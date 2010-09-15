@@ -11,7 +11,7 @@ class OFXStringBool(validators.StringBool):
     false_values = ['n',]
 
     def _from_python(self, value, state):
-        return super('OFXStringBool', self)._from_python(value, state).upper()
+        return super(OFXStringBool, self)._from_python(value, state).upper()
 
 class DecimalConverter(validators.Number):
     """ FIXME This is pretty rough """
@@ -66,9 +66,10 @@ class OFXDtConverter(api.FancyValidator):
         try:
             # Transform to GMT
             value = time.gmtime(time.mktime(value.timetuple()))
-            value = value.strftime('%s [0:GMT]' % self.formats[0])
+            #value = time.strftime('%s [0:GMT]' % self.formats[0], value)
+            value = time.strftime(self.formats[1], value)
         except:
-            raise
+            raise ValueError # FIXME
         return value
 
 # Validators specifying allowed item types in the XXXLIST aggregates
