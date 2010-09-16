@@ -66,7 +66,8 @@ class OFXDtConverter(api.FancyValidator):
         try:
             # Transform to GMT
             value = time.gmtime(time.mktime(value.timetuple()))
-            #value = time.strftime('%s [0:GMT]' % self.formats[0], value)
+            # timetuples don't have usec precision
+            #value = time.strftime('%s[0:GMT]' % self.formats[1], value)
             value = time.strftime(self.formats[1], value)
         except:
             raise ValueError # FIXME
