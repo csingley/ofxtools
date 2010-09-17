@@ -1,12 +1,8 @@
+#!/usr/bin/env python2
 import os
 import xml.etree.cElementTree as ET
 
 import valid
-
-OFXv1 = ('102', '103')
-OFXv2 = ('203', '211')
-HEADER_FIELDS = {'100': ('DATA', 'VERSION', 'SECURITY', 'ENCODING', 'CHARSET',
-                        'COMPRESSION', 'OLDFILEUID', 'NEWFILEUID'),}
 
 class OFXParser(object):
     """ """
@@ -15,9 +11,10 @@ class OFXParser(object):
     INVTRANLISTitem = valid.INVTRANLISTitem
     POSLISTitem = valid.POSLISTitem
 
-    def __init__(self):
+    def __init__(self, verbose=False):
         """ """
         self.reset()
+        self.verbose = verbose
 
     def reset(self):
         self.header = None
@@ -38,7 +35,8 @@ class OFXParser(object):
         if not hasattr(source, 'read"'):
             source = open(source, 'rb')
         self.header, source = self.unwrapOFX(source)
-        ofxposition = source.tell()
+        # Mark position where markup begins
+        breakbeat = source.tell()
         with source as s:
             try:
                 # If all tags are closed explicitly, expat will work
@@ -46,13 +44,12 @@ class OFXParser(object):
                 root = self.tree.parse(s, parser)
             except SyntaxError:
                 # Fall back to sgmlop if available (it's faster), else sgmllib.
-                # Our homebrew parsers don't deal well with leaf elements
-                #  having explicitly closed tags.
                 try:
-                    parser = OFXTreeBuilder_sgmlop()
+                    parser = OFXTreeBuilder_sgmlop(verbose=self.verbose)
                 except ImportError:
-                    parser = OFXTreeBuilder()
-                s.seek(ofxposition)
+                    parser = OFXTreeBuilder(verbose=self.verbose)
+                # expat started playing; rewind
+                s.seek(breakbeat)
                 root = self.tree.parse(s, parser)
 
         # STMTRS
@@ -242,11 +239,11 @@ class OFXParser(object):
             # Header is 9 lines of flat text (not markup) that we strip
             header_key, header_version = validateOFXv1Header(line1, 'OFXHEADER')
             header = dict([validateOFXv1Header(source.readline(), f) \
-                    for f in HEADER_FIELDS[header_version]])
+                    for f in valid.HEADER_FIELDS[header_version]])
             header[header_key] = header_version
             # Sanity check
             assert header['DATA'] == 'OFXSGML'
-            assert header['VERSION'] in OFXv1
+            assert header['VERSION'] in valid.OFXv1
         elif line1.startswith('<?xml'):
             #OFXv2
             # OFX declaration is the next line of content
@@ -255,7 +252,7 @@ class OFXParser(object):
             args = ofx_decl[:-3].split(' ')[1:]
             header = dict([arg.split('=') for arg in args])
             # Sanity check
-            assert header['VERSION'] in OFXv2
+            assert header['VERSION'] in valid.OFXv2
         else:
             raise ValueError("Malformed OFX header '%s'" % line1)
 
@@ -264,8 +261,8 @@ class OFXParser(object):
     #def sgml2xml(self, sgmlstr, version='102', sx=None):
         #""" """
         #version = str(version)
-        #if version not in OFXv1:
-            #raise ValueError('version must be one of %s' % str(OFXv1))
+        #if version not in valid.OFXv1:
+            #raise ValueError('version must be one of %s' % str(valid.OFXv1))
         #if version == '102':
             ## Use the DTD for OFXv103
             #version = '103'
@@ -281,9 +278,12 @@ class OFXParser(object):
 
 from sgmllib import SGMLParser
 class OFXTreeBuilder(SGMLParser):
-    def __init__(self):
+    def __init__(self, verbose=False):
         self.__builder = ET.TreeBuilder()
         SGMLParser.__init__(self)
+        self.inside_data = False
+        self.latest_starttag = None
+        self.verbose = verbose
 
     def feed(self, data):
         return SGMLParser.feed(self, data)
@@ -293,32 +293,55 @@ class OFXTreeBuilder(SGMLParser):
         return self.__builder.close()
 
     def unknown_starttag(self, tag, attrib):
+        # First close any dangling data
+        if self.inside_data:
+            if self.verbose:
+                msg = "starttag closing '%s'" % self.latest_starttag
+                print msg
+            self.__builder.end(self.latest_starttag)
+        self.inside_data = False
+
         tag = tag.upper()
+        if self.verbose:
+            msg = "starttag opening '%s'" % tag
+            print msg
         self.__builder.start(tag, attrib)
-        self.current_starttag = tag
-        self.dont_close_starttag = False
+        self.latest_starttag = tag
 
     def unknown_endtag(self, tag):
+        # First close any dangling data
+        if self.inside_data:
+            if self.verbose:
+                msg = "endtag closing '%s'" % self.latest_starttag
+                print msg
+            self.__builder.end(self.latest_starttag)
+        self.inside_data = False
+
         tag = tag.upper()
-        if tag == self.current_starttag and self.dont_close_starttag:
-            pass
-        else:
+        if tag != self.latest_starttag:
+            if self.verbose:
+                msg = "endtag closing '%s'" % tag
+                print msg
             self.__builder.end(tag)
-        self.dont_close_starttag = False
 
     def handle_data(self, text):
-        text = text.strip()
+        text = text.strip('\f\n\r\t\v') # Strip whitespace, except space char
         if text:
+            if self.verbose:
+                msg = "handle_data adding data '%s'" % text
+                print msg
+            self.inside_data = True
             self.__builder.data(text)
-            self.__builder.end(self.current_starttag)
-            self.dont_close_starttag = True
 
 class OFXTreeBuilder_sgmlop(object):
-    def __init__(self):
+    def __init__(self, verbose=False):
         import sgmlop
         self.__builder = ET.TreeBuilder()
         self.__parser = sgmlop.SGMLParser()
         self.__parser.register(self)
+        self.inside_data = False
+        self.latest_starttag = None
+        self.verbose = verbose
 
     def feed(self, data):
         self.__parser.feed(data)
@@ -329,25 +352,46 @@ class OFXTreeBuilder_sgmlop(object):
         return self.__builder.close()
 
     def finish_starttag(self, tag, attrib):
+        # First close any dangling data
+        if self.inside_data:
+            if self.verbose:
+                msg = "starttag closing '%s'" % self.latest_starttag
+                print msg
+            self.__builder.end(self.latest_starttag)
+        self.inside_data = False
+
         tag = tag.upper()
+        if self.verbose:
+            msg = "starttag opening '%s'" % tag
+            print msg
         self.__builder.start(tag, attrib)
-        self.current_starttag = tag
-        self.dont_close_starttag = False
+        self.latest_starttag = tag
 
     def finish_endtag(self, tag):
-        tag = tag.upper()
-        if tag == self.current_starttag and self.dont_close_starttag:
-            pass
-        else:
-            self.__builder.end(tag)
-        self.dont_close_starttag = False
+        # First close any dangling data
+        if self.inside_data:
+            if self.verbose:
+                msg = "endtag closing '%s'" % self.latest_starttag
+                print msg
+            self.__builder.end(self.latest_starttag)
+        self.inside_data = False
 
-    def handle_data(self, data):
-        data = data.strip()
-        if data:
-            self.__builder.data(data)
-            self.__builder.end(self.current_starttag)
-            self.dont_close_starttag = True
+        tag = tag.upper()
+        if tag != self.latest_starttag:
+            if self.verbose:
+                msg = "endtag closing '%s'" % tag
+                print msg
+            self.__builder.end(tag)
+
+    def handle_data(self, text):
+        text = text.strip('\f\n\r\t\v') # Strip whitespace, except space char
+        if text:
+            if self.verbose:
+                msg = "handle_data adding data '%s'" % text
+                print msg
+            self.inside_data = True
+            self.__builder.data(text)
+
 
 class ReportBase(object):
     def __init__(self, **kwargs):
@@ -383,13 +427,18 @@ class InvBalance(ReportBase):
             id = ''
             return '<%s %s>' % (self.__class__.__name__, id)
 
-if __name__ == '__main__':
+def main():
     from optparse import OptionParser
     optparser = OptionParser(usage='usage: %prog FILE')
+    optparser.set_defaults(verbose=False)
+    optparser.add_option('-v', '--verbose', action='store_true',
+                        help='Turn on parser debug output')
     (options, args) = optparser.parse_args()
     if len(args) != 1:
         optparser.error('incorrect number of arguments')
     FILE = args[0]
-
-    ofxparser = OFXParser()
+    ofxparser = OFXParser(verbose=options.verbose)
     ofxparser.parse(FILE)
+
+if __name__ == '__main__':
+    main()

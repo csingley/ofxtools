@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 import urllib2
 import datetime
 import uuid
@@ -11,11 +12,10 @@ accttypeValidator = valid.validators.OneOf(valid.ACCOUNT_TYPES)
 
 class OFXClient(object):
     """ """
-    #appid = 'Money' # Masquerade as MS Money
-    #appver = '1700' # 1500=Money 2006, 1600=Money 2007, 1700=Money Plus
     appid = 'QWIN' # Masquerade as Quicken for Windows
     appver = '1700' # 1500=Quicken 2006, 1600=Quicken 2007, 1700=Quicken 2008
-
+    #appid = 'Money' # Masquerade as MS Money
+    #appver = '1700' # 1500=Money 2006, 1600=Money 2007, 1700=Money Plus
     def __init__(self, url, fiorg=None, fid=None, bankid=None, brokerid=None,
     version=102):
         # Initialize
@@ -207,11 +207,13 @@ def main():
 
     usage = "usage: %prog [options] institution (bank | creditcard | investment) account [account account ...]"
     optparser = OptionParser(usage=usage)
-    optparser.set_defaults(accttype='CHECKING',
+    optparser.set_defaults(list=False, dry_run=False, accttype='CHECKING',
                             inctran=True, dtstart=None, dtend=None,
                             incpos=True, dtasof=None, incbal=True)
     optparser.add_option('-l', '--list', action='store_true',
                         help='list known institutions and exit')
+    optparser.add_option('-n', '--dry-run', action='store_true',
+                        help='display OFX request and exit')
     optparser.add_option('-u', '--user', help='login user ID at institution')
     # account options
     acctgroup = OptionGroup(optparser, 'Bank Account Options')
@@ -301,8 +303,9 @@ def main():
         # FIXME
         raise ValueError("Need username/password to authenticate download")
 
-    #print client.do_request()
-    #return
+    if options.dry_run:
+        print client.do_request()
+        return
 
     try:
         response = client.download()

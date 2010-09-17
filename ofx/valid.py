@@ -5,6 +5,11 @@ from decimal import Decimal
 
 from formencode import api, validators, Schema
 
+OFXv1 = ('102', '103')
+OFXv2 = ('203', '211')
+HEADER_FIELDS = {'100': ('DATA', 'VERSION', 'SECURITY', 'ENCODING', 'CHARSET',
+                        'COMPRESSION', 'OLDFILEUID', 'NEWFILEUID'),}
+
 # Custom formencode validators
 class OFXStringBool(validators.StringBool):
     true_values = ['y',]
