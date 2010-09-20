@@ -26,6 +26,22 @@ class ReportBase(object):
         return unicode(self)
 
 
+class Account(ReportBase):
+    pass
+
+
+class BankAccount(Account):
+    pass
+
+
+class CcAccount(Account):
+    pass
+
+
+class InvAccount(Account):
+    pass
+
+
 class Transaction(ReportBase):
     def __unicode__(self):
         id = "FIXME"
@@ -150,6 +166,7 @@ class BankStatement(Statement):
     ledger_balance = None
     available_balance = None
 
+    AccountClass = BankAccount
     TransactionClass = Transaction
 
     transaction_validator = valid.BANKTRANLISTitem
@@ -188,7 +205,7 @@ class BankStatement(Statement):
 
         dregs = self.handle_element(stmtrs)
         self.curdef = dregs.pop('curdef')
-        self.account = dregs
+        self.account = self.AccountClass(**dregs)
 
     def handle_ledgerbal(ledgerbal):
         ledgerbal = self.handle_element(ledgerbal)
@@ -199,7 +216,7 @@ class BankStatement(Statement):
         self.available_balance = (availbal['dtasof'], availbal['balamt'])
 
 class CreditCardStatement(BankStatement):
-    pass
+    AccountClass = CcAccount
 
 
 class InvestmentStatement(Statement):
@@ -209,6 +226,7 @@ class InvestmentStatement(Statement):
     short_balance = None
     buying_power = None
 
+    AccountClass = InvAccount
     SecurityClass = Security
     TransactionClass = InvTransaction
     PositionClass = Position
@@ -265,10 +283,10 @@ class InvestmentStatement(Statement):
 
         dregs = self.handle_element(stmtrs)
 
-        # Pop INVACCTFROM, which we don't want to end up flat.
-        brokerid = dregs.pop('brokerid')
-        acctid = dregs.pop('acctid')
-        self.account = (brokerid, acctid)
+        # Instantiate INVACCTFROM
+        acct_attrs = {'brokerid': dregs.pop('brokerid'),}
+        acct_attrs['acctid'] = dregs.pop('acctid')
+        self.account = self.AccountClass(**acct_attrs)
 
         for key, value in dregs.iteritems():
             setattr(self, key, value)
