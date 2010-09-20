@@ -4,167 +4,87 @@ import xml.etree.cElementTree as ET
 
 import valid
 
-class OFXParser(object):
-    """ """
-    BANKTRANLISTitem = valid.BANKTRANLISTitem
-    SECLISTitem = valid.SECLISTitem
-    INVTRANLISTitem = valid.INVTRANLISTitem
-    POSLISTitem = valid.POSLISTitem
+### ELEMENT HANDLER CLASSES
+# After the OFX data have been parsed into an ElementTree structure,
+# the interesting parts of the tree get passed into these classes for
+# further processing.  The handlers validate the data, convert them
+# from strings into Python data structurs, and flatten them into
+# un-nested dictionaries and lists of dictionaries.
+#
+# Having accomplished that, these handler classes simply store the data as
+# object attributes to be accessed.  You can subclass these handlers and
+# override the top-level handling methods in order to perform more extensive
+# processing.  In particular, the data model here is intended to facilitate
+# persistence into a relational database.
+class ReportBase(object):
+    def __init__(self, **attrs):
+        for key,value in attrs.iteritems():
+            if value is not None:
+                setattr(self, key, value)
 
-    def __init__(self, verbose=False):
-        """ """
-        self.reset()
-        self.verbose = verbose
+    def __repr__(self):
+        return unicode(self)
 
-    def reset(self):
-        self.header = None
-        self.tree = ET.ElementTree()
-        self.bank_transactions = None
-        self.bank_balance = None
-        self.bank_balance_available = None
-        self.creditcard_transactions = None
-        self.securities = None
-        self.invstmtrs_preamble = None
-        self.invtranlist_preamble = None
-        self.investment_transactions = None
-        self.positions = None
-        self.investment_balances = None
 
-    def parse(self, source):
-        """ """
-        if not hasattr(source, 'read"'):
-            source = open(source, 'rb')
-        self.header, source = self.unwrapOFX(source)
-        # Mark position where markup begins
-        breakbeat = source.tell()
-        with source as s:
-            try:
-                # If all tags are closed explicitly, expat will work
-                parser = ET.XMLParser()
-                root = self.tree.parse(s, parser)
-            except SyntaxError:
-                # Fall back to sgmlop if available (it's faster), else sgmllib.
-                try:
-                    parser = OFXTreeBuilder_sgmlop(verbose=self.verbose)
-                except ImportError:
-                    parser = OFXTreeBuilder(verbose=self.verbose)
-                # expat started playing; rewind
-                s.seek(breakbeat)
-                root = self.tree.parse(s, parser)
+class Transaction(ReportBase):
+    def __unicode__(self):
+        id = "FIXME"
+        return '<%s %s>' % (self.__class__.__name__, id)
 
-        # STMTRS
-        stmtrs = root.find('.//STMTRS')
-        if stmtrs:
-            self.stmtrs_preamble, self.tranlist_preamble, self.bank_transactions, self.bank_balance, self.bank_balance_available = self.parse_STMTRS(stmtrs)
 
-        # CCSTMTRS
-        ccstmtrs = root.find('.//CCSTMTRS')
-        if ccstmtrs:
-            self.ccstmtrs_preamble, self.cctranlist_preamble, self.creditcard_transactions, self.creditcard_balance, self.creditcard_balance_available = self.parse_STMTRS(ccstmtrs)
+class Security(ReportBase):
+    def __unicode__(self):
+        id = self.ticker or '%s %s' % (self.uniqueidtype, self.uniqueid)
+        return '<%s %s>' % (self.__class__.__name__, id)
 
-        # SECLIST
-        seclist = root.find('.//SECLIST')
-        if seclist:
-            def init_sec(element):
-                # Strip out SECID so it won't run through parse_SECID()...
-                secinfo = element.find('SECINFO')
-                secid = secinfo.find('SECID')
-                secinfo.remove(secid)
-                # ...then parse the rest of the xxxINFO naively
-                secattr = self.parse_element(element)
-                # Merge in SECID (Double check for namespace collisions)
-                secid_attr = dict([(child.tag.lower(), child.text) for child in secid])
-                for key in secid_attr.keys():
-                    assert key not in secattr.keys()
-                secattr.update(valid.SECID.to_python(secid_attr))
-                # Merge in security type
-                assert 'type' not in secattr.keys()
-                secattr['type'] = self.SECLISTitem.to_python(element.tag)[:-4]
-                security = Security(**secattr)
-                return (secattr['uniqueidtype'], secattr['uniqueid']), security
-            self.securities = dict([init_sec(sec) for sec in seclist])
 
-        # INVSTMTRS
-        invstmtrs = root.find('.//INVSTMTRS')
-        if invstmtrs:
-            # Copy the STMTRS aggregate without the TRANLIST, so we can parse
-            #  the preamble using default method (recursing into ACCTFROM)
-            invstmtrs_clone = self._clone(invstmtrs, num_children=3)
-            self.invstmtrs_preamble = self.parse_element(invstmtrs_clone)
-            # INVTRANLIST
-            invtranlist = invstmtrs.find('INVTRANLIST')
-            if invtranlist:
-                self.invtranlist_preamble = self.parse_element(invtranlist, recurse=False)
-                def parse_tran(element):
-                    # Parse the body of the transaction
-                    tranattr = self.parse_element(element)
-                    # Merge in transaction type
-                    assert type not in tranattr.keys()
-                    tranattr['type'] = self.INVTRANLISTitem.to_python(element.tag)
-                    return InvTransaction(**tranattr)
-                self.investment_transactions = [parse_tran(tran) for tran in invtranlist[2:]]
+class InvTransaction(ReportBase):
+    def __unicode__(self):
+        id = self.fitid
+        return '<%s %s>' % (self.__class__.__name__, id)
 
-            # INVPOSLIST
-            invposlist = invstmtrs.find('INVPOSLIST')
-            if invposlist:
-                def parse_item(element):
-                    # Parse body
-                    attr = self.parse_element(element)
-                    # Merge in type
-                    assert type not in attr.keys()
-                    attr['type'] = self.POSLISTitem.to_python(element.tag)[3:]
-                    return Position(**attr)
-                self.positions = [parse_item(pos) for pos in invposlist]
 
-            # INVBAL
-            # FIXME - BALLIST is silently dropped
-            invbal = invstmtrs.find('INVBAL')
-            if invbal:
-                # Strip off BALLIST and parse it
-                ballist = invbal.find('BALLIST')
-                if ballist:
-                    invbal.remove(ballist)
-                    bals = [self.parse_element(bal) for bal in ballist]
-                else:
-                    bals = None
-                # Parse the rest of INVBAL
-                attr = self.parse_element(invbal)
-                self.investment_balances = InvBalance(**attr)
+class Position(ReportBase):
+    def __init__(self, **attrs):
+        price_attrs = {'secid': attrs['secid'],}
+        for attr in ('unitprice','dtpriceasof'):
+            price_attrs[attr] = attrs.pop(attr)
+        self.price = Price(**price_attrs)
 
-    def parse_STMTRS(self, stmtrs):
-        # Copy the STMTRS aggregate without the TRANLIST, so we can parse
-        #  the preamble using default method (recursing into ACCTFROM)
-        stmtrs_clone = self._clone(stmtrs, num_children=2)
-        stmtrs_preamble = self.parse_element(stmtrs_clone)
-        # BANKTRANLIST
-        banktranlist = stmtrs.find('BANKTRANLIST')
-        if banktranlist:
-            tranlist_preamble = self.parse_element(banktranlist, recurse=False)
-            def parse_tran(element):
-                # Parse the body of the transaction
-                tranattr = self.parse_element(element)
-                # Merge in transaction type
-                assert type not in tranattr.keys()
-                tranattr['type'] = self.BANKTRANLISTitem.to_python(element.tag)
-                return Transaction(**tranattr)
-            transactions = [parse_tran(tran) for tran in banktranlist[2:]]
-        # LEDGERBAL - mandatory
-        ledgerbal = stmtrs.find('LEDGERBAL')
-        balance = self.parse_element(ledgerbal)
-        # AVAILBAL
-        availbal = stmtrs.find('LEDGERBAL')
-        if availbal:
-            balance_available = self.parse_element(availbal)
-        # BALLIST
-        # FIXME
-        pass
+        super(Position, self).__init__(**attrs)
 
-        return stmtrs_preamble, tranlist_preamble, transactions, balance, balance_available
+    def __unicode__(self):
+        id = self.secid
+        return '<%s %s>' % (self.__class__.__name__, id)
 
-    def parse_element(self, element, recurse=True):
+class Price(ReportBase):
+    def __unicode__(self):
+        id = "FIXME"
+        return '<%s %s>' % (self.__class__.__name__, id)
+
+class Statement(ReportBase):
+    account = None
+    default_currency = None
+    transactions = []
+    start = None
+    end = None
+    asof = None
+    other_balances = {}
+
+    def handle_element(self, element, recurse=True):
         """
-        Default parsing method if nothing more specific overrides.
-        Relies on the fact that OFX aggregates contain no data.
+        General-purpose element handler.  Uses the element tag to look up the
+        right validator & convert element data text into Python data types.
+        Recurses through aggregates and flattens them into un-nested dicts.
+
+        This method will blow up if the aggregate contains LISTs, or if it
+        contains multiple subaggregates whose namespaces will collide when
+        flattened (e.g. DTASOF elements in LEDGERBAL and AVAILBAL).
+        Remove all such hair from the element before passing it in here.
+
+        The switch to turn off recursion (i.e. only handle top-level elements
+        in an aggregate & ignore subaggregates) is a convenience for getting
+        at DTSTART and DTEND in TRANSLIST aggregates.
         """
         aggregates = {}
         leaves = {}
@@ -180,9 +100,9 @@ class OFXParser(object):
             elif recurse:
                 # element is an aggregate and we haven't turned off recursion.
                 # dispatch parse method; fallback to default (recurse here).
-                parseMethod = getattr(self, 'parse_%s' % tag, self.parse_element)
+                handlerMethod = getattr(self, 'handle_%s' % tag, self.handle_element)
                 assert tag not in aggregates
-                aggregates.update(parseMethod(child))
+                aggregates.update(handlerMethod(child))
         # Validate leaves; aggregates are already validated by parse method.
         validation_schema = getattr(valid, element.tag)
         results = validation_schema.to_python(leaves)
@@ -192,20 +112,253 @@ class OFXParser(object):
         results.update(aggregates)
         return results
 
-    def parse_SECID(self, element):
+    def handle_list_item(self, item, validator, object_class,
+        extra_attributes=None):
+        # Convert the body of the item
+        attr = self.handle_element(item)
+
+        # Merge in the item type from the tag
+        assert 'type' not in attr.keys()
+        attr['type'] = validator.to_python(item.tag)
+
+        # Check for namespace collisions, then merge in any extra
+        # attributes passed in.
+        extra_attributes = extra_attributes or {}
+        attr_keys = attr.keys()
+        for key in extra_attributes.keys():
+            assert key not in attr_keys
+        attr.update(extra_attributes)
+
+        return object_class(**attr)
+
+    def handle_tranlist(self, tranlist):
+        tranlist_preamble = self.handle_element(tranlist, recurse=False)
+        self.transactions = [self.handle_list_item(tran,
+                        self.transaction_validator, self.TransactionClass) \
+                        for tran in tranlist[2:]]
+        self.start = tranlist_preamble['dtstart']
+        self.end = tranlist_preamble['dtend']
+
+    def handle_ballist(self, ballist):
+        def handle_bal(bal):
+            bal = self.handle_element(bal)
+            return bal.pop('name'), bal
+        return dict([handle_bal(bal) for bal in ballist])
+
+
+class BankStatement(Statement):
+    ledger_balance = None
+    available_balance = None
+
+    TransactionClass = Transaction
+
+    transaction_validator = valid.BANKTRANLISTitem
+
+    def __init__(self, stmtrs):
+        self.handle_stmtrs(stmtrs)
+
+    def handle_stmtrs(self, stmtrs):
+        # BANKTRANLIST
+        tranlist = stmtrs.find('BANKTRANLIST')
+        if tranlist:
+            self.handle_tranlist(tranlist)
+            stmtrs.remove(tranlist)
+
+        # LEDGERBAL - mandatory
+        ledgerbal = stmtrs.find('LEDGERBAL')
+        self.handle_ledgerbal(ledgerbal)
+        stmtrs.remove(ledgerbal)
+
+        # AVAILBAL
+        availbal = stmtrs.find('AVAILBAL')
+        if availbal:
+            self.handle_availbal(availbal)
+            stmtrs.remove(availbal)
+
+        # BALLIST
+        ballist = stmtrs.find('BALLIST')
+        if ballist:
+            self.other_balances = self.handle_ballist(ballist)
+            stmtrs.remove(ballist)
+
+        # MKTGINFO - not supported
+        mktginfo = stmtrs.find('MKTGINFO')
+        if mktginfo:
+            stmtrs.remove(mktginfo)
+
+        dregs = self.handle_element(stmtrs)
+        self.curdef = dregs.pop('curdef')
+        self.account = dregs
+
+    def handle_ledgerbal(ledgerbal):
+        ledgerbal = self.handle_element(ledgerbal)
+        self.ledger_balance = (ledgerbal['dtasof'], ledgerbal['balamt'])
+
+    def handle_availbal(self, availbal):
+        availbal = self.handle_element(availbal)
+        self.available_balance = (availbal['dtasof'], availbal['balamt'])
+
+class CreditCardStatement(BankStatement):
+    pass
+
+
+class InvestmentStatement(Statement):
+    positions = []
+    available_cash = None
+    margin_balance = None
+    short_balance = None
+    buying_power = None
+
+    SecurityClass = Security
+    TransactionClass = InvTransaction
+    PositionClass = Position
+
+    transaction_validator = valid.INVTRANLISTitem
+
+    def __init__(self, seclist, stmtrs):
+        self.handle_stmtrs(seclist, stmtrs)
+
+    def handle_stmtrs(self, seclist, stmtrs):
+        # First create Securities instances, and store in a map of
+        #  (uniqueidtype, uniqueid) -> Security for easy lookup
+        self.securities = self.handle_SECLIST(seclist)
+
+        # INVTRANLIST
+        tranlist = stmtrs.find('INVTRANLIST')
+        if tranlist:
+            self.handle_tranlist(tranlist)
+            stmtrs.remove(tranlist)
+
+        # INVPOSLIST
+        poslist = stmtrs.find('INVPOSLIST')
+        if poslist:
+            self.handle_poslist(poslist)
+            stmtrs.remove(poslist)
+
+        # INVBAL
+        invbal = stmtrs.find('INVBAL')
+        if invbal:
+            self.handle_invbal(invbal)
+            # Once BALLIST is stripped out, we don't need to remove INVBAL,
+            # which contains no other subaggregates.  It'll get processed
+            # along with the dregs.
+
+        # INVOOLIST - not supported
+        invoolist = stmtrs.find('INVOOLIST')
+        if invoolist:
+            stmtrs.remove(invoolist)
+
+        # INV401K - not supported
+        inv401k = stmtrs.find('INV401K')
+        if inv401k:
+            stmtrs.remove(inv401k)
+
+        # INV401KBAL - not supported
+        inv401kbal = stmtrs.find('INV401KBAL')
+        if inv401kbal:
+            stmtrs.remove(inv401kbal)
+
+        # MKTGINFO - not supported
+        mktginfo = stmtrs.find('MKTGINFO')
+        if mktginfo:
+            stmtrs.remove(mktginfo)
+
+        dregs = self.handle_element(stmtrs)
+
+        # Pop INVACCTFROM, which we don't want to end up flat.
+        brokerid = dregs.pop('brokerid')
+        acctid = dregs.pop('acctid')
+        self.account = (brokerid, acctid)
+
+        for key, value in dregs.iteritems():
+            setattr(self, key, value)
+
+    def handle_SECLIST(self, seclist):
+        def handle_sec(element):
+            # Strip out SECID so self.handle_element() won't dispatch it to
+            # self.handle_SECID(), which method we actually use to perform
+            # the lookups we're constructing here.
+            secinfo = element.find('SECINFO')
+            secid = secinfo.find('SECID')
+            secinfo.remove(secid)
+
+            # Flatten SECID and validate it manually
+            secid_attr = dict([(child.tag.lower(), child.text) for child in secid])
+            secid_attr = valid.SECID.to_python(secid_attr)
+
+            # ...then parse the rest of the xxxINFO naively
+            security = self.handle_list_item(element, valid.SECLISTitem,
+                    self.SecurityClass, extra_attributes=secid_attr)
+            return (security.uniqueidtype, security.uniqueid), security
+        return dict([handle_sec(sec) for sec in seclist])
+
+    def handle_SECID(self, element):
         # Validate
-        results = self.parse_element(element)
+        results = self.handle_element(element)
         # Transform to Security instance
         sec = self.securities[(results['uniqueidtype'], results['uniqueid'])]
         return {'secid': sec}
 
-    def _clone(self, element, num_children=-1):
-        """ """
-        clone = ET.Element(element.tag)
-        clone.text = element.text
-        for child in element[:num_children]:
-            clone.append(child)
-        return clone
+    def handle_poslist(self, poslist):
+        positions = [self.handle_list_item(pos, valid.POSLISTitem, \
+                        self.PositionClass) for pos in poslist]
+        # Strip out pricing data from the positions
+        def strip_price(pos):
+            price = pos.price
+            del pos.price
+            return price
+
+        self.positions = positions
+        self.prices = [strip_price(pos) for pos in positions]
+
+    def handle_invbal(self, invbal):
+        # Strip off BALLIST and parse it
+        ballist = invbal.find('BALLIST')
+        if ballist:
+            self.other_balances = self.handle_ballist(ballist)
+            invbal.remove(ballist)
+
+### PARSER CLASSES
+# These classes convert OFX data into a Python ElementTree structure.
+
+class OFXParser(object):
+    """
+    Reads OFX files (v1 & v2) and extracts the interesting data.
+    """
+    BankHandler = BankStatement
+    CcHandler = CreditCardStatement
+    InvHandler = InvestmentStatement
+
+    def __init__(self, use_sgmlop=False, verbose=False):
+        self.reset()
+        self.use_sgmlop = use_sgmlop
+        self.verbose = verbose
+
+    def reset(self):
+        self.header = None
+        self.tree = ET.ElementTree()
+        self.bank_statement = None
+        self.creditcard_statement = None
+        self.investment_statement = None
+
+    def parse(self, source):
+        if not hasattr(source, 'read"'):
+            source = open(source, 'rb')
+        self.header, source = self.unwrapOFX(source)
+        root = self._parse(source)
+
+        stmtrs = root.find('.//STMTRS')
+        if stmtrs:
+            self.bank_statement = self.BankHandler(stmtrs)
+
+        ccstmtrs = root.find('.//CCSTMTRS')
+        if ccstmtrs:
+            self.creditcard_statement = self.CcHandler(ccstmtrs)
+
+        seclist = root.find('.//SECLIST')
+        invstmtrs = root.find('.//INVSTMTRS')
+        if invstmtrs:
+            self.investment_statement = self.InvHandler(seclist, invstmtrs)
 
     def unwrapOFX(self, source):
         """ Pass in an open file-like object """
@@ -258,26 +411,40 @@ class OFXParser(object):
 
         return header, source
 
-    #def sgml2xml(self, sgmlstr, version='102', sx=None):
-        #""" """
-        #version = str(version)
-        #if version not in valid.OFXv1:
-            #raise ValueError('version must be one of %s' % str(valid.OFXv1))
-        #if version == '102':
-            ## Use the DTD for OFXv103
-            #version = '103'
-        #spec = os.path.join(INSTALL_DIR, 'spec',version)
-        #if not os.path.isdir(spec):
-            #raise RuntimeError("Can't find OFXv%s spec at %s" % (version, spec))
-        #sx = sx or self.world_sx or self.module_sx
-        #if not sx:
-            #raise RuntimeError("Can't find sx")
-        #SX = Popen([sx, '-D%s' % spec], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        #xmlstr, stderr = SX.communicate(sgmlstr)
-        #return xmlstr
+    def _parse(self, source):
+        # Mark initial position in file
+        breakbeat = source.tell()
+        with source as s:
+            if self.use_sgmlop:
+                parser = OFXTreeBuilder_sgmlop(verbose=self.verbose)
+                root = self.tree.parse(s, parser)
+            else:
+                try:
+                    # expat (Python's bundled XML parser) is compiled C: fast.
+                    # expat doesn't validate against DTDs; it will work as long
+                    # as all tags are closed explicitly, which is allowed by
+                    # OFXv1 and done by some FIs.
+                    parser = ET.XMLParser()
+                    root = self.tree.parse(s, parser)
+                except SyntaxError:
+                    # Fall back to SGMLParser (slow, but handles unclosed tags)
+                    try:
+                        parser = OFXTreeBuilder_sgmlop(verbose=self.verbose)
+                    except ImportError:
+                        parser = OFXTreeBuilder(verbose=self.verbose)
+                    # expat already started reading the file; rewind
+                    s.seek(breakbeat)
+                    root = self.tree.parse(s, parser)
+        return root
 
 from sgmllib import SGMLParser
 class OFXTreeBuilder(SGMLParser):
+    """
+    Parses OFX v1&v2 into an ElementTree instance.
+    Accessible via standard feed/close consumer interface.
+
+    Built on sgmllib, which is deprecated and going away in py3k.
+    """
     def __init__(self, verbose=False):
         self.__builder = ET.TreeBuilder()
         SGMLParser.__init__(self)
@@ -334,6 +501,15 @@ class OFXTreeBuilder(SGMLParser):
             self.__builder.data(text)
 
 class OFXTreeBuilder_sgmlop(object):
+    """
+    Parses OFX v1&v2 into an ElementTree instance.
+    Accessible via standard feed/close consumer interface.
+
+    Built on sgmlop, which is deprecated and going away in py3k:
+        http://bugs.python.org/issue1772916
+    Nevertheless sgmlop is the best parser available, and can be gotten here:
+        http://effbot.org/zone/sgmlop-index.htm
+    """
     def __init__(self, verbose=False):
         import sgmlop
         self.__builder = ET.TreeBuilder()
@@ -348,6 +524,15 @@ class OFXTreeBuilder_sgmlop(object):
 
     def close(self):
         self.__parser.close()
+        # "Note that if you use the standard pattern where a parser class holds
+        #  a reference to the sgmlop object, and you'll register methods in the
+        #  same class, Python may leak resources. To avoid this, you can either
+        #  remove the object from the class before you destroy the class instance,
+        #  or unregister all methods (by calling register(None)), or both.
+        #  Recent versions of sgmlop supports proper garbage collection for
+        #  this situation, but it never hurts to be on the safe side."
+        # http://effbot.org/zone/sgmlop-handbook.htm
+        self.__parser.register(None)
         self.__parser = None
         return self.__builder.close()
 
@@ -393,52 +578,24 @@ class OFXTreeBuilder_sgmlop(object):
             self.__builder.data(text)
 
 
-class ReportBase(object):
-    def __init__(self, **kwargs):
-        for key,value in kwargs.iteritems():
-            if value:
-                setattr(self, key, value)
-
-    def __repr__(self):
-        return unicode(self)
-
-class Transaction(ReportBase):
-    def __unicode__(self):
-        id = "FIXME"
-        return '<%s %s>' % (self.__class__.__name__, id)
-
-class Security(ReportBase):
-    def __unicode__(self):
-        id = self.ticker or '%s %s' % (self.uniqueidtype, self.uniqueid)
-        return '<%s %s>' % (self.__class__.__name__, id)
-
-class InvTransaction(ReportBase):
-    def __unicode__(self):
-        id = self.fitid
-        return '<%s %s>' % (self.__class__.__name__, id)
-
-class Position(ReportBase):
-        def __unicode__(self):
-            id = self.security
-            return '<%s %s>' % (self.__class__.__name__, id)
-
-class InvBalance(ReportBase):
-        def __unicode__(self):
-            id = ''
-            return '<%s %s>' % (self.__class__.__name__, id)
-
+### MAIN FUNCTION
 def main():
     from optparse import OptionParser
     optparser = OptionParser(usage='usage: %prog FILE')
-    optparser.set_defaults(verbose=False)
+    optparser.set_defaults(use_sgmlop=False, verbose=False,)
+    optparser.add_option('-c', '--use-sgmlop', action='store_true',
+                        help='Parse with sgmlop (fast, but must be installed)')
     optparser.add_option('-v', '--verbose', action='store_true',
                         help='Turn on parser debug output')
     (options, args) = optparser.parse_args()
     if len(args) != 1:
         optparser.error('incorrect number of arguments')
     FILE = args[0]
-    ofxparser = OFXParser(verbose=options.verbose)
+    ofxparser = OFXParser(use_sgmlop=options.use_sgmlop,
+                        verbose=options.verbose
+    )
     ofxparser.parse(FILE)
+
 
 if __name__ == '__main__':
     main()
