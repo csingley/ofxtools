@@ -607,7 +607,7 @@ def main():
                         help='Turn on parser debug output')
     (options, args) = optparser.parse_args()
     if len(args) != 1:
-        optparser.error('incorrect number of arguments')
+        optparser.print_usage()
     FILE = args[0]
     ofxparser = OFXParser(use_sgmlop=options.use_sgmlop,
                         verbose=options.verbose
