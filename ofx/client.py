@@ -13,11 +13,18 @@ accttypeValidator = valid.validators.OneOf(valid.ACCOUNT_TYPES)
 class OFXClient(object):
     """ """
     appids = ('QWIN', # Quicken for Windows
+                'QMOFX', # Quicken for Mac
+                'QBW', # QuickBooks for Windows
+                'QBM', # QuickBooks for Mac
                 'Money', # MSFT Money
+                'Money Plus', # MSFT Money Plus
     )
     appvers = ('1500', # Quicken 2006/ Money 2006
-                '1600', # Quicken 2007/ Money 2007
-                '1700' # Quicken 2008/ Money Plus
+                '1600', # Quicken 2007/ Money 2007/ QuickBooks 2006
+                '1700', # Quicken 2008/ Money Plus/ QuickBooks 2007
+                '1800', # Quicken 2009/ QuickBooks 2008
+                '1900', # Quicken 2010/ QuickBooks 2009
+                '2000', # QuickBooks 2010
     )
 
     def __init__(self, url, org=None, fid=None,
@@ -28,7 +35,7 @@ class OFXClient(object):
         self.url = url
         self.org = org
         self.fid = fid
-        self.version = version
+        self.version = int(version)
         assert appid in self.appids
         self.appid = appid
         assert appver in self.appvers
@@ -42,35 +49,12 @@ class OFXClient(object):
         self.request = None
         self.response = None
 
-    def download_bank(self, accounts, user, password,
-                    include_transactions=True, dtstart=None, dtend=None):
-        self.write_bank(accounts, include_transactions, dtstart, dtend)
-        self.write_signon(user, password)
-        self.write_request()
-        return self.download()
-
-    def download_creditcard(self, accounts, user, password,
-                    include_transactions=True, dtstart=None, dtend=None):
-        self.write_creditcard(accounts, include_transactions, dtstart, dtend)
-        self.write_signon(user, password)
-        self.write_request()
-        return self.download()
-
-    def download_investment(self, accounts, user, password,
-                    include_transactions=True, dtstart=None, dtend=None,
-                    include_positions=True, dtasof=None,
-                    include_balances=True):
-        self.write_investment(accounts, include_transactions, dtstart, dtend,
-                    include_positions, dtasof, include_balances)
-        self.write_signon(user, password)
-        self.write_request()
-        return self.download()
-
     def download(self):
         mime = 'application/x-ofx'
         headers = {'Content-type': mime, 'Accept': '*/*, %s' % mime}
         if not self.request:
-            raise ValueError('No request found') # FIXME
+            # FIXME
+            raise ValueError('No request found')
         http = urllib2.Request(self.url, self.request, headers)
         self.response = urllib2.urlopen(http)
         return self.response
@@ -78,7 +62,8 @@ class OFXClient(object):
     def write_request(self):
         ofx = Element('OFX')
         if not self.signon:
-            raise ValueError('No signon found') # FIXME
+            # FIXME
+            raise ValueError('No signon found')
         ofx.append(self.signon)
         empty = True
         for msgset in ('bank', 'creditcard', 'investment'):
@@ -87,7 +72,8 @@ class OFXClient(object):
                 ofx.append(msgset)
                 empty = False
         if empty:
-            raise ValueError('No messages requested') # FIXME
+            # FIXME
+            raise ValueError('No messages requested')
         self.request = self.header + tostring(ofx)
         return self.request
 
@@ -156,7 +142,8 @@ class OFXClient(object):
                 accttype, bankid, acctid = account
                 accttype = accttypeValidator.to_python(accttype)
             except ValueError:
-                raise ValueError('Bank accounts must be specified as a sequence of (ACCTTYPE, BANKID, ACCTID) tuples') # FIXME
+                # FIXME
+                raise ValueError('Bank accounts must be specified as a sequence of (ACCTTYPE, BANKID, ACCTID) tuples, not %s' % str(accounts))
             stmtrq = self.wrap_request(msgsrq, 'STMTRQ')
             acctfrom = SubElement(stmtrq, 'BANKACCTFROM')
             SubElement(acctfrom, 'BANKID').text = bankid
@@ -232,10 +219,7 @@ class OFXClient(object):
         SubElement(inctran, 'INCLUDE').text = stringBool.from_python(include)
         return inctran
 
-
-def main():
-    ### PARSE COMMAND LINE OPTIONS
-    import re
+def init_optionparser():
     from optparse import OptionParser, OptionGroup
 
     usage = "usage: %prog [options] institution"
@@ -249,7 +233,7 @@ def main():
                         help='list known institutions and exit')
     optparser.add_option('-n', '--dry-run', action='store_true',
                         help='display OFX request and exit')
-    optparser.add_option('-n', '--config', metavar='FILE', help='use alternate config file')
+    optparser.add_option('-o', '--config', metavar='FILE', help='use alternate config file')
     optparser.add_option('-u', '--user', help='login user ID at institution')
     # Bank accounts
     bankgroup = OptionGroup(optparser, 'Bank accounts are specified as pairs of (routing#, acct#)')
@@ -288,8 +272,114 @@ def main():
                         action='store_false')
     optparser.add_option_group(balgroup)
 
+    return optparser
+
+import os.path
+from ConfigParser import SafeConfigParser
+
+def _(path):
+    " Makes paths do the right thing.  Defined in module namespace for brevity."
+    path = os.path.expanduser(path)
+    path = os.path.normpath(path)
+    path = os.path.normcase(path)
+    return path
+
+class OfxConfigParser(SafeConfigParser):
+    """ """
+    import re
+    main_config = os.path.join(os.path.dirname(__file__), 'main.cfg')
+    defaults = {'version': '102', 'appid': 'QWIN', 'appver': '1700',
+                'org': None, 'fid': None, 'user': None,
+                'bankid': None, 'brokerid': None,
+                'checking': '', 'savings': '', 'moneymrkt': '',
+                'creditline': '', 'creditcard': '', 'investment': ''}
+
+    acct_re = re.compile(r'([\w.\-/]{1,22})')
+    #bankaccts_re = re.compile(r'\(([\w.\-/]{1,9}),\s*([\w.\-/]{1,22})\)')
+    pair_re = re.compile(r'\(([\w.\-/]{1,22}),\s*([\w.\-/]{1,22})\)')
+    naked_re = re.compile(r'(\b)([\w.\-/]{1,22})')
+
+    def __init__(self, defaults=None, dict_type=dict):
+        defaults = defaults or self.defaults
+        SafeConfigParser.__init__(self, defaults, dict_type)
+
+    def read(self, filenames=None):
+        # First load main config
+        self.readfp(open(self.main_config))
+        # Then load user configs (defaults to main.cfg [global] config: value)
+        filenames = filenames or _(self.get('global', 'config'))
+        read_ok = SafeConfigParser.read(self, filenames)
+        # Finally, parse [global] and store for use by other methods
+        self.process_global()
+        return read_ok
+
+    def process_global(self):
+        # FIXME - extend beyond dir
+        self.dir = _(self.get('global', 'dir'))
+
+    @property
+    def fi_index(self):
+        sections = self.sections()
+        sections.remove('global')
+        return sections
+
+    def merge_opts(self, options, args):
+        self.options = options
+        self.args = args
+        self.fi = fi = args[0]
+        if fi not in self.fi_index:
+            # FIXME
+            raise ValueError
+
+        # Set options that are only specified via config
+        for option in ('url', 'org', 'fid', 'bankid', 'brokerid',
+                        'version', 'appid', 'appver'):
+            setattr(self, option, self.get(fi, option))
+
+        # Set options that are only specified via CLI
+        for option in ('inctran', 'dtstart', 'dtend',
+                        'incpos', 'dtasof',
+                        'incbal'):
+            setattr(self, option, getattr(options, option))
+
+        # Override config options with options set via CLI
+        bank_accounts = []
+        for accttype in ('checking', 'savings', 'moneymrkt', 'creditline'):
+            bank_accounts += [(accttype.upper(), l[0] or self.bankid, l[1])
+                        for l in self.parse_accts(self.prefer_cli(accttype))]
+        self.bank_accounts = bank_accounts
+        self.creditcard_accounts = self.acct_re.findall(self.prefer_cli('creditcard'))
+        self.investment_accounts = [(l[0] or self.brokerid, l[1])
+                        for l in self.parse_accts(self.prefer_cli('investment'))]
+
+        self.user = self.prefer_cli('user')
+
+    @property
+    def client_config(self):
+        return dict([(option, getattr(self, option))
+            for option in ('url', 'org', 'fid', 'version')])
+
+    # Utilities
+    def prefer_cli(self, option):
+        return getattr(self.options, option) or self.get(self.fi, option)
+
+    def parse_accts(self, string):
+        # FIXME - it would be nice to be able to mix&match the
+        # two styles within a single line.
+        return self.pair_re.findall(string) or self.naked_re.findall(string)
+
+def main():
+    ### PARSE COMMAND LINE OPTIONS
+    from getpass import getpass
+
+    optparser = init_optionparser()
+
     # Process options & validate input
     (options, args) = optparser.parse_args()
+
+    if len(args) != 1:
+        optparser.print_usage()
+        return
 
     # Convert dtXXX str -> datetime.date
     dateconv = valid.validators.DateConverter(if_empty=None)
@@ -298,101 +388,26 @@ def main():
         setattr(options, attr, dateconv.to_python(dt))
 
     ### PARSE CONFIG
-    import os.path
-    from ConfigParser import SafeConfigParser
-    from getpass import getpass
-
-    def _(path):
-        path = os.path.expanduser(path)
-        path = os.path.normpath(path)
-        path = os.path.normcase(path)
-        return path
-
-    INSTALL_DIR = _(os.path.dirname(__file__))
-    main_config = os.path.join(INSTALL_DIR, 'main.cfg')
-
-    defaults = {'version': '102', 'appid': 'QWIN', 'appver': '1700',
-                'org': None, 'fid': None, 'user': None,
-                'bankid': None, 'brokerid': None,
-                'checking': '', 'savings': '', 'moneymrkt': '',
-                'creditline': '', 'creditcard': '', 'investment': ''}
-    config = SafeConfigParser(defaults)
-
-    config.readfp(open(main_config))
-    if options.config:
-        user_config = _(options.config)
-    else:
-        user_config = _(config.get('global', 'config'))
-    config.read(user_config)
+    config = OfxConfigParser()
+    config.read(options.config)
 
     # If we're just listing known FIs, then bail out here.
     if options.list:
-        sections = config.sections()
-        sections.remove('global')
-        print sections
+        print config.fi_index
         return
 
-    if len(args) != 1:
-        optparser.print_usage()
-        return
-    fi = args.pop()
+    config.merge_opts(options, args)
 
-    # First process [global]
-    dir = _(config.get('global', 'dir')) # archive directory
+    client = OFXClient(**config.client_config)
 
-    # Then look up FI configs
-    url = config.get(fi, 'url')
-    org = config.get(fi, 'org')
-    fid = config.get(fi, 'fid')
-    version = config.getint(fi, 'version')
-    appid = config.get(fi, 'appid')
-    appver = config.get(fi, 'appver')
-    client = OFXClient(url, org=org, fid=fid, version=version)
+    for accttype in ('bank', 'creditcard', 'investment'):
+        accts = getattr(config, '%s_accounts' % accttype)
+        if accts:
+            write_method = getattr(client, 'write_%s' % accttype)
+            write_method(accts)
 
-    acct_re = re.compile(r'([\w.\-/]{1,22})')
-    bankaccts_re = re.compile(r'\(([\w.\-/]{1,9}),\s*([\w.\-/]{1,22})\)')
-    invaccts_re = re.compile(r'\(([\w.\-/]{1,22}),\s*([\w.\-/]{1,22})\)')
-    nakedaccts_re = re.compile(r'(\b)([\w.\-/]{1,22})')
+    user = config.user
 
-    def parse_bank(string):
-        # FIXME - it would be nice to be able to mix&match the
-        # two styles within a single line.
-        return bankaccts_re.findall(string) or nakedaccts_re.findall(string)
-
-    def parse_inv(string):
-        # FIXME - it would be nice to be able to mix&match the
-        # two styles within a single line.
-        return invaccts_re.findall(string) or nakedaccts_re.findall(string)
-
-    bankid = config.get(fi, 'bankid')
-    bank_accounts = []
-    for accttype in ('checking', 'savings', 'moneymrkt', 'creditline'):
-        string = getattr(options, accttype) or config.get(fi, accttype)
-        bank_accounts += [(accttype.upper(), l[0] or bankid, l[1]) for l in parse_bank(string)]
-    if bank_accounts:
-        client.write_bank(bank_accounts, include_transactions=options.inctran,
-            dtstart=options.dtstart, dtend=options.dtend)
-
-    string = options.creditcard or config.get(fi, 'creditcard')
-    cc_accounts = acct_re.findall(string)
-    if cc_accounts:
-        client.write_creditcard(cc_accounts, include_transactions=options.inctran,
-            dtstart=options.dtstart, dtend=options.dtend)
-
-    string = options.investment or config.get(fi, 'investment')
-    brokerid = config.get(fi, 'brokerid')
-    inv_accounts = [(l[0] or brokerid, l[1]) for l in parse_inv(string)]
-    if inv_accounts:
-        client.write_investment(inv_accounts,
-                    include_transactions=options.inctran,
-                    dtstart=options.dtstart, dtend=options.dtend,
-                    include_positions=options.incpos, dtasof=options.dtasof,
-                    include_balances=options.incbal)
-
-    user = options.user or config.get(fi, 'user')
-    if not user:
-        # FIXME
-        raise ValueError('No user id')
     password = getpass()
     client.write_signon(user, password)
 
