@@ -125,6 +125,29 @@ class ORIGCURRENCY(Schema):
     currate = DecimalConverter()
     cursym = validators.OneOf(ISO4217codes)
 
+# SONRS
+class SONRS(Schema):
+    dtserver = OFXDtConverter()
+    userkey = validators.String(max=64, if_missing=None)
+    tskeyexpire = OFXDtConverter(if_missing=None)
+    language = validators.OneOf(('ENG',)) # FIXME
+    dtprofup = OFXDtConverter(if_missing=None)
+    dtacctup = OFXDtConverter(if_missing=None)
+    sesscookie = validators.String(max=1000, if_missing=None)
+    accesskey = validators.String(max=1000, if_missing=None)
+
+
+class STATUS(Schema):
+    code = validators.Int()
+    severity = validators.OneOf(('INFO', 'WARN', 'ERROR'))
+    message = validators.String(max=255, if_missing=None)
+
+
+class FI(Schema):
+    org = validators.String(max=32)
+    fid = validators.String(max=32, if_missing=None)
+
+
 # STMTRS preamble
 class STMTRS(Schema):
     curdef = validators.OneOf(ISO4217codes)

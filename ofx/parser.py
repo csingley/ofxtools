@@ -25,6 +25,10 @@ class ReportBase(object):
     def __repr__(self):
         return unicode(self)
 
+    def __unicode__(self):
+        id = "FIXME"
+        return '<%s %s>' % (self.__class__.__name__, id)
+
 
 class Account(ReportBase):
     pass
@@ -43,9 +47,7 @@ class InvAccount(Account):
 
 
 class Transaction(ReportBase):
-    def __unicode__(self):
-        id = "FIXME"
-        return '<%s %s>' % (self.__class__.__name__, id)
+    pass
 
 
 class Security(ReportBase):
@@ -78,15 +80,8 @@ class Price(ReportBase):
         id = "FIXME"
         return '<%s %s>' % (self.__class__.__name__, id)
 
-class Statement(ReportBase):
-    account = None
-    default_currency = None
-    transactions = []
-    start = None
-    end = None
-    asof = None
-    other_balances = {}
 
+class Response(ReportBase):
     def handle_element(self, element, recurse=True):
         """
         General-purpose element handler.  Uses the element tag to look up the
@@ -127,6 +122,41 @@ class Statement(ReportBase):
             assert key not in leaves.keys()
         results.update(aggregates)
         return results
+
+
+class Signon(Response):
+    code = None
+    severity = None
+    message = None
+    dtserver = None
+    userkey = None
+    tskeyexpire = None
+    language = None
+    dtprofup = None
+    dtacctup = None
+    org = None
+    fid = None
+    sesscookie = None
+    accesskey = None
+
+    def __init__(self, sonrs):
+        self.handle_sonrs(sonrs)
+
+    def handle_sonrs(self, sonrs):
+        attr = self.handle_element(sonrs)
+        for key, value in attr.iteritems():
+            if value:
+                setattr(self, key, value)
+
+
+class Statement(Response):
+    account = None
+    default_currency = None
+    transactions = []
+    start = None
+    end = None
+    asof = None
+    other_balances = {}
 
     def handle_list_item(self, item, validator, object_class,
         extra_attributes=None):
@@ -214,6 +244,7 @@ class BankStatement(Statement):
     def handle_availbal(self, availbal):
         availbal = self.handle_element(availbal)
         self.available_balance = (availbal['dtasof'], availbal['balamt'])
+
 
 class CreditCardStatement(BankStatement):
     AccountClass = CcAccount
@@ -343,6 +374,7 @@ class OFXParser(object):
     """
     Reads OFX files (v1 & v2) and extracts the interesting data.
     """
+    SignonHandler = Signon
     BankHandler = BankStatement
     CcHandler = CreditCardStatement
     InvHandler = InvestmentStatement
@@ -355,6 +387,7 @@ class OFXParser(object):
     def reset(self):
         self.header = None
         self.tree = ET.ElementTree()
+        self.signon = None
         self.bank_statement = None
         self.creditcard_statement = None
         self.investment_statement = None
@@ -364,6 +397,9 @@ class OFXParser(object):
             source = open(source, 'rb')
         self.header, source = self.unwrapOFX(source)
         root = self._parse(source)
+
+        sonrs = root.find('.//SONRS')
+        self.signon = self.SignonHandler(sonrs)
 
         stmtrs = root.find('.//STMTRS')
         if stmtrs:

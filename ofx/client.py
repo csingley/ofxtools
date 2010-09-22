@@ -284,7 +284,7 @@ def _(path):
     path = os.path.normcase(path)
     return path
 
-class OfxConfigParser(SafeConfigParser):
+class OFXConfigParser(SafeConfigParser):
     """ """
     import re
     main_config = os.path.join(os.path.dirname(__file__), 'main.cfg')
@@ -388,7 +388,7 @@ def main():
         setattr(options, attr, dateconv.to_python(dt))
 
     ### PARSE CONFIG
-    config = OfxConfigParser()
+    config = OFXConfigParser()
     config.read(options.config)
 
     # If we're just listing known FIs, then bail out here.
