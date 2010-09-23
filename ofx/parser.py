@@ -379,9 +379,8 @@ class OFXParser(object):
     CcHandler = CreditCardStatement
     InvHandler = InvestmentStatement
 
-    def __init__(self, use_sgmlop=False, verbose=False):
+    def __init__(self, verbose=False):
         self.reset()
-        self.use_sgmlop = use_sgmlop
         self.verbose = verbose
 
     def reset(self):
@@ -393,7 +392,7 @@ class OFXParser(object):
         self.investment_statement = None
 
     def parse(self, source):
-        if not hasattr(source, 'read"'):
+        if not hasattr(source, 'read'):
             source = open(source, 'rb')
         self.header, source = self.unwrapOFX(source)
         root = self._parse(source)
@@ -466,29 +465,28 @@ class OFXParser(object):
         return header, source
 
     def _parse(self, source):
-        # Mark initial position in file
-        breakbeat = source.tell()
-        with source as s:
-            if self.use_sgmlop:
-                parser = OFXTreeBuilder_sgmlop(verbose=self.verbose)
-                root = self.tree.parse(s, parser)
-            else:
-                try:
-                    # expat (Python's bundled XML parser) is compiled C: fast.
-                    # expat doesn't validate against DTDs; it will work as long
-                    # as all tags are closed explicitly, which is allowed by
-                    # OFXv1 and done by some FIs.
-                    parser = ET.XMLParser()
-                    root = self.tree.parse(s, parser)
-                except SyntaxError:
-                    # Fall back to SGMLParser (slow, but handles unclosed tags)
-                    try:
-                        parser = OFXTreeBuilder_sgmlop(verbose=self.verbose)
-                    except ImportError:
-                        parser = OFXTreeBuilder(verbose=self.verbose)
-                    # expat already started reading the file; rewind
-                    s.seek(breakbeat)
-                    root = self.tree.parse(s, parser)
+        # Mark the beginning of the tag soup
+        beginning = source.tell()
+        try:
+            # If sgmlop is installed, it's the fastest parser
+            # and it will handle OFXv1-style unclosed tags.
+            parser = OFXTreeBuilder_sgmlop(verbose=self.verbose)
+        except ImportError:
+            # expat (Python's bundled XML parser) is compiled C: fast.
+            # expat doesn't validate against DTDs; it will work as long
+            # as all tags are closed explicitly, which is allowed by
+            # OFXv1 and actually done by some FIs.
+            parser = ET.XMLParser()
+            try:
+                root = self.tree.parse(source, parser)
+            except SyntaxError:
+                # Fall back to SGMLParser (slow, but handles unclosed tags)
+                parser = OFXTreeBuilder(verbose=self.verbose)
+                # expat already started reading the file; rewind
+                source.seek(beginning)
+                root = self.tree.parse(source, parser)
+        else:
+            root = self.tree.parse(source, parser)
         return root
 
 from sgmllib import SGMLParser
@@ -636,18 +634,14 @@ class OFXTreeBuilder_sgmlop(object):
 def main():
     from optparse import OptionParser
     optparser = OptionParser(usage='usage: %prog FILE')
-    optparser.set_defaults(use_sgmlop=False, verbose=False,)
-    optparser.add_option('-c', '--use-sgmlop', action='store_true',
-                        help='Parse with sgmlop (fast, but must be installed)')
+    optparser.set_defaults(verbose=False,)
     optparser.add_option('-v', '--verbose', action='store_true',
                         help='Turn on parser debug output')
     (options, args) = optparser.parse_args()
     if len(args) != 1:
         optparser.print_usage()
     FILE = args[0]
-    ofxparser = OFXParser(use_sgmlop=options.use_sgmlop,
-                        verbose=options.verbose
-    )
+    ofxparser = OFXParser(verbose=options.verbose)
     ofxparser.parse(FILE)
 
 

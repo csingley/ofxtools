@@ -5,6 +5,7 @@ import uuid
 from xml.etree.cElementTree import Element, SubElement, tostring
 
 import valid
+from parser import OFXParser
 
 dtConverter = valid.OFXDtConverter()
 stringBool = valid.OFXStringBool()
@@ -274,7 +275,7 @@ def init_optionparser():
 
     return optparser
 
-import os.path
+import os
 from ConfigParser import SafeConfigParser
 
 def _(path):
@@ -359,6 +360,13 @@ class OFXConfigParser(SafeConfigParser):
         return dict([(option, getattr(self, option))
             for option in ('url', 'org', 'fid', 'version')])
 
+    def archive_path(self, dtserver):
+        fi_dir = os.path.join(self.dir, self.fi)
+        if not os.path.exists(fi_dir):
+            os.makedirs(fi_dir)
+        return os.path.join(fi_dir, '%s.ofx' % dtserver.strftime('%Y%m%d%H%M%S'))
+
+
     # Utilities
     def prefer_cli(self, option):
         return getattr(self.options, option) or self.get(self.fi, option)
@@ -420,7 +428,32 @@ def main():
         response = client.download()
     except urllib2.HTTPError as err:
         raise
-    print response.read()
+
+    # urllib2.urlopen returns an addinfourl instance, supporting a limited
+    # subset of file methods.  Copy response to a StringIO to ensure that
+    # tell() and seek() are available.
+    from cStringIO import StringIO
+    source = StringIO()
+    # Mark the beginning of the source
+    beginning = source.tell()
+    source.write(response.read())
+    # Rewind source in order to parse it
+    source.seek(beginning)
+
+    ofxparser = OFXParser()
+    ofxparser.parse(source)
+    signon = ofxparser.signon
+    if signon.code:
+        # Error - FIXME
+        raise ValueError('OFX signon error code %s' % signon.code)
+
+    # Rewind source in order to save it
+    source.seek(beginning)
+    archive_path = config.archive_path(signon.dtserver)
+    with open(archive_path, 'w') as archive:
+        archive.write(source.read())
+
+
 
 if __name__ == '__main__':
     main()

@@ -421,6 +421,16 @@ class TRANSFER(Schema):
     dtpurchase = OFXDtConverter(if_missing=None)
     inv401ksource = validators.OneOf(INV401KSOURCES, if_missing=None)
 
+class JRNLFUND(Schema):
+    subacctto = validators.OneOf(SUBACCOUNTS)
+    subacctfrom = validators.OneOf(SUBACCOUNTS)
+    total = DecimalConverter()
+
+class JRNLSEC(Schema):
+    subacctto = validators.OneOf(SUBACCOUNTS)
+    subacctfrom = validators.OneOf(SUBACCOUNTS)
+    units = DecimalConverter()
+
 class INVBANKTRAN(Schema):
     subacctfund = validators.OneOf(SUBACCOUNTS)
 
