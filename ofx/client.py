@@ -1,11 +1,15 @@
 #!/usr/bin/env python2
-import urllib2
 import datetime
 import uuid
 from xml.etree.cElementTree import Element, SubElement, tostring
+import urllib2
+import os
+import ConfigParser
+from cStringIO import StringIO
 
 import valid
 from parser import OFXParser
+from utilities import _
 
 dtConverter = valid.OFXDtConverter()
 stringBool = valid.OFXStringBool()
@@ -29,7 +33,7 @@ class OFXClient(object):
     )
 
     def __init__(self, url, org=None, fid=None,
-        version=102, appid='QWIN', appver='1700'):
+        version=102, appid='QWIN', appver='1800'):
         # Initialize
         self.reset()
 
@@ -50,33 +54,81 @@ class OFXClient(object):
         self.request = None
         self.response = None
 
-    def download(self):
+    @classmethod
+    def from_config(cls, config):
+        # Validate config
+        if not isinstance(config, OFXConfigParser):
+            # FIXME
+            raise ValueError
+        if not config.read_ok:
+            # FIXME
+            raise ValueError
+
+        # Instantiate client
+        client = cls(**config.client_config)
+
+        # Write request message sets
+        for accttype in ('bank', 'creditcard', 'investment'):
+            accts = getattr(config, '%s_accounts' % accttype)
+            if accts:
+                write_method = getattr(client, 'write_%s' % accttype)
+                write_method(accts)
+
+        return client
+
+    def download(self, user=None, password=None, parse=False, archive_dir=None):
         mime = 'application/x-ofx'
         headers = {'Content-type': mime, 'Accept': '*/*, %s' % mime}
         if not self.request:
-            # FIXME
-            raise ValueError('No request found')
+            self.write_request(user, password)
         http = urllib2.Request(self.url, self.request, headers)
-        self.response = urllib2.urlopen(http)
-        return self.response
+        try:
+            self.response = response = urllib2.urlopen(http)
+        except urllib2.HTTPError as err:
+            # FIXME
+            raise
+        # urllib2.urlopen returns an addinfourl instance, which supports
+        # a limited subset of file methods.  Copy response to a StringIO
+        # so that we can use tell() and seek().
+        source = StringIO()
+        source.write(response.read())
+        # After writing, rewind to the beginning.
+        source.seek(0)
 
-    def write_request(self):
+        ofxparser = OFXParser()
+        ofxparser.parse(source)
+        # Rewind source again after parsing
+        source.seek(0)
+
+        # Validate SONRS
+        signon = ofxparser.signon
+        if signon.code:
+            # Error - FIXME
+            raise ValueError('OFX signon error code %s' % signon.code)
+
+        if archive_dir:
+            archive_path = os.path.join(archive_dir, '%s.ofx' % signon.dtserver.strftime('%Y%m%d%H%M%S'))
+            with open(archive_path, 'w') as archive:
+                archive.write(source.read())
+            # Rewind source again after copying
+            source.seek(0)
+
+        if parse:
+            return ofxparser
+        else:
+            return source
+
+    def write_request(self, user=None, password=None):
         ofx = Element('OFX')
         if not self.signon:
-            # FIXME
-            raise ValueError('No signon found')
+            self.write_signon(user, password)
         ofx.append(self.signon)
-        empty = True
         for msgset in ('bank', 'creditcard', 'investment'):
             msgset = getattr(self, msgset, None)
             if msgset:
                 ofx.append(msgset)
-                empty = False
-        if empty:
-            # FIXME
-            raise ValueError('No messages requested')
-        self.request = self.header + tostring(ofx)
-        return self.request
+        self.request = request = self.header + tostring(ofx)
+        return request
 
     @property
     def header(self):
@@ -111,9 +163,13 @@ class OFXClient(object):
             ofx_decl = '<?OFX %s?>' % ' '.join(attrs)
             return '\r\n'.join((xml_decl, ofx_decl))
         else:
-            raise ValueError # FIXME
+            # FIXME
+            raise ValueError
 
     def write_signon(self, user, password):
+        if not (user and password):
+            # FIXME
+            raise ValueError
         msgsrq = Element('SIGNONMSGSRQV1')
         sonrq = SubElement(msgsrq, 'SONRQ')
         SubElement(sonrq, 'DTCLIENT').text = dtConverter.from_python(datetime.datetime.now())
@@ -275,21 +331,12 @@ def init_optionparser():
 
     return optparser
 
-import os
-from ConfigParser import SafeConfigParser
 
-def _(path):
-    " Makes paths do the right thing.  Defined in module namespace for brevity."
-    path = os.path.expanduser(path)
-    path = os.path.normpath(path)
-    path = os.path.normcase(path)
-    return path
-
-class OFXConfigParser(SafeConfigParser):
+class OFXConfigParser(ConfigParser.SafeConfigParser):
     """ """
     import re
     main_config = os.path.join(os.path.dirname(__file__), 'main.cfg')
-    defaults = {'version': '102', 'appid': 'QWIN', 'appver': '1700',
+    defaults = {'version': '102', 'appid': 'QWIN', 'appver': '1800',
                 'org': None, 'fid': None, 'user': None,
                 'bankid': None, 'brokerid': None,
                 'checking': '', 'savings': '', 'moneymrkt': '',
@@ -302,17 +349,17 @@ class OFXConfigParser(SafeConfigParser):
 
     def __init__(self, defaults=None, dict_type=dict):
         defaults = defaults or self.defaults
-        SafeConfigParser.__init__(self, defaults, dict_type)
+        ConfigParser.SafeConfigParser.__init__(self, defaults, dict_type)
 
     def read(self, filenames=None):
         # First load main config
         self.readfp(open(self.main_config))
         # Then load user configs (defaults to main.cfg [global] config: value)
         filenames = filenames or _(self.get('global', 'config'))
-        read_ok = SafeConfigParser.read(self, filenames)
+        self.read_ok = ConfigParser.SafeConfigParser.read(self, filenames)
         # Finally, parse [global] and store for use by other methods
         self.process_global()
-        return read_ok
+        return self.read_ok
 
     def process_global(self):
         # FIXME - extend beyond dir
@@ -358,14 +405,14 @@ class OFXConfigParser(SafeConfigParser):
     @property
     def client_config(self):
         return dict([(option, getattr(self, option))
-            for option in ('url', 'org', 'fid', 'version')])
+            for option in ('url', 'org', 'fid', 'version', 'appid', 'appver')])
 
-    def archive_path(self, dtserver):
+    @property
+    def archive_dir(self):
         fi_dir = os.path.join(self.dir, self.fi)
         if not os.path.exists(fi_dir):
             os.makedirs(fi_dir)
-        return os.path.join(fi_dir, '%s.ofx' % dtserver.strftime('%Y%m%d%H%M%S'))
-
+        return fi_dir
 
     # Utilities
     def prefer_cli(self, option):
@@ -405,54 +452,17 @@ def main():
         return
 
     config.merge_opts(options, args)
-
-    client = OFXClient(**config.client_config)
-
-    for accttype in ('bank', 'creditcard', 'investment'):
-        accts = getattr(config, '%s_accounts' % accttype)
-        if accts:
-            write_method = getattr(client, 'write_%s' % accttype)
-            write_method(accts)
-
+    client = OFXClient.from_config(config)
     user = config.user
-
     password = getpass()
-    client.write_signon(user, password)
 
-    request = client.write_request()
+    request = client.write_request(user, password)
     if options.dry_run:
         print request
         return
 
-    try:
-        response = client.download()
-    except urllib2.HTTPError as err:
-        raise
-
-    # urllib2.urlopen returns an addinfourl instance, supporting a limited
-    # subset of file methods.  Copy response to a StringIO to ensure that
-    # tell() and seek() are available.
-    from cStringIO import StringIO
-    source = StringIO()
-    # Mark the beginning of the source
-    beginning = source.tell()
-    source.write(response.read())
-    # Rewind source in order to parse it
-    source.seek(beginning)
-
-    ofxparser = OFXParser()
-    ofxparser.parse(source)
-    signon = ofxparser.signon
-    if signon.code:
-        # Error - FIXME
-        raise ValueError('OFX signon error code %s' % signon.code)
-
-    # Rewind source in order to save it
-    source.seek(beginning)
-    archive_path = config.archive_path(signon.dtserver)
-    with open(archive_path, 'w') as archive:
-        archive.write(source.read())
-
+    response = client.download(archive_dir=config.archive_dir)
+    #print response.read()
 
 
 if __name__ == '__main__':
