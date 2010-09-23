@@ -94,16 +94,14 @@ class OFXClient(object):
         source.seek(0)
 
         ofxparser = OFXParser()
-        ofxparser.parse(source)
+        errors = ofxparser.parse(source)
         # Rewind source again after parsing
         source.seek(0)
 
-        # Validate SONRS
-        signon = ofxparser.signon
-        if signon.code:
-            # Error - FIXME
-            assert signon.severity == 'ERROR'
-            raise ValueError("OFX signon error code %s: '%s'" % (signon.code, signon.message))
+        # Check for errors
+        if errors:
+            # FIXME
+            raise ValueError("OFX download errors: '%s'" % str(errors))
 
         if archive_dir:
             archive_path = os.path.join(archive_dir, '%s.ofx' % signon.dtserver.strftime('%Y%m%d%H%M%S'))

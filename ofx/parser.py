@@ -107,7 +107,9 @@ class Response(ReportBase):
             if data:
                 # element is a leaf element.
                 assert tag not in leaves
-                leaves[tag.lower()] = data
+                # Silently drop all private tags (e.g. <INTU.XXXX>
+                if '.' not in tag:
+                    leaves[tag.lower()] = data
             elif recurse:
                 # element is an aggregate and we haven't turned off recursion.
                 # dispatch parse method; fallback to default (recurse here).
@@ -145,7 +147,7 @@ class Signon(Response):
     def handle_sonrs(self, sonrs):
         attr = self.handle_element(sonrs)
         for key, value in attr.iteritems():
-            if value:
+            if value is not None:
                 setattr(self, key, value)
 
 
@@ -157,6 +159,18 @@ class Statement(Response):
     end = None
     asof = None
     other_balances = {}
+    code = None
+    code = None
+
+    def handle_stmttrnrs(self, stmttrnrs):
+        status = self.handle_element(stmttrnrs.find('STATUS'))
+        self.code = status['code']
+        self.severity = status['severity']
+        self.message = status['message']
+
+    def handle_stmtrs(self, stmtrs):
+        # Override in subclass
+        raise ValueError
 
     def handle_list_item(self, item, validator, object_class,
         extra_attributes=None):
@@ -201,7 +215,12 @@ class BankStatement(Statement):
 
     transaction_validator = valid.BANKTRANLISTitem
 
-    def __init__(self, stmtrs):
+    #def __init__(self, stmtrs):
+        #self.handle_stmtrs(stmtrs)
+
+    def __init__(self, stmttrnrs):
+        self.handle_stmttrnrs(stmttrnrs)
+        stmtrs = stmttrnrs.find('STMTRS')
         self.handle_stmtrs(stmtrs)
 
     def handle_stmtrs(self, stmtrs):
@@ -237,7 +256,7 @@ class BankStatement(Statement):
         self.curdef = dregs.pop('curdef')
         self.account = self.AccountClass(**dregs)
 
-    def handle_ledgerbal(ledgerbal):
+    def handle_ledgerbal(self, ledgerbal):
         ledgerbal = self.handle_element(ledgerbal)
         self.ledger_balance = (ledgerbal['dtasof'], ledgerbal['balamt'])
 
@@ -249,6 +268,10 @@ class BankStatement(Statement):
 class CreditCardStatement(BankStatement):
     AccountClass = CcAccount
 
+    def __init__(self, stmttrnrs):
+        self.handle(stmttrnrs)
+        stmtrs = stmttrnrs.find('CCSTMTRS')
+        self.handle_stmtrs(seclist, stmtrs)
 
 class InvestmentStatement(Statement):
     positions = []
@@ -264,7 +287,12 @@ class InvestmentStatement(Statement):
 
     transaction_validator = valid.INVTRANLISTitem
 
-    def __init__(self, seclist, stmtrs):
+    #def __init__(self, seclist, stmtrs):
+        #self.handle_stmtrs(seclist, stmtrs)
+
+    def __init__(self, seclist, stmttrnrs):
+        self.handle_stmttrnrs(stmttrnrs)
+        stmtrs = stmttrnrs.find('INVSTMTRS')
         self.handle_stmtrs(seclist, stmtrs)
 
     def handle_stmtrs(self, seclist, stmtrs):
@@ -396,22 +424,47 @@ class OFXParser(object):
             source = open(source, 'rb')
         self.header, source = self.unwrapOFX(source)
         root = self._parse(source)
+        assert root.tag == 'OFX'
 
-        sonrs = root.find('.//SONRS')
-        self.signon = self.SignonHandler(sonrs)
+        sonrs = root.find('SIGNONMSGSRSV1/SONRS')
+        self.signon = signon = self.SignonHandler(sonrs)
 
-        stmtrs = root.find('.//STMTRS')
-        if stmtrs:
-            self.bank_statement = self.BankHandler(stmtrs)
+        stmttrnrs = root.find('BANKMSGSRSV1/STMTTRNRS')
+        if stmttrnrs:
+            self.bank_statement = self.BankHandler(stmttrnrs)
 
-        ccstmtrs = root.find('.//CCSTMTRS')
-        if ccstmtrs:
-            self.creditcard_statement = self.CcHandler(ccstmtrs)
+        ccstmttrnrs = root.find('CREDITCARDMSGSRSV1/CCSTMTTRNRS')
+        if ccstmttrnrs:
+            self.creditcard_statement = self.CcHandler(ccstmttrnrs)
 
-        seclist = root.find('.//SECLIST')
-        invstmtrs = root.find('.//INVSTMTRS')
-        if invstmtrs:
-            self.investment_statement = self.InvHandler(seclist, invstmtrs)
+        seclist = root.find('SECLISTMSGSRSV1/SECLIST')
+        invstmttrnrs = root.find('INVSTMTMSGSRSV1/INVSTMTTRNRS')
+        if invstmttrnrs:
+            self.investment_statement = self.InvHandler(seclist, invstmttrnrs)
+
+        errors = {}
+        if signon.code:
+            errors.update({'signon':{'code': signon.code, 'severity': signon.severity, 'message': signon.message}})
+
+        #status.update(dict(([(msg, dict([(attr, getattr(getattr(self, '%s_statement' % msg), attr)) for attr in ('code', 'severity', 'message')])) for msg in ('bank', 'creditcard', 'investment') if getattr(self, '%s_statement' % msg) is not None])))
+
+        #for msg in ('bank', 'creditcard', 'investment'):
+            #stmt = getattr(self, '%s_statement' % msg)
+            #if stmt and stmt.code:
+                #d = {}
+                #for tag in ('code', 'severity', 'message'):
+                    #attr = getattr(stmt, tag)
+                    #d.update({tag: attr})
+                #errors.update({msg: d})
+
+        for msg in ('bank', 'creditcard', 'investment'):
+            stmt = getattr(self, '%s_statement' % msg)
+            if stmt and stmt.code:
+                d = dict([(tag, getattr(stmt, tag)) \
+                            for tag in ('code', 'severity', 'message')])
+                errors.update({msg: d})
+
+        return errors
 
     def unwrapOFX(self, source):
         """ Pass in an open file-like object """
@@ -465,7 +518,9 @@ class OFXParser(object):
         return header, source
 
     def _parse(self, source):
-        # Mark the beginning of the tag soup
+        # Mark the beginning of the tag soup.
+        # This is generally not going to be seek(0), because we've
+        # already stepped through the OFX header in unwrapOFX().
         beginning = source.tell()
         try:
             # If sgmlop is installed, it's the fastest parser
@@ -630,7 +685,6 @@ class OFXTreeBuilder_sgmlop(object):
             self.__builder.data(text)
 
 
-### MAIN FUNCTION
 def main():
     from optparse import OptionParser
     optparser = OptionParser(usage='usage: %prog FILE')
@@ -642,8 +696,8 @@ def main():
         optparser.print_usage()
     FILE = args[0]
     ofxparser = OFXParser(verbose=options.verbose)
-    ofxparser.parse(FILE)
-
+    errors = ofxparser.parse(FILE)
+    print errors
 
 if __name__ == '__main__':
     main()
