@@ -9,7 +9,7 @@ from cStringIO import StringIO
 
 import valid
 from parser import OFXParser
-from utilities import _
+from utilities import _, parse_accts, acct_re
 
 dtConverter = valid.OFXDtConverter()
 stringBool = valid.OFXStringBool()
@@ -32,19 +32,17 @@ class OFXClient(object):
                 '2000', # QuickBooks 2010
     )
 
-    def __init__(self, url, org=None, fid=None,
-        version=102, appid='QWIN', appver='1800'):
+    def __init__(self, url, **kwargs):
+        self.url = url
+        defaults = {'version': 102, 'appid': 'QWIN', 'appver': '1800'}
+        for attr in ('org', 'fid', 'version', 'appid', 'appver'):
+            setattr(self, attr, kwargs.get(attr, defaults.get(attr, None)))
+        self.version = int(self.version)
+        assert self.appid in self.appids
+        assert self.appver in self.appvers
+
         # Initialize
         self.reset()
-
-        self.url = url
-        self.org = org
-        self.fid = fid
-        self.version = int(version)
-        assert appid in self.appids
-        self.appid = appid
-        assert appver in self.appvers
-        self.appver = appver
 
     def reset(self):
         self.signon = None
@@ -55,26 +53,26 @@ class OFXClient(object):
         self.response = None
 
     @classmethod
-    def from_config(cls, config):
-        # Validate config
-        if not isinstance(config, OFXConfigParser):
-            # FIXME
-            raise ValueError
-        if not config.read_ok:
-            # FIXME
-            raise ValueError
-
-        # Instantiate client
-        client = cls(**config.client_config)
-
-        # Write request message sets
-        for accttype in ('bank', 'creditcard', 'investment'):
-            accts = getattr(config, '%s_accounts' % accttype)
-            if accts:
-                write_method = getattr(client, 'write_%s' % accttype)
-                write_method(accts)
-
+    def from_config(cls, **kwargs):
+        client = cls(**kwargs)
+        client.encode(**kwargs)
         return client
+
+    def encode(self, **kwargs):
+        bank_opts = dict([(k, kwargs[k]) for k in ('inctran', 'dtstart', 'dtend')])
+        inv_opts = dict([(k, kwargs[k]) for k in ('incpos', 'dtasof', 'incbal')])
+        inv_opts.update(bank_opts)
+
+        for accttype in ('bank', 'creditcard'):
+            accts = kwargs.get('%s_accounts' % accttype, None)
+            if accts:
+                print accts
+                write_method = getattr(self, 'write_%s' % accttype)
+                write_method(accts, **bank_opts)
+
+        invaccts = kwargs.get('investment_accounts', None)
+        if invaccts:
+            self.write_investment(invaccts, **inv_opts)
 
     def download(self, user=None, password=None, parse=False, archive_dir=None):
         mime = 'application/x-ofx'
@@ -104,7 +102,8 @@ class OFXClient(object):
         signon = ofxparser.signon
         if signon.code:
             # Error - FIXME
-            raise ValueError('OFX signon error code %s' % signon.code)
+            assert signon.severity == 'ERROR'
+            raise ValueError("OFX signon error code %s: '%s'" % (signon.code, signon.message))
 
         if archive_dir:
             archive_path = os.path.join(archive_dir, '%s.ofx' % signon.dtserver.strftime('%Y%m%d%H%M%S'))
@@ -185,7 +184,7 @@ class OFXClient(object):
         SubElement(sonrq, 'APPVER').text = self.appver
         self.signon = msgsrq
 
-    def write_bank(self, accounts, include_transactions=True, dtstart=None, dtend=None):
+    def write_bank(self, accounts, inctran=True, dtstart=None, dtend=None):
         """
         Requesting transactions without dtstart/dtend (which is the default)
         asks for all transactions on record.
@@ -200,17 +199,17 @@ class OFXClient(object):
                 accttype = accttypeValidator.to_python(accttype)
             except ValueError:
                 # FIXME
-                raise ValueError('Bank accounts must be specified as a sequence of (ACCTTYPE, BANKID, ACCTID) tuples, not %s' % str(accounts))
+                raise ValueError("Bank accounts must be specified as a sequence of (ACCTTYPE, BANKID, ACCTID) tuples, not '%s'" % str(accounts))
             stmtrq = self.wrap_request(msgsrq, 'STMTRQ')
             acctfrom = SubElement(stmtrq, 'BANKACCTFROM')
             SubElement(acctfrom, 'BANKID').text = bankid
             SubElement(acctfrom, 'ACCTID').text = acctid
             SubElement(acctfrom, 'ACCTTYPE').text = accttype
 
-            self.include_transactions(stmtrq, include_transactions, dtstart, dtend)
+            self.include_transactions(stmtrq, inctran, dtstart, dtend)
         self.bank = msgsrq
 
-    def write_creditcard(self, accounts, include_transactions=True, dtstart=None, dtend=None):
+    def write_creditcard(self, accounts, inctran=True, dtstart=None, dtend=None):
         """
         Requesting transactions without dtstart/dtend (which is the default)
         asks for all transactions on record.
@@ -224,13 +223,13 @@ class OFXClient(object):
             acctfrom = SubElement(stmtrq, 'CCACCTFROM')
             SubElement(acctfrom, 'ACCTID').text = account
 
-            self.include_transactions(stmtrq, include_transactions, dtstart, dtend)
+            self.include_transactions(stmtrq, inctran, dtstart, dtend)
         self.creditcard = msgsrq
 
     def write_investment(self, accounts,
-                    include_transactions=True, dtstart=None, dtend=None,
-                    include_positions=True, dtasof=None,
-                    include_balances=True):
+                    inctran=True, dtstart=None, dtend=None,
+                    incpos=True, dtasof=None,
+                    incbal=True):
         """ """
         if not accounts:
             # FIXME
@@ -240,22 +239,22 @@ class OFXClient(object):
             try:
                 brokerid, acctid = account
             except ValueError:
-                raise ValueError('Investment accounts must be specified as a sequence of (BROKERID, ACCTID) tuples')
+                raise ValueError("Investment accounts must be specified as a sequence of (BROKERID, ACCTID) tuples, not '%s'" % str(accounts))
             stmtrq = self.wrap_request(msgsrq, 'INVSTMTRQ')
             acctfrom = SubElement(stmtrq, 'INVACCTFROM')
             SubElement(acctfrom, 'BROKERID').text = brokerid
             SubElement(acctfrom, 'ACCTID').text = acctid
 
-            self.include_transactions(stmtrq, include_transactions, dtstart, dtend)
+            self.include_transactions(stmtrq, inctran, dtstart, dtend)
 
             SubElement(stmtrq, 'INCOO').text = 'N'
 
             incpos = SubElement(stmtrq, 'INCPOS')
             if dtasof:
                 SubElement(incpos, 'DTASOF').text = dtConverter.from_python(dtasof)
-            SubElement(incpos, 'INCLUDE').text = stringBool.from_python(include_positions)
+            SubElement(incpos, 'INCLUDE').text = stringBool.from_python(incpos)
 
-            SubElement(stmtrq, 'INCBAL').text = stringBool.from_python(include_balances)
+            SubElement(stmtrq, 'INCBAL').text = stringBool.from_python(incbal)
         self.investment = msgsrq
 
     # Utilities
@@ -371,36 +370,36 @@ class OFXConfigParser(ConfigParser.SafeConfigParser):
         sections.remove('global')
         return sections
 
-    def merge_opts(self, options, args):
-        self.options = options
-        self.args = args
-        self.fi = fi = args[0]
-        if fi not in self.fi_index:
-            # FIXME
-            raise ValueError
+    def setup_fi(self, fi, **kwargs):
+        self.fi = fi
 
-        # Set options that are only specified via config
+        # Options that are only specified via config
         for option in ('url', 'org', 'fid', 'bankid', 'brokerid',
                         'version', 'appid', 'appver'):
             setattr(self, option, self.get(fi, option))
 
-        # Set options that are only specified via CLI
-        for option in ('inctran', 'dtstart', 'dtend',
-                        'incpos', 'dtasof',
-                        'incbal'):
-            setattr(self, option, getattr(options, option))
+        # Options that are only specified via caller input
+        for option in ('inctran', 'incpos', 'incbal'):
+            setattr(self, option, kwargs.get(option, True))
 
-        # Override config options with options set via CLI
-        bank_accounts = []
+        for option in ('dtstart', 'dtend', 'dtasof'):
+            setattr(self, option, kwargs.get(option, None))
+
+        # Options where caller input overrides config
+        bank_accts = []
         for accttype in ('checking', 'savings', 'moneymrkt', 'creditline'):
-            bank_accounts += [(accttype.upper(), l[0] or self.bankid, l[1])
-                        for l in self.parse_accts(self.prefer_cli(accttype))]
-        self.bank_accounts = bank_accounts
-        self.creditcard_accounts = self.acct_re.findall(self.prefer_cli('creditcard'))
-        self.investment_accounts = [(l[0] or self.brokerid, l[1])
-                        for l in self.parse_accts(self.prefer_cli('investment'))]
+            accts  = kwargs.get(accttype, None) \
+                    or parse_accts(self.get(fi, accttype))
+            bank_accts += [(accttype.upper(), acct[0] or self.bankid, acct[1])
+                            for acct in accts]
+        self.bank_accounts = bank_accts
+        self.creditcard_accounts = kwargs.get('creditcard', None) \
+                or acct_re.findall(self.get(fi, 'creditcard'))
+        inv_accts = kwargs.get('investment', None) or parse_accts(self.get(fi,'investment'))
+        self.investment_accounts = [(acct[0] or self.brokerid, acct[1])
+                    for acct in inv_accts]
 
-        self.user = self.prefer_cli('user')
+        self.user = kwargs.get('user', None) or self.get(fi,'user')
 
     @property
     def client_config(self):
@@ -414,15 +413,6 @@ class OFXConfigParser(ConfigParser.SafeConfigParser):
             os.makedirs(fi_dir)
         return fi_dir
 
-    # Utilities
-    def prefer_cli(self, option):
-        return getattr(self.options, option) or self.get(self.fi, option)
-
-    def parse_accts(self, string):
-        # FIXME - it would be nice to be able to mix&match the
-        # two styles within a single line.
-        return self.pair_re.findall(string) or self.naked_re.findall(string)
-
 def main():
     ### PARSE COMMAND LINE OPTIONS
     from getpass import getpass
@@ -432,15 +422,19 @@ def main():
     # Process options & validate input
     (options, args) = optparser.parse_args()
 
-    if len(args) != 1:
-        optparser.print_usage()
-        return
-
     # Convert dtXXX str -> datetime.date
     dateconv = valid.validators.DateConverter(if_empty=None)
     for attr in ('dtstart', 'dtend', 'dtasof'):
-        dt = getattr(options, attr, None)
-        setattr(options, attr, dateconv.to_python(dt))
+        string = getattr(options, attr, None)
+        setattr(options, attr, dateconv.to_python(string))
+
+    # Parse account info
+    for accttype in ('checking', 'savings', 'moneymrkt', 'creditline', 'investment'):
+        string = getattr(options, accttype) or ''
+        setattr(options, accttype, parse_accts(string))
+
+    options.creditcard = acct_re.findall(options.creditcard or '')
+
 
     ### PARSE CONFIG
     config = OFXConfigParser()
@@ -451,18 +445,27 @@ def main():
         print config.fi_index
         return
 
-    config.merge_opts(options, args)
-    client = OFXClient.from_config(config)
+    if len(args) != 1:
+        optparser.print_usage()
+        return
+
+    fi = args[0]
+    if fi not in config.fi_index:
+        # FIXME
+        raise ValueError
+
+    config.setup_fi(fi, **options.__dict__)
+    client = OFXClient.from_config(**config.__dict__)
+    # Don't ask for password until we're sure nothing's blown up
     user = config.user
     password = getpass()
-
     request = client.write_request(user, password)
     if options.dry_run:
         print request
         return
 
     response = client.download(archive_dir=config.archive_dir)
-    #print response.read()
+    print response.read()
 
 
 if __name__ == '__main__':
