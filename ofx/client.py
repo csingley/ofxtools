@@ -103,7 +103,8 @@ class OFXClient(object):
             raise ValueError("OFX download errors: '%s'" % str(errors))
 
         if archive_dir:
-            archive_path = os.path.join(archive_dir, '%s.ofx' % signon.dtserver.strftime('%Y%m%d%H%M%S'))
+            dtserver = ofxparser.signon.dtserver
+            archive_path = os.path.join(archive_dir, '%s.ofx' % dtserver.strftime('%Y%m%d%H%M%S'))
             with open(archive_path, 'w') as archive:
                 archive.write(source.read())
             # Rewind source again after copying
@@ -277,7 +278,9 @@ def init_optionparser():
 
     usage = "usage: %prog [options] institution"
     optparser = OptionParser(usage=usage)
-    optparser.set_defaults(list=False, dry_run=False, config=None, user= None,
+    optparser.set_defaults(list=False, dry_run=False,
+                            config=None, archive=True, dir=None,
+                            user= None,
                             checking=None, savings=None, moneymrkt=None,
                             creditline=None, creditcard=None, investment=None,
                             inctran=True, dtstart=None, dtend=None,
@@ -286,14 +289,17 @@ def init_optionparser():
                         help='list known institutions and exit')
     optparser.add_option('-n', '--dry-run', action='store_true',
                         help='display OFX request and exit')
-    optparser.add_option('-o', '--config', metavar='FILE', help='use alternate config file')
+    optparser.add_option('-f', '--config', metavar='FILE', help='use alternate config file')
+    optparser.add_option('-r', '--no-archive', action='store_true',
+                        help="don't archive OFX downloads to file")
+    optparser.add_option('-o', '--dir', metavar='DIR', help='archive OFX downloads in DIR')
     optparser.add_option('-u', '--user', help='login user ID at institution')
     # Bank accounts
     bankgroup = OptionGroup(optparser, 'Bank accounts are specified as pairs of (routing#, acct#)')
     bankgroup.add_option('-c', '--checking', metavar='(LIST OF ACCOUNTS)')
     bankgroup.add_option('-a', '--savings', metavar='(LIST OF ACCOUNTS)')
     bankgroup.add_option('-m', '--moneymrkt', metavar='(LIST OF ACCOUNTS)')
-    bankgroup.add_option('-r', '--creditline', metavar='(LIST OF ACCOUNTS)')
+    bankgroup.add_option('-y', '--creditline', metavar='(LIST OF ACCOUNTS)')
     optparser.add_option_group(bankgroup)
 
     # Credit card accounts
@@ -308,20 +314,20 @@ def init_optionparser():
 
     # Transaction options
     transgroup = OptionGroup(optparser, 'Transaction Options')
-    transgroup.add_option('-t', '--skip-transactions', dest='inctran',
+    transgroup.add_option('-t', '--no-transactions', dest='inctran',
                         action='store_false')
     transgroup.add_option('-s', '--start', dest='dtstart')
     transgroup.add_option('-e', '--end', dest='dtend')
     optparser.add_option_group(transgroup)
     # Position options
     posgroup = OptionGroup(optparser, '(Investment) Position Options')
-    posgroup.add_option('-p', '--skip-positions', dest='incpos',
+    posgroup.add_option('-p', '--no-positions', dest='incpos',
                         action='store_false')
     posgroup.add_option('-d', '--date', dest='dtasof')
     optparser.add_option_group(posgroup)
     # Balance options
     balgroup = OptionGroup(optparser, '(Investment) Balance Options')
-    balgroup.add_option('-b', '--skip-balances', dest='incbal',
+    balgroup.add_option('-b', '--no-balances', dest='incbal',
                         action='store_false')
     optparser.add_option_group(balgroup)
 
@@ -448,7 +454,7 @@ def main():
     fi = args[0]
     if fi not in config.fi_index:
         # FIXME
-        raise ValueError
+        raise ValueError("Unknown firm %s" % fi)
 
     config.setup_fi(fi, **options.__dict__)
     client = OFXClient.from_config(**config.__dict__)
@@ -460,7 +466,11 @@ def main():
         print request
         return
 
-    response = client.download(archive_dir=config.archive_dir)
+    if options.no_archive:
+        archive_dir = None
+    else:
+        archive_dir = _(options.dir or config.archive_dir)
+    response = client.download(archive_dir=archive_dir)
     print response.read()
 
 

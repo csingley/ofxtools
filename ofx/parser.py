@@ -593,7 +593,8 @@ class OFXTreeBuilder(SGMLParser):
             self.__builder.end(tag)
 
     def handle_data(self, text):
-        text = text.strip('\f\n\r\t\v') # Strip whitespace, except space char
+        #text = text.strip('\f\n\r\t\v') # Strip whitespace, except space char
+        text = text.strip
         if text:
             if self.verbose:
                 msg = "handle_data adding data '%s'" % text
@@ -671,7 +672,7 @@ class OFXTreeBuilder_sgmlop(object):
 
     def handle_data(self, text):
         #text = text.strip('\f\n\r\t\v') # Strip whitespace, except space char
-        text = text.rstrip() # Strip whitespace, except space char
+        text = text.strip()
         if text:
             if self.verbose:
                 msg = "handle_data adding data '%s'" % text
