@@ -66,7 +66,6 @@ class OFXClient(object):
         for accttype in ('bank', 'creditcard'):
             accts = kwargs.get('%s_accounts' % accttype, None)
             if accts:
-                print accts
                 write_method = getattr(self, 'write_%s' % accttype)
                 write_method(accts, **bank_opts)
 
@@ -432,7 +431,6 @@ def main():
         setattr(options, accttype, parse_accts(string))
 
     options.creditcard = acct_re.findall(options.creditcard or '')
-
 
     ### PARSE CONFIG
     config = OFXConfigParser()

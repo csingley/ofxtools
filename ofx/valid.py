@@ -37,7 +37,6 @@ class OFXDtConverter(api.FancyValidator):
     def _to_python(self, value, state):
         # Pristine copy of input for error reporting
         orig_value = value
-
         # Strip out timezone, on which strptime() chokes
         match = self.tz_re.search(value)
         if match:
@@ -166,7 +165,7 @@ INV401KSOURCES = ('PRETAX', 'AFTERTAX', 'MATCH', 'PROFITSHARING', 'ROLLOVER',
 class STMTTRN(Schema):
     trntype = validators.OneOf(TRANSACTION_TYPES)
     dtposted = OFXDtConverter()
-    dtuse = OFXDtConverter(if_missing=None)
+    dtuser = OFXDtConverter(if_missing=None)
     dtavail = OFXDtConverter(if_missing=None)
     trnamt = DecimalConverter()
     fitid = validators.String(max=255)
@@ -364,6 +363,9 @@ class BUYOPT(Schema):
     optbuytype = validators.OneOf(OPTBUYTYPES)
     shperctrct = validators.Int()
 
+class BUYOTHER(Schema):
+    pass
+
 class BUYSTOCK(Schema):
     buytype = validators.OneOf(BUYTYPES)
 
@@ -397,6 +399,9 @@ class SELLOPT(Schema):
     relfitid = validators.String(max=255, if_missing=None)
     reltype = validators.OneOf(('SPREAD', 'STRADDLE', 'NONE', 'OTHER'), if_missing=None)
     secured = validators.OneOf(SECURED_TYPES, if_missing=None)
+
+class SELLOTHER(Schema):
+    pass
 
 class SELLSTOCK(Schema):
     selltype = validators.OneOf(SELLTYPES)

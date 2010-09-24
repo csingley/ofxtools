@@ -221,7 +221,8 @@ class BankStatement(Statement):
     def __init__(self, stmttrnrs):
         self.handle_stmttrnrs(stmttrnrs)
         stmtrs = stmttrnrs.find('STMTRS')
-        self.handle_stmtrs(stmtrs)
+        if stmtrs:
+            self.handle_stmtrs(stmtrs)
 
     def handle_stmtrs(self, stmtrs):
         # BANKTRANLIST
@@ -269,9 +270,9 @@ class CreditCardStatement(BankStatement):
     AccountClass = CcAccount
 
     def __init__(self, stmttrnrs):
-        self.handle(stmttrnrs)
+        self.handle_stmttrnrs(stmttrnrs)
         stmtrs = stmttrnrs.find('CCSTMTRS')
-        self.handle_stmtrs(seclist, stmtrs)
+        self.handle_stmtrs(stmtrs)
 
 class InvestmentStatement(Statement):
     positions = []
@@ -293,7 +294,8 @@ class InvestmentStatement(Statement):
     def __init__(self, seclist, stmttrnrs):
         self.handle_stmttrnrs(stmttrnrs)
         stmtrs = stmttrnrs.find('INVSTMTRS')
-        self.handle_stmtrs(seclist, stmtrs)
+        if stmtrs:
+            self.handle_stmtrs(seclist, stmtrs)
 
     def handle_stmtrs(self, seclist, stmtrs):
         # First create Securities instances, and store in a map of
@@ -367,7 +369,8 @@ class InvestmentStatement(Statement):
             security = self.handle_list_item(element, valid.SECLISTitem,
                     self.SecurityClass, extra_attributes=secid_attr)
             return (security.uniqueidtype, security.uniqueid), security
-        return dict([handle_sec(sec) for sec in seclist])
+        if seclist is not None:
+            return dict([handle_sec(sec) for sec in seclist])
 
     def handle_SECID(self, element):
         # Validate
@@ -446,17 +449,6 @@ class OFXParser(object):
         if signon.code:
             errors.update({'signon':{'code': signon.code, 'severity': signon.severity, 'message': signon.message}})
 
-        #status.update(dict(([(msg, dict([(attr, getattr(getattr(self, '%s_statement' % msg), attr)) for attr in ('code', 'severity', 'message')])) for msg in ('bank', 'creditcard', 'investment') if getattr(self, '%s_statement' % msg) is not None])))
-
-        #for msg in ('bank', 'creditcard', 'investment'):
-            #stmt = getattr(self, '%s_statement' % msg)
-            #if stmt and stmt.code:
-                #d = {}
-                #for tag in ('code', 'severity', 'message'):
-                    #attr = getattr(stmt, tag)
-                    #d.update({tag: attr})
-                #errors.update({msg: d})
-
         for msg in ('bank', 'creditcard', 'investment'):
             stmt = getattr(self, '%s_statement' % msg)
             if stmt and stmt.code:
@@ -503,6 +495,8 @@ class OFXParser(object):
             # Sanity check
             assert header['DATA'] == 'OFXSGML'
             assert header['VERSION'] in valid.OFXv1
+            #if header['VERSION'] not in valid.OFXv1:
+                #print "OFXv1 header claims OFX version is %s" % header['VERSION']
         elif line1.startswith('<?xml'):
             #OFXv2
             # OFX declaration is the next line of content
@@ -676,7 +670,8 @@ class OFXTreeBuilder_sgmlop(object):
             self.__builder.end(tag)
 
     def handle_data(self, text):
-        text = text.strip('\f\n\r\t\v') # Strip whitespace, except space char
+        #text = text.strip('\f\n\r\t\v') # Strip whitespace, except space char
+        text = text.rstrip() # Strip whitespace, except space char
         if text:
             if self.verbose:
                 msg = "handle_data adding data '%s'" % text
