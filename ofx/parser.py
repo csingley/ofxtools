@@ -352,6 +352,30 @@ class InvestmentStatement(Statement):
         for key, value in dregs.iteritems():
             setattr(self, key, value)
 
+    #"""
+    #Quicken will attempt to match securities downloaded in the SECLIST to
+    #securities in Quicken using the following logic.
+
+    #First, Quicken checks to see if the security has already been matched
+    #by comparing the CUSIP or UNIQUEID in the download to the unique
+    #identifier stored in the Quicken database. If there is a match, then
+    #no additional steps are taken.
+
+    #When Quicken does not find a match based on CUSIP, it will compare the
+    #downloaded security name to the security names in the file. It will match
+    #the security, if it finds an exact match for the security name.
+
+    #Next, Quicken compares the ticker downloaded to the symbol for each
+    #security. When a ticker in the download matches the symbol for a security
+    #in the Quicken database, Quicken matches them. When there is no symbol for
+    #the security on the security list, Quicken skips this step. Quicken will
+    #proceed to show the security matching dialog.
+
+    #When Quicken cannot find a match based on one of the three criteria above,
+    #it will show the security matching dialog.
+    #"""
+    #http://fi.intuit.com/ofximplementation/dl/OFXDataMappingGuide.pdf
+
     def handle_SECLIST(self, seclist):
         def handle_sec(element):
             # Strip out SECID so self.handle_element() won't dispatch it to

@@ -6,6 +6,7 @@ def _(path):
     path = os.path.expanduser(path)
     path = os.path.normpath(path)
     path = os.path.normcase(path)
+    path = os.path.abspath(path)
     return path
 
 acct_re = re.compile(r'([\w.\-/]{1,22})')

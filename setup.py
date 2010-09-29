@@ -6,7 +6,7 @@ setup(
     version = "0.1",
     packages = find_packages(),
 
-    install_requires = ['formencode>=1..0'],
+    install_requires = ['formencode>=1.0'],
 
     # Metadata for PyPI
     author = "Christopher Singley",
