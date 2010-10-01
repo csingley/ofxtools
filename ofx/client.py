@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 import datetime
 import uuid
 from xml.etree.cElementTree import Element, SubElement, tostring
@@ -11,50 +11,29 @@ import valid
 from parser import OFXParser
 from utilities import _, parse_accts, acct_re
 
-dtConverter = valid.OFXDtConverter()
-stringBool = valid.OFXStringBool()
+dtconverter = valid.OFXDtConverter()
+stringbool = valid.OFXStringBool()
 accttypeValidator = valid.validators.OneOf(valid.ACCOUNT_TYPES)
 
 APP_DEFAULTS = {'version': '102', 'appid': 'QWIN', 'appver': '1800',}
-FI_DEFAULTS = {'org': '', 'fid': '', 'bankid': '', 'brokerid': '', 'user': ''}
+FI_DEFAULTS = {'url': '', 'org': '', 'fid': '', 'bankid': '', 'brokerid': '',}
+ACCT_DEFAULTS = {'checking': '', 'savings': '', 'moneymrkt': '',
+                'creditline': '', 'creditcard': '', 'investment': '',}
 STMT_DEFAULTS = {'inctran': True, 'dtstart': None, 'dtend': None,
                 'incpos': True, 'dtasof': None, 'incbal': True, }
-ACCT_DEFAULTS = {'checking': '', 'savings': '', 'moneymrkt': '',
-                'creditline': '', 'creditcard': '', 'investment': ''}
-UI_DEFAULTS = {'list': False, 'dry_run': False, 'config': None,
-                'archive': True, 'dir': None, 'user': ''}
+UI_DEFAULTS = {'list': False, 'dry_run': False, 'from_config': None,
+                'archive': True, 'dir': None,}
 
 
 class OFXClient(object):
     """ """
-    appids = ('QWIN', # Quicken for Windows
-                'QMOFX', # Quicken for Mac
-                'QBW', # QuickBooks for Windows
-                'QBM', # QuickBooks for Mac
-                'Money', # MSFT Money
-                'Money Plus', # MSFT Money Plus
-    )
-    appvers = ('1500', # Quicken 2006/ Money 2006
-                '1600', # Quicken 2007/ Money 2007/ QuickBooks 2006
-                '1700', # Quicken 2008/ Money Plus/ QuickBooks 2007
-                '1800', # Quicken 2009/ QuickBooks 2008
-                '1900', # Quicken 2010/ QuickBooks 2009
-                '2000', # QuickBooks 2010
-    )
-
     defaults = APP_DEFAULTS.copy()
     defaults.update(FI_DEFAULTS)
     defaults.update(STMT_DEFAULTS)
 
-    overrides = {}
-
-    def __init__(self, url, **kwargs):
-        self.url = url
-        for (name, value) in kwargs.iteritems():
-            if name in self.defaults:
-                if name in ('appid', 'appver'):
-                    assert value in getattr(self, '%ss' % name)
-                self.overrides[name] = value
+    def __init__(self, **kwargs):
+        for (name, value) in self.defaults.iteritems():
+            setattr(self, name, kwargs.get(name, value))
         # Initialize
         self.reset()
 
@@ -66,31 +45,7 @@ class OFXClient(object):
         self.request = None
         self.response = None
 
-    def __getattr__(self, name):
-        try:
-            return self.overrides.get(name, self.defaults[name])
-        except KeyError:
-            raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
-
-    @classmethod
-    def from_config(cls, config):
-        client_opts = dict([(k, getattr(config, k)) \
-                        for k in APP_DEFAULTS.keys() + FI_DEFAULTS.keys()])
-        client = cls(config.url, **client_opts)
-
-        stmt_opts = dict([(k, getattr(config, k)) \
-                        for k in STMT_DEFAULTS.keys()])
-        for accttype in ('bank', 'creditcard'):
-            accts = getattr(config, '%s_accounts' % accttype, None)
-            if accts:
-                write_method = getattr(client, 'write_%s' % accttype)
-                write_method(accts, **stmt_opts)
-        invaccts = getattr(config, 'investment_accounts', None)
-        if invaccts:
-            client.write_investment(invaccts, **stmt_opts)
-        return client
-
-    def download(self, user=None, password=None, parse=False, archive_dir=None):
+    def download(self, user=None, password=None):
         mime = 'application/x-ofx'
         headers = {'Content-type': mime, 'Accept': '*/*, %s' % mime}
         if not self.request:
@@ -109,35 +64,12 @@ class OFXClient(object):
         source.write(response.read())
         # After writing, rewind to the beginning.
         source.seek(0)
-
-        ofxparser = OFXParser()
-        errors = ofxparser.parse(source)
-        # Rewind source again after parsing
-        source.seek(0)
-
-        # Check for errors
-        if errors:
-            # FIXME
-            print source.read()
-            raise ValueError("OFX download errors: '%s'" % str(errors))
-
-        if archive_dir:
-            dtserver = ofxparser.signon.dtserver
-            archive_path = os.path.join(archive_dir, '%s.ofx' % dtserver.strftime('%Y%m%d%H%M%S'))
-            with open(archive_path, 'w') as archive:
-                archive.write(source.read())
-            # Rewind source again after copying
-            source.seek(0)
-
-        if parse:
-            return ofxparser
-        else:
-            return source
+        return source
 
     def write_request(self, user=None, password=None):
         ofx = Element('OFX')
         if not self.signon:
-            self.write_signon(user, password)
+            self.request_signon(user, password)
         ofx.append(self.signon)
         for msgset in ('bank', 'creditcard', 'investment'):
             msgset = getattr(self, msgset, None)
@@ -182,13 +114,13 @@ class OFXClient(object):
             # FIXME
             raise ValueError
 
-    def write_signon(self, user, password):
+    def request_signon(self, user, password):
         if not (user and password):
             # FIXME
             raise ValueError
         msgsrq = Element('SIGNONMSGSRQV1')
         sonrq = SubElement(msgsrq, 'SONRQ')
-        SubElement(sonrq, 'DTCLIENT').text = dtConverter.from_python(datetime.datetime.now())
+        SubElement(sonrq, 'DTCLIENT').text = dtconverter.from_python(datetime.datetime.now())
         SubElement(sonrq, 'USERID').text = user
         SubElement(sonrq, 'USERPASS').text = password
         SubElement(sonrq, 'LANGUAGE').text = 'ENG'
@@ -201,7 +133,7 @@ class OFXClient(object):
         SubElement(sonrq, 'APPVER').text = self.appver
         self.signon = msgsrq
 
-    def write_bank(self, accounts, **kwargs):
+    def request_bank(self, accounts, **kwargs):
         """
         Requesting transactions without dtstart/dtend (which is the default)
         asks for all transactions on record.
@@ -227,7 +159,7 @@ class OFXClient(object):
             self.include_transactions(stmtrq, **kwargs)
         self.bank = msgsrq
 
-    def write_creditcard(self, accounts, **kwargs):
+    def request_creditcard(self, accounts, **kwargs):
         """
         Requesting transactions without dtstart/dtend (which is the default)
         asks for all transactions on record.
@@ -245,15 +177,15 @@ class OFXClient(object):
             self.include_transactions(stmtrq, **kwargs)
         self.creditcard = msgsrq
 
-    def write_investment(self, accounts, **kwargs):
+    def request_investment(self, accounts, **kwargs):
         """ """
         if not accounts:
             # FIXME
             raise ValueError('No investment accounts requested')
 
-        incpos = kwargs.get('incpos', self.incpos)
-        dtasof = kwargs.get('dtasof', self.dtasof)
-        incbal = kwargs.get('incbal', self.incbal)
+        incpos = kwargs.get('incpos', self.defaults['incpos'])
+        dtasof = dtconverter.to_python(kwargs.get('dtasof', self.defaults['dtasof']))
+        incbal = kwargs.get('incbal', self.defaults['incbal'])
 
         msgsrq = Element('INVSTMTMSGSRQV1')
         for account in accounts:
@@ -272,10 +204,10 @@ class OFXClient(object):
 
             pos = SubElement(stmtrq, 'INCPOS')
             if dtasof:
-                SubElement(pos, 'DTASOF').text = dtConverter.from_python(dtasof)
-            SubElement(pos, 'INCLUDE').text = stringBool.from_python(incpos)
+                SubElement(pos, 'DTASOF').text = dtconverter.from_python(dtasof)
+            SubElement(pos, 'INCLUDE').text = stringbool.from_python(incpos)
 
-            SubElement(stmtrq, 'INCBAL').text = stringBool.from_python(incbal)
+            SubElement(stmtrq, 'INCBAL').text = stringbool.from_python(incbal)
         self.investment = msgsrq
 
     # Utilities
@@ -288,17 +220,18 @@ class OFXClient(object):
         return SubElement(trnrq, tag)
 
     def include_transactions(self, parent, **kwargs):
-        include = kwargs.get('inctran', self.inctran)
-        dtstart = kwargs.get('dtstart', self.dtstart)
-        dtend = kwargs.get('dtend', self.dtend)
+        include = kwargs.get('inctran', self.defaults['inctran'])
+        dtstart = dtconverter.to_python(kwargs.get('dtstart', self.defaults['dtstart']))
+        dtend = dtconverter.to_python(kwargs.get('dtend', self.defaults['dtend']))
 
         inctran = SubElement(parent, 'INCTRAN')
         if dtstart:
-            SubElement(inctran, 'DTSTART').text = dtConverter.from_python(dtstart)
+            SubElement(inctran, 'DTSTART').text = dtconverter.from_python(dtstart)
         if dtend:
-            SubElement(inctran, 'DTEND').text = dtConverter.from_python(dtend)
-        SubElement(inctran, 'INCLUDE').text = stringBool.from_python(include)
+            SubElement(inctran, 'DTEND').text = dtconverter.from_python(dtend)
+        SubElement(inctran, 'INCLUDE').text = stringbool.from_python(include)
         return inctran
+
 
 def init_optionparser():
     from optparse import OptionParser, OptionGroup
@@ -308,27 +241,28 @@ def init_optionparser():
     defaults = UI_DEFAULTS.copy()
     defaults.update(STMT_DEFAULTS)
     defaults.update(ACCT_DEFAULTS)
+    defaults['user'] = ''
     optparser.set_defaults(**defaults)
     optparser.add_option('-l', '--list', action='store_true',
                         help='list known institutions and exit')
     optparser.add_option('-n', '--dry-run', action='store_true',
                         help='display OFX request and exit')
-    optparser.add_option('-f', '--config', metavar='FILE', help='use alternate config file')
-    optparser.add_option('-r', '--no-archive', dest='archive', action='store_false',
+    optparser.add_option('-f', '--from-config', metavar='FILE', help='use alternate config file')
+    optparser.add_option('-a', '--no-archive', dest='archive', action='store_false',
                         help="don't archive OFX downloads to file")
     optparser.add_option('-o', '--dir', metavar='DIR', help='archive OFX downloads in DIR')
     optparser.add_option('-u', '--user', help='login user ID at institution')
     # Bank accounts
     bankgroup = OptionGroup(optparser, 'Bank accounts are specified as pairs of (routing#, acct#)')
-    bankgroup.add_option('-c', '--checking', metavar='(LIST OF ACCOUNTS)')
-    bankgroup.add_option('-a', '--savings', metavar='(LIST OF ACCOUNTS)')
-    bankgroup.add_option('-m', '--moneymrkt', metavar='(LIST OF ACCOUNTS)')
-    bankgroup.add_option('-y', '--creditline', metavar='(LIST OF ACCOUNTS)')
+    bankgroup.add_option('-C', '--checking', metavar='(LIST OF ACCOUNTS)')
+    bankgroup.add_option('-S', '--savings', metavar='(LIST OF ACCOUNTS)')
+    bankgroup.add_option('-M', '--moneymrkt', metavar='(LIST OF ACCOUNTS)')
+    bankgroup.add_option('-L', '--creditline', metavar='(LIST OF ACCOUNTS)')
     optparser.add_option_group(bankgroup)
 
     # Credit card accounts
     ccgroup = OptionGroup(optparser, 'Credit cards are specified by an acct#')
-    ccgroup.add_option('-C', '--creditcard', metavar='(LIST OF ACCOUNTS)')
+    ccgroup.add_option('-c', '--creditcard', metavar='(LIST OF ACCOUNTS)')
     optparser.add_option_group(ccgroup)
 
     # Investment accounts
@@ -336,109 +270,47 @@ def init_optionparser():
     invgroup.add_option('-i', '--investment', metavar='(LIST OF ACCOUNTS)')
     optparser.add_option_group(invgroup)
 
-    # Transaction options
-    transgroup = OptionGroup(optparser, 'Transaction Options')
-    transgroup.add_option('-t', '--no-transactions', dest='inctran',
+    # Statement options
+    stmtgroup = OptionGroup(optparser, 'Statement Options')
+    stmtgroup.add_option('-t', '--no-transactions', dest='inctran',
                         action='store_false')
-    transgroup.add_option('-s', '--start', dest='dtstart')
-    transgroup.add_option('-e', '--end', dest='dtend')
-    optparser.add_option_group(transgroup)
-    # Position options
-    posgroup = OptionGroup(optparser, '(Investment) Position Options')
-    posgroup.add_option('-p', '--no-positions', dest='incpos',
+    stmtgroup.add_option('-s', '--start', dest='dtstart', help='Start date/time for transactions')
+    stmtgroup.add_option('-e', '--end', dest='dtend', help='End date/time for transactions')
+    stmtgroup.add_option('-p', '--no-positions', dest='incpos',
                         action='store_false')
-    posgroup.add_option('-d', '--date', dest='dtasof')
-    optparser.add_option_group(posgroup)
-    # Balance options
-    balgroup = OptionGroup(optparser, '(Investment) Balance Options')
-    balgroup.add_option('-b', '--no-balances', dest='incbal',
+    stmtgroup.add_option('-d', '--date', dest='dtasof', help='As-of date for investment positions')
+    stmtgroup.add_option('-b', '--no-balances', dest='incbal',
                         action='store_false')
-    optparser.add_option_group(balgroup)
+    optparser.add_option_group(stmtgroup)
 
     return optparser
 
 
-class OFXClientConfig(object):
+class OFXConfigParser(ConfigParser.SafeConfigParser):
     """ """
     main_config = _(os.path.join(os.path.dirname(__file__), 'main.cfg'))
 
-    fallbacks = APP_DEFAULTS.copy()
-    fallbacks.update(FI_DEFAULTS)
-    fallbacks.update(ACCT_DEFAULTS)
-    fallbacks.update(STMT_DEFAULTS)
+    defaults = APP_DEFAULTS.copy()
+    defaults.update(FI_DEFAULTS)
+    defaults['user'] = ''
+    defaults.update(ACCT_DEFAULTS)
 
-    defaults = None
-    overrides = {}
 
     def __init__(self):
-        self.defaults = ConfigParser.SafeConfigParser(self.fallbacks)
-
-    def __getattr__(self, name):
-        # First check if we're looking up a global config
-        if name in ('config', 'dir',):
-            # FIXME - extend
-            return _(self.defaults.get('global', name))
-        # If we're looking up an FI config, we need to know which one.
-        if 'fi' not in self.overrides:
-            raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, 'fi'))
-        if name == 'fi':
-            return self.overrides['fi']
-        try:
-            # This blows up inside ConfigParser
-            #return self.overrides.get(name, self.defaults.get(self.fi, name))
-            value = self.overrides.get(name, 'NO_DEFAULT')
-            if value == 'NO_DEFAULT':
-                value = self.defaults.get(self.fi, name)
-            return value
-
-        except ConfigParser.NoSectionError, ConfigParser.NoOptionError:
-            raise AttributeError
-            ("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
-
-    def __setattr__(self, name, value):
-        if name in ('defaults', 'overrides'):
-            object.__setattr__(self, name, value)
-        else:
-            self.overrides[name] = value
+        ConfigParser.SafeConfigParser.__init__(self, self.defaults)
 
     def read(self, filenames=None):
-        defaults = self.defaults
         # Load main config
-        defaults.readfp(open(self.main_config))
+        self.readfp(open(self.main_config))
         # Then load user configs (defaults to main.cfg [global] config: value)
-        filenames = filenames or _(defaults.get('global', 'config'))
-        return defaults.read(filenames)
+        filenames = filenames or _(self.get('global', 'config'))
+        return ConfigParser.SafeConfigParser.read(self, filenames)
 
     @property
     def fi_index(self):
-        sections = self.defaults.sections()
+        sections = self.sections()
         sections.remove('global')
         return sections
-
-    @property
-    def bank_accounts(self):
-        bank_accts = []
-        for accttype in ('checking', 'savings', 'moneymrkt', 'creditline'):
-            accts  = parse_accts(getattr(self, accttype))
-            bank_accts += [(accttype.upper(), acct[0] or self.bankid, acct[1])
-                            for acct in accts]
-        return bank_accts
-
-    @property
-    def creditcard_accounts(self):
-        return acct_re.findall(self.creditcard)
-
-    @property
-    def investment_accounts(self):
-        brokerid = self.brokerid
-        return [(brokerid, acct) for acct in acct_re.findall(self.investment)]
-
-    @property
-    def archive_dir(self):
-        fi_dir = os.path.join(self.dir, self.fi)
-        if not os.path.exists(fi_dir):
-            os.makedirs(fi_dir)
-        return fi_dir
 
 
 def main():
@@ -446,64 +318,97 @@ def main():
     from getpass import getpass
 
     optparser = init_optionparser()
-
-    # Process options & validate input
     (options, args) = optparser.parse_args()
 
-    # Transform options into a dict for ease of further processing
-    options = options.__dict__
-
-    # Demux UI-only opts
-    ui_opts = dict([(k,options.pop(k)) for k in UI_DEFAULTS.keys()])
-
     ### PARSE CONFIG
-    config = OFXClientConfig()
-    config.read(ui_opts['config'])
+    config = OFXConfigParser()
+    config.read(options.from_config)
 
     # If we're just listing known FIs, then bail out here.
-    if ui_opts['list']:
+    if options.list:
         print config.fi_index
         return
 
     if len(args) != 1:
         optparser.print_usage()
         return
-    config.fi = args[0]
+    fi = args[0]
 
-    # Override user config, if optparser field is non-empty.
-    config.user = ui_opts.pop('user') or config.user
+    ### DEMUX UI INPUT
+    options = options.__dict__
 
-    # Demux acct#s and override config files if not empty.
-    for k in ACCT_DEFAULTS.keys():
-        config.overrides[k] = options.pop(k) or getattr(config, k)
+    # Meta options for controlling the UI itself.
+    ui_opts = dict([(option,options.pop(option)) for option in UI_DEFAULTS.keys()])
 
-    # Only statement opts should remain to demux.  These should clobber
-    # configs, since they're not supposed to be specified in config files.
-    dateconv = valid.validators.DateConverter(if_empty=None)
-    for k in STMT_DEFAULTS.keys():
-        v = options.pop(k)
-        if k[:2] == 'dt':
-            v = dateconv.to_python(v)
-        config.overrides[k] = v
+    # Options which can be controlled by either UI or config file.
+    # Defaults are empty strings i.e. no input; fall back to config.
+    acct_opts = dict([(option, options.pop(option) or config.get(fi, option)) \
+                for option in ACCT_DEFAULTS.keys() + ['user',]])
 
-    client = OFXClient.from_config(config)
-    # Don't ask for password until we're sure nothing's blown up
-    user = config.user
-    password = getpass()
-    request = client.write_request(user, password)
+    # Remaining optparse options should be statement options, which are only
+    # controlled via UI.
+    stmt_opts = dict([(option, options.pop(option)) for option in STMT_DEFAULTS.keys()])
+    if options != {}:
+        # FIXME
+        print options
+        raise ValueError
+
+    ### INSTANTIATE CLIENT
+    # Client instance attributes are controlled only via config file.
+    client_opts = dict([(option, config.get(fi, option)) for option in APP_DEFAULTS.keys() + FI_DEFAULTS.keys()])
+    client = OFXClient(**client_opts)
+
+    ### CONSTRUCT OFX REQUEST
+    # Parse account strings
+    bankid = client.bankid
+    brokerid = client.brokerid
+
+    bank_accts = []
+    for accttype in ('checking', 'savings', 'moneymrkt', 'creditline'):
+        accts  = parse_accts(acct_opts[accttype])
+        bank_accts += [(accttype.upper(), acct[0] or bankid, acct[1])
+                        for acct in accts]
+
+    cc_accts = acct_re.findall(acct_opts['creditcard'])
+    inv_accts = [(brokerid, acct)
+                    for acct in acct_re.findall(acct_opts['investment'])]
+
+    # Create STMTRQ aggregates
+    if bank_accts:
+        client.request_bank(bank_accts, **stmt_opts)
+    if cc_accts:
+        client.request_creditcard(cc_accts, **stmt_opts)
+    if inv_accts:
+        client.request_investment(inv_accts, **stmt_opts)
+
+    ### HANDLE REQUEST
     if ui_opts['dry_run']:
-        print request
+        print client.write_request(acct_opts['user'], 'TOPSECRETPASSWORD')
         return
 
-    if ui_opts['archive']:
-        archive_dir = _(ui_opts['dir'] or config.archive_dir)
-    else:
-        archive_dir = None
+    password = getpass()
+    response = client.download(user=acct_opts['user'], password=password)
 
-    response = client.download(archive_dir=archive_dir)
-    import sys
-    sys.exit()
-    if not ui_opts['archive']:
+    if ui_opts['archive']:
+        # Parse response to check for errors before saving to archive.
+        ofxparser = OFXParser()
+        errors = ofxparser.parse(response)
+        # Rewind source again after parsing
+        response.seek(0)
+        if errors:
+            # FIXME
+            print response.read()
+            raise ValueError("OFX download errors: '%s'" % str(errors))
+
+        # Archive to disk
+        archive_dir = _(ui_opts['dir'] or os.path.join(config.get('global', 'dir'), fi))
+        timestamp = ofxparser.signon.dtserver.strftime('%Y%m%d%H%M%S')
+        if not os.path.exists(archive_dir):
+            os.makedirs(archive_dir)
+        archive_path = os.path.join(archive_dir, '%s.ofx' % timestamp)
+        with open(archive_path, 'w') as archive:
+            archive.write(response.read())
+    else:
         print response.read()
 
 
