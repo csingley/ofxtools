@@ -8,13 +8,7 @@ import ConfigParser
 from cStringIO import StringIO
 import re
 
-import valid
-from parser import OFXParser
-from utilities import _, parse_accts, acct_re
-
-dtconverter = valid.OFXDtConverter()
-stringbool = valid.OFXStringBool()
-accttypeValidator = valid.validators.OneOf(valid.ACCOUNT_TYPES)
+from utilities import _, OFXDtConverter, OFXStringBool, BankAcctTypeValidator
 
 APP_DEFAULTS = {'version': '102', 'appid': 'QWIN', 'appver': '1800',}
 FI_DEFAULTS = {'url': '', 'org': '', 'fid': '', 'bankid': '', 'brokerid': '',}
@@ -84,14 +78,16 @@ class OFXClient(object):
         self.request = request = self.header + tostring(ofx)
         return request
 
-    def request_profile(self):
+    def request_profile(self, user=None, password=None):
+        user = user or 'elmerfudd'
+        password = password or 'TOPSECRET'
+        self.request_signon(user, password)
         ofx = Element('OFX')
-        self.request_signon(user='elmerfudd', password='TOPSECRET')
         ofx.append(self.signon)
         msgsrq = Element('PROFMSGSRQV1')
         profrq = self.wrap_request(msgsrq, 'PROFRQ')
         SubElement(profrq, 'CLIENTROUTING').text = 'NONE'
-        SubElement(profrq, 'DTPROFUP').text = dtconverter.from_python(datetime.date(1990,1,1))
+        SubElement(profrq, 'DTPROFUP').text = OFXDtConverter.from_python(datetime.date(1990,1,1))
         ofx.append(msgsrq)
         self.request = request = self.header + tostring(ofx)
         return request
@@ -138,7 +134,7 @@ class OFXClient(object):
             raise ValueError
         msgsrq = Element('SIGNONMSGSRQV1')
         sonrq = SubElement(msgsrq, 'SONRQ')
-        SubElement(sonrq, 'DTCLIENT').text = dtconverter.from_python(datetime.datetime.now())
+        SubElement(sonrq, 'DTCLIENT').text = OFXDtConverter.from_python(datetime.datetime.now())
         SubElement(sonrq, 'USERID').text = user
         SubElement(sonrq, 'USERPASS').text = password
         SubElement(sonrq, 'LANGUAGE').text = 'ENG'
@@ -164,7 +160,7 @@ class OFXClient(object):
         for account in accounts:
             try:
                 accttype, bankid, acctid = account
-                accttype = accttypeValidator.to_python(accttype)
+                accttype = BankAcctTypeValidator.to_python(accttype)
             except ValueError:
                 # FIXME
                 raise ValueError("Bank accounts must be specified as a sequence of (ACCTTYPE, BANKID, ACCTID) tuples, not '%s'" % str(accounts))
@@ -202,7 +198,7 @@ class OFXClient(object):
             raise ValueError('No investment accounts requested')
 
         incpos = kwargs.get('incpos', self.defaults['incpos'])
-        dtasof = dtconverter.to_python(kwargs.get('dtasof', self.defaults['dtasof']))
+        dtasof = OFXDtConverter.to_python(kwargs.get('dtasof', self.defaults['dtasof']))
         incbal = kwargs.get('incbal', self.defaults['incbal'])
 
         msgsrq = Element('INVSTMTMSGSRQV1')
@@ -222,10 +218,10 @@ class OFXClient(object):
 
             pos = SubElement(stmtrq, 'INCPOS')
             if dtasof:
-                SubElement(pos, 'DTASOF').text = dtconverter.from_python(dtasof)
-            SubElement(pos, 'INCLUDE').text = stringbool.from_python(incpos)
+                SubElement(pos, 'DTASOF').text = OFXDtConverter.from_python(dtasof)
+            SubElement(pos, 'INCLUDE').text = OFXStringBool.from_python(incpos)
 
-            SubElement(stmtrq, 'INCBAL').text = stringbool.from_python(incbal)
+            SubElement(stmtrq, 'INCBAL').text = OFXStringBool.from_python(incbal)
         self.investment = msgsrq
 
     # Utilities
@@ -239,15 +235,15 @@ class OFXClient(object):
 
     def include_transactions(self, parent, **kwargs):
         include = kwargs.get('inctran', self.defaults['inctran'])
-        dtstart = dtconverter.to_python(kwargs.get('dtstart', self.defaults['dtstart']))
-        dtend = dtconverter.to_python(kwargs.get('dtend', self.defaults['dtend']))
+        dtstart = OFXDtConverter.to_python(kwargs.get('dtstart', self.defaults['dtstart']))
+        dtend = OFXDtConverter.to_python(kwargs.get('dtend', self.defaults['dtend']))
 
         inctran = SubElement(parent, 'INCTRAN')
         if dtstart:
-            SubElement(inctran, 'DTSTART').text = dtconverter.from_python(dtstart)
+            SubElement(inctran, 'DTSTART').text = OFXDtConverter.from_python(dtstart)
         if dtend:
-            SubElement(inctran, 'DTEND').text = dtconverter.from_python(dtend)
-        SubElement(inctran, 'INCLUDE').text = stringbool.from_python(include)
+            SubElement(inctran, 'DTEND').text = OFXDtConverter.from_python(dtend)
+        SubElement(inctran, 'INCLUDE').text = OFXStringBool.from_python(include)
         return inctran
 
     def parse_bank(self, accttype, string):
@@ -410,13 +406,16 @@ def main():
 
     ### HANDLE REQUEST
     if ui_opts['dry_run']:
-        print client.write_request(acct_opts['user'], 'TOPSECRETPASSWORD')
+        print client.write_request(acct_opts['user'], 'TOPSECRET')
         return
-    elif ui_opts['profile']:
-        client.request_profile()
+
+    password = getpass()
+
+    if ui_opts['profile']:
+        #client.request_profile()
+        client.request_profile(user=acct_opts['user'], password=password)
         archive_file = 'profile.ofx'
     else:
-        password = getpass()
         client.write_request(user=acct_opts['user'], password=password)
         # FIXME - ought to use DTCLIENT from the SONRQ here
         archive_file = '%s.ofx' % datetime.datetime.now().strftime('%Y%m%d%H%M%S')

@@ -5,6 +5,8 @@ from decimal import Decimal
 
 from formencode import api, validators, Schema
 
+import utilities
+
 OFXv1 = ('102', '103')
 OFXv2 = ('203', '211')
 VERSIONS = OFXv1 + OFXv2
@@ -44,57 +46,65 @@ class DecimalConverter(validators.Number):
             raise Invalid(self.message('number', state),
                                 value, state)
 
-class OFXDtConverter(api.FancyValidator):
-    # Valid datetime formats given by OFX 3.2.8.2
-    tz_re = re.compile(r'\[[-+.\d]*:\w*\]')
-    formats = ('%Y%m%d%H%M%S.%f', '%Y%m%d%H%M%S', '%Y%m%d')
+#class OFXDatetimeConverter(api.FancyValidator):
+    ## Valid datetime formats given by OFX 3.2.8.2
+    #tz_re = re.compile(r'\[[-+.\d]*:\w*\]')
+    #formats = ('%Y%m%d%H%M%S.%f', '%Y%m%d%H%M%S', '%Y%m%d')
+
+    #def _to_python(self, value, state):
+        ## If it's already there, don't push it.
+        #if isinstance(value, datetime.datetime):
+            #return value
+        ## Pristine copy of input for error reporting
+        #orig_value = value
+        ## Strip out timezone, on which strptime() chokes
+        #match = self.tz_re.search(value)
+        #if match:
+            #tz_delta = match.group().split(':')[0].lstrip('[')
+            #tz_delta = int(Decimal(tz_delta)*3600) # in seconds
+            #value = value[:match.start()]
+        #else:
+            #tz_delta = 0
+
+        ## Try each supported format
+        #for format in self.formats:
+            #try:
+                #value = datetime.datetime.strptime(value, format)
+                #error = False
+                #break
+            #except ValueError:
+                #error = True
+                #continue
+        #if error:
+            #raise ValueError("Datetime '%s' does not match OFX formats %s" % (orig_value, str(self.formats)))
+
+        ## Adjust timezone to GMT
+        #value -= datetime.timedelta(seconds=tz_delta)
+        #return value
+
+    #def _from_python(self, value, state):
+        #""" Input datetime.datetime in local time; output str in GMT. """
+        ## Pristine copy of input for error reporting
+        #orig_value = value
+
+        #try:
+            ## Transform to GMT
+            #value = time.gmtime(time.mktime(value.timetuple()))
+            ## timetuples don't have usec precision
+            ##value = time.strftime('%s[0:GMT]' % self.formats[1], value)
+            #value = time.strftime(self.formats[1], value)
+        #except:
+            #raise ValueError # FIXME
+        #return value
+
+class OFXDatetimeConverter(api.FancyValidator):
+    _converter = utilities.OFXDtConverter
 
     def _to_python(self, value, state):
-        # If it's already there, don't push it.
-        if isinstance(value, datetime.datetime):
-            return value
-        # Pristine copy of input for error reporting
-        orig_value = value
-        # Strip out timezone, on which strptime() chokes
-        match = self.tz_re.search(value)
-        if match:
-            tz_delta = match.group().split(':')[0].lstrip('[')
-            tz_delta = int(Decimal(tz_delta)*3600) # in seconds
-            value = value[:match.start()]
-        else:
-            tz_delta = 0
-
-        # Try each supported format
-        for format in self.formats:
-            try:
-                value = datetime.datetime.strptime(value, format)
-                error = False
-                break
-            except ValueError:
-                error = True
-                continue
-        if error:
-            raise ValueError("Datetime '%s' does not match OFX formats %s" % (orig_value, str(self.formats)))
-
-        # Adjust timezone to GMT
-        value -= datetime.timedelta(seconds=tz_delta)
-        return value
+        return self._converter.to_python(value)
 
     def _from_python(self, value, state):
-        """ Input datetime.datetime in local time; output str in GMT. """
-        # Pristine copy of input for error reporting
-        orig_value = value
-
-        try:
-            # Transform to GMT
-            value = time.gmtime(time.mktime(value.timetuple()))
-            # timetuples don't have usec precision
-            #value = time.strftime('%s[0:GMT]' % self.formats[1], value)
-            value = time.strftime(self.formats[1], value)
-        except:
-            raise ValueError # FIXME
-        return value
-
+        return self._converter.from_python(value)
 
 # Validators specifying allowed item types in the XXXLIST aggregates
 BANKTRANLISTitem = validators.OneOf(('STMTTRN',))
@@ -145,12 +155,12 @@ class ORIGCURRENCY(Schema):
 
 # SONRS
 class SONRS(Schema):
-    dtserver = OFXDtConverter()
+    dtserver = OFXDatetimeConverter()
     userkey = validators.String(max=64, if_missing=None)
-    tskeyexpire = OFXDtConverter(if_missing=None)
+    tskeyexpire = OFXDatetimeConverter(if_missing=None)
     language = validators.OneOf(('ENG',)) # FIXME
-    dtprofup = OFXDtConverter(if_missing=None)
-    dtacctup = OFXDtConverter(if_missing=None)
+    dtprofup = OFXDatetimeConverter(if_missing=None)
+    dtacctup = OFXDatetimeConverter(if_missing=None)
     sesscookie = validators.String(max=1000, if_missing=None)
     accesskey = validators.String(max=1000, if_missing=None)
 
@@ -172,8 +182,8 @@ class STMTRS(Schema):
 
 # BANKTRANLIST preamble
 class BANKTRANLIST(Schema):
-    dtstart = OFXDtConverter()
-    dtend = OFXDtConverter()
+    dtstart = OFXDatetimeConverter()
+    dtend = OFXDatetimeConverter()
 
 # Banking transaction aggregates
 ACCOUNT_TYPES = ('CHECKING', 'SAVINGS', 'MONEYMRKT', 'CREDITLINE')
@@ -183,9 +193,9 @@ INV401KSOURCES = ('PRETAX', 'AFTERTAX', 'MATCH', 'PROFITSHARING', 'ROLLOVER',
 
 class STMTTRN(Schema):
     trntype = validators.OneOf(TRANSACTION_TYPES)
-    dtposted = OFXDtConverter()
-    dtuser = OFXDtConverter(if_missing=None)
-    dtavail = OFXDtConverter(if_missing=None)
+    dtposted = OFXDatetimeConverter()
+    dtuser = OFXDatetimeConverter(if_missing=None)
+    dtavail = OFXDatetimeConverter(if_missing=None)
     trnamt = DecimalConverter()
     fitid = validators.String(max=255)
     correctfitid = validators.String(max=255, if_missing=None)
@@ -201,11 +211,11 @@ class STMTTRN(Schema):
 
 class LEDGERBAL(Schema):
     balamt = DecimalConverter()
-    dtasof = OFXDtConverter()
+    dtasof = OFXDatetimeConverter()
 
 class AVAILBAL(Schema):
     balamt = DecimalConverter()
-    dtasof = OFXDtConverter()
+    dtasof = OFXDatetimeConverter()
 
 class PAYEE(Schema):
     name = validators.String(max=32)
@@ -233,7 +243,7 @@ class BAL(Schema):
     desc = validators.String(max=80)
     baltype = validators.OneOf(('DOLLAR', 'PERCENT', 'NUMBER'))
     value = DecimalConverter()
-    dtasof = OFXDtConverter(if_missing=None)
+    dtasof = OFXDatetimeConverter(if_missing=None)
 
 # CCSTMTRS preamble
 class CCSTMTRS(Schema):
@@ -256,7 +266,7 @@ class SECINFO(Schema):
     fiid = validators.String(max=32, if_missing=None)
     rating = validators.String(max=10, if_missing=None)
     unitprice = DecimalConverter(if_missing=None)
-    dtasof = OFXDtConverter(if_missing=None)
+    dtasof = OFXDatetimeConverter(if_missing=None)
     memo = validators.String(max=255, if_missing=None)
 
 class DEBTINFO(Schema):
@@ -264,14 +274,14 @@ class DEBTINFO(Schema):
     debttype = validators.OneOf(('COUPON', 'ZERO'))
     debtclass = validators.OneOf(('TREASURY', 'MUNICIPAL', 'CORPORATE', 'OTHER'), if_missing=None)
     couponrt = DecimalConverter(if_missing=None)
-    dtcoupon = OFXDtConverter(if_missing=None)
+    dtcoupon = OFXDatetimeConverter(if_missing=None)
     couponfreq = validators.OneOf(('MONTHLY', 'QUARTERLY', 'SEMIANNUAL', 'ANNUAL', 'OTHER'), if_missing=None)
     callprice = DecimalConverter(if_missing=None)
     yieldtocall = DecimalConverter(if_missing=None)
-    dtcall = OFXDtConverter(if_missing=None)
+    dtcall = OFXDatetimeConverter(if_missing=None)
     calltype = validators.OneOf(('CALL', 'PUT', 'PREFUND', 'MATURITY'), if_missing=None)
     yieldtomat = DecimalConverter(if_missing=None)
-    dtmat = OFXDtConverter(if_missing=None)
+    dtmat = OFXDatetimeConverter(if_missing=None)
     assetclass = validators.OneOf(ASSET_CLASSES, if_missing=None)
     fiassetclass = validators.String(max=32, if_missing=None)
 
@@ -283,7 +293,7 @@ class MFINFO(Schema):
 class OPTINFO(Schema):
     opttype = validators.OneOf(('CALL', 'PUT'))
     strikeprice = DecimalConverter()
-    dtexpire = OFXDtConverter()
+    dtexpire = OFXDatetimeConverter()
     shperctrct = validators.Int()
     assetclass = validators.OneOf(ASSET_CLASSES, if_missing=None)
     fiassetclass = validators.String(max=32, if_missing=None)
@@ -297,14 +307,14 @@ class STOCKINFO(Schema):
     stocktype = validators.OneOf(('COMMON', 'PREFERRED', 'CONVERTIBLE', 'OTHER'), if_missing=None)
     # FIXME 'yield' (from OFX spec) is a reserved word in Python => SyntaxError
     #yield = DecimalConverter(if_missing=None)
-    dtyieldasof = OFXDtConverter(if_missing=None)
+    dtyieldasof = OFXDatetimeConverter(if_missing=None)
     typedesc = validators.String(max=32, if_missing=None)
     assetclass = validators.OneOf(ASSET_CLASSES, if_missing=None)
     fiassetclass = validators.String(max=32, if_missing=None)
 
 # INVSTMTRS preamble
 class INVSTMTRS(Schema):
-    dtasof = OFXDtConverter()
+    dtasof = OFXDatetimeConverter()
     curdef = validators.OneOf(ISO4217codes)
 
 class INVACCTFROM(Schema):
@@ -313,8 +323,8 @@ class INVACCTFROM(Schema):
 
 # INVTRANLIST preamble
 class INVTRANLIST(Schema):
-    dtstart = OFXDtConverter()
-    dtend = OFXDtConverter()
+    dtstart = OFXDatetimeConverter()
+    dtend = OFXDatetimeConverter()
 
 # Investment Transaction aggregates
 SUBACCOUNTS = ('CASH', 'MARGIN', 'SHORT', 'OTHER')
@@ -329,8 +339,8 @@ POSITIONTYPES = ('SHORT', 'LONG')
 class INVTRAN(Schema):
     fitid = validators.String(max=255)
     srvrtid = validators.String(max=10, if_missing=None)
-    dttrade = OFXDtConverter()
-    dtsettle = OFXDtConverter(if_missing=None)
+    dttrade = OFXDatetimeConverter()
+    dtsettle = OFXDatetimeConverter(if_missing=None)
     reversalfitid = validators.String(max=255, if_missing=None)
     memo = validators.String(max=255, if_missing=None)
 
@@ -349,7 +359,7 @@ class INVBUY(Schema):
     loanprincipal = DecimalConverter(if_missing=None)
     loaninterest = DecimalConverter(if_missing=None)
     inv401ksource = validators.OneOf(INV401KSOURCES, if_missing=None)
-    dtpayroll = OFXDtConverter(if_missing=None)
+    dtpayroll = OFXDatetimeConverter(if_missing=None)
     prioryearcontrib = OFXStringBool(if_missing=None)
 
 class INVSELL(Schema):
@@ -442,7 +452,7 @@ class TRANSFER(Schema):
     postype = validators.OneOf(POSITIONTYPES)
     avgcostbasis = DecimalConverter(if_missing=None)
     unitprice = DecimalConverter(if_missing=None)
-    dtpurchase = OFXDtConverter(if_missing=None)
+    dtpurchase = OFXDatetimeConverter(if_missing=None)
     inv401ksource = validators.OneOf(INV401KSOURCES, if_missing=None)
 
 class JRNLFUND(Schema):
@@ -465,7 +475,7 @@ class INVPOS(Schema):
     units = DecimalConverter()
     unitprice = DecimalConverter()
     mktval = DecimalConverter()
-    dtpriceasof = OFXDtConverter()
+    dtpriceasof = OFXDatetimeConverter()
     memo = validators.String(max=255, if_missing=None)
     inv401ksource = validators.OneOf(INV401KSOURCES, if_missing=None)
 
