@@ -95,6 +95,7 @@ class OFXDtConverter(api.FancyValidator):
             raise ValueError # FIXME
         return value
 
+
 # Validators specifying allowed item types in the XXXLIST aggregates
 BANKTRANLISTitem = validators.OneOf(('STMTTRN',))
 

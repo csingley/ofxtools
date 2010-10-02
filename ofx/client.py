@@ -6,6 +6,7 @@ import urllib2
 import os
 import ConfigParser
 from cStringIO import StringIO
+import re
 
 import valid
 from parser import OFXParser
@@ -21,8 +22,8 @@ ACCT_DEFAULTS = {'checking': '', 'savings': '', 'moneymrkt': '',
                 'creditline': '', 'creditcard': '', 'investment': '',}
 STMT_DEFAULTS = {'inctran': True, 'dtstart': None, 'dtend': None,
                 'incpos': True, 'dtasof': None, 'incbal': True, }
-UI_DEFAULTS = {'list': False, 'dry_run': False, 'from_config': None,
-                'archive': True, 'dir': None,}
+UI_DEFAULTS = {'list': False, 'dry_run': False, 'profile': False,
+                'from_config': None, 'archive': True, 'dir': None,}
 
 
 class OFXClient(object):
@@ -30,6 +31,11 @@ class OFXClient(object):
     defaults = APP_DEFAULTS.copy()
     defaults.update(FI_DEFAULTS)
     defaults.update(STMT_DEFAULTS)
+
+    acct_re = re.compile(r'([\w.\-/]{1,22})')
+    bankpair_re = re.compile(r'\(([\w.\-/]{1,9}),\s*([\w.\-/]{1,22})\)')
+    pair_re = re.compile(r'\(([\w.\-/]{1,22}),\s*([\w.\-/]{1,22})\)')
+    naked_re = re.compile(r'(\b)([\w.\-/]{1,22})')
 
     def __init__(self, **kwargs):
         for (name, value) in self.defaults.iteritems():
@@ -75,6 +81,18 @@ class OFXClient(object):
             msgset = getattr(self, msgset, None)
             if msgset:
                 ofx.append(msgset)
+        self.request = request = self.header + tostring(ofx)
+        return request
+
+    def request_profile(self):
+        ofx = Element('OFX')
+        self.request_signon(user='elmerfudd', password='TOPSECRET')
+        ofx.append(self.signon)
+        msgsrq = Element('PROFMSGSRQV1')
+        profrq = self.wrap_request(msgsrq, 'PROFRQ')
+        SubElement(profrq, 'CLIENTROUTING').text = 'NONE'
+        SubElement(profrq, 'DTPROFUP').text = dtconverter.from_python(datetime.date(1990,1,1))
+        ofx.append(msgsrq)
         self.request = request = self.header + tostring(ofx)
         return request
 
@@ -232,6 +250,18 @@ class OFXClient(object):
         SubElement(inctran, 'INCLUDE').text = stringbool.from_python(include)
         return inctran
 
+    def parse_bank(self, accttype, string):
+        # FIXME - it would be nice to be able to mix&match the two styles
+        # within a single line.
+        accts = self.bankpair_re.findall(string) or self.naked_re.findall(string)
+        return [(accttype.upper(), acct[0] or self.bankid, acct[1])
+                for acct in accts]
+
+    def parse_cc(self, string):
+        return self.acct_re.findall(string)
+
+    def parse_inv(self, string):
+        return [(self.brokerid, acct) for acct in self.acct_re.findall(string)]
 
 def init_optionparser():
     from optparse import OptionParser, OptionGroup
@@ -247,6 +277,8 @@ def init_optionparser():
                         help='list known institutions and exit')
     optparser.add_option('-n', '--dry-run', action='store_true',
                         help='display OFX request and exit')
+    optparser.add_option('-P', '--profile', action='store_true',
+                        help='request OFX server profile')
     optparser.add_option('-f', '--from-config', metavar='FILE', help='use alternate config file')
     optparser.add_option('-a', '--no-archive', dest='archive', action='store_false',
                         help="don't archive OFX downloads to file")
@@ -338,11 +370,12 @@ def main():
     options = options.__dict__
 
     # Meta options for controlling the UI itself.
-    ui_opts = dict([(option,options.pop(option)) for option in UI_DEFAULTS.keys()])
+    ui_opts = dict([(option,options.pop(option))
+                for option in UI_DEFAULTS.keys()])
 
     # Options which can be controlled by either UI or config file.
     # Defaults are empty strings i.e. no input; fall back to config.
-    acct_opts = dict([(option, options.pop(option) or config.get(fi, option)) \
+    acct_opts = dict([(option, options.pop(option) or config.get(fi, option))
                 for option in ACCT_DEFAULTS.keys() + ['user',]])
 
     # Remaining optparse options should be statement options, which are only
@@ -360,18 +393,12 @@ def main():
 
     ### CONSTRUCT OFX REQUEST
     # Parse account strings
-    bankid = client.bankid
-    brokerid = client.brokerid
-
     bank_accts = []
     for accttype in ('checking', 'savings', 'moneymrkt', 'creditline'):
-        accts  = parse_accts(acct_opts[accttype])
-        bank_accts += [(accttype.upper(), acct[0] or bankid, acct[1])
-                        for acct in accts]
+        bank_accts += client.parse_bank(accttype, acct_opts[accttype])
 
-    cc_accts = acct_re.findall(acct_opts['creditcard'])
-    inv_accts = [(brokerid, acct)
-                    for acct in acct_re.findall(acct_opts['investment'])]
+    cc_accts = client.parse_cc(acct_opts['creditcard'])
+    inv_accts = client.parse_inv(acct_opts['investment'])
 
     # Create STMTRQ aggregates
     if bank_accts:
@@ -385,9 +412,16 @@ def main():
     if ui_opts['dry_run']:
         print client.write_request(acct_opts['user'], 'TOPSECRETPASSWORD')
         return
+    elif ui_opts['profile']:
+        client.request_profile()
+        archive_file = 'profile.ofx'
+    else:
+        password = getpass()
+        client.write_request(user=acct_opts['user'], password=password)
+        # FIXME - ought to use DTCLIENT from the SONRQ here
+        archive_file = '%s.ofx' % datetime.datetime.now().strftime('%Y%m%d%H%M%S')
 
-    password = getpass()
-    response = client.download(user=acct_opts['user'], password=password)
+    response = client.download()
 
     if ui_opts['archive']:
         # Parse response to check for errors before saving to archive.
@@ -402,10 +436,9 @@ def main():
 
         # Archive to disk
         archive_dir = _(ui_opts['dir'] or os.path.join(config.get('global', 'dir'), fi))
-        timestamp = ofxparser.signon.dtserver.strftime('%Y%m%d%H%M%S')
         if not os.path.exists(archive_dir):
             os.makedirs(archive_dir)
-        archive_path = os.path.join(archive_dir, '%s.ofx' % timestamp)
+        archive_path = os.path.join(archive_dir, archive_file)
         with open(archive_path, 'w') as archive:
             archive.write(response.read())
     else:
