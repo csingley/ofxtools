@@ -424,16 +424,6 @@ def main():
     response = client.download()
 
     if ui_opts['archive']:
-        # Parse response to check for errors before saving to archive.
-        ofxparser = OFXParser()
-        errors = ofxparser.parse(response)
-        # Rewind source again after parsing
-        response.seek(0)
-        if errors:
-            # FIXME
-            print response.read()
-            raise ValueError("OFX download errors: '%s'" % str(errors))
-
         # Archive to disk
         archive_dir = _(ui_opts['dir'] or os.path.join(config.get('global', 'dir'), fi))
         if not os.path.exists(archive_dir):
