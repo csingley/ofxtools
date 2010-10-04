@@ -35,13 +35,6 @@ class OFXGui(QtGui.QMainWindow, Ui_MainWindow):
 
         self.connect(self.actionExit, QtCore.SIGNAL('triggered()'), QtCore.SLOT('close()'))
 
-        # FI configs
-
-        #self.connect(self.fi, QtCore.SIGNAL('activated(QString)'), self.from_config)
-
-        #self.setup_archive()
-
-
     def setup_fi(self):
         self.fi.addItems(self.config.fi_index)
         self.fi_name = self.fi.currentText()
