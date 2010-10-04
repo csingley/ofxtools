@@ -56,9 +56,6 @@ class OFXGui(QtGui.QMainWindow, Ui_MainWindow):
                 continue
             self.write_widget(widget, value)
 
-    #def setup_archive(self):
-        #self.archive.setText(self.config.archive_dir)
-
     @QtCore.pyqtSlot()
     def on_actionConfig_triggered(self):
         dir =  _(os.path.join('~','.pyofx'))
@@ -167,10 +164,20 @@ class OFXGui(QtGui.QMainWindow, Ui_MainWindow):
             widget.setChecked(value)
         elif isinstance(widget, QtGui.QDateTimeEdit):
             # FIXME
-            assert value is None
-            pass
+            if value is None:
+                now = QtCore.QDateTime.currentDateTime()
+                if widget == self.dtstart:
+                    value = now.addYears(-1)
+                elif widget == self.dtend:
+                    value = now
+                elif widget == self.dtasof:
+                    value = now
+                else:
+                    raise ValueError
+                widget.setDateTime(value)
+            else:
+                raise ValueError
         else:
-            print option
             # FIXME
             raise ValueError
 
