@@ -715,6 +715,7 @@ def main():
     if len(args) != 1:
         optparser.print_usage()
     FILE = args[0]
+
     ofxparser = OFXParser(verbose=options.verbose)
     errors = ofxparser.parse(FILE)
     print errors

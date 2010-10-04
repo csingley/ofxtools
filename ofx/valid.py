@@ -7,23 +7,6 @@ from formencode import api, validators, Schema
 
 import utilities
 
-OFXv1 = ('102', '103')
-OFXv2 = ('203', '211')
-VERSIONS = OFXv1 + OFXv2
-APPIDS = ('QWIN', # Quicken for Windows
-            'QMOFX', # Quicken for Mac
-            'QBW', # QuickBooks for Windows
-            'QBM', # QuickBooks for Mac
-            'Money', # MSFT Money
-            'Money Plus', # MSFT Money Plus
-)
-APPVERS = ('1500', # Quicken 2006/ Money 2006
-            '1600', # Quicken 2007/ Money 2007/ QuickBooks 2006
-            '1700', # Quicken 2008/ Money Plus/ QuickBooks 2007
-            '1800', # Quicken 2009/ QuickBooks 2008
-            '1900', # Quicken 2010/ QuickBooks 2009
-            '2000', # QuickBooks 2010
-)
 HEADER_FIELDS = {'100': ('DATA', 'VERSION', 'SECURITY', 'ENCODING', 'CHARSET',
                         'COMPRESSION', 'OLDFILEUID', 'NEWFILEUID'),}
 
@@ -45,57 +28,6 @@ class DecimalConverter(validators.Number):
         except (InvalidOperation, ValueError):
             raise Invalid(self.message('number', state),
                                 value, state)
-
-#class OFXDatetimeConverter(api.FancyValidator):
-    ## Valid datetime formats given by OFX 3.2.8.2
-    #tz_re = re.compile(r'\[[-+.\d]*:\w*\]')
-    #formats = ('%Y%m%d%H%M%S.%f', '%Y%m%d%H%M%S', '%Y%m%d')
-
-    #def _to_python(self, value, state):
-        ## If it's already there, don't push it.
-        #if isinstance(value, datetime.datetime):
-            #return value
-        ## Pristine copy of input for error reporting
-        #orig_value = value
-        ## Strip out timezone, on which strptime() chokes
-        #match = self.tz_re.search(value)
-        #if match:
-            #tz_delta = match.group().split(':')[0].lstrip('[')
-            #tz_delta = int(Decimal(tz_delta)*3600) # in seconds
-            #value = value[:match.start()]
-        #else:
-            #tz_delta = 0
-
-        ## Try each supported format
-        #for format in self.formats:
-            #try:
-                #value = datetime.datetime.strptime(value, format)
-                #error = False
-                #break
-            #except ValueError:
-                #error = True
-                #continue
-        #if error:
-            #raise ValueError("Datetime '%s' does not match OFX formats %s" % (orig_value, str(self.formats)))
-
-        ## Adjust timezone to GMT
-        #value -= datetime.timedelta(seconds=tz_delta)
-        #return value
-
-    #def _from_python(self, value, state):
-        #""" Input datetime.datetime in local time; output str in GMT. """
-        ## Pristine copy of input for error reporting
-        #orig_value = value
-
-        #try:
-            ## Transform to GMT
-            #value = time.gmtime(time.mktime(value.timetuple()))
-            ## timetuples don't have usec precision
-            ##value = time.strftime('%s[0:GMT]' % self.formats[1], value)
-            #value = time.strftime(self.formats[1], value)
-        #except:
-            #raise ValueError # FIXME
-        #return value
 
 class OFXDatetimeConverter(api.FancyValidator):
     _converter = utilities.OFXDtConverter

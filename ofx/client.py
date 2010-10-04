@@ -10,15 +10,33 @@ import re
 
 from utilities import _, OFXDtConverter, OFXStringBool, BankAcctTypeValidator
 
+OFXv1 = ('102', '103')
+OFXv2 = ('203', '211')
+VERSIONS = OFXv1 + OFXv2
+APPIDS = ('QWIN', # Quicken for Windows
+            'QMOFX', # Quicken for Mac
+            'QBW', # QuickBooks for Windows
+            'QBM', # QuickBooks for Mac
+            'Money', # MSFT Money
+            'Money Plus', # MSFT Money Plus
+)
+APPVERS = ('1500', # Quicken 2006/ Money 2006
+            '1600', # Quicken 2007/ Money 2007/ QuickBooks 2006
+            '1700', # Quicken 2008/ Money Plus/ QuickBooks 2007
+            '1800', # Quicken 2009/ QuickBooks 2008
+            '1900', # Quicken 2010/ QuickBooks 2009
+            '2000', # QuickBooks 2010
+)
+
 APP_DEFAULTS = {'version': '102', 'appid': 'QWIN', 'appver': '1800',}
 FI_DEFAULTS = {'url': '', 'org': '', 'fid': '', 'bankid': '', 'brokerid': '',}
 ACCT_DEFAULTS = {'checking': '', 'savings': '', 'moneymrkt': '',
                 'creditline': '', 'creditcard': '', 'investment': '',}
 STMT_DEFAULTS = {'inctran': True, 'dtstart': None, 'dtend': None,
                 'incpos': True, 'dtasof': None, 'incbal': True, }
-UI_DEFAULTS = {'list': False, 'dry_run': False, 'profile': False,
-                'from_config': None, 'archive': True, 'dir': None,}
-
+GUI_DEFAULTS = {'dry_run': False, 'profile': False, }
+CLI_DEFAULTS = GUI_DEFAULTS.copy()
+CLI_DEFAULTS.update({'list': False, 'from_config': None, 'archive': True, 'dir': None,})
 
 class OFXClient(object):
     """ """
@@ -259,12 +277,30 @@ class OFXClient(object):
     def parse_inv(self, string):
         return [(self.brokerid, acct) for acct in self.acct_re.findall(string)]
 
+    def parse_accounts(self, acct_opts, **stmt_opts):
+        """ Pass in a dict of {accttype: acct string} """
+        bank_accts = []
+        for accttype in ('checking', 'savings', 'moneymrkt', 'creditline'):
+            bank_accts += self.parse_bank(accttype, acct_opts[accttype])
+
+        cc_accts = self.parse_cc(acct_opts['creditcard'])
+        inv_accts = self.parse_inv(acct_opts['investment'])
+
+        # Create STMTRQ aggregates
+        if bank_accts:
+            self.request_bank(bank_accts, **stmt_opts)
+        if cc_accts:
+            self.request_creditcard(cc_accts, **stmt_opts)
+        if inv_accts:
+            self.request_investment(inv_accts, **stmt_opts)
+
+
 def init_optionparser():
     from optparse import OptionParser, OptionGroup
 
     usage = "usage: %prog [options] institution"
     optparser = OptionParser(usage=usage)
-    defaults = UI_DEFAULTS.copy()
+    defaults = CLI_DEFAULTS.copy()
     defaults.update(STMT_DEFAULTS)
     defaults.update(ACCT_DEFAULTS)
     defaults['user'] = ''
@@ -366,8 +402,8 @@ def main():
     options = options.__dict__
 
     # Meta options for controlling the UI itself.
-    ui_opts = dict([(option,options.pop(option))
-                for option in UI_DEFAULTS.keys()])
+    cli_opts = dict([(option,options.pop(option))
+                for option in CLI_DEFAULTS.keys()])
 
     # Options which can be controlled by either UI or config file.
     # Defaults are empty strings i.e. no input; fall back to config.
@@ -389,42 +425,30 @@ def main():
 
     ### CONSTRUCT OFX REQUEST
     # Parse account strings
-    bank_accts = []
-    for accttype in ('checking', 'savings', 'moneymrkt', 'creditline'):
-        bank_accts += client.parse_bank(accttype, acct_opts[accttype])
+    client.parse_accounts(acct_opts)
 
-    cc_accts = client.parse_cc(acct_opts['creditcard'])
-    inv_accts = client.parse_inv(acct_opts['investment'])
-
-    # Create STMTRQ aggregates
-    if bank_accts:
-        client.request_bank(bank_accts, **stmt_opts)
-    if cc_accts:
-        client.request_creditcard(cc_accts, **stmt_opts)
-    if inv_accts:
-        client.request_investment(inv_accts, **stmt_opts)
+    user = acct_opts['user']
 
     ### HANDLE REQUEST
-    if ui_opts['dry_run']:
-        print client.write_request(acct_opts['user'], 'TOPSECRET')
+    if cli_opts['dry_run']:
+        print client.write_request(user, 'TOPSECRET')
         return
 
     password = getpass()
 
-    if ui_opts['profile']:
-        #client.request_profile()
-        client.request_profile(user=acct_opts['user'], password=password)
+    if cli_opts['profile']:
+        client.request_profile(user=user, password=password)
         archive_file = 'profile.ofx'
     else:
-        client.write_request(user=acct_opts['user'], password=password)
+        client.write_request(user=user, password=password)
         # FIXME - ought to use DTCLIENT from the SONRQ here
         archive_file = '%s.ofx' % datetime.datetime.now().strftime('%Y%m%d%H%M%S')
 
     response = client.download()
 
-    if ui_opts['archive']:
+    if cli_opts['archive']:
         # Archive to disk
-        archive_dir = _(ui_opts['dir'] or os.path.join(config.get('global', 'dir'), fi))
+        archive_dir = _(cli_opts['dir'] or os.path.join(config.get('global', 'dir'), fi))
         if not os.path.exists(archive_dir):
             os.makedirs(archive_dir)
         archive_path = os.path.join(archive_dir, archive_file)
