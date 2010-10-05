@@ -2,6 +2,12 @@
 import sys
 import os
 
+try:
+    import keyring
+    HAS_KEYRING = True
+except ImportError:
+    HAS_KEYRING = False
+
 import sip
 for api in ('QString', 'QDate', 'QDateTime', 'QTime'):
     sip.setapi(api, 2)
@@ -103,9 +109,7 @@ class OFXGui(QtGui.QMainWindow, Ui_MainWindow):
             msg.exec_()
             return
 
-        password = self.get_password()
-        if password is None:
-            return
+        password = self.get_password(user)
 
         if self.profile.isChecked():
             client.request_profile(user=user, password=password)
@@ -133,7 +137,7 @@ class OFXGui(QtGui.QMainWindow, Ui_MainWindow):
     def popup_response(self, detail):
         msg = QtGui.QMessageBox(self, windowTitle='OFX Response',
                 text='Response received from %s' % self.fi_name,
-                standardButtons=QtGui.QMessageBox.Save | QtGui.QMessageBox.Ok)
+                standardButtons=QtGui.QMessageBox.Save | QtGui.QMessageBox.Discard)
         msg.setDefaultButton(msg.Save)
         msg.setDetailedText(detail)
         return msg.exec_()
@@ -181,19 +185,26 @@ class OFXGui(QtGui.QMainWindow, Ui_MainWindow):
             # FIXME
             raise ValueError
 
-    def get_password(self):
-        diag = QtGui.QInputDialog
-        title = 'Password'
-        label = 'Password for %s' % self.fi_name
-        string = None
-        while string is None:
-            string, ok = diag.getText(self, title, label, mode=QtGui.QLineEdit.Password)
-            if ok is False: # user pressed Cancel
-                return None
-            if string == '':     # user entered nothing
-                string = None
-        return string
-
+    def get_password(self, user):
+        KNOW_PASSWORD = False
+        if HAS_KEYRING:
+            password = keyring.get_password('pyofx_%s' % self.fi_name, user)
+            if password is not None:
+                KNOW_PASSWORD = True
+        if not KNOW_PASSWORD:
+            diag = QtGui.QInputDialog
+            title = 'Password'
+            label = 'Password for %s' % self.fi_name
+            password = None
+            while password is None:
+                password, ok = diag.getText(self, title, label, mode=QtGui.QLineEdit.Password)
+                if ok is False: # user pressed Cancel
+                    return None
+                if password == '':     # user entered nothing
+                    password = None
+            if HAS_KEYRING:
+                keyring.set_password('pyofx_%s' % self.fi_name, user, password)
+        return password
 
 def main():
     app = QtGui.QApplication(sys.argv)
