@@ -5,10 +5,14 @@ from decimal import Decimal
 
 from formencode import api, validators, Schema
 
-import utilities
+from utilities import OFXDtConverter, ISO4217, ISO3166_1a3
 
 HEADER_FIELDS = {'100': ('DATA', 'VERSION', 'SECURITY', 'ENCODING', 'CHARSET',
                         'COMPRESSION', 'OLDFILEUID', 'NEWFILEUID'),}
+
+OFXv1 = ('102', '103')
+OFXv2 = ('203', '211')
+VERSIONS = OFXv1 + OFXv2
 
 # Custom formencode validators
 class OFXStringBool(validators.StringBool):
@@ -30,7 +34,7 @@ class DecimalConverter(validators.Number):
                                 value, state)
 
 class OFXDatetimeConverter(api.FancyValidator):
-    _converter = utilities.OFXDtConverter
+    _converter = OFXDtConverter
 
     def _to_python(self, value, state):
         return self._converter.to_python(value)
@@ -52,38 +56,13 @@ INVTRANLISTitem = validators.OneOf(('BUYDEBT', 'BUYMF', 'BUYOPT', 'BUYOTHER',
 
 POSLISTitem = validators.OneOf(('POSDEBT', 'POSMF', 'POSOPT', 'POSOTHER', 'POSSTOCK'))
 
-# Country codes
-COUNTRY_CODES = ('ABW', 'AFG', 'AGO', 'AIA', 'ALA', 'ALB', 'AND', 'ANT', 'ARE', 'ARG', 'ARM', 'ASM', 'ATA', 'ATF', 'ATG', 'AUS', 'AUT', 'AZE', 'BDI', 'BEL', 'BEN', 'BFA', 'BGD', 'BGR', 'BHR', 'BHS', 'BIH', 'BLM', 'BLR', 'BLZ', 'BMU', 'BOL', 'BRA', 'BRB', 'BRN', 'BTN', 'BVT', 'BWA', 'CAF', 'CAN', 'CCK', 'CHE', 'CHL', 'CHN', 'CIV', 'CMR', 'COD', 'COG', 'COK', 'COL', 'COM', 'CPV', 'CRI', 'CUB', 'CXR', 'CYM', 'CYP', 'CZE', 'DEU', 'DJI', 'DMA', 'DNK', 'DOM', 'DZA', 'ECU', 'EGY', 'ERI', 'ESH', 'ESP', 'EST', 'ETH', 'FIN', 'FJI', 'FLK', 'FRA', 'FRO', 'FSM', 'GAB', 'GBR', 'GEO', 'GGY', 'GHA', 'GIB', 'GIN', 'GLP', 'GMB', 'GNB', 'GNQ', 'GRC', 'GRD', 'GRL', 'GTM', 'GUF', 'GUM', 'GUY', 'HKG', 'HMD', 'HND', 'HRV', 'HTI', 'HUN', 'IDN', 'IMN', 'IND', 'IOT', 'IRL', 'IRN', 'IRQ', 'ISL', 'ISR', 'ITA', 'JAM', 'JEY', 'JOR', 'JPN', 'KAZ', 'KEN', 'KGZ', 'KHM', 'KIR', 'KNA', 'KOR', 'KWT', 'LAO', 'LBN', 'LBR', 'LBY', 'LCA', 'LIE', 'LKA', 'LSO', 'LTU', 'LUX', 'LVA', 'MAC', 'MAF', 'MAR', 'MCO', 'MDA', 'MDG', 'MDV', 'MEX', 'MHL', 'MKD', 'MLI', 'MLT', 'MMR', 'MNE', 'MNG', 'MNP', 'MOZ', 'MRT', 'MSR', 'MTQ', 'MUS', 'MWI', 'MYS', 'MYT', 'NAM', 'NCL', 'NER', 'NFK', 'NGA', 'NIC', 'NIU', 'NLD', 'NOR', 'NPL', 'NRU', 'NZL', 'OMN', 'PAK', 'PAN', 'PCN', 'PER', 'PHL', 'PLW', 'PNG', 'POL', 'PRI', 'PRK', 'PRT', 'PRY', 'PSE', 'PYF', 'QAT', 'REU', 'ROU', 'RUS', 'RWA', 'SAU', 'SDN', 'SEN', 'SGP', 'SGS', 'SHN', 'SJM', 'SLB', 'SLE', 'SLV', 'SMR', 'SOM', 'SPM', 'SRB', 'STP', 'SUR', 'SVK', 'SVN', 'SWE', 'SWZ', 'SYC', 'SYR', 'TCA', 'TCD', 'TGO', 'THA', 'TJK', 'TKL', 'TKM', 'TLS', 'TON', 'TTO', 'TUN', 'TUR', 'TUV', 'TWN', 'TZA', 'UGA', 'UKR', 'UMI', 'URY', 'USA', 'UZB', 'VAT', 'VCT', 'VEN', 'VGB', 'VIR', 'VNM', 'VUT', 'WLF', 'WSM', 'YEM', 'ZAF', 'ZMB', 'ZWE')
-
-# Currency aggregates
-ISO4217codes = ('AE', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD', 'AWG',
-            'AZN', 'BAM', 'BBD', 'BDT', 'BGN', 'BHD', 'BIF', 'BMD', 'BND',
-            'BOB', 'BOV', 'BRL', 'BSD', 'BTN', 'BWP', 'BYR', 'BZD', 'CAD',
-            'CDF', 'CHE', 'CHF', 'CHW', 'CLF', 'CLP', 'CNY', 'COP', 'COU',
-            'CRC', 'CUC', 'CUP', 'CVE', 'CZK', 'DJF', 'DKK', 'DOP', 'DZD',
-            'EEK', 'EGP', 'ERN', 'ETB', 'EUR', 'FJD', 'FKP', 'GBP', 'GEL',
-            'GHS', 'GIP', 'GMD', 'GNF', 'GTQ', 'GYD', 'HKD', 'HNL', 'HRK',
-            'HTG', 'HUF', 'IDR', 'ILS', 'INR', 'IQD', 'IRR', 'ISK', 'JMD',
-            'JOD', 'JPY', 'KES', 'KGS', 'KHR', 'KMF', 'KPW', 'KRW', 'KWD',
-            'KYD', 'KZT', 'LAK', 'LBP', 'LKR', 'LRD', 'LSL', 'LTL', 'LVL',
-            'LYD', 'MAD', 'MDL', 'MGA', 'MKD', 'MMK', 'MNT', 'MOP', 'MRO',
-            'MUR', 'MVR', 'MWK', 'MXN', 'MXV', 'MYR', 'MZN', 'NAD', 'NGN',
-            'NIO', 'NOK', 'NPR', 'NZD', 'OMR', 'PAB', 'PEN', 'PGK', 'PHP',
-            'PKR', 'PLN', 'PYG', 'QAR', 'RON', 'RSD', 'RUB', 'RWF', 'SAR',
-            'SBD', 'SCR', 'SDG', 'SEK', 'SGD', 'SHP', 'SLL', 'SOS', 'SRD',
-            'STD', 'SVC', 'SYP', 'SZL', 'THB', 'TJS', 'TMT', 'TND', 'TOP',
-            'TRY', 'TTD', 'TWD', 'TZS', 'UAH', 'UGX', 'USD', 'USN', 'USS',
-            'UYI', 'UYU', 'UZS', 'VEF', 'VND', 'VUV', 'WST', 'XAF', 'XAG',
-            'XAU', 'XBA', 'XBB', 'XBC', 'XBD', 'XCD', 'XDR', 'XFU', 'XOF',
-            'XPD', 'XPF', 'XPT', 'XTS', 'XXX', 'YER', 'ZAR', 'ZMK', 'ZWL')
-
 class CURRENCY(Schema):
     currate = DecimalConverter()
-    cursym = validators.OneOf(ISO4217codes)
+    cursym = validators.OneOf(ISO4217)
 
 class ORIGCURRENCY(Schema):
     currate = DecimalConverter()
-    cursym = validators.OneOf(ISO4217codes)
+    cursym = validators.OneOf(ISO4217)
 
 # SONRS
 class SONRS(Schema):
@@ -110,7 +89,7 @@ class FI(Schema):
 
 # STMTRS preamble
 class STMTRS(Schema):
-    curdef = validators.OneOf(ISO4217codes)
+    curdef = validators.OneOf(ISO4217)
 
 # BANKTRANLIST preamble
 class BANKTRANLIST(Schema):
@@ -157,7 +136,7 @@ class PAYEE(Schema):
     city = validators.String(max=32)
     state = validators.String(max=5)
     postalcode = validators.String(max=11)
-    country = validators.OneOf(COUNTRY_CODES)
+    country = validators.OneOf(ISO3166_1a3)
     phone = validators.String(max=32)
 
 class BANKACCTFROM(Schema):
@@ -179,7 +158,7 @@ class BAL(Schema):
 
 # CCSTMTRS preamble
 class CCSTMTRS(Schema):
-    curdef = validators.OneOf(ISO4217codes)
+    curdef = validators.OneOf(ISO4217)
 
 class CCACCTFROM(Schema):
     acctid = validators.String(max=22)
@@ -247,7 +226,7 @@ class STOCKINFO(Schema):
 # INVSTMTRS preamble
 class INVSTMTRS(Schema):
     dtasof = OFXDatetimeConverter()
-    curdef = validators.OneOf(ISO4217codes)
+    curdef = validators.OneOf(ISO4217)
 
 class INVACCTFROM(Schema):
     brokerid = validators.String(max=22)

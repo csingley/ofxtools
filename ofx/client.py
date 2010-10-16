@@ -10,9 +10,11 @@ import re
 
 from utilities import _, OFXDtConverter, OFXStringBool, BankAcctTypeValidator
 
+# Copied in here from valid, so we don't need to import it & depend on FormEncode
 OFXv1 = ('102', '103')
 OFXv2 = ('203', '211')
 VERSIONS = OFXv1 + OFXv2
+
 APPIDS = ('QWIN', # Quicken for Windows
             'QMOFX', # Quicken for Mac
             'QBW', # QuickBooks for Windows
