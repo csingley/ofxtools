@@ -4,36 +4,13 @@ import os
 import xml.etree.cElementTree as ET
 from decimal import Decimal
 
-import valid
 import db
 
 HEADER_FIELDS = {'100': ('DATA', 'VERSION', 'SECURITY', 'ENCODING', 'CHARSET',
                         'COMPRESSION', 'OLDFILEUID', 'NEWFILEUID'),}
 
-#"""
-#Quicken will attempt to match securities downloaded in the SECLIST to
-#securities in Quicken using the following logic.
-
-#First, Quicken checks to see if the security has already been matched
-#by comparing the CUSIP or UNIQUEID in the download to the unique
-#identifier stored in the Quicken database. If there is a match, then
-#no additional steps are taken.
-
-#When Quicken does not find a match based on CUSIP, it will compare the
-#downloaded security name to the security names in the file. It will match
-#the security, if it finds an exact match for the security name.
-
-#Next, Quicken compares the ticker downloaded to the symbol for each
-#security. When a ticker in the download matches the symbol for a security
-#in the Quicken database, Quicken matches them. When there is no symbol for
-#the security on the security list, Quicken skips this step. Quicken will
-#proceed to show the security matching dialog.
-
-#When Quicken cannot find a match based on one of the three criteria above,
-#it will show the security matching dialog.
-#"""
-#http://fi.intuit.com/ofximplementation/dl/OFXDataMappingGuide.pdf
-
+OFXv1 = ('102', '103')
+OFXv2 = ('203', '211')
 
 class OFXParser(object):
     """
@@ -119,7 +96,7 @@ class OFXParser(object):
             header[header_key] = header_version
             # Sanity check
             assert header['DATA'] == 'OFXSGML'
-            assert header['VERSION'] in valid.OFXv1
+            assert header['VERSION'] in OFXv1
             #if header['VERSION'] not in valid.OFXv1:
                 #print "OFXv1 header claims OFX version is %s" % header['VERSION']
         elif line1.startswith('<?xml'):
@@ -130,7 +107,7 @@ class OFXParser(object):
             args = ofx_decl[:-3].split(' ')[1:]
             header = dict([arg.split('=') for arg in args])
             # Sanity check
-            assert header['VERSION'] in valid.OFXv2
+            assert header['VERSION'] in OFXv2
         else:
             raise ValueError("Malformed OFX header '%s'" % line1)
 

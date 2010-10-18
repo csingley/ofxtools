@@ -132,7 +132,7 @@ class OFXGui(QtGui.QMainWindow, Ui_MainWindow):
                             directory=archive_path,
                             filter='OFX files (*.ofx);;All files (*)')
             with open(archive_path, 'w') as archive:
-                archive.write(detail)
+                archive.write(response.read())
 
     def popup_response(self, detail):
         msg = QtGui.QMessageBox(self, windowTitle='OFX Response',
