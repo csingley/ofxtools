@@ -7,9 +7,6 @@ from formencode import api, validators, Schema
 
 from utilities import OFXDtConverter, ISO4217, ISO3166_1a3
 
-HEADER_FIELDS = {'100': ('DATA', 'VERSION', 'SECURITY', 'ENCODING', 'CHARSET',
-                        'COMPRESSION', 'OLDFILEUID', 'NEWFILEUID'),}
-
 OFXv1 = ('102', '103')
 OFXv2 = ('203', '211')
 VERSIONS = OFXv1 + OFXv2

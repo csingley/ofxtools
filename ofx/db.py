@@ -39,6 +39,14 @@ class OFXDateTime(types.TypeDecorator):
         return OFXDtConverter.to_python(value)
 
 
+class TRANLOG(Entity):
+    trnuid = Field(String(36), required=True)
+    dtstart = Field(OFXDateTime, required=True)
+    dtend = Field(OFXDateTime, required=True)
+
+    trans = OneToMany('TRAN')
+
+
 # Accounts
 class ACCT(Entity):
     using_options(inheritance='multi')
@@ -47,7 +55,7 @@ class ACCT(Entity):
     curdef = Field(Enum(*ISO4217), required=True)
 
     fibals = OneToMany('FIBAL')
-    stmttrns = OneToMany('STMTTRN')
+    trans = OneToMany('TRAN')
 
 
 class BANKACCT(ACCT):
@@ -76,7 +84,6 @@ class INVACCT(ACCT):
 
     bals = OneToMany('INVBAL')
     invposs = OneToMany('INVPOS')
-    invtrans = OneToMany('INVTRAN')
 
 
 # Balances
@@ -133,7 +140,17 @@ class PAYEE(Entity):
     stmttrns = OneToMany('STMTTRN')
 
 
-class STMTTRN(Entity):
+class TRAN(Entity):
+    using_options(inheritance='multi')
+
+    fitid = Field(String(255), required=True)
+    srvrtid = Field(String(10))
+
+    acct = ManyToOne('ACCT', required=True)
+    log = ManyToOne('TRANLOG', required=True)
+
+
+class STMTTRN(TRAN):
     using_options(inheritance='multi')
 
     trntype = Field(Enum('CREDIT', 'DEBIT', 'INT', 'DIV', 'FEE', 'SRVCHG', 'DEP', 'ATM', 'POS', 'XFER', 'CHECK', 'PAYMENT', 'CASH', 'DIRECTDEP', 'DIRECTDEBIT', 'REPEATPMT', 'OTHER'), required=True)
@@ -141,18 +158,13 @@ class STMTTRN(Entity):
     dtuser = Field(OFXDateTime)
     dtavail = Field(OFXDateTime)
     trnamt = Field(OFXDecimal, required=True)
-    fitid = Field(String(255), required=True)
     correctfitid = Field(OFXDecimal)
     correctaction = Field(Enum('REPLACE', 'DELETE'))
-    srvrtid = Field(String(10))
     checknum = Field(String(12))
     refnum = Field(String(32))
     sic = Field(Integer)
     payeeid = Field(String(12))
     name = Field(String(32))
-    payee = ManyToOne('PAYEE')
-    bankacctto = ManyToOne('BANKACCT')
-    ccacctto = ManyToOne('CCACCT')
     memo = Field(String(255))
     cursym = Field(Enum(*ISO4217))
     currate = Field(OFXDecimal(8))
@@ -160,7 +172,9 @@ class STMTTRN(Entity):
     origcurrate = Field(OFXDecimal(8))
     inv401ksource = Field(Enum(*INV401KSOURCES))
 
-    acct = ManyToOne('ACCT', required=True)
+    payee = ManyToOne('PAYEE')
+    bankacctto = ManyToOne('BANKACCT')
+    ccacctto = ManyToOne('CCACCT')
 
 
 class INVBANKTRAN(STMTTRN):
@@ -169,15 +183,13 @@ class INVBANKTRAN(STMTTRN):
     subacctfund = Field(Enum(*INVSUBACCTS), required=True)
 
 
-class INVTRAN(Entity):
-    fitid = Field(String(255), required=True)
-    srvrtid = Field(String(10))
+class INVTRAN(TRAN):
+    using_options(inheritance='multi')
+
     dttrade = Field(OFXDateTime, required=True)
     dtsettle = Field(OFXDateTime)
     reversalfitid = Field(String(255))
     memo = Field(String(255))
-
-    acct = ManyToOne('INVACCT', required=True)
 
 
 class INVBUY(INVTRAN):
@@ -556,7 +568,7 @@ class SECPRICE(Entity):
     currate = Field(OFXDecimal(8))
 
     sec = ManyToOne('SECINFO', required=True)
-    #invpos = OneToOne('INVPOS')
+    invpos = ManyToOne('INVPOS')
 
 
 # Positions
@@ -575,7 +587,7 @@ class INVPOS(Entity):
     inv401ksource = Field(Enum(*INV401KSOURCES))
 
     acct = ManyToOne('INVACCT', required=True)
-    #secprice = OneToOne('SECPRICE')
+    secprice = OneToOne('SECPRICE')
 
 
 class POSDEBT(INVPOS):

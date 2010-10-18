@@ -1,10 +1,14 @@
 #!/usr/bin/env python
+import sys
 import os
 import xml.etree.cElementTree as ET
 from decimal import Decimal
 
 import valid
 import db
+
+HEADER_FIELDS = {'100': ('DATA', 'VERSION', 'SECURITY', 'ENCODING', 'CHARSET',
+                        'COMPRESSION', 'OLDFILEUID', 'NEWFILEUID'),}
 
 #"""
 #Quicken will attempt to match securities downloaded in the SECLIST to
@@ -52,43 +56,32 @@ class OFXParser(object):
         assert root.tag == 'OFX'
 
         sonrs = root.find('SIGNONMSGSRSV1/SONRS')
-        # FIXME - handle errors
-        self.flatten(sonrs)
+        self.handleSTATUS(sonrs.find('STATUS'))
 
         stmttrnrs = root.find('BANKMSGSRSV1/STMTTRNRS')
         if stmttrnrs:
-            # FIXME - handle errors
-            self.flatten(stmttrnrs)
-            stmtrs = stmttrnrs.find('STMTRS')
-            self.handleSTMTRS(stmtrs)
+            trnuid = stmttrnrs.find('TRNUID').text
+            self.handleSTATUS(stmttrnrs.find('STATUS'))
+            stmtrss = stmttrnrs.findall('STMTRS')
+            for stmtrs in stmtrss:
+                self.handleSTMTRS(stmtrs, trnuid)
 
         ccstmttrnrs = root.find('CREDITCARDMSGSRSV1/CCSTMTTRNRS')
         if ccstmttrnrs:
-            # FIXME - handle errors
-            self.flatten(ccstmttrnrs)
-            stmtrs = stmttrnrs.find('STMTRS')
-            self.handleSTMTRS(ccstmtrs)
+            trnuid = stmttrnrs.find('TRNUID').text
+            self.handleSTATUS(ccstmttrnrs.find('STATUS'))
+            stmtrss = stmttrnrs.findall('STMTRS')
+            for stmtrs in stmtrss:
+                self.handleSTMTRS(ccstmtrs, trnuid)
 
         seclist = root.find('SECLISTMSGSRSV1/SECLIST')
         invstmttrnrs = root.find('INVSTMTMSGSRSV1/INVSTMTTRNRS')
         if invstmttrnrs:
-            # FIXME - handle errors
-            self.flatten(invstmttrnrs)
-            invstmtrs = invstmttrnrs.find('INVSTMTRS')
-            self.handleINVSTMTRS(invstmtrs, seclist)
-
-        #errors = {}
-        #if signon.code:
-            #errors.update({'signon':{'code': signon.code, 'severity': signon.severity, 'message': signon.message}})
-
-        #for msg in ('bank', 'creditcard', 'investment'):
-            #stmt = getattr(self, '%s_statement' % msg)
-            #if stmt and stmt.code:
-                #d = dict([(tag, getattr(stmt, tag)) \
-                            #for tag in ('code', 'severity', 'message')])
-                #errors.update({msg: d})
-
-        #return errors
+            trnuid = invstmttrnrs.find('TRNUID').text
+            self.handleSTATUS(invstmttrnrs.find('STATUS'))
+            invstmtrss = invstmttrnrs.findall('INVSTMTRS')
+            for invstmtrs in invstmtrss:
+                self.handleINVSTMTRS(invstmtrs, seclist, trnuid)
 
     def unwrapOFX(self, source):
         """ Pass in an open file-like object """
@@ -122,7 +115,7 @@ class OFXParser(object):
             # Header is 9 lines of flat text (not markup) that we strip
             header_key, header_version = validateOFXv1Header(line1, 'OFXHEADER')
             header = dict([validateOFXv1Header(source.readline(), f) \
-                    for f in valid.HEADER_FIELDS[header_version]])
+                    for f in HEADER_FIELDS[header_version]])
             header[header_key] = header_version
             # Sanity check
             assert header['DATA'] == 'OFXSGML'
@@ -202,31 +195,45 @@ class OFXParser(object):
         leaves.update(aggregates)
         return leaves
 
-    def handleSTMTRS(self, stmtrs):
+    def handleSTATUS(self, status):
+        attrs = self.flatten(status)
+        severity = attrs['severity']
+        assert severity in ('INFO', 'WARN', 'ERROR')
+        if severity == 'ERROR':
+            # FIXME - handle errors
+            pass
+        elif severity == 'WARN':
+            # FIXME - handle errors
+            pass
+
+    def handleSTMTRS(self, stmtrs, trnuid):
         acct_attrs = {'curdef': stmtrs.find('CURDEF').text,}
         acct_attrs.update(self.flatten(stmtrs.find('BANKACCTFROM')))
-        self.acct = db.BANKACCT(**acct_attrs)
+        acct = db.BANKACCT(**acct_attrs)
 
         # BANKTRANLIST
         tranlist = stmtrs.find('BANKTRANLIST')
         if tranlist:
-            self.dtstart, self.dtend = dtstart, dtend = tranlist[0:2]
+            dtstart, dtend = tranlist[0:2]
             tranlist.remove(dtstart)
             tranlist.remove(dtend)
+            log = db.TRANLOG(trnuid=trnuid, dtstart=dtstart.text, dtend=dtend.text)
             for tran in tranlist:
                 attrs = self.flatten(tran)
-                # Add FK for Account
-                attrs['acct'] = self.acct
+                # Add FKs for ACCT, TRANLOG
+                attrs['acct'] = acct
+                attrs['log'] = log
                 db.STMTTRN(**attrs)
 
         # LEDGERBAL - mandatory
         ledgerbal = stmtrs.find('LEDGERBAL')
         attrs = self.flatten(ledgerbal)
         attrs['ledgerbal'] = attrs.pop('balamt')
-        attrs['acct'] = self.acct
+        attrs['acct'] = acct
         # AVAILBAL
         availbal = stmtrs.find('AVAILBAL')
         if availbal:
+            # FIXME - check that AVAILBAL.DTASOF matches LEDGERBAL.DTASOF
             attrs['availbal'] = availbal.find('BALAMT').text
         db.BANKBAL(**attrs)
 
@@ -235,10 +242,10 @@ class OFXParser(object):
         if ballist:
             for fibal in ballist:
                 attrs = self.flatten(fibal)
-                attrs['acct'] = self.acct
+                attrs['acct'] = acct
                 db.FIBAL(**attrs)
 
-    def handleINVSTMTRS(self, stmtrs, seclist):
+    def handleINVSTMTRS(self, stmtrs, seclist, trnuid):
         # Create Securities instances, and store in a map of
         #  (uniqueidtype, uniqueid) -> Security for quick lookup
         if seclist is not None:
@@ -250,27 +257,34 @@ class OFXParser(object):
         self.dtasof = stmtrs.find('DTASOF').text
         acct_attrs = {'curdef': stmtrs.find('CURDEF').text,}
         acct_attrs.update(self.flatten(stmtrs.find('INVACCTFROM')))
-        self.acct = db.INVACCT(**acct_attrs)
+        acct = db.INVACCT(**acct_attrs)
 
         # INVTRANLIST
         tranlist = stmtrs.find('INVTRANLIST')
         if tranlist:
-            self.dtstart, self.dtend = dtstart, dtend = tranlist[0:2]
+            dtstart, dtend = tranlist[0:2]
             tranlist.remove(dtstart)
             tranlist.remove(dtend)
+            log = db.TRANLOG(trnuid=trnuid, dtstart=dtstart.text, dtend=dtend.text)
             invbanktrans = tranlist.findall('INVBANKTRAN')
             for invbanktran in invbanktrans:
                 tranlist.remove(invbanktran)
-                stmttrn = invbanktran[0]
-                attrs = self.flatten(stmttrn)
-                attrs['acct'] = self.acct
-                db.STMTTRN(**attrs)
+                attrs = self.flatten(invbanktran)
+                attrs['acct'] = acct
+                attrs['log'] = log
+                db.INVBANKTRAN(**attrs)
             for trn in tranlist:
                 secClass = getattr(db, trn.tag)
                 attrs = self.flatten(trn)
-                if 'uniqueid' in attrs:
-                    attrs['sec'] = self.secs[(attrs.pop('uniqueidtype'), attrs.pop('uniqueid'))]
-                attrs['acct'] = self.acct
+                #if 'uniqueid' in attrs:
+                if issubclass(secClass, (db.INVBUY, db.INVSELL, db.CLOSUREOPT,
+                                        db.INCOME, db.INVEXPENSE, db.JRNLSEC,
+                                        db.REINVEST, db.RETOFCAP, db.SPLIT,
+                                        db.TRANSFER)):
+                    attrs['sec'] = self.secs[(attrs.pop('uniqueidtype'),
+                                                attrs.pop('uniqueid'))]
+                attrs['acct'] = acct
+                attrs['log'] = log
                 secClass(**attrs)
 
         # INVPOSLIST
@@ -279,7 +293,7 @@ class OFXParser(object):
             for pos in poslist:
                 secClass = getattr(db, pos.tag)
                 attrs = self.flatten(pos)
-                attrs['acct'] = self.acct
+                attrs['acct'] = acct
                 sec = attrs['sec'] = self.secs[(attrs.pop('uniqueidtype'), attrs.pop('uniqueid'))]
 
                 # Strip out pricing data from the positions
@@ -299,10 +313,10 @@ class OFXParser(object):
                 invbal.remove(ballist)
                 for fibal in ballist:
                     attrs = self.flatten(fibal)
-                    attrs['acct'] = self.acct
+                    attrs['acct'] = acct
                     db.FIBAL(**attrs)
             attrs = self.flatten(invbal)
-            attrs['acct'] = self.acct
+            attrs['acct'] = acct
             attrs['dtasof'] = self.dtasof
             db.INVBAL(**attrs)
 
@@ -406,7 +420,7 @@ class OFXTreeBuilder(SGMLParser):
 
     def handle_data(self, text):
         #text = text.strip('\f\n\r\t\v') # Strip whitespace, except space char
-        text = text.strip
+        text = text.strip()
         if text:
             if self.verbose:
                 msg = "handle_data adding data '%s'" % text
@@ -502,6 +516,7 @@ def main():
     (options, args) = optparser.parse_args()
     if len(args) != 1:
         optparser.print_usage()
+        sys.exit(-1)
     FILE = args[0]
 
     import elixir
@@ -510,11 +525,10 @@ def main():
     elixir.create_all()
 
     ofxparser = OFXParser(verbose=options.verbose)
-    errors = ofxparser.parse(FILE)
+    ofxparser.parse(FILE)
 
     elixir.session.commit()
 
-    print errors
 
 if __name__ == '__main__':
     main()
