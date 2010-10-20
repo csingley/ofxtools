@@ -4,63 +4,45 @@ import os
 import xml.etree.cElementTree as ET
 from decimal import Decimal
 
-import db
+try:
+    import elixir
+    HAS_ELIXIR = True
+except ImportError:
+    HAS_ELIXIR = False
+else:
+    import db
+
+from utilities import OFXv1, OFXv2
 
 HEADER_FIELDS = {'100': ('DATA', 'VERSION', 'SECURITY', 'ENCODING', 'CHARSET',
                         'COMPRESSION', 'OLDFILEUID', 'NEWFILEUID'),}
-
-OFXv1 = ('102', '103')
-OFXv2 = ('203', '211')
 
 class OFXParser(object):
     """
     Reads OFX files (v1 & v2), converts to ElementTree, and extracts the
     interesting data to a SQL database.
     """
-    def __init__(self, verbose=False):
+    def __init__(self, verbose=False, url=None):
         self.reset()
         self.verbose = verbose
+        self.url = url
 
     def reset(self):
         self.header = None
         self.tree = ET.ElementTree()
+        self.connection = None
 
     def parse(self, source):
         if not hasattr(source, 'read'):
             source = open(source, 'rb')
-        self.header, source = self.unwrapOFX(source)
+        self.header, source = self.unwrap(source)
         root = self._parse(source)
         assert root.tag == 'OFX'
 
-        sonrs = root.find('SIGNONMSGSRSV1/SONRS')
-        self.handleSTATUS(sonrs.find('STATUS'))
+        if HAS_ELIXIR:
+            self.translate()
 
-        stmttrnrs = root.find('BANKMSGSRSV1/STMTTRNRS')
-        if stmttrnrs:
-            trnuid = stmttrnrs.find('TRNUID').text
-            self.handleSTATUS(stmttrnrs.find('STATUS'))
-            stmtrss = stmttrnrs.findall('STMTRS')
-            for stmtrs in stmtrss:
-                self.handleSTMTRS(stmtrs, trnuid)
-
-        ccstmttrnrs = root.find('CREDITCARDMSGSRSV1/CCSTMTTRNRS')
-        if ccstmttrnrs:
-            trnuid = stmttrnrs.find('TRNUID').text
-            self.handleSTATUS(ccstmttrnrs.find('STATUS'))
-            stmtrss = stmttrnrs.findall('STMTRS')
-            for stmtrs in stmtrss:
-                self.handleSTMTRS(ccstmtrs, trnuid)
-
-        seclist = root.find('SECLISTMSGSRSV1/SECLIST')
-        invstmttrnrs = root.find('INVSTMTMSGSRSV1/INVSTMTTRNRS')
-        if invstmttrnrs:
-            trnuid = invstmttrnrs.find('TRNUID').text
-            self.handleSTATUS(invstmttrnrs.find('STATUS'))
-            invstmtrss = invstmttrnrs.findall('INVSTMTRS')
-            for invstmtrs in invstmtrss:
-                self.handleINVSTMTRS(invstmtrs, seclist, trnuid)
-
-    def unwrapOFX(self, source):
+    def unwrap(self, source):
         """ Pass in an open file-like object """
         def next_nonempty_line(source):
             FOUND_CONTENT = False
@@ -139,6 +121,49 @@ class OFXParser(object):
         else:
             root = self.tree.parse(source, parser)
         return root
+
+    def translate(self):
+        engine = elixir.sqlalchemy.create_engine(self.url or 'sqlite://',
+                                                echo=self.verbose)
+        self.connection = engine.connect()
+        elixir.metadata.bind = self.connection
+        elixir.setup_all()
+        elixir.create_all()
+
+        try:
+            sonrs = self.tree.find('SIGNONMSGSRSV1/SONRS')
+            self.handleSTATUS(sonrs.find('STATUS'))
+
+            stmttrnrs = self.tree.find('BANKMSGSRSV1/STMTTRNRS')
+            if stmttrnrs:
+                trnuid = stmttrnrs.find('TRNUID').text
+                self.handleSTATUS(stmttrnrs.find('STATUS'))
+                stmtrss = stmttrnrs.findall('STMTRS')
+                for stmtrs in stmtrss:
+                    self.handleSTMTRS(stmtrs, trnuid)
+
+            ccstmttrnrs = self.tree.find('CREDITCARDMSGSRSV1/CCSTMTTRNRS')
+            if ccstmttrnrs:
+                trnuid = stmttrnrs.find('TRNUID').text
+                self.handleSTATUS(ccstmttrnrs.find('STATUS'))
+                stmtrss = stmttrnrs.findall('STMTRS')
+                for stmtrs in stmtrss:
+                    self.handleSTMTRS(ccstmtrs, trnuid)
+
+            seclist = self.tree.find('SECLISTMSGSRSV1/SECLIST')
+
+            invstmttrnrs = self.tree.find('INVSTMTMSGSRSV1/INVSTMTTRNRS')
+            if invstmttrnrs:
+                trnuid = invstmttrnrs.find('TRNUID').text
+                self.handleSTATUS(invstmttrnrs.find('STATUS'))
+                invstmtrss = invstmttrnrs.findall('INVSTMTRS')
+                for invstmtrs in invstmtrss:
+                    self.handleINVSTMTRS(invstmtrs, seclist, trnuid)
+        except:
+            elixir.session.rollback()
+            raise
+        else:
+            elixir.session.commit()
 
     def flatten(self, element):
         """
@@ -487,25 +512,20 @@ class OFXTreeBuilder_sgmlop(object):
 def main():
     from optparse import OptionParser
     optparser = OptionParser(usage='usage: %prog FILE')
-    optparser.set_defaults(verbose=False,)
+    optparser.set_defaults(verbose=False, database=None)
     optparser.add_option('-v', '--verbose', action='store_true',
-                        help='Turn on parser debug output')
+                        help='Turn on debug output')
+    optparser.add_option('-d', '--database',
+                        help='URL of persistent database')
     (options, args) = optparser.parse_args()
     if len(args) != 1:
         optparser.print_usage()
         sys.exit(-1)
     FILE = args[0]
 
-    import elixir
-    elixir.metadata.bind = "sqlite:///test.sqlite"
-    elixir.setup_all()
-    elixir.create_all()
-
-    ofxparser = OFXParser(verbose=options.verbose)
+    ofxparser = OFXParser(verbose=options.verbose,
+                        url=options.database)
     ofxparser.parse(FILE)
-
-    elixir.session.commit()
-
 
 if __name__ == '__main__':
     main()

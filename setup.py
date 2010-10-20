@@ -6,7 +6,9 @@ setup(
     version = "0.1",
     packages = find_packages(),
 
-    install_requires = ['formencode>=1.0'],
+    install_requires = ['sqlalchemy >= 0.6',
+                        'elixir >= 0.7',
+    ],
 
     # Metadata for PyPI
     author = "Christopher Singley",

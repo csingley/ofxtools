@@ -12,6 +12,9 @@ def _(path):
     path = os.path.abspath(path)
     return path
 
+OFXv1 = ('102', '103')
+OFXv2 = ('203', '211')
+
 # Currency codes
 ISO4217 = ('AE', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD', 'AWG',
             'AZN', 'BAM', 'BBD', 'BDT', 'BGN', 'BHD', 'BIF', 'BMD', 'BND',

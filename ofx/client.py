@@ -8,10 +8,9 @@ import ConfigParser
 from cStringIO import StringIO
 import re
 
-from utilities import _, OFXDtConverter, OFXStringBool, BankAcctTypeValidator
+from utilities import _, OFXDtConverter, OFXStringBool, BankAcctTypeValidator, OFXv1, OFXv2
 
-OFXv1 = ('102', '103')
-OFXv2 = ('203', '211')
+
 VERSIONS = OFXv1 + OFXv2
 
 APPIDS = ('QWIN', # Quicken for Windows

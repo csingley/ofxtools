@@ -40,6 +40,8 @@ class OFXDateTime(types.TypeDecorator):
 
 
 class TRANLOG(Entity):
+    using_options(tablename='tranlog')
+
     trnuid = Field(String(36), required=True)
     dtstart = Field(OFXDateTime, required=True)
     dtend = Field(OFXDateTime, required=True)
@@ -49,7 +51,7 @@ class TRANLOG(Entity):
 
 # Accounts
 class ACCT(Entity):
-    using_options(inheritance='multi')
+    using_options(tablename='acct', inheritance='multi')
 
     acctid = Field(String(22), required=True)
     curdef = Field(Enum(*ISO4217), required=True)
@@ -59,7 +61,7 @@ class ACCT(Entity):
 
 
 class BANKACCT(ACCT):
-    using_options(inheritance='multi')
+    using_options(tablename='bankacct', inheritance='multi')
 
     bankid = Field(String(9), required=True)
     branchid = Field(String(22))
@@ -70,7 +72,7 @@ class BANKACCT(ACCT):
 
 
 class CCACCT(ACCT):
-    using_options(inheritance='multi')
+    using_options(tablename='ccacct', inheritance='multi')
 
     acctkey = Field(String(22))
 
@@ -78,7 +80,7 @@ class CCACCT(ACCT):
 
 
 class INVACCT(ACCT):
-    using_options(inheritance='multi')
+    using_options(tablename='invacct', inheritance='multi')
 
     brokerid = Field(String(22), required=True)
 
@@ -88,6 +90,8 @@ class INVACCT(ACCT):
 
 # Balances
 class BANKBAL(Entity):
+    using_options(tablename='bankbal')
+
     dtasof = Field(OFXDateTime, required=True)
     ledgerbal = Field(OFXDecimal, required=True)
     availbal = Field(OFXDecimal, required=True)
@@ -96,6 +100,8 @@ class BANKBAL(Entity):
 
 
 class CCBAL(Entity):
+    using_options(tablename='ccbal')
+
     dtasof = Field(OFXDateTime, required=True)
     ledgerbal = Field(OFXDecimal, required=True)
     availbal = Field(OFXDecimal, required=True)
@@ -104,6 +110,8 @@ class CCBAL(Entity):
 
 
 class INVBAL(Entity):
+    using_options(tablename='invbal')
+
     dtasof = Field(OFXDateTime, required=True)
     availcash = Field(OFXDecimal, required=True)
     marginbalance = Field(OFXDecimal, required=True)
@@ -114,6 +122,8 @@ class INVBAL(Entity):
 
 
 class FIBAL(Entity):
+    using_options(tablename='fibal')
+
     name = Field(String(32), required=True)
     desc = Field(String(80), required=True)
     baltype = Field(Enum('DOLLAR', 'PERCENT', 'NUMBER'), required=True)
@@ -127,6 +137,8 @@ class FIBAL(Entity):
 
 # Transactions
 class PAYEE(Entity):
+    using_options(tablename='payee')
+
     name = Field(String(32), required=True)
     addr1 = Field(String(32), required=True)
     addr2 = Field(String(32))
@@ -141,7 +153,7 @@ class PAYEE(Entity):
 
 
 class TRAN(Entity):
-    using_options(inheritance='multi')
+    using_options(tablename='tran', inheritance='multi')
 
     fitid = Field(String(255), required=True)
     srvrtid = Field(String(10))
@@ -151,7 +163,7 @@ class TRAN(Entity):
 
 
 class STMTTRN(TRAN):
-    using_options(inheritance='multi')
+    using_options(tablename='stmttrn', inheritance='multi')
 
     trntype = Field(Enum('CREDIT', 'DEBIT', 'INT', 'DIV', 'FEE', 'SRVCHG', 'DEP', 'ATM', 'POS', 'XFER', 'CHECK', 'PAYMENT', 'CASH', 'DIRECTDEP', 'DIRECTDEBIT', 'REPEATPMT', 'OTHER'), required=True)
     dtposted = Field(OFXDateTime, required=True)
@@ -178,13 +190,13 @@ class STMTTRN(TRAN):
 
 
 class INVBANKTRAN(STMTTRN):
-    using_options(inheritance='multi')
+    using_options(tablename='invbanktran', inheritance='multi')
 
     subacctfund = Field(Enum(*INVSUBACCTS), required=True)
 
 
 class INVTRAN(TRAN):
-    using_options(inheritance='multi')
+    using_options(tablename='invtran', inheritance='multi')
 
     dttrade = Field(OFXDateTime, required=True)
     dtsettle = Field(OFXDateTime)
@@ -193,7 +205,7 @@ class INVTRAN(TRAN):
 
 
 class INVBUY(INVTRAN):
-    using_options(inheritance='multi')
+    using_options(tablename='invbuy', inheritance='multi')
 
     units = Field(OFXDecimal, required=True)
     unitprice = Field(OFXDecimal(4), required=True)
@@ -218,7 +230,7 @@ class INVBUY(INVTRAN):
 
 
 class INVSELL(INVTRAN):
-    using_options(inheritance='multi')
+    using_options(tablename='invsell', inheritance='multi')
 
     units = Field(OFXDecimal, required=True)
     unitprice = Field(OFXDecimal(4), required=True)
@@ -244,7 +256,7 @@ class INVSELL(INVTRAN):
 
 
 class BUYDEBT(INVBUY):
-    using_options(inheritance='multi')
+    using_options(tablename='buydebt', inheritance='multi')
 
     accrdint = Field(OFXDecimal)
 
@@ -252,7 +264,7 @@ class BUYDEBT(INVBUY):
 
 
 class BUYMF(INVBUY):
-    using_options(inheritance='multi')
+    using_options(tablename='buymf', inheritance='multi')
 
     buytype = Field(Enum(*BUYTYPES), required=True)
     relfitid = Field(String(255))
@@ -261,7 +273,7 @@ class BUYMF(INVBUY):
 
 
 class BUYOPT(INVBUY):
-    using_options(inheritance='multi')
+    using_options(tablename='buyopt', inheritance='multi')
 
     optbuytype = Field(Enum('BUYTOOPEN', 'BUYTOCLOSE'), required=True)
     shperctrct = Field(Integer, required=True)
@@ -270,13 +282,13 @@ class BUYOPT(INVBUY):
 
 
 class BUYOTHER(INVBUY):
-    using_options(inheritance='multi')
+    using_options(tablename='buyother', inheritance='multi')
 
     sec = ManyToOne('OTHERINFO', required=True)
 
 
 class BUYSTOCK(INVBUY):
-    using_options(inheritance='multi')
+    using_options(tablename='buystock', inheritance='multi')
 
     buytype = Field(Enum(*BUYTYPES), required=True)
 
@@ -284,7 +296,7 @@ class BUYSTOCK(INVBUY):
 
 
 class CLOSUREOPT(INVTRAN):
-    using_options(inheritance='multi')
+    using_options(tablename='closureopt', inheritance='multi')
 
     optaction = Field(Enum('EXERCISE', 'ASSIGN', 'EXPIRE'))
     units = Field(OFXDecimal, required=True)
@@ -297,7 +309,7 @@ class CLOSUREOPT(INVTRAN):
 
 
 class INCOME(INVTRAN):
-    using_options(inheritance='multi')
+    using_options(tablename='income', inheritance='multi')
 
     incometype = Field(Enum(*INCOMETYPES), required=True)
     total = Field(OFXDecimal, required=True)
@@ -315,7 +327,7 @@ class INCOME(INVTRAN):
 
 
 class INVEXPENSE(INVTRAN):
-    using_options(inheritance='multi')
+    using_options(tablename='invexpense', inheritance='multi')
 
     total = Field(OFXDecimal, required=True)
     subacctsec = Field(Enum(*INVSUBACCTS), required=True)
@@ -330,7 +342,7 @@ class INVEXPENSE(INVTRAN):
 
 
 class JRNLFUND(INVTRAN):
-    using_options(inheritance='multi')
+    using_options(tablename='jrnlfund', inheritance='multi')
 
     subacctto = Field(Enum(*INVSUBACCTS), required=True)
     subacctfrom = Field(Enum(*INVSUBACCTS), required=True)
@@ -338,7 +350,7 @@ class JRNLFUND(INVTRAN):
 
 
 class JRNLSEC(INVTRAN):
-    using_options(inheritance='multi')
+    using_options(tablename='jrnlsec', inheritance='multi')
 
     subacctto = Field(Enum(*INVSUBACCTS), required=True)
     subacctfrom = Field(Enum(*INVSUBACCTS), required=True)
@@ -348,7 +360,7 @@ class JRNLSEC(INVTRAN):
 
 
 class MARGININTEREST(INVTRAN):
-    using_options(inheritance='multi')
+    using_options(tablename='margininterest', inheritance='multi')
 
     total = Field(OFXDecimal, required=True)
     subacctfund = Field(Enum(*INVSUBACCTS), required=True)
@@ -359,7 +371,7 @@ class MARGININTEREST(INVTRAN):
 
 
 class REINVEST(INVTRAN):
-    using_options(inheritance='multi')
+    using_options(tablename='reinvest', inheritance='multi')
 
     incometype = Field(Enum(*INCOMETYPES), required=True)
     total = Field(OFXDecimal, required=True)
@@ -381,7 +393,7 @@ class REINVEST(INVTRAN):
 
 
 class RETOFCAP(INVTRAN):
-    using_options(inheritance='multi')
+    using_options(tablename='retofcap', inheritance='multi')
 
     total = Field(OFXDecimal, required=True)
     subacctsec = Field(Enum(*INVSUBACCTS), required=True)
@@ -396,7 +408,7 @@ class RETOFCAP(INVTRAN):
 
 
 class SELLDEBT(INVSELL):
-    using_options(inheritance='multi')
+    using_options(tablename='selldebt', inheritance='multi')
 
     sellreason = Field(Enum('CALL','SELL', 'MATURITY', required=True))
     accrdint = Field(OFXDecimal)
@@ -405,7 +417,7 @@ class SELLDEBT(INVSELL):
 
 
 class SELLMF(INVSELL):
-    using_options(inheritance='multi')
+    using_options(tablename='sellmf', inheritance='multi')
 
     selltype = Field(Enum(*SELLTYPES), required=True)
     avgcostbasis = Field(OFXDecimal)
@@ -415,7 +427,7 @@ class SELLMF(INVSELL):
 
 
 class SELLOPT(INVSELL):
-    using_options(inheritance='multi')
+    using_options(tablename='sellopt', inheritance='multi')
 
     optselltype = Field(Enum('SELLTOCLOSE', 'SELLTOOPEN'), required=True)
     shperctrct = Field(Integer, required=True)
@@ -427,13 +439,13 @@ class SELLOPT(INVSELL):
 
 
 class SELLOTHER(INVSELL):
-    using_options(inheritance='multi')
+    using_options(tablename='sellother', inheritance='multi')
 
     sec = ManyToOne('OTHERINFO', required=True)
 
 
 class SELLSTOCK(INVSELL):
-    using_options(inheritance='multi')
+    using_options(tablename='sellstock', inheritance='multi')
 
     selltype = Field(Enum(*SELLTYPES), required=True)
 
@@ -441,7 +453,7 @@ class SELLSTOCK(INVSELL):
 
 
 class SPLIT(INVTRAN):
-    using_options(inheritance='multi')
+    using_options(tablename='split', inheritance='multi')
 
     subacctsec = Field(Enum(*INVSUBACCTS), required=True)
     oldunits = Field(OFXDecimal, required=True)
@@ -456,7 +468,7 @@ class SPLIT(INVTRAN):
 
 
 class TRANSFER(INVTRAN):
-    using_options(inheritance='multi')
+    using_options(tablename='transfer', inheritance='multi')
 
     subacctsec = Field(Enum(*INVSUBACCTS), required=True)
     units = Field(OFXDecimal, required=True)
@@ -472,7 +484,7 @@ class TRANSFER(INVTRAN):
 
 # Securities
 class SECINFO(Entity):
-    using_options(inheritance='multi')
+    using_options(tablename='secinfo', inheritance='multi')
 
     uniqueid = Field(String(32), required=True)
     uniqueidtype = Field(String(10), required=True)
@@ -486,7 +498,7 @@ class SECINFO(Entity):
 
 
 class DEBTINFO(SECINFO):
-    using_options(inheritance='multi')
+    using_options(tablename='debtinfo', inheritance='multi')
 
     parvalue = Field(OFXDecimal, required=True)
     debttype = Field(Enum('COUPON', 'ZERO'), required=True)
@@ -505,6 +517,8 @@ class DEBTINFO(SECINFO):
 
 
 class MFASSETCLASS(Entity):
+    using_options(tablename='mfassetclass')
+
     assetclass = Field(Enum(*ASSETCLASSES))
     percent = Field(OFXDecimal)
 
@@ -512,6 +526,8 @@ class MFASSETCLASS(Entity):
 
 
 class FIMFASSETCLASS(Entity):
+    using_options(tablename='fimfassetclass')
+
     fiassetclass = Field(String(32))
     percent = Field(OFXDecimal)
 
@@ -519,7 +535,7 @@ class FIMFASSETCLASS(Entity):
 
 
 class MFINFO(SECINFO):
-    using_options(inheritance='multi')
+    using_options(tablename='mfinfo', inheritance='multi')
 
     mftype = Field(Enum('OPENEND', 'CLOSEEND', 'OTHER'))
     yld = Field(OFXDecimal(4))
@@ -529,7 +545,7 @@ class MFINFO(SECINFO):
 
 
 class OPTINFO(SECINFO):
-    using_options(inheritance='multi')
+    using_options(tablename='optinfo', inheritance='multi')
 
     opttype = Field(Enum('CALL', 'PUT'), required=True)
     strikeprice = Field(OFXDecimal, required=True)
@@ -542,7 +558,7 @@ class OPTINFO(SECINFO):
 
 
 class OTHERINFO(SECINFO):
-    using_options(inheritance='multi')
+    using_options(tablename='otherinfo', inheritance='multi')
 
     typedesc = Field(String(32))
     assetclass = Field(Enum(*ASSETCLASSES))
@@ -550,7 +566,7 @@ class OTHERINFO(SECINFO):
 
 
 class STOCKINFO(SECINFO):
-    using_options(inheritance='multi')
+    using_options(tablename='stockinfo', inheritance='multi')
 
     stocktype = Field(Enum('COMMON', 'PREFERRED', 'CONVERTIBLE', 'OTHER'))
     yld = Field(OFXDecimal(4))
@@ -562,6 +578,8 @@ class STOCKINFO(SECINFO):
 
 # Securities prices
 class SECPRICE(Entity):
+    using_options(tablename='secprice')
+
     dtpriceasof = Field(OFXDateTime, required=True)
     unitprice = Field(OFXDecimal(4), required=True)
     cursym = Field(Enum(*ISO4217), required=True)
@@ -573,7 +591,7 @@ class SECPRICE(Entity):
 
 # Positions
 class INVPOS(Entity):
-    using_options(inheritance='multi')
+    using_options(tablename='invpos', inheritance='multi')
 
     heldinacct = Field(Enum(*INVSUBACCTS), required=True)
     postype = Field(Enum('SHORT', 'LONG'), required=True)
@@ -591,13 +609,13 @@ class INVPOS(Entity):
 
 
 class POSDEBT(INVPOS):
-    using_options(inheritance='multi')
+    using_options(tablename='posdebt', inheritance='multi')
 
     sec = ManyToOne('DEBTINFO', required=True)
 
 
 class POSMF(INVPOS):
-    using_options(inheritance='multi')
+    using_options(tablename='posmf', inheritance='multi')
 
     unitsstreet = Field(OFXDecimal)
     unitsuser = Field(OFXDecimal)
@@ -608,7 +626,7 @@ class POSMF(INVPOS):
 
 
 class POSOPT(INVPOS):
-    using_options(inheritance='multi')
+    using_options(tablename='posopt', inheritance='multi')
 
     secured = Field(Enum('NAKED', 'COVERED'))
 
@@ -616,13 +634,13 @@ class POSOPT(INVPOS):
 
 
 class POSOTHER(INVPOS):
-    using_options(inheritance='multi')
+    using_options(tablename='posother', inheritance='multi')
 
     sec = ManyToOne('OTHERINFO', required=True)
 
 
 class POSSTOCK(INVPOS):
-    using_options(inheritance='multi')
+    using_options(tablename='posstock', inheritance='multi')
 
     unitsstreet = Field(OFXDecimal)
     unitsuser = Field(OFXDecimal)
