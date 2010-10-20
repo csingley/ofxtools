@@ -144,10 +144,10 @@ class OFXParser(object):
 
             ccstmttrnrs = self.tree.find('CREDITCARDMSGSRSV1/CCSTMTTRNRS')
             if ccstmttrnrs:
-                trnuid = stmttrnrs.find('TRNUID').text
+                trnuid = ccstmttrnrs.find('TRNUID').text
                 self.handleSTATUS(ccstmttrnrs.find('STATUS'))
-                stmtrss = stmttrnrs.findall('STMTRS')
-                for stmtrs in stmtrss:
+                stmtrss = ccstmttrnrs.findall('STMTRS')
+                for ccstmtrs in stmtrss:
                     self.handleSTMTRS(ccstmtrs, trnuid)
 
             seclist = self.tree.find('SECLISTMSGSRSV1/SECLIST')
@@ -302,6 +302,8 @@ class OFXParser(object):
                 price_attrs = {'sec': sec}
                 price_attrs.update(dict([(a, attrs.pop(a, None))
                     for a in ('dtpriceasof', 'unitprice', 'cursym', 'currate')]))
+                price_attrs['cursym'] = price_attrs['cursym'] or acct.curdef
+
                 db.SECPRICE(**price_attrs)
 
                 secClass(**attrs)
