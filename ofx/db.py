@@ -1,17 +1,18 @@
 from decimal import Decimal
 
 from elixir import *
-from sqlalchemy import types
+from sqlalchemy import types, UniqueConstraint
 
 from utilities import ISO4217, ISO3166_1a3, OFXDtConverter
 
 INV401KSOURCES = ('PRETAX', 'AFTERTAX', 'MATCH', 'PROFITSHARING', 'ROLLOVER',
-'OTHERVEST', 'OTHERNONVEST')
+                'OTHERVEST', 'OTHERNONVEST')
 INVSUBACCTS = ('CASH', 'MARGIN', 'SHORT', 'OTHER')
 BUYTYPES = ('BUY', 'BUYTOCOVER')
 SELLTYPES = ('SELL', 'SELLSHORT')
 INCOMETYPES = ('CGLONG', 'CGSHORT', 'DIV', 'INTEREST', 'MISC')
-ASSETCLASSES = ('DOMESTICBOND', 'INTLBOND', 'LARGESTOCK', 'SMALLSTOCK', 'INTLSTOCK', 'MONEYMRKT', 'OTHER')
+ASSETCLASSES = ('DOMESTICBOND', 'INTLBOND', 'LARGESTOCK', 'SMALLSTOCK',
+                'INTLSTOCK', 'MONEYMRKT', 'OTHER')
 
 # Custom SQLAlchemy types
 class OFXDecimal(types.TypeDecorator):
@@ -42,7 +43,7 @@ class OFXDateTime(types.TypeDecorator):
 class TRANLOG(Entity):
     using_options(tablename='tranlog')
 
-    trnuid = Field(String(36), required=True)
+    trnuid = Field(String(36), required=True, unique=True)
     dtstart = Field(OFXDateTime, required=True)
     dtend = Field(OFXDateTime, required=True)
 
@@ -61,18 +62,21 @@ class ACCT(Entity):
 
 
 class BANKACCT(ACCT):
-    using_options(tablename='bankacct', inheritance='multi')
+    using_options(UniqueConstraint('bankid', 'acctid'), tablename='bankacct',
+                    inheritance='multi')
 
     bankid = Field(String(9), required=True)
     branchid = Field(String(22))
-    accttype = Field(Enum('CHECKING', 'SAVINGS', 'MONEYMRKT', 'CREDITLINE'), required=True)
+    accttype = Field(Enum('CHECKING', 'SAVINGS', 'MONEYMRKT', 'CREDITLINE'),
+                    required=True)
     acctkey = Field(String(22))
 
     bals = OneToMany('BANKBAL')
 
 
 class CCACCT(ACCT):
-    using_options(tablename='ccacct', inheritance='multi')
+    using_options(UniqueConstraint('acctid'), tablename='ccacct',
+                    inheritance='multi')
 
     acctkey = Field(String(22))
 
@@ -80,7 +84,8 @@ class CCACCT(ACCT):
 
 
 class INVACCT(ACCT):
-    using_options(tablename='invacct', inheritance='multi')
+    using_options(UniqueConstraint('brokerid', 'acctid'), tablename='invacct',
+                    inheritance='multi')
 
     brokerid = Field(String(22), required=True)
 
@@ -90,7 +95,7 @@ class INVACCT(ACCT):
 
 # Balances
 class BANKBAL(Entity):
-    using_options(tablename='bankbal')
+    using_options(UniqueConstraint('acct', 'dtasof'), tablename='bankbal')
 
     dtasof = Field(OFXDateTime, required=True)
     ledgerbal = Field(OFXDecimal, required=True)
@@ -100,7 +105,7 @@ class BANKBAL(Entity):
 
 
 class CCBAL(Entity):
-    using_options(tablename='ccbal')
+    using_options(UniqueConstraint('acct', 'dtasof'), tablename='ccbal')
 
     dtasof = Field(OFXDateTime, required=True)
     ledgerbal = Field(OFXDecimal, required=True)
@@ -110,7 +115,7 @@ class CCBAL(Entity):
 
 
 class INVBAL(Entity):
-    using_options(tablename='invbal')
+    using_options(UniqueConstraint('acct', 'dtasof'), tablename='invbal')
 
     dtasof = Field(OFXDateTime, required=True)
     availcash = Field(OFXDecimal, required=True)
@@ -122,7 +127,7 @@ class INVBAL(Entity):
 
 
 class FIBAL(Entity):
-    using_options(tablename='fibal')
+    using_options(UniqueConstraint('acct','dtasof','name'), tablename='fibal')
 
     name = Field(String(32), required=True)
     desc = Field(String(80), required=True)
@@ -149,11 +154,12 @@ class PAYEE(Entity):
     country = Field(Enum(*ISO3166_1a3))
     phone = Field(String(32), required=True)
 
-    stmttrns = OneToMany('STMTTRN')
+    stmttrns = ManyToMany('STMTTRN')
 
 
 class TRAN(Entity):
-    using_options(tablename='tran', inheritance='multi')
+    using_options(UniqueConstraint('acctid', 'fitid'), tablename='tran',
+                    inheritance='multi')
 
     fitid = Field(String(255), required=True)
     srvrtid = Field(String(10))
@@ -165,7 +171,10 @@ class TRAN(Entity):
 class STMTTRN(TRAN):
     using_options(tablename='stmttrn', inheritance='multi')
 
-    trntype = Field(Enum('CREDIT', 'DEBIT', 'INT', 'DIV', 'FEE', 'SRVCHG', 'DEP', 'ATM', 'POS', 'XFER', 'CHECK', 'PAYMENT', 'CASH', 'DIRECTDEP', 'DIRECTDEBIT', 'REPEATPMT', 'OTHER'), required=True)
+    trntype = Field(Enum('CREDIT', 'DEBIT', 'INT', 'DIV', 'FEE', 'SRVCHG',
+                        'DEP', 'ATM', 'POS', 'XFER', 'CHECK', 'PAYMENT',
+                        'CASH', 'DIRECTDEP', 'DIRECTDEBIT', 'REPEATPMT',
+                        'OTHER'), required=True)
     dtposted = Field(OFXDateTime, required=True)
     dtuser = Field(OFXDateTime)
     dtavail = Field(OFXDateTime)
@@ -184,7 +193,7 @@ class STMTTRN(TRAN):
     origcurrate = Field(OFXDecimal(8))
     inv401ksource = Field(Enum(*INV401KSOURCES))
 
-    payee = ManyToOne('PAYEE')
+    payee = ManyToMany('PAYEE')
     bankacctto = ManyToOne('BANKACCT')
     ccacctto = ManyToOne('CCACCT')
 
@@ -484,7 +493,8 @@ class TRANSFER(INVTRAN):
 
 # Securities
 class SECINFO(Entity):
-    using_options(tablename='secinfo', inheritance='multi')
+    using_options(UniqueConstraint('uniqueidtype', 'uniqueid'),
+                                    tablename='secinfo', inheritance='multi')
 
     uniqueid = Field(String(32), required=True)
     uniqueidtype = Field(String(10), required=True)
@@ -505,7 +515,8 @@ class DEBTINFO(SECINFO):
     debtclass = Field(Enum('TREASURY', 'MUNICIPAL', 'CORPORATE', 'OTHER'))
     couponrt = Field(OFXDecimal(4))
     dtcoupon = Field(OFXDateTime)
-    couponfreq = Field(Enum('MONTHLY', 'QUARTERLY', 'SEMIANNUAL', 'ANNUAL', 'OTHER'))
+    couponfreq = Field(Enum('MONTHLY', 'QUARTERLY', 'SEMIANNUAL', 'ANNUAL',
+                            'OTHER'))
     callprice = Field(OFXDecimal(4))
     yieldtocall = Field(OFXDecimal(4))
     dtcall = Field(OFXDateTime)
@@ -578,7 +589,7 @@ class STOCKINFO(SECINFO):
 
 # Securities prices
 class SECPRICE(Entity):
-    using_options(tablename='secprice')
+    using_options(UniqueConstraint('sec', 'dtpriceasof'), tablename='secprice')
 
     dtpriceasof = Field(OFXDateTime, required=True)
     unitprice = Field(OFXDecimal(4), required=True)

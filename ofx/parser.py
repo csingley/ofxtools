@@ -31,6 +31,7 @@ class OFXParser(object):
         self.header = None
         self.tree = ET.ElementTree()
         self.connection = None
+        self.secs = None
 
     def parse(self, source):
         if not hasattr(source, 'read'):
@@ -79,8 +80,8 @@ class OFXParser(object):
             # Sanity check
             assert header['DATA'] == 'OFXSGML'
             assert header['VERSION'] in OFXv1
-            #if header['VERSION'] not in valid.OFXv1:
-                #print "OFXv1 header claims OFX version is %s" % header['VERSION']
+            #if header['VERSION'] not in OFXv1:
+            #    print "OFXv1 header claims OFX version is %s" % header['VERSION']
         elif line1.startswith('<?xml'):
             #OFXv2
             # OFX declaration is the next line of content
