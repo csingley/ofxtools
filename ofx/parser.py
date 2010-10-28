@@ -31,7 +31,6 @@ class OFXParser(object):
         self.header = None
         self.tree = ET.ElementTree()
         self.connection = None
-        self.secs = None
 
     def parse(self, source):
         if not hasattr(source, 'read'):
@@ -139,17 +138,17 @@ class OFXParser(object):
             if stmttrnrs:
                 trnuid = stmttrnrs.find('TRNUID').text
                 self.handleSTATUS(stmttrnrs.find('STATUS'))
-                stmtrss = stmttrnrs.findall('STMTRS')
-                for stmtrs in stmtrss:
-                    self.handleSTMTRS(stmtrs, trnuid)
+                elements = stmttrnrs.findall('STMTRS')
+                for element in elements:
+                    self.handleSTMTRS(trnuid, element)
 
             ccstmttrnrs = self.tree.find('CREDITCARDMSGSRSV1/CCSTMTTRNRS')
             if ccstmttrnrs:
                 trnuid = ccstmttrnrs.find('TRNUID').text
                 self.handleSTATUS(ccstmttrnrs.find('STATUS'))
-                stmtrss = ccstmttrnrs.findall('STMTRS')
-                for ccstmtrs in stmtrss:
-                    self.handleSTMTRS(ccstmtrs, trnuid)
+                elements = ccstmttrnrs.findall('CCSTMTRS')
+                for element in elements:
+                    self.handleCCSTMTRS(trnuid, element)
 
             seclist = self.tree.find('SECLISTMSGSRSV1/SECLIST')
 
@@ -157,9 +156,9 @@ class OFXParser(object):
             if invstmttrnrs:
                 trnuid = invstmttrnrs.find('TRNUID').text
                 self.handleSTATUS(invstmttrnrs.find('STATUS'))
-                invstmtrss = invstmttrnrs.findall('INVSTMTRS')
-                for invstmtrs in invstmtrss:
-                    self.handleINVSTMTRS(invstmtrs, seclist, trnuid)
+                elements = invstmttrnrs.findall('INVSTMTRS')
+                for element in elements:
+                    self.handleINVSTMTRS(trnuid, element, seclist)
         except:
             elixir.session.rollback()
             raise
@@ -209,108 +208,131 @@ class OFXParser(object):
             # FIXME - handle errors
             pass
 
-    def handleSTMTRS(self, stmtrs, trnuid):
-        acct_attrs = {'curdef': stmtrs.find('CURDEF').text,}
-        acct_attrs.update(self.flatten(stmtrs.find('BANKACCTFROM')))
-        acct = db.BANKACCT(**acct_attrs)
+    def handleSTMTRS(self, trnuid, element, cc=False):
+        if cc:
+            acctTag = 'CCACCTFROM'
+            acctClass = db.CCACCT
+        else:
+            acctTag = 'BANKACCTFROM'
+            acctClass = db.BANKACCT
+        acct_attrs = self.flatten(element.find(acctTag))
+        acct = acctClass.get_or_create(**acct_attrs)[0]
+
+        stmtrs_attrs = {'trnuid': trnuid, 'acct': acct,
+                        'curdef': element.find('CURDEF').text}
+        stmtrs, created = db.STMTRS.get_or_create(**stmtrs_attrs)
+        if not created:
+            return
 
         # BANKTRANLIST
-        tranlist = stmtrs.find('BANKTRANLIST')
+        tranlist = element.find('BANKTRANLIST')
         if tranlist:
             dtstart, dtend = tranlist[0:2]
+            stmtrs.dtstart = dtstart.text
+            stmtrs.dtend = dtend.text
             tranlist.remove(dtstart)
             tranlist.remove(dtend)
-            log = db.TRANLOG(trnuid=trnuid, dtstart=dtstart.text, dtend=dtend.text)
             for tran in tranlist:
                 attrs = self.flatten(tran)
-                # Add FKs for ACCT, TRANLOG
                 attrs['acct'] = acct
-                attrs['log'] = log
-                db.STMTTRN(**attrs)
+                attrs['stmtrs'] = stmtrs
+                db.STMTTRN.get_or_create(**attrs)
 
         # LEDGERBAL - mandatory
-        ledgerbal = stmtrs.find('LEDGERBAL')
+        ledgerbal = element.find('LEDGERBAL')
         attrs = self.flatten(ledgerbal)
         attrs['ledgerbal'] = attrs.pop('balamt')
         attrs['acct'] = acct
+        attrs['stmtrs'] = stmtrs
         # AVAILBAL
-        availbal = stmtrs.find('AVAILBAL')
+        availbal = element.find('AVAILBAL')
         if availbal:
             # FIXME - check that AVAILBAL.DTASOF matches LEDGERBAL.DTASOF
             attrs['availbal'] = availbal.find('BALAMT').text
-        db.BANKBAL(**attrs)
+        db.BANKBAL.get_or_create(**attrs)
 
         # BALLIST
-        ballist = stmtrs.find('BALLIST')
+        ballist = element.find('BALLIST')
         if ballist:
             for fibal in ballist:
                 attrs = self.flatten(fibal)
                 attrs['acct'] = acct
-                db.FIBAL(**attrs)
+                attrs['stmtrs'] = stmtrs
+                db.FIBAL.get_or_create(**attrs)
 
-    def handleINVSTMTRS(self, stmtrs, seclist, trnuid):
+    def handleCCSTMTRS(self, trnuid, element):
+        self.handleSTMTRS(trnuid, element, cc=True)
+
+    def handleINVSTMTRS(self, trnuid, element, seclist):
+        acct_attrs = self.flatten(element.find('INVACCTFROM'))
+        acct = db.INVACCT.get_or_create(**acct_attrs)[0]
+
+        stmtrs_attrs = {'trnuid': trnuid, 'acct': acct,
+                        'curdef': element.find('CURDEF').text,
+                        'dtasof': element.find('DTASOF').text}
+        stmtrs, created = db.INVSTMTRS.get_or_create(**stmtrs_attrs)
+        if not created:
+            return
+
         # Create Securities instances, and store in a map of
         #  (uniqueidtype, uniqueid) -> Security for quick lookup
         if seclist is not None:
             def handle_sec(element):
                 instance = self.handleSEC(element)
                 return ((instance.uniqueidtype, instance.uniqueid), instance)
-            self.secs = dict([handle_sec(sec) for sec in seclist])
-
-        self.dtasof = stmtrs.find('DTASOF').text
-        acct_attrs = {'curdef': stmtrs.find('CURDEF').text,}
-        acct_attrs.update(self.flatten(stmtrs.find('INVACCTFROM')))
-        acct = db.INVACCT(**acct_attrs)
+            secs = dict([handle_sec(sec) for sec in seclist])
 
         # INVTRANLIST
-        tranlist = stmtrs.find('INVTRANLIST')
+        tranlist = element.find('INVTRANLIST')
         if tranlist:
             dtstart, dtend = tranlist[0:2]
+            stmtrs.dtstart = dtstart.text
+            stmtrs.dtend = dtend.text
             tranlist.remove(dtstart)
             tranlist.remove(dtend)
-            log = db.TRANLOG(trnuid=trnuid, dtstart=dtstart.text, dtend=dtend.text)
+
             invbanktrans = tranlist.findall('INVBANKTRAN')
             for invbanktran in invbanktrans:
                 tranlist.remove(invbanktran)
                 attrs = self.flatten(invbanktran)
                 attrs['acct'] = acct
-                attrs['log'] = log
-                db.INVBANKTRAN(**attrs)
+                attrs['stmtrs'] = stmtrs
+                db.INVBANKTRAN.get_or_create(**attrs)
             for trn in tranlist:
-                secClass = getattr(db, trn.tag)
+                tranClass = getattr(db, trn.tag)
                 attrs = self.flatten(trn)
                 #if 'uniqueid' in attrs:
-                if issubclass(secClass, (db.INVBUY, db.INVSELL, db.CLOSUREOPT,
+                if issubclass(tranClass, (db.INVBUY, db.INVSELL, db.CLOSUREOPT,
                                         db.INCOME, db.INVEXPENSE, db.JRNLSEC,
                                         db.REINVEST, db.RETOFCAP, db.SPLIT,
                                         db.TRANSFER)):
-                    attrs['sec'] = self.secs[(attrs.pop('uniqueidtype'),
+                    attrs['sec'] = secs[(attrs.pop('uniqueidtype'),
                                                 attrs.pop('uniqueid'))]
                 attrs['acct'] = acct
-                attrs['log'] = log
-                secClass(**attrs)
+                attrs['stmtrs'] = stmtrs
+                tranClass.get_or_create(**attrs)
 
         # INVPOSLIST
-        poslist = stmtrs.find('INVPOSLIST')
+        poslist = element.find('INVPOSLIST')
         if poslist:
             for pos in poslist:
-                secClass = getattr(db, pos.tag)
+                posClass = getattr(db, pos.tag)
                 attrs = self.flatten(pos)
                 attrs['acct'] = acct
-                sec = attrs['sec'] = self.secs[(attrs.pop('uniqueidtype'), attrs.pop('uniqueid'))]
+                attrs['stmtrs'] = stmtrs
+                sec = attrs['sec'] = secs[(attrs.pop('uniqueidtype'), attrs.pop('uniqueid'))]
 
                 # Strip out pricing data from the positions
-                price_attrs = {'sec': sec}
+                price_attrs = {'sec': sec, 'stmtrs': stmtrs}
                 price_attrs.update(dict([(a, attrs.pop(a, None))
                     for a in ('dtpriceasof', 'unitprice', 'cursym', 'currate')]))
-                price_attrs['cursym'] = price_attrs['cursym'] or acct.curdef
+                price_attrs['cursym'] = price_attrs['cursym'] or stmtrs.curdef
 
-                db.SECPRICE(**price_attrs)
-
-                secClass(**attrs)
+                db.SECPRICE.get_or_create(**price_attrs)
+                posClass.get_or_create(**attrs)
 
         # INVBAL
-        invbal = stmtrs.find('INVBAL')
+        invbal = element.find('INVBAL')
         if invbal:
             # Strip off BALLIST
             ballist = invbal.find('BALLIST')
@@ -319,31 +341,35 @@ class OFXParser(object):
                 for fibal in ballist:
                     attrs = self.flatten(fibal)
                     attrs['acct'] = acct
-                    db.FIBAL(**attrs)
+                    attrs['stmtrs'] = stmtrs
+                    # FIXME - check that BAL.DTASOF (if present) matches INVSTMTRS.DTASOF
+                    attrs['dtasof'] = stmtrs.dtasof
+                    db.FIBAL.get_or_create(**attrs)
             attrs = self.flatten(invbal)
             attrs['acct'] = acct
-            attrs['dtasof'] = self.dtasof
-            db.INVBAL(**attrs)
+            attrs['stmtrs'] = stmtrs
+            attrs['dtasof'] = stmtrs.dtasof
+            db.INVBAL.get_or_create(**attrs)
 
         # INVOOLIST - not supported
-        invoolist = stmtrs.find('INVOOLIST')
+        invoolist = element.find('INVOOLIST')
         if invoolist:
-            stmtrs.remove(invoolist)
+            element.remove(invoolist)
 
         # INV401K - not supported
-        inv401k = stmtrs.find('INV401K')
+        inv401k = element.find('INV401K')
         if inv401k:
-            stmtrs.remove(inv401k)
+            element.remove(inv401k)
 
         # INV401KBAL - not supported
-        inv401kbal = stmtrs.find('INV401KBAL')
+        inv401kbal = element.find('INV401KBAL')
         if inv401kbal:
-            stmtrs.remove(inv401kbal)
+            element.remove(inv401kbal)
 
         # MKTGINFO - not supported
-        mktginfo = stmtrs.find('MKTGINFO')
+        mktginfo = element.find('MKTGINFO')
         if mktginfo:
-            stmtrs.remove(mktginfo)
+            element.remove(mktginfo)
 
     def handleSEC(self, element):
         # Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up flatten()
@@ -360,12 +386,12 @@ class OFXParser(object):
             for portion in mfassetclass:
                 attrs = self.flatten(portion)
                 attrs['mf'] = instance
-                db.MFASSETCLASS(**attrs)
+                db.MFASSETCLASS.get_or_create(**attrs)
         if fimfassetclass:
             for portion in fimfassetclass:
                 attrs = self.flatten(portion)
                 attrs['mf'] = instance
-                db.FIMFASSETCLASS(**attrs)
+                db.FIMFASSETCLASS.get_or_create(**attrs)
         return instance
 
 

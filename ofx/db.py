@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from elixir import *
-from sqlalchemy import types, UniqueConstraint
+from sqlalchemy import types, orm, UniqueConstraint
 
 from utilities import ISO4217, ISO3166_1a3, OFXDtConverter
 
@@ -40,29 +40,65 @@ class OFXDateTime(types.TypeDecorator):
         return OFXDtConverter.to_python(value)
 
 
-class TRANLOG(Entity):
-    using_options(tablename='tranlog')
+class Mergeable(object):
+    """
+    Mixin class providing get_or_create().
 
-    trnuid = Field(String(36), required=True, unique=True)
-    dtstart = Field(OFXDateTime, required=True)
-    dtend = Field(OFXDateTime, required=True)
+    Subclasses must efine 'signature' attribute (sequence of column names).
+    """
 
+    @classmethod
+    def get_or_create(cls, **kwargs):
+        #print kwargs
+        sig = dict([(k, kwargs[k]) for k in cls.signature])
+        try:
+            instance = cls.query.filter_by(**sig).one()
+            created = False
+        except orm.exc.NoResultFound:
+            instance = cls(**kwargs)
+            created = True
+        return instance, created
+
+
+class STMTRS(Entity, Mergeable):
+    signature = ('trnuid', 'acct')
+    using_options(UniqueConstraint(*signature), tablename='stmtrs',
+                    inheritance='multi')
+
+    trnuid = Field(String(36), required=True)
+    curdef = Field(Enum(*ISO4217), required=True)
+    dtstart = Field(OFXDateTime)
+    dtend = Field(OFXDateTime)
+
+    acct = ManyToOne('ACCT')
     trans = OneToMany('TRAN')
+    bal = OneToOne('BAL')
+    fibals = OneToMany('FIBAL')
 
+
+class INVSTMTRS(STMTRS):
+    using_options(tablename='invstmtrs', inheritance='multi')
+
+    dtasof = Field(OFXDateTime, required=True)
+
+    invposs = OneToMany('INVPOS')
+    prices = OneToMany('SECPRICE')
 
 # Accounts
 class ACCT(Entity):
     using_options(tablename='acct', inheritance='multi')
 
     acctid = Field(String(22), required=True)
-    curdef = Field(Enum(*ISO4217), required=True)
 
+    stmtrss = OneToMany('STMTRS')
+    bals = OneToMany('BAL')
     fibals = OneToMany('FIBAL')
     trans = OneToMany('TRAN')
 
 
-class BANKACCT(ACCT):
-    using_options(UniqueConstraint('bankid', 'acctid'), tablename='bankacct',
+class BANKACCT(ACCT, Mergeable):
+    signature = ('bankid', 'acctid')
+    using_options(UniqueConstraint(*signature), tablename='bankacct',
                     inheritance='multi')
 
     bankid = Field(String(9), required=True)
@@ -71,63 +107,63 @@ class BANKACCT(ACCT):
                     required=True)
     acctkey = Field(String(22))
 
-    bals = OneToMany('BANKBAL')
 
-
-class CCACCT(ACCT):
-    using_options(UniqueConstraint('acctid'), tablename='ccacct',
+class CCACCT(ACCT, Mergeable):
+    signature = ('acctid', )
+    using_options(UniqueConstraint(*signature), tablename='ccacct',
                     inheritance='multi')
 
     acctkey = Field(String(22))
 
-    bals = OneToMany('CCBAL')
 
-
-class INVACCT(ACCT):
-    using_options(UniqueConstraint('brokerid', 'acctid'), tablename='invacct',
+class INVACCT(ACCT, Mergeable):
+    signature = ('brokerid', 'acctid')
+    using_options(UniqueConstraint(*signature), tablename='invacct',
                     inheritance='multi')
 
     brokerid = Field(String(22), required=True)
 
-    bals = OneToMany('INVBAL')
     invposs = OneToMany('INVPOS')
 
 
 # Balances
-class BANKBAL(Entity):
-    using_options(UniqueConstraint('acct', 'dtasof'), tablename='bankbal')
+class BAL(Entity, Mergeable):
+    signature = ('acct', 'dtasof')
+    using_options(UniqueConstraint(*signature), tablename='bal',
+                    inheritance='multi')
 
     dtasof = Field(OFXDateTime, required=True)
+
+    acct = ManyToOne('ACCT', required=True)
+    stmtrs = ManyToOne('STMTRS', required=True)
+
+
+class BANKBAL(BAL):
+    using_options(tablename='bankbal', inheritance='multi')
+
     ledgerbal = Field(OFXDecimal, required=True)
     availbal = Field(OFXDecimal, required=True)
 
-    acct = ManyToOne('BANKACCT', required=True)
 
+class CCBAL(BAL):
+    using_options(tablename='ccbal', inheritance='multi')
 
-class CCBAL(Entity):
-    using_options(UniqueConstraint('acct', 'dtasof'), tablename='ccbal')
-
-    dtasof = Field(OFXDateTime, required=True)
     ledgerbal = Field(OFXDecimal, required=True)
     availbal = Field(OFXDecimal, required=True)
 
-    acct = ManyToOne('CCACCT', required=True)
 
+class INVBAL(BAL):
+    using_options(tablename='invbal', inheritance='multi')
 
-class INVBAL(Entity):
-    using_options(UniqueConstraint('acct', 'dtasof'), tablename='invbal')
-
-    dtasof = Field(OFXDateTime, required=True)
     availcash = Field(OFXDecimal, required=True)
     marginbalance = Field(OFXDecimal, required=True)
     shortbalance = Field(OFXDecimal, required=True)
     buypower = Field(OFXDecimal)
 
-    acct = ManyToOne('INVACCT', required=True)
 
-
-class FIBAL(Entity):
-    using_options(UniqueConstraint('acct','dtasof','name'), tablename='fibal')
+class FIBAL(Entity, Mergeable):
+    signature = ('acct', 'dtasof','name')
+    using_options(UniqueConstraint(*signature), tablename='fibal')
 
     name = Field(String(32), required=True)
     desc = Field(String(80), required=True)
@@ -138,6 +174,7 @@ class FIBAL(Entity):
     currate = Field(OFXDecimal(8))
 
     acct = ManyToOne('ACCT', required=True)
+    stmtrs = ManyToOne('STMTRS', required=True)
 
 
 # Transactions
@@ -157,15 +194,16 @@ class PAYEE(Entity):
     stmttrns = ManyToMany('STMTTRN')
 
 
-class TRAN(Entity):
-    using_options(UniqueConstraint('acctid', 'fitid'), tablename='tran',
+class TRAN(Entity, Mergeable):
+    signature = ('acct', 'fitid')
+    using_options(UniqueConstraint(*signature), tablename='tran',
                     inheritance='multi')
 
     fitid = Field(String(255), required=True)
     srvrtid = Field(String(10))
 
     acct = ManyToOne('ACCT', required=True)
-    log = ManyToOne('TRANLOG', required=True)
+    stmtrs = ManyToOne('STMTRS', required=True)
 
 
 class STMTTRN(TRAN):
@@ -492,19 +530,22 @@ class TRANSFER(INVTRAN):
 
 
 # Securities
-class SECINFO(Entity):
-    using_options(UniqueConstraint('uniqueidtype', 'uniqueid'),
+class SECINFO(Entity, Mergeable):
+    signature = ('uniqueidtype', 'uniqueid')
+    using_options(UniqueConstraint(*signature),
                                     tablename='secinfo', inheritance='multi')
 
     uniqueid = Field(String(32), required=True)
     uniqueidtype = Field(String(10), required=True)
-    secname = Field(String(50), required=True)
-    ticker = Field(String(120))
+    secname = Field(String(120), required=True)
+    ticker = Field(String(32))
     fiid = Field(String(32))
     rating = Field(String(10))
     #unitprice = Field(OFXDecimal)
     #dtasof = Field(OFXDateTime)
     memo = Field(String(255))
+
+    invposs = OneToMany('INVPOS')
 
 
 class DEBTINFO(SECINFO):
@@ -527,19 +568,21 @@ class DEBTINFO(SECINFO):
     fiassetclass = Field(String(32))
 
 
-class MFASSETCLASS(Entity):
+class MFASSETCLASS(Entity, Mergeable):
+    signature = ('assetclass',)
     using_options(tablename='mfassetclass')
 
-    assetclass = Field(Enum(*ASSETCLASSES))
+    assetclass = Field(Enum(*ASSETCLASSES), unique=True)
     percent = Field(OFXDecimal)
 
     mf = ManyToOne('MFINFO')
 
 
-class FIMFASSETCLASS(Entity):
+class FIMFASSETCLASS(Entity, Mergeable):
+    signature = ('fiassetclass',)
     using_options(tablename='fimfassetclass')
 
-    fiassetclass = Field(String(32))
+    fiassetclass = Field(String(32), unique=True)
     percent = Field(OFXDecimal)
 
     mf = ManyToOne('MFINFO')
@@ -588,8 +631,9 @@ class STOCKINFO(SECINFO):
 
 
 # Securities prices
-class SECPRICE(Entity):
-    using_options(UniqueConstraint('sec', 'dtpriceasof'), tablename='secprice')
+class SECPRICE(Entity, Mergeable):
+    signature = ('sec', 'dtpriceasof')
+    using_options(UniqueConstraint(*signature), tablename='secprice')
 
     dtpriceasof = Field(OFXDateTime, required=True)
     unitprice = Field(OFXDecimal(4), required=True)
@@ -597,12 +641,14 @@ class SECPRICE(Entity):
     currate = Field(OFXDecimal(8))
 
     sec = ManyToOne('SECINFO', required=True)
-    invpos = ManyToOne('INVPOS')
+    stmtrs = ManyToOne('INVSTMTRS', required=True)
+    #invpos = ManyToOne('INVPOS')
 
 
 # Positions
-class INVPOS(Entity):
-    using_options(tablename='invpos', inheritance='multi')
+class INVPOS(Entity, Mergeable):
+    signature = ('sec', 'acct', 'heldinacct', 'postype')
+    using_options(UniqueConstraint(*signature), tablename='invpos', inheritance='multi')
 
     heldinacct = Field(Enum(*INVSUBACCTS), required=True)
     postype = Field(Enum('SHORT', 'LONG'), required=True)
@@ -616,13 +662,12 @@ class INVPOS(Entity):
     inv401ksource = Field(Enum(*INV401KSOURCES))
 
     acct = ManyToOne('INVACCT', required=True)
-    secprice = OneToOne('SECPRICE')
+    sec = ManyToOne('SECINFO', required=True)
+    stmtrs = ManyToOne('INVSTMTRS', required=True)
 
 
 class POSDEBT(INVPOS):
     using_options(tablename='posdebt', inheritance='multi')
-
-    sec = ManyToOne('DEBTINFO', required=True)
 
 
 class POSMF(INVPOS):
@@ -633,21 +678,15 @@ class POSMF(INVPOS):
     reinvdiv = Field(Boolean)
     reinvcg = Field(Boolean)
 
-    sec = ManyToOne('MFINFO', required=True)
-
 
 class POSOPT(INVPOS):
     using_options(tablename='posopt', inheritance='multi')
 
     secured = Field(Enum('NAKED', 'COVERED'))
 
-    sec = ManyToOne('OPTINFO', required=True)
-
 
 class POSOTHER(INVPOS):
     using_options(tablename='posother', inheritance='multi')
-
-    sec = ManyToOne('OTHERINFO', required=True)
 
 
 class POSSTOCK(INVPOS):
@@ -656,5 +695,3 @@ class POSSTOCK(INVPOS):
     unitsstreet = Field(OFXDecimal)
     unitsuser = Field(OFXDecimal)
     reinvdiv = Field(Boolean)
-
-    sec = ManyToOne('STOCKINFO', required=True)
