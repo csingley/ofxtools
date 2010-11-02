@@ -530,7 +530,7 @@ class TRANSFER(INVTRAN):
 
 
 # Securities
-class SECINFO(Entity, Mergeable):
+class SECINFO(Entity):
     signature = ('uniqueidtype', 'uniqueid')
     using_options(UniqueConstraint(*signature),
                                     tablename='secinfo', inheritance='multi')
@@ -547,6 +547,42 @@ class SECINFO(Entity, Mergeable):
 
     invposs = OneToMany('INVPOS')
 
+    @classmethod
+    def match(cls, **kwargs):
+        """
+        Quicken will attempt to match securities downloaded in the SECLIST
+        to securities in Quicken using the following logic:
+
+        First Quicken checks to see if the security has already been matched
+        by comparing the CUSIP or UNIQUEID in the download to the unique
+        identifier stored in the Quicken database. If there is a match no
+        additional steps are taken.
+
+        When Quicken does not find a match based on CUSIP, it will compare the
+        downloaded security name to the security names in the file. It will
+        match the security if it finds an exact match for the security name.
+        Next Quicken compares the ticker downloaded to the symbol for each
+        security. When a ticker in the download matches the symbol for a
+        security in the Quicken database they are matched. When there is no
+        symbol for the security on the security list this step is skipped.
+        Quicken will proceed to showing the security matching dialog.
+
+        When Quicken cannot find a match based on one of the 3 criteria above
+        it will show the security matching dialog. Under existing securities
+        Quicken will show the entire security list. If Quicken thinks it has
+        found a match based on comparison of security names it will default
+        to the security it believes is the match in the list of securities.
+        The user can accept the match, change to a different security, or
+        choose the "No" radio button to create a new security.
+
+        http://fi.intuit.com/ofximplementation/dl/OFXDataMappingGuide.pdf
+        """
+        for keys in ('uniqueidtype', 'uniqueid'), ('secname',), ('ticker',):
+            attrs = dict([(key, kwargs[key]) for key in keys])
+            try:
+                return cls.query.filter_by(**attrs).one()
+            except orm.exc.NoResultFound:
+                continue
 
 class DEBTINFO(SECINFO):
     using_options(tablename='debtinfo', inheritance='multi')
