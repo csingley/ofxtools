@@ -19,6 +19,7 @@ APPIDS = ('QWIN', # Quicken for Windows
             'QBM', # QuickBooks for Mac
             'Money', # MSFT Money
             'Money Plus', # MSFT Money Plus
+            'PyOFX', # Custom
 )
 APPVERS = ('1500', # Quicken 2006/ Money 2006
             '1600', # Quicken 2007/ Money 2007/ QuickBooks 2006
@@ -26,6 +27,7 @@ APPVERS = ('1500', # Quicken 2006/ Money 2006
             '1800', # Quicken 2009/ QuickBooks 2008
             '1900', # Quicken 2010/ QuickBooks 2009
             '2000', # QuickBooks 2010
+            '9999', # Custom
 )
 
 APP_DEFAULTS = {'version': '102', 'appid': 'QWIN', 'appver': '1800',}

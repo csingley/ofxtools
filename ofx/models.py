@@ -44,7 +44,7 @@ class Mergeable(object):
     """
     Mixin class providing get_or_create().
 
-    Subclasses must efine 'signature' attribute (sequence of column names).
+    Subclasses must define 'signature' attribute (sequence of column names).
     """
 
     @classmethod
@@ -60,29 +60,33 @@ class Mergeable(object):
         return instance, created
 
 
-class STMTRS(Entity, Mergeable):
-    signature = ('trnuid', 'acct')
-    using_options(UniqueConstraint(*signature), tablename='stmtrs',
-                    inheritance='multi')
+class FI(Entity, Mergeable):
+    """
+    FI aggregates are optional in SONRQ/SONRS; not all firms use them.
+    We stick the OFX server URL here (there won't be one if OFX files
+    are generated for download by a web server).
+    """
+    signature = ('org', 'fid')
+    using_options(tablename='fi')
 
-    trnuid = Field(String(36), required=True)
-    curdef = Field(Enum(*ISO4217), required=True)
-    dtstart = Field(OFXDateTime)
-    dtend = Field(OFXDateTime)
+    url = Field(String)
+    org = Field(String(32), required=True)
+    fid = Field(String(32), required=True)
 
-    acct = ManyToOne('ACCT')
-    trans = OneToMany('TRAN')
-    bal = OneToOne('BAL')
-    fibals = OneToMany('FIBAL')
+    accts = OneToMany('ACCT')
+    signons = OneToMany('SIGNON')
 
 
-class INVSTMTRS(STMTRS):
-    using_options(tablename='invstmtrs', inheritance='multi')
+class SIGNON(Entity, Mergeable):
+    """ Only present in SONRQ, not in SONRS. """
+    signature = ('fi', 'userid')
+    using_options(UniqueConstraint(*signature), tablename='signon')
 
-    dtasof = Field(OFXDateTime, required=True)
+    userid = Field(String(), required=True)
 
-    invposs = OneToMany('INVPOS')
-    prices = OneToMany('SECPRICE')
+    fi = ManyToOne('FI', required=True)
+    accts = OneToMany('ACCT')
+
 
 # Accounts
 class ACCT(Entity):
@@ -90,7 +94,8 @@ class ACCT(Entity):
 
     acctid = Field(String(22), required=True)
 
-    stmtrss = OneToMany('STMTRS')
+    fi = ManyToOne('FI')
+    signon = ManyToOne('SIGNON')
     bals = OneToMany('BAL')
     fibals = OneToMany('FIBAL')
     trans = OneToMany('TRAN')
@@ -133,9 +138,10 @@ class BAL(Entity, Mergeable):
                     inheritance='multi')
 
     dtasof = Field(OFXDateTime, required=True)
+    cursym = Field(Enum(*ISO4217), required=True)
+    currate = Field(OFXDecimal(8))
 
     acct = ManyToOne('ACCT', required=True)
-    stmtrs = ManyToOne('STMTRS', required=True)
 
 
 class BANKBAL(BAL):
@@ -174,7 +180,6 @@ class FIBAL(Entity, Mergeable):
     currate = Field(OFXDecimal(8))
 
     acct = ManyToOne('ACCT', required=True)
-    stmtrs = ManyToOne('STMTRS', required=True)
 
 
 # Transactions
@@ -203,7 +208,7 @@ class TRAN(Entity, Mergeable):
     srvrtid = Field(String(10))
 
     acct = ManyToOne('ACCT', required=True)
-    stmtrs = ManyToOne('STMTRS', required=True)
+    #stmtrs = ManyToOne('STMTRS', required=True)
 
 
 class STMTTRN(TRAN):
@@ -677,7 +682,7 @@ class SECPRICE(Entity, Mergeable):
     currate = Field(OFXDecimal(8))
 
     sec = ManyToOne('SECINFO', required=True)
-    stmtrs = ManyToOne('INVSTMTRS', required=True)
+    #stmtrs = ManyToOne('INVSTMTRS', required=True)
     #invpos = ManyToOne('INVPOS')
 
 
@@ -699,7 +704,7 @@ class INVPOS(Entity, Mergeable):
 
     acct = ManyToOne('INVACCT', required=True)
     sec = ManyToOne('SECINFO', required=True)
-    stmtrs = ManyToOne('INVSTMTRS', required=True)
+    #stmtrs = ManyToOne('INVSTMTRS', required=True)
 
 
 class POSDEBT(INVPOS):

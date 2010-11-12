@@ -13,10 +13,6 @@ class OFXImporter(object):
         self.database = database
         self.verbose = verbose
 
-        # Check that the signon is OK before setting up DB connection
-        sonrs = self.tree.find('SIGNONMSGSRSV1/SONRS')
-        self.processSTATUS(sonrs.find('STATUS'))
-
         engine = elixir.sqlalchemy.create_engine(database or 'sqlite://',
                                                 echo=self.verbose)
         self.connection = engine.connect()
@@ -43,13 +39,22 @@ class OFXImporter(object):
                 # Create Securities instances, and store in a map of
                 #  (uniqueidtype, uniqueid) -> Security for quick lookup
                 self.securities[(instance.uniqueidtype, instance.uniqueid)] = instance
-
+            self.processSONRS()
             self.processStatements()
         except:
             elixir.session.rollback()
             raise
         else:
             elixir.session.commit()
+
+    def processSONRS(self):
+        sonrs = self.tree.find('SIGNONMSGSRSV1/SONRS')
+        self.processSTATUS(sonrs.find('STATUS'))
+        fi = sonrs.find('FI')
+        if fi:
+            attrs = self.flatten(fi)
+            fi = models.FI.get_or_create(**attrs)[0]
+        self.fi = fi
 
     def processSECLIST(self):
         seclist = self.tree.find('SECLISTMSGSRSV1/SECLIST')
@@ -74,20 +79,17 @@ class OFXImporter(object):
                 self.unknown_securities.append((secClass, attrs, mfassetclass, fimfassetclass))
 
     def processStatements(self):
-        for trnrs in ('STMTTRNRS', 'CCSTMTTRNRS', 'INVSTMTTRNRS'):
-            self.processTRNRS(trnrs)
+        for tag in ('STMTTRNRS', 'CCSTMTTRNRS', 'INVSTMTTRNRS'):
+            for trnrs in self.tree.findall('*/%s' % tag):
+                self.processTRNRS(trnrs)
 
-
-    def processTRNRS(self, tag):
-        trnrs = self.tree.find('*/%s' % tag)
-        if trnrs:
-            trnuid = trnrs.find('TRNUID').text
-            # Check the statement status
-            self.processSTATUS(trnrs.find('STATUS'))
-            stmtTag = tag.replace('STMTTRNRS', 'STMTRS')
-            handler = getattr(self, 'process%s' % stmtTag)
-            for stmt in trnrs.findall(stmtTag):
-                handler(trnuid, stmt)
+    def processTRNRS(self, trnrs):
+        # Check the statement status
+        self.processSTATUS(trnrs.find('STATUS'))
+        stmtTag = trnrs.tag.replace('STMTTRNRS', 'STMTRS')
+        handler = getattr(self, 'process%s' % stmtTag)
+        stmt = trnrs.find(stmtTag)
+        handler(stmt)
 
     def flatten(self, element):
         """
@@ -132,7 +134,7 @@ class OFXImporter(object):
             # FIXME - handle errors
             raise ValueError
 
-    def processSTMTRS(self, trnuid, element, cc=False):
+    def processSTMTRS(self, element, cc=False):
         if cc:
             acctTag = 'CCACCTFROM'
             acctClass = models.CCACCT
@@ -140,39 +142,33 @@ class OFXImporter(object):
             acctTag = 'BANKACCTFROM'
             acctClass = models.BANKACCT
         acct_attrs = self.flatten(element.find(acctTag))
+        acct_attrs['fi'] = self.fi
         acct = acctClass.get_or_create(**acct_attrs)[0]
 
-        stmtrs_attrs = {'trnuid': trnuid, 'acct': acct,
-                        'curdef': element.find('CURDEF').text}
-        stmtrs, created = models.STMTRS.get_or_create(**stmtrs_attrs)
-        if not created:
-            return
+        curdef = element.find('CURDEF').text
 
         # BANKTRANLIST
         tranlist = element.find('BANKTRANLIST')
         if tranlist:
             dtstart, dtend = tranlist[0:2]
-            stmtrs.dtstart = dtstart.text
-            stmtrs.dtend = dtend.text
             tranlist.remove(dtstart)
             tranlist.remove(dtend)
             for tran in tranlist:
                 attrs = self.flatten(tran)
+                attrs = self.setCURSYM(attrs, curdef)
                 attrs['acct'] = acct
-                attrs['stmtrs'] = stmtrs
                 models.STMTTRN.get_or_create(**attrs)
 
         # LEDGERBAL - mandatory
         ledgerbal = element.find('LEDGERBAL')
         attrs = self.flatten(ledgerbal)
         attrs['ledgerbal'] = attrs.pop('balamt')
-        attrs['acct'] = acct
-        attrs['stmtrs'] = stmtrs
-        # AVAILBAL
+        self.setCURSYM(attrs, curdef)
         availbal = element.find('AVAILBAL')
         if availbal:
             # FIXME - check that AVAILBAL.DTASOF matches LEDGERBAL.DTASOF
             attrs['availbal'] = availbal.find('BALAMT').text
+        attrs['acct'] = acct
         models.BANKBAL.get_or_create(**attrs)
 
         # BALLIST
@@ -180,31 +176,35 @@ class OFXImporter(object):
         if ballist:
             for fibal in ballist:
                 attrs = self.flatten(fibal)
+                self.setCURSYM(attrs, curdef)
                 attrs['acct'] = acct
-                attrs['stmtrs'] = stmtrs
                 models.FIBAL.get_or_create(**attrs)
 
-    def processCCSTMTRS(self, trnuid, element):
-        self.processSTMTRS(trnuid, element, cc=True)
+    def processCCSTMTRS(self, element):
+        self.processSTMTRS(element, cc=True)
 
-    def processINVSTMTRS(self, trnuid, element):
-        acct_attrs = self.flatten(element.find('INVACCTFROM'))
-        acct = models.INVACCT.get_or_create(**acct_attrs)[0]
+    def setCURSYM(self, attrs, curdef):
+        has_cursym = 'cursym' in attrs
+        has_origcursym = 'origcursym' in attrs
+        # OFX spec insists CURSYM and ORIGCURSYM be mutually exclusive
+        assert not (has_cursym and has_origcursym)
+        if not (has_cursym or has_origcursym):
+            attrs['cursym'] = curdef
+            attrs['currate'] = 1
+        return attrs
 
-        stmtrs_attrs = {'trnuid': trnuid, 'acct': acct,
-                        'curdef': element.find('CURDEF').text,
-                        'dtasof': element.find('DTASOF').text}
-        stmtrs, created = models.INVSTMTRS.get_or_create(**stmtrs_attrs)
-        if not created:
-            # dupe
-            return
+    def processINVSTMTRS(self, element):
+        attrs = self.flatten(element.find('INVACCTFROM'))
+        attrs['fi'] = self.fi
+        acct = models.INVACCT.get_or_create(**attrs)[0]
+
+        curdef = element.find('CURDEF').text
+        dtasof = element.find('DTASOF').text
 
         # INVTRANLIST
         tranlist = element.find('INVTRANLIST')
         if tranlist:
             dtstart, dtend = tranlist[0:2]
-            stmtrs.dtstart = dtstart.text
-            stmtrs.dtend = dtend.text
             tranlist.remove(dtstart)
             tranlist.remove(dtend)
 
@@ -212,20 +212,26 @@ class OFXImporter(object):
             for invbanktran in invbanktrans:
                 tranlist.remove(invbanktran)
                 attrs = self.flatten(invbanktran)
+                attrs = self.setCURSYM(attrs, curdef)
                 attrs['acct'] = acct
-                attrs['stmtrs'] = stmtrs
                 models.INVBANKTRAN.get_or_create(**attrs)
             for trn in tranlist:
                 tranClass = getattr(models, trn.tag)
                 attrs = self.flatten(trn)
+                # Securities-related transactions
                 if issubclass(tranClass, (models.INVBUY, models.INVSELL, models.CLOSUREOPT,
                                         models.INCOME, models.INVEXPENSE, models.JRNLSEC,
                                         models.REINVEST, models.RETOFCAP, models.SPLIT,
                                         models.TRANSFER)):
                     attrs['sec'] = self.securities[(attrs.pop('uniqueidtype'),
                                                 attrs.pop('uniqueid'))]
+                # Transactions with currency
+                if issubclass(tranClass, (models.INVBUY, models.INVSELL, models.INCOME,
+                                        models.INVEXPENSE, models.MARGININTEREST,
+                                        models.REINVEST, models.RETOFCAP)):
+                    attrs = self.setCURSYM(attrs, curdef)
                 attrs['acct'] = acct
-                attrs['stmtrs'] = stmtrs
+                #attrs['stmtrs'] = stmtrs
                 tranClass.get_or_create(**attrs)
 
         # INVPOSLIST
@@ -235,14 +241,13 @@ class OFXImporter(object):
                 posClass = getattr(models, pos.tag)
                 attrs = self.flatten(pos)
                 attrs['acct'] = acct
-                attrs['stmtrs'] = stmtrs
                 sec = attrs['sec'] = self.securities[(attrs.pop('uniqueidtype'), attrs.pop('uniqueid'))]
 
                 # Strip out pricing data from the positions
-                price_attrs = {'sec': sec, 'stmtrs': stmtrs}
+                price_attrs = {'sec': sec}
                 price_attrs.update(dict([(a, attrs.pop(a, None))
                     for a in ('dtpriceasof', 'unitprice', 'cursym', 'currate')]))
-                price_attrs['cursym'] = price_attrs['cursym'] or stmtrs.curdef
+                price_attrs['cursym'] = price_attrs['cursym'] or curdef
 
                 models.SECPRICE.get_or_create(**price_attrs)
                 posClass.get_or_create(**attrs)
@@ -257,14 +262,15 @@ class OFXImporter(object):
                 for fibal in ballist:
                     attrs = self.flatten(fibal)
                     attrs['acct'] = acct
-                    attrs['stmtrs'] = stmtrs
                     # FIXME - check that BAL.DTASOF (if present) matches INVSTMTRS.DTASOF
-                    attrs['dtasof'] = stmtrs.dtasof
+                    attrs['dtasof'] = dtasof
+                    self.setCURSYM(attrs, curdef)
                     models.FIBAL.get_or_create(**attrs)
             attrs = self.flatten(invbal)
             attrs['acct'] = acct
-            attrs['stmtrs'] = stmtrs
-            attrs['dtasof'] = stmtrs.dtasof
+            attrs['dtasof'] = dtasof
+            attrs['cursym'] = curdef
+            attrs['currate'] = 1
             models.INVBAL.get_or_create(**attrs)
 
         # INVOOLIST - not supported
