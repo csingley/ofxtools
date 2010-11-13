@@ -208,7 +208,6 @@ class TRAN(Entity, Mergeable):
     srvrtid = Field(String(10))
 
     acct = ManyToOne('ACCT', required=True)
-    #stmtrs = ManyToOne('STMTRS', required=True)
 
 
 class STMTTRN(TRAN):

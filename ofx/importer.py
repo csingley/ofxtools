@@ -47,15 +47,6 @@ class OFXImporter(object):
         else:
             elixir.session.commit()
 
-    def processSONRS(self):
-        sonrs = self.tree.find('SIGNONMSGSRSV1/SONRS')
-        self.processSTATUS(sonrs.find('STATUS'))
-        fi = sonrs.find('FI')
-        if fi:
-            attrs = self.flatten(fi)
-            fi = models.FI.get_or_create(**attrs)[0]
-        self.fi = fi
-
     def processSECLIST(self):
         seclist = self.tree.find('SECLISTMSGSRSV1/SECLIST')
         if not seclist:
@@ -78,6 +69,26 @@ class OFXImporter(object):
             else:
                 self.unknown_securities.append((secClass, attrs, mfassetclass, fimfassetclass))
 
+    def processSONRS(self):
+        sonrs = self.tree.find('SIGNONMSGSRSV1/SONRS')
+        self.processSTATUS(sonrs.find('STATUS'))
+        fi = sonrs.find('FI')
+        if fi:
+            attrs = self.flatten(fi)
+            fi = models.FI.get_or_create(**attrs)[0]
+        self.fi = fi
+
+    def processSTATUS(self, status):
+        attrs = self.flatten(status)
+        severity = attrs['severity']
+        assert severity in ('INFO', 'WARN', 'ERROR')
+        if severity == 'ERROR':
+            # FIXME - handle errors
+            raise ValueError
+        elif severity == 'WARN':
+            # FIXME - handle errors
+            raise ValueError
+
     def processStatements(self):
         for tag in ('STMTTRNRS', 'CCSTMTTRNRS', 'INVSTMTTRNRS'):
             for trnrs in self.tree.findall('*/%s' % tag):
@@ -91,9 +102,128 @@ class OFXImporter(object):
         stmt = trnrs.find(stmtTag)
         handler(stmt)
 
+    def processSTMTRS(self, stmtrs, cc=False):
+        if cc:
+            acctTag = 'CCACCTFROM'
+            acctClass = models.CCACCT
+        else:
+            acctTag = 'BANKACCTFROM'
+            acctClass = models.BANKACCT
+        attrs = self.flatten(stmtrs.find(acctTag))
+        attrs['fi'] = self.fi
+        acct = acctClass.get_or_create(**attrs)[0]
+
+        curdef = stmtrs.find('CURDEF').text
+        # STMTRS doesn't have a DTASOF element, so use LEDGERBAL.DTASOF when
+        # a statement date is needed (e.g. LEDGERBAL that omits DTASOF)
+        dtasof = stmtrs.find('LEDGERBAL/DTASOF').text
+
+        # BANKTRANLIST
+        tranlist = stmtrs.find('BANKTRANLIST')
+        if tranlist:
+            dtstart, dtend = tranlist[0:2]
+            tranlist.remove(dtstart)
+            tranlist.remove(dtend)
+            # Silently discard DTSTART, DTEND
+            for tran in tranlist:
+                attrs = self.process_common(tran, acct, curdef)
+                models.STMTTRN.get_or_create(**attrs)
+
+        # LEDGERBAL - mandatory
+        ledgerbal = stmtrs.find('LEDGERBAL')
+        attrs = self.process_common(ledgerbal, acct, curdef)
+        attrs['ledgerbal'] = attrs.pop('balamt')
+        # AVAILBAL
+        availbal = stmtrs.find('AVAILBAL')
+        if availbal:
+            availbal_dtasof = availbal.find('DTASOF').text
+            assert availbal_dtasof.strip() == dtasof.strip()
+            attrs['availbal'] = availbal.find('BALAMT').text
+        models.BANKBAL.get_or_create(**attrs)
+
+        # BALLIST
+        ballist = stmtrs.find('BALLIST')
+        if ballist:
+            self.processBALLIST(ballist, dtasof, curdef, acct)
+
+    def processCCSTMTRS(self, ccstmtrs):
+        self.processSTMTRS(ccstmtrs, cc=True)
+
+    def processINVSTMTRS(self, invstmtrs):
+        attrs = self.flatten(invstmtrs.find('INVACCTFROM'))
+        attrs['fi'] = self.fi
+        acct = models.INVACCT.get_or_create(**attrs)[0]
+
+        curdef = invstmtrs.find('CURDEF').text
+        dtasof = invstmtrs.find('DTASOF').text
+
+        # INVTRANLIST
+        tranlist = invstmtrs.find('INVTRANLIST')
+        if tranlist:
+            dtstart, dtend = tranlist[0:2]
+            # Silently discard DTSTART, DTEND
+            tranlist.remove(dtstart)
+            tranlist.remove(dtend)
+            invbanktrans = tranlist.findall('INVBANKTRAN')
+            for invbanktran in invbanktrans:
+                tranlist.remove(invbanktran)
+                attrs = self.process_common(invbanktran, acct, curdef)
+                models.INVBANKTRAN.get_or_create(**attrs)
+            for trn in tranlist:
+                attrs = self.flatten(trn)
+                attrs['acct'] = acct
+                tranClass = getattr(models, trn.tag)
+                if hasattr(tranClass, 'cursym'):
+                    attrs = self.setCURSYM(attrs, curdef)
+                if hasattr(tranClass, 'sec'):
+                    attrs['sec'] = self.securities[(attrs.pop('uniqueidtype'),
+                                                attrs.pop('uniqueid'))]
+                tranClass.get_or_create(**attrs)
+
+        # INVPOSLIST
+        poslist = invstmtrs.find('INVPOSLIST')
+        if poslist:
+            for pos in poslist:
+                attrs = self.process_common(pos, acct, curdef)
+                sec = attrs['sec'] = self.securities[(attrs.pop('uniqueidtype'), attrs.pop('uniqueid'))]
+
+                # Strip out pricing data from the positions
+                price_attrs = {'sec': sec}
+                price_attrs.update(dict([(a, attrs.pop(a))
+                    for a in ('dtpriceasof', 'unitprice', 'cursym', 'currate')]))
+
+                models.SECPRICE.get_or_create(**price_attrs)
+                posClass = getattr(models, pos.tag)
+                posClass.get_or_create(**attrs)
+
+        # INVBAL
+        invbal = invstmtrs.find('INVBAL')
+        if invbal:
+            # First strip off BALLIST & process it
+            ballist = invbal.find('BALLIST')
+            if ballist:
+                invbal.remove(ballist)
+                self.processBALLIST(ballist, dtasof, curdef, acct)
+            # Now we can flatten the rest of INVBAL
+            attrs = self.process_common(invbal, acct, curdef)
+            attrs['dtasof'] = dtasof
+            models.INVBAL.get_or_create(**attrs)
+
+        # Unsupported subaggregates
+        for tag in ('INVOOLIST', 'INV401K', 'INV401KBAL', 'MKTGINFO'):
+            child = invstmtrs.find(tag)
+            if child:
+                invstmtrs.remove(child)
+
+    def processBALLIST(self, ballist, dtasof, curdef, acct):
+        for fibal in ballist:
+            attrs = self.process_common(fibal, acct, curdef)
+            attrs['dtasof'] = attrs.get('dtasof', dtasof)
+            models.FIBAL.get_or_create(**attrs)
+
     def flatten(self, element):
         """
-        Recurse through aggregate and flatten into an un-nested dict.
+        Recurse through aggregate and flatten; return an un-nested dict.
 
         This method will blow up if the aggregate contains LISTs, or if it
         contains multiple subaggregates whose namespaces will collide when
@@ -123,67 +253,11 @@ class OFXImporter(object):
         leaves.update(aggregates)
         return leaves
 
-    def processSTATUS(self, status):
-        attrs = self.flatten(status)
-        severity = attrs['severity']
-        assert severity in ('INFO', 'WARN', 'ERROR')
-        if severity == 'ERROR':
-            # FIXME - handle errors
-            raise ValueError
-        elif severity == 'WARN':
-            # FIXME - handle errors
-            raise ValueError
-
-    def processSTMTRS(self, element, cc=False):
-        if cc:
-            acctTag = 'CCACCTFROM'
-            acctClass = models.CCACCT
-        else:
-            acctTag = 'BANKACCTFROM'
-            acctClass = models.BANKACCT
-        acct_attrs = self.flatten(element.find(acctTag))
-        acct_attrs['fi'] = self.fi
-        acct = acctClass.get_or_create(**acct_attrs)[0]
-
-        curdef = element.find('CURDEF').text
-
-        # BANKTRANLIST
-        tranlist = element.find('BANKTRANLIST')
-        if tranlist:
-            dtstart, dtend = tranlist[0:2]
-            tranlist.remove(dtstart)
-            tranlist.remove(dtend)
-            for tran in tranlist:
-                attrs = self.flatten(tran)
-                attrs = self.setCURSYM(attrs, curdef)
-                attrs['acct'] = acct
-                models.STMTTRN.get_or_create(**attrs)
-
-        # LEDGERBAL - mandatory
-        ledgerbal = element.find('LEDGERBAL')
-        attrs = self.flatten(ledgerbal)
-        attrs['ledgerbal'] = attrs.pop('balamt')
-        self.setCURSYM(attrs, curdef)
-        availbal = element.find('AVAILBAL')
-        if availbal:
-            # FIXME - check that AVAILBAL.DTASOF matches LEDGERBAL.DTASOF
-            attrs['availbal'] = availbal.find('BALAMT').text
-        attrs['acct'] = acct
-        models.BANKBAL.get_or_create(**attrs)
-
-        # BALLIST
-        ballist = element.find('BALLIST')
-        if ballist:
-            for fibal in ballist:
-                attrs = self.flatten(fibal)
-                self.setCURSYM(attrs, curdef)
-                attrs['acct'] = acct
-                models.FIBAL.get_or_create(**attrs)
-
-    def processCCSTMTRS(self, element):
-        self.processSTMTRS(element, cc=True)
-
     def setCURSYM(self, attrs, curdef):
+        """
+        Set CURSYM (currency) to CURDEF (default currency) if necessary.
+        Takes a dict as input; returns a dict.
+        """
         has_cursym = 'cursym' in attrs
         has_origcursym = 'origcursym' in attrs
         # OFX spec insists CURSYM and ORIGCURSYM be mutually exclusive
@@ -193,105 +267,12 @@ class OFXImporter(object):
             attrs['currate'] = 1
         return attrs
 
-    def processINVSTMTRS(self, element):
-        attrs = self.flatten(element.find('INVACCTFROM'))
-        attrs['fi'] = self.fi
-        acct = models.INVACCT.get_or_create(**attrs)[0]
+    def process_common(self, element, acct, curdef):
+        attrs = self.flatten(element)
+        attrs = self.setCURSYM(attrs, curdef)
+        attrs['acct'] = acct
+        return attrs
 
-        curdef = element.find('CURDEF').text
-        dtasof = element.find('DTASOF').text
-
-        # INVTRANLIST
-        tranlist = element.find('INVTRANLIST')
-        if tranlist:
-            dtstart, dtend = tranlist[0:2]
-            tranlist.remove(dtstart)
-            tranlist.remove(dtend)
-
-            invbanktrans = tranlist.findall('INVBANKTRAN')
-            for invbanktran in invbanktrans:
-                tranlist.remove(invbanktran)
-                attrs = self.flatten(invbanktran)
-                attrs = self.setCURSYM(attrs, curdef)
-                attrs['acct'] = acct
-                models.INVBANKTRAN.get_or_create(**attrs)
-            for trn in tranlist:
-                tranClass = getattr(models, trn.tag)
-                attrs = self.flatten(trn)
-                # Securities-related transactions
-                if issubclass(tranClass, (models.INVBUY, models.INVSELL, models.CLOSUREOPT,
-                                        models.INCOME, models.INVEXPENSE, models.JRNLSEC,
-                                        models.REINVEST, models.RETOFCAP, models.SPLIT,
-                                        models.TRANSFER)):
-                    attrs['sec'] = self.securities[(attrs.pop('uniqueidtype'),
-                                                attrs.pop('uniqueid'))]
-                # Transactions with currency
-                if issubclass(tranClass, (models.INVBUY, models.INVSELL, models.INCOME,
-                                        models.INVEXPENSE, models.MARGININTEREST,
-                                        models.REINVEST, models.RETOFCAP)):
-                    attrs = self.setCURSYM(attrs, curdef)
-                attrs['acct'] = acct
-                #attrs['stmtrs'] = stmtrs
-                tranClass.get_or_create(**attrs)
-
-        # INVPOSLIST
-        poslist = element.find('INVPOSLIST')
-        if poslist:
-            for pos in poslist:
-                posClass = getattr(models, pos.tag)
-                attrs = self.flatten(pos)
-                attrs['acct'] = acct
-                sec = attrs['sec'] = self.securities[(attrs.pop('uniqueidtype'), attrs.pop('uniqueid'))]
-
-                # Strip out pricing data from the positions
-                price_attrs = {'sec': sec}
-                price_attrs.update(dict([(a, attrs.pop(a, None))
-                    for a in ('dtpriceasof', 'unitprice', 'cursym', 'currate')]))
-                price_attrs['cursym'] = price_attrs['cursym'] or curdef
-
-                models.SECPRICE.get_or_create(**price_attrs)
-                posClass.get_or_create(**attrs)
-
-        # INVBAL
-        invbal = element.find('INVBAL')
-        if invbal:
-            # Strip off BALLIST
-            ballist = invbal.find('BALLIST')
-            if ballist:
-                invbal.remove(ballist)
-                for fibal in ballist:
-                    attrs = self.flatten(fibal)
-                    attrs['acct'] = acct
-                    # FIXME - check that BAL.DTASOF (if present) matches INVSTMTRS.DTASOF
-                    attrs['dtasof'] = dtasof
-                    self.setCURSYM(attrs, curdef)
-                    models.FIBAL.get_or_create(**attrs)
-            attrs = self.flatten(invbal)
-            attrs['acct'] = acct
-            attrs['dtasof'] = dtasof
-            attrs['cursym'] = curdef
-            attrs['currate'] = 1
-            models.INVBAL.get_or_create(**attrs)
-
-        # INVOOLIST - not supported
-        invoolist = element.find('INVOOLIST')
-        if invoolist:
-            element.remove(invoolist)
-
-        # INV401K - not supported
-        inv401k = element.find('INV401K')
-        if inv401k:
-            element.remove(inv401k)
-
-        # INV401KBAL - not supported
-        inv401kbal = element.find('INV401KBAL')
-        if inv401kbal:
-            element.remove(inv401kbal)
-
-        # MKTGINFO - not supported
-        mktginfo = element.find('MKTGINFO')
-        if mktginfo:
-            element.remove(mktginfo)
 
 def main():
     import sys
