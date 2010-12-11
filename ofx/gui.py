@@ -19,6 +19,8 @@ from client import OFXConfigParser, OFXClient, VERSIONS, APPIDS, APPVERS, \
     APP_DEFAULTS, FI_DEFAULTS, STMT_DEFAULTS, ACCT_DEFAULTS, GUI_DEFAULTS
 from utilities import _
 
+if sys.version_info < (2, 7):
+    raise RuntimeError('ofx.gui library requires Python v2.7+')
 
 class OFXGui(QtGui.QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
@@ -84,8 +86,8 @@ class OFXGui(QtGui.QMainWindow, Ui_MainWindow):
     def on_download_clicked(self):
         """ Read GUI widgets """
         # Client instance attributes
-        client_opts = dict([(key, self.read_widget(getattr(self, key)))
-                        for key in APP_DEFAULTS.keys() + FI_DEFAULTS.keys()])
+        client_opts = {key: self.read_widget(getattr(self, key))
+                        for key in APP_DEFAULTS.keys() + FI_DEFAULTS.keys()}
         client = OFXClient(**client_opts)
 
         # Statement options
@@ -95,8 +97,8 @@ class OFXGui(QtGui.QMainWindow, Ui_MainWindow):
             stmt_opts[option] = self.read_widget(widget)
 
         # Account numbers
-        accts = dict([(key, self.read_widget(getattr(self, key)))
-                        for key in ACCT_DEFAULTS.keys()])
+        accts = {key: self.read_widget(getattr(self, key))
+                        for key in ACCT_DEFAULTS.keys()}
 
         client.parse_accounts(accts, **stmt_opts)
         user = self.read_widget(self.user)

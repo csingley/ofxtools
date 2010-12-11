@@ -1,6 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/python2.7
+import sys
+
 import elixir
 import models
+
+from utilities import _
+
+if sys.version_info[:2] != (2, 7):
+    raise RuntimeError('ofx.importer library requires Python v2.7')
 
 class OFXImporter(object):
     """
@@ -50,7 +57,9 @@ class OFXImporter(object):
     def processSECLIST(self):
         seclist = self.tree.find('SECLISTMSGSRSV1/SECLIST')
         if not seclist:
+            print "no seclist"
             return
+        print "got seclst"
         for sec in seclist:
             # Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up flatten()
             mfassetclass = sec.find('MFASSETCLASS')
@@ -176,6 +185,7 @@ class OFXImporter(object):
                 if hasattr(tranClass, 'cursym'):
                     attrs = self.setCURSYM(attrs, curdef)
                 if hasattr(tranClass, 'sec'):
+                    print self.securities
                     attrs['sec'] = self.securities[(attrs.pop('uniqueidtype'),
                                                 attrs.pop('uniqueid'))]
                 tranClass.get_or_create(**attrs)
@@ -189,8 +199,8 @@ class OFXImporter(object):
 
                 # Strip out pricing data from the positions
                 price_attrs = {'sec': sec}
-                price_attrs.update(dict([(a, attrs.pop(a))
-                    for a in ('dtpriceasof', 'unitprice', 'cursym', 'currate')]))
+                price_attrs.update({a: attrs.pop(a)
+                    for a in ('dtpriceasof', 'unitprice', 'cursym', 'currate')})
 
                 models.SECPRICE.get_or_create(**price_attrs)
                 posClass = getattr(models, pos.tag)
@@ -275,25 +285,22 @@ class OFXImporter(object):
 
 
 def main():
-    import sys
-    from optparse import OptionParser
+    from argparse import ArgumentParser
     from parser import OFXParser
-    optparser = OptionParser(usage='usage: %prog FILE')
-    optparser.set_defaults(verbose=False, database=None)
-    optparser.add_option('-v', '--verbose', action='store_true',
-                        help='Turn on debug output')
-    optparser.add_option('-d', '--database',
-                        help='URL of persistent database')
-    (options, args) = optparser.parse_args()
-    if len(args) != 1:
-        optparser.print_usage()
-        sys.exit(-1)
-    FILE = args[0]
 
-    ofxparser = OFXParser(verbose=options.verbose)
-    ofxparser.parse(FILE)
-    importer = OFXImporter(ofxparser.tree, verbose=options.verbose,
-                            database=options.database)
+    argparser = ArgumentParser()
+    argparser.add_argument('file')
+    argparser.add_argument('-v', '--verbose', action='store_true', default=False,
+                        help='Turn on debug output')
+    argparser.add_argument('-d', '--database',
+                        help='URL of persistent database')
+    args = argparser.parse_args()
+
+    ofxparser = OFXParser(verbose=args.verbose)
+    ofxparser.parse(_(args.file))
+
+    importer = OFXImporter(ofxparser.tree, verbose=args.verbose,
+                            database=args.database)
     importer.process()
 
 if __name__ == '__main__':

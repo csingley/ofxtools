@@ -4,7 +4,10 @@ import os
 import xml.etree.cElementTree as ET
 from decimal import Decimal
 
-from utilities import OFXv1, OFXv2
+from utilities import _, OFXv1, OFXv2
+
+if sys.version_info[:2] != (2, 7):
+    raise RuntimeError('ofx.parser library requires Python v2.7')
 
 HEADER_FIELDS = {'100': ('DATA', 'VERSION', 'SECURITY', 'ENCODING', 'CHARSET',
                         'COMPRESSION', 'OLDFILEUID', 'NEWFILEUID'),}
@@ -14,10 +17,9 @@ class OFXParser(object):
     Reads OFX files (v1 & v2), converts to ElementTree, and extracts the
     interesting data to a SQL database.
     """
-    def __init__(self, verbose=False, url=None):
+    def __init__(self, verbose=False):
         self.reset()
         self.verbose = verbose
-        self.url = url
 
     def reset(self):
         self.header = None
@@ -151,6 +153,8 @@ class OFXTreeBuilder(SGMLParser):
         self.latest_starttag = tag
 
     def unknown_endtag(self, tag):
+        #if self.verbose:
+            #print "unknown_endtag saw '%s'"% tag
         # First close any dangling data
         if self.inside_data:
             if self.verbose:
@@ -256,22 +260,15 @@ class OFXTreeBuilder_sgmlop(object):
 
 
 def main():
-    from optparse import OptionParser
-    optparser = OptionParser(usage='usage: %prog FILE')
-    optparser.set_defaults(verbose=False, database=None)
-    optparser.add_option('-v', '--verbose', action='store_true',
+    from argparse import ArgumentParser
+    argparser = ArgumentParser()
+    argparser.add_argument('file')
+    argparser.add_argument('-v', '--verbose', action='store_true', default=False,
                         help='Turn on debug output')
-    optparser.add_option('-d', '--database',
-                        help='URL of persistent database')
-    (options, args) = optparser.parse_args()
-    if len(args) != 1:
-        optparser.print_usage()
-        sys.exit(-1)
-    FILE = args[0]
+    args = argparser.parse_args()
 
-    ofxparser = OFXParser(verbose=options.verbose,
-                        url=options.database)
-    ofxparser.parse(FILE)
+    ofxparser = OFXParser(verbose=args.verbose)
+    ofxparser.parse(_(args.file))
 
 if __name__ == '__main__':
     main()

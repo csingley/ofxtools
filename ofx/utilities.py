@@ -4,6 +4,14 @@ import datetime
 import time
 from decimal import Decimal
 
+from xml.dom import minidom
+
+
+def prettify(xmlstring):
+    """ """
+    return minidom.parseString(xmlstring).toprettyxml(indent=' '*2)
+
+
 def _(path):
     """Makes paths do the right thing."""
     path = os.path.expanduser(path)
@@ -12,8 +20,10 @@ def _(path):
     path = os.path.abspath(path)
     return path
 
+
 OFXv1 = ('102', '103')
 OFXv2 = ('203', '211')
+
 
 # Currency codes
 ISO4217 = ('AE', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD', 'AWG',
@@ -36,6 +46,7 @@ ISO4217 = ('AE', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD', 'AWG',
             'UYI', 'UYU', 'UZS', 'VEF', 'VND', 'VUV', 'WST', 'XAF', 'XAG',
             'XAU', 'XBA', 'XBB', 'XBC', 'XBD', 'XCD', 'XDR', 'XFU', 'XOF',
             'XPD', 'XPF', 'XPT', 'XTS', 'XXX', 'YER', 'ZAR', 'ZMK', 'ZWL')
+
 
 # Country codes
 ISO3166_1a3 = ('ABW', 'AFG', 'AGO', 'AIA', 'ALA', 'ALB', 'AND', 'ANT', 'ARE',
@@ -66,6 +77,26 @@ ISO3166_1a3 = ('ABW', 'AFG', 'AGO', 'AIA', 'ALA', 'ALB', 'AND', 'ANT', 'ARE',
                 'TWN', 'TZA', 'UGA', 'UKR', 'UMI', 'URY', 'USA', 'UZB', 'VAT',
                 'VCT', 'VEN', 'VGB', 'VIR', 'VNM', 'VUT', 'WLF', 'WSM', 'YEM',
                 'ZAF', 'ZMB', 'ZWE')
+
+
+def settleDate(dt):
+    """
+    Given a trade date (or datetime), return the trade settlement date(time)
+    """
+    def nextBizDay(dt):
+        stop = False
+        while not stop:
+            dt += datetime.timedelta(days=1)
+            if dt.isoweekday() in (6,7):
+                stop = False
+            else:
+                stop = True
+        return dt
+
+    for n in range(3):
+        dt = nextBizDay(dt)
+    return dt
+
 
 # Validators/converters implemented here so that
 # client.py needn't depend on FormEncode or SQLAlchemy
@@ -122,12 +153,14 @@ class OFXDtConverter(object):
             raise # FIXME
         return value
 
+
 class OFXStringBool(object):
     values = {True: 'Y', False: 'N'}
 
     @classmethod
     def from_python(cls, value):
         return cls.values[value]
+
 
 class BankAcctTypeValidator(object):
     values = ('CHECKING', 'SAVINGS', 'MONEYMRKT', 'CREDITLINE')
