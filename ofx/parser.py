@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import sys
 import os
-#import xml.etree.cElementTree as ET
 import xml.etree.ElementTree as ET
 from sgmllib import SGMLParser
 from decimal import Decimal
@@ -16,7 +15,16 @@ HEADER_FIELDS = {'100': ('DATA', 'VERSION', 'SECURITY', 'ENCODING', 'CHARSET',
 
 
 class OFXTreeBuilder(ET.TreeBuilder):
-    """ """
+    """
+    OFX doesn't close tags on leaf node elements.  SGMLParser is stateless, so
+    it can't handle OFX's implicitly-closed tags.  Rather than reimplementing
+    that state at the parser level, or have OFXParser look up TreeBuilder's
+    skirt at its private attributes, it's better just to accept the breach of
+    orthogonality and delegate the handling of implicit tag closure to
+    TreeBuilder, who is already maintaining all the necessary state.
+
+    So that's how the OFXParser and OFXTreeBuilder subclasses work together.
+    """
     def start(self, tag):
         # First clean up any dangling unclosed leaf nodes
         if self._data:
