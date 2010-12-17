@@ -93,8 +93,10 @@ def settleDate(dt):
                 stop = True
         return dt
 
+    #print dt
     for n in range(3):
         dt = nextBizDay(dt)
+    #print dt
     return dt
 
 

@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 import sys
 import os
-import xml.etree.cElementTree as ET
+#import xml.etree.cElementTree as ET
+import xml.etree.ElementTree as ET
+from sgmllib import SGMLParser
 from decimal import Decimal
 
 from utilities import _, OFXv1, OFXv2
@@ -12,26 +14,58 @@ if sys.version_info[:2] != (2, 7):
 HEADER_FIELDS = {'100': ('DATA', 'VERSION', 'SECURITY', 'ENCODING', 'CHARSET',
                         'COMPRESSION', 'OLDFILEUID', 'NEWFILEUID'),}
 
-class OFXParser(object):
+
+class OFXTreeBuilder(ET.TreeBuilder):
+    """ """
+    def start(self, tag):
+        # First clean up any dangling unclosed leaf nodes
+        if self._data:
+            self._flush()
+            self._last = self._elem.pop()
+            self._tail = 1
+        ET.TreeBuilder.start(self, tag, attrs={})
+
+    def data(self, data):
+        ET.TreeBuilder.data(self, data)
+
+    def end(self, tag):
+        # First clean up any dangling unclosed leaf nodes
+        if self._data:
+            self._flush()
+            self._last = self._elem.pop()
+            self._tail = 1
+        ET.TreeBuilder.end(self, tag)
+
+
+class OFXParser(SGMLParser):
     """
-    Reads OFX files (v1 & v2), converts to ElementTree, and extracts the
-    interesting data to a SQL database.
+    Parses OFX v1&v2 data files into an ElementTree instance.
+    Accessible via standard feed/close consumer interface.
+
+    Built on sgmllib, which is deprecated and going away in py3k.
     """
     def __init__(self, verbose=False):
-        self.reset()
         self.verbose = verbose
+        self.__builder = OFXTreeBuilder()
+        SGMLParser.__init__(self)
 
     def reset(self):
         self.header = None
         self.tree = ET.ElementTree()
-        self.connection = None
+        SGMLParser.reset(self)
+
+    def close(self):
+        root = self.__builder.close()
+        SGMLParser.close(self)
+        return root
 
     def parse(self, source):
         if not hasattr(source, 'read'):
             source = open(source, 'rb')
         self.header, source = self.unwrap(source)
-        root = self._parse(source)
+        root = self.tree.parse(source, parser=self)
         assert root.tag == 'OFX'
+        return root
 
     def unwrap(self, source):
         """ Pass in an open file-like object """
@@ -86,167 +120,20 @@ class OFXParser(object):
 
         return header, source
 
-    def _parse(self, source):
-        # Mark the beginning of the tag soup.
-        # This is generally not going to be seek(0), because we've
-        # already stepped through the OFX header in unwrapOFX().
-        beginning = source.tell()
-        try:
-            # If sgmlop is installed, it's the fastest parser
-            # and it will handle OFXv1-style unclosed tags.
-            parser = OFXTreeBuilder_sgmlop(verbose=self.verbose)
-        except ImportError:
-            # expat (Python's bundled XML parser) is compiled C: fast.
-            # expat doesn't validate against DTDs; it will work as long
-            # as all tags are closed explicitly, which is allowed by
-            # OFXv1 and actually done by some FIs.
-            parser = ET.XMLParser()
-            try:
-                root = self.tree.parse(source, parser)
-            except SyntaxError:
-                # Fall back to SGMLParser (slow, but handles unclosed tags)
-                parser = OFXTreeBuilder(verbose=self.verbose)
-                # expat already started reading the file; rewind
-                source.seek(beginning)
-                root = self.tree.parse(source, parser)
-        else:
-            root = self.tree.parse(source, parser)
-        return root
-
-
-from sgmllib import SGMLParser
-class OFXTreeBuilder(SGMLParser):
-    """
-    Parses OFX v1&v2 into an ElementTree instance.
-    Accessible via standard feed/close consumer interface.
-
-    Built on sgmllib, which is deprecated and going away in py3k.
-    """
-    def __init__(self, verbose=False):
-        self.__builder = ET.TreeBuilder()
-        SGMLParser.__init__(self)
-        self.inside_data = False
-        self.latest_starttag = None
-        self.verbose = verbose
-
-    def feed(self, data):
-        return SGMLParser.feed(self, data)
-
-    def close(self):
-        SGMLParser.close(self)
-        return self.__builder.close()
-
     def unknown_starttag(self, tag, attrib):
-        # First close any dangling data
-        if self.inside_data:
-            if self.verbose:
-                msg = "starttag closing '%s'" % self.latest_starttag
-                print msg
-            self.__builder.end(self.latest_starttag)
-        self.inside_data = False
-
         tag = tag.upper()
         if self.verbose:
             msg = "starttag opening '%s'" % tag
             print msg
-        self.__builder.start(tag, attrib)
-        self.latest_starttag = tag
+        #OFX tags don't have attributes
+        self.__builder.start(tag)
 
     def unknown_endtag(self, tag):
-        #if self.verbose:
-            #print "unknown_endtag saw '%s'"% tag
-        # First close any dangling data
-        if self.inside_data:
-            if self.verbose:
-                msg = "endtag closing '%s'" % self.latest_starttag
-                print msg
-            self.__builder.end(self.latest_starttag)
-        self.inside_data = False
-
-        tag = tag.upper()
-        if tag != self.latest_starttag:
-            if self.verbose:
-                msg = "endtag closing '%s'" % tag
-                print msg
-            self.__builder.end(tag)
-
-    def handle_data(self, text):
-        #text = text.strip('\f\n\r\t\v') # Strip whitespace, except space char
-        text = text.strip()
-        if text:
-            if self.verbose:
-                msg = "handle_data adding data '%s'" % text
-                print msg
-            self.inside_data = True
-            self.__builder.data(text)
-
-class OFXTreeBuilder_sgmlop(object):
-    """
-    Parses OFX v1&v2 into an ElementTree instance.
-    Accessible via standard feed/close consumer interface.
-
-    Built on sgmlop, which is deprecated and going away in py3k:
-        http://bugs.python.org/issue1772916
-    Nevertheless sgmlop is the best parser available, and can be gotten here:
-        http://effbot.org/zone/sgmlop-index.htm
-    """
-    def __init__(self, verbose=False):
-        import sgmlop
-        self.__builder = ET.TreeBuilder()
-        self.__parser = sgmlop.SGMLParser()
-        self.__parser.register(self)
-        self.inside_data = False
-        self.latest_starttag = None
-        self.verbose = verbose
-
-    def feed(self, data):
-        self.__parser.feed(data)
-
-    def close(self):
-        self.__parser.close()
-        # "Note that if you use the standard pattern where a parser class holds
-        #  a reference to the sgmlop object, and you'll register methods in the
-        #  same class, Python may leak resources. To avoid this, you can either
-        #  remove the object from the class before you destroy the class instance,
-        #  or unregister all methods (by calling register(None)), or both.
-        #  Recent versions of sgmlop supports proper garbage collection for
-        #  this situation, but it never hurts to be on the safe side."
-        # http://effbot.org/zone/sgmlop-handbook.htm
-        self.__parser.register(None)
-        self.__parser = None
-        return self.__builder.close()
-
-    def finish_starttag(self, tag, attrib):
-        # First close any dangling data
-        if self.inside_data:
-            if self.verbose:
-                msg = "starttag closing '%s'" % self.latest_starttag
-                print msg
-            self.__builder.end(self.latest_starttag)
-        self.inside_data = False
-
         tag = tag.upper()
         if self.verbose:
-            msg = "starttag opening '%s'" % tag
+            msg = "endtag closing '%s'" % tag
             print msg
-        self.__builder.start(tag, attrib)
-        self.latest_starttag = tag
-
-    def finish_endtag(self, tag):
-        # First close any dangling data
-        if self.inside_data:
-            if self.verbose:
-                msg = "endtag closing '%s'" % self.latest_starttag
-                print msg
-            self.__builder.end(self.latest_starttag)
-        self.inside_data = False
-
-        tag = tag.upper()
-        if tag != self.latest_starttag:
-            if self.verbose:
-                msg = "endtag closing '%s'" % tag
-                print msg
-            self.__builder.end(tag)
+        self.__builder.end(tag)
 
     def handle_data(self, text):
         #text = text.strip('\f\n\r\t\v') # Strip whitespace, except space char
@@ -255,7 +142,6 @@ class OFXTreeBuilder_sgmlop(object):
             if self.verbose:
                 msg = "handle_data adding data '%s'" % text
                 print msg
-            self.inside_data = True
             self.__builder.data(text)
 
 
@@ -269,6 +155,7 @@ def main():
 
     ofxparser = OFXParser(verbose=args.verbose)
     ofxparser.parse(_(args.file))
+    ofxparser.tree.write('test2.ofx')
 
 if __name__ == '__main__':
     main()

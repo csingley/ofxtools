@@ -56,10 +56,8 @@ class OFXImporter(object):
 
     def processSECLIST(self):
         seclist = self.tree.find('SECLISTMSGSRSV1/SECLIST')
-        if not seclist:
-            print "no seclist"
+        if seclist is None:
             return
-        print "got seclst"
         for sec in seclist:
             # Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up flatten()
             mfassetclass = sec.find('MFASSETCLASS')
@@ -168,7 +166,7 @@ class OFXImporter(object):
 
         # INVTRANLIST
         tranlist = invstmtrs.find('INVTRANLIST')
-        if tranlist:
+        if tranlist is not None:
             dtstart, dtend = tranlist[0:2]
             # Silently discard DTSTART, DTEND
             tranlist.remove(dtstart)
@@ -185,14 +183,13 @@ class OFXImporter(object):
                 if hasattr(tranClass, 'cursym'):
                     attrs = self.setCURSYM(attrs, curdef)
                 if hasattr(tranClass, 'sec'):
-                    print self.securities
                     attrs['sec'] = self.securities[(attrs.pop('uniqueidtype'),
                                                 attrs.pop('uniqueid'))]
                 tranClass.get_or_create(**attrs)
 
         # INVPOSLIST
         poslist = invstmtrs.find('INVPOSLIST')
-        if poslist:
+        if poslist is not None:
             for pos in poslist:
                 attrs = self.process_common(pos, acct, curdef)
                 sec = attrs['sec'] = self.securities[(attrs.pop('uniqueidtype'), attrs.pop('uniqueid'))]
@@ -208,10 +205,10 @@ class OFXImporter(object):
 
         # INVBAL
         invbal = invstmtrs.find('INVBAL')
-        if invbal:
+        if invbal is not None:
             # First strip off BALLIST & process it
             ballist = invbal.find('BALLIST')
-            if ballist:
+            if ballist is not None:
                 invbal.remove(ballist)
                 self.processBALLIST(ballist, dtasof, curdef, acct)
             # Now we can flatten the rest of INVBAL
@@ -302,6 +299,8 @@ def main():
     importer = OFXImporter(ofxparser.tree, verbose=args.verbose,
                             database=args.database)
     importer.process()
+    print importer.securities
+    print importer.unknown_securities
 
 if __name__ == '__main__':
     main()
