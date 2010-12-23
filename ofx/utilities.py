@@ -4,6 +4,7 @@ import datetime
 import calendar
 import time
 from decimal import Decimal
+import itertools
 
 from xml.dom import minidom
 
@@ -128,17 +129,19 @@ class NYSEcalendar(object):
 
     @classmethod
     def _weekdays(cls, year, month, weekday):
+        def weekdayTest(days):
+            return (days[0] > 0) and (days[1] == weekday)
         return [datetime.date(year, month, day) \
-            for (day, wkday) in cls._cal.itermonthdays2(year, month) \
-            if day > 0 and wkday == weekday]
+                for (day, wkday) in itertools.ifilter(weekdayTest,
+                                        cls._cal.itermonthdays2(year, month))]
 
     @classmethod
     def mondays(cls, year, month):
-        return cls._weekdays(year, month, 0)
+        return cls._weekdays(year, month, weekday=0)
 
     @classmethod
     def thursdays(cls, year, month):
-        return cls._weekdays(year, month, 3)
+        return cls._weekdays(year, month, weekday=3)
 
     @classmethod
     def holidays(cls, year):
