@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 import sys
 import os
+import re
 import xml.etree.ElementTree as ET
 from sgmllib import SGMLParser
 from decimal import Decimal
 
-from utilities import _, OFXv1, OFXv2
+from utilities import _, OFXv1, OFXv2, prettify
 
 if sys.version_info[:2] != (2, 7):
     raise RuntimeError('ofx.parser library requires Python v2.7')
@@ -52,6 +53,31 @@ class OFXParser(SGMLParser):
 
     Built on sgmllib, which is deprecated and going away in py3k.
     """
+    v1Header = re.compile(r"""\s*
+                            OFXHEADER:(?P<OFXHEADER>\d+)\s+
+                            DATA:(?P<DATA>[A-Z]+)\s+
+                            VERSION:(?P<VERSION>\d+)\s+
+                            SECURITY:(?P<SECURITY>[A-Z]+)\s+
+                            ENCODING:(?P<ENCODING>[A-Z]+)\s+
+                            CHARSET:(?P<CHARSET>\d+)\s+
+                            COMPRESSION:(?P<COMPRESSION>[A-Z]+)\s+
+                            OLDFILEUID:(?P<OLDFILEUID>[\w-]+)\s+
+                            NEWFILEUID:(?P<NEWFILEUID>[\w-]+)\s+
+                            """, re.X)
+
+    v2Header = re.compile(r"""(<\?xml\s+
+                            (version=\"(?P<XMLVERSION>[\d.]+)\")?\s*
+                            (encoding=\"(?P<ENCODING>[\w-]+)\")?\s*
+                            (standalone=\"(?P<STANDALONE>[\w]+)\")?\s*
+                            \?>)\s*
+                            <\?OFX\s+
+                            OFXHEADER=\"(?P<OFXHEADER>\d+)\"\s+
+                            VERSION=\"(?P<VERSION>\d+)\"\s+
+                            SECURITY=\"(?P<SECURITY>[A-Z]+)\"\s+
+                            OLDFILEUID=\"(?P<OLDFILEUID>[\w-]+)\"\s+
+                            NEWFILEUID=\"(?P<NEWFILEUID>[\w-]+)\"\s*
+                            \?>\s+""", re.X)
+
     def __init__(self, verbose=False):
         self.verbose = verbose
         self.__builder = OFXTreeBuilder()
@@ -70,63 +96,43 @@ class OFXParser(SGMLParser):
     def parse(self, source):
         if not hasattr(source, 'read'):
             source = open(source, 'rb')
-        self.header, source = self.unwrap(source)
-        root = self.tree.parse(source, parser=self)
-        assert root.tag == 'OFX'
-        return root
-
-    def unwrap(self, source):
-        """ Pass in an open file-like object """
-        def next_nonempty_line(source):
-            FOUND_CONTENT = False
-            while not FOUND_CONTENT:
-                line = source.readline()
-                # Per Python docs, for str.readline(), 'An empty string is
-                #  returned only when EOF is encountered immediately.'
-                if line == '':
-                    raise EOFError("Source is empty")
-                line = line.strip()
-                if line:
-                    FOUND_CONTENT = True
-            return line
-
-        def validateOFXv1Header(line, field):
-            try:
-                key, value = line.split(':')
-                assert key == field
-            except ValueError:
-                # If split() doesn't yield a duple
-                raise ValueError("Malformed OFX header '%s'" % line)
-            except AssertionError:
-                raise ValueError("Expecting OFX header field '%s' not '%s'" % (field, key))
-            return key.strip(), value.strip()
-
-        line1 = next_nonempty_line(source)
-        if line1.startswith('OFXHEADER'):
+        source = source.read().strip()
+        ### First parse OFX header
+        v1Header = self.v1Header.match(source)
+        if v1Header:
             # OFXv1
-            # Header is 9 lines of flat text (not markup) that we strip
-            header_key, header_version = validateOFXv1Header(line1, 'OFXHEADER')
-            header = dict([validateOFXv1Header(source.readline(), f) \
-                    for f in HEADER_FIELDS[header_version]])
-            header[header_key] = header_version
+            header = v1Header.groupdict()
             # Sanity check
-            assert header['DATA'] == 'OFXSGML'
-            assert header['VERSION'] in OFXv1
-            #if header['VERSION'] not in OFXv1:
-            #    print "OFXv1 header claims OFX version is %s" % header['VERSION']
-        elif line1.startswith('<?xml'):
-            #OFXv2
-            # OFX declaration is the next line of content
-            ofx_decl = next_nonempty_line(source)
-            assert ofx_decl.endswith('?>')
-            args = ofx_decl[:-3].split(' ')[1:]
-            header = dict([arg.split('=') for arg in args])
-            # Sanity check
-            assert header['VERSION'] in OFXv2
+            try:
+                assert header['OFXHEADER'] == '100'
+                assert header['DATA'] == 'OFXSGML'
+                assert header['VERSION'] in OFXv1
+                assert header['SECURITY'] in ('NONE', 'TYPE1')
+                assert header['ENCODING'] in ('UNICODE', 'USASCII')
+            except AssertionError:
+                raise SyntaxError('Malformed OFX header %s' % str(header))
+            source = source[v1Header.end():]
+            parser = self
         else:
-            raise ValueError("Malformed OFX header '%s'" % line1)
-
-        return header, source
+            v2Header = self.v2Header.match(source)
+            if not v2Header:
+                raise SyntaxError('Missing OFX Header')
+            header = v2Header.groupdict()
+            # Sanity check
+            try:
+                assert header['OFXHEADER'] == '200'
+                assert header['VERSION'] in OFXv2
+                assert header['SECURITY'] in ('NONE', 'TYPE1')
+            except AssertionError:
+                raise SyntaxError('Malformed OFX header %s' % str(header))
+            source = source[v2Header.end():]
+            parser = None # Default to ElementTree.XMLParser
+        self.header = header
+        ### Then parse tag soup
+        root = ET.fromstring(source, parser=parser)
+        assert root.tag == 'OFX'
+        self.tree._setroot(root)
+        return root
 
     def unknown_starttag(self, tag, attrib):
         tag = tag.upper()
@@ -162,8 +168,8 @@ def main():
     args = argparser.parse_args()
 
     ofxparser = OFXParser(verbose=args.verbose)
-    ofxparser.parse(_(args.file))
-    ofxparser.tree.write('test2.ofx')
+    root = ofxparser.parse(_(args.file))
+    print prettify(ET.tostring(root))
 
 if __name__ == '__main__':
     main()

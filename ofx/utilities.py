@@ -129,6 +129,9 @@ class NYSEcalendar(object):
 
     @classmethod
     def _weekdays(cls, year, month, weekday):
+        """
+        Filter datetime.dates in (year, month) for a given weekday.
+        """
         def weekdayTest(days):
             return (days[0] > 0) and (days[1] == weekday)
         return [datetime.date(year, month, day) \
