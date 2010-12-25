@@ -29,20 +29,20 @@ class OFXTreeBuilder(ET.TreeBuilder):
     def start(self, tag):
         # First clean up any dangling unclosed leaf nodes
         if self._data:
-            self._flush()
-            self._last = self._elem.pop()
-            self._tail = 1
+            ET.TreeBuilder.end(self, self._last.tag)
         ET.TreeBuilder.start(self, tag, attrs={})
 
     def data(self, data):
         ET.TreeBuilder.data(self, data)
 
     def end(self, tag):
-        # First clean up any dangling unclosed leaf nodes
-        if self._data:
-            self._flush()
-            self._last = self._elem.pop()
-            self._tail = 1
+        # If I see a closing tag different than the top of the stack, then
+        # the unclosed tag must be a data-bearing leaf node, and the closing
+        # tag is that of its containing parent aggregate.
+        # First close the data-bearing element, then proceed as usual
+        toptag = self._elem[-1].tag
+        if tag != toptag:
+            ET.TreeBuilder.end(self, toptag)
         ET.TreeBuilder.end(self, tag)
 
 
