@@ -78,8 +78,7 @@ class OFXParser(SGMLParser):
                             NEWFILEUID=\"(?P<NEWFILEUID>[\w-]+)\"\s*
                             \?>\s+""", re.X)
 
-    def __init__(self, verbose=False):
-        self.verbose = verbose
+    def __init__(self):
         self.__builder = OFXTreeBuilder()
         SGMLParser.__init__(self)
 
@@ -136,26 +135,23 @@ class OFXParser(SGMLParser):
 
     def unknown_starttag(self, tag, attrib):
         tag = tag.upper()
-        if self.verbose:
-            msg = "starttag opening '%s'" % tag
-            print msg
         #OFX tags don't have attributes
         self.__builder.start(tag)
 
     def unknown_endtag(self, tag):
         tag = tag.upper()
-        if self.verbose:
-            msg = "endtag closing '%s'" % tag
-            print msg
         self.__builder.end(tag)
 
     def handle_data(self, text):
+        # FIXME - Find a better way of stripping whitespace.
+        # If SGMLParser sees a data with (e.g.) an ampersand character in it,
+        # the regexes break up the data in chunks, and those chunks can
+        # have their whitespace stripped inappropriately.
+        # so "Peanut butter & jelly" -> "Peanut butter&jelly".
+        # However, the fix below blows up the parser.  Look into this.
         #text = text.strip('\f\n\r\t\v') # Strip whitespace, except space char
-        text = text.strip()
+        text = text.strip(' \f\n\r\t\v')
         if text:
-            if self.verbose:
-                msg = "handle_data adding data '%s'" % text
-                print msg
             self.__builder.data(text)
 
 
@@ -163,8 +159,6 @@ def main():
     from argparse import ArgumentParser
     argparser = ArgumentParser()
     argparser.add_argument('file')
-    argparser.add_argument('-v', '--verbose', action='store_true', default=False,
-                        help='Turn on debug output')
     args = argparser.parse_args()
 
     ofxparser = OFXParser(verbose=args.verbose)
