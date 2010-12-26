@@ -8,51 +8,77 @@ from decimal import Decimal
 
 from utilities import _, OFXv1, OFXv2, prettify
 
-if sys.version_info[:2] != (2, 7):
-    raise RuntimeError('ofx.parser library requires Python v2.7')
-
-HEADER_FIELDS = {'100': ('DATA', 'VERSION', 'SECURITY', 'ENCODING', 'CHARSET',
-                        'COMPRESSION', 'OLDFILEUID', 'NEWFILEUID'),}
+if sys.version_info < (2, 7):
+    raise RuntimeError('ofx.parser library requires Python v2.7+')
 
 
-class OFXTreeBuilder(ET.TreeBuilder):
-    """
-    OFX doesn't close tags on leaf node elements.  SGMLParser is stateless, so
-    it can't handle OFX's implicitly-closed tags.  Rather than reimplementing
-    that state at the parser level, or have OFXParser look up TreeBuilder's
-    skirt at its private attributes, it's better just to accept the breach of
-    orthogonality and delegate the handling of implicit tag closure to
-    TreeBuilder, who is already maintaining all the necessary state.
+#class OFXSGMLTreeBuilder(ET.TreeBuilder):
+    #""" """
+    #def start(self, tag):
+        ## First clean up any dangling unclosed leaf nodes
+        #if self._data:
+            #ET.TreeBuilder.end(self, self._last.tag)
+        #ET.TreeBuilder.start(self, tag, attrs={})
 
-    So that's how the OFXParser and OFXTreeBuilder subclasses work together.
-    """
-    def start(self, tag):
-        # First clean up any dangling unclosed leaf nodes
-        if self._data:
-            ET.TreeBuilder.end(self, self._last.tag)
-        ET.TreeBuilder.start(self, tag, attrs={})
-
-    def data(self, data):
-        ET.TreeBuilder.data(self, data)
-
-    def end(self, tag):
-        # If I see a closing tag different than the top of the stack, then
-        # the unclosed tag must be a data-bearing leaf node, and the closing
-        # tag is that of its containing parent aggregate.
-        # First close the data-bearing element, then proceed as usual
-        toptag = self._elem[-1].tag
-        if tag != toptag:
-            ET.TreeBuilder.end(self, toptag)
-        ET.TreeBuilder.end(self, tag)
+    #def end(self, tag):
+        ## If I see a closing tag different than the top of the stack, then
+        ## the unclosed tag must be a data-bearing leaf node, and the closing
+        ## tag is that of its containing parent aggregate.
+        ## First close the data-bearing element, then proceed as usual
+        #toptag = self._elem[-1].tag
+        #if tag != toptag:
+            #ET.TreeBuilder.end(self, toptag)
+        #ET.TreeBuilder.end(self, tag)
 
 
-class OFXParser(SGMLParser):
-    """
-    Parses OFX v1&v2 data files into an ElementTree instance.
-    Accessible via standard feed/close consumer interface.
+#class OFXSGMLParser(SGMLParser):
+    #"""
+    #Parses OFX v1&v2 data files into an ElementTree instance.
+    #Accessible via standard feed/close consumer interface.
 
-    Built on sgmllib, which is deprecated and going away in py3k.
-    """
+    #Built on sgmllib, which is deprecated and going away in py3k.
+    #"""
+
+    #def __init__(self):
+        #self.__builder = OFXSGMLTreeBuilder()
+        #SGMLParser.__init__(self)
+
+    #def reset(self):
+        #self.header = None
+        #self.tree = ET.ElementTree()
+        #SGMLParser.reset(self)
+
+    #def close(self):
+        #root = self.__builder.close()
+        #SGMLParser.close(self)
+        #return root
+
+    #def unknown_starttag(self, tag, attrib):
+        #tag = tag.upper()
+        ##OFX tags don't have attributes
+        #self.__builder.start(tag)
+
+    #def unknown_endtag(self, tag):
+        #tag = tag.upper()
+        #self.__builder.end(tag)
+
+    #def handle_data(self, text):
+        ## FIXME - Find a better way of stripping whitespace.
+        ## If SGMLParser sees a data with (e.g.) an ampersand character in it,
+        ## the regexes break up the data in chunks, and those chunks can
+        ## have their whitespace stripped inappropriately, so desirable
+        ## whitespace ends up missing from the data.
+        ## e.g. "Peanut butter & jelly" -> "Peanut butter&jelly".
+        ## However, the attempted fix below blows up the parser.
+        ## The impact on OFX data quality is minimal (basically just
+        ## securities names), but still, look into this.
+        ##text = text.strip('\f\n\r\t\v') # Strip whitespace, except space char
+        #text = text.strip(' \f\n\r\t\v')
+        #if text:
+            #self.__builder.data(text)
+
+
+class OFXParser(ET.ElementTree):
     v1Header = re.compile(r"""\s*
                             OFXHEADER:(?P<OFXHEADER>\d+)\s+
                             DATA:(?P<DATA>[A-Z]+)\s+
@@ -63,7 +89,7 @@ class OFXParser(SGMLParser):
                             COMPRESSION:(?P<COMPRESSION>[A-Z]+)\s+
                             OLDFILEUID:(?P<OLDFILEUID>[\w-]+)\s+
                             NEWFILEUID:(?P<NEWFILEUID>[\w-]+)\s+
-                            """, re.X)
+                            """, re.VERBOSE)
 
     v2Header = re.compile(r"""(<\?xml\s+
                             (version=\"(?P<XMLVERSION>[\d.]+)\")?\s*
@@ -76,26 +102,13 @@ class OFXParser(SGMLParser):
                             SECURITY=\"(?P<SECURITY>[A-Z]+)\"\s+
                             OLDFILEUID=\"(?P<OLDFILEUID>[\w-]+)\"\s+
                             NEWFILEUID=\"(?P<NEWFILEUID>[\w-]+)\"\s*
-                            \?>\s+""", re.X)
-
-    def __init__(self):
-        self.__builder = OFXTreeBuilder()
-        SGMLParser.__init__(self)
-
-    def reset(self):
-        self.header = None
-        self.tree = ET.ElementTree()
-        SGMLParser.reset(self)
-
-    def close(self):
-        root = self.__builder.close()
-        SGMLParser.close(self)
-        return root
+                            \?>\s+""", re.VERBOSE)
 
     def parse(self, source):
         if not hasattr(source, 'read'):
             source = open(source, 'rb')
-        source = source.read().strip()
+        source = source.read()
+
         ### First parse OFX header
         v1Header = self.v1Header.match(source)
         if v1Header:
@@ -111,7 +124,8 @@ class OFXParser(SGMLParser):
             except AssertionError:
                 raise SyntaxError('Malformed OFX header %s' % str(header))
             source = source[v1Header.end():]
-            parser = self
+            #parser = OFXSGMLParser()
+            parser = OFXTreeBuilder()
         else:
             v2Header = self.v2Header.match(source)
             if not v2Header:
@@ -125,34 +139,48 @@ class OFXParser(SGMLParser):
             except AssertionError:
                 raise SyntaxError('Malformed OFX header %s' % str(header))
             source = source[v2Header.end():]
-            parser = None # Default to ElementTree.XMLParser
-        self.header = header
+            parser = ET.XMLTreeBuilder()
+
         ### Then parse tag soup
-        root = ET.fromstring(source, parser=parser)
-        assert root.tag == 'OFX'
-        self.tree._setroot(root)
-        return root
+        parser.feed(source)
+        self._root = parser.close()
+        return self._root
 
-    def unknown_starttag(self, tag, attrib):
-        tag = tag.upper()
-        #OFX tags don't have attributes
-        self.__builder.start(tag)
 
-    def unknown_endtag(self, tag):
-        tag = tag.upper()
-        self.__builder.end(tag)
+class OFXTreeBuilder(ET.TreeBuilder):
+    """ """
+    regex = re.compile(r"""<(?P<TAG>[A-Z1-9./]+?)>
+                            (?P<TEXT>[^<]+)?
+                            (</(?P=TAG)>)?
+                            \s*""", re.VERBOSE)
 
-    def handle_data(self, text):
-        # FIXME - Find a better way of stripping whitespace.
-        # If SGMLParser sees a data with (e.g.) an ampersand character in it,
-        # the regexes break up the data in chunks, and those chunks can
-        # have their whitespace stripped inappropriately.
-        # so "Peanut butter & jelly" -> "Peanut butter&jelly".
-        # However, the fix below blows up the parser.  Look into this.
-        #text = text.strip('\f\n\r\t\v') # Strip whitespace, except space char
-        text = text.strip(' \f\n\r\t\v')
-        if text:
-            self.__builder.data(text)
+    def feed(self, data):
+        for match in self.regex.finditer(data):
+            tag, text, closingTag = match.groups()
+            text = text or '' # None has no strip() method
+            text = text.strip()
+            if len(text):
+                # OFX "element" (i.e. data-bearing leaf)
+                assert not tag.startswith('/')
+                self.start(tag, attrs={})
+                self.data(text)
+                # Closing tags are optional for OFXv1 data elements
+                # Close them all, whether or not they're explicitly closed
+                self.end(tag)
+            else:
+                # OFX "aggregate" (tagged branch w/ no data)
+                if tag.startswith('/'):
+                    # aggregate closing tag
+                    assert not text
+                    self.end(tag[1:])
+                else:
+                    # aggregate opening tag
+                    self.start(tag, attrs={})
+                    if closingTag:
+                        # regex captures the entire closing tag
+                        # validate that closing/opening tags match
+                        assert closingTag.replace(tag, '') == '</>'
+                        self.end(tag)
 
 
 def main():
@@ -161,9 +189,11 @@ def main():
     argparser.add_argument('file')
     args = argparser.parse_args()
 
-    ofxparser = OFXParser(verbose=args.verbose)
+    ofxparser = OFXParser()
     root = ofxparser.parse(_(args.file))
+    #root = ofxparser.getroot()
     print prettify(ET.tostring(root))
+
 
 if __name__ == '__main__':
     main()
