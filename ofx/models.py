@@ -50,7 +50,7 @@ class Mergeable(object):
     @classmethod
     def get_or_create(cls, **kwargs):
         #print kwargs
-        sig = dict([(k, kwargs[k]) for k in cls.signature])
+        sig = {k: kwargs.get(k, None) for k in cls.signature}
         try:
             instance = cls.query.filter_by(**sig).one()
             created = False
@@ -67,11 +67,11 @@ class FI(Entity, Mergeable):
     are generated for download by a web server).
     """
     signature = ('org', 'fid')
-    using_options(tablename='fi')
+    using_options(UniqueConstraint(*signature), tablename='fi')
 
     url = Field(String)
     org = Field(String(32), required=True)
-    fid = Field(String(32), required=True)
+    fid = Field(String(32))
 
     accts = OneToMany('ACCT')
     signons = OneToMany('SIGNON')
