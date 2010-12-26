@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/env python
 import sys
 
 import elixir
@@ -6,8 +6,8 @@ import models
 
 from utilities import _
 
-if sys.version_info[:2] != (2, 7):
-    raise RuntimeError('ofx.importer library requires Python v2.7')
+if sys.version_info < (2, 7):
+    raise RuntimeError('ofx.importer requires Python v2.7+')
 
 class OFXImporter(object):
     """
@@ -80,7 +80,7 @@ class OFXImporter(object):
         sonrs = self.tree.find('SIGNONMSGSRSV1/SONRS')
         self.processSTATUS(sonrs.find('STATUS'))
         fi = sonrs.find('FI')
-        if fi:
+        if fi is not None:
             attrs = self.flatten(fi)
             fi = models.FI.get_or_create(**attrs)[0]
         self.fi = fi
@@ -127,7 +127,7 @@ class OFXImporter(object):
 
         # BANKTRANLIST
         tranlist = stmtrs.find('BANKTRANLIST')
-        if tranlist:
+        if tranlist is not None:
             dtstart, dtend = tranlist[0:2]
             tranlist.remove(dtstart)
             tranlist.remove(dtend)
@@ -142,7 +142,7 @@ class OFXImporter(object):
         attrs['ledgerbal'] = attrs.pop('balamt')
         # AVAILBAL
         availbal = stmtrs.find('AVAILBAL')
-        if availbal:
+        if availbal is not None:
             availbal_dtasof = availbal.find('DTASOF').text
             assert availbal_dtasof.strip() == dtasof.strip()
             attrs['availbal'] = availbal.find('BALAMT').text

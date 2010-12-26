@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/env python
 import sys
 import datetime
 import uuid
@@ -14,7 +14,7 @@ from getpass import getpass
 from utilities import _, OFXDtConverter, OFXStringBool, BankAcctTypeValidator, OFXv1, OFXv2, prettify
 
 if sys.version_info < (2, 7):
-    raise RuntimeError('ofx.client library requires Python v2.7+')
+    raise RuntimeError('ofx.client requires Python v2.7+')
 
 VERSIONS = OFXv1 + OFXv2
 
