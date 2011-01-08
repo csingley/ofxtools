@@ -56,7 +56,13 @@ class OFXImporter(object):
             if instance:
                 # Create Securities instances, and store in a map of
                 #  (uniqueidtype, uniqueid) -> Security for quick lookup
-                self.securities[(instance.uniqueidtype, instance.uniqueid)] = instance
+                #
+                # The logic in models.SECINFO.match() doesn't require that the
+                # securities instance matched from teh DB has the same key
+                # (uniqueidtype, uniqueid) as the attributes incoming from the
+                # OFX file currently being processed.  So make sure to key the
+                # dict according to the current attributes, not the DB's.
+                self.securities[(attrs['uniqueidtype'], attrs['uniqueid'])] = instance
             else:
                 # FIXME - shouldn't just blindly create unknown securities
                 instance = secClass(**attrs)
