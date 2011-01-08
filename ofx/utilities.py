@@ -5,6 +5,7 @@ import calendar
 import time
 from decimal import Decimal
 import itertools
+import string
 
 from xml.dom import minidom
 
@@ -96,6 +97,148 @@ ISO3166_1a3 = ('ABW', 'AFG', 'AGO', 'AIA', 'ALA', 'ALB', 'AND', 'ANT', 'ARE',
                 'VCT', 'VEN', 'VGB', 'VIR', 'VNM', 'VUT', 'WLF', 'WSM', 'YEM',
                 'ZAF', 'ZMB', 'ZWE')
 
+# ISO3166_1a2 country codes and numbering agencies
+# Swiped from
+# http://code.activestate.com/recipes/498277-isin-validator/
+numberingAgencies = {'BE': (u'Euronext - Brussels', u'Belgium'),
+'FR': (u'Euroclear France', u'France'),
+'BG': (u'Central Depository of Bulgaria', u'Bulgaria'),
+'VE': (u'Bolsa de Valores de Caracas, C.A.', u'Venezuela'),
+'DK': (u'VP Securities Services', u'Denmark'),
+'HR': (u'SDA - Central Depository Agency of Croatia', u'Croatia'),
+'DE': (u'Wertpapier-Mitteilungen', u'Germany'),
+'JP': (u'Tokyo Stock Exchange', u'Japan'),
+'HU': (u'KELER', u'Hungary'),
+'HK': (u'Hong Kong Exchanges and Clearing Ltd', u'Hong Kong'),
+'JO': (u'Securities Depository Center of Jordan', u'Jordan'),
+'BR': (u'Bolsa de Valores de Sao Paulo - BOVESPA', u'Brazil'),
+'XS': (u'Clearstream Banking', u'Clearstream'),
+'FI': (u'Finnish Central Securities Depository Ltd', u'Finland'),
+'GR': (u'Central Securities Depository S.A.', u'Greece'),
+'IS': (u'Icelandic Securities Depository', u'Iceland'),
+'RU': (u'The National Depository Center, Russia', u'Russia'),
+'LB': (u'Midclear S.A.L.', u'Lebanon'),
+'PT': (u'Interbolsa - Sociedade Gestora de Sistemas de Liquida\xc3\xa7\xc3\xa3o e Sistemas Centralizados de Valores', u'Portugal'),
+'NO': (u'Verdipapirsentralen (VPS) ASA', u'Norway'),
+'TW': (u'Taiwan Stock Exchange Corporation', u'Taiwan, Province of China'),
+'UA': (u'National Depository of Ukraine', u'Ukraine'),
+'TR': (u'Takasbank', u'Turkey'),
+'LK': (u'Colombo Stock Exchange', u'Sri Lanka'),
+'LV': (u'OMX - Latvian Central Depository', u'Latvia'),
+'LU': (u'Clearstream Banking', u'Luxembourg'),
+'TH': (u'Thailand Securities Depository Co., Ltd', u'Thailand'),
+'NL': (u'Euronext Netherlands', u'Netherlands'),
+'PK': (u'Central Depository Company of Pakistan Ltd', u'Pakistan'),
+'PH': (u'Philippine Stock Exchange, Inc.', u'Philippines'),
+'RO': (u'The National Securities Clearing Settlement and Depository Corporation', u'Romania'),
+'EG': (u'Misr for Central Clearing, Depository and Registry (MCDR)', u'Egypt'),
+'PL': (u'National Depository for Securities', u'Poland'),
+'AA': (u'ANNA Secretariat', u'ANNAland'),
+'CH': (u'Telekurs Financial Ltd.', u'Switzerland'),
+'CN': (u'China Securities Regulatory Commission', u'China'),
+'CL': (u'Deposito Central de Valores', u'Chile'),
+'EE': (u'Estonian Central Depository for Securities', u'Estonia'),
+'CA': (u'The Canadian Depository for Securities Ltd', u'Canada'),
+'IR': (u'Tehran Stock Exchange Services Company', u'Iran'),
+'IT': (u'Ufficio Italiano dei Cambi', u'Italy'),
+'ZA': (u'JSE Securities Exchange of South Africa', u'South Africa'),
+'CZ': (u'Czech National Bank', u'Czech Republic'),
+'CY': (u'Cyprus Stock Exchange', u'Cyprus'),
+'AR': (u'Caja de Valores S.A.', u'Argentina'),
+'AU': (u'Australian Stock Exchange Limited', u'Australia'),
+'AT': (u'Oesterreichische Kontrollbank AG', u'Austria'),
+'IN': (u'Securities and Exchange Board of India', u'India'),
+'CS': (u'Central Securities Depository A.D. Beograd', u'Serbia & Montenegro'),
+'CR': (u'Central de Valores - CEVAL', u'Costa Rica'),
+'IE': (u'The Irish Stock Exchange', u'Ireland'),
+'ID': (u'PT. Kustodian Sentral Efek Indonesia (Indonesian Central Securities Depository (ICSD))', u'Indonesia'),
+'ES': (u'Comision Nacional del Mercado de Valores (CNMV)', u'Spain'),
+'PE': (u'Bolsa de Valores de Lima', u'Peru'),
+'TN': (u'Sticodevam', u'Tunisia'),
+'PA': (u'Bolsa de Valores de Panama S.A.', u'Panama'),
+'SG': (u'Singapore Exchange Limited', u'Singapore'),
+'IL': (u'The Tel Aviv Stock Exchange', u'Israel'),
+'US': (u'Standard & Poor\xb4s - CUSIP Service Bureau', u'USA'),
+'MX': (u'S.D. Indeval SA de CV', u'Mexico'),
+'SK': (u'Central Securities Depository SR, Inc.', u'Slovakia'),
+'KR': (u'Korea Exchange - KRX', u'Korea'),
+'SI': (u'KDD Central Securities Clearing Corporation', u'Slovenia'),
+'KW': (u'Kuwait Clearing Company', u'Kuwait'),
+'MY': (u'Bursa Malaysia', u'Malaysia'),
+'MO': (u'MAROCLEAR S.A.', u'Morocco'),
+'SE': (u'VPC AB', u'Sweden'),
+'GB': (u'London Stock Exchange', u'United Kingdom')}
+
+def cusipChecksum(base):
+    """
+    Compute the check digit for a base Committee on Uniform Security
+    Identification Procedures (CUSIP) securities identifier.
+    Input an 8-digit alphanum str, output a single-char str.
+
+    http://goo.gl/4TeWl
+    """
+    def encode(index, char):
+        num = {'*': 36, '@': 37, '#': 38}.get(char, int(char, 36))
+        return str(num * 2) if index % 2 else str(num)
+
+    assert len(base) == 8
+    for badLetter in 'IO':
+        assert badLetter not in base
+    check = ''.join([encode(index, char) for index, char in enumerate(base)])
+    check = sum([int(digit) for digit in check])
+    return str((10 - (check % 10)) % 10)
+
+def sedolChecksum(base):
+    """
+    Stock Exchange Daily Official List (SEDOL)
+    http://goo.gl/HxFWL
+    """
+    weights = (1, 3, 1, 7, 3, 9)
+
+    assert len(base) == 6
+    for badLetter in 'AEIOU':
+        assert badLetter not in base
+    check = sum([int(char, 36) * weights[n] for n, char in enumerate(base)])
+    return str((10 - (check % 10)) % 10)
+
+def isinChecksum(base):
+    """
+    Compute the check digit for a base International Securities Identification
+    Number (ISIN).  Input an 11-char alphanum str, output a single-char str.
+
+    http://goo.gl/8kPzD
+    """
+    assert len(base) == 11
+    assert alphanum[:2] in numberingAgencies.keys()
+    check = ''.join([int(char, 36) for char in base])
+    check = check[::-1] # string reversal
+    check = ''.join([d if n%2 else str(int(d)*2) for n, d in enumerate(check)])
+    return str((10 - sum([int(d) for d in check]) % 10) % 10)
+
+def cusip2isin(cusip, nation=None):
+    nation = nation or 'US'
+    assert len(cusip) == 9
+    assert CUSIPchecksum(cusip[:8]) == cusip[9]
+    base = nation + cusip
+    return base + ISINchecksum(base)
+
+def sedol2isin(sedol, nation=None):
+    nation = nation or 'GB'
+    assert len(sedol) == 7
+    assert SEDOLchecksum(sedol[:6]) == sedol[6]
+    base = nation + sedol.zfill(9)
+    return base + ISINchecksum(base)
+
+#def isin2cusip(isin):
+    #assert len(isin) == 12
+    #assert isinChecksum(isin[:11]) == isin[12]
+    #assert isin[:2] in ('US', 'CA') # FIXME
+    #return isin[2:11]
+
+#def isin2sedol(isin):
+    #assert len(isin) == 12
+    #assert isinChecksum(isin[:11]) == isin[12]
+    #assert isin[:2] in ('GB', 'CA') # FIXME
 
 def settleDate(dt):
     """
