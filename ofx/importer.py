@@ -13,7 +13,7 @@ class OFXImporter(object):
     """
     """
     securities = {}
-    unknown_securities = []
+    #unknown_securities = []
 
     def __init__(self, tree, database=None, verbose=False):
         self.tree = tree
@@ -30,22 +30,6 @@ class OFXImporter(object):
     def process(self):
         try:
             self.processSECLIST()
-            # FIXME - shouldn't just blindly create unknown_securities
-            for secClass, attrs, mfassetclass, fimfassetclass in self.unknown_securities:
-                instance = secClass(**attrs)
-                if mfassetclass:
-                    for portion in mfassetclass:
-                        attrs = self.flatten(portion)
-                        attrs['mf'] = instance
-                        models.MFASSETCLASS.get_or_create(**attrs)
-                if fimfassetclass:
-                    for portion in fimfassetclass:
-                        attrs = self.flatten(portion)
-                        attrs['mf'] = instance
-                        models.FIMFASSETCLASS.get_or_create(**attrs)
-                # Create Securities instances, and store in a map of
-                #  (uniqueidtype, uniqueid) -> Security for quick lookup
-                self.securities[(instance.uniqueidtype, instance.uniqueid)] = instance
             self.processSONRS()
             self.processStatements()
         except:
@@ -74,7 +58,21 @@ class OFXImporter(object):
                 #  (uniqueidtype, uniqueid) -> Security for quick lookup
                 self.securities[(instance.uniqueidtype, instance.uniqueid)] = instance
             else:
-                self.unknown_securities.append((secClass, attrs, mfassetclass, fimfassetclass))
+                # FIXME - shouldn't just blindly create unknown securities
+                instance = secClass(**attrs)
+                if mfassetclass:
+                    for portion in mfassetclass:
+                        attrs = self.flatten(portion)
+                        attrs['mf'] = instance
+                        models.MFASSETCLASS.get_or_create(**attrs)
+                if fimfassetclass:
+                    for portion in fimfassetclass:
+                        attrs = self.flatten(portion)
+                        attrs['mf'] = instance
+                        models.FIMFASSETCLASS.get_or_create(**attrs)
+                # Create Securities instances, and store in a map of
+                #  (uniqueidtype, uniqueid) -> Security for quick lookup
+                self.securities[(instance.uniqueidtype, instance.uniqueid)] = instance
 
     def processSONRS(self):
         sonrs = self.tree.find('SIGNONMSGSRSV1/SONRS')
@@ -293,14 +291,13 @@ def main():
                         help='URL of persistent database')
     args = argparser.parse_args()
 
-    ofxparser = OFXParser(verbose=args.verbose)
-    ofxparser.parse(_(args.file))
+    tree = OFXParser()
+    tree.parse(_(args.file))
 
-    importer = OFXImporter(ofxparser.tree, verbose=args.verbose,
+    importer = OFXImporter(tree.getroot(), verbose=args.verbose,
                             database=args.database)
     importer.process()
     print importer.securities
-    print importer.unknown_securities
 
 if __name__ == '__main__':
     main()

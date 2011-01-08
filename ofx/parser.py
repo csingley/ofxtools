@@ -86,7 +86,7 @@ class OFXTreeBuilder(ET.TreeBuilder):
     regex = re.compile(r"""<(?P<TAG>[A-Z1-9./]+?)>
                             (?P<TEXT>[^<]+)?
                             (</(?P=TAG)>)?
-                            \s*""", re.VERBOSE)
+                            """, re.VERBOSE)
 
     def feed(self, data):
         for match in self.regex.finditer(data):

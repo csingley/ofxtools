@@ -11,36 +11,10 @@ from cStringIO import StringIO
 import re
 from getpass import getpass
 
-from utilities import _, OFXDtConverter, OFXStringBool, BankAcctTypeValidator, OFXv1, OFXv2, prettify
+from utilities import _, OFXDtConverter, OFXStringBool, BankAcctTypeValidator, prettify
 
 if sys.version_info < (2, 7):
     raise RuntimeError('ofx.client requires Python v2.7+')
-
-VERSIONS = OFXv1 + OFXv2
-
-APPIDS = ('QWIN', # Quicken for Windows
-            'QMOFX', # Quicken for Mac
-            'QBW', # QuickBooks for Windows
-            'QBM', # QuickBooks for Mac
-            'Money', # MSFT Money
-            'Money Plus', # MSFT Money Plus
-            'PyOFX', # Custom
-)
-APPVERS = ('1500', # Quicken 2006/ Money 2006
-            '1600', # Quicken 2007/ Money 2007/ QuickBooks 2006
-            '1700', # Quicken 2008/ Money Plus/ QuickBooks 2007
-            '1800', # Quicken 2009/ QuickBooks 2008
-            '1900', # Quicken 2010/ QuickBooks 2009
-            '2000', # QuickBooks 2010
-            '9999', # Custom
-)
-
-#APP_DEFAULTS = {'version': '102', 'appid': 'QWIN', 'appver': '1800',}
-#FI_DEFAULTS = {'url': '', 'org': '', 'fid': '', 'bankid': '', 'brokerid': '',}
-#ACCT_DEFAULTS = {'checking': '', 'savings': '', 'moneymrkt': '',
-                #'creditline': '', 'creditcard': '', 'investment': '',}
-#STMT_DEFAULTS = {'inctran': True, 'dtstart': None, 'dtend': None,
-                #'incpos': True, 'dtasof': None, 'incbal': True, }
 
 class OFXClient(object):
     """ """
@@ -450,7 +424,8 @@ def do_list(args, config):
 
 def do_detail(args, config):
     # FIXME
-    if args.fi not in config.fi_index:
+    fi = args.fi
+    if fi not in config.fi_index:
         raise ValueError("Unknown FI '%s' not in %s"
                         % (fi, str(config.fi_index)))
     print str(dict(config.items(fi)))

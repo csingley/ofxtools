@@ -15,12 +15,13 @@ from PyQt4 import QtGui, QtCore
 
 from mainwindow import Ui_MainWindow
 
-from client import OFXConfigParser, OFXClient, VERSIONS, APPIDS, APPVERS, \
-    APP_DEFAULTS, FI_DEFAULTS, STMT_DEFAULTS, ACCT_DEFAULTS, GUI_DEFAULTS
-from utilities import _
+from client import OFXClient, OFXConfigParser
+from utilities import _, OFXv1, OFXv2, APPIDS, APPVERS
 
 if sys.version_info < (2, 7):
     raise RuntimeError('ofx.gui library requires Python v2.7+')
+
+VERSIONS = OFXv1 + OFXv2
 
 class OFXGui(QtGui.QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
@@ -58,7 +59,7 @@ class OFXGui(QtGui.QMainWindow, Ui_MainWindow):
         self.appver.addItems(APPVERS)
 
     def setup_stmt_opts(self):
-        for (option, value) in STMT_DEFAULTS.iteritems():
+        for (option, value) in OFXClient.stmt_defaults.iteritems():
             widget = getattr(self, option, None)
             if not widget:
                 continue
@@ -87,20 +88,21 @@ class OFXGui(QtGui.QMainWindow, Ui_MainWindow):
         """ Read GUI widgets """
         # Client instance attributes
         client_opts = {key: self.read_widget(getattr(self, key))
-                        for key in APP_DEFAULTS.keys() + FI_DEFAULTS.keys()}
+                        for key in OFXClient.defaults.keys()}
         client = OFXClient(**client_opts)
 
         # Statement options
-        stmt_opts = {}
-        for option in STMT_DEFAULTS.keys():
+        stmt_options = {}
+        for option in OFXClient.stmt_defaults.keys():
             widget = getattr(self, option, None)
-            stmt_opts[option] = self.read_widget(widget)
+            stmt_options[option] = self.read_widget(widget)
 
         # Account numbers
         accts = {key: self.read_widget(getattr(self, key))
-                        for key in ACCT_DEFAULTS.keys()}
+                        for key in OFXClient.acct_defaults.keys()}
+        acct_tuple = client.parse_account_strings(**accts)
 
-        client.parse_accounts(accts, **stmt_opts)
+        client.request_all(*acct_tuple, **stmt_options)
         user = self.read_widget(self.user)
 
         if self.dry_run.isChecked():
