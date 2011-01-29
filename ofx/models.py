@@ -69,9 +69,9 @@ class FI(Entity, Mergeable):
     signature = ('org', 'fid')
     using_options(UniqueConstraint(*signature), tablename='fi')
 
-    url = Field(String)
-    org = Field(String(32), required=True)
-    fid = Field(String(32))
+    url = Field(Unicode)
+    org = Field(Unicode(32), required=True)
+    fid = Field(Unicode(32))
 
     accts = OneToMany('ACCT')
     signons = OneToMany('SIGNON')
@@ -82,7 +82,7 @@ class SIGNON(Entity, Mergeable):
     signature = ('fi', 'userid')
     using_options(UniqueConstraint(*signature), tablename='signon')
 
-    userid = Field(String(), required=True)
+    userid = Field(Unicode(), required=True)
 
     fi = ManyToOne('FI', required=True)
     accts = OneToMany('ACCT')
@@ -92,7 +92,7 @@ class SIGNON(Entity, Mergeable):
 class ACCT(Entity):
     using_options(tablename='acct', inheritance='multi')
 
-    acctid = Field(String(22), required=True)
+    acctid = Field(Unicode(22), required=True)
 
     fi = ManyToOne('FI')
     signon = ManyToOne('SIGNON')
@@ -106,11 +106,11 @@ class BANKACCT(ACCT, Mergeable):
     using_options(UniqueConstraint(*signature), tablename='bankacct',
                     inheritance='multi')
 
-    bankid = Field(String(9), required=True)
-    branchid = Field(String(22))
+    bankid = Field(Unicode(9), required=True)
+    branchid = Field(Unicode(22))
     accttype = Field(Enum('CHECKING', 'SAVINGS', 'MONEYMRKT', 'CREDITLINE'),
                     required=True)
-    acctkey = Field(String(22))
+    acctkey = Field(Unicode(22))
 
 
 class CCACCT(ACCT, Mergeable):
@@ -118,7 +118,7 @@ class CCACCT(ACCT, Mergeable):
     using_options(UniqueConstraint(*signature), tablename='ccacct',
                     inheritance='multi')
 
-    acctkey = Field(String(22))
+    acctkey = Field(Unicode(22))
 
 
 class INVACCT(ACCT, Mergeable):
@@ -126,7 +126,7 @@ class INVACCT(ACCT, Mergeable):
     using_options(UniqueConstraint(*signature), tablename='invacct',
                     inheritance='multi')
 
-    brokerid = Field(String(22), required=True)
+    brokerid = Field(Unicode(22), required=True)
 
     invposs = OneToMany('INVPOS')
 
@@ -171,8 +171,8 @@ class FIBAL(Entity, Mergeable):
     signature = ('acct', 'dtasof','name')
     using_options(UniqueConstraint(*signature), tablename='fibal')
 
-    name = Field(String(32), required=True)
-    desc = Field(String(80), required=True)
+    name = Field(Unicode(32), required=True)
+    desc = Field(Unicode(80), required=True)
     baltype = Field(Enum('DOLLAR', 'PERCENT', 'NUMBER'), required=True)
     value = Field(OFXDecimal, required=True)
     dtasof = Field(OFXDateTime)
@@ -186,15 +186,15 @@ class FIBAL(Entity, Mergeable):
 class PAYEE(Entity):
     using_options(tablename='payee')
 
-    name = Field(String(32), required=True)
-    addr1 = Field(String(32), required=True)
-    addr2 = Field(String(32))
-    addr3 = Field(String(32))
-    city = Field(String(32), required=True)
-    state = Field(String(5), required=True)
-    postalcode = Field(String(11), required=True)
+    name = Field(Unicode(32), required=True)
+    addr1 = Field(Unicode(32), required=True)
+    addr2 = Field(Unicode(32))
+    addr3 = Field(Unicode(32))
+    city = Field(Unicode(32), required=True)
+    state = Field(Unicode(5), required=True)
+    postalcode = Field(Unicode(11), required=True)
     country = Field(Enum(*ISO3166_1a3))
-    phone = Field(String(32), required=True)
+    phone = Field(Unicode(32), required=True)
 
     stmttrns = ManyToMany('STMTTRN')
 
@@ -204,8 +204,8 @@ class TRAN(Entity, Mergeable):
     using_options(UniqueConstraint(*signature), tablename='tran',
                     inheritance='multi')
 
-    fitid = Field(String(255), required=True)
-    srvrtid = Field(String(10))
+    fitid = Field(Unicode(255), required=True)
+    srvrtid = Field(Unicode(10))
 
     acct = ManyToOne('ACCT', required=True)
 
@@ -223,12 +223,12 @@ class STMTTRN(TRAN):
     trnamt = Field(OFXDecimal, required=True)
     correctfitid = Field(OFXDecimal)
     correctaction = Field(Enum('REPLACE', 'DELETE'))
-    checknum = Field(String(12))
-    refnum = Field(String(32))
+    checknum = Field(Unicode(12))
+    refnum = Field(Unicode(32))
     sic = Field(Integer)
-    payeeid = Field(String(12))
-    name = Field(String(32))
-    memo = Field(String(255))
+    payeeid = Field(Unicode(12))
+    name = Field(Unicode(32))
+    memo = Field(Unicode(255))
     cursym = Field(Enum(*ISO4217))
     currate = Field(OFXDecimal(8))
     origcursym = Field(Enum(*ISO4217))
@@ -251,8 +251,8 @@ class INVTRAN(TRAN):
 
     dttrade = Field(OFXDateTime, required=True)
     dtsettle = Field(OFXDateTime)
-    reversalfitid = Field(String(255))
-    memo = Field(String(255))
+    reversalfitid = Field(Unicode(255))
+    memo = Field(Unicode(255))
 
 
 class INVBUY(INVTRAN):
@@ -272,7 +272,7 @@ class INVBUY(INVTRAN):
     origcurrate = Field(OFXDecimal(8))
     subacctsec = Field(Enum(*INVSUBACCTS))
     subacctfund = Field(Enum(*INVSUBACCTS))
-    loanid = Field(String(32))
+    loanid = Field(Unicode(32))
     loanprincipal = Field(OFXDecimal)
     loaninterest = Field(OFXDecimal)
     inv401ksource = Field(Enum(*INV401KSOURCES))
@@ -300,7 +300,7 @@ class INVSELL(INVTRAN):
     origcurrate = Field(OFXDecimal(8))
     subacctsec = Field(Enum(*INVSUBACCTS), required=True)
     subacctfund = Field(Enum(*INVSUBACCTS), required=True)
-    loanid = Field(String(32))
+    loanid = Field(Unicode(32))
     statewithholding = Field(OFXDecimal)
     penalty = Field(OFXDecimal)
     inv401ksource = Field(Enum(*INV401KSOURCES))
@@ -318,7 +318,7 @@ class BUYMF(INVBUY):
     using_options(tablename='buymf', inheritance='multi')
 
     buytype = Field(Enum(*BUYTYPES), required=True)
-    relfitid = Field(String(255))
+    relfitid = Field(Unicode(255))
 
     sec = ManyToOne('MFINFO', required=True)
 
@@ -353,7 +353,7 @@ class CLOSUREOPT(INVTRAN):
     units = Field(OFXDecimal, required=True)
     shperctrct = Field(Integer, required=True)
     subacctsec = Field(Enum(*INVSUBACCTS), required=True)
-    relfitid = Field(String(255))
+    relfitid = Field(Unicode(255))
     gain = Field(OFXDecimal)
 
     sec = ManyToOne('OPTINFO', required=True)
@@ -472,7 +472,7 @@ class SELLMF(INVSELL):
 
     selltype = Field(Enum(*SELLTYPES), required=True)
     avgcostbasis = Field(OFXDecimal)
-    relfitid = Field(String(255))
+    relfitid = Field(Unicode(255))
 
     sec = ManyToOne('MFINFO', required=True)
 
@@ -482,7 +482,7 @@ class SELLOPT(INVSELL):
 
     optselltype = Field(Enum('SELLTOCLOSE', 'SELLTOOPEN'), required=True)
     shperctrct = Field(Integer, required=True)
-    relfitid = Field(String(255))
+    relfitid = Field(Unicode(255))
     reltype = Field(Enum('SPREAD', 'STRADDLE', 'NONE', 'OTHER'))
     secured = Field(Enum('NAKED', 'COVERED'))
 
@@ -539,15 +539,15 @@ class SECINFO(Entity):
     using_options(UniqueConstraint(*signature),
                                     tablename='secinfo', inheritance='multi')
 
-    uniqueid = Field(String(32), required=True)
-    uniqueidtype = Field(String(10), required=True)
-    secname = Field(String(120), required=True)
-    ticker = Field(String(32))
-    fiid = Field(String(32))
-    rating = Field(String(10))
+    uniqueid = Field(Unicode(32), required=True)
+    uniqueidtype = Field(Unicode(10), required=True)
+    secname = Field(Unicode(120), required=True)
+    ticker = Field(Unicode(32))
+    fiid = Field(Unicode(32))
+    rating = Field(Unicode(10))
     #unitprice = Field(OFXDecimal)
     #dtasof = Field(OFXDateTime)
-    memo = Field(String(255))
+    memo = Field(Unicode(255))
 
     invposs = OneToMany('INVPOS')
 
@@ -605,7 +605,7 @@ class DEBTINFO(SECINFO):
     ytmat = Field(OFXDecimal(4))
     dtmat = Field(OFXDateTime)
     assetclass = Field(Enum(*ASSETCLASSES))
-    fiassetclass = Field(String(32))
+    fiassetclass = Field(Unicode(32))
 
 
 class MFASSETCLASS(Entity, Mergeable):
@@ -622,7 +622,7 @@ class FIMFASSETCLASS(Entity, Mergeable):
     signature = ('fiassetclass',)
     using_options(tablename='fimfassetclass')
 
-    fiassetclass = Field(String(32), unique=True)
+    fiassetclass = Field(Unicode(32), unique=True)
     percent = Field(OFXDecimal)
 
     mf = ManyToOne('MFINFO')
@@ -646,7 +646,7 @@ class OPTINFO(SECINFO):
     dtexpire = Field(OFXDateTime, required=True)
     shperctrct = Field(Integer, required=True)
     assetclass = Field(Enum(*ASSETCLASSES))
-    fiassetclass = Field(String(32))
+    fiassetclass = Field(Unicode(32))
 
     sec = ManyToOne('SECINFO', required=True)
 
@@ -654,9 +654,9 @@ class OPTINFO(SECINFO):
 class OTHERINFO(SECINFO):
     using_options(tablename='otherinfo', inheritance='multi')
 
-    typedesc = Field(String(32))
+    typedesc = Field(Unicode(32))
     assetclass = Field(Enum(*ASSETCLASSES))
-    fiassetclass = Field(String(32))
+    fiassetclass = Field(Unicode(32))
 
 
 class STOCKINFO(SECINFO):
@@ -665,9 +665,9 @@ class STOCKINFO(SECINFO):
     stocktype = Field(Enum('COMMON', 'PREFERRED', 'CONVERTIBLE', 'OTHER'))
     yld = Field(OFXDecimal(4))
     dtyieldasof = Field(OFXDateTime)
-    typedesc = Field(String(32))
+    typedesc = Field(Unicode(32))
     assetclass = Field(Enum(*ASSETCLASSES))
-    fiassetclass = Field(String(32))
+    fiassetclass = Field(Unicode(32))
 
 
 # Securities prices
@@ -698,7 +698,7 @@ class INVPOS(Entity, Mergeable):
     #dtpriceasof = Field(OFXDateTime, required=True)
     #cursym = Field(Enum(*ISO4217), required=True)
     #currate = Field(OFXDecimal(8))
-    memo = Field(String(255))
+    memo = Field(Unicode(255))
     inv401ksource = Field(Enum(*INV401KSOURCES))
 
     acct = ManyToOne('INVACCT', required=True)
