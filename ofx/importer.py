@@ -9,6 +9,40 @@ from utilities import _
 if sys.version_info < (2, 7):
     raise RuntimeError('ofx.importer requires Python v2.7+')
 
+class OFXResponse(object):
+    """ """
+    statements = []
+
+
+class Statement(object):
+    """ """
+    account = None
+    defaultCurrency = None
+    dtAsOf = None
+    dtStart = None
+    dtEnd = None
+    balance = None
+    fiBalances =[]
+    transactions = []
+
+    def __init__(self, acct, curdef, dtasof):
+        self.account = acct
+        self.defaultCurrency = curdef
+        self.dtAsOf = dtasof
+
+
+class BankStatement(Statement):
+    pass
+
+
+class CcStatement(BankStatement):
+    pass
+
+
+class InvStatement(Statement):
+   positions = []
+
+
 class OFXImporter(object):
     """
     """
@@ -21,11 +55,14 @@ class OFXImporter(object):
         self.verbose = verbose
 
         engine = elixir.sqlalchemy.create_engine(database or 'sqlite://',
-                                                echo=self.verbose)
+                                                echo=self.verbose,
+        )
         self.connection = engine.connect()
         elixir.metadata.bind = self.connection
         elixir.setup_all()
         elixir.create_all()
+
+        self.response = OFXResponse()
 
     def process(self):
         try:
@@ -58,7 +95,7 @@ class OFXImporter(object):
                 #  (uniqueidtype, uniqueid) -> Security for quick lookup
                 #
                 # The logic in models.SECINFO.match() doesn't require that the
-                # securities instance matched from teh DB has the same key
+                # securities instance matched from the DB has the same key
                 # (uniqueidtype, uniqueid) as the attributes incoming from the
                 # OFX file currently being processed.  So make sure to key the
                 # dict according to the current attributes, not the DB's.
@@ -103,7 +140,7 @@ class OFXImporter(object):
     def processStatements(self):
         for tag in ('STMTTRNRS', 'CCSTMTTRNRS', 'INVSTMTTRNRS'):
             for trnrs in self.tree.findall('*/%s' % tag):
-                self.processTRNRS(trnrs)
+                self.response.statements.append(self.processTRNRS(trnrs))
 
     def processTRNRS(self, trnrs):
         # Check the statement status
@@ -111,23 +148,28 @@ class OFXImporter(object):
         stmtTag = trnrs.tag.replace('STMTTRNRS', 'STMTRS')
         handler = getattr(self, 'process%s' % stmtTag)
         stmt = trnrs.find(stmtTag)
-        handler(stmt)
+        return handler(stmt)
 
     def processSTMTRS(self, stmtrs, cc=False):
         if cc:
             acctTag = 'CCACCTFROM'
             acctClass = models.CCACCT
+            statementClass = CcStatement
         else:
             acctTag = 'BANKACCTFROM'
             acctClass = models.BANKACCT
+            statementClass = BankStatement
         attrs = self.flatten(stmtrs.find(acctTag))
         attrs['fi'] = self.fi
         acct = acctClass.get_or_create(**attrs)[0]
 
         curdef = stmtrs.find('CURDEF').text
+
         # STMTRS doesn't have a DTASOF element, so use LEDGERBAL.DTASOF when
-        # a statement date is needed (e.g. LEDGERBAL that omits DTASOF)
+        # a statement date is needed (e.g. BALLIST.BAL that omits DTASOF)
         dtasof = stmtrs.find('LEDGERBAL/DTASOF').text
+
+        statement = statementClass(acct, curdef, models.OFXDtConverter.to_python(dtasof))
 
         # BANKTRANLIST
         tranlist = stmtrs.find('BANKTRANLIST')
@@ -135,10 +177,11 @@ class OFXImporter(object):
             dtstart, dtend = tranlist[0:2]
             tranlist.remove(dtstart)
             tranlist.remove(dtend)
-            # Silently discard DTSTART, DTEND
+            statement.dtstart = models.OFXDtConverter.to_python(dtstart.text)
+            statement.dtend = models.OFXDtConverter.to_python(dtend.text)
             for tran in tranlist:
                 attrs = self.process_common(tran, acct, curdef)
-                models.STMTTRN.get_or_create(**attrs)
+                statement.transactions.append(models.STMTTRN.get_or_create(**attrs)[0])
 
         # LEDGERBAL - mandatory
         ledgerbal = stmtrs.find('LEDGERBAL')
@@ -150,12 +193,14 @@ class OFXImporter(object):
             availbal_dtasof = availbal.find('DTASOF').text
             assert availbal_dtasof.strip() == dtasof.strip()
             attrs['availbal'] = availbal.find('BALAMT').text
-        models.BANKBAL.get_or_create(**attrs)
+        statement.balance = models.BANKBAL.get_or_create(**attrs)[0]
 
         # BALLIST
         ballist = stmtrs.find('BALLIST')
         if ballist:
-            self.processBALLIST(ballist, dtasof, curdef, acct)
+            statement.fibals = self.processBALLIST(ballist, dtasof, curdef, acct)
+
+        return statement
 
     def processCCSTMTRS(self, ccstmtrs):
         self.processSTMTRS(ccstmtrs, cc=True)
@@ -168,6 +213,8 @@ class OFXImporter(object):
         curdef = invstmtrs.find('CURDEF').text
         dtasof = invstmtrs.find('DTASOF').text
 
+        statement = InvStatement(acct, curdef, models.OFXDtConverter.to_python(dtasof))
+
         # INVTRANLIST
         tranlist = invstmtrs.find('INVTRANLIST')
         if tranlist is not None:
@@ -175,11 +222,13 @@ class OFXImporter(object):
             # Silently discard DTSTART, DTEND
             tranlist.remove(dtstart)
             tranlist.remove(dtend)
+            statement.dtstart = models.OFXDtConverter.to_python(dtstart.text)
+            statement.dtend = models.OFXDtConverter.to_python(dtend.text)
             invbanktrans = tranlist.findall('INVBANKTRAN')
             for invbanktran in invbanktrans:
                 tranlist.remove(invbanktran)
                 attrs = self.process_common(invbanktran, acct, curdef)
-                models.INVBANKTRAN.get_or_create(**attrs)
+                statement.transactions.append(models.INVBANKTRAN.get_or_create(**attrs)[0])
             for trn in tranlist:
                 attrs = self.flatten(trn)
                 attrs['acct'] = acct
@@ -189,7 +238,7 @@ class OFXImporter(object):
                 if hasattr(tranClass, 'sec'):
                     attrs['sec'] = self.securities[(attrs.pop('uniqueidtype'),
                                                 attrs.pop('uniqueid'))]
-                tranClass.get_or_create(**attrs)
+                statement.transactions.append(tranClass.get_or_create(**attrs)[0])
 
         # INVPOSLIST
         poslist = invstmtrs.find('INVPOSLIST')
@@ -203,9 +252,11 @@ class OFXImporter(object):
                 price_attrs.update({a: attrs.pop(a)
                     for a in ('dtpriceasof', 'unitprice', 'cursym', 'currate')})
 
+                # FIXME - pricing data not yet captured in OFXResponse.statements
                 models.SECPRICE.get_or_create(**price_attrs)
+
                 posClass = getattr(models, pos.tag)
-                posClass.get_or_create(**attrs)
+                statement.positions.append(posClass.get_or_create(**attrs)[0])
 
         # INVBAL
         invbal = invstmtrs.find('INVBAL')
@@ -218,19 +269,26 @@ class OFXImporter(object):
             # Now we can flatten the rest of INVBAL
             attrs = self.process_common(invbal, acct, curdef)
             attrs['dtasof'] = dtasof
-            models.INVBAL.get_or_create(**attrs)
+            statement.balances = models.INVBAL.get_or_create(**attrs)[0]
 
         # Unsupported subaggregates
         for tag in ('INVOOLIST', 'INV401K', 'INV401KBAL', 'MKTGINFO'):
             child = invstmtrs.find(tag)
             if child:
-                invstmtrs.remove(child)
+                invstmtrs.remove
+
+        return statement
 
     def processBALLIST(self, ballist, dtasof, curdef, acct):
-        for fibal in ballist:
+        def processBAL(fibal):
             attrs = self.process_common(fibal, acct, curdef)
             attrs['dtasof'] = attrs.get('dtasof', dtasof)
-            models.FIBAL.get_or_create(**attrs)
+            return models.FIBAL.get_or_create(**attrs)[0]
+        return [processBAL(fibal) for fibal in ballist]
+        #for fibal in ballist:
+            #attrs = self.process_common(fibal, acct, curdef)
+            #attrs['dtasof'] = attrs.get('dtasof', dtasof)
+            #models.FIBAL.get_or_create(**attrs)
 
     def flatten(self, element):
         """
@@ -303,7 +361,7 @@ def main():
     importer = OFXImporter(tree.getroot(), verbose=args.verbose,
                             database=args.database)
     importer.process()
-    print importer.securities
+    print importer.response.statements
 
 if __name__ == '__main__':
     main()
