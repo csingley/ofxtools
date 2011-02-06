@@ -177,8 +177,9 @@ class OFXImporter(object):
             dtstart, dtend = tranlist[0:2]
             tranlist.remove(dtstart)
             tranlist.remove(dtend)
-            statement.dtstart = models.OFXDtConverter.to_python(dtstart.text)
-            statement.dtend = models.OFXDtConverter.to_python(dtend.text)
+
+            statement.dtStart = models.OFXDtConverter.to_python(dtstart.text)
+            statement.dtEnd = models.OFXDtConverter.to_python(dtend.text)
             for tran in tranlist:
                 attrs = self.process_common(tran, acct, curdef)
                 statement.transactions.append(models.STMTTRN.get_or_create(**attrs)[0])
@@ -222,8 +223,8 @@ class OFXImporter(object):
             # Silently discard DTSTART, DTEND
             tranlist.remove(dtstart)
             tranlist.remove(dtend)
-            statement.dtstart = models.OFXDtConverter.to_python(dtstart.text)
-            statement.dtend = models.OFXDtConverter.to_python(dtend.text)
+            statement.dtStart = models.OFXDtConverter.to_python(dtstart.text)
+            statement.dtEnd = models.OFXDtConverter.to_python(dtend.text)
             invbanktrans = tranlist.findall('INVBANKTRAN')
             for invbanktran in invbanktrans:
                 tranlist.remove(invbanktran)
@@ -361,7 +362,8 @@ def main():
     importer = OFXImporter(tree.getroot(), verbose=args.verbose,
                             database=args.database)
     importer.process()
-    print importer.response.statements
+    print stmt.dtStart, stmt.dtEnd
+
 
 if __name__ == '__main__':
     main()
