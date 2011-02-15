@@ -3,7 +3,7 @@ import datetime
 import time
 import re
 
-from utilities import ISO4217, ISO3166_1a3
+from utilities import ISO4217, ISO3166_1a3, ISO639_2
 
 INV401KSOURCES = ('PRETAX', 'AFTERTAX', 'MATCH', 'PROFITSHARING', 'ROLLOVER',
                 'OTHERVEST', 'OTHERNONVEST')
@@ -18,14 +18,6 @@ ASSETCLASSES = ('DOMESTICBOND', 'INTLBOND', 'LARGESTOCK', 'SMALLSTOCK',
 ###
 class Aggregate(object):
     """ """
-    @property
-    def elements(self):
-        d = {}
-        for m in self.__class__.mro():
-            d.update({k: v for k,v in m.__dict__.iteritems() \
-                                    if isinstance(v, Element)})
-        return d
-
     def __init__(self, **kwargs):
         for name, element in self.elements.viewitems():
             value = kwargs.pop(name, None)
@@ -37,6 +29,13 @@ class Aggregate(object):
             raise ValueError("Undefined element(s) for '%s': %s"
                             % (self.__class__.__name__, str(kwargs.viewkeys())))
 
+    @property
+    def elements(self):
+        d = {}
+        for m in self.__class__.__mro__:
+            d.update({k: v for k,v in m.__dict__.iteritems() \
+                                    if isinstance(v, Element)})
+        return d
 
     def __getattribute__(self, name):
         if name.startswith('__'):
@@ -56,6 +55,8 @@ class Aggregate(object):
             value = classattr.convert(value)
         object.__setattr__(self, name, value)
 
+    def __repr__(self):
+        return '<%s %s>' % (self.__class__.__name__, ' '.join(['%s=%s' % (attr, getattr(self, attr)) for attr in self.elements.viewkeys() if getattr(self, attr) is not None]))
 
 class Element(object):
     """ """
@@ -81,7 +82,7 @@ class Boolean(Element):
     def convert(self, value):
         if value is None and not self.required:
             return None
-        return cls.mapping[value]
+        return self.mapping[value]
 
 
 class Unicode(Element):
@@ -115,9 +116,20 @@ class OneOf(Element):
 
 
 class Integer(Element):
+    def _init(self, *args, **kwargs):
+        length = None
+        if args:
+            length = args[0]
+            args = args[1:]
+        self.length = length
+        super(Integer, self)._init(*args, **kwargs)
+
     def convert(self, value):
         if value is None and not self.required:
             return None
+        value = int(value)
+        if self.length is not None and value >= 10**self.length:
+            raise ValueError # FIXME
         return int(value)
 
 
@@ -192,21 +204,38 @@ class DateTime(Element):
             raise # FIXME
         return value
 
-###
+### SONRS
 class FI(Aggregate):
     """
     FI aggregates are optional in SONRQ/SONRS; not all firms use them.
     """
-    org = Unicode(32, required=True)
+    org = Unicode(32)
     fid = Unicode(32)
 
 
+class STATUS(Aggregate):
+    code = Integer(6, required=True)
+    severity = OneOf('INFO', 'WARN', 'ERROR', required=True)
+    message = Unicode(255)
+
+
+class SONRS(FI, STATUS):
+    dtserver = DateTime(required=True)
+    userkey = Unicode(64)
+    tskeyexpire = DateTime()
+    language = OneOf(*ISO639_2)
+    dtprofup = DateTime()
+    dtacctup = DateTime()
+    sesscookie = Unicode(1000)
+    accesskey = Unicode(1000)
+
+
 # Accounts
-class ACCT(Aggregate):
+class ACCTFROM(Aggregate):
     acctid = Unicode(22, required=True)
 
 
-class BANKACCT(ACCT):
+class BANKACCTFROM(ACCTFROM):
     bankid = Unicode(9, required=True)
     branchid = Unicode(22)
     accttype = OneOf('CHECKING', 'SAVINGS', 'MONEYMRKT', 'CREDITLINE',
@@ -214,39 +243,33 @@ class BANKACCT(ACCT):
     acctkey = Unicode(22)
 
 
-class CCACCT(ACCT):
+class CCACCTFROM(ACCTFROM):
     acctkey = Unicode(22)
 
 
-class INVACCT(ACCT):
+class INVACCTFROM(ACCTFROM):
     brokerid = Unicode(22, required=True)
 
 
 # Balances
-class BAL(Aggregate):
+class LEDGERBAL(Aggregate):
+    balamt = Decimal(required=True)
     dtasof = DateTime(required=True)
-    cursym = OneOf(*ISO4217, required=True)
-    currate = Decimal(8)
 
 
-class BANKBAL(BAL):
-    ledgerbal = Decimal(required=True)
-    availbal = Decimal(required=True)
+class AVAILBAL(Aggregate):
+    balamt = Decimal(required=True)
+    dtasof = DateTime(required=True)
 
 
-class CCBAL(BAL):
-    ledgerbal = Decimal(required=True)
-    availbal = Decimal(required=True)
-
-
-class INVBAL(BAL):
+class INVBAL(Aggregate):
     availcash = Decimal(required=True)
     marginbalance = Decimal(required=True)
     shortbalance = Decimal(required=True)
     buypower = Decimal()
 
 
-class FIBAL(Aggregate):
+class BAL(Aggregate):
     name = Unicode(32, required=True)
     desc = Unicode(80, required=True)
     baltype = OneOf('DOLLAR', 'PERCENT', 'NUMBER', required=True)
@@ -260,6 +283,7 @@ class FIBAL(Aggregate):
 class SECID(Aggregate):
     uniqueid = Unicode(32, required=True)
     uniqueidtype = Unicode(10, required=True)
+
 
 class SECINFO(SECID):
     secname = Unicode(120, required=True)
@@ -612,7 +636,7 @@ class INVPOS(SECID):
     unitprice = Decimal(4, required=True)
     mktval = Decimal(required=True)
     dtpriceasof = DateTime(required=True)
-    cursym = OneOf(*ISO4217, required=True)
+    cursym = OneOf(*ISO4217)
     currate = Decimal(8)
     memo = Unicode(255)
     inv401ksource = OneOf(*INV401KSOURCES)
