@@ -258,9 +258,7 @@ class BaseSTMT(object):
     curdef = None
     acctfrom = None
 
-    dtstart = None
-    dtend = None
-
+    tranlist = []
     ballist = []
 
     def __init__(self, stmtrs):
@@ -270,10 +268,8 @@ class BaseSTMT(object):
         self.process(stmtrs)
 
     def process(self, stmtrs):
+        # Define in subclass
         raise NotImplementedError
-
-    def _processBALLIST(self, ballist):
-        return [bal.convert() for bal in ballist]
 
     def __repr__(self):
         return '<%s at 0x%x>' % (self.__class__.__name__, id(self))
@@ -283,7 +279,7 @@ class STMT(BaseSTMT):
     ledgerbal = None
     availbal = None
 
-    banktranlist = []
+    tranlist = []
 
     _acctTag = 'BANKACCTFROM'
 
@@ -291,17 +287,23 @@ class STMT(BaseSTMT):
     def bankacctfrom(self):
         return self.acctfrom
 
+    @bankacctfrom.setter
+    def bankacctfrom(self, value):
+        self.acctfrom = value
+
+    @property
+    def banktranlist(self):
+        return self.tranlist
+
+    @banktranlist.setter
+    def banktranlist(self, value):
+        self.tranlist = value
+
     def process(self, stmtrs):
         # BANKTRANLIST
         tranlist = stmtrs.find('BANKTRANLIST')
         if tranlist is not None:
-            dtstart, dtend = tranlist[0:2]
-            tranlist.remove(dtstart)
-            tranlist.remove(dtend)
-
-            self.dtStart = converters.DateTime.convert(dtstart.text)
-            self.dtEnd = converters.DateTime.convert(dtend.text)
-            self.banktranlist = [tran.convert() for tran in tranlist]
+            self.tranlist = BANKTRANLIST(tranlist)
 
         # LEDGERBAL - mandatory
         self.ledgerbal = stmtrs.find('LEDGERBAL').convert()
@@ -314,7 +316,7 @@ class STMT(BaseSTMT):
         # BALLIST
         ballist = stmtrs.find('BALLIST')
         if ballist:
-            self.ballist = self._processBALLIST(ballist)
+            self.ballist = [bal.convert() for bal in ballist]
 
         # Unsupported subaggregates
         for tag in ('MKTGINFO', ):
@@ -334,7 +336,6 @@ class CCSTMT(STMT):
 class INVSTMT(BaseSTMT):
     dtasof = None
 
-    invtranlist = []
     invposlist = []
     invbal = None
 
@@ -344,6 +345,18 @@ class INVSTMT(BaseSTMT):
     def invacctfrom(self):
         return self.acctfrom
 
+    @invacctfrom.setter
+    def invacctfrom(self, value):
+        self.acctfrom = value
+
+    @property
+    def invtranlist(self):
+        return self.tranlist
+
+    @invtranlist.setter
+    def invtranlist(self, value):
+        self.tranlist = value
+
     def process(self, invstmtrs):
         dtasof = invstmtrs.find('DTASOF').text
         self.dtasof = converters.DateTime.convert(dtasof)
@@ -351,19 +364,12 @@ class INVSTMT(BaseSTMT):
         # INVTRANLIST
         tranlist = invstmtrs.find('INVTRANLIST')
         if tranlist is not None:
-            dtstart, dtend = tranlist[0:2]
-            tranlist.remove(dtstart)
-            tranlist.remove(dtend)
-            self.dtStart = converters.DateTime.convert(dtstart.text)
-            self.dtEnd = converters.DateTime.convert(dtend.text)
-            for trn in tranlist:
-                self.invtranlist.append(trn.convert())
+            self.tranlist = INVTRANLIST(tranlist)
 
         # INVPOSLIST
         poslist = invstmtrs.find('INVPOSLIST')
         if poslist is not None:
-            for pos in poslist:
-                self.invposlist.append(pos.convert())
+            self.invposlist = [pos.convert() for pos in poslist]
 
         # INVBAL
         invbal = invstmtrs.find('INVBAL')
@@ -372,7 +378,7 @@ class INVSTMT(BaseSTMT):
             ballist = invbal.find('BALLIST')
             if ballist is not None:
                 invbal.remove(ballist)
-                self.ballist = self._processBALLIST(ballist)
+                self.ballist = [bal.convert() for bal in ballist]
             # Now we can flatten the rest of INVBAL
             self.invbal = invbal.convert()
 
@@ -381,6 +387,29 @@ class INVSTMT(BaseSTMT):
             child = invstmtrs.find(tag)
             if child:
                 invstmtrs.remove
+
+
+class TRANLIST(list):
+    """ """
+    def __init__(self, tranlist):
+        # Initialize with *TRANLIST Element
+        dtstart, dtend = tranlist[0:2]
+        tranlist = tranlist[2:]
+        self.dtstart = converters.DateTime.convert(dtstart.text)
+        self.dtend = converters.DateTime.convert(dtend.text)
+        self.extend([tran.convert() for tran in tranlist])
+
+    def __repr__(self):
+        #return "<%s dtstart='%s' dtend='%s' %r>" % (self.__class__.__name__, self.dtstart, self.dtend, [i for i in self])
+        return "<%s dtstart='%s' dtend='%s' #transactions=%s>" % (self.__class__.__name__, self.dtstart, self.dtend, len(self))
+
+
+class BANKTRANLIST(TRANLIST):
+    pass
+
+
+class INVTRANLIST(TRANLIST):
+    pass
 
 
 class ParseError(SyntaxError):
@@ -400,11 +429,12 @@ def main():
 
     stmt = ofxparser.response.statements[0]
     if isinstance(stmt, (STMT, CCSTMT)):
-        print stmt.banktranlist
+        tranlist = stmt.banktranlist
     elif isinstance(stmt, INVSTMT):
-        print stmt.invtranlist
+        tranlist = stmt.invtranlist
     else:
         raise ValueError('%s not an instance of (STMT, CCSTMT, INVSTMT)' % stmt)
+    print tranlist
 
 
 if __name__ == '__main__':
