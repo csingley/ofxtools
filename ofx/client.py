@@ -11,10 +11,13 @@ from cStringIO import StringIO
 import re
 from getpass import getpass
 
-from utilities import _, OFXDtConverter, OFXStringBool, BankAcctTypeValidator, prettify
+import converters
+from utilities import _, prettify
+
 
 if sys.version_info < (2, 7):
     raise RuntimeError('ofx.client requires Python v2.7+')
+
 
 class OFXClient(object):
     """ """
@@ -107,7 +110,7 @@ class OFXClient(object):
         msgsrq = Element('PROFMSGSRQV1')
         profrq = self.wrap_request(msgsrq, 'PROFRQ')
         SubElement(profrq, 'CLIENTROUTING').text = 'NONE'
-        SubElement(profrq, 'DTPROFUP').text = OFXDtConverter.from_python(datetime.date(1990,1,1))
+        SubElement(profrq, 'DTPROFUP').text = converters.DateTime.unconvert(datetime.date(1990,1,1))
         ofx.append(msgsrq)
         self.request = request = self.header + tostring(ofx)
         return request
@@ -154,7 +157,7 @@ class OFXClient(object):
             raise ValueError
         msgsrq = Element('SIGNONMSGSRQV1')
         sonrq = SubElement(msgsrq, 'SONRQ')
-        SubElement(sonrq, 'DTCLIENT').text = OFXDtConverter.from_python(datetime.datetime.now())
+        SubElement(sonrq, 'DTCLIENT').text = converters.DateTime.unconvert(datetime.datetime.now())
         SubElement(sonrq, 'USERID').text = user
         SubElement(sonrq, 'USERPASS').text = password
         SubElement(sonrq, 'LANGUAGE').text = 'ENG'
@@ -181,7 +184,7 @@ class OFXClient(object):
         for account in accounts:
             try:
                 accttype, bankid, acctid = account
-                accttype = BankAcctTypeValidator.to_python(accttype)
+                accttype = converters.OneOf(*converters.ACCTTYPES).convert(accttype)
             except ValueError:
                 # FIXME
                 raise ValueError("Bank accounts must be specified as a sequence of (ACCTTYPE, BANKID, ACCTID) tuples, not '%s'" % str(accounts))
@@ -242,10 +245,10 @@ class OFXClient(object):
             SubElement(stmtrq, 'INCOO').text = 'N'
             pos = SubElement(stmtrq, 'INCPOS')
             if dtasof:
-                SubElement(pos, 'DTASOF').text = OFXDtConverter.from_python(dtasof)
-            SubElement(pos, 'INCLUDE').text = OFXStringBool.from_python(incpos)
+                SubElement(pos, 'DTASOF').text = converters.DateTime.unconvert(dtasof)
+            SubElement(pos, 'INCLUDE').text = converters.Boolean().unconvert(incpos)
 
-            SubElement(stmtrq, 'INCBAL').text = OFXStringBool.from_python(incbal)
+            SubElement(stmtrq, 'INCBAL').text = converters.Boolean().unconvert(incbal)
         self.investment = msgsrq
 
     def request_all(self, bank_accts, cc_accts, inv_accts, inctran=stmt_defaults['inctran'],
@@ -271,10 +274,10 @@ class OFXClient(object):
     def _include_transactions(self, parent, inctran, dtstart, dtend):
         element = SubElement(parent, 'INCTRAN')
         if dtstart:
-            SubElement(element, 'DTSTART').text = OFXDtConverter.from_python(dtstart)
+            SubElement(element, 'DTSTART').text = converters.DateTime.unconvert(dtstart)
         if dtend:
-            SubElement(element, 'DTEND').text = OFXDtConverter.from_python(dtend)
-        SubElement(element, 'INCLUDE').text = OFXStringBool.from_python(inctran)
+            SubElement(element, 'DTEND').text = converters.DateTime.unconvert(dtend)
+        SubElement(element, 'INCLUDE').text = converters.Boolean().unconvert(inctran)
         return element
 
     def parse_bank(self, accttype, string):
@@ -466,7 +469,7 @@ def do_stmt(args, config):
 
     # Datetime validation/conversion
     for dt in ('dtstart', 'dtend', 'dtasof'):
-        setattr(args, dt, OFXDtConverter.to_python(getattr(args, dt)))
+        setattr(args, dt, converters.DateTime.convert(getattr(args, dt)))
 
     client = OFXClient.from_args(args)
 

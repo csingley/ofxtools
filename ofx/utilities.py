@@ -298,17 +298,6 @@ def sedol2isin(sedol, nation=None):
     base = nation + sedol.zfill(9)
     return base + ISINchecksum(base)
 
-#def isin2cusip(isin):
-    #assert len(isin) == 12
-    #assert isinChecksum(isin[:11]) == isin[12]
-    #assert isin[:2] in ('US', 'CA') # FIXME
-    #return isin[2:11]
-
-#def isin2sedol(isin):
-    #assert len(isin) == 12
-    #assert isinChecksum(isin[:11]) == isin[12]
-    #assert isin[:2] in ('GB', 'CA') # FIXME
-
 def settleDate(dt):
     """
     Given a trade date (or datetime), return the trade settlement date(time)

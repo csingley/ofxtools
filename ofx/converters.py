@@ -11,8 +11,9 @@ if sys.version_info < (2, 7):
     raise RuntimeError('ofx.parser library requires Python v2.7+')
 
 
-INV401KSOURCES = (u'PRETAX', u'AFTERTAX', u'MATCH', u'PROFITSHARING', u'ROLLOVER',
-                u'OTHERVEST', u'OTHERNONVEST')
+INV401KSOURCES = (u'PRETAX', u'AFTERTAX', u'MATCH', u'PROFITSHARING',
+                    u'ROLLOVER', u'OTHERVEST', u'OTHERNONVEST')
+ACCTTYPES = (u'CHECKING', u'SAVINGS', u'MONEYMRKT', u'CREDITLINE')
 INVSUBACCTS = (u'CASH', u'MARGIN', u'SHORT', u'OTHER')
 BUYTYPES = (u'BUY', u'BUYTOCOVER')
 SELLTYPES = (u'SELL', u'SELLSHORT')
@@ -90,6 +91,10 @@ class Boolean(Element):
             return None
         return self.mapping[value]
 
+    def unconvert(self, value):
+        if value is None and not self.required:
+            return None
+        return {v:k for k,v in self.mapping.viewitems()}[value]
 
 class Unicode(Element):
     def _init(self, *args, **kwargs):
@@ -246,7 +251,7 @@ class ACCTFROM(Aggregate):
 class BANKACCTFROM(ACCTFROM):
     bankid = Unicode(9, required=True)
     branchid = Unicode(22)
-    accttype = OneOf(u'CHECKING', u'SAVINGS', u'MONEYMRKT', u'CREDITLINE',
+    accttype = OneOf(*ACCTTYPES,
                     required=True)
     acctkey = Unicode(22)
 
