@@ -34,7 +34,7 @@ class Aggregate(object):
             setattr(self, name, value)
         if kwargs:
             raise ValueError("Undefined element(s) for '%s': %s"
-                            % (self.__class__.__name__, str(kwargs.viewkeys())))
+                            % (self.__class__.__name__, kwargs.viewkeys()))
 
     @property
     def elements(self):
@@ -75,8 +75,8 @@ class Element(object):
     def _init(self, *args, **kwargs):
         """ Override in subclass """
         if args or kwargs:
-            raise ValueError("Unknown args for '%s'- args: %s; kwargs: %s"
-                            % (self.__class__.__name__, str(args), str(kwargs)))
+            raise ValueError("Unknown args for '%s'- args: %r; kwargs: %r"
+                            % (self.__class__.__name__, args, kwargs))
 
     def convert(self, value):
         """ Override in subclass """
@@ -109,7 +109,7 @@ class Unicode(Element):
         if value is None and not self.required:
             return None
         if self.length is not None and len(value) > self.length:
-            raise ValueError # FIXME
+            raise ValueError("'%s' is too long; max length=%s" % (value, self.length))
         return unicode(value)
 
 
@@ -122,10 +122,11 @@ class OneOf(Element):
         if value is None and not self.required:
             return None
         if (value in self.valid):
+            # unicode, dammit
             if isinstance(value, basestring):
                 value = unicode(value)
             return value
-        raise ValueError("'%s' is not OneOf%s" % (str(value), str(tuple(self.valid)))) # FIXME
+        raise ValueError("'%s' is not OneOf %r" % (value, self.valid))
 
 
 class Integer(Element):
@@ -142,7 +143,7 @@ class Integer(Element):
             return None
         value = int(value)
         if self.length is not None and value >= 10**self.length:
-            raise ValueError # FIXME
+            raise ValueError('%s has too many digits; max digits=%s' % (value, self.length))
         return int(value)
 
 
@@ -195,7 +196,7 @@ class DateTime(Element):
             value = datetime.datetime.strptime(value, format)
         except ValueError:
             raise ValueError("Datetime '%s' does not match OFX formats %s" %
-                            (orig_value, str(cls.formats.values())))
+                            (orig_value, cls.formats.values()))
 
         # Adjust timezone to GMT
         value -= datetime.timedelta(seconds=gmt_offset)
