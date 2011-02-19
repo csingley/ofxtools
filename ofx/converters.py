@@ -22,51 +22,16 @@ ASSETCLASSES = (u'DOMESTICBOND', u'INTLBOND', u'LARGESTOCK', u'SMALLSTOCK',
                 u'INTLSTOCK', u'MONEYMRKT', u'OTHER')
 
 
-###
-class Aggregate(object):
-    """ """
-    def __init__(self, **kwargs):
-        for name, element in self.elements.viewitems():
-            value = kwargs.pop(name, None)
-            if element.required and value is None:
-                raise ValueError("'%s' attribute is required for %s"
-                                % (name, self.__class__.__name__))
-            setattr(self, name, value)
-        if kwargs:
-            raise ValueError("Undefined element(s) for '%s': %s"
-                            % (self.__class__.__name__, kwargs.viewkeys()))
-
-    @property
-    def elements(self):
-        d = {}
-        for m in self.__class__.__mro__:
-            d.update({k: v for k,v in m.__dict__.iteritems() \
-                                    if isinstance(v, Element)})
-        return d
-
-    def __getattribute__(self, name):
-        if name.startswith('__'):
-            # Short-circuit private attributes to avoid infinite recursion
-            attribute = object.__getattribute__(self, name)
-        elif isinstance(getattr(self.__class__, name), Element):
-            # Don't inherit Element attributes from class
-            attribute = self.__dict__[name]
-        else:
-            attribute = object.__getattribute__(self, name)
-        return attribute
-
-    def __setattr__(self, name, value):
-        """ If attribute references an Element, convert before setting """
-        classattr = getattr(self.__class__, name)
-        if isinstance(classattr, Element):
-            value = classattr.convert(value)
-        object.__setattr__(self, name, value)
-
-    def __repr__(self):
-        return '<%s %s>' % (self.__class__.__name__, ' '.join(['%s=%r' % (attr, getattr(self, attr)) for attr in self.elements.viewkeys() if getattr(self, attr) is not None]))
-
 class Element(object):
-    """ """
+    """
+    Base class of validator/type converter for OFX 'element', i.e. SGML leaf
+    node that contains text data.
+
+    Element instances store validation parameters relevant to a particular
+    Aggregate subclass (e.g. maximum string length, decimal precision,
+    required vs. optional, etc.) - they don't directly store the data
+    itself (which lives in the __dict__ of an Aggregate instance).
+    """
     def __init__(self, *args, **kwargs):
         required = kwargs.pop('required', False)
         self.required = required
@@ -218,7 +183,60 @@ class DateTime(Element):
             raise # FIXME
         return value
 
-### SONRS
+
+class Aggregate(object):
+    """
+    Base class of validator/type converter for OFX 'aggregate', i.e. SGML parent
+    node that contains no data.  Data-bearing Elements are represented as
+    attributes of the containing Aggregate.
+
+    The Aggregate class is implemented as a data descriptor that, before
+    setting an attribute, checks whether that attribute is defined as
+    an Element in the class definition.  If it is, the Element's type
+    conversion method is called, and the resulting value stored in the
+    Aggregate instance's __dict__.
+    """
+    def __init__(self, **kwargs):
+        for name, element in self.elements.viewitems():
+            value = kwargs.pop(name, None)
+            if element.required and value is None:
+                raise ValueError("'%s' attribute is required for %s"
+                                % (name, self.__class__.__name__))
+            setattr(self, name, value)
+        if kwargs:
+            raise ValueError("Undefined element(s) for '%s': %s"
+                            % (self.__class__.__name__, kwargs.viewkeys()))
+
+    @property
+    def elements(self):
+        d = {}
+        for m in self.__class__.__mro__:
+            d.update({k: v for k,v in m.__dict__.iteritems() \
+                                    if isinstance(v, Element)})
+        return d
+
+    def __getattribute__(self, name):
+        if name.startswith('__'):
+            # Short-circuit private attributes to avoid infinite recursion
+            attribute = object.__getattribute__(self, name)
+        elif isinstance(getattr(self.__class__, name), Element):
+            # Don't inherit Element attributes from class
+            attribute = self.__dict__[name]
+        else:
+            attribute = object.__getattribute__(self, name)
+        return attribute
+
+    def __setattr__(self, name, value):
+        """ If attribute references an Element, convert before setting """
+        classattr = getattr(self.__class__, name)
+        if isinstance(classattr, Element):
+            value = classattr.convert(value)
+        object.__setattr__(self, name, value)
+
+    def __repr__(self):
+        return '<%s %s>' % (self.__class__.__name__, ' '.join(['%s=%r' % (attr, getattr(self, attr)) for attr in self.elements.viewkeys() if getattr(self, attr) is not None]))
+
+
 class FI(Aggregate):
     """
     FI aggregates are optional in SONRQ/SONRS; not all firms use them.
@@ -244,7 +262,6 @@ class SONRS(FI, STATUS):
     accesskey = Unicode(1000)
 
 
-# Accounts
 class ACCTFROM(Aggregate):
     acctid = Unicode(22, required=True)
 
@@ -257,8 +274,16 @@ class BANKACCTFROM(ACCTFROM):
     acctkey = Unicode(22)
 
 
+class BANKACCTTO(BANKACCTFROM):
+    pass
+
+
 class CCACCTFROM(ACCTFROM):
     acctkey = Unicode(22)
+
+
+class CCACCTTO(CCACCTFROM):
+    pass
 
 
 class INVACCTFROM(ACCTFROM):
@@ -329,26 +354,23 @@ class DEBTINFO(SECINFO):
     fiassetclass = Unicode(32)
 
 
+class MFINFO(SECINFO):
+    mftype = OneOf(u'OPENEND', u'CLOSEEND', u'OTHER')
+    yld = Decimal(4)
+    dtyieldasof = DateTime()
+
+    mfassetclass = []
+    fimfassetclass = []
+
+
 class MFASSETCLASS(Aggregate):
     assetclass = OneOf(*ASSETCLASSES)
     percent = Decimal()
-
-    # FIXME
-    #mf = ManyToOne('MFINFO')
 
 
 class FIMFASSETCLASS(Aggregate):
     fiassetclass = Unicode(32)
     percent = Decimal()
-
-    # FIXME
-    #mf = ManyToOne('MFINFO')
-
-
-class MFINFO(SECINFO):
-    mftype = OneOf(u'OPENEND', u'CLOSEEND', u'OTHER')
-    yld = Decimal(4)
-    dtyieldasof = DateTime()
 
 
 class OPTINFO(SECINFO):
@@ -415,11 +437,6 @@ class STMTTRN(TRAN):
     origcursym = OneOf(*ISO4217)
     origcurrate = Decimal(8)
     inv401ksource = OneOf(*INV401KSOURCES)
-
-    # FIXME
-    #payee = ManyToMany('PAYEE')
-    #bankacctto = ManyToOne('BANKACCT')
-    #ccacctto = ManyToOne('CCACCT')
 
 
 class INVBANKTRAN(STMTTRN):
