@@ -164,12 +164,22 @@ class OFXElement(ET.Element):
     def convert(self):
         """ """
         converterClass = getattr(converters, self.tag)
-        if not issubclass(converterClass, converters.Aggregate):
-            raise ParseError() # FIXME
-        self, extras = converterClass._preprocess(self)
+        assert issubclass(converterClass, converters.Aggregate)
         attributes = self._flatten()
+
+        if issubclass(converterClass, converters.ORIGCURRENCY):
+            currency = self.find('*/CURRENCY')
+            origcurrency = self.find('*/ORIGCURRENCY')
+            if (currency is not None) and (origcurrency is not None):
+                raise ParseError() # FIXME
+            curtype = currency
+            if curtype is None:
+                 curtype = origcurrency
+            if curtype is not None:
+                curtype = curtype.tag
+            attributes['curtype'] = curtype
+
         aggregate = converterClass(**attributes)
-        aggregate._postprocess(**extras)
 
         return aggregate
 
