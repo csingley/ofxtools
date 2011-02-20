@@ -156,35 +156,20 @@ class OFXTreeBuilder(ET.TreeBuilder):
 
 class OFXElement(ET.Element):
     """ """
+    currencyTags = ()
+    origcurrencyAggregates = (converters.STMTTRN, converters.INVBUY,
+                            converters.INVSELL, converters.INCOME,
+                            converters.INVEXPENSE, converters.MARGININTEREST,
+                            converters.REINVEST, converters.RETOFCAP)
     def convert(self):
         """ """
         converterClass = getattr(converters, self.tag)
-        if not isinstance(converterClass, Aggregate):
-            raise ParseEror() # FIXME
-
-        if self.tag == 'STMTTRN':
-            payee = self.find('PAYEE')
-            if payee:
-                self.remove(payee)
-            bankacctto = self.find('BANKACCTTO')
-            if bankacctto:
-                self.remove(bankacctto)
-            ccacctto = self.find('CCACCTTO')
-            if ccacctto:
-                self.remove(ccacctto)
-
+        if not issubclass(converterClass, converters.Aggregate):
+            raise ParseError() # FIXME
+        self, extras = converterClass._preprocess(self)
         attributes = self._flatten()
         aggregate = converterClass(**attributes)
-
-        if self.tag == 'STMTTRN':
-            if payee:
-                aggregate.payee = payee.convert()
-                if self.name:
-                    raise ParseError() # FIXME
-            if bankacctto:
-                aggregate.bankacctto = bankacctto.convert()
-            if ccacctto:
-                aggregate.ccacctto = ccacctto.convert()
+        aggregate._postprocess(**extras)
 
         return aggregate
 
@@ -369,7 +354,7 @@ class CCSTMT(STMT):
 class INVSTMT(BaseSTMT):
     dtasof = None
 
-    invposlist = []
+    invposlist = None
     invbal = None
 
     _acctTag = 'INVACCTFROM'

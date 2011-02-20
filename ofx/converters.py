@@ -236,6 +236,74 @@ class Aggregate(object):
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, ' '.join(['%s=%r' % (attr, getattr(self, attr)) for attr in self.elements.viewkeys() if getattr(self, attr) is not None]))
 
+    @classmethod
+    def _preprocess(cls, ofxelement):
+        """
+        Hook to override in subclass; gets called before ._flatten().
+        Pass in a parser.OFXElement instance.
+        """
+        return ofxelement, {}
+
+    def _postprocess(self, **extras):
+        """
+        Hook to override in subclass; gets called after ._flatten().
+        Pass in a dict of {attr_name: Aggregate_subclass}.
+        """
+        pass
+
+
+class Currency(object):
+    """
+    Mixin class providing processing for Aggregates with CURRENCY subaggregate.
+    """
+    currency = None
+
+    currency_parent = ''
+
+    @classmethod
+    def _preprocess(cls, ofxelement):
+        if len(cls.currency_parent):
+            currency_parent = ofxelement.find(cls.currency_parent)
+        else:
+            currency_parent = ofxelement
+        currency = currency_parent.find('CURRENCY')
+        if currency is not None:
+            currency_parent.remove(currency)
+        extras = {'currency': currency}
+        return ofxelement, extras
+
+    def _postprocess(self, currency):
+        if currency is not None:
+            self.currency = currency.convert()
+
+
+class OrigCurrency(Currency):
+    """
+    Mixin class providing processing for Aggregates with CURRENCY/ORIGCURRENCY.
+    """
+    origcurrency = None
+
+    @classmethod
+    def _preprocess(cls, ofxelement):
+        if len(cls.currency_parent):
+            currency_parent = ofxelement.find(cls.currency_parent)
+        else:
+            currency_parent = ofxelement
+        currency = currency_parent.find('CURRENCY')
+        if currency is not None:
+            currency_parent.remove(currency)
+        origcurrency = currency_parent.find('ORIGCURRENCY')
+        if origcurrency is not None:
+            currency_parent.remove(origcurrency)
+        extras = {'currency': currency, 'origcurrency': origcurrency}
+        return ofxelement, extras
+
+    def _postprocess(self, currency, origcurrency):
+        super(OrigCurrency, self)._postprocess(currency)
+        if origcurrency is not None:
+            self.origcurrency = origcurrency.convert()
+        assert not (self.currency and self.origcurrency)
+
 
 class FI(Aggregate):
     """
@@ -260,6 +328,15 @@ class SONRS(FI, STATUS):
     dtacctup = DateTime()
     sesscookie = Unicode(1000)
     accesskey = Unicode(1000)
+
+
+class CURRENCY(Aggregate):
+    cursym = OneOf(*ISO4217)
+    currate = Decimal(8)
+
+
+class ORIGCURRENCY(CURRENCY):
+    pass
 
 
 class ACCTFROM(Aggregate):
@@ -308,14 +385,12 @@ class INVBAL(Aggregate):
     buypower = Decimal()
 
 
-class BAL(Aggregate):
+class BAL(Currency, Aggregate):
     name = Unicode(32, required=True)
     desc = Unicode(80, required=True)
     baltype = OneOf(u'DOLLAR', u'PERCENT', u'NUMBER', required=True)
     value = Decimal(required=True)
     dtasof = DateTime()
-    cursym = OneOf(*ISO4217)
-    currate = Decimal(8)
 
 
 # Securities
@@ -324,16 +399,16 @@ class SECID(Aggregate):
     uniqueidtype = Unicode(10, required=True)
 
 
-class SECINFO(SECID):
+class SECINFO(Currency, SECID):
     secname = Unicode(120, required=True)
     ticker = Unicode(32)
     fiid = Unicode(32)
     rating = Unicode(10)
     unitprice = Decimal()
     dtasof = DateTime()
-    currate = Decimal(8)
-    cursym = OneOf(*ISO4217)
     memo = Unicode(255)
+
+    currency_parent = 'SECINFO'
 
 
 class DEBTINFO(SECINFO):
@@ -415,7 +490,7 @@ class TRAN(Aggregate):
     srvrtid = Unicode(10)
 
 
-class STMTTRN(TRAN):
+class STMTTRN(OrigCurrency, TRAN):
     trntype = OneOf(u'CREDIT', u'DEBIT', u'INT', u'DIV', u'FEE', u'SRVCHG',
                     u'DEP', u'ATM', u'POS', u'XFER', u'CHECK', u'PAYMENT',
                     u'CASH', u'DIRECTDEP', u'DIRECTDEBIT', u'REPEATPMT',
@@ -432,15 +507,17 @@ class STMTTRN(TRAN):
     payeeid = Unicode(12)
     name = Unicode(32)
     memo = Unicode(255)
-    cursym = OneOf(*ISO4217)
-    currate = Decimal(8)
-    origcursym = OneOf(*ISO4217)
-    origcurrate = Decimal(8)
     inv401ksource = OneOf(*INV401KSOURCES)
+
+    payee = None
+    bankacctto = None
+    ccacctto = None
 
 
 class INVBANKTRAN(STMTTRN):
     subacctfund = OneOf(*INVSUBACCTS, required=True)
+
+    currency_parent = 'STMTTRN'
 
 
 class INVTRAN(TRAN):
@@ -450,7 +527,7 @@ class INVTRAN(TRAN):
     memo = Unicode(255)
 
 
-class INVBUY(INVTRAN, SECID):
+class INVBUY(OrigCurrency, INVTRAN, SECID):
     units = Decimal(required=True)
     unitprice = Decimal(4, required=True)
     markup = Decimal()
@@ -459,10 +536,6 @@ class INVBUY(INVTRAN, SECID):
     fees = Decimal()
     load = Decimal()
     total = Decimal(required=True)
-    cursym = OneOf(*ISO4217)
-    currate = Decimal(8)
-    origcursym = OneOf(*ISO4217)
-    origcurrate = Decimal(8)
     subacctsec = OneOf(*INVSUBACCTS)
     subacctfund = OneOf(*INVSUBACCTS)
     loanid = Unicode(32)
@@ -472,8 +545,10 @@ class INVBUY(INVTRAN, SECID):
     dtpayroll = DateTime()
     prioryearcontrib = Boolean()
 
+    currency_parent = 'INVBUY'
 
-class INVSELL(INVTRAN, SECID):
+
+class INVSELL(OrigCurrency,INVTRAN, SECID):
     units = Decimal(required=True)
     unitprice = Decimal(4, required=True)
     markdown = Decimal()
@@ -485,16 +560,14 @@ class INVSELL(INVTRAN, SECID):
     taxexempt = Boolean()
     total = Decimal(required=True)
     gain = Decimal()
-    cursym = OneOf(*ISO4217)
-    currate = Decimal(8)
-    origcursym = OneOf(*ISO4217)
-    origcurrate = Decimal(8)
     subacctsec = OneOf(*INVSUBACCTS, required=True)
     subacctfund = OneOf(*INVSUBACCTS, required=True)
     loanid = Unicode(32)
     statewithholding = Decimal()
     penalty = Decimal()
     inv401ksource = OneOf(*INV401KSOURCES)
+
+    currency_parent = 'INVSELL'
 
 
 class BUYDEBT(INVBUY):
@@ -528,28 +601,20 @@ class CLOSUREOPT(INVTRAN, SECID):
     gain = Decimal()
 
 
-class INCOME(INVTRAN, SECID):
+class INCOME(OrigCurrency, INVTRAN, SECID):
     incometype = OneOf(*INCOMETYPES, required=True)
     total = Decimal(required=True)
     subacctsec = OneOf(*INVSUBACCTS, required=True)
     subacctfund = OneOf(*INVSUBACCTS, required=True)
     taxexempt = Boolean()
     withholding = Decimal()
-    cursym = OneOf(*ISO4217)
-    currate = Decimal(8)
-    origcursym = OneOf(*ISO4217)
-    origcurrate = Decimal(8)
     inv401ksource = OneOf(*INV401KSOURCES)
 
 
-class INVEXPENSE(INVTRAN, SECID):
+class INVEXPENSE(OrigCurrency, INVTRAN):
     total = Decimal(required=True)
     subacctsec = OneOf(*INVSUBACCTS, required=True)
     subacctfund = OneOf(*INVSUBACCTS, required=True)
-    cursym = OneOf(*ISO4217)
-    currate = Decimal(8)
-    origcursym = OneOf(*ISO4217)
-    origcurrate = Decimal(8)
     inv401ksource = OneOf(*INV401KSOURCES)
 
 
@@ -565,16 +630,12 @@ class JRNLSEC(INVTRAN, SECID):
     units = Decimal(required=True)
 
 
-class MARGININTEREST(INVTRAN):
+class MARGININTEREST(OrigCurrency, INVTRAN):
     total = Decimal(required=True)
     subacctfund = OneOf(*INVSUBACCTS, required=True)
-    cursym = OneOf(*ISO4217)
-    currate = Decimal(8)
-    origcursym = OneOf(*ISO4217)
-    origcurrate = Decimal(8)
 
 
-class REINVEST(INVTRAN, SECID):
+class REINVEST(OrigCurrency, INVTRAN, SECID):
     incometype = OneOf(*INCOMETYPES, required=True)
     total = Decimal(required=True)
     subacctsec = OneOf(*INVSUBACCTS)
@@ -585,21 +646,13 @@ class REINVEST(INVTRAN, SECID):
     fees = Decimal()
     load = Decimal()
     taxexempt = Boolean()
-    cursym = OneOf(*ISO4217)
-    currate = Decimal(8)
-    origcursym = OneOf(*ISO4217)
-    origcurrate = Decimal(8)
     inv401ksource = OneOf(*INV401KSOURCES)
 
 
-class RETOFCAP(INVTRAN, SECID):
+class RETOFCAP(OrigCurrency, INVTRAN, SECID):
     total = Decimal(required=True)
     subacctsec = OneOf(*INVSUBACCTS, required=True)
     subacctfund = OneOf(*INVSUBACCTS, required=True)
-    cursym = OneOf(*ISO4217)
-    currate = Decimal(8)
-    origcursym = OneOf(*ISO4217)
-    origcurrate = Decimal(8)
     inv401ksource = OneOf(*INV401KSOURCES)
 
 
@@ -653,17 +706,17 @@ class TRANSFER(INVTRAN, SECID):
 
 
 # Positions
-class INVPOS(SECID):
+class INVPOS(Currency, SECID):
     heldinacct = OneOf(*INVSUBACCTS, required=True)
     postype = OneOf(u'SHORT', u'LONG', required=True)
     units = Decimal(required=True)
     unitprice = Decimal(4, required=True)
     mktval = Decimal(required=True)
     dtpriceasof = DateTime(required=True)
-    cursym = OneOf(*ISO4217)
-    currate = Decimal(8)
     memo = Unicode(255)
     inv401ksource = OneOf(*INV401KSOURCES)
+
+    currency_parent = 'INVPOS'
 
 
 class POSDEBT(INVPOS):
