@@ -281,8 +281,6 @@ class OrigCurrency(Currency):
     """
     Mixin class providing processing for Aggregates with CURRENCY/ORIGCURRENCY.
     """
-    origcurrency = None
-
     @classmethod
     def _preprocess(cls, ofxelement):
         if len(cls.currency_parent):
