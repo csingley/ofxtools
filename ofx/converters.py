@@ -301,8 +301,8 @@ class OrigCurrency(Currency):
     def _postprocess(self, currency, origcurrency):
         super(OrigCurrency, self)._postprocess(currency)
         if origcurrency is not None:
-            self.origcurrency = origcurrency.convert()
-        assert not (self.currency and self.origcurrency)
+            assert self.currency is None
+            self.currency = origcurrency.convert()
 
 
 class FI(Aggregate):
