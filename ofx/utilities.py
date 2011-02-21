@@ -390,18 +390,17 @@ def findEaster(year):
     Copyright (c) 2003  Gustavo Niemeyer <niemeyer@conectiva.com>
     The code is licensed under the PSF license.
 
-    Edited by csingley to "de-modulize" the function to fit into PMS,
-    and to remove Easter calculation methods unused by our application.
-
     This method was ported from the work done by GM Arts,
     on top of the algorithm by Claus Tondering, which was
     based in part on the algorithm of Ouding (1940), as
     quoted in "Explanatory Supplement to the Astronomical
     Almanac", P.  Kenneth Seidelmann, editor.
 
-    This algorithm (as edited by csingley) implements the
-    revised method of easter calculation, in Gregorian calendar,
-    valid in years 1583 to 4099.
+    Edited by csingley to "de-modulize" the function to fit into pyofx,
+    and to remove unused Easter calculation methods.
+
+    This algorithm implements the revised method of easter calculation,
+    in Gregorian calendar, valid in years 1583 to 4099.
 
     More about the algorithm may be found at:
     http://users.chariot.net.au/~gmarts/eastalg.htm
@@ -433,76 +432,3 @@ def findEaster(year):
     m = 3+(p+26)/30
     return datetime.date(y,m,d)
 
-
-
-# Validators/converters implemented here so that
-# client.py needn't depend on FormEncode or SQLAlchemy
-class OFXDtConverter(object):
-    # Valid datetime formats given by OFX 3.2.8.2
-    tz_re = re.compile(r'\[([-+]?\d{0,2}\.?\d*):?(\w*)\]')
-    # strftime formats keyed by the length of the corresponding string
-    formats = {18: '%Y%m%d%H%M%S.%f', 14: '%Y%m%d%H%M%S', 8: '%Y%m%d'}
-
-    @classmethod
-    def to_python(cls, value):
-        # If it's a datetime or None, don't touch it.
-        if isinstance(value, datetime.datetime) or value==None:
-            return value
-
-        # Pristine copy of input for error reporting
-        orig_value = value
-
-        # Strip out timezone, on which strptime() chokes
-        chunks = cls.tz_re.split(value)
-        value = chunks.pop(0)
-        if chunks:
-            gmt_offset, tz_name = chunks[:2]
-            # Some FIs *cough* IBKR *cough* write crap for the TZ offset
-            if gmt_offset == '-':
-                gmt_offset = '0'
-            gmt_offset = int(Decimal(gmt_offset)*3600) # hours -> seconds
-        else:
-            gmt_offset = 0
-        format = cls.formats[len(value)]
-        try:
-            value = datetime.datetime.strptime(value, format)
-        except ValueError:
-            raise ValueError("Datetime '%s' does not match OFX formats %s" %
-                            (orig_value, str(cls.formats.values())))
-
-        # Adjust timezone to GMT
-        value -= datetime.timedelta(seconds=gmt_offset)
-        return value
-
-    @classmethod
-    def from_python(cls, value):
-        """ Input datetime.datetime in local time; output str in GMT. """
-        # Pristine copy of input for error reporting
-        orig_value = value
-
-        try:
-            # Transform to GMT
-            value = time.gmtime(time.mktime(value.timetuple()))
-            # timetuples don't have usec precision
-            #value = time.strftime('%s[0:GMT]' % cls.formats[14], value)
-            value = time.strftime(cls.formats[14], value)
-        except:
-            raise # FIXME
-        return value
-
-
-class OFXStringBool(object):
-    values = {True: 'Y', False: 'N'}
-
-    @classmethod
-    def from_python(cls, value):
-        return cls.values[value]
-
-
-class BankAcctTypeValidator(object):
-    values = ('CHECKING', 'SAVINGS', 'MONEYMRKT', 'CREDITLINE')
-
-    @classmethod
-    def to_python(cls, value):
-        assert value in cls.values
-        return value
