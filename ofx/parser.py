@@ -2,7 +2,7 @@
 import sys
 import re
 import xml.etree.ElementTree as ET
-from collections import Counter
+from collections import defaultdict
 
 import converters
 from utilities import _, OFXv1, OFXv2, prettify
@@ -92,8 +92,8 @@ class OFXTreeBuilder(ET.TreeBuilder):
                             """, re.VERBOSE)
 
     def __init__(self, element_factory=None):
-        self.tagCount = Counter()
-        self.closeTagCount = Counter()
+        self.tagCount = defaultdict(int)
+        self.closeTagCount = defaultdict(int)
         super(OFXTreeBuilder, self).__init__(element_factory)
 
     def feed(self, data):
@@ -243,14 +243,17 @@ class OFXResponse(object):
             classname = stmtClass.__name__
             for trnrs in self._root.findall('*/%sTRNRS' % classname):
                 stmtrs = trnrs.find('%sRS' % classname)
-                stmt = stmtClass(stmtrs)
-                # Staple the TRNRS wrapper data onto the STMT
-                stmt.trnuid = converters.Unicode(36).convert(trnrs.find('TRNUID').text)
-                stmt.status = trnrs.find('STATUS').convert()
-                cltcookie = trnrs.find('CLTCOOKIE')
-                if cltcookie is not None:
-                    stmt.cltcookie = converters.Unicode(36).convert(cltcookie.text)
-                self.statements.append(stmt)
+                # *STMTTRNRS may have no *STMTRS (in case of error).
+                # Don't blow up; skip silently.
+                if stmtrs is not None:
+                    stmt = stmtClass(stmtrs)
+                    # Staple the TRNRS wrapper data onto the STMT
+                    stmt.trnuid = converters.Unicode(36).convert(trnrs.find('TRNUID').text)
+                    stmt.status = trnrs.find('STATUS').convert()
+                    cltcookie = trnrs.find('CLTCOOKIE')
+                    if cltcookie is not None:
+                        stmt.cltcookie = converters.Unicode(36).convert(cltcookie.text)
+                    self.statements.append(stmt)
 
     def _processSECLIST(self):
         seclist = self._root.find('SECLISTMSGSRSV1/SECLIST')
@@ -307,6 +310,22 @@ class STMT(BaseSTMT):
 
     _acctTag = 'BANKACCTFROM'
 
+    @property
+    def bankacctfrom(self):
+        return self.acctfrom
+
+    @bankacctfrom.setter
+    def bankacctfrom(self, value):
+        self.acctfrom = value
+
+    @property
+    def banktranlist(self):
+        return self.tranlist
+
+    @banktranlist.setter
+    def banktranlist(self, value):
+        self.tranlist = value
+
     def process(self, stmtrs):
         # BANKTRANLIST
         tranlist = stmtrs.find('BANKTRANLIST')
@@ -332,22 +351,6 @@ class STMT(BaseSTMT):
             if child:
                 stmtrs.remove
 
-    @property
-    def bankacctfrom(self):
-        return self.acctfrom
-
-    @bankacctfrom.setter
-    def bankacctfrom(self, value):
-        self.acctfrom = value
-
-    @property
-    def banktranlist(self):
-        return self.tranlist
-
-    @banktranlist.setter
-    def banktranlist(self, value):
-        self.tranlist = value
-
 
 class CCSTMT(STMT):
     _acctTag = 'CCACCTFROM'
@@ -368,6 +371,22 @@ class INVSTMT(BaseSTMT):
     invbal = None
 
     _acctTag = 'INVACCTFROM'
+
+    @property
+    def invacctfrom(self):
+        return self.acctfrom
+
+    @invacctfrom.setter
+    def invacctfrom(self, value):
+        self.acctfrom = value
+
+    @property
+    def invtranlist(self):
+        return self.tranlist
+
+    @invtranlist.setter
+    def invtranlist(self, value):
+        self.tranlist = value
 
     def process(self, invstmtrs):
         dtasof = invstmtrs.find('DTASOF').text
@@ -397,24 +416,8 @@ class INVSTMT(BaseSTMT):
         # Unsupported subaggregates
         for tag in ('INVOOLIST', 'INV401K', 'INV401KBAL', 'MKTGINFO'):
             child = invstmtrs.find(tag)
-            if child:
+            if child is not None:
                 invstmtrs.remove
-
-    @property
-    def invacctfrom(self):
-        return self.acctfrom
-
-    @invacctfrom.setter
-    def invacctfrom(self, value):
-        self.acctfrom = value
-
-    @property
-    def invtranlist(self):
-        return self.tranlist
-
-    @invtranlist.setter
-    def invtranlist(self, value):
-        self.tranlist = value
 
 
 class TRANLIST(list):
