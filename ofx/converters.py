@@ -340,8 +340,6 @@ class SECINFO(CURRENCY, SECID):
     dtasof = DateTime()
     memo = Unicode(255)
 
-    currency_parent = 'SECINFO'
-
 
 class DEBTINFO(SECINFO):
     parvalue = Decimal(required=True)
@@ -449,8 +447,6 @@ class STMTTRN(TRAN, ORIGCURRENCY):
 class INVBANKTRAN(STMTTRN):
     subacctfund = OneOf(*INVSUBACCTS, required=True)
 
-    currency_parent = 'STMTTRN'
-
 
 class INVTRAN(TRAN):
     dttrade = DateTime(required=True)
@@ -477,8 +473,6 @@ class INVBUY(INVTRAN, SECID, ORIGCURRENCY):
     dtpayroll = DateTime()
     prioryearcontrib = Boolean()
 
-    currency_parent = 'INVBUY'
-
 
 class INVSELL(INVTRAN, SECID, ORIGCURRENCY):
     units = Decimal(required=True)
@@ -498,8 +492,6 @@ class INVSELL(INVTRAN, SECID, ORIGCURRENCY):
     statewithholding = Decimal()
     penalty = Decimal()
     inv401ksource = OneOf(*INV401KSOURCES)
-
-    currency_parent = 'INVSELL'
 
 
 class BUYDEBT(INVBUY):
@@ -543,7 +535,7 @@ class INCOME(INVTRAN, SECID, ORIGCURRENCY):
     inv401ksource = OneOf(*INV401KSOURCES)
 
 
-class INVEXPENSE(INVTRAN, ORIGCURRENCY):
+class INVEXPENSE(INVTRAN, SECID, ORIGCURRENCY):
     total = Decimal(required=True)
     subacctsec = OneOf(*INVSUBACCTS, required=True)
     subacctfund = OneOf(*INVSUBACCTS, required=True)
@@ -647,8 +639,6 @@ class INVPOS(SECID, CURRENCY):
     dtpriceasof = DateTime(required=True)
     memo = Unicode(255)
     inv401ksource = OneOf(*INV401KSOURCES)
-
-    currency_parent = 'INVPOS'
 
 
 class POSDEBT(INVPOS):
