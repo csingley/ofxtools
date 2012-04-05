@@ -1,22 +1,27 @@
 #!/usr/bin/env python
 import sys
+version = sys.version_info
+if version < (2, 7):
+    raise RuntimeError('ofx.client requires Python v2.7+')
+
 import datetime
 import uuid
 from xml.etree.cElementTree import Element, SubElement, tostring
 import contextlib
-import urllib2
+if version[0] < 3:
+    from urllib2 import Request, urlopen, HTTPError
+    from ConfigParser import SafeConfigParser
+    from cStringIO import StringIO
+else:
+    from urllib.request import Request, urlopen, HTTPError
+    from configparser import SafeConfigParser
+    from io import StringIO
 import os
-import ConfigParser
-from cStringIO import StringIO
 import re
 from getpass import getpass
 
 import converters
 from utilities import _, prettify
-
-
-if sys.version_info < (2, 7):
-    raise RuntimeError('ofx.client requires Python v2.7+')
 
 
 class OFXClient(object):
@@ -44,7 +49,7 @@ class OFXClient(object):
                 appid=defaults['appid'], appver=defaults['appver']):
         self.url = url
         self.org = org; self.fid = fid
-        self.bankid=bankid; self.brokerid = brokerid
+        self.bankid = bankid; self.brokerid = brokerid
         self.version = version; self.appid = appid; self.appver = appver
 
         # Initialize
@@ -56,7 +61,7 @@ class OFXClient(object):
         Create an OFXClient from output of argparse.ArgumentParser.parse_args().
         Extraneous args not related to FI-specific settings are ignored.
         """
-        return cls(**{k: getattr(args, k) for k in cls.defaults.iterkeys()})
+        return cls(**{k: getattr(args, k) for k in cls.defaults.keys()})
 
     def reset(self):
         self.signon = None
@@ -67,14 +72,23 @@ class OFXClient(object):
         self.request = None
         self.response = None
 
+    @property
+    def major_version(self):
+        """ Return 1 for OFXv1; 2 for OFXv2 """
+        return int(round(float(self.version), -2)/100)
+
+    @property
+    def encoding(self):
+        return {1: "US-ASCII", 2: "UTF-8"}
+    
     def download(self, user=None, password=None):
         mimetype = 'application/x-ofx'
         headers = {'Content-type': mimetype, 'Accept': '*/*, %s' % mimetype}
         if not self.request:
             self.write_request(user, password)
-        http = urllib2.Request(self.url, self.request, headers)
+        http = Request(self.url, self.request, headers)
         try:
-            with contextlib.closing(urllib2.urlopen(http)) as response:
+            with contextlib.closing(urlopen(http)) as response:
                 # urllib2.urlopen returns an addinfourl instance, which supports
                 # a limited subset of file methods.  Copy response to a StringIO
                 # so that we can use tell() and seek().
@@ -84,9 +98,9 @@ class OFXClient(object):
                 source.seek(0)
                 self.response = source
                 return source
-        except urllib2.HTTPError as err:
+        except HTTPError as err:
             # FIXME
-            print err.info()
+            print(err.info())
             raise
 
     def write_request(self, user=None, password=None):
@@ -118,8 +132,7 @@ class OFXClient(object):
     @property
     def header(self):
         """ OFX header; prepend to OFX markup. """
-        version = (int(self.version)/100)*100 # Int division drops remainder
-        if version == 100:
+        if self.major_version == 1:
             # Flat text header
             fields = (  ('OFXHEADER', str(version)),
                         ('DATA', 'OFXSGML'),
@@ -135,7 +148,7 @@ class OFXClient(object):
             lines = '\r\n'.join(lines)
             lines += '\r\n'*2
             return lines
-        elif version == 200:
+        elif self.major_version == 2:
             # XML header
             xml_decl = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>'
             fields = (  ('OFXHEADER', str(version)),
@@ -144,10 +157,11 @@ class OFXClient(object):
                         ('OLDFILEUID', 'NONE'),
                         ('NEWFILEUID', str(uuid.uuid4())),
             )
-            attrs = ['='.join(attr, '"%s"' %val) for attr,val in fields]
+            attrs = ['='.join((attr, '"%s"' %val)) for attr,val in fields]
             ofx_decl = '<?OFX %s?>' % ' '.join(attrs)
             return '\r\n'.join((xml_decl, ofx_decl))
         else:
+            print(self.version)
             # FIXME
             raise ValueError
 
@@ -311,7 +325,7 @@ class OFXClient(object):
         return bank_accts, cc_accts, inv_accts
 
 
-class OFXConfigParser(ConfigParser.SafeConfigParser):
+class OFXConfigParser(SafeConfigParser):
     """ """
     main_config = _(os.path.join(os.path.dirname(__file__), 'main.cfg'))
 
@@ -319,14 +333,14 @@ class OFXConfigParser(ConfigParser.SafeConfigParser):
     defaults.update(OFXClient.acct_defaults)
 
     def __init__(self):
-        ConfigParser.SafeConfigParser.__init__(self, self.defaults)
+        SafeConfigParser.__init__(self, self.defaults)
 
     def read(self, filenames=None):
         # Load main config
         self.readfp(open(self.main_config))
         # Then load user configs (defaults to main.cfg [global] config: value)
         filenames = filenames or _(self.get('global', 'config'))
-        return ConfigParser.SafeConfigParser.read(self, filenames)
+        return SafeConfigParser.read(self, filenames)
 
     @property
     def fi_index(self):
@@ -423,7 +437,7 @@ def main():
     args.func(args, config)
 
 def do_list(args, config):
-    print str(config.fi_index)
+    print(str(config.fi_index))
 
 def do_detail(args, config):
     # FIXME
@@ -431,7 +445,7 @@ def do_detail(args, config):
     if fi not in config.fi_index:
         raise ValueError("Unknown FI '%s' not in %s"
                         % (fi, str(config.fi_index)))
-    print str(dict(config.items(fi)))
+    print(str(dict(config.items(fi))))
 
 def merge_config(args, config, stmt=False):
     fi = args.fi
@@ -440,10 +454,10 @@ def merge_config(args, config, stmt=False):
             raise ValueError("Unknown FI '%s' not in %s"
                             % (fi, str(config.fi_index)))
         # Load values from config where CLI hasn't overridden them
-        keys = OFXClient.defaults.keys() + ['user',]
+        keys = list(OFXClient.defaults.keys()) + ['user',]
         if stmt:
-            keys += OFXClient.stmt_defaults.keys() \
-            + OFXClient.acct_defaults.keys()
+            keys += list(OFXClient.stmt_defaults.keys()) \
+            + list(OFXClient.acct_defaults.keys())
         for k in keys:
             if k not in args:
                 setattr(args, k, config.get(fi, k))
@@ -455,14 +469,20 @@ def do_profile(args, config):
     client = OFXClient.from_args(args)
 
     if args.dry_run:
-        client.write_request(user, 'TOPSECRET')
-        print client.header + prettify(tostring(client.ofx))
+        rq = client.write_request(args.user, 'TOPSECRET')
+        # N.B. the prettify function will insert an XML header
+        # between the OFX header and the OFX data
+        pretty = False
+        if pretty:
+            print(client.header + prettify(tostring(client.ofx)))
+        else:
+            print(rq)
         return
 
     args.password = getpass()
     client.request_profile(user=args.user, password=args.password)
     response = client.download()
-    print response.read()
+    print(response.read())
 
 def do_stmt(args, config):
     args = merge_config(args, config, stmt=True)
@@ -477,20 +497,26 @@ def do_stmt(args, config):
     accts = {k: getattr(args, k) for k in ('checking', 'savings',
                 'moneymrkt', 'creditline', 'creditcard', 'investment')}
     acct_tuple = client.parse_account_strings(**accts)
-    stmt_options = {k: getattr(args, k) for k in client.stmt_defaults.iterkeys()}
+    stmt_options = {k: getattr(args, k) for k in client.stmt_defaults.keys()}
     client.request_all(*acct_tuple, **stmt_options)
 
     ### HANDLE REQUEST
     if args.dry_run:
-        client.write_request(user=args.user, password='TOPSECRET')
-        print client.header + prettify(tostring(client.ofx))
+        rq = client.write_request(user=args.user, password='TOPSECRET')
+        # N.B. the prettify function will insert an XML header
+        # between the OFX header and the OFX data
+        pretty = False
+        if pretty:
+            print(client.header + prettify(tostring(client.ofx)))
+        else:
+            print(rq)
         return
 
     args.password = getpass()
     client.write_request(user=args.user, password=args.password)
 
     response = client.download()
-    print response.read()
+    print(response.read())
 
 
 if __name__ == '__main__':

@@ -11,15 +11,15 @@ if sys.version_info < (2, 7):
     raise RuntimeError('ofx.parser library requires Python v2.7+')
 
 
-INV401KSOURCES = (u'PRETAX', u'AFTERTAX', u'MATCH', u'PROFITSHARING',
-                    u'ROLLOVER', u'OTHERVEST', u'OTHERNONVEST')
-ACCTTYPES = (u'CHECKING', u'SAVINGS', u'MONEYMRKT', u'CREDITLINE')
-INVSUBACCTS = (u'CASH', u'MARGIN', u'SHORT', u'OTHER')
-BUYTYPES = (u'BUY', u'BUYTOCOVER')
-SELLTYPES = (u'SELL', u'SELLSHORT')
-INCOMETYPES = (u'CGLONG', u'CGSHORT', u'DIV', u'INTEREST', u'MISC')
-ASSETCLASSES = (u'DOMESTICBOND', u'INTLBOND', u'LARGESTOCK', u'SMALLSTOCK',
-                u'INTLSTOCK', u'MONEYMRKT', u'OTHER')
+INV401KSOURCES = ('PRETAX', 'AFTERTAX', 'MATCH', 'PROFITSHARING',
+                    'ROLLOVER', 'OTHERVEST', 'OTHERNONVEST')
+ACCTTYPES = ('CHECKING', 'SAVINGS', 'MONEYMRKT', 'CREDITLINE')
+INVSUBACCTS = ('CASH', 'MARGIN', 'SHORT', 'OTHER')
+BUYTYPES = ('BUY', 'BUYTOCOVER')
+SELLTYPES = ('SELL', 'SELLSHORT')
+INCOMETYPES = ('CGLONG', 'CGSHORT', 'DIV', 'INTEREST', 'MISC')
+ASSETCLASSES = ('DOMESTICBOND', 'INTLBOND', 'LARGESTOCK', 'SMALLSTOCK',
+                'INTLSTOCK', 'MONEYMRKT', 'OTHER')
 
 
 class Element(object):
@@ -59,7 +59,7 @@ class Boolean(Element):
     def unconvert(self, value):
         if value is None and not self.required:
             return None
-        return {v:k for k,v in self.mapping.viewitems()}[value]
+        return {v:k for k,v in self.mapping.items()}[value]
 
 class Unicode(Element):
     def _init(self, *args, **kwargs):
@@ -247,7 +247,7 @@ class FI(Aggregate):
 
 class STATUS(Aggregate):
     code = Integer(6, required=True)
-    severity = OneOf(u'INFO', u'WARN', u'ERROR', required=True)
+    severity = OneOf('INFO', 'WARN', 'ERROR', required=True)
     message = Unicode(255)
 
 
@@ -320,7 +320,7 @@ class INVBAL(Aggregate):
 class BAL(CURRENCY):
     name = Unicode(32, required=True)
     desc = Unicode(80, required=True)
-    baltype = OneOf(u'DOLLAR', u'PERCENT', u'NUMBER', required=True)
+    baltype = OneOf('DOLLAR', 'PERCENT', 'NUMBER', required=True)
     value = Decimal(required=True)
     dtasof = DateTime()
 
@@ -343,16 +343,16 @@ class SECINFO(CURRENCY, SECID):
 
 class DEBTINFO(SECINFO):
     parvalue = Decimal(required=True)
-    debttype = OneOf(u'COUPON', u'ZERO', required=True)
-    debtclass = OneOf(u'TREASURY', u'MUNICIPAL', u'CORPORATE', u'OTHER')
+    debttype = OneOf('COUPON', 'ZERO', required=True)
+    debtclass = OneOf('TREASURY', 'MUNICIPAL', 'CORPORATE', 'OTHER')
     couponrt = Decimal(4)
     dtcoupon = DateTime()
-    couponfreq = OneOf(u'MONTHLY', u'QUARTERLY', u'SEMIANNUAL', u'ANNUAL',
-                            u'OTHER')
+    couponfreq = OneOf('MONTHLY', 'QUARTERLY', 'SEMIANNUAL', 'ANNUAL',
+                            'OTHER')
     callprice = Decimal(4)
     yieldtocall = Decimal(4)
     dtcall = DateTime()
-    calltype = OneOf(u'CALL', u'PUT', u'PREFUND', u'MATURITY')
+    calltype = OneOf('CALL', 'PUT', 'PREFUND', 'MATURITY')
     ytmat = Decimal(4)
     dtmat = DateTime()
     assetclass = OneOf(*ASSETCLASSES)
@@ -360,7 +360,7 @@ class DEBTINFO(SECINFO):
 
 
 class MFINFO(SECINFO):
-    mftype = OneOf(u'OPENEND', u'CLOSEEND', u'OTHER')
+    mftype = OneOf('OPENEND', 'CLOSEEND', 'OTHER')
     yld = Decimal(4)
     dtyieldasof = DateTime()
 
@@ -379,7 +379,7 @@ class FIMFASSETCLASS(Aggregate):
 
 
 class OPTINFO(SECINFO):
-    opttype = OneOf(u'CALL', u'PUT', required=True)
+    opttype = OneOf('CALL', 'PUT', required=True)
     strikeprice = Decimal(required=True)
     dtexpire = DateTime(required=True)
     shperctrct = Integer(required=True)
@@ -394,7 +394,7 @@ class OTHERINFO(SECINFO):
 
 
 class STOCKINFO(SECINFO):
-    stocktype = OneOf(u'COMMON', u'PREFERRED', u'CONVERTIBLE', u'OTHER')
+    stocktype = OneOf('COMMON', 'PREFERRED', 'CONVERTIBLE', 'OTHER')
     yld = Decimal(4)
     dtyieldasof = DateTime()
     typedesc = Unicode(32)
@@ -421,16 +421,16 @@ class TRAN(Aggregate):
 
 
 class STMTTRN(TRAN, ORIGCURRENCY):
-    trntype = OneOf(u'CREDIT', u'DEBIT', u'INT', u'DIV', u'FEE', u'SRVCHG',
-                    u'DEP', u'ATM', u'POS', u'XFER', u'CHECK', u'PAYMENT',
-                    u'CASH', u'DIRECTDEP', u'DIRECTDEBIT', u'REPEATPMT',
-                    u'OTHER', required=True)
+    trntype = OneOf('CREDIT', 'DEBIT', 'INT', 'DIV', 'FEE', 'SRVCHG',
+                    'DEP', 'ATM', 'POS', 'XFER', 'CHECK', 'PAYMENT',
+                    'CASH', 'DIRECTDEP', 'DIRECTDEBIT', 'REPEATPMT',
+                    'OTHER', required=True)
     dtposted = DateTime(required=True)
     dtuser = DateTime()
     dtavail = DateTime()
     trnamt = Decimal(required=True)
     correctfitid = Decimal()
-    correctaction = OneOf(u'REPLACE', u'DELETE')
+    correctaction = OneOf('REPLACE', 'DELETE')
     checknum = Unicode(12)
     refnum = Unicode(32)
     sic = Integer()
@@ -504,7 +504,7 @@ class BUYMF(INVBUY):
 
 
 class BUYOPT(INVBUY):
-    optbuytype = OneOf(u'BUYTOOPEN', u'BUYTOCLOSE', required=True)
+    optbuytype = OneOf('BUYTOOPEN', 'BUYTOCLOSE', required=True)
     shperctrct = Integer(required=True)
 
 
@@ -517,7 +517,7 @@ class BUYSTOCK(INVBUY):
 
 
 class CLOSUREOPT(INVTRAN, SECID):
-    optaction = OneOf(u'EXERCISE', u'ASSIGN', u'EXPIRE')
+    optaction = OneOf('EXERCISE', 'ASSIGN', 'EXPIRE')
     units = Decimal(required=True)
     shperctrct = Integer(required=True)
     subacctsec = OneOf(*INVSUBACCTS, required=True)
@@ -581,7 +581,7 @@ class RETOFCAP(INVTRAN, SECID, ORIGCURRENCY):
 
 
 class SELLDEBT(INVSELL):
-    sellreason = OneOf(u'CALL', u'SELL', u'MATURITY', required=True)
+    sellreason = OneOf('CALL', 'SELL', 'MATURITY', required=True)
     accrdint = Decimal()
 
 
@@ -592,11 +592,11 @@ class SELLMF(INVSELL):
 
 
 class SELLOPT(INVSELL):
-    optselltype = OneOf(u'SELLTOCLOSE', u'SELLTOOPEN', required=True)
+    optselltype = OneOf('SELLTOCLOSE', 'SELLTOOPEN', required=True)
     shperctrct = Integer(required=True)
     relfitid = Unicode(255)
-    reltype = OneOf(u'SPREAD', u'STRADDLE', u'NONE', u'OTHER')
-    secured = OneOf(u'NAKED', u'COVERED')
+    reltype = OneOf('SPREAD', 'STRADDLE', 'NONE', 'OTHER')
+    secured = OneOf('NAKED', 'COVERED')
 
 
 class SELLOTHER(INVSELL):
@@ -621,8 +621,8 @@ class SPLIT(INVTRAN, SECID):
 class TRANSFER(INVTRAN, SECID):
     subacctsec = OneOf(*INVSUBACCTS, required=True)
     units = Decimal(required=True)
-    tferaction = OneOf(u'IN', u'OUT', required=True)
-    postype = OneOf(u'SHORT', u'LONG', required=True)
+    tferaction = OneOf('IN', 'OUT', required=True)
+    postype = OneOf('SHORT', 'LONG', required=True)
     avgcostbasis = Decimal()
     unitprice = Decimal()
     dtpurchase = DateTime()
@@ -632,7 +632,7 @@ class TRANSFER(INVTRAN, SECID):
 # Positions
 class INVPOS(SECID, CURRENCY):
     heldinacct = OneOf(*INVSUBACCTS, required=True)
-    postype = OneOf(u'SHORT', u'LONG', required=True)
+    postype = OneOf('SHORT', 'LONG', required=True)
     units = Decimal(required=True)
     unitprice = Decimal(4, required=True)
     mktval = Decimal(required=True)
@@ -653,7 +653,7 @@ class POSMF(INVPOS):
 
 
 class POSOPT(INVPOS):
-    secured = OneOf(u'NAKED', u'COVERED')
+    secured = OneOf('NAKED', 'COVERED')
 
 
 class POSOTHER(INVPOS):
