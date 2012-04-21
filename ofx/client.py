@@ -1,21 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import sys
 version = sys.version_info
-if version < (2, 7):
-    raise RuntimeError('ofx.client requires Python v2.7+')
 
 import datetime
 import uuid
 from xml.etree.cElementTree import Element, SubElement, tostring
 import contextlib
-if version[0] < 3:
-    from urllib2 import Request, urlopen, HTTPError
-    from ConfigParser import SafeConfigParser
-    from cStringIO import StringIO
-else:
-    from urllib.request import Request, urlopen, HTTPError
-    from configparser import SafeConfigParser
-    from io import StringIO
+from urllib.request import Request, urlopen, HTTPError
+from configparser import SafeConfigParser
+from io import StringIO
 import os
 import re
 from getpass import getpass
@@ -82,14 +75,18 @@ class OFXClient(object):
         headers = {'Content-type': mimetype, 'Accept': '*/*, %s' % mimetype}
         if not self.request:
             self.write_request(user, password)
-        http = Request(self.url, self.request, headers)
+        # py3k: urllib.request wants bytes not str
+        request = self.request.encode()
+        http = Request(self.url, request, headers)
         try:
             with contextlib.closing(urlopen(http)) as response:
+                # py3k: urlopen returns bytes not str
+                response_ = response.read().decode()
                 # urllib2.urlopen returns an addinfourl instance, which supports
                 # a limited subset of file methods.  Copy response to a StringIO
                 # so that we can use tell() and seek().
                 source = StringIO()
-                source.write(response.read())
+                source.write(response_)
                 # After writing, rewind to the beginning.
                 source.seek(0)
                 self.response = source
@@ -108,7 +105,8 @@ class OFXClient(object):
             msgset = getattr(self, msgset, None)
             if msgset:
                 ofx.append(msgset)
-        self.request = request = self.header + tostring(ofx)
+        # py3k - ElementTree.tostring() returns bytes not str
+        self.request = request = self.header + tostring(ofx).decode()
         return request
 
     def request_profile(self, user=None, password=None):
@@ -122,7 +120,8 @@ class OFXClient(object):
         SubElement(profrq, 'CLIENTROUTING').text = 'NONE'
         SubElement(profrq, 'DTPROFUP').text = converters.DateTime.unconvert(datetime.date(1990,1,1))
         ofx.append(msgsrq)
-        self.request = request = self.header + tostring(ofx)
+        # py3k - ElementTree.tostring() returns bytes not str
+        self.request = request = self.header + tostring(ofx).decode()
         return request
 
     @property
