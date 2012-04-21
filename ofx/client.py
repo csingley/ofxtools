@@ -76,10 +76,6 @@ class OFXClient(object):
     def major_version(self):
         """ Return 1 for OFXv1; 2 for OFXv2 """
         return int(round(float(self.version), -2)/100)
-
-    @property
-    def encoding(self):
-        return {1: "US-ASCII", 2: "UTF-8"}
     
     def download(self, user=None, password=None):
         mimetype = 'application/x-ofx'
