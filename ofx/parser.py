@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import sys
 import re
 import xml.etree.ElementTree as ET
@@ -6,10 +6,6 @@ from collections import defaultdict
 
 import converters
 from utilities import _, OFXv1, OFXv2, prettify
-
-
-if sys.version_info < (2, 7):
-    raise RuntimeError('ofx.parser library requires Python v2.7+')
 
 
 class OFXParser(ET.ElementTree):
@@ -40,7 +36,7 @@ class OFXParser(ET.ElementTree):
 
     def parse(self, source):
         if not hasattr(source, 'read'):
-            source = open(source, 'rb')
+            source = open(source)
         source = source.read()
 
         ### First parse OFX header
@@ -58,8 +54,8 @@ class OFXParser(ET.ElementTree):
             except AssertionError:
                 raise ParseError('Malformed OFX header %s' % str(header))
             source = source[v1Header.end():]
-            parser = OFXTreeBuilder(element_factory=OFXElement)
         else:
+            # OFXv2
             v2Header = self.v2Header.match(source)
             if not v2Header:
                 raise ParseError('Missing OFX Header')
@@ -72,9 +68,9 @@ class OFXParser(ET.ElementTree):
             except AssertionError:
                 raise ParseError('Malformed OFX header %s' % str(header))
             source = source[v2Header.end():]
-            parser = ET.XMLTreeBuilder(element_factory=OFXElement)
 
         ### Then parse tag soup into tree of Elements
+        parser = OFXTreeBuilder(element_factory=OFXElement)
         parser.feed(source)
         self._root = parser.close()
 
@@ -464,7 +460,7 @@ def main():
         tranlist = stmt.invtranlist
     else:
         raise ValueError('%s not an instance of (STMT, CCSTMT, INVSTMT)' % stmt)
-    print tranlist
+    print(tranlist)
 
 
 if __name__ == '__main__':

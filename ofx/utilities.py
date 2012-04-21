@@ -25,7 +25,7 @@ def _(path):
 
 
 OFXv1 = ('102', '103')
-OFXv2 = ('203', '211')
+OFXv2 = ('200', '203', '211')
 
 APPIDS = ('QWIN', # Quicken for Windows
             'QMOFX', # Quicken for Mac

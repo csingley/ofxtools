@@ -75,7 +75,7 @@ class Unicode(Element):
             return None
         if self.length is not None and len(value) > self.length:
             raise ValueError("'%s' is too long; max length=%s" % (value, self.length))
-        return unicode(value)
+        return str(value)
 
 
 class OneOf(Element):
@@ -87,9 +87,6 @@ class OneOf(Element):
         if value is None and not self.required:
             return None
         if (value in self.valid):
-            # unicode, dammit
-            if isinstance(value, basestring):
-                value = unicode(value)
             return value
         raise ValueError("'%s' is not OneOf %r" % (value, self.valid))
 
@@ -197,7 +194,7 @@ class Aggregate(object):
     Aggregate instance's __dict__.
     """
     def __init__(self, **kwargs):
-        for name, element in self.elements.viewitems():
+        for name, element in self.elements.items():
             value = kwargs.pop(name, None)
             if element.required and value is None:
                 raise ValueError("'%s' attribute is required for %s"
@@ -211,7 +208,7 @@ class Aggregate(object):
     def elements(self):
         d = {}
         for m in self.__class__.__mro__:
-            d.update({k: v for k,v in m.__dict__.iteritems() \
+            d.update({k: v for k,v in m.__dict__.items() \
                                     if isinstance(v, Element)})
         return d
 
