@@ -5,69 +5,71 @@ import xml.etree.ElementTree as ET
 from collections import defaultdict
 
 import converters
-from utilities import _, OFXv1, OFXv2, prettify
+from utilities import _, prettify
+
+
+class OFXHeaderSpec(object):
+    class v1(object):
+        regex = re.compile(r"""\s*
+                                OFXHEADER:(?P<OFXHEADER>\d+)\s+
+                                DATA:(?P<DATA>[A-Z]+)\s+
+                                VERSION:(?P<VERSION>\d+)\s+
+                                SECURITY:(?P<SECURITY>[A-Z]+)\s+
+                                ENCODING:(?P<ENCODING>[A-Z]+)\s+
+                                CHARSET:(?P<CHARSET>\d+)\s+
+                                COMPRESSION:(?P<COMPRESSION>[A-Z]+)\s+
+                                OLDFILEUID:(?P<OLDFILEUID>[\w-]+)\s+
+                                NEWFILEUID:(?P<NEWFILEUID>[\w-]+)\s+
+                                """, re.VERBOSE)
+
+        tests = { 'OFXHEADER': ('100',),
+                 'DATA': ('OFXSGML',),
+                 'VERSION': ('102', '103'),
+                 'SECURITY': ('NONE', 'TYPE1'),
+                 'ENCODING': ('UNICODE', 'USASCII')
+                }
+ 
+    class v2(object):
+        regex = re.compile(r"""(<\?xml\s+
+                                (version=\"(?P<XMLVERSION>[\d.]+)\")?\s*
+                                (encoding=\"(?P<ENCODING>[\w-]+)\")?\s*
+                                (standalone=\"(?P<STANDALONE>[\w]+)\")?\s*
+                                \?>)\s*
+                                <\?OFX\s+
+                                OFXHEADER=\"(?P<OFXHEADER>\d+)\"\s+
+                                VERSION=\"(?P<VERSION>\d+)\"\s+
+                                SECURITY=\"(?P<SECURITY>[A-Z]+)\"\s+
+                                OLDFILEUID=\"(?P<OLDFILEUID>[\w-]+)\"\s+
+                                NEWFILEUID=\"(?P<NEWFILEUID>[\w-]+)\"\s*
+                                \?>\s+""", re.VERBOSE)
+
+        tests = { 'OFXHEADER': ('200',),
+                 'VERSION': ('200', '203', '211'),
+                 'SECURITY': ('NONE', 'TYPE1'),
+                }
 
 
 class OFXParser(ET.ElementTree):
-    v1Header = re.compile(r"""\s*
-                            OFXHEADER:(?P<OFXHEADER>\d+)\s+
-                            DATA:(?P<DATA>[A-Z]+)\s+
-                            VERSION:(?P<VERSION>\d+)\s+
-                            SECURITY:(?P<SECURITY>[A-Z]+)\s+
-                            ENCODING:(?P<ENCODING>[A-Z]+)\s+
-                            CHARSET:(?P<CHARSET>\d+)\s+
-                            COMPRESSION:(?P<COMPRESSION>[A-Z]+)\s+
-                            OLDFILEUID:(?P<OLDFILEUID>[\w-]+)\s+
-                            NEWFILEUID:(?P<NEWFILEUID>[\w-]+)\s+
-                            """, re.VERBOSE)
-
-    v2Header = re.compile(r"""(<\?xml\s+
-                            (version=\"(?P<XMLVERSION>[\d.]+)\")?\s*
-                            (encoding=\"(?P<ENCODING>[\w-]+)\")?\s*
-                            (standalone=\"(?P<STANDALONE>[\w]+)\")?\s*
-                            \?>)\s*
-                            <\?OFX\s+
-                            OFXHEADER=\"(?P<OFXHEADER>\d+)\"\s+
-                            VERSION=\"(?P<VERSION>\d+)\"\s+
-                            SECURITY=\"(?P<SECURITY>[A-Z]+)\"\s+
-                            OLDFILEUID=\"(?P<OLDFILEUID>[\w-]+)\"\s+
-                            NEWFILEUID=\"(?P<NEWFILEUID>[\w-]+)\"\s*
-                            \?>\s+""", re.VERBOSE)
-
     def parse(self, source):
         if not hasattr(source, 'read'):
             source = open(source)
         source = source.read()
 
         ### First parse OFX header
-        v1Header = self.v1Header.match(source)
-        if v1Header:
-            # OFXv1
-            header = v1Header.groupdict()
-            # Sanity check
-            try:
-                assert header['OFXHEADER'] == '100'
-                assert header['DATA'] == 'OFXSGML'
-                assert header['VERSION'] in OFXv1
-                assert header['SECURITY'] in ('NONE', 'TYPE1')
-                assert header['ENCODING'] in ('UNICODE', 'USASCII')
-            except AssertionError:
-                raise ParseError('Malformed OFX header %s' % str(header))
-            source = source[v1Header.end():]
-        else:
-            # OFXv2
-            v2Header = self.v2Header.match(source)
-            if not v2Header:
-                raise ParseError('Missing OFX Header')
-            header = v2Header.groupdict()
-            # Sanity check
-            try:
-                assert header['OFXHEADER'] == '200'
-                assert header['VERSION'] in OFXv2
-                assert header['SECURITY'] in ('NONE', 'TYPE1')
-            except AssertionError:
-                raise ParseError('Malformed OFX header %s' % str(header))
-            source = source[v2Header.end():]
+        for headerspec in (OFXHeaderSpec.v1, OFXHeaderSpec.v2):
+            headermatch = headerspec.regex.match(source)
+            if headermatch is not None:
+                header = headermatch.groupdict()
+                try:
+                    for (field, valid) in headerspec.tests.items():
+                        assert header[field] in valid
+                except AssertionError:
+                    raise ParseError('Malformed OFX header %s' % str(header))
+                break
+
+        if headermatch is None:
+            raise ParseError("Can't recognize OFX Header")
+        source = source[headermatch.end():]
 
         ### Then parse tag soup into tree of Elements
         parser = OFXTreeBuilder(element_factory=OFXElement)
