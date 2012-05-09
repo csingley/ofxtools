@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 from collections import defaultdict
 
 import converters
-from utilities import _, prettify
+from utilities import _
 
 
 class OFXHeaderSpec(object):

@@ -1,135 +1,155 @@
 #!/usr/bin/env python3
-import sys
-version = sys.version_info
-
 import datetime
 import uuid
 from xml.etree.cElementTree import Element, SubElement, tostring
+from collections import defaultdict, OrderedDict
 import contextlib
 from urllib.request import Request, urlopen, HTTPError
-from configparser import SafeConfigParser
+from urllib.parse import urlparse
 from io import StringIO
 import os
 import re
+from configparser import SafeConfigParser
 from getpass import getpass
 
 import converters
 from utilities import _, prettify
 
 
-class OFXClient(object):
+class BankAcct:
     """ """
-    defaults = {'version': '102', 'appid': 'QWIN', 'appver': '1800',
-                'url': None, 'org': None, 'fid': None,
-                'bankid': None, 'brokerid': None,
-    }
+    config = OrderedDict.fromkeys(('BANKID', 'ACCTID', 'ACCTTYPE'))
+    acctfrom_tag = 'BANKACCTFROM'
+    stmtrq_tag = 'STMTRQ'
+    msgsrq_tag = 'BANKMSGSRQV1'
 
-    stmt_defaults = {'inctran': True, 'dtstart': None, 'dtend': None,
-                    'incpos': True, 'dtasof': None, 'incbal': True,
-    }
+    # 9-digit ABA routing number
+    routingre = re.compile('^\d{9}$')
 
-    acct_defaults = {'checking': '', 'savings': '', 'moneymrkt': '',
-                    'creditline': '', 'creditcard': '', 'investment': '',}
+    def __init__(self, bankid, acctid, accttype):
+        accttype = accttype.upper()
+        accttype = converters.OneOf(*converters.ACCTTYPES).convert(accttype)
+        self.config['ACCTTYPE'] = converters.OneOf(*converters.ACCTTYPES).convert(accttype)
 
-    acct_re = re.compile(r'([\w.\-/]{1,22})')
-    bankpair_re = re.compile(r'\(([\w.\-/]{1,9}),\s*([\w.\-/]{1,22})\)')
-    pair_re = re.compile(r'\(([\w.\-/]{1,22}),\s*([\w.\-/]{1,22})\)')
-    naked_re = re.compile(r'(\b)([\w.\-/]{1,22})')
+        bankid = str(bankid)
+        if not self.routingre.match(bankid):
+            raise ValueError # FIXME
+        self.config['BANKID'] = bankid
 
-    def __init__(self, url, org=defaults['org'], fid=defaults['fid'],
-                bankid=defaults['bankid'], brokerid=defaults['brokerid'],
-                version=defaults['version'],
-                appid=defaults['appid'], appver=defaults['appver']):
+        assert acctid
+        self.config['ACCTID'] = str(acctid)
+
+    def stmtrq(self, inctran=True, dtstart=None, dtend=None, **kwargs):
+        """ """
+        # Requesting transactions without dtstart/dtend (which is the default)
+        # asks for all transactions on record.
+        rq = Element(self.stmtrq_tag)
+        rq.append(self.acctfrom)
+        rq.append(self.inctran(inctran, dtstart, dtend))
+        return rq
+
+    @property
+    def acctfrom(self):
+        """ """
+        acctfrom = Element(self.acctfrom_tag)
+        for tag, text in self.config.items():
+            SubElement(acctfrom, tag).text = text
+        return acctfrom
+
+    def inctran(self, inctran, dtstart, dtend):
+        """ """
+        tran = Element('INCTRAN')
+        if dtstart:
+            SubElement(tran, 'DTSTART').text = converters.DateTime.unconvert(dtstart)
+        if dtend:
+            SubElement(tran, 'DTEND').text = converters.DateTime.unconvert(dtend)
+        SubElement(tran, 'INCLUDE').text = converters.Boolean().unconvert(inctran)
+        return tran
+
+
+class CcAcct(BankAcct):
+    """ """
+    config = OrderedDict.fromkeys(('ACCTID', ))
+    acctfrom_tag = 'CCACCTFROM'
+    stmtrq_tag = 'CCSTMTRQ'
+    msgsrq_tag = 'CREDITCARDMSGSRQV1'
+    def __init__(self, acctid):
+        assert acctid
+        self.config['ACCTID'] = str(acctid)
+
+
+class InvAcct(BankAcct):
+    """ """
+    config = OrderedDict.fromkeys(('BROKERID', 'ACCTID'))
+    acctfrom_tag = 'INVACCTFROM'
+    stmtrq_tag = 'INVSTMTRQ'
+    msgsrq_tag = 'INVSTMTMSGSRQV1'
+
+    def __init__(self, brokerid, acctid):
+        assert brokerid
+        self.config['BROKERID'] = brokerid
+        assert acctid
+        self.config['ACCTID'] = str(acctid)
+
+    def stmtrq(self, inctran=True, dtstart=None, dtend=None,
+               dtasof=None, incpos=True, incbal=True):
+        """ """
+        rq = super(InvAcct, self).stmtrq(inctran, dtstart, dtend)
+        rq.append(self.incoo())
+        rq.append(self.incpos(dtasof, incpos))
+        rq.append(self.incbal(incbal))
+        return rq
+
+    def incoo(self):
+        # Include Open Orders - not implemented
+        oo = Element('INCOO')
+        oo.text = converters.Boolean().unconvert(False)
+        return oo
+
+    def incpos(self, dtasof, incpos):
+        pos = Element('INCPOS')
+        if dtasof:
+            SubElement(pos, 'DTASOF').text = converters.DateTime.unconvert(dtasof)
+        SubElement(pos, 'INCLUDE').text = converters.Boolean().unconvert(incpos)
+        return pos
+
+    def incbal(self, incbal):
+        bal = Element('INCBAL')
+        bal.text = converters.Boolean().unconvert(incbal)
+        return bal
+
+
+class OFXClient:
+    """ """
+    # OFX header/signon defaults
+    version = 102
+    appid = 'QWIN'
+    appver = '1800'
+
+    # Stmt request
+    bankid = None
+    brokerid = None
+
+    def __init__(self, url, org, fid):
         self.url = url
-        self.org = org; self.fid = fid
-        self.bankid = bankid; self.brokerid = brokerid
-        self.version = version; self.appid = appid; self.appver = appver
-
-        # Initialize
-        self.reset()
-
-    @classmethod
-    def from_args(cls, args):
-        """
-        Create an OFXClient from output of argparse.ArgumentParser.parse_args().
-        Extraneous args not related to FI-specific settings are ignored.
-        """
-        return cls(**{k: getattr(args, k) for k in cls.defaults.keys()})
-
-    def reset(self):
-        self.signon = None
-        self.bank = None
-        self.creditcard = None
-        self.investment = None
-        self.ofx = None
-        self.request = None
-        self.response = None
+        self.org = org
+        self.fid = fid
 
     @property
     def major_version(self):
         """ Return 1 for OFXv1; 2 for OFXv2 """
-        return int(round(float(self.version), -2)/100)
-    
-    def download(self, user=None, password=None):
-        mimetype = 'application/x-ofx'
-        headers = {'Content-type': mimetype, 'Accept': '*/*, %s' % mimetype}
-        if not self.request:
-            self.write_request(user, password)
-        # py3k: urllib.request wants bytes not str
-        request = self.request.encode()
-        http = Request(self.url, request, headers)
-        try:
-            with contextlib.closing(urlopen(http)) as response:
-                # py3k: urlopen returns bytes not str
-                response_ = response.read().decode()
-                # urllib2.urlopen returns an addinfourl instance, which supports
-                # a limited subset of file methods.  Copy response to a StringIO
-                # so that we can use tell() and seek().
-                source = StringIO()
-                source.write(response_)
-                # After writing, rewind to the beginning.
-                source.seek(0)
-                self.response = source
-                return source
-        except HTTPError as err:
-            # FIXME
-            print(err.info())
-            raise
-
-    def write_request(self, user=None, password=None):
-        ofx = self.ofx = Element('OFX')
-        if not self.signon:
-            self.request_signon(user, password)
-        ofx.append(self.signon)
-        for msgset in ('bank', 'creditcard', 'investment'):
-            msgset = getattr(self, msgset, None)
-            if msgset:
-                ofx.append(msgset)
-        # py3k - ElementTree.tostring() returns bytes not str
-        self.request = request = self.header + tostring(ofx).decode()
-        return request
-
-    def request_profile(self, user=None, password=None):
-        user = user or 'elmerfudd'
-        password = password or 'TOPSECRET'
-        self.request_signon(user, password)
-        ofx = Element('OFX')
-        ofx.append(self.signon)
-        msgsrq = Element('PROFMSGSRQV1')
-        profrq = self.wrap_request(msgsrq, 'PROFRQ')
-        SubElement(profrq, 'CLIENTROUTING').text = 'NONE'
-        SubElement(profrq, 'DTPROFUP').text = converters.DateTime.unconvert(datetime.date(1990,1,1))
-        ofx.append(msgsrq)
-        # py3k - ElementTree.tostring() returns bytes not str
-        self.request = request = self.header + tostring(ofx).decode()
-        return request
+        return int(self.version)//100
 
     @property
-    def header(self):
-        """ OFX header; prepend to OFX markup. """
+    def ofxheader_version(self):
+        return self.major_version*100
+
+    @property
+    def ofxheader(self):
+        """ Prepend to OFX markup. """
         if self.major_version == 1:
             # Flat text header
-            fields = (  ('OFXHEADER', str(version)),
+            fields = (  ('OFXHEADER', str(self.ofxheader_version)),
                         ('DATA', 'OFXSGML'),
                         ('VERSION', str(self.version)),
                         ('SECURITY', 'NONE'),
@@ -160,175 +180,103 @@ class OFXClient(object):
             # FIXME
             raise ValueError
 
-    def request_signon(self, user, password):
-        if not (user and password):
-            # FIXME
-            raise ValueError
+    def signon(self, user, password):
         msgsrq = Element('SIGNONMSGSRQV1')
         sonrq = SubElement(msgsrq, 'SONRQ')
         SubElement(sonrq, 'DTCLIENT').text = converters.DateTime.unconvert(datetime.datetime.now())
         SubElement(sonrq, 'USERID').text = user
         SubElement(sonrq, 'USERPASS').text = password
         SubElement(sonrq, 'LANGUAGE').text = 'ENG'
+        print(self.org)
         if self.org:
             fi = SubElement(sonrq, 'FI')
             SubElement(fi, 'ORG').text = self.org
             if self.fid:
                 SubElement(fi, 'FID').text = self.fid
         SubElement(sonrq, 'APPID').text = self.appid
-        SubElement(sonrq, 'APPVER').text = self.appver
-        self.signon = msgsrq
+        SubElement(sonrq, 'APPVER').text = str(self.appver)
+        return msgsrq
 
-    def request_bank(self, accounts, inctran=stmt_defaults['inctran'],
-                        dtstart=stmt_defaults['dtstart'], dtend=stmt_defaults['dtend']):
-        """
-        Requesting transactions without dtstart/dtend (which is the default)
-        asks for all transactions on record.
-        """
-        if not accounts:
-            # FIXME
-            raise ValueError('No bank accounts requested')
-
-        msgsrq = Element('BANKMSGSRQV1')
-        for account in accounts:
-            try:
-                accttype, bankid, acctid = account
-                accttype = converters.OneOf(*converters.ACCTTYPES).convert(accttype)
-            except ValueError:
-                # FIXME
-                raise ValueError("Bank accounts must be specified as a sequence of (ACCTTYPE, BANKID, ACCTID) tuples, not '%s'" % str(accounts))
-            assert bankid
-            stmtrq = self.wrap_request(msgsrq, 'STMTRQ')
-            acctfrom = SubElement(stmtrq, 'BANKACCTFROM')
-            SubElement(acctfrom, 'BANKID').text = bankid
-            SubElement(acctfrom, 'ACCTID').text = acctid
-            SubElement(acctfrom, 'ACCTTYPE').text = accttype
-
-            self._include_transactions(stmtrq, inctran, dtstart, dtend)
-        self.bank = msgsrq
-
-    def request_creditcard(self, accounts, inctran=stmt_defaults['inctran'],
-                        dtstart=stmt_defaults['dtstart'], dtend=stmt_defaults['dtend']):
-        """
-        Requesting transactions without dtstart/dtend (which is the default)
-        asks for all transactions on record.
-        """
-        if not accounts:
-            # FIXME
-            raise ValueError('No credit card accounts requested')
-
-        msgsrq = Element('CREDITCARDMSGSRQV1')
-        for account in accounts:
-            stmtrq = self.wrap_request(msgsrq, 'CCSTMTRQ')
-            acctfrom = SubElement(stmtrq, 'CCACCTFROM')
-            SubElement(acctfrom, 'ACCTID').text = account
-
-            self._include_transactions(stmtrq, inctran, dtstart, dtend)
-        self.creditcard = msgsrq
-
-    def request_investment(self, accounts, inctran=stmt_defaults['inctran'],
-                        dtstart=stmt_defaults['dtstart'], dtend=stmt_defaults['dtend'],
-                        incpos=stmt_defaults['incpos'], dtasof=stmt_defaults['dtasof'],
-                        incbal=stmt_defaults['incbal']):
+    def statement_request(self, user, password, accounts, **kwargs):
         """ """
-        if not accounts:
-            # FIXME
-            raise ValueError('No investment accounts requested')
+        ofx = Element('OFX')
+        ofx.append(self.signon(user, password))
 
-        msgsrq = Element('INVSTMTMSGSRQV1')
+        # Create MSGSRQ SubElements for each acct type, indexed by tag
+        msgsrq_tags = [getattr(a, 'msgsrq_tag') for a in (BankAcct, CcAcct, InvAcct)]
+        msgsrqs = {tag:SubElement(ofx, tag) for tag in msgsrq_tags}
+
         for account in accounts:
-            try:
-                brokerid, acctid = account
-            except ValueError:
-                raise ValueError("Investment accounts must be specified as a sequence of (BROKERID, ACCTID) tuples, not '%s'" % str(accounts))
-            assert brokerid
+            stmtrq = account.stmtrq(**kwargs)
+            stmttrnrq = self._wraptrn(stmtrq)
+            msgsrq = msgsrqs[account.msgsrq_tag]
+            msgsrq.append(stmttrnrq)
 
-            stmtrq = self.wrap_request(msgsrq, 'INVSTMTRQ')
-            acctfrom = SubElement(stmtrq, 'INVACCTFROM')
+        # Destroy unused MSGSRQ SubElements, because OFXv1 doesn't like
+        # self-closed tags, e.g. <BANKMSGSRQV1 />
+        for tag in msgsrqs:
+            acct = ofx.find(tag)
+            if len(acct) == 0:
+                ofx.remove(acct)
 
-            SubElement(acctfrom, 'BROKERID').text = brokerid
-            SubElement(acctfrom, 'ACCTID').text = acctid
+        return ofx
 
-            self._include_transactions(stmtrq, inctran, dtstart, dtend)
-
-            SubElement(stmtrq, 'INCOO').text = 'N'
-            pos = SubElement(stmtrq, 'INCPOS')
-            if dtasof:
-                SubElement(pos, 'DTASOF').text = converters.DateTime.unconvert(dtasof)
-            SubElement(pos, 'INCLUDE').text = converters.Boolean().unconvert(incpos)
-
-            SubElement(stmtrq, 'INCBAL').text = converters.Boolean().unconvert(incbal)
-        self.investment = msgsrq
-
-    def request_all(self, bank_accts, cc_accts, inv_accts, inctran=stmt_defaults['inctran'],
-                        dtstart=stmt_defaults['dtstart'], dtend=stmt_defaults['dtend'],
-                        incpos=stmt_defaults['incpos'], dtasof=stmt_defaults['dtasof'],
-                        incbal=stmt_defaults['incbal']):
-        if bank_accts:
-            self.request_bank(bank_accts, inctran, dtstart, dtend)
-        if cc_accts:
-            self.request_creditcard(cc_accts, inctran, dtstart, dtend)
-        if inv_accts:
-            self.request_investment(inv_accts, inctran, dtstart, dtend, incpos, dtasof, incbal)
-
-    # Utilities
-    def wrap_request(self, parent, tag):
+    def profile_request(self, user=None, password=None):
         """ """
+        user = user or 'elmerfudd'
+        password = password or 'TOPSECRET'
+        ofx = Element('OFX')
+        ofx.append(self.signon(user, password))
+        msgsrq = SubElement(ofx, 'PROFMSGSRQV1')
+        profrq = Element('PROFRQ')
+        SubElement(profrq, 'CLIENTROUTING').text = 'NONE'
+        SubElement(profrq, 'DTPROFUP').text = converters.DateTime.unconvert(datetime.date(1990,1,1))
+        msgsrq.append(self._wraptrn(profrq))
+        return ofx
+
+    def download(self, request):
+        """ """
+        mimetype = 'application/x-ofx'
+        HTTPheaders = {'Content-type': mimetype, 'Accept': '*/*, %s' % mimetype}
+        # py3k - ElementTree.tostring() returns bytes not str
+        request = self.ofxheader + tostring(request).decode()
+        # py3k: urllib.request wants bytes not str
+        request = Request(self.url, request.encode(), HTTPheaders)
+        try:
+            with contextlib.closing(urlopen(request)) as response:
+                # py3k: urlopen returns bytes not str
+                response_ = response.read().decode()
+                # urllib2.urlopen returns an addinfourl instance, which supports
+                # a limited subset of file methods.  Copy response to a StringIO
+                # so that we can use tell() and seek().
+                source = StringIO()
+                source.write(response_)
+                # After writing, rewind to the beginning.
+                source.seek(0)
+                self.response = source
+                return source
+        except HTTPError as err:
+            # FIXME
+            print(err.info())
+            raise
+
+    def _wraptrn(self, rq):
+        """ """
+        tag = rq.tag
         assert 'TRNRQ' not in tag
         assert tag[-2:] == 'RQ'
-        trnrq = SubElement(parent, tag.replace('RQ', 'TRNRQ'))
+        trnrq = Element(tag.replace('RQ', 'TRNRQ'))
         SubElement(trnrq, 'TRNUID').text = str(uuid.uuid4())
-        return SubElement(trnrq, tag)
-
-    def _include_transactions(self, parent, inctran, dtstart, dtend):
-        element = SubElement(parent, 'INCTRAN')
-        if dtstart:
-            SubElement(element, 'DTSTART').text = converters.DateTime.unconvert(dtstart)
-        if dtend:
-            SubElement(element, 'DTEND').text = converters.DateTime.unconvert(dtend)
-        SubElement(element, 'INCLUDE').text = converters.Boolean().unconvert(inctran)
-        return element
-
-    def parse_bank(self, accttype, string):
-        # FIXME - it would be nice to be able to mix&match the two styles
-        # within a single line.
-        accts = self.bankpair_re.findall(string) or self.naked_re.findall(string)
-        return [(accttype.upper(), acct[0] or self.bankid, acct[1])
-                for acct in accts]
-
-    def parse_cc(self, string):
-        return self.acct_re.findall(string)
-
-    def parse_inv(self, string):
-        return [(self.brokerid, acct) for acct in self.acct_re.findall(string)]
-
-    def parse_account_strings(self, checking=None, savings=None,
-        moneymrkt=None, creditline=None, creditcard=None, investment=None):
-        checking = checking or ''
-        savings = savings or ''
-        moneymrkt = moneymrkt or ''
-        creditline = creditline or ''
-        creditcard = creditcard or ''
-        investment = investment or ''
-        bank_accts = []
-        bank_accts += self.parse_bank('checking', checking)
-        bank_accts += self.parse_bank('savings', savings)
-        bank_accts += self.parse_bank('moneymrkt', moneymrkt)
-        bank_accts += self.parse_bank('creditline', creditline)
-        cc_accts = self.parse_cc(creditcard)
-        inv_accts = self.parse_inv(investment)
-        return bank_accts, cc_accts, inv_accts
+        trnrq.append(rq)
+        return trnrq
 
 
 class OFXConfigParser(SafeConfigParser):
     """ """
     main_config = _(os.path.join(os.path.dirname(__file__), 'main.cfg'))
 
-    defaults = OFXClient.defaults.copy()
-    defaults.update(OFXClient.acct_defaults)
-
     def __init__(self):
-        SafeConfigParser.__init__(self, self.defaults)
+        SafeConfigParser.__init__(self)
 
     def read(self, filenames=None):
         # Load main config
@@ -343,71 +291,118 @@ class OFXConfigParser(SafeConfigParser):
         sections.remove('global')
         return sections
 
+def do_config(args):
+    # FIXME
+    server = args.server
+    if server not in config.fi_index:
+        raise ValueError("Unknown FI '%s' not in %s"
+                        % (server, str(config.fi_index)))
+    print(str(dict(config.items(server))))
 
-def init_argparser():
-    from argparse import ArgumentParser, SUPPRESS
+def do_profile(args):
+    print(vars(args))
+    client = OFXClient(args.url, args.org, args.fid)
+
+    # Always use dummy password - initial profile request
+    password = 'T0PS3CR3T'
+    request = client.profile_request(args.user, password)
+
+    # Handle request
+    if args.dry_run:
+        print(client.ofxheader + tostring(request).decode())
+    else:
+        response = client.download(request)
+        print(response.read())
+
+def do_stmt(args):
+    client = OFXClient(args.url, args.org, args.fid)
+
+    # Define accounts
+    accts = []
+    for accttype in ('checking', 'savings', 'moneymrkt', 'creditline'):
+        for acctid in getattr(args, accttype):
+            accts.append(BankAcct(args.bankid, acctid, accttype))
+
+    for acctid in args.creditcard:
+        accts.append(CcAcct(acctid))
+
+    for acctid in args.investment:
+        accts.append(InvAcct(args.brokerid, acctid))
+
+    # Use dummy password for dummy request
+    if args.dry_run:
+        password = 'T0PS3CR3T'
+    else:
+        password = getpass()
+
+    # Statement parameters
+    d = vars(args)
+    # convert dtstart/dtend/dtasof from str to datetime
+    kwargs = {k:converters.DateTime.convert(v) for k,v in d.items() if k.startswith('dt')}
+    # inctrans/incpos/incbal 
+    kwargs.update({k:v for k,v in d.items() if k.startswith('inc')})
+
+    request = client.statement_request(args.user, password, accts, **kwargs)
+
+    # Handle request
+    if args.dry_run:
+        print(client.ofxheader + tostring(request).decode())
+    else:
+        response = client.download(request)
+        print(response.read())
+
+
+if __name__ == '__main__':
+    # Read config first, so fi_index can be used in help
+    config = OFXConfigParser()
+    config.read()
+
+    from argparse import ArgumentParser
 
     #usage = "usage: %(prog)s [options] institution"
     #argparser = ArgumentParser(usage=usage)
-    root_parser = ArgumentParser(description='Download OFX financial data')
+    argparser = ArgumentParser(description='Download OFX financial data',
+                                epilog='FIs configured: %s' % config.fi_index)
+    argparser.add_argument('server', help='OFX server - URL or FI name from config')
+    #argparser.add_argument('action', nargs='?', choices=('stmt', 'profile', 'config'),
+                          #default='stmt', help='OFX statement|OFX profile|Configured settings')
+    argparser.add_argument('-n', '--dry-run', action='store_true', 
+                           default=False, help='display OFX request and exit')
 
-    subparsers = root_parser.add_subparsers()
-    list_subparser = subparsers.add_parser('list', help='List known FIs and exit')
-    list_subparser.set_defaults(func=do_list)
+    signon_group = argparser.add_argument_group(title='signon options')
+    signon_group.add_argument('-u', '--user', help='FI login username')
+    signon_group.add_argument('--version', help='OFX version')
+    signon_group.add_argument('--org', help='FI.ORG')
+    signon_group.add_argument('--fid', help='FI.FID')
+    signon_group.add_argument('--appid', help='OFX client app identifier')
+    signon_group.add_argument('--appver', help='OFX client app version')
 
-    detail_subparser = subparsers.add_parser('detail', help='Show FI configuration and exit')
-    detail_subparser.add_argument('fi')
-    detail_subparser.set_defaults(func=do_detail)
+    subparsers = argparser.add_subparsers(title='subcommands',
+                                          description='FOOBAR',
+                                          # Would be nice to add this:
+                                          # http://bugs.python.org/issue9253
+                                          #default='stmt',
+                                          help='help help help')
+    subparser_config = subparsers.add_parser('config', help='Display FI configurations and exit')
+    subparser_config.set_defaults(func=do_config)
 
-    request_subparser = ArgumentParser(add_help=False)
+    subparser_profile = subparsers.add_parser('profile', help='helpity help')
+    subparser_profile.set_defaults(func=do_profile)
 
-    request_subparser.add_argument('-U', '--url', default=SUPPRESS,
-                                    help='FI web address')
-    request_subparser.add_argument('-u', '--user', default=SUPPRESS,
-                                    help='FI login username')
-    request_subparser.add_argument('--version', default=SUPPRESS,
-                                    help='OFX version')
-    request_subparser.add_argument('--appid', default=SUPPRESS,
-                                    help='Application identifier string')
-    request_subparser.add_argument('--appver', default=SUPPRESS,
-                                    help='Application version number')
-    request_subparser.add_argument('--org', default=SUPPRESS,
-                                    help='FI.ORG')
-    request_subparser.add_argument('--fid', default=SUPPRESS,
-                                    help='FI.FID')
-    request_subparser.add_argument('--bankid', default=SUPPRESS,
-                                    help='ABA routing#')
-    request_subparser.add_argument('--brokerid', default=SUPPRESS,
-                                    help='Broker ID string')
-    request_subparser.add_argument('-n', '--dry-run', action='store_true',
-                                    #default=SUPPRESS,
-                                    default=False,
-                                    help='display OFX request and exit')
+    subparser_stmt = subparsers.add_parser('stmt', help='helpity help')
+    subparser_stmt.set_defaults(func=do_stmt)
 
-    profile_subparser= subparsers.add_parser('profile', parents=[request_subparser], help='Download OFX profile')
-    profile_subparser.add_argument('fi', nargs='?', help="Name of FI configuration section ('list' subcommand shows known FIs)")
-    profile_subparser.set_defaults(func=do_profile)
+    acct_group = subparser_stmt.add_argument_group(title='account options')
+    acct_group.add_argument('--bankid', help='ABA routing#')
+    acct_group.add_argument('--brokerid', help='Broker ID string')
+    acct_group.add_argument('-C', '--checking', metavar='acct#', action='append', default=[])
+    acct_group.add_argument('-S', '--savings', metavar='acct#', action='append', default=[])
+    acct_group.add_argument('-M', '--moneymrkt', metavar='acct#', action='append', default=[])
+    acct_group.add_argument('-L', '--creditline', metavar='acct#', action='append', default=[])
+    acct_group.add_argument('-c', '--creditcard', '--cc', metavar='acct#', action='append', default=[])
+    acct_group.add_argument('-i', '--investment', metavar='acct#', action='append', default=[])
 
-    stmt_subparser = subparsers.add_parser('stmt', parents=[request_subparser], help='Download OFX statement')
-    stmt_subparser.add_argument('fi', nargs='?', help="Name of FI configuration section ('list' subcommand shows known FIs)")
-
-    # Accounts
-    acct_group = stmt_subparser.add_argument_group(title='Account Options')
-    acct_group.add_argument('-C', '--checking', nargs='+',
-                            default=SUPPRESS, metavar='(routing#, acct#)')
-    acct_group.add_argument('-S', '--savings', nargs='+',
-                            default=SUPPRESS, metavar='(routing#, acct#)')
-    acct_group.add_argument('-M', '--moneymrkt', nargs='+',
-                            default=SUPPRESS, metavar='(routing#, acct#)')
-    acct_group.add_argument('-L', '--creditline', nargs='+',
-                            default=SUPPRESS, metavar='(routing#, acct#)')
-    acct_group.add_argument('-c', '--cc', '--creditcard', nargs='+',
-                            default=SUPPRESS, metavar='(acct#)')
-    acct_group.add_argument('-i', '--investment', nargs='+',
-                            default=SUPPRESS, metavar='(acct#)')
-
-    # Statement options
-    stmt_group = stmt_subparser.add_argument_group(title='Statement Options')
+    stmt_group = subparser_stmt.add_argument_group(title='statement options')
     stmt_group.add_argument('-s', '--start', dest='dtstart', help='Start date/time for transactions')
     stmt_group.add_argument('-e', '--end', dest='dtend', help='End date/time for transactions')
     stmt_group.add_argument('--no-transactions', dest='inctran',
@@ -418,101 +413,25 @@ def init_argparser():
     stmt_group.add_argument('--no-balances', dest='incbal',
                             action='store_false', default=True)
 
-    stmt_group.set_defaults(func=do_stmt)
-
-    return root_parser
-
-
-def main():
-    config = OFXConfigParser()
-    config.read()
-
-    argparser = init_argparser()
     args = argparser.parse_args()
-    args.func(args, config)
 
-def do_list(args, config):
-    print(str(config.fi_index))
-
-def do_detail(args, config):
-    # FIXME
-    fi = args.fi
-    if fi not in config.fi_index:
-        raise ValueError("Unknown FI '%s' not in %s"
-                        % (fi, str(config.fi_index)))
-    print(str(dict(config.items(fi))))
-
-def merge_config(args, config, stmt=False):
-    fi = args.fi
-    if fi:
-        if fi not in config.fi_index:
+    # If positional arg is FI name (not URL), then merge config
+    server = args.server
+    if urlparse(server).scheme:
+        args.url = server
+    else:
+        if server not in config.fi_index:
             raise ValueError("Unknown FI '%s' not in %s"
-                            % (fi, str(config.fi_index)))
-        # Load values from config where CLI hasn't overridden them
-        keys = list(OFXClient.defaults.keys()) + ['user',]
-        if stmt:
-            keys += list(OFXClient.stmt_defaults.keys()) \
-            + list(OFXClient.acct_defaults.keys())
-        for k in keys:
-            if k not in args:
-                setattr(args, k, config.get(fi, k))
-    return args
+                            % (server, str(config.fi_index)))
+        # Pass 'vars' keyword to ConfigParser.items to have command line
+        # settings override configs read from file
+        overrides = {k:v for k,v in vars(args).items() if v}
+        for cfg, value in config.items(server, raw=True, vars=overrides):
+            arg = getattr(args, cfg, '')
+            if isinstance(arg, list):
+                arg.append(value)
+            else:
+                setattr(args, cfg, value)
 
-def do_profile(args, config):
-    # FIXME
-    args = merge_config(args, config)
-    client = OFXClient.from_args(args)
+    args.func(args)
 
-    if args.dry_run:
-        rq = client.write_request(args.user, 'TOPSECRET')
-        # N.B. the prettify function will insert an XML header
-        # between the OFX header and the OFX data
-        pretty = False
-        if pretty:
-            print(client.header + prettify(tostring(client.ofx)))
-        else:
-            print(rq)
-        return
-
-    args.password = getpass()
-    client.request_profile(user=args.user, password=args.password)
-    response = client.download()
-    print(response.read())
-
-def do_stmt(args, config):
-    args = merge_config(args, config, stmt=True)
-
-    # Datetime validation/conversion
-    for dt in ('dtstart', 'dtend', 'dtasof'):
-        setattr(args, dt, converters.DateTime.convert(getattr(args, dt)))
-
-    client = OFXClient.from_args(args)
-
-    ### CONSTRUCT STATEMENT REQUESTS
-    accts = {k: getattr(args, k) for k in ('checking', 'savings',
-                'moneymrkt', 'creditline', 'creditcard', 'investment')}
-    acct_tuple = client.parse_account_strings(**accts)
-    stmt_options = {k: getattr(args, k) for k in client.stmt_defaults.keys()}
-    client.request_all(*acct_tuple, **stmt_options)
-
-    ### HANDLE REQUEST
-    if args.dry_run:
-        rq = client.write_request(user=args.user, password='TOPSECRET')
-        # N.B. the prettify function will insert an XML header
-        # between the OFX header and the OFX data
-        pretty = False
-        if pretty:
-            print(client.header + prettify(tostring(client.ofx)))
-        else:
-            print(rq)
-        return
-
-    args.password = getpass()
-    client.write_request(user=args.user, password=args.password)
-
-    response = client.download()
-    print(response.read())
-
-
-if __name__ == '__main__':
-    main()
