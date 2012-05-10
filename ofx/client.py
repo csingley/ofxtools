@@ -13,7 +13,7 @@ from configparser import SafeConfigParser
 from getpass import getpass
 
 import converters
-from utilities import _, prettify
+from utilities import _
 
 
 class BankAcct:
@@ -41,6 +41,7 @@ class BankAcct:
 
     def stmtrq(self, inctran=True, dtstart=None, dtend=None, **kwargs):
         """ """
+        # **kwargs catches incpos/dtasof
         # Requesting transactions without dtstart/dtend (which is the default)
         # asks for all transactions on record.
         rq = Element(self.stmtrq_tag)
@@ -130,10 +131,17 @@ class OFXClient:
     bankid = None
     brokerid = None
 
-    def __init__(self, url, org, fid):
+    def __init__(self, url, org, fid, version=None, appid=None, appver=None):
         self.url = url
         self.org = org
         self.fid = fid
+        # Defaults 
+        if version:
+            self.version = int(version)
+        if appid:
+            self.appid = str(appid)
+        if appver:
+            self.appver = str(appver)
 
     @property
     def major_version(self):
@@ -166,7 +174,7 @@ class OFXClient:
         elif self.major_version == 2:
             # XML header
             xml_decl = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>'
-            fields = (  ('OFXHEADER', str(version)),
+            fields = (  ('OFXHEADER', str(self.ofxheader_version)),
                         ('VERSION', str(self.version)),
                         ('SECURITY', 'NONE'),
                         ('OLDFILEUID', 'NONE'),
@@ -300,8 +308,8 @@ def do_config(args):
     print(str(dict(config.items(server))))
 
 def do_profile(args):
-    print(vars(args))
-    client = OFXClient(args.url, args.org, args.fid)
+    client = OFXClient(args.url, args.org, args.fid, 
+                       version=args.version, appid=args.appid, appver=args.appver)
 
     # Always use dummy password - initial profile request
     password = 'T0PS3CR3T'
@@ -315,7 +323,8 @@ def do_profile(args):
         print(response.read())
 
 def do_stmt(args):
-    client = OFXClient(args.url, args.org, args.fid)
+    client = OFXClient(args.url, args.org, args.fid, 
+                       version=args.version, appid=args.appid, appver=args.appver)
 
     # Define accounts
     accts = []
@@ -371,9 +380,9 @@ if __name__ == '__main__':
 
     signon_group = argparser.add_argument_group(title='signon options')
     signon_group.add_argument('-u', '--user', help='FI login username')
-    signon_group.add_argument('--version', help='OFX version')
     signon_group.add_argument('--org', help='FI.ORG')
     signon_group.add_argument('--fid', help='FI.FID')
+    signon_group.add_argument('--version', help='OFX version')
     signon_group.add_argument('--appid', help='OFX client app identifier')
     signon_group.add_argument('--appver', help='OFX client app version')
 
