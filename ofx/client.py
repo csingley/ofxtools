@@ -18,7 +18,7 @@ from utilities import _
 
 class BankAcct:
     """ """
-    config = OrderedDict.fromkeys(('BANKID', 'ACCTID', 'ACCTTYPE'))
+    acctkeys = ('BANKID', 'ACCTID', 'ACCTTYPE')
     acctfrom_tag = 'BANKACCTFROM'
     stmtrq_tag = 'STMTRQ'
     msgsrq_tag = 'BANKMSGSRQV1'
@@ -27,17 +27,24 @@ class BankAcct:
     routingre = re.compile('^\d{9}$')
 
     def __init__(self, bankid, acctid, accttype):
+        self._acct = OrderedDict.fromkeys(self.acctkeys)
         accttype = accttype.upper()
         accttype = converters.OneOf(*converters.ACCTTYPES).convert(accttype)
-        self.config['ACCTTYPE'] = converters.OneOf(*converters.ACCTTYPES).convert(accttype)
+        self._acct['ACCTTYPE'] = converters.OneOf(*converters.ACCTTYPES).convert(accttype)
 
         bankid = str(bankid)
         if not self.routingre.match(bankid):
-            raise ValueError # FIXME
-        self.config['BANKID'] = bankid
+            raise ValueError('Invalid bankid %s' % bankid)
+        self._acct['BANKID'] = bankid
 
         assert acctid
-        self.config['ACCTID'] = str(acctid)
+        self._acct['ACCTID'] = str(acctid)
+
+    def __repr__(self):
+        values = [v for v in self._acct.values()]
+        repr_string = '%s(' + ', '.join(["'%s'"]*len(values)) +')'
+        values.insert(0, self.__class__.__name__)
+        return repr_string % tuple(values)
 
     def stmtrq(self, inctran=True, dtstart=None, dtend=None, **kwargs):
         """ """
@@ -53,7 +60,7 @@ class BankAcct:
     def acctfrom(self):
         """ """
         acctfrom = Element(self.acctfrom_tag)
-        for tag, text in self.config.items():
+        for tag, text in self._acct.items():
             SubElement(acctfrom, tag).text = text
         return acctfrom
 
@@ -70,27 +77,36 @@ class BankAcct:
 
 class CcAcct(BankAcct):
     """ """
-    config = OrderedDict.fromkeys(('ACCTID', ))
+    acctkeys = ('ACCTID')
     acctfrom_tag = 'CCACCTFROM'
     stmtrq_tag = 'CCSTMTRQ'
     msgsrq_tag = 'CREDITCARDMSGSRQV1'
+
     def __init__(self, acctid):
+        self._acct = OrderedDict.fromkeys(self.acctkeys)
         assert acctid
-        self.config['ACCTID'] = str(acctid)
+        self._acct['ACCTID'] = str(acctid)
+
+    #def __repr__(self):
+        #return '%s(%s)' % (self.__class__.__name__, self.acctid)
 
 
 class InvAcct(BankAcct):
     """ """
-    config = OrderedDict.fromkeys(('BROKERID', 'ACCTID'))
+    acctkeys = ('BROKERID', 'ACCTID')
     acctfrom_tag = 'INVACCTFROM'
     stmtrq_tag = 'INVSTMTRQ'
     msgsrq_tag = 'INVSTMTMSGSRQV1'
 
     def __init__(self, brokerid, acctid):
+        self._acct = OrderedDict.fromkeys(self.acctkeys)
         assert brokerid
-        self.config['BROKERID'] = brokerid
+        self._acct['BROKERID'] = brokerid
         assert acctid
-        self.config['ACCTID'] = str(acctid)
+        self._acct['ACCTID'] = str(acctid)
+
+    #def __repr__(self):
+        #return '%s(%s)' % (self.__class__.__name__, self.brokerid, self.acctid)
 
     def stmtrq(self, inctran=True, dtstart=None, dtend=None,
                dtasof=None, incpos=True, incbal=True):
@@ -195,7 +211,6 @@ class OFXClient:
         SubElement(sonrq, 'USERID').text = user
         SubElement(sonrq, 'USERPASS').text = password
         SubElement(sonrq, 'LANGUAGE').text = 'ENG'
-        print(self.org)
         if self.org:
             fi = SubElement(sonrq, 'FI')
             SubElement(fi, 'ORG').text = self.org
@@ -329,14 +344,23 @@ def do_stmt(args):
     # Define accounts
     accts = []
     for accttype in ('checking', 'savings', 'moneymrkt', 'creditline'):
+        #print(accts)
         for acctid in getattr(args, accttype):
-            accts.append(BankAcct(args.bankid, acctid, accttype))
+            print(accts)
+            a = BankAcct(args.bankid, acctid, accttype)
+            print(accts)
+            print(a)
+            accts.append(a)
+            print(accts)
+            print()
 
     for acctid in args.creditcard:
         accts.append(CcAcct(acctid))
 
     for acctid in args.investment:
         accts.append(InvAcct(args.brokerid, acctid))
+
+    #print(accts)
 
     # Use dummy password for dummy request
     if args.dry_run:
@@ -432,15 +456,22 @@ if __name__ == '__main__':
         if server not in config.fi_index:
             raise ValueError("Unknown FI '%s' not in %s"
                             % (server, str(config.fi_index)))
-        # Pass 'vars' keyword to ConfigParser.items to have command line
-        # settings override configs read from file
-        overrides = {k:v for k,v in vars(args).items() if v}
-        for cfg, value in config.items(server, raw=True, vars=overrides):
-            arg = getattr(args, cfg, '')
-            if isinstance(arg, list):
-                arg.append(value)
+        # List of nonempty argparse args set from command line
+        overrides = [k for k,v in vars(args).items() if v]
+        for cfg, value in config.items(server, raw=True):
+            # argparse settings override configparser settings
+            if cfg in overrides:
+                continue
+            if cfg in ('checking', 'savings', 'moneymrkt', 'creditline',
+                       'creditcard', 'investment'):
+                # Allow sequences of acct nos
+                values = [v.strip() for v in value.split(',')]
+                arg = getattr(args, cfg)
+                assert isinstance(arg, list)
+                arg.extend(values)
             else:
                 setattr(args, cfg, value)
 
+    # Execute subparser callback, passing merged argparse/configparser args
     args.func(args)
 
