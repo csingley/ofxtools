@@ -14,16 +14,6 @@ def prettify(xmlstring):
     """ """
     return minidom.parseString(xmlstring).toprettyxml(indent=' '*2)
 
-
-def _(path):
-    """Makes paths do the right thing."""
-    path = os.path.expanduser(path)
-    path = os.path.normpath(path)
-    path = os.path.normcase(path)
-    path = os.path.abspath(path)
-    return path
-
-
 OFXv1 = ('102', '103')
 OFXv2 = ('200', '203', '211')
 
@@ -43,66 +33,6 @@ APPVERS = ('1500', # Quicken 2006/ Money 2006
             '2000', # QuickBooks 2010
             '9999', # Custom
 )
-
-# Currency codes
-ISO4217 = ('AE', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD',
-            'AWG', 'AZN', 'BAM', 'BBD', 'BDT', 'BGN', 'BHD', 'BIF',
-            'BMD', 'BND', 'BOB', 'BOV', 'BRL', 'BSD', 'BTN', 'BWP',
-            'BYR', 'BZD', 'CAD', 'CDF', 'CHE', 'CHF', 'CHW', 'CLF',
-            'CLP', 'CNY', 'COP', 'CO', 'CRC', 'CUC', 'CUP', 'CVE',
-            'CZK', 'DJF', 'DKK', 'DOP', 'DZD', 'EEK', 'EGP', 'ERN',
-            'ETB', 'EUR', 'FJD', 'FKP', 'GBP', 'GEL', 'GHS', 'GIP',
-            'GMD', 'GNF', 'GTQ', 'GYD', 'HKD', 'HNL', 'HRK', 'HTG',
-            'HUF', 'IDR', 'ILS', 'INR', 'IQD', 'IRR', 'ISK', 'JMD',
-            'JOD', 'JPY', 'KES', 'KGS', 'KHR', 'KMF', 'KPW', 'KRW',
-            'KWD', 'KYD', 'KZT', 'LAK', 'LBP', 'LKR', 'LRD', 'LSL',
-            'LTL', 'LVL', 'LYD', 'MAD', 'MDL', 'MGA', 'MKD', 'MMK',
-            'MNT', 'MOP', 'MRO', 'MUR', 'MVR', 'MWK', 'MXN', 'MXV',
-            'MYR', 'MZN', 'NAD', 'NGN', 'NIO', 'NOK', 'NPR', 'NZD',
-            'OMR', 'PAB', 'PEN', 'PGK', 'PHP', 'PKR', 'PLN', 'PYG',
-            'QAR', 'RON', 'RSD', 'RUB', 'RWF', 'SAR', 'SBD', 'SCR',
-            'SDG', 'SEK', 'SGD', 'SHP', 'SLL', 'SOS', 'SRD', 'STD',
-            'SVC', 'SYP', 'SZL', 'THB', 'TJS', 'TMT', 'TND', 'TOP',
-            'TRY', 'TTD', 'TWD', 'TZS', 'UAH', 'UGX', 'USD', 'USN',
-            'USS', 'UYI', 'UY', 'UZS', 'VEF', 'VND', 'VUV', 'WST',
-            'XAF', 'XAG', 'XA', 'XBA', 'XBB', 'XBC', 'XBD', 'XCD',
-            'XDR', 'XF', 'XOF', 'XPD', 'XPF', 'XPT', 'XTS', 'XXX',
-            'YER', 'ZAR', 'ZMK', 'ZWL')
-
-
-# Country codes
-ISO3166_1a3 = ('ABW', 'AFG', 'AGO', 'AIA', 'ALA', 'ALB', 'AND', 'ANT',
-                'ARE', 'ARG', 'ARM', 'ASM', 'ATA', 'ATF', 'ATG', 'AUS',
-                'AUT', 'AZE', 'BDI', 'BEL', 'BEN', 'BFA', 'BGD', 'BGR',
-                'BHR', 'BHS', 'BIH', 'BLM', 'BLR', 'BLZ', 'BM', 'BOL',
-                'BRA', 'BRB', 'BRN', 'BTN', 'BVT', 'BWA', 'CAF', 'CAN',
-                'CCK', 'CHE', 'CHL', 'CHN', 'CIV', 'CMR', 'COD', 'COG',
-                'COK', 'COL', 'COM', 'CPV', 'CRI', 'CUB', 'CXR', 'CYM',
-                'CYP', 'CZE', 'DE', 'DJI', 'DMA', 'DNK', 'DOM', 'DZA',
-                'EC', 'EGY', 'ERI', 'ESH', 'ESP', 'EST', 'ETH', 'FIN',
-                'FJI', 'FLK', 'FRA', 'FRO', 'FSM', 'GAB', 'GBR', 'GEO',
-                'GGY', 'GHA', 'GIB', 'GIN', 'GLP', 'GMB', 'GNB', 'GNQ',
-                'GRC', 'GRD', 'GRL', 'GTM', 'GUF', 'GUM', 'GUY', 'HKG',
-                'HMD', 'HND', 'HRV', 'HTI', 'HUN', 'IDN', 'IMN', 'IND',
-                'IOT', 'IRL', 'IRN', 'IRQ', 'ISL', 'ISR', 'ITA', 'JAM',
-                'JEY', 'JOR', 'JPN', 'KAZ', 'KEN', 'KGZ', 'KHM', 'KIR',
-                'KNA', 'KOR', 'KWT', 'LAO', 'LBN', 'LBR', 'LBY', 'LCA',
-                'LIE', 'LKA', 'LSO', 'LT', 'LUX', 'LVA', 'MAC', 'MAF',
-                'MAR', 'MCO', 'MDA', 'MDG', 'MDV', 'MEX', 'MHL', 'MKD',
-                'MLI', 'MLT', 'MMR', 'MNE', 'MNG', 'MNP', 'MOZ', 'MRT',
-                'MSR', 'MTQ', 'MUS', 'MWI', 'MYS', 'MYT', 'NAM', 'NCL',
-                'NER', 'NFK', 'NGA', 'NIC', 'NI', 'NLD', 'NOR', 'NPL',
-                'NR', 'NZL', 'OMN', 'PAK', 'PAN', 'PCN', 'PER', 'PHL',
-                'PLW', 'PNG', 'POL', 'PRI', 'PRK', 'PRT', 'PRY', 'PSE',
-                'PYF', 'QAT', 'RE', 'RO', 'RUS', 'RWA', 'SA', 'SDN',
-                'SEN', 'SGP', 'SGS', 'SHN', 'SJM', 'SLB', 'SLE', 'SLV',
-                'SMR', 'SOM', 'SPM', 'SRB', 'STP', 'SUR', 'SVK', 'SVN',
-                'SWE', 'SWZ', 'SYC', 'SYR', 'TCA', 'TCD', 'TGO', 'THA',
-                'TJK', 'TKL', 'TKM', 'TLS', 'TON', 'TTO', 'TUN', 'TUR',
-                'TUV', 'TWN', 'TZA', 'UGA', 'UKR', 'UMI', 'URY', 'USA',
-                'UZB', 'VAT', 'VCT', 'VEN', 'VGB', 'VIR', 'VNM', 'VUT',
-                'WLF', 'WSM', 'YEM', 'ZAF', 'ZMB', 'ZWE')
-
 # ISO3166_1a2 country codes and numbering agencies
 # Swiped from
 # http://code.activestate.com/recipes/498277-isin-validator/
@@ -174,69 +104,6 @@ numberingAgencies = {'BE': ('Euronext - Brussels', 'Belgium'),
 'MO': ('MAROCLEAR S.A.', 'Morocco'),
 'SE': ('VPC AB', 'Sweden'),
 'GB': ('London Stock Exchange', 'United Kingdom')}
-
-# 3-letter language codes
-ISO639_2 = ('AAR', 'ABK', 'ACE', 'ACH', 'ADA', 'ADY', 'AFA', 'AFH',
-            'AFR', 'AIN', 'AKA', 'AKK', 'SQI', 'ALE', 'ALG', 'ALT',
-            'AMH', 'ANG', 'ANP', 'APA', 'ARA', 'ARC', 'ARG', 'HYE',
-            'ARN', 'ARP', 'ART', 'ARW', 'ASM', 'AST', 'ATH', 'AUS',
-            'AVA', 'AVE', 'AWA', 'AYM', 'AZE', 'BAD', 'BAI', 'BAK',
-            'BAL', 'BAM', 'BAN', 'EUS', 'BAS', 'BAT', 'BEJ', 'BEL',
-            'BEM', 'BEN', 'BER', 'BHO', 'BIH', 'BIK', 'BIN', 'BIS',
-            'BLA', 'BNT', 'BOS', 'BRA', 'BRE', 'BTK', 'BUA', 'BUG',
-            'BUL', 'MYA', 'BYN', 'CAD', 'CAI', 'CAR', 'CAT', 'CA',
-            'CEB', 'CEL', 'CHA', 'CHB', 'CHE', 'CHG', 'ZHO', 'CHK',
-            'CHM', 'CHN', 'CHO', 'CHP', 'CHR', 'CH', 'CHV', 'CHY',
-            'CMC', 'COP', 'COR', 'COS', 'CPE', 'CPF', 'CPP', 'CRE',
-            'CRH', 'CRP', 'CSB', 'CUS', 'CES', 'DAK', 'DAN', 'DAR',
-            'DAY', 'DEL', 'DEN', 'DGR', 'DIN', 'DIV', 'DOI', 'DRA',
-            'DSB', 'DUA', 'DUM', 'NLD', 'DY', 'DZO', 'EFI', 'EGY',
-            'EKA', 'ELX', 'ENG', 'ENM', 'EPO', 'EST', 'EWE', 'EWO',
-            'FAN', 'FAO', 'FAT', 'FIJ', 'FIL', 'FIN', 'FI', 'FON',
-            'FRA', 'FRM', 'FRO', 'FRR', 'FRS', 'FRY', 'FUL', 'FUR',
-            'GAA', 'GAY', 'GBA', 'GEM', 'KAT', 'DE', 'GEZ', 'GIL',
-            'GLA', 'GLE', 'GLG', 'GLV', 'GMH', 'GOH', 'GON', 'GOR',
-            'GOT', 'GRB', 'GRC', 'ELL', 'GRN', 'GSW', 'GUJ', 'GWI',
-            'HAI', 'HAT', 'HA', 'HAW', 'HEB', 'HER', 'HIL', 'HIM',
-            'HIN', 'HIT', 'HMN', 'HMO', 'HRV', 'HSB', 'HUN', 'HUP',
-            'IBA', 'IBO', 'ISL', 'IDO', 'III', 'IJO', 'IK', 'ILE',
-            'ILO', 'INA', 'INC', 'IND', 'INE', 'INH', 'IPK', 'IRA',
-            'IRO', 'ITA', 'JAV', 'JBO', 'JPN', 'JPR', 'JRB', 'KAA',
-            'KAB', 'KAC', 'KAL', 'KAM', 'KAN', 'KAR', 'KAS', 'KA',
-            'KAW', 'KAZ', 'KBD', 'KHA', 'KHI', 'KHM', 'KHO', 'KIK',
-            'KIN', 'KIR', 'KMB', 'KOK', 'KOM', 'KON', 'KOR', 'KOS',
-            'KPE', 'KRC', 'KRL', 'KRO', 'KR', 'KUA', 'KUM', 'KUR',
-            'KUT', 'LAD', 'LAH', 'LAM', 'LAO', 'LAT', 'LAV', 'LEZ',
-            'LIM', 'LIN', 'LIT', 'LOL', 'LOZ', 'LTZ', 'LUA', 'LUB',
-            'LUG', 'LUI', 'LUN', 'LUO', 'LUS', 'MKD', 'MAD', 'MAG',
-            'MAH', 'MAI', 'MAK', 'MAL', 'MAN', 'MRI', 'MAP', 'MAR',
-            'MAS', 'MSA', 'MDF', 'MDR', 'MEN', 'MGA', 'MIC', 'MIN',
-            'MIS', 'MKH', 'MLG', 'MLT', 'MNC', 'MNI', 'MNO', 'MOH',
-            'MON', 'MOS', 'MUL', 'MUN', 'MUS', 'MWL', 'MWR', 'MYN',
-            'MYV', 'NAH', 'NAI', 'NAP', 'NA', 'NAV', 'NBL', 'NDE',
-            'NDO', 'NDS', 'NEP', 'NEW', 'NIA', 'NIC', 'NI', 'NNO',
-            'NOB', 'NOG', 'NON', 'NOR', 'NQO', 'NSO', 'NUB', 'NWC',
-            'NYA', 'NYM', 'NYN', 'NYO', 'NZI', 'OCI', 'OJI', 'ORI',
-            'ORM', 'OSA', 'OSS', 'OTA', 'OTO', 'PAA', 'PAG', 'PAL',
-            'PAM', 'PAN', 'PAP', 'PA', 'PEO', 'FAS', 'PHI', 'PHN',
-            'PLI', 'POL', 'PON', 'POR', 'PRA', 'PRO', 'PUS', 'QUE',
-            'RAJ', 'RAP', 'RAR', 'ROA', 'ROH', 'ROM', 'RON', 'RUN',
-            'RUP', 'RUS', 'SAD', 'SAG', 'SAH', 'SAI', 'SAL', 'SAM',
-            'SAN', 'SAS', 'SAT', 'SCN', 'SCO', 'SEL', 'SEM', 'SGA',
-            'SGN', 'SHN', 'SID', 'SIN', 'SIO', 'SIT', 'SLA', 'SLO',
-            'SLV', 'SMA', 'SME', 'SMI', 'SMJ', 'SMN', 'SMO', 'SMS',
-            'SNA', 'SND', 'SNK', 'SOG', 'SOM', 'SON', 'SOT', 'SPA',
-            'SRD', 'SRN', 'SRP', 'SRR', 'SSA', 'SSW', 'SUK', 'SUN',
-            'SUS', 'SUX', 'SWA', 'SWE', 'SYC', 'SYR', 'TAH', 'TAI',
-            'TAM', 'TAT', 'TEL', 'TEM', 'TER', 'TET', 'TGK', 'TGL',
-            'THA', 'BOD', 'TIG', 'TIR', 'TIV', 'TKL', 'TLH', 'TLI',
-            'TMH', 'TOG', 'TON', 'TPI', 'TSI', 'TSN', 'TSO', 'TUK',
-            'TUM', 'TUP', 'TUR', 'TUT', 'TVL', 'TWI', 'TYV', 'UDM',
-            'UGA', 'UIG', 'UKR', 'UMB', 'UND', 'URD', 'UZB', 'VAI',
-            'VEN', 'VIE', 'VOL', 'VOT', 'WAK', 'WAL', 'WAR', 'WAS',
-            'CYM', 'WEN', 'WLN', 'WOL', 'XAL', 'XHO', 'YAO', 'YAP',
-            'YID', 'YOR', 'YPK', 'ZAP', 'ZBL', 'ZEN', 'ZHA', 'ZND',
-            'ZUL', 'ZUN', 'ZXX', 'ZZA')
 
 def cusipChecksum(base):
     """
