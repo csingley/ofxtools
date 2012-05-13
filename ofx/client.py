@@ -346,13 +346,8 @@ def do_stmt(args):
     for accttype in ('checking', 'savings', 'moneymrkt', 'creditline'):
         #print(accts)
         for acctid in getattr(args, accttype):
-            print(accts)
             a = BankAcct(args.bankid, acctid, accttype)
-            print(accts)
-            print(a)
             accts.append(a)
-            print(accts)
-            print()
 
     for acctid in args.creditcard:
         accts.append(CcAcct(acctid))
