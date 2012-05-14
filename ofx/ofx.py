@@ -2,6 +2,7 @@
 import decimal
 import datetime
 import time
+import calendar
 import uuid
 from xml.etree.cElementTree import Element, SubElement, tostring
 from collections import defaultdict, OrderedDict
@@ -68,10 +69,10 @@ class BankAcct:
         """ """
         tran = Element('INCTRAN')
         if dtstart:
-            SubElement(tran, 'DTSTART').text = DateTime.unconvert(dtstart)
+            SubElement(tran, 'DTSTART').text = OFXdatetime.unconvert(dtstart)
         if dtend:
-            SubElement(tran, 'DTEND').text = DateTime.unconvert(dtend)
-        SubElement(tran, 'INCLUDE').text = Boolean().unconvert(inctran)
+            SubElement(tran, 'DTEND').text = OFXdatetime.unconvert(dtend)
+        SubElement(tran, 'INCLUDE').text = OFXbool().unconvert(inctran)
         return tran
 
 
@@ -120,19 +121,19 @@ class InvAcct(BankAcct):
     def incoo(self):
         # Include Open Orders - not implemented
         oo = Element('INCOO')
-        oo.text = Boolean().unconvert(False)
+        oo.text = OFXbool().unconvert(False)
         return oo
 
     def incpos(self, dtasof, incpos):
         pos = Element('INCPOS')
         if dtasof:
-            SubElement(pos, 'DTASOF').text = DateTime.unconvert(dtasof)
-        SubElement(pos, 'INCLUDE').text = Boolean().unconvert(incpos)
+            SubElement(pos, 'DTASOF').text = OFXdatetime.unconvert(dtasof)
+        SubElement(pos, 'INCLUDE').text = OFXbool().unconvert(incpos)
         return pos
 
     def incbal(self, incbal):
         bal = Element('INCBAL')
-        bal.text = Boolean().unconvert(incbal)
+        bal.text = OFXbool().unconvert(incbal)
         return bal
 
 
@@ -207,7 +208,7 @@ class OFXClient:
     def signon(self, user, password):
         msgsrq = Element('SIGNONMSGSRQV1')
         sonrq = SubElement(msgsrq, 'SONRQ')
-        SubElement(sonrq, 'DTCLIENT').text = DateTime.unconvert(datetime.datetime.now())
+        SubElement(sonrq, 'DTCLIENT').text = OFXdatetime.unconvert(datetime.datetime.now())
         SubElement(sonrq, 'USERID').text = user
         SubElement(sonrq, 'USERPASS').text = password
         SubElement(sonrq, 'LANGUAGE').text = 'ENG'
@@ -253,7 +254,7 @@ class OFXClient:
         msgsrq = SubElement(ofx, 'PROFMSGSRQV1')
         profrq = Element('PROFRQ')
         SubElement(profrq, 'CLIENTROUTING').text = 'NONE'
-        SubElement(profrq, 'DTPROFUP').text = DateTime.unconvert(datetime.date(1990,1,1))
+        SubElement(profrq, 'DTPROFUP').text = OFXdatetime.unconvert(datetime.date(1990,1,1))
         msgsrq.append(self._wraptrn(profrq))
         return ofx
 
@@ -439,11 +440,11 @@ class OFXTreeBuilder(ET.TreeBuilder):
 
 class OFXElement(ET.Element):
     """ """
-    currencyTags = ()
-    origcurrencyAggregates = (STMTTRN, INVBUY,
-                            INVSELL, INCOME,
-                            INVEXPENSE, MARGININTEREST,
-                            REINVEST, RETOFCAP)
+    #currencyTags = ()
+    #origcurrencyAggregates = (STMTTRN, INVBUY,
+                            #INVSELL, INCOME,
+                            #INVEXPENSE, MARGININTEREST,
+                            #REINVEST, RETOFCAP)
     def convert(self):
         """ """
         converterClass = getattr(converters, self.tag)
@@ -531,11 +532,11 @@ class OFXResponse(object):
                 if stmtrs is not None:
                     stmt = stmtClass(stmtrs)
                     # Staple the TRNRS wrapper data onto the STMT
-                    stmt.trnuid = Unicode(36).convert(trnrs.find('TRNUID').text)
+                    stmt.trnuid = OFXstr(36).convert(trnrs.find('TRNUID').text)
                     stmt.status = trnrs.find('STATUS').convert()
                     cltcookie = trnrs.find('CLTCOOKIE')
                     if cltcookie is not None:
-                        stmt.cltcookie = Unicode(36).convert(cltcookie.text)
+                        stmt.cltcookie = OFXstr(36).convert(cltcookie.text)
                     self.statements.append(stmt)
 
     def _processSECLIST(self):
@@ -673,7 +674,7 @@ class INVSTMT(BaseSTMT):
 
     def process(self, invstmtrs):
         dtasof = invstmtrs.find('DTASOF').text
-        self.dtasof = DateTime.convert(dtasof)
+        self.dtasof = OFXdatetime.convert(dtasof)
 
         # INVTRANLIST
         tranlist = invstmtrs.find('INVTRANLIST')
@@ -709,8 +710,8 @@ class TRANLIST(list):
         # Initialize with *TRANLIST Element
         dtstart, dtend = tranlist[0:2]
         tranlist = tranlist[2:]
-        self.dtstart = DateTime.convert(dtstart.text)
-        self.dtend = DateTime.convert(dtend.text)
+        self.dtstart = OFXdatetime.convert(dtstart.text)
+        self.dtend = OFXdatetime.convert(dtend.text)
         self.extend([tran.convert() for tran in tranlist])
 
     def __repr__(self):
@@ -732,14 +733,14 @@ class ParseError(SyntaxError):
 
 class OFXConfigParser(SafeConfigParser):
     """ """
-    main_config = fixpath(os.path.join(os.path.dirname(__file__), 'main.cfg'))
+    main_config = os.path.join(os.path.dirname(__file__), 'main.cfg')
 
     def __init__(self):
         SafeConfigParser.__init__(self)
 
     def read(self, filenames=None):
         # Load main config
-        self.readfp(open(self.main_config))
+        self.readfp(open(fixpath(self.main_config)))
         # Then load user configs (defaults to main.cfg [global] config: value)
         filenames = filenames or fixpath(self.get('global', 'config'))
         return SafeConfigParser.read(self, filenames)
@@ -763,12 +764,12 @@ ASSETCLASSES = ('DOMESTICBOND', 'INTLBOND', 'LARGESTOCK', 'SMALLSTOCK',
                 'INTLSTOCK', 'MONEYMRKT', 'OTHER')
 
 
-class Element(object):
+class OFXElement(object):
     """
     Base class of validator/type converter for OFX 'element', i.e. SGML leaf
     node that contains text data.
 
-    Element instances store validation parameters relevant to a particular
+    OFXElement instances store validation parameters relevant to a particular
     Aggregate subclass (e.g. maximum string length, decimal precision,
     required vs. optional, etc.) - they don't directly store the data
     itself (which lives in the __dict__ of an Aggregate instance).
@@ -789,7 +790,7 @@ class Element(object):
         raise NotImplementedError
 
 
-class Boolean(Element):
+class OFXbool(OFXElement):
     mapping = {'Y': True, 'N': False}
 
     def convert(self, value):
@@ -802,14 +803,14 @@ class Boolean(Element):
             return None
         return {v:k for k,v in self.mapping.items()}[value]
 
-class Unicode(Element):
+class OFXstr(OFXElement):
     def _init(self, *args, **kwargs):
         length = None
         if args:
             length = args[0]
             args = args[1:]
         self.length = length
-        super(Unicode, self)._init(*args, **kwargs)
+        super(OFXstr, self)._init(*args, **kwargs)
 
     def convert(self, value):
         if value is None and not self.required:
@@ -819,7 +820,7 @@ class Unicode(Element):
         return str(value)
 
 
-class OneOf(Element):
+class OneOf(OFXElement):
     def _init(self, *args, **kwargs):
         self.valid = set(args)
         super(OneOf, self)._init(**kwargs)
@@ -832,14 +833,14 @@ class OneOf(Element):
         raise ValueError("'%s' is not OneOf %r" % (value, self.valid))
 
 
-class Integer(Element):
+class OFXint(OFXElement):
     def _init(self, *args, **kwargs):
         length = None
         if args:
             length = args[0]
             args = args[1:]
         self.length = length
-        super(Integer, self)._init(*args, **kwargs)
+        super(OFXint, self)._init(*args, **kwargs)
 
     def convert(self, value):
         if value is None and not self.required:
@@ -850,14 +851,14 @@ class Integer(Element):
         return int(value)
 
 
-class Decimal(Element):
+class OFXdecimal(OFXElement):
     def _init(self, *args, **kwargs):
         precision = 2
         if args:
             precision = args[0]
             args = args[1:]
         self.precision = precision
-        super(Decimal, self)._init(*args, **kwargs)
+        super(OFXdecimal, self)._init(*args, **kwargs)
 
     def convert(self, value):
         if value is None and not self.required:
@@ -868,7 +869,7 @@ class Decimal(Element):
         return value
 
 
-class DateTime(Element):
+class OFXdatetime(OFXElement):
     # Valid datetime formats given by OFX spec in section 3.2.8.2
     tz_re = re.compile(r'\[([-+]?\d{0,2}\.?\d*):?(\w*)\]')
     # strftime formats keyed by the length of the corresponding string
@@ -925,12 +926,12 @@ class DateTime(Element):
 class Aggregate(object):
     """
     Base class of validator/type converter for OFX 'aggregate', i.e. SGML parent
-    node that contains no data.  Data-bearing Elements are represented as
+    node that contains no data.  Data-bearing OFXElements are represented as
     attributes of the containing Aggregate.
 
     The Aggregate class is implemented as a data descriptor that, before
     setting an attribute, checks whether that attribute is defined as
-    an Element in the class definition.  If it is, the Element's type
+    an OFXElement in the class definition.  If it is, the OFXElement's type
     conversion method is called, and the resulting value stored in the
     Aggregate instance's __dict__.
     """
@@ -950,540 +951,29 @@ class Aggregate(object):
         d = {}
         for m in self.__class__.__mro__:
             d.update({k: v for k,v in m.__dict__.items() \
-                                    if isinstance(v, Element)})
+                                    if isinstance(v, OFXElement)})
         return d
 
     def __getattribute__(self, name):
         if name.startswith('__'):
             # Short-circuit private attributes to avoid infinite recursion
             attribute = object.__getattribute__(self, name)
-        elif isinstance(getattr(self.__class__, name), Element):
-            # Don't inherit Element attributes from class
+        elif isinstance(getattr(self.__class__, name), OFXElement):
+            # Don't inherit OFXElement attributes from class
             attribute = self.__dict__[name]
         else:
             attribute = object.__getattribute__(self, name)
         return attribute
 
     def __setattr__(self, name, value):
-        """ If attribute references an Element, convert before setting """
+        """ If attribute references an OFXElement, convert before setting """
         classattr = getattr(self.__class__, name)
-        if isinstance(classattr, Element):
+        if isinstance(classattr, OFXElement):
             value = classattr.convert(value)
         object.__setattr__(self, name, value)
 
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, ' '.join(['%s=%r' % (attr, getattr(self, attr)) for attr in self.elements.viewkeys() if getattr(self, attr) is not None]))
-
-
-class FI(Aggregate):
-    """
-    FI aggregates are optional in SONRQ/SONRS; not all firms use them.
-    """
-    org = Unicode(32)
-    fid = Unicode(32)
-
-
-class STATUS(Aggregate):
-    code = Integer(6, required=True)
-    severity = OneOf('INFO', 'WARN', 'ERROR', required=True)
-    message = Unicode(255)
-
-
-class SONRS(FI, STATUS):
-    dtserver = DateTime(required=True)
-    userkey = Unicode(64)
-    tskeyexpire = DateTime()
-    language = OneOf(*ISO639_2)
-    dtprofup = DateTime()
-    dtacctup = DateTime()
-    sesscookie = Unicode(1000)
-    accesskey = Unicode(1000)
-
-
-class CURRENCY(Aggregate):
-    cursym = OneOf(*ISO4217)
-    currate = Decimal(8)
-
-
-class ORIGCURRENCY(CURRENCY):
-    curtype = OneOf('CURRENCY', 'ORIGCURRENCY')
-
-
-class ACCTFROM(Aggregate):
-    acctid = Unicode(22, required=True)
-
-
-class BANKACCTFROM(ACCTFROM):
-    bankid = Unicode(9, required=True)
-    branchid = Unicode(22)
-    accttype = OneOf(*ACCTTYPES,
-                    required=True)
-    acctkey = Unicode(22)
-
-
-class BANKACCTTO(BANKACCTFROM):
-    pass
-
-
-class CCACCTFROM(ACCTFROM):
-    acctkey = Unicode(22)
-
-
-class CCACCTTO(CCACCTFROM):
-    pass
-
-
-class INVACCTFROM(ACCTFROM):
-    brokerid = Unicode(22, required=True)
-
-
-# Balances
-class LEDGERBAL(Aggregate):
-    balamt = Decimal(required=True)
-    dtasof = DateTime(required=True)
-
-
-class AVAILBAL(Aggregate):
-    balamt = Decimal(required=True)
-    dtasof = DateTime(required=True)
-
-
-class INVBAL(Aggregate):
-    availcash = Decimal(required=True)
-    marginbalance = Decimal(required=True)
-    shortbalance = Decimal(required=True)
-    buypower = Decimal()
-
-
-class BAL(CURRENCY):
-    name = Unicode(32, required=True)
-    desc = Unicode(80, required=True)
-    baltype = OneOf('DOLLAR', 'PERCENT', 'NUMBER', required=True)
-    value = Decimal(required=True)
-    dtasof = DateTime()
-
-
-# Securities
-class SECID(Aggregate):
-    uniqueid = Unicode(32, required=True)
-    uniqueidtype = Unicode(10, required=True)
-
-
-class SECINFO(CURRENCY, SECID):
-    secname = Unicode(120, required=True)
-    ticker = Unicode(32)
-    fiid = Unicode(32)
-    rating = Unicode(10)
-    unitprice = Decimal()
-    dtasof = DateTime()
-    memo = Unicode(255)
-
-
-class DEBTINFO(SECINFO):
-    parvalue = Decimal(required=True)
-    debttype = OneOf('COUPON', 'ZERO', required=True)
-    debtclass = OneOf('TREASURY', 'MUNICIPAL', 'CORPORATE', 'OTHER')
-    couponrt = Decimal(4)
-    dtcoupon = DateTime()
-    couponfreq = OneOf('MONTHLY', 'QUARTERLY', 'SEMIANNUAL', 'ANNUAL',
-                            'OTHER')
-    callprice = Decimal(4)
-    yieldtocall = Decimal(4)
-    dtcall = DateTime()
-    calltype = OneOf('CALL', 'PUT', 'PREFUND', 'MATURITY')
-    ytmat = Decimal(4)
-    dtmat = DateTime()
-    assetclass = OneOf(*ASSETCLASSES)
-    fiassetclass = Unicode(32)
-
-
-class MFINFO(SECINFO):
-    mftype = OneOf('OPENEND', 'CLOSEEND', 'OTHER')
-    yld = Decimal(4)
-    dtyieldasof = DateTime()
-
-    mfassetclass = []
-    fimfassetclass = []
-
-
-class MFASSETCLASS(Aggregate):
-    assetclass = OneOf(*ASSETCLASSES)
-    percent = Decimal()
-
-
-class FIMFASSETCLASS(Aggregate):
-    fiassetclass = Unicode(32)
-    percent = Decimal()
-
-
-class OPTINFO(SECINFO):
-    opttype = OneOf('CALL', 'PUT', required=True)
-    strikeprice = Decimal(required=True)
-    dtexpire = DateTime(required=True)
-    shperctrct = Integer(required=True)
-    assetclass = OneOf(*ASSETCLASSES)
-    fiassetclass = Unicode(32)
-
-
-class OTHERINFO(SECINFO):
-    typedesc = Unicode(32)
-    assetclass = OneOf(*ASSETCLASSES)
-    fiassetclass = Unicode(32)
-
-
-class STOCKINFO(SECINFO):
-    stocktype = OneOf('COMMON', 'PREFERRED', 'CONVERTIBLE', 'OTHER')
-    yld = Decimal(4)
-    dtyieldasof = DateTime()
-    typedesc = Unicode(32)
-    assetclass = OneOf(*ASSETCLASSES)
-    fiassetclass = Unicode(32)
-
-
-# Transactions
-class PAYEE(Aggregate):
-    name = Unicode(32, required=True)
-    addr1 = Unicode(32, required=True)
-    addr2 = Unicode(32)
-    addr3 = Unicode(32)
-    city = Unicode(32, required=True)
-    state = Unicode(5, required=True)
-    postalcode = Unicode(11, required=True)
-    country = OneOf(*ISO3166_1a3)
-    phone = Unicode(32, required=True)
-
-
-class TRAN(Aggregate):
-    fitid = Unicode(255, required=True)
-    srvrtid = Unicode(10)
-
-
-class STMTTRN(TRAN, ORIGCURRENCY):
-    trntype = OneOf('CREDIT', 'DEBIT', 'INT', 'DIV', 'FEE', 'SRVCHG',
-                    'DEP', 'ATM', 'POS', 'XFER', 'CHECK', 'PAYMENT',
-                    'CASH', 'DIRECTDEP', 'DIRECTDEBIT', 'REPEATPMT',
-                    'OTHER', required=True)
-    dtposted = DateTime(required=True)
-    dtuser = DateTime()
-    dtavail = DateTime()
-    trnamt = Decimal(required=True)
-    correctfitid = Decimal()
-    correctaction = OneOf('REPLACE', 'DELETE')
-    checknum = Unicode(12)
-    refnum = Unicode(32)
-    sic = Integer()
-    payeeid = Unicode(12)
-    name = Unicode(32)
-    memo = Unicode(255)
-    inv401ksource = OneOf(*INV401KSOURCES)
-
-    payee = None
-    bankacctto = None
-    ccacctto = None
-
-
-class INVBANKTRAN(STMTTRN):
-    subacctfund = OneOf(*INVSUBACCTS, required=True)
-
-
-class INVTRAN(TRAN):
-    dttrade = DateTime(required=True)
-    dtsettle = DateTime()
-    reversalfitid = Unicode(255)
-    memo = Unicode(255)
-
-
-class INVBUY(INVTRAN, SECID, ORIGCURRENCY):
-    units = Decimal(required=True)
-    unitprice = Decimal(4, required=True)
-    markup = Decimal()
-    commission = Decimal()
-    taxes = Decimal()
-    fees = Decimal()
-    load = Decimal()
-    total = Decimal(required=True)
-    subacctsec = OneOf(*INVSUBACCTS)
-    subacctfund = OneOf(*INVSUBACCTS)
-    loanid = Unicode(32)
-    loanprincipal = Decimal()
-    loaninterest = Decimal()
-    inv401ksource = OneOf(*INV401KSOURCES)
-    dtpayroll = DateTime()
-    prioryearcontrib = Boolean()
-
-
-class INVSELL(INVTRAN, SECID, ORIGCURRENCY):
-    units = Decimal(required=True)
-    unitprice = Decimal(4, required=True)
-    markdown = Decimal()
-    commission = Decimal()
-    taxes = Decimal()
-    fees = Decimal()
-    load = Decimal()
-    withholding = Decimal()
-    taxexempt = Boolean()
-    total = Decimal(required=True)
-    gain = Decimal()
-    subacctsec = OneOf(*INVSUBACCTS, required=True)
-    subacctfund = OneOf(*INVSUBACCTS, required=True)
-    loanid = Unicode(32)
-    statewithholding = Decimal()
-    penalty = Decimal()
-    inv401ksource = OneOf(*INV401KSOURCES)
-
-
-class BUYDEBT(INVBUY):
-    accrdint = Decimal()
-
-
-class BUYMF(INVBUY):
-    buytype = OneOf(*BUYTYPES, required=True)
-    relfitid = Unicode(255)
-
-
-class BUYOPT(INVBUY):
-    optbuytype = OneOf('BUYTOOPEN', 'BUYTOCLOSE', required=True)
-    shperctrct = Integer(required=True)
-
-
-class BUYOTHER(INVBUY):
-    pass
-
-
-class BUYSTOCK(INVBUY):
-    buytype = OneOf(*BUYTYPES, required=True)
-
-
-class CLOSUREOPT(INVTRAN, SECID):
-    optaction = OneOf('EXERCISE', 'ASSIGN', 'EXPIRE')
-    units = Decimal(required=True)
-    shperctrct = Integer(required=True)
-    subacctsec = OneOf(*INVSUBACCTS, required=True)
-    relfitid = Unicode(255)
-    gain = Decimal()
-
-
-class INCOME(INVTRAN, SECID, ORIGCURRENCY):
-    incometype = OneOf(*INCOMETYPES, required=True)
-    total = Decimal(required=True)
-    subacctsec = OneOf(*INVSUBACCTS, required=True)
-    subacctfund = OneOf(*INVSUBACCTS, required=True)
-    taxexempt = Boolean()
-    withholding = Decimal()
-    inv401ksource = OneOf(*INV401KSOURCES)
-
-
-class INVEXPENSE(INVTRAN, SECID, ORIGCURRENCY):
-    total = Decimal(required=True)
-    subacctsec = OneOf(*INVSUBACCTS, required=True)
-    subacctfund = OneOf(*INVSUBACCTS, required=True)
-    inv401ksource = OneOf(*INV401KSOURCES)
-
-
-class JRNLFUND(INVTRAN):
-    subacctto = OneOf(*INVSUBACCTS, required=True)
-    subacctfrom = OneOf(*INVSUBACCTS, required=True)
-    total = Decimal(required=True)
-
-
-class JRNLSEC(INVTRAN, SECID):
-    subacctto = OneOf(*INVSUBACCTS, required=True)
-    subacctfrom = OneOf(*INVSUBACCTS, required=True)
-    units = Decimal(required=True)
-
-
-class MARGININTEREST(INVTRAN, ORIGCURRENCY):
-    total = Decimal(required=True)
-    subacctfund = OneOf(*INVSUBACCTS, required=True)
-
-
-class REINVEST(INVTRAN, SECID, ORIGCURRENCY):
-    incometype = OneOf(*INCOMETYPES, required=True)
-    total = Decimal(required=True)
-    subacctsec = OneOf(*INVSUBACCTS)
-    units = Decimal(required=True)
-    unitprice = Decimal(4, required=True)
-    commission = Decimal()
-    taxes = Decimal()
-    fees = Decimal()
-    load = Decimal()
-    taxexempt = Boolean()
-    inv401ksource = OneOf(*INV401KSOURCES)
-
-
-class RETOFCAP(INVTRAN, SECID, ORIGCURRENCY):
-    total = Decimal(required=True)
-    subacctsec = OneOf(*INVSUBACCTS, required=True)
-    subacctfund = OneOf(*INVSUBACCTS, required=True)
-    inv401ksource = OneOf(*INV401KSOURCES)
-
-
-class SELLDEBT(INVSELL):
-    sellreason = OneOf('CALL', 'SELL', 'MATURITY', required=True)
-    accrdint = Decimal()
-
-
-class SELLMF(INVSELL):
-    selltype = OneOf(*SELLTYPES, required=True)
-    avgcostbasis = Decimal()
-    relfitid = Unicode(255)
-
-
-class SELLOPT(INVSELL):
-    optselltype = OneOf('SELLTOCLOSE', 'SELLTOOPEN', required=True)
-    shperctrct = Integer(required=True)
-    relfitid = Unicode(255)
-    reltype = OneOf('SPREAD', 'STRADDLE', 'NONE', 'OTHER')
-    secured = OneOf('NAKED', 'COVERED')
-
-
-class SELLOTHER(INVSELL):
-    pass
-
-
-class SELLSTOCK(INVSELL):
-    selltype = OneOf(*SELLTYPES, required=True)
-
-
-class SPLIT(INVTRAN, SECID):
-    subacctsec = OneOf(*INVSUBACCTS, required=True)
-    oldunits = Decimal(required=True)
-    newunits = Decimal(required=True)
-    numerator = Decimal(required=True)
-    denominator = Decimal(required=True)
-    fraccash = Decimal()
-    subacctfund = OneOf(*INVSUBACCTS)
-    inv401ksource = OneOf(*INV401KSOURCES)
-
-
-class TRANSFER(INVTRAN, SECID):
-    subacctsec = OneOf(*INVSUBACCTS, required=True)
-    units = Decimal(required=True)
-    tferaction = OneOf('IN', 'OUT', required=True)
-    postype = OneOf('SHORT', 'LONG', required=True)
-    avgcostbasis = Decimal()
-    unitprice = Decimal()
-    dtpurchase = DateTime()
-    inv401ksource = OneOf(*INV401KSOURCES)
-
-
-# Positions
-class INVPOS(SECID, CURRENCY):
-    heldinacct = OneOf(*INVSUBACCTS, required=True)
-    postype = OneOf('SHORT', 'LONG', required=True)
-    units = Decimal(required=True)
-    unitprice = Decimal(4, required=True)
-    mktval = Decimal(required=True)
-    dtpriceasof = DateTime(required=True)
-    memo = Unicode(255)
-    inv401ksource = OneOf(*INV401KSOURCES)
-
-
-class POSDEBT(INVPOS):
-    pass
-
-
-class POSMF(INVPOS):
-    unitsstreet = Decimal()
-    unitsuser = Decimal()
-    reinvdiv = Boolean()
-    reinvcg = Boolean()
-
-
-class POSOPT(INVPOS):
-    secured = OneOf('NAKED', 'COVERED')
-
-
-class POSOTHER(INVPOS):
-    pass
-
-
-class POSSTOCK(INVPOS):
-    unitsstreet = Decimal()
-    unitsuser = Decimal()
-    reinvdiv = Boolean()
-
-
-### UTILITIES
-def fixpath(path):
-    """Makes paths do the right thing."""
-    path = os.path.expanduser(path)
-    path = os.path.normpath(path)
-    path = os.path.normcase(path)
-    path = os.path.abspath(path)
-    return path
-
-OFXv1 = ('102', '103')
-OFXv2 = ('200', '203', '211')
-
-APPIDS = ('QWIN', # Quicken for Windows
-            'QMOFX', # Quicken for Mac
-            'QBW', # QuickBooks for Windows
-            'QBM', # QuickBooks for Mac
-            'Money', # MSFT Money
-            'Money Plus', # MSFT Money Plus
-            'PyOFX', # Custom
-)
-
-APPVERS = ('1500', # Quicken 2006/ Money 2006
-            '1600', # Quicken 2007/ Money 2007/ QuickBooks 2006
-            '1700', # Quicken 2008/ Money Plus/ QuickBooks 2007
-            '1800', # Quicken 2009/ QuickBooks 2008
-            '1900', # Quicken 2010/ QuickBooks 2009
-            '2000', # QuickBooks 2010
-            '9999', # Custom
-)
-
-# Currency codes
-ISO4217 = ('AE', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD', 'AWG', 'AZN',
-           'BAM', 'BBD', 'BDT', 'BGN', 'BHD', 'BIF', 'BMD', 'BND', 'BOB', 'BOV',
-           'BRL', 'BSD', 'BTN', 'BWP', 'BYR', 'BZD', 'CAD', 'CDF', 'CHE', 'CHF',
-           'CHW', 'CLF', 'CLP', 'CNY', 'COP', 'CO', 'CRC', 'CUC', 'CUP', 'CVE',
-           'CZK', 'DJF', 'DKK', 'DOP', 'DZD', 'EEK', 'EGP', 'ERN', 'ETB', 'EUR',
-           'FJD', 'FKP', 'GBP', 'GEL', 'GHS', 'GIP', 'GMD', 'GNF', 'GTQ', 'GYD',
-           'HKD', 'HNL', 'HRK', 'HTG', 'HUF', 'IDR', 'ILS', 'INR', 'IQD', 'IRR',
-           'ISK', 'JMD', 'JOD', 'JPY', 'KES', 'KGS', 'KHR', 'KMF', 'KPW', 'KRW',
-           'KWD', 'KYD', 'KZT', 'LAK', 'LBP', 'LKR', 'LRD', 'LSL', 'LTL', 'LVL',
-           'LYD', 'MAD', 'MDL', 'MGA', 'MKD', 'MMK', 'MNT', 'MOP', 'MRO', 'MUR',
-           'MVR', 'MWK', 'MXN', 'MXV', 'MYR', 'MZN', 'NAD', 'NGN', 'NIO', 'NOK',
-           'NPR', 'NZD', 'OMR', 'PAB', 'PEN', 'PGK', 'PHP', 'PKR', 'PLN', 'PYG',
-           'QAR', 'RON', 'RSD', 'RUB', 'RWF', 'SAR', 'SBD', 'SCR', 'SDG', 'SEK',
-           'SGD', 'SHP', 'SLL', 'SOS', 'SRD', 'STD', 'SVC', 'SYP', 'SZL', 'THB',
-           'TJS', 'TMT', 'TND', 'TOP', 'TRY', 'TTD', 'TWD', 'TZS', 'UAH', 'UGX',
-           'USD', 'USN', 'USS', 'UYI', 'UY', 'UZS', 'VEF', 'VND', 'VUV', 'WST',
-           'XAF', 'XAG', 'XA', 'XBA', 'XBB', 'XBC', 'XBD', 'XCD', 'XDR', 'XF',
-           'XOF', 'XPD', 'XPF', 'XPT', 'XTS', 'XXX', 'YER', 'ZAR', 'ZMK', 'ZWL')
-
-
-# Country codes
-ISO3166_1a3 = ('ABW', 'AFG', 'AGO', 'AIA', 'ALA', 'ALB', 'AND', 'ANT', 'ARE',
-               'ARG', 'ARM', 'ASM', 'ATA', 'ATF', 'ATG', 'AUS', 'AUT', 'AZE', 
-               'BDI', 'BEL', 'BEN', 'BFA', 'BGD', 'BGR', 'BHR', 'BHS', 'BIH',
-               'BLM', 'BLR', 'BLZ', 'BM', 'BOL', 'BRA', 'BRB', 'BRN', 'BTN',
-               'BVT', 'BWA', 'CAF', 'CAN', 'CCK', 'CHE', 'CHL', 'CHN', 'CIV',
-               'CMR', 'COD', 'COG', 'COK', 'COL', 'COM', 'CPV', 'CRI', 'CUB',
-               'CXR', 'CYM', 'CYP', 'CZE', 'DE', 'DJI', 'DMA', 'DNK', 'DOM',
-               'DZA', 'EC', 'EGY', 'ERI', 'ESH', 'ESP', 'EST', 'ETH', 'FIN',
-               'FJI', 'FLK', 'FRA', 'FRO', 'FSM', 'GAB', 'GBR', 'GEO', 'GGY', 
-               'GHA', 'GIB', 'GIN', 'GLP', 'GMB', 'GNB', 'GNQ', 'GRC', 'GRD', 
-               'GRL', 'GTM', 'GUF', 'GUM', 'GUY', 'HKG', 'HMD', 'HND', 'HRV',
-               'HTI', 'HUN', 'IDN', 'IMN', 'IND', 'IOT', 'IRL', 'IRN', 'IRQ',
-               'ISL', 'ISR', 'ITA', 'JAM', 'JEY', 'JOR', 'JPN', 'KAZ', 'KEN',
-               'KGZ', 'KHM', 'KIR', 'KNA', 'KOR', 'KWT', 'LAO', 'LBN', 'LBR',
-               'LBY', 'LCA', 'LIE', 'LKA', 'LSO', 'LT', 'LUX', 'LVA', 'MAC', 
-               'MAF', 'MAR', 'MCO', 'MDA', 'MDG', 'MDV', 'MEX', 'MHL', 'MKD',
-               'MLI', 'MLT', 'MMR', 'MNE', 'MNG', 'MNP', 'MOZ', 'MRT', 'MSR',
-               'MTQ', 'MUS', 'MWI', 'MYS', 'MYT', 'NAM', 'NCL', 'NER', 'NFK',
-               'NGA', 'NIC', 'NI', 'NLD', 'NOR', 'NPL', 'NR', 'NZL', 'OMN', 
-               'PAK', 'PAN', 'PCN', 'PER', 'PHL', 'PLW', 'PNG', 'POL', 'PRI',
-               'PRK', 'PRT', 'PRY', 'PSE', 'PYF', 'QAT', 'RE', 'RO', 'RUS',
-               'RWA', 'SA', 'SDN', 'SEN', 'SGP', 'SGS', 'SHN', 'SJM', 'SLB', 
-               'SLE', 'SLV', 'SMR', 'SOM', 'SPM', 'SRB', 'STP', 'SUR', 'SVK',
-               'SVN', 'SWE', 'SWZ', 'SYC', 'SYR', 'TCA', 'TCD', 'TGO', 'THA', 
-               'TJK', 'TKL', 'TKM', 'TLS', 'TON', 'TTO', 'TUN', 'TUR', 'TUV',
-               'TWN', 'TZA', 'UGA', 'UKR', 'UMI', 'URY', 'USA', 'UZB', 'VAT',
-               'VCT', 'VEN', 'VGB', 'VIR', 'VNM', 'VUT', 'WLF', 'WSM', 'YEM',
-               'ZAF', 'ZMB', 'ZWE')
 
 # 3-letter language codes
 ISO639_2 = ('AAR', 'ABK', 'ACE', 'ACH', 'ADA', 'ADY', 'AFA', 'AFH', 'AFR',
@@ -1540,7 +1030,517 @@ ISO639_2 = ('AAR', 'ABK', 'ACE', 'ACH', 'ADA', 'ADY', 'AFA', 'AFH', 'AFR',
             'YAP', 'YID', 'YOR', 'YPK', 'ZAP', 'ZBL', 'ZEN', 'ZHA', 'ZND',
             'ZUL', 'ZUN', 'ZXX', 'ZZA') 
 
-# ISO3166_1a2 country codes and numbering agencies
+# Currency codes
+ISO4217 = ('AE', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD', 'AWG', 'AZN',
+           'BAM', 'BBD', 'BDT', 'BGN', 'BHD', 'BIF', 'BMD', 'BND', 'BOB', 'BOV',
+           'BRL', 'BSD', 'BTN', 'BWP', 'BYR', 'BZD', 'CAD', 'CDF', 'CHE', 'CHF',
+           'CHW', 'CLF', 'CLP', 'CNY', 'COP', 'CO', 'CRC', 'CUC', 'CUP', 'CVE',
+           'CZK', 'DJF', 'DKK', 'DOP', 'DZD', 'EEK', 'EGP', 'ERN', 'ETB', 'EUR',
+           'FJD', 'FKP', 'GBP', 'GEL', 'GHS', 'GIP', 'GMD', 'GNF', 'GTQ', 'GYD',
+           'HKD', 'HNL', 'HRK', 'HTG', 'HUF', 'IDR', 'ILS', 'INR', 'IQD', 'IRR',
+           'ISK', 'JMD', 'JOD', 'JPY', 'KES', 'KGS', 'KHR', 'KMF', 'KPW', 'KRW',
+           'KWD', 'KYD', 'KZT', 'LAK', 'LBP', 'LKR', 'LRD', 'LSL', 'LTL', 'LVL',
+           'LYD', 'MAD', 'MDL', 'MGA', 'MKD', 'MMK', 'MNT', 'MOP', 'MRO', 'MUR',
+           'MVR', 'MWK', 'MXN', 'MXV', 'MYR', 'MZN', 'NAD', 'NGN', 'NIO', 'NOK',
+           'NPR', 'NZD', 'OMR', 'PAB', 'PEN', 'PGK', 'PHP', 'PKR', 'PLN', 'PYG',
+           'QAR', 'RON', 'RSD', 'RUB', 'RWF', 'SAR', 'SBD', 'SCR', 'SDG', 'SEK',
+           'SGD', 'SHP', 'SLL', 'SOS', 'SRD', 'STD', 'SVC', 'SYP', 'SZL', 'THB',
+           'TJS', 'TMT', 'TND', 'TOP', 'TRY', 'TTD', 'TWD', 'TZS', 'UAH', 'UGX',
+           'USD', 'USN', 'USS', 'UYI', 'UY', 'UZS', 'VEF', 'VND', 'VUV', 'WST',
+           'XAF', 'XAG', 'XA', 'XBA', 'XBB', 'XBC', 'XBD', 'XCD', 'XDR', 'XF',
+           'XOF', 'XPD', 'XPF', 'XPT', 'XTS', 'XXX', 'YER', 'ZAR', 'ZMK', 'ZWL')
+
+# Country codes
+ISO3166_1a3 = ('ABW', 'AFG', 'AGO', 'AIA', 'ALA', 'ALB', 'AND', 'ANT', 'ARE',
+               'ARG', 'ARM', 'ASM', 'ATA', 'ATF', 'ATG', 'AUS', 'AUT', 'AZE', 
+               'BDI', 'BEL', 'BEN', 'BFA', 'BGD', 'BGR', 'BHR', 'BHS', 'BIH',
+               'BLM', 'BLR', 'BLZ', 'BM', 'BOL', 'BRA', 'BRB', 'BRN', 'BTN',
+               'BVT', 'BWA', 'CAF', 'CAN', 'CCK', 'CHE', 'CHL', 'CHN', 'CIV',
+               'CMR', 'COD', 'COG', 'COK', 'COL', 'COM', 'CPV', 'CRI', 'CUB',
+               'CXR', 'CYM', 'CYP', 'CZE', 'DE', 'DJI', 'DMA', 'DNK', 'DOM',
+               'DZA', 'EC', 'EGY', 'ERI', 'ESH', 'ESP', 'EST', 'ETH', 'FIN',
+               'FJI', 'FLK', 'FRA', 'FRO', 'FSM', 'GAB', 'GBR', 'GEO', 'GGY', 
+               'GHA', 'GIB', 'GIN', 'GLP', 'GMB', 'GNB', 'GNQ', 'GRC', 'GRD', 
+               'GRL', 'GTM', 'GUF', 'GUM', 'GUY', 'HKG', 'HMD', 'HND', 'HRV',
+               'HTI', 'HUN', 'IDN', 'IMN', 'IND', 'IOT', 'IRL', 'IRN', 'IRQ',
+               'ISL', 'ISR', 'ITA', 'JAM', 'JEY', 'JOR', 'JPN', 'KAZ', 'KEN',
+               'KGZ', 'KHM', 'KIR', 'KNA', 'KOR', 'KWT', 'LAO', 'LBN', 'LBR',
+               'LBY', 'LCA', 'LIE', 'LKA', 'LSO', 'LT', 'LUX', 'LVA', 'MAC', 
+               'MAF', 'MAR', 'MCO', 'MDA', 'MDG', 'MDV', 'MEX', 'MHL', 'MKD',
+               'MLI', 'MLT', 'MMR', 'MNE', 'MNG', 'MNP', 'MOZ', 'MRT', 'MSR',
+               'MTQ', 'MUS', 'MWI', 'MYS', 'MYT', 'NAM', 'NCL', 'NER', 'NFK',
+               'NGA', 'NIC', 'NI', 'NLD', 'NOR', 'NPL', 'NR', 'NZL', 'OMN', 
+               'PAK', 'PAN', 'PCN', 'PER', 'PHL', 'PLW', 'PNG', 'POL', 'PRI',
+               'PRK', 'PRT', 'PRY', 'PSE', 'PYF', 'QAT', 'RE', 'RO', 'RUS',
+               'RWA', 'SA', 'SDN', 'SEN', 'SGP', 'SGS', 'SHN', 'SJM', 'SLB', 
+               'SLE', 'SLV', 'SMR', 'SOM', 'SPM', 'SRB', 'STP', 'SUR', 'SVK',
+               'SVN', 'SWE', 'SWZ', 'SYC', 'SYR', 'TCA', 'TCD', 'TGO', 'THA', 
+               'TJK', 'TKL', 'TKM', 'TLS', 'TON', 'TTO', 'TUN', 'TUR', 'TUV',
+               'TWN', 'TZA', 'UGA', 'UKR', 'UMI', 'URY', 'USA', 'UZB', 'VAT',
+               'VCT', 'VEN', 'VGB', 'VIR', 'VNM', 'VUT', 'WLF', 'WSM', 'YEM',
+               'ZAF', 'ZMB', 'ZWE')
+
+class FI(Aggregate):
+    """
+    FI aggregates are optional in SONRQ/SONRS; not all firms use them.
+    """
+    org = OFXstr(32)
+    fid = OFXstr(32)
+
+
+class STATUS(Aggregate):
+    code = OFXint(6, required=True)
+    severity = OneOf('INFO', 'WARN', 'ERROR', required=True)
+    message = OFXstr(255)
+
+
+class SONRS(FI, STATUS):
+    dtserver = OFXdatetime(required=True)
+    userkey = OFXstr(64)
+    tskeyexpire = OFXdatetime()
+    language = OneOf(*ISO639_2)
+    dtprofup = OFXdatetime()
+    dtacctup = OFXdatetime()
+    sesscookie = OFXstr(1000)
+    accesskey = OFXstr(1000)
+
+
+class CURRENCY(Aggregate):
+    cursym = OneOf(*ISO4217)
+    currate = OFXdecimal(8)
+
+
+class ORIGCURRENCY(CURRENCY):
+    curtype = OneOf('CURRENCY', 'ORIGCURRENCY')
+
+
+class ACCTFROM(Aggregate):
+    acctid = OFXstr(22, required=True)
+
+
+class BANKACCTFROM(ACCTFROM):
+    bankid = OFXstr(9, required=True)
+    branchid = OFXstr(22)
+    accttype = OneOf(*ACCTTYPES,
+                    required=True)
+    acctkey = OFXstr(22)
+
+
+class BANKACCTTO(BANKACCTFROM):
+    pass
+
+
+class CCACCTFROM(ACCTFROM):
+    acctkey = OFXstr(22)
+
+
+class CCACCTTO(CCACCTFROM):
+    pass
+
+
+class INVACCTFROM(ACCTFROM):
+    brokerid = OFXstr(22, required=True)
+
+
+# Balances
+class LEDGERBAL(Aggregate):
+    balamt = OFXdecimal(required=True)
+    dtasof = OFXdatetime(required=True)
+
+
+class AVAILBAL(Aggregate):
+    balamt = OFXdecimal(required=True)
+    dtasof = OFXdatetime(required=True)
+
+
+class INVBAL(Aggregate):
+    availcash = OFXdecimal(required=True)
+    marginbalance = OFXdecimal(required=True)
+    shortbalance = OFXdecimal(required=True)
+    buypower = OFXdecimal()
+
+
+class BAL(CURRENCY):
+    name = OFXstr(32, required=True)
+    desc = OFXstr(80, required=True)
+    baltype = OneOf('DOLLAR', 'PERCENT', 'NUMBER', required=True)
+    value = OFXdecimal(required=True)
+    dtasof = OFXdatetime()
+
+
+# Securities
+class SECID(Aggregate):
+    uniqueid = OFXstr(32, required=True)
+    uniqueidtype = OFXstr(10, required=True)
+
+
+class SECINFO(CURRENCY, SECID):
+    secname = OFXstr(120, required=True)
+    ticker = OFXstr(32)
+    fiid = OFXstr(32)
+    rating = OFXstr(10)
+    unitprice = OFXdecimal()
+    dtasof = OFXdatetime()
+    memo = OFXstr(255)
+
+
+class DEBTINFO(SECINFO):
+    parvalue = OFXdecimal(required=True)
+    debttype = OneOf('COUPON', 'ZERO', required=True)
+    debtclass = OneOf('TREASURY', 'MUNICIPAL', 'CORPORATE', 'OTHER')
+    couponrt = OFXdecimal(4)
+    dtcoupon = OFXdatetime()
+    couponfreq = OneOf('MONTHLY', 'QUARTERLY', 'SEMIANNUAL', 'ANNUAL',
+                            'OTHER')
+    callprice = OFXdecimal(4)
+    yieldtocall = OFXdecimal(4)
+    dtcall = OFXdatetime()
+    calltype = OneOf('CALL', 'PUT', 'PREFUND', 'MATURITY')
+    ytmat = OFXdecimal(4)
+    dtmat = OFXdatetime()
+    assetclass = OneOf(*ASSETCLASSES)
+    fiassetclass = OFXstr(32)
+
+
+class MFINFO(SECINFO):
+    mftype = OneOf('OPENEND', 'CLOSEEND', 'OTHER')
+    yld = OFXdecimal(4)
+    dtyieldasof = OFXdatetime()
+
+    mfassetclass = []
+    fimfassetclass = []
+
+
+class MFASSETCLASS(Aggregate):
+    assetclass = OneOf(*ASSETCLASSES)
+    percent = OFXdecimal()
+
+
+class FIMFASSETCLASS(Aggregate):
+    fiassetclass = OFXstr(32)
+    percent = OFXdecimal()
+
+
+class OPTINFO(SECINFO):
+    opttype = OneOf('CALL', 'PUT', required=True)
+    strikeprice = OFXdecimal(required=True)
+    dtexpire = OFXdatetime(required=True)
+    shperctrct = OFXint(required=True)
+    assetclass = OneOf(*ASSETCLASSES)
+    fiassetclass = OFXstr(32)
+
+
+class OTHERINFO(SECINFO):
+    typedesc = OFXstr(32)
+    assetclass = OneOf(*ASSETCLASSES)
+    fiassetclass = OFXstr(32)
+
+
+class STOCKINFO(SECINFO):
+    stocktype = OneOf('COMMON', 'PREFERRED', 'CONVERTIBLE', 'OTHER')
+    yld = OFXdecimal(4)
+    dtyieldasof = OFXdatetime()
+    typedesc = OFXstr(32)
+    assetclass = OneOf(*ASSETCLASSES)
+    fiassetclass = OFXstr(32)
+
+
+# Transactions
+class PAYEE(Aggregate):
+    name = OFXstr(32, required=True)
+    addr1 = OFXstr(32, required=True)
+    addr2 = OFXstr(32)
+    addr3 = OFXstr(32)
+    city = OFXstr(32, required=True)
+    state = OFXstr(5, required=True)
+    postalcode = OFXstr(11, required=True)
+    country = OneOf(*ISO3166_1a3)
+    phone = OFXstr(32, required=True)
+
+
+class TRAN(Aggregate):
+    fitid = OFXstr(255, required=True)
+    srvrtid = OFXstr(10)
+
+
+class STMTTRN(TRAN, ORIGCURRENCY):
+    trntype = OneOf('CREDIT', 'DEBIT', 'INT', 'DIV', 'FEE', 'SRVCHG',
+                    'DEP', 'ATM', 'POS', 'XFER', 'CHECK', 'PAYMENT',
+                    'CASH', 'DIRECTDEP', 'DIRECTDEBIT', 'REPEATPMT',
+                    'OTHER', required=True)
+    dtposted = OFXdatetime(required=True)
+    dtuser = OFXdatetime()
+    dtavail = OFXdatetime()
+    trnamt = OFXdecimal(required=True)
+    correctfitid = OFXdecimal()
+    correctaction = OneOf('REPLACE', 'DELETE')
+    checknum = OFXstr(12)
+    refnum = OFXstr(32)
+    sic = OFXint()
+    payeeid = OFXstr(12)
+    name = OFXstr(32)
+    memo = OFXstr(255)
+    inv401ksource = OneOf(*INV401KSOURCES)
+
+    payee = None
+    bankacctto = None
+    ccacctto = None
+
+
+class INVBANKTRAN(STMTTRN):
+    subacctfund = OneOf(*INVSUBACCTS, required=True)
+
+
+class INVTRAN(TRAN):
+    dttrade = OFXdatetime(required=True)
+    dtsettle = OFXdatetime()
+    reversalfitid = OFXstr(255)
+    memo = OFXstr(255)
+
+
+class INVBUY(INVTRAN, SECID, ORIGCURRENCY):
+    units = OFXdecimal(required=True)
+    unitprice = OFXdecimal(4, required=True)
+    markup = OFXdecimal()
+    commission = OFXdecimal()
+    taxes = OFXdecimal()
+    fees = OFXdecimal()
+    load = OFXdecimal()
+    total = OFXdecimal(required=True)
+    subacctsec = OneOf(*INVSUBACCTS)
+    subacctfund = OneOf(*INVSUBACCTS)
+    loanid = OFXstr(32)
+    loanprincipal = OFXdecimal()
+    loaninterest = OFXdecimal()
+    inv401ksource = OneOf(*INV401KSOURCES)
+    dtpayroll = OFXdatetime()
+    prioryearcontrib = OFXbool()
+
+
+class INVSELL(INVTRAN, SECID, ORIGCURRENCY):
+    units = OFXdecimal(required=True)
+    unitprice = OFXdecimal(4, required=True)
+    markdown = OFXdecimal()
+    commission = OFXdecimal()
+    taxes = OFXdecimal()
+    fees = OFXdecimal()
+    load = OFXdecimal()
+    withholding = OFXdecimal()
+    taxexempt = OFXbool()
+    total = OFXdecimal(required=True)
+    gain = OFXdecimal()
+    subacctsec = OneOf(*INVSUBACCTS, required=True)
+    subacctfund = OneOf(*INVSUBACCTS, required=True)
+    loanid = OFXstr(32)
+    statewithholding = OFXdecimal()
+    penalty = OFXdecimal()
+    inv401ksource = OneOf(*INV401KSOURCES)
+
+
+class BUYDEBT(INVBUY):
+    accrdint = OFXdecimal()
+
+
+class BUYMF(INVBUY):
+    buytype = OneOf(*BUYTYPES, required=True)
+    relfitid = OFXstr(255)
+
+
+class BUYOPT(INVBUY):
+    optbuytype = OneOf('BUYTOOPEN', 'BUYTOCLOSE', required=True)
+    shperctrct = OFXint(required=True)
+
+
+class BUYOTHER(INVBUY):
+    pass
+
+
+class BUYSTOCK(INVBUY):
+    buytype = OneOf(*BUYTYPES, required=True)
+
+
+class CLOSUREOPT(INVTRAN, SECID):
+    optaction = OneOf('EXERCISE', 'ASSIGN', 'EXPIRE')
+    units = OFXdecimal(required=True)
+    shperctrct = OFXint(required=True)
+    subacctsec = OneOf(*INVSUBACCTS, required=True)
+    relfitid = OFXstr(255)
+    gain = OFXdecimal()
+
+
+class INCOME(INVTRAN, SECID, ORIGCURRENCY):
+    incometype = OneOf(*INCOMETYPES, required=True)
+    total = OFXdecimal(required=True)
+    subacctsec = OneOf(*INVSUBACCTS, required=True)
+    subacctfund = OneOf(*INVSUBACCTS, required=True)
+    taxexempt = OFXbool()
+    withholding = OFXdecimal()
+    inv401ksource = OneOf(*INV401KSOURCES)
+
+
+class INVEXPENSE(INVTRAN, SECID, ORIGCURRENCY):
+    total = OFXdecimal(required=True)
+    subacctsec = OneOf(*INVSUBACCTS, required=True)
+    subacctfund = OneOf(*INVSUBACCTS, required=True)
+    inv401ksource = OneOf(*INV401KSOURCES)
+
+
+class JRNLFUND(INVTRAN):
+    subacctto = OneOf(*INVSUBACCTS, required=True)
+    subacctfrom = OneOf(*INVSUBACCTS, required=True)
+    total = OFXdecimal(required=True)
+
+
+class JRNLSEC(INVTRAN, SECID):
+    subacctto = OneOf(*INVSUBACCTS, required=True)
+    subacctfrom = OneOf(*INVSUBACCTS, required=True)
+    units = OFXdecimal(required=True)
+
+
+class MARGININTEREST(INVTRAN, ORIGCURRENCY):
+    total = OFXdecimal(required=True)
+    subacctfund = OneOf(*INVSUBACCTS, required=True)
+
+
+class REINVEST(INVTRAN, SECID, ORIGCURRENCY):
+    incometype = OneOf(*INCOMETYPES, required=True)
+    total = OFXdecimal(required=True)
+    subacctsec = OneOf(*INVSUBACCTS)
+    units = OFXdecimal(required=True)
+    unitprice = OFXdecimal(4, required=True)
+    commission = OFXdecimal()
+    taxes = OFXdecimal()
+    fees = OFXdecimal()
+    load = OFXdecimal()
+    taxexempt = OFXbool()
+    inv401ksource = OneOf(*INV401KSOURCES)
+
+
+class RETOFCAP(INVTRAN, SECID, ORIGCURRENCY):
+    total = OFXdecimal(required=True)
+    subacctsec = OneOf(*INVSUBACCTS, required=True)
+    subacctfund = OneOf(*INVSUBACCTS, required=True)
+    inv401ksource = OneOf(*INV401KSOURCES)
+
+
+class SELLDEBT(INVSELL):
+    sellreason = OneOf('CALL', 'SELL', 'MATURITY', required=True)
+    accrdint = OFXdecimal()
+
+
+class SELLMF(INVSELL):
+    selltype = OneOf(*SELLTYPES, required=True)
+    avgcostbasis = OFXdecimal()
+    relfitid = OFXstr(255)
+
+
+class SELLOPT(INVSELL):
+    optselltype = OneOf('SELLTOCLOSE', 'SELLTOOPEN', required=True)
+    shperctrct = OFXint(required=True)
+    relfitid = OFXstr(255)
+    reltype = OneOf('SPREAD', 'STRADDLE', 'NONE', 'OTHER')
+    secured = OneOf('NAKED', 'COVERED')
+
+
+class SELLOTHER(INVSELL):
+    pass
+
+
+class SELLSTOCK(INVSELL):
+    selltype = OneOf(*SELLTYPES, required=True)
+
+
+class SPLIT(INVTRAN, SECID):
+    subacctsec = OneOf(*INVSUBACCTS, required=True)
+    oldunits = OFXdecimal(required=True)
+    newunits = OFXdecimal(required=True)
+    numerator = OFXdecimal(required=True)
+    denominator = OFXdecimal(required=True)
+    fraccash = OFXdecimal()
+    subacctfund = OneOf(*INVSUBACCTS)
+    inv401ksource = OneOf(*INV401KSOURCES)
+
+
+class TRANSFER(INVTRAN, SECID):
+    subacctsec = OneOf(*INVSUBACCTS, required=True)
+    units = OFXdecimal(required=True)
+    tferaction = OneOf('IN', 'OUT', required=True)
+    postype = OneOf('SHORT', 'LONG', required=True)
+    avgcostbasis = OFXdecimal()
+    unitprice = OFXdecimal()
+    dtpurchase = OFXdatetime()
+    inv401ksource = OneOf(*INV401KSOURCES)
+
+
+# Positions
+class INVPOS(SECID, CURRENCY):
+    heldinacct = OneOf(*INVSUBACCTS, required=True)
+    postype = OneOf('SHORT', 'LONG', required=True)
+    units = OFXdecimal(required=True)
+    unitprice = OFXdecimal(4, required=True)
+    mktval = OFXdecimal(required=True)
+    dtpriceasof = OFXdatetime(required=True)
+    memo = OFXstr(255)
+    inv401ksource = OneOf(*INV401KSOURCES)
+
+
+class POSDEBT(INVPOS):
+    pass
+
+
+class POSMF(INVPOS):
+    unitsstreet = OFXdecimal()
+    unitsuser = OFXdecimal()
+    reinvdiv = OFXbool()
+    reinvcg = OFXbool()
+
+
+class POSOPT(INVPOS):
+    secured = OneOf('NAKED', 'COVERED')
+
+
+class POSOTHER(INVPOS):
+    pass
+
+
+class POSSTOCK(INVPOS):
+    unitsstreet = OFXdecimal()
+    unitsuser = OFXdecimal()
+    reinvdiv = OFXbool()
+
+
+### UTILITIES
+def fixpath(path):
+    """Makes paths do the right thing."""
+    path = os.path.expanduser(path)
+    path = os.path.normpath(path)
+    path = os.path.normcase(path)
+    path = os.path.abspath(path)
+    return path
+
+OFXv1 = ('102', '103')
+OFXv2 = ('200', '203', '211')
+
+APPIDS = ('QWIN', # Quicken for Windows
+            'QMOFX', # Quicken for Mac
+            'QBW', # QuickBooks for Windows
+            'QBM', # QuickBooks for Mac
+            'Money', # MSFT Money
+            'Money Plus', # MSFT Money Plus
+            'PyOFX', # Custom
+)
+
+APPVERS = ('1500', # Quicken 2006/ Money 2006
+            '1600', # Quicken 2007/ Money 2007/ QuickBooks 2006
+            '1700', # Quicken 2008/ Money Plus/ QuickBooks 2007
+            '1800', # Quicken 2009/ QuickBooks 2008
+            '1900', # Quicken 2010/ QuickBooks 2009
+            '2000', # QuickBooks 2010
+            '9999', # Custom
+)
+
+
+# 2-letter country codes for numbering agencies (used to construct ISINs)
 # Swiped from
 # http://code.activestate.com/recipes/498277-isin-validator/
 numberingAgencies = {'BE': ('Euronext - Brussels', 'Belgium'),
@@ -1652,7 +1652,7 @@ def isinChecksum(base):
     http://goo.gl/8kPzD
     """
     assert len(base) == 11
-    assert alphanum[:2] in numberingAgencies.keys()
+    assert base[:2] in numberingAgencies.keys()
     check = ''.join([int(char, 36) for char in base])
     check = check[::-1] # string reversal
     check = ''.join([d if n%2 else str(int(d)*2) for n, d in enumerate(check)])
@@ -1858,7 +1858,7 @@ def do_stmt(args):
     # Statement parameters
     d = vars(args)
     # convert dtstart/dtend/dtasof from str to datetime
-    kwargs = {k:DateTime.convert(v) for k,v in d.items() if k.startswith('dt')}
+    kwargs = {k:OFXdatetime.convert(v) for k,v in d.items() if k.startswith('dt')}
     # inctrans/incpos/incbal 
     kwargs.update({k:v for k,v in d.items() if k.startswith('inc')})
 
