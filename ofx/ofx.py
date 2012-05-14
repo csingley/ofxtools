@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
+import decimal
 import datetime
+import time
 import uuid
 from xml.etree.cElementTree import Element, SubElement, tostring
 from collections import defaultdict, OrderedDict
@@ -12,17 +14,6 @@ import re
 import xml.etree.ElementTree as ET
 from configparser import SafeConfigParser
 from getpass import getpass
-
-import converters
-
-### UTILITIS
-def fixpath(path):
-    """Makes paths do the right thing."""
-    path = os.path.expanduser(path)
-    path = os.path.normpath(path)
-    path = os.path.normcase(path)
-    path = os.path.abspath(path)
-    return path
 
 
 class BankAcct:
@@ -38,8 +29,8 @@ class BankAcct:
     def __init__(self, bankid, acctid, accttype):
         self._acct = OrderedDict.fromkeys(self.acctkeys)
         accttype = accttype.upper()
-        accttype = converters.OneOf(*converters.ACCTTYPES).convert(accttype)
-        self._acct['ACCTTYPE'] = converters.OneOf(*converters.ACCTTYPES).convert(accttype)
+        accttype = OneOf(*ACCTTYPES).convert(accttype)
+        self._acct['ACCTTYPE'] = OneOf(*ACCTTYPES).convert(accttype)
 
         bankid = str(bankid)
         if not self.routingre.match(bankid):
@@ -77,10 +68,10 @@ class BankAcct:
         """ """
         tran = Element('INCTRAN')
         if dtstart:
-            SubElement(tran, 'DTSTART').text = converters.DateTime.unconvert(dtstart)
+            SubElement(tran, 'DTSTART').text = DateTime.unconvert(dtstart)
         if dtend:
-            SubElement(tran, 'DTEND').text = converters.DateTime.unconvert(dtend)
-        SubElement(tran, 'INCLUDE').text = converters.Boolean().unconvert(inctran)
+            SubElement(tran, 'DTEND').text = DateTime.unconvert(dtend)
+        SubElement(tran, 'INCLUDE').text = Boolean().unconvert(inctran)
         return tran
 
 
@@ -129,19 +120,19 @@ class InvAcct(BankAcct):
     def incoo(self):
         # Include Open Orders - not implemented
         oo = Element('INCOO')
-        oo.text = converters.Boolean().unconvert(False)
+        oo.text = Boolean().unconvert(False)
         return oo
 
     def incpos(self, dtasof, incpos):
         pos = Element('INCPOS')
         if dtasof:
-            SubElement(pos, 'DTASOF').text = converters.DateTime.unconvert(dtasof)
-        SubElement(pos, 'INCLUDE').text = converters.Boolean().unconvert(incpos)
+            SubElement(pos, 'DTASOF').text = DateTime.unconvert(dtasof)
+        SubElement(pos, 'INCLUDE').text = Boolean().unconvert(incpos)
         return pos
 
     def incbal(self, incbal):
         bal = Element('INCBAL')
-        bal.text = converters.Boolean().unconvert(incbal)
+        bal.text = Boolean().unconvert(incbal)
         return bal
 
 
@@ -216,7 +207,7 @@ class OFXClient:
     def signon(self, user, password):
         msgsrq = Element('SIGNONMSGSRQV1')
         sonrq = SubElement(msgsrq, 'SONRQ')
-        SubElement(sonrq, 'DTCLIENT').text = converters.DateTime.unconvert(datetime.datetime.now())
+        SubElement(sonrq, 'DTCLIENT').text = DateTime.unconvert(datetime.datetime.now())
         SubElement(sonrq, 'USERID').text = user
         SubElement(sonrq, 'USERPASS').text = password
         SubElement(sonrq, 'LANGUAGE').text = 'ENG'
@@ -262,7 +253,7 @@ class OFXClient:
         msgsrq = SubElement(ofx, 'PROFMSGSRQV1')
         profrq = Element('PROFRQ')
         SubElement(profrq, 'CLIENTROUTING').text = 'NONE'
-        SubElement(profrq, 'DTPROFUP').text = converters.DateTime.unconvert(datetime.date(1990,1,1))
+        SubElement(profrq, 'DTPROFUP').text = DateTime.unconvert(datetime.date(1990,1,1))
         msgsrq.append(self._wraptrn(profrq))
         return ofx
 
@@ -449,17 +440,17 @@ class OFXTreeBuilder(ET.TreeBuilder):
 class OFXElement(ET.Element):
     """ """
     currencyTags = ()
-    origcurrencyAggregates = (converters.STMTTRN, converters.INVBUY,
-                            converters.INVSELL, converters.INCOME,
-                            converters.INVEXPENSE, converters.MARGININTEREST,
-                            converters.REINVEST, converters.RETOFCAP)
+    origcurrencyAggregates = (STMTTRN, INVBUY,
+                            INVSELL, INCOME,
+                            INVEXPENSE, MARGININTEREST,
+                            REINVEST, RETOFCAP)
     def convert(self):
         """ """
         converterClass = getattr(converters, self.tag)
-        assert issubclass(converterClass, converters.Aggregate)
+        assert issubclass(converterClass, Aggregate)
         attributes = self._flatten()
 
-        if issubclass(converterClass, converters.ORIGCURRENCY):
+        if issubclass(converterClass, ORIGCURRENCY):
             currency = self.find('*/CURRENCY')
             origcurrency = self.find('*/ORIGCURRENCY')
             if (currency is not None) and (origcurrency is not None):
@@ -540,11 +531,11 @@ class OFXResponse(object):
                 if stmtrs is not None:
                     stmt = stmtClass(stmtrs)
                     # Staple the TRNRS wrapper data onto the STMT
-                    stmt.trnuid = converters.Unicode(36).convert(trnrs.find('TRNUID').text)
+                    stmt.trnuid = Unicode(36).convert(trnrs.find('TRNUID').text)
                     stmt.status = trnrs.find('STATUS').convert()
                     cltcookie = trnrs.find('CLTCOOKIE')
                     if cltcookie is not None:
-                        stmt.cltcookie = converters.Unicode(36).convert(cltcookie.text)
+                        stmt.cltcookie = Unicode(36).convert(cltcookie.text)
                     self.statements.append(stmt)
 
     def _processSECLIST(self):
@@ -682,7 +673,7 @@ class INVSTMT(BaseSTMT):
 
     def process(self, invstmtrs):
         dtasof = invstmtrs.find('DTASOF').text
-        self.dtasof = converters.DateTime.convert(dtasof)
+        self.dtasof = DateTime.convert(dtasof)
 
         # INVTRANLIST
         tranlist = invstmtrs.find('INVTRANLIST')
@@ -718,8 +709,8 @@ class TRANLIST(list):
         # Initialize with *TRANLIST Element
         dtstart, dtend = tranlist[0:2]
         tranlist = tranlist[2:]
-        self.dtstart = converters.DateTime.convert(dtstart.text)
-        self.dtend = converters.DateTime.convert(dtend.text)
+        self.dtstart = DateTime.convert(dtstart.text)
+        self.dtend = DateTime.convert(dtend.text)
         self.extend([tran.convert() for tran in tranlist])
 
     def __repr__(self):
@@ -737,6 +728,7 @@ class INVTRANLIST(TRANLIST):
 class ParseError(SyntaxError):
     """ """
     pass
+
 
 class OFXConfigParser(SafeConfigParser):
     """ """
@@ -758,6 +750,1064 @@ class OFXConfigParser(SafeConfigParser):
         sections.remove('global')
         return sections
 
+
+### CONVERTERS
+INV401KSOURCES = ('PRETAX', 'AFTERTAX', 'MATCH', 'PROFITSHARING',
+                    'ROLLOVER', 'OTHERVEST', 'OTHERNONVEST')
+ACCTTYPES = ('CHECKING', 'SAVINGS', 'MONEYMRKT', 'CREDITLINE')
+INVSUBACCTS = ('CASH', 'MARGIN', 'SHORT', 'OTHER')
+BUYTYPES = ('BUY', 'BUYTOCOVER')
+SELLTYPES = ('SELL', 'SELLSHORT')
+INCOMETYPES = ('CGLONG', 'CGSHORT', 'DIV', 'INTEREST', 'MISC')
+ASSETCLASSES = ('DOMESTICBOND', 'INTLBOND', 'LARGESTOCK', 'SMALLSTOCK',
+                'INTLSTOCK', 'MONEYMRKT', 'OTHER')
+
+
+class Element(object):
+    """
+    Base class of validator/type converter for OFX 'element', i.e. SGML leaf
+    node that contains text data.
+
+    Element instances store validation parameters relevant to a particular
+    Aggregate subclass (e.g. maximum string length, decimal precision,
+    required vs. optional, etc.) - they don't directly store the data
+    itself (which lives in the __dict__ of an Aggregate instance).
+    """
+    def __init__(self, *args, **kwargs):
+        required = kwargs.pop('required', False)
+        self.required = required
+        self._init(*args, **kwargs)
+
+    def _init(self, *args, **kwargs):
+        """ Override in subclass """
+        if args or kwargs:
+            raise ValueError("Unknown args for '%s'- args: %r; kwargs: %r"
+                            % (self.__class__.__name__, args, kwargs))
+
+    def convert(self, value):
+        """ Override in subclass """
+        raise NotImplementedError
+
+
+class Boolean(Element):
+    mapping = {'Y': True, 'N': False}
+
+    def convert(self, value):
+        if value is None and not self.required:
+            return None
+        return self.mapping[value]
+
+    def unconvert(self, value):
+        if value is None and not self.required:
+            return None
+        return {v:k for k,v in self.mapping.items()}[value]
+
+class Unicode(Element):
+    def _init(self, *args, **kwargs):
+        length = None
+        if args:
+            length = args[0]
+            args = args[1:]
+        self.length = length
+        super(Unicode, self)._init(*args, **kwargs)
+
+    def convert(self, value):
+        if value is None and not self.required:
+            return None
+        if self.length is not None and len(value) > self.length:
+            raise ValueError("'%s' is too long; max length=%s" % (value, self.length))
+        return str(value)
+
+
+class OneOf(Element):
+    def _init(self, *args, **kwargs):
+        self.valid = set(args)
+        super(OneOf, self)._init(**kwargs)
+
+    def convert(self, value):
+        if value is None and not self.required:
+            return None
+        if (value in self.valid):
+            return value
+        raise ValueError("'%s' is not OneOf %r" % (value, self.valid))
+
+
+class Integer(Element):
+    def _init(self, *args, **kwargs):
+        length = None
+        if args:
+            length = args[0]
+            args = args[1:]
+        self.length = length
+        super(Integer, self)._init(*args, **kwargs)
+
+    def convert(self, value):
+        if value is None and not self.required:
+            return None
+        value = int(value)
+        if self.length is not None and value >= 10**self.length:
+            raise ValueError('%s has too many digits; max digits=%s' % (value, self.length))
+        return int(value)
+
+
+class Decimal(Element):
+    def _init(self, *args, **kwargs):
+        precision = 2
+        if args:
+            precision = args[0]
+            args = args[1:]
+        self.precision = precision
+        super(Decimal, self)._init(*args, **kwargs)
+
+    def convert(self, value):
+        if value is None and not self.required:
+            return None
+        value = decimal.Decimal(value)
+        precision = decimal.Decimal('0.' + '0'*(self.precision-1) + '1')
+        value.quantize(precision)
+        return value
+
+
+class DateTime(Element):
+    # Valid datetime formats given by OFX spec in section 3.2.8.2
+    tz_re = re.compile(r'\[([-+]?\d{0,2}\.?\d*):?(\w*)\]')
+    # strftime formats keyed by the length of the corresponding string
+    formats = {18: '%Y%m%d%H%M%S.%f', 14: '%Y%m%d%H%M%S', 8: '%Y%m%d'}
+
+    @classmethod
+    def convert(cls, value):
+        # If it's a datetime or None, don't touch it.
+        if isinstance(value, datetime.datetime) or value is None:
+            return value
+
+        # Pristine copy of input for error reporting purposes
+        orig_value = value
+
+        # Strip out timezone, on which strptime() chokes
+        chunks = cls.tz_re.split(value)
+        value = chunks.pop(0)
+        if chunks:
+            gmt_offset, tz_name = chunks[:2]
+            # Some FIs *cough* IBKR *cough* write crap for the TZ offset
+            if gmt_offset == '-':
+                gmt_offset = '0'
+            gmt_offset = int(decimal.Decimal(gmt_offset)*3600) # hours -> seconds
+        else:
+            gmt_offset = 0
+        format = cls.formats[len(value)]
+        try:
+            value = datetime.datetime.strptime(value, format)
+        except ValueError:
+            raise ValueError("Datetime '%s' does not match OFX formats %s" %
+                            (orig_value, cls.formats.values()))
+
+        # Adjust timezone to GMT
+        value -= datetime.timedelta(seconds=gmt_offset)
+        return value
+
+    @classmethod
+    def unconvert(cls, value):
+        """ Input datetime.datetime in local time; output str in GMT. """
+        # Pristine copy of input for error reporting purposes
+        orig_value = value
+
+        try:
+            # Transform to GMT
+            value = time.gmtime(time.mktime(value.timetuple()))
+            # timetuples don't have usec precision
+            #value = time.strftime('%s[0:GMT]' % cls.formats[14], value)
+            value = time.strftime(cls.formats[14], value)
+        except:
+            raise # FIXME
+        return value
+
+
+class Aggregate(object):
+    """
+    Base class of validator/type converter for OFX 'aggregate', i.e. SGML parent
+    node that contains no data.  Data-bearing Elements are represented as
+    attributes of the containing Aggregate.
+
+    The Aggregate class is implemented as a data descriptor that, before
+    setting an attribute, checks whether that attribute is defined as
+    an Element in the class definition.  If it is, the Element's type
+    conversion method is called, and the resulting value stored in the
+    Aggregate instance's __dict__.
+    """
+    def __init__(self, **kwargs):
+        for name, element in self.elements.items():
+            value = kwargs.pop(name, None)
+            if element.required and value is None:
+                raise ValueError("'%s' attribute is required for %s"
+                                % (name, self.__class__.__name__))
+            setattr(self, name, value)
+        if kwargs:
+            raise ValueError("Undefined element(s) for '%s': %s"
+                            % (self.__class__.__name__, kwargs.viewkeys()))
+
+    @property
+    def elements(self):
+        d = {}
+        for m in self.__class__.__mro__:
+            d.update({k: v for k,v in m.__dict__.items() \
+                                    if isinstance(v, Element)})
+        return d
+
+    def __getattribute__(self, name):
+        if name.startswith('__'):
+            # Short-circuit private attributes to avoid infinite recursion
+            attribute = object.__getattribute__(self, name)
+        elif isinstance(getattr(self.__class__, name), Element):
+            # Don't inherit Element attributes from class
+            attribute = self.__dict__[name]
+        else:
+            attribute = object.__getattribute__(self, name)
+        return attribute
+
+    def __setattr__(self, name, value):
+        """ If attribute references an Element, convert before setting """
+        classattr = getattr(self.__class__, name)
+        if isinstance(classattr, Element):
+            value = classattr.convert(value)
+        object.__setattr__(self, name, value)
+
+    def __repr__(self):
+        return '<%s %s>' % (self.__class__.__name__, ' '.join(['%s=%r' % (attr, getattr(self, attr)) for attr in self.elements.viewkeys() if getattr(self, attr) is not None]))
+
+
+class FI(Aggregate):
+    """
+    FI aggregates are optional in SONRQ/SONRS; not all firms use them.
+    """
+    org = Unicode(32)
+    fid = Unicode(32)
+
+
+class STATUS(Aggregate):
+    code = Integer(6, required=True)
+    severity = OneOf('INFO', 'WARN', 'ERROR', required=True)
+    message = Unicode(255)
+
+
+class SONRS(FI, STATUS):
+    dtserver = DateTime(required=True)
+    userkey = Unicode(64)
+    tskeyexpire = DateTime()
+    language = OneOf(*ISO639_2)
+    dtprofup = DateTime()
+    dtacctup = DateTime()
+    sesscookie = Unicode(1000)
+    accesskey = Unicode(1000)
+
+
+class CURRENCY(Aggregate):
+    cursym = OneOf(*ISO4217)
+    currate = Decimal(8)
+
+
+class ORIGCURRENCY(CURRENCY):
+    curtype = OneOf('CURRENCY', 'ORIGCURRENCY')
+
+
+class ACCTFROM(Aggregate):
+    acctid = Unicode(22, required=True)
+
+
+class BANKACCTFROM(ACCTFROM):
+    bankid = Unicode(9, required=True)
+    branchid = Unicode(22)
+    accttype = OneOf(*ACCTTYPES,
+                    required=True)
+    acctkey = Unicode(22)
+
+
+class BANKACCTTO(BANKACCTFROM):
+    pass
+
+
+class CCACCTFROM(ACCTFROM):
+    acctkey = Unicode(22)
+
+
+class CCACCTTO(CCACCTFROM):
+    pass
+
+
+class INVACCTFROM(ACCTFROM):
+    brokerid = Unicode(22, required=True)
+
+
+# Balances
+class LEDGERBAL(Aggregate):
+    balamt = Decimal(required=True)
+    dtasof = DateTime(required=True)
+
+
+class AVAILBAL(Aggregate):
+    balamt = Decimal(required=True)
+    dtasof = DateTime(required=True)
+
+
+class INVBAL(Aggregate):
+    availcash = Decimal(required=True)
+    marginbalance = Decimal(required=True)
+    shortbalance = Decimal(required=True)
+    buypower = Decimal()
+
+
+class BAL(CURRENCY):
+    name = Unicode(32, required=True)
+    desc = Unicode(80, required=True)
+    baltype = OneOf('DOLLAR', 'PERCENT', 'NUMBER', required=True)
+    value = Decimal(required=True)
+    dtasof = DateTime()
+
+
+# Securities
+class SECID(Aggregate):
+    uniqueid = Unicode(32, required=True)
+    uniqueidtype = Unicode(10, required=True)
+
+
+class SECINFO(CURRENCY, SECID):
+    secname = Unicode(120, required=True)
+    ticker = Unicode(32)
+    fiid = Unicode(32)
+    rating = Unicode(10)
+    unitprice = Decimal()
+    dtasof = DateTime()
+    memo = Unicode(255)
+
+
+class DEBTINFO(SECINFO):
+    parvalue = Decimal(required=True)
+    debttype = OneOf('COUPON', 'ZERO', required=True)
+    debtclass = OneOf('TREASURY', 'MUNICIPAL', 'CORPORATE', 'OTHER')
+    couponrt = Decimal(4)
+    dtcoupon = DateTime()
+    couponfreq = OneOf('MONTHLY', 'QUARTERLY', 'SEMIANNUAL', 'ANNUAL',
+                            'OTHER')
+    callprice = Decimal(4)
+    yieldtocall = Decimal(4)
+    dtcall = DateTime()
+    calltype = OneOf('CALL', 'PUT', 'PREFUND', 'MATURITY')
+    ytmat = Decimal(4)
+    dtmat = DateTime()
+    assetclass = OneOf(*ASSETCLASSES)
+    fiassetclass = Unicode(32)
+
+
+class MFINFO(SECINFO):
+    mftype = OneOf('OPENEND', 'CLOSEEND', 'OTHER')
+    yld = Decimal(4)
+    dtyieldasof = DateTime()
+
+    mfassetclass = []
+    fimfassetclass = []
+
+
+class MFASSETCLASS(Aggregate):
+    assetclass = OneOf(*ASSETCLASSES)
+    percent = Decimal()
+
+
+class FIMFASSETCLASS(Aggregate):
+    fiassetclass = Unicode(32)
+    percent = Decimal()
+
+
+class OPTINFO(SECINFO):
+    opttype = OneOf('CALL', 'PUT', required=True)
+    strikeprice = Decimal(required=True)
+    dtexpire = DateTime(required=True)
+    shperctrct = Integer(required=True)
+    assetclass = OneOf(*ASSETCLASSES)
+    fiassetclass = Unicode(32)
+
+
+class OTHERINFO(SECINFO):
+    typedesc = Unicode(32)
+    assetclass = OneOf(*ASSETCLASSES)
+    fiassetclass = Unicode(32)
+
+
+class STOCKINFO(SECINFO):
+    stocktype = OneOf('COMMON', 'PREFERRED', 'CONVERTIBLE', 'OTHER')
+    yld = Decimal(4)
+    dtyieldasof = DateTime()
+    typedesc = Unicode(32)
+    assetclass = OneOf(*ASSETCLASSES)
+    fiassetclass = Unicode(32)
+
+
+# Transactions
+class PAYEE(Aggregate):
+    name = Unicode(32, required=True)
+    addr1 = Unicode(32, required=True)
+    addr2 = Unicode(32)
+    addr3 = Unicode(32)
+    city = Unicode(32, required=True)
+    state = Unicode(5, required=True)
+    postalcode = Unicode(11, required=True)
+    country = OneOf(*ISO3166_1a3)
+    phone = Unicode(32, required=True)
+
+
+class TRAN(Aggregate):
+    fitid = Unicode(255, required=True)
+    srvrtid = Unicode(10)
+
+
+class STMTTRN(TRAN, ORIGCURRENCY):
+    trntype = OneOf('CREDIT', 'DEBIT', 'INT', 'DIV', 'FEE', 'SRVCHG',
+                    'DEP', 'ATM', 'POS', 'XFER', 'CHECK', 'PAYMENT',
+                    'CASH', 'DIRECTDEP', 'DIRECTDEBIT', 'REPEATPMT',
+                    'OTHER', required=True)
+    dtposted = DateTime(required=True)
+    dtuser = DateTime()
+    dtavail = DateTime()
+    trnamt = Decimal(required=True)
+    correctfitid = Decimal()
+    correctaction = OneOf('REPLACE', 'DELETE')
+    checknum = Unicode(12)
+    refnum = Unicode(32)
+    sic = Integer()
+    payeeid = Unicode(12)
+    name = Unicode(32)
+    memo = Unicode(255)
+    inv401ksource = OneOf(*INV401KSOURCES)
+
+    payee = None
+    bankacctto = None
+    ccacctto = None
+
+
+class INVBANKTRAN(STMTTRN):
+    subacctfund = OneOf(*INVSUBACCTS, required=True)
+
+
+class INVTRAN(TRAN):
+    dttrade = DateTime(required=True)
+    dtsettle = DateTime()
+    reversalfitid = Unicode(255)
+    memo = Unicode(255)
+
+
+class INVBUY(INVTRAN, SECID, ORIGCURRENCY):
+    units = Decimal(required=True)
+    unitprice = Decimal(4, required=True)
+    markup = Decimal()
+    commission = Decimal()
+    taxes = Decimal()
+    fees = Decimal()
+    load = Decimal()
+    total = Decimal(required=True)
+    subacctsec = OneOf(*INVSUBACCTS)
+    subacctfund = OneOf(*INVSUBACCTS)
+    loanid = Unicode(32)
+    loanprincipal = Decimal()
+    loaninterest = Decimal()
+    inv401ksource = OneOf(*INV401KSOURCES)
+    dtpayroll = DateTime()
+    prioryearcontrib = Boolean()
+
+
+class INVSELL(INVTRAN, SECID, ORIGCURRENCY):
+    units = Decimal(required=True)
+    unitprice = Decimal(4, required=True)
+    markdown = Decimal()
+    commission = Decimal()
+    taxes = Decimal()
+    fees = Decimal()
+    load = Decimal()
+    withholding = Decimal()
+    taxexempt = Boolean()
+    total = Decimal(required=True)
+    gain = Decimal()
+    subacctsec = OneOf(*INVSUBACCTS, required=True)
+    subacctfund = OneOf(*INVSUBACCTS, required=True)
+    loanid = Unicode(32)
+    statewithholding = Decimal()
+    penalty = Decimal()
+    inv401ksource = OneOf(*INV401KSOURCES)
+
+
+class BUYDEBT(INVBUY):
+    accrdint = Decimal()
+
+
+class BUYMF(INVBUY):
+    buytype = OneOf(*BUYTYPES, required=True)
+    relfitid = Unicode(255)
+
+
+class BUYOPT(INVBUY):
+    optbuytype = OneOf('BUYTOOPEN', 'BUYTOCLOSE', required=True)
+    shperctrct = Integer(required=True)
+
+
+class BUYOTHER(INVBUY):
+    pass
+
+
+class BUYSTOCK(INVBUY):
+    buytype = OneOf(*BUYTYPES, required=True)
+
+
+class CLOSUREOPT(INVTRAN, SECID):
+    optaction = OneOf('EXERCISE', 'ASSIGN', 'EXPIRE')
+    units = Decimal(required=True)
+    shperctrct = Integer(required=True)
+    subacctsec = OneOf(*INVSUBACCTS, required=True)
+    relfitid = Unicode(255)
+    gain = Decimal()
+
+
+class INCOME(INVTRAN, SECID, ORIGCURRENCY):
+    incometype = OneOf(*INCOMETYPES, required=True)
+    total = Decimal(required=True)
+    subacctsec = OneOf(*INVSUBACCTS, required=True)
+    subacctfund = OneOf(*INVSUBACCTS, required=True)
+    taxexempt = Boolean()
+    withholding = Decimal()
+    inv401ksource = OneOf(*INV401KSOURCES)
+
+
+class INVEXPENSE(INVTRAN, SECID, ORIGCURRENCY):
+    total = Decimal(required=True)
+    subacctsec = OneOf(*INVSUBACCTS, required=True)
+    subacctfund = OneOf(*INVSUBACCTS, required=True)
+    inv401ksource = OneOf(*INV401KSOURCES)
+
+
+class JRNLFUND(INVTRAN):
+    subacctto = OneOf(*INVSUBACCTS, required=True)
+    subacctfrom = OneOf(*INVSUBACCTS, required=True)
+    total = Decimal(required=True)
+
+
+class JRNLSEC(INVTRAN, SECID):
+    subacctto = OneOf(*INVSUBACCTS, required=True)
+    subacctfrom = OneOf(*INVSUBACCTS, required=True)
+    units = Decimal(required=True)
+
+
+class MARGININTEREST(INVTRAN, ORIGCURRENCY):
+    total = Decimal(required=True)
+    subacctfund = OneOf(*INVSUBACCTS, required=True)
+
+
+class REINVEST(INVTRAN, SECID, ORIGCURRENCY):
+    incometype = OneOf(*INCOMETYPES, required=True)
+    total = Decimal(required=True)
+    subacctsec = OneOf(*INVSUBACCTS)
+    units = Decimal(required=True)
+    unitprice = Decimal(4, required=True)
+    commission = Decimal()
+    taxes = Decimal()
+    fees = Decimal()
+    load = Decimal()
+    taxexempt = Boolean()
+    inv401ksource = OneOf(*INV401KSOURCES)
+
+
+class RETOFCAP(INVTRAN, SECID, ORIGCURRENCY):
+    total = Decimal(required=True)
+    subacctsec = OneOf(*INVSUBACCTS, required=True)
+    subacctfund = OneOf(*INVSUBACCTS, required=True)
+    inv401ksource = OneOf(*INV401KSOURCES)
+
+
+class SELLDEBT(INVSELL):
+    sellreason = OneOf('CALL', 'SELL', 'MATURITY', required=True)
+    accrdint = Decimal()
+
+
+class SELLMF(INVSELL):
+    selltype = OneOf(*SELLTYPES, required=True)
+    avgcostbasis = Decimal()
+    relfitid = Unicode(255)
+
+
+class SELLOPT(INVSELL):
+    optselltype = OneOf('SELLTOCLOSE', 'SELLTOOPEN', required=True)
+    shperctrct = Integer(required=True)
+    relfitid = Unicode(255)
+    reltype = OneOf('SPREAD', 'STRADDLE', 'NONE', 'OTHER')
+    secured = OneOf('NAKED', 'COVERED')
+
+
+class SELLOTHER(INVSELL):
+    pass
+
+
+class SELLSTOCK(INVSELL):
+    selltype = OneOf(*SELLTYPES, required=True)
+
+
+class SPLIT(INVTRAN, SECID):
+    subacctsec = OneOf(*INVSUBACCTS, required=True)
+    oldunits = Decimal(required=True)
+    newunits = Decimal(required=True)
+    numerator = Decimal(required=True)
+    denominator = Decimal(required=True)
+    fraccash = Decimal()
+    subacctfund = OneOf(*INVSUBACCTS)
+    inv401ksource = OneOf(*INV401KSOURCES)
+
+
+class TRANSFER(INVTRAN, SECID):
+    subacctsec = OneOf(*INVSUBACCTS, required=True)
+    units = Decimal(required=True)
+    tferaction = OneOf('IN', 'OUT', required=True)
+    postype = OneOf('SHORT', 'LONG', required=True)
+    avgcostbasis = Decimal()
+    unitprice = Decimal()
+    dtpurchase = DateTime()
+    inv401ksource = OneOf(*INV401KSOURCES)
+
+
+# Positions
+class INVPOS(SECID, CURRENCY):
+    heldinacct = OneOf(*INVSUBACCTS, required=True)
+    postype = OneOf('SHORT', 'LONG', required=True)
+    units = Decimal(required=True)
+    unitprice = Decimal(4, required=True)
+    mktval = Decimal(required=True)
+    dtpriceasof = DateTime(required=True)
+    memo = Unicode(255)
+    inv401ksource = OneOf(*INV401KSOURCES)
+
+
+class POSDEBT(INVPOS):
+    pass
+
+
+class POSMF(INVPOS):
+    unitsstreet = Decimal()
+    unitsuser = Decimal()
+    reinvdiv = Boolean()
+    reinvcg = Boolean()
+
+
+class POSOPT(INVPOS):
+    secured = OneOf('NAKED', 'COVERED')
+
+
+class POSOTHER(INVPOS):
+    pass
+
+
+class POSSTOCK(INVPOS):
+    unitsstreet = Decimal()
+    unitsuser = Decimal()
+    reinvdiv = Boolean()
+
+
+### UTILITIES
+def fixpath(path):
+    """Makes paths do the right thing."""
+    path = os.path.expanduser(path)
+    path = os.path.normpath(path)
+    path = os.path.normcase(path)
+    path = os.path.abspath(path)
+    return path
+
+OFXv1 = ('102', '103')
+OFXv2 = ('200', '203', '211')
+
+APPIDS = ('QWIN', # Quicken for Windows
+            'QMOFX', # Quicken for Mac
+            'QBW', # QuickBooks for Windows
+            'QBM', # QuickBooks for Mac
+            'Money', # MSFT Money
+            'Money Plus', # MSFT Money Plus
+            'PyOFX', # Custom
+)
+
+APPVERS = ('1500', # Quicken 2006/ Money 2006
+            '1600', # Quicken 2007/ Money 2007/ QuickBooks 2006
+            '1700', # Quicken 2008/ Money Plus/ QuickBooks 2007
+            '1800', # Quicken 2009/ QuickBooks 2008
+            '1900', # Quicken 2010/ QuickBooks 2009
+            '2000', # QuickBooks 2010
+            '9999', # Custom
+)
+
+# Currency codes
+ISO4217 = ('AE', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD', 'AWG', 'AZN',
+           'BAM', 'BBD', 'BDT', 'BGN', 'BHD', 'BIF', 'BMD', 'BND', 'BOB', 'BOV',
+           'BRL', 'BSD', 'BTN', 'BWP', 'BYR', 'BZD', 'CAD', 'CDF', 'CHE', 'CHF',
+           'CHW', 'CLF', 'CLP', 'CNY', 'COP', 'CO', 'CRC', 'CUC', 'CUP', 'CVE',
+           'CZK', 'DJF', 'DKK', 'DOP', 'DZD', 'EEK', 'EGP', 'ERN', 'ETB', 'EUR',
+           'FJD', 'FKP', 'GBP', 'GEL', 'GHS', 'GIP', 'GMD', 'GNF', 'GTQ', 'GYD',
+           'HKD', 'HNL', 'HRK', 'HTG', 'HUF', 'IDR', 'ILS', 'INR', 'IQD', 'IRR',
+           'ISK', 'JMD', 'JOD', 'JPY', 'KES', 'KGS', 'KHR', 'KMF', 'KPW', 'KRW',
+           'KWD', 'KYD', 'KZT', 'LAK', 'LBP', 'LKR', 'LRD', 'LSL', 'LTL', 'LVL',
+           'LYD', 'MAD', 'MDL', 'MGA', 'MKD', 'MMK', 'MNT', 'MOP', 'MRO', 'MUR',
+           'MVR', 'MWK', 'MXN', 'MXV', 'MYR', 'MZN', 'NAD', 'NGN', 'NIO', 'NOK',
+           'NPR', 'NZD', 'OMR', 'PAB', 'PEN', 'PGK', 'PHP', 'PKR', 'PLN', 'PYG',
+           'QAR', 'RON', 'RSD', 'RUB', 'RWF', 'SAR', 'SBD', 'SCR', 'SDG', 'SEK',
+           'SGD', 'SHP', 'SLL', 'SOS', 'SRD', 'STD', 'SVC', 'SYP', 'SZL', 'THB',
+           'TJS', 'TMT', 'TND', 'TOP', 'TRY', 'TTD', 'TWD', 'TZS', 'UAH', 'UGX',
+           'USD', 'USN', 'USS', 'UYI', 'UY', 'UZS', 'VEF', 'VND', 'VUV', 'WST',
+           'XAF', 'XAG', 'XA', 'XBA', 'XBB', 'XBC', 'XBD', 'XCD', 'XDR', 'XF',
+           'XOF', 'XPD', 'XPF', 'XPT', 'XTS', 'XXX', 'YER', 'ZAR', 'ZMK', 'ZWL')
+
+
+# Country codes
+ISO3166_1a3 = ('ABW', 'AFG', 'AGO', 'AIA', 'ALA', 'ALB', 'AND', 'ANT', 'ARE',
+               'ARG', 'ARM', 'ASM', 'ATA', 'ATF', 'ATG', 'AUS', 'AUT', 'AZE', 
+               'BDI', 'BEL', 'BEN', 'BFA', 'BGD', 'BGR', 'BHR', 'BHS', 'BIH',
+               'BLM', 'BLR', 'BLZ', 'BM', 'BOL', 'BRA', 'BRB', 'BRN', 'BTN',
+               'BVT', 'BWA', 'CAF', 'CAN', 'CCK', 'CHE', 'CHL', 'CHN', 'CIV',
+               'CMR', 'COD', 'COG', 'COK', 'COL', 'COM', 'CPV', 'CRI', 'CUB',
+               'CXR', 'CYM', 'CYP', 'CZE', 'DE', 'DJI', 'DMA', 'DNK', 'DOM',
+               'DZA', 'EC', 'EGY', 'ERI', 'ESH', 'ESP', 'EST', 'ETH', 'FIN',
+               'FJI', 'FLK', 'FRA', 'FRO', 'FSM', 'GAB', 'GBR', 'GEO', 'GGY', 
+               'GHA', 'GIB', 'GIN', 'GLP', 'GMB', 'GNB', 'GNQ', 'GRC', 'GRD', 
+               'GRL', 'GTM', 'GUF', 'GUM', 'GUY', 'HKG', 'HMD', 'HND', 'HRV',
+               'HTI', 'HUN', 'IDN', 'IMN', 'IND', 'IOT', 'IRL', 'IRN', 'IRQ',
+               'ISL', 'ISR', 'ITA', 'JAM', 'JEY', 'JOR', 'JPN', 'KAZ', 'KEN',
+               'KGZ', 'KHM', 'KIR', 'KNA', 'KOR', 'KWT', 'LAO', 'LBN', 'LBR',
+               'LBY', 'LCA', 'LIE', 'LKA', 'LSO', 'LT', 'LUX', 'LVA', 'MAC', 
+               'MAF', 'MAR', 'MCO', 'MDA', 'MDG', 'MDV', 'MEX', 'MHL', 'MKD',
+               'MLI', 'MLT', 'MMR', 'MNE', 'MNG', 'MNP', 'MOZ', 'MRT', 'MSR',
+               'MTQ', 'MUS', 'MWI', 'MYS', 'MYT', 'NAM', 'NCL', 'NER', 'NFK',
+               'NGA', 'NIC', 'NI', 'NLD', 'NOR', 'NPL', 'NR', 'NZL', 'OMN', 
+               'PAK', 'PAN', 'PCN', 'PER', 'PHL', 'PLW', 'PNG', 'POL', 'PRI',
+               'PRK', 'PRT', 'PRY', 'PSE', 'PYF', 'QAT', 'RE', 'RO', 'RUS',
+               'RWA', 'SA', 'SDN', 'SEN', 'SGP', 'SGS', 'SHN', 'SJM', 'SLB', 
+               'SLE', 'SLV', 'SMR', 'SOM', 'SPM', 'SRB', 'STP', 'SUR', 'SVK',
+               'SVN', 'SWE', 'SWZ', 'SYC', 'SYR', 'TCA', 'TCD', 'TGO', 'THA', 
+               'TJK', 'TKL', 'TKM', 'TLS', 'TON', 'TTO', 'TUN', 'TUR', 'TUV',
+               'TWN', 'TZA', 'UGA', 'UKR', 'UMI', 'URY', 'USA', 'UZB', 'VAT',
+               'VCT', 'VEN', 'VGB', 'VIR', 'VNM', 'VUT', 'WLF', 'WSM', 'YEM',
+               'ZAF', 'ZMB', 'ZWE')
+
+# 3-letter language codes
+ISO639_2 = ('AAR', 'ABK', 'ACE', 'ACH', 'ADA', 'ADY', 'AFA', 'AFH', 'AFR',
+            'AIN', 'AKA', 'AKK', 'SQI', 'ALE', 'ALG', 'ALT', 'AMH', 'ANG', 
+            'ANP', 'APA', 'ARA', 'ARC', 'ARG', 'HYE', 'ARN', 'ARP', 'ART',
+            'ARW', 'ASM', 'AST', 'ATH', 'AUS', 'AVA', 'AVE', 'AWA', 'AYM',
+            'AZE', 'BAD', 'BAI', 'BAK', 'BAL', 'BAM', 'BAN', 'EUS', 'BAS', 
+            'BAT', 'BEJ', 'BEL', 'BEM', 'BEN', 'BER', 'BHO', 'BIH', 'BIK', 
+            'BIN', 'BIS', 'BLA', 'BNT', 'BOS', 'BRA', 'BRE', 'BTK', 'BUA',
+            'BUG', 'BUL', 'MYA', 'BYN', 'CAD', 'CAI', 'CAR', 'CAT', 'CEB',
+            'CEL', 'CHA', 'CHB', 'CHE', 'CHG', 'ZHO', 'CHK', 'CHM', 'CHN', 
+            'CHO', 'CHP', 'CHR', 'CHV', 'CHY', 'CMC', 'COP', 'COR', 'COS',
+            'CPE', 'CPF', 'CPP', 'CRE', 'CRH', 'CRP', 'CSB', 'CUS', 'CES',
+            'DAK', 'DAN', 'DAR', 'DAY', 'DEL', 'DEN', 'DGR', 'DIN', 'DIV',
+            'DOI', 'DRA', 'DSB', 'DUA', 'DUM', 'NLD', 'DZO', 'EFI', 'EGY',
+            'EKA', 'ELX', 'ENG', 'ENM', 'EPO', 'EST', 'EWE', 'EWO', 'FAN',
+            'FAO', 'FAT', 'FIJ', 'FIL', 'FIN', 'FON', 'FRA', 'FRM', 'FRO',
+            'FRR', 'FRS', 'FRY', 'FUL', 'FUR', 'GAA', 'GAY', 'GBA', 'GEM',
+            'KAT', 'GEZ', 'GIL', 'GLA', 'GLE', 'GLG', 'GLV', 'GMH', 'GOH', 
+            'GON', 'GOR', 'GOT', 'GRB', 'GRC', 'ELL', 'GRN', 'GSW', 'GUJ', 
+            'GWI', 'HAI', 'HAT', 'HAW', 'HEB', 'HER', 'HIL', 'HIM', 'HIN',
+            'HIT', 'HMN', 'HMO', 'HRV', 'HSB', 'HUN', 'HUP', 'IBA', 'IBO',
+            'ISL', 'IDO', 'III', 'IJO', 'ILE', 'ILO', 'INA', 'INC', 'IND',
+            'INE', 'INH', 'IPK', 'IRA', 'IRO', 'ITA', 'JAV', 'JBO', 'JPN',
+            'JPR', 'JRB', 'KAA', 'KAB', 'KAC', 'KAL', 'KAM', 'KAN', 'KAR',
+            'KAS', 'KAW', 'KAZ', 'KBD', 'KHA', 'KHI', 'KHM', 'KHO', 'KIK',
+            'KIN', 'KIR', 'KMB', 'KOK', 'KOM', 'KON', 'KOR', 'KOS', 'KPE',
+            'KRC', 'KRL', 'KRO', 'KUA', 'KUM', 'KUR', 'KUT', 'LAD', 'LAH',
+            'LAM', 'LAO', 'LAT', 'LAV', 'LEZ', 'LIM', 'LIN', 'LIT', 'LOL', 
+            'LOZ', 'LTZ', 'LUA', 'LUB', 'LUG', 'LUI', 'LUN', 'LUO', 'LUS',
+            'MKD', 'MAD', 'MAG', 'MAH', 'MAI', 'MAK', 'MAL', 'MAN', 'MRI', 
+            'MAP', 'MAR', 'MAS', 'MSA', 'MDF', 'MDR', 'MEN', 'MGA', 'MIC', 
+            'MIN', 'MIS', 'MKH', 'MLG', 'MLT', 'MNC', 'MNI', 'MNO', 'MOH', 
+            'MON', 'MOS', 'MUL', 'MUN', 'MUS', 'MWL', 'MWR', 'MYN', 'MYV', 
+            'NAH', 'NAI', 'NAP', 'NAV', 'NBL', 'NDE', 'NDO', 'NDS', 'NEP', 
+            'NEW', 'NIA', 'NIC', 'NNO', 'NOB', 'NOG', 'NON', 'NOR', 'NQO', 
+            'NSO', 'NUB', 'NWC', 'NYA', 'NYM', 'NYN', 'NYO', 'NZI', 'OCI',
+            'OJI', 'ORI', 'ORM', 'OSA', 'OSS', 'OTA', 'OTO', 'PAA', 'PAG',
+            'PAL', 'PAM', 'PAN', 'PAP', 'PEO', 'FAS', 'PHI', 'PHN', 'PLI',
+            'POL', 'PON', 'POR', 'PRA', 'PRO', 'PUS', 'QUE', 'RAJ', 'RAP', 
+            'RAR', 'ROA', 'ROH', 'ROM', 'RON', 'RUN', 'RUP', 'RUS', 'SAD',
+            'SAG', 'SAH', 'SAI', 'SAL', 'SAM', 'SAN', 'SAS', 'SAT', 'SCN',
+            'SCO', 'SEL', 'SEM', 'SGA', 'SGN', 'SHN', 'SID', 'SIN', 'SIO', 
+            'SIT', 'SLA', 'SLO', 'SLV', 'SMA', 'SME', 'SMI', 'SMJ', 'SMN', 
+            'SMO', 'SMS', 'SNA', 'SND', 'SNK', 'SOG', 'SOM', 'SON', 'SOT', 
+            'SPA', 'SRD', 'SRN', 'SRP', 'SRR', 'SSA', 'SSW', 'SUK', 'SUN', 
+            'SUS', 'SUX', 'SWA', 'SWE', 'SYC', 'SYR', 'TAH', 'TAI', 'TAM', 
+            'TAT', 'TEL', 'TEM', 'TER', 'TET', 'TGK', 'TGL', 'THA', 'BOD', 
+            'TIG', 'TIR', 'TIV', 'TKL', 'TLH', 'TLI', 'TMH', 'TOG', 'TON', 
+            'TPI', 'TSI', 'TSN', 'TSO', 'TUK', 'TUM', 'TUP', 'TUR', 'TUT', 
+            'TVL', 'TWI', 'TYV', 'UDM', 'UGA', 'UIG', 'UKR', 'UMB', 'UND', 
+            'URD', 'UZB', 'VAI', 'VEN', 'VIE', 'VOL', 'VOT', 'WAK', 'WAL', 
+            'WAR', 'WAS', 'CYM', 'WEN', 'WLN', 'WOL', 'XAL', 'XHO', 'YAO', 
+            'YAP', 'YID', 'YOR', 'YPK', 'ZAP', 'ZBL', 'ZEN', 'ZHA', 'ZND',
+            'ZUL', 'ZUN', 'ZXX', 'ZZA') 
+
+# ISO3166_1a2 country codes and numbering agencies
+# Swiped from
+# http://code.activestate.com/recipes/498277-isin-validator/
+numberingAgencies = {'BE': ('Euronext - Brussels', 'Belgium'),
+'FR': ('Euroclear France', 'France'),
+'BG': ('Central Depository of Bulgaria', 'Bulgaria'),
+'VE': ('Bolsa de Valores de Caracas, C.A.', 'Venezuela'),
+'DK': ('VP Securities Services', 'Denmark'),
+'HR': ('SDA - Central Depository Agency of Croatia', 'Croatia'),
+'DE': ('Wertpapier-Mitteilungen', 'Germany'),
+'JP': ('Tokyo Stock Exchange', 'Japan'),
+'H': ('KELER', 'Hungary'),
+'HK': ('Hong Kong Exchanges and Clearing Ltd', 'Hong Kong'),
+'JO': ('Securities Depository Center of Jordan', 'Jordan'),
+'BR': ('Bolsa de Valores de Sao Paulo - BOVESPA', 'Brazil'),
+'XS': ('Clearstream Banking', 'Clearstream'),
+'FI': ('Finnish Central Securities Depository Ltd', 'Finland'),
+'GR': ('Central Securities Depository S.A.', 'Greece'),
+'IS': ('Icelandic Securities Depository', 'Iceland'),
+'R': ('The National Depository Center, Russia', 'Russia'),
+'LB': ('Midclear S.A.L.', 'Lebanon'),
+'PT': ('Interbolsa - Sociedade Gestora de Sistemas de Liquidação e Sistemas Centralizados de Valores', 'Portugal'),
+'NO': ('Verdipapirsentralen (VPS) ASA', 'Norway'),
+'TW': ('Taiwan Stock Exchange Corporation', 'Taiwan, Province of China'),
+'UA': ('National Depository of Ukraine', 'Ukraine'),
+'TR': ('Takasbank', 'Turkey'),
+'LK': ('Colombo Stock Exchange', 'Sri Lanka'),
+'LV': ('OMX - Latvian Central Depository', 'Latvia'),
+'L': ('Clearstream Banking', 'Luxembourg'),
+'TH': ('Thailand Securities Depository Co., Ltd', 'Thailand'),
+'NL': ('Euronext Netherlands', 'Netherlands'),
+'PK': ('Central Depository Company of Pakistan Ltd', 'Pakistan'),
+'PH': ('Philippine Stock Exchange, Inc.', 'Philippines'),
+'RO': ('The National Securities Clearing Settlement and Depository Corporation', 'Romania'),
+'EG': ('Misr for Central Clearing, Depository and Registry (MCDR)', 'Egypt'),
+'PL': ('National Depository for Securities', 'Poland'),
+'AA': ('ANNA Secretariat', 'ANNAland'),
+'CH': ('Telekurs Financial Ltd.', 'Switzerland'),
+'CN': ('China Securities Regulatory Commission', 'China'),
+'CL': ('Deposito Central de Valores', 'Chile'),
+'EE': ('Estonian Central Depository for Securities', 'Estonia'),
+'CA': ('The Canadian Depository for Securities Ltd', 'Canada'),
+'IR': ('Tehran Stock Exchange Services Company', 'Iran'),
+'IT': ('Ufficio Italiano dei Cambi', 'Italy'),
+'ZA': ('JSE Securities Exchange of South Africa', 'South Africa'),
+'CZ': ('Czech National Bank', 'Czech Republic'),
+'CY': ('Cyprus Stock Exchange', 'Cyprus'),
+'AR': ('Caja de Valores S.A.', 'Argentina'),
+'A': ('Australian Stock Exchange Limited', 'Australia'),
+'AT': ('Oesterreichische Kontrollbank AG', 'Austria'),
+'IN': ('Securities and Exchange Board of India', 'India'),
+'CS': ('Central Securities Depository A.D. Beograd', 'Serbia & Montenegro'),
+'CR': ('Central de Valores - CEVAL', 'Costa Rica'),
+'IE': ('The Irish Stock Exchange', 'Ireland'),
+'ID': ('PT. Kustodian Sentral Efek Indonesia (Indonesian Central Securities Depository (ICSD))', 'Indonesia'),
+'ES': ('Comision Nacional del Mercado de Valores (CNMV)', 'Spain'),
+'PE': ('Bolsa de Valores de Lima', 'Per'),
+'TN': ('Sticodevam', 'Tunisia'),
+'PA': ('Bolsa de Valores de Panama S.A.', 'Panama'),
+'SG': ('Singapore Exchange Limited', 'Singapore'),
+'IL': ('The Tel Aviv Stock Exchange', 'Israel'),
+'US': ("Standard & Poor's - CUSIP Service Bureau", 'USA'),
+'MX': ('S.D. Indeval SA de CV', 'Mexico'),
+'SK': ('Central Securities Depository SR, Inc.', 'Slovakia'),
+'KR': ('Korea Exchange - KRX', 'Korea'),
+'SI': ('KDD Central Securities Clearing Corporation', 'Slovenia'),
+'KW': ('Kuwait Clearing Company', 'Kuwait'),
+'MY': ('Bursa Malaysia', 'Malaysia'),
+'MO': ('MAROCLEAR S.A.', 'Morocco'),
+'SE': ('VPC AB', 'Sweden'),
+'GB': ('London Stock Exchange', 'United Kingdom')}
+
+def cusipChecksum(base):
+    """
+    Compute the check digit for a base Committee on Uniform Security
+    Identification Procedures (CUSIP) securities identifier.
+    Input an 8-digit alphanum str, output a single-char str.
+
+    http://goo.gl/4TeWl
+    """
+    def encode(index, char):
+        num = {'*': 36, '@': 37, '#': 38}.get(char, int(char, 36))
+        return str(num * 2) if index % 2 else str(num)
+
+    assert len(base) == 8
+    for badLetter in 'IO':
+        assert badLetter not in base
+    check = ''.join([encode(index, char) for index, char in enumerate(base)])
+    check = sum([int(digit) for digit in check])
+    return str((10 - (check % 10)) % 10)
+
+def sedolChecksum(base):
+    """
+    Stock Exchange Daily Official List (SEDOL)
+    http://goo.gl/HxFWL
+    """
+    weights = (1, 3, 1, 7, 3, 9)
+
+    assert len(base) == 6
+    for badLetter in 'AEIO':
+        assert badLetter not in base
+    check = sum([int(char, 36) * weights[n] for n, char in enumerate(base)])
+    return str((10 - (check % 10)) % 10)
+
+def isinChecksum(base):
+    """
+    Compute the check digit for a base International Securities Identification
+    Number (ISIN).  Input an 11-char alphanum str, output a single-char str.
+
+    http://goo.gl/8kPzD
+    """
+    assert len(base) == 11
+    assert alphanum[:2] in numberingAgencies.keys()
+    check = ''.join([int(char, 36) for char in base])
+    check = check[::-1] # string reversal
+    check = ''.join([d if n%2 else str(int(d)*2) for n, d in enumerate(check)])
+    return str((10 - sum([int(d) for d in check]) % 10) % 10)
+
+def cusip2isin(cusip, nation=None):
+    nation = nation or 'US'
+    assert len(cusip) == 9
+    assert CUSIPchecksum(cusip[:8]) == cusip[9]
+    base = nation + cusip
+    return base + ISINchecksum(base)
+
+def sedol2isin(sedol, nation=None):
+    nation = nation or 'GB'
+    assert len(sedol) == 7
+    assert SEDOLchecksum(sedol[:6]) == sedol[6]
+    base = nation + sedol.zfill(9)
+    return base + ISINchecksum(base)
+
+def settleDate(dt):
+    """
+    Given a trade date (or datetime), return the trade settlement date(time)
+    """
+    def nextBizDay(dt):
+        stop = False
+        while not stop:
+            dt += datetime.timedelta(days=1)
+            if dt.weekday() in (5, 6) or dt in NYSEcalendar.holidays(dt.year):
+                stop = False
+            else:
+                stop = True
+        return dt
+
+    #print dt
+    for n in range(3):
+        dt = nextBizDay(dt)
+    #print dt
+    return dt
+
+
+class NYSEcalendar(object):
+    """
+    The Board has determined that the Exchange will not be open for business on
+        New Year's Day,
+        Martin Luther King, Jr. Day,
+        Washington's Birthday,
+        Good Friday,
+        Memorial Day,
+        Independence Day,
+        Labor Day,
+        Thanksgiving Day
+        and Christmas Day.
+    Martin Luther King, Jr. Day, Washington's Birthday and Memorial Day will be
+    celebrated on the third Monday in January, the third Monday in February
+    and the last Monday in May, respectively
+
+    The Exchange Board has also determined that, when any holiday observed by
+    the Exchange falls on a Saturday, the Exchange will not be open for
+    business on the preceding Friday and when any holiday observed by the
+    Exchange falls on a Sunday, the Exchange will not be open for business on
+    the succeeding Monday, unless unusual business conditions exist,
+    such as the ending of a monthly or the yearly accounting period.
+    """
+    _cal = calendar.Calendar()
+
+    @classmethod
+    def _weekdays(cls, year, month, weekday):
+        """
+        Filter datetime.dates in (year, month) for a given weekday.
+        """
+        def weekdayTest(days):
+            return (days[0] > 0) and (days[1] == weekday)
+        return [datetime.date(year, month, day) \
+                for (day, wkday) in itertools.ifilter(weekdayTest,
+                                        cls._cal.itermonthdays2(year, month))]
+
+    @classmethod
+    def mondays(cls, year, month):
+        return cls._weekdays(year, month, weekday=0)
+
+    @classmethod
+    def thursdays(cls, year, month):
+        return cls._weekdays(year, month, weekday=3)
+
+    @classmethod
+    def holidays(cls, year):
+        hols = [datetime.date(year, 7, 4), # Independence Day
+                datetime.date(year, 12, 25), # Christmas
+                cls.mondays(year, 1)[2], # MLK Day
+                findEaster(year) - datetime.timedelta(days=2), # Good Friday
+                cls.mondays(year, 2)[2], # Washington's Birthday
+                cls.mondays(year, 5)[-1], # Memorial Day
+                cls.mondays(year, 9)[0], # Labor Day
+                cls.thursdays(year, 11)[-1], # Thanksgiving
+        ]
+        newYearsDay = datetime.date(year, 1, 1)
+        if newYearsDay.weekday() != 5:
+            # If New Year's Day falls on a Saturday, then it would get moved
+            # back to the preceding Friday, except that would be 12/31, which
+            # is the close of the monthly and annual accounting cycle... so
+            # in that case, the holiday just gets skipped instead.
+            hols.append(newYearsDay)
+        hols.sort()
+        return hols
+
+
+def findEaster(year):
+    """
+    Copyright (c) 2003  Gustavo Niemeyer <niemeyer@conectiva.com>
+    The code is licensed under the PSF license.
+
+    This method was ported from the work done by GM Arts,
+    on top of the algorithm by Claus Tondering, which was
+    based in part on the algorithm of Ouding (1940), as
+    quoted in "Explanatory Supplement to the Astronomical
+    Almanac", P.  Kenneth Seidelmann, editor.
+
+    Edited by csingley to "de-modulize" the function to fit into pyofx,
+    and to remove unused Easter calculation methods.
+
+    This algorithm implements the revised method of easter calculation,
+    in Gregorian calendar, valid in years 1583 to 4099.
+
+    More about the algorithm may be found at:
+    http://users.chariot.net.au/~gmarts/eastalg.htm
+    and
+    http://www.tondering.dk/claus/calendar.html
+    """
+    # g - Golden year - 1
+    # c - Century
+    # h - (23 - Epact) mod 30
+    # i - Number of days from March 21 to Paschal Full Moon
+    # j - Weekday for PFM (0=Sunday, etc)
+    # p - Number of days from March 21 to Sunday on or before PFM
+    #     (-6 to 28)
+
+    y = year
+    g = y % 19
+    e = 0
+
+    # New method (i.e. EASTER_WESTERN)
+    c = y/100
+    h = (c-c/4-(8*c+13)/25+19*g+15)%30
+    i = h-(h/28)*(1-(h/28)*(29/(h+1))*((21-g)/11))
+    j = (y+y/4+i+2-c+c/4)%7
+
+    # p can be from -6 to 56 corresponding to dates 22 March to 23 May
+    # (later dates apply to method 2, although 23 May never actually occurs)
+    p = i-j+e
+    d = 1+(p+27+(p+6)/40)%31
+    m = 3+(p+26)/30
+    return datetime.date(y,m,d)
+
+
+### CLI COMMANDS
 def do_config(args):
     # FIXME
     server = args.server
@@ -799,8 +1849,6 @@ def do_stmt(args):
     for acctid in args.investment:
         accts.append(InvAcct(args.brokerid, acctid))
 
-    #print(accts)
-
     # Use dummy password for dummy request
     if args.dry_run:
         password = 'T0PS3CR3T'
@@ -810,7 +1858,7 @@ def do_stmt(args):
     # Statement parameters
     d = vars(args)
     # convert dtstart/dtend/dtasof from str to datetime
-    kwargs = {k:converters.DateTime.convert(v) for k,v in d.items() if k.startswith('dt')}
+    kwargs = {k:DateTime.convert(v) for k,v in d.items() if k.startswith('dt')}
     # inctrans/incpos/incbal 
     kwargs.update({k:v for k,v in d.items() if k.startswith('inc')})
 
