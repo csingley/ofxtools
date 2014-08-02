@@ -1,5 +1,12 @@
-pyofx is a Python library for working with Open Financial Exchange (OFX) data, which is the standard format for downloading financial information from banks and stockbrokers in the USA.  Facilities provided for processing both OFXv1 (SGML) and OFXv2 (pure XML) include:
+pyofx is a Python library for working with Open Financial Exchange (OFX) data - both OFXv1 (SGML) and OFXv2 (pure XML) - which is the standard format for downloading financial information from banks and stockbrokers in the USA.
 
-    * download (client.py);
-    * parsing (parser.py);
-    * validation and conversion to Python data structures (valid.py).
+The primary facilities provided include:
+    * The OFXClient class, which dowloads OFX statements from the Internet
+    * A wrapper to execute ofx.py as a script 
+      Edit pyofx.example.cfg and save to ~/.config/pyofx/pyofx.cfg, then run
+      ofx.py
+    * The OFXParser class, which converts OFX data into a standard ElementTree
+      structure for further processing in Python.
+      !! OFXParser is currently broken following some changes to Python 3 !!
+
+pyofx has no external dependencies beyond stdlib.

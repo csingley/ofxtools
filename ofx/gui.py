@@ -15,8 +15,7 @@ from PyQt4 import QtGui, QtCore
 
 from mainwindow import Ui_MainWindow
 
-from client import OFXClient, OFXConfigParser
-from utilities import _, OFXv1, OFXv2, APPIDS, APPVERS
+from ofx import OFXClient, OFXConfigParser, OFXv1, OFXv2, APPIDS, APPVERS
 
 if sys.version_info < (2, 7):
     raise RuntimeError('ofx.gui library requires Python v2.7+')
