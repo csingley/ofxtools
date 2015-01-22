@@ -457,7 +457,6 @@ class Element(ET.Element):
                             #REINVEST, RETOFCAP)
     def convert(self):
         """ """
-        #converterClass = getattr(converters, self.tag)
         converterClass = globals()[self.tag]
         assert issubclass(converterClass, Aggregate)
         attributes = self._flatten()
@@ -556,16 +555,13 @@ class OFXResponse(object):
             return
         for sec in seclist:
             # Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up _flatten()
-            mfassetclass = sec.find('MFASSETCLASS')
-            if mfassetclass:
+            mfassetclass = sec.find('./MFASSETCLASS')
+            if mfassetclass is not None:
                 sec.remove(mfassetclass)
-                for portion in mfassetclass:
-                    sec.mfassetclass.append(mfassetclass.convert())
-            fimfassetclass = sec.find('FIMFASSETCLASS')
+            fimfassetclass = sec.find('./FIMFASSETCLASS')
             if fimfassetclass:
                 sec.remove(fimfassetclass)
-                for portion in mfassetclass:
-                    sec.fimfassetclass.append(fimfassetclass.convert())
+
             self.seclist.append(sec.convert())
 
     def __repr__(self):
@@ -955,7 +951,7 @@ class Aggregate(object):
             setattr(self, name, value)
         if kwargs:
             raise ValueError("Undefined element(s) for '%s': %s"
-                            % (self.__class__.__name__, kwargs.viewkeys()))
+                            % (self.__class__.__name__, kwargs.keys()))
 
     @property
     def elements(self):
