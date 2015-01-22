@@ -1,5 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import sys
 import decimal
 import datetime
 import time
@@ -8,14 +9,22 @@ import uuid
 from xml.etree.cElementTree import Element, SubElement, tostring
 from collections import defaultdict, OrderedDict
 import contextlib
-from urllib.request import Request, urlopen, HTTPError
-from urllib.parse import urlparse
 from io import StringIO
 import os
 import re
 import xml.etree.ElementTree as ET
-from configparser import SafeConfigParser
 from getpass import getpass
+
+PYTHON_VERSION = sys.version_info.major
+
+if  PYTHON_VERSION == 3:
+    from configparser import SafeConfigParser
+    from urllib.request import Request, urlopen, HTTPError
+    from urllib.parse import urlparse
+else:
+    from ConfigParser import SafeConfigParser
+    from urllib2 import Request, urlopen, HTTPError
+    from urlparse import urlparse
 
 
 class BankAcct:
@@ -359,7 +368,7 @@ class OFXParser(ET.ElementTree):
         source = source[headermatch.end():]
 
         ### Then parse tag soup into tree of Elements
-        parser = OFXTreeBuilder(element_factory=OFXElement)
+        parser = OFXTreeBuilder(element_factory=Element)
         parser.feed(source)
         self._root = parser.close()
 
@@ -393,7 +402,7 @@ class OFXTreeBuilder(ET.TreeBuilder):
                     msg = "<%s> is a closing tag, but has trailing text: '%s'"\
                             % (tag, text)
                     raise ParseError(msg)
-                self.start(tag, attrs={})
+                self.start(tag, {})
                 self.data(text)
                 # Closing tags are optional for OFXv1 data elements
                 # Close them all, whether or not they're explicitly closed
@@ -414,15 +423,15 @@ class OFXTreeBuilder(ET.TreeBuilder):
                         raise ParseError(err.message)
                 else:
                     # aggregate opening tag
-                    self.start(tag, attrs={})
+                    self.start(tag, {})
                     if closeTag:
                         # regex captures the entire closing tag
-                        assert closeTag.replace(tag, '') == '</>'
-                        try:
-                            self.end(tag)
-                        except ParseError as err:
-                            err.message += ' </%s> #%s' % (tag, self.tagCount[tag]) # FIXME
-                            raise ParseError(err.message)
+                       assert closeTag.replace(tag, '') == '</>'
+                       try:
+                           self.end(tag)
+                       except ParseError as err:
+                           err.message += ' </%s> #%s' % (tag, self.tagCount[tag]) # FIXME
+                           raise ParseError(err.message)
 
     def end(self, tag):
         try:
@@ -439,7 +448,7 @@ class OFXTreeBuilder(ET.TreeBuilder):
                 raise
 
 
-class OFXElement(ET.Element):
+class Element(ET.Element):
     """ """
     #currencyTags = ()
     #origcurrencyAggregates = (STMTTRN, INVBUY,
@@ -448,7 +457,8 @@ class OFXElement(ET.Element):
                             #REINVEST, RETOFCAP)
     def convert(self):
         """ """
-        converterClass = getattr(converters, self.tag)
+        #converterClass = getattr(converters, self.tag)
+        converterClass = globals()[self.tag]
         assert issubclass(converterClass, Aggregate)
         attributes = self._flatten()
 
