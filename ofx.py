@@ -8,9 +8,7 @@ import datetime
 import time
 import calendar
 import uuid
-#from xml.etree.cElementTree import Element, SubElement, tostring
 import xml.etree.ElementTree as ET
-from xml.etree.ElementTree import SubElement, tostring
 from collections import defaultdict, OrderedDict
 import contextlib
 from io import StringIO
@@ -32,8 +30,8 @@ else:
 
 # local imports
 from lib import ISO639_2, ISO4217, ISO3166_1a3
-from converters import OFXElement, OFXbool, OFXstr, OneOf, OFXint, OFXdecimal,\
-        OFXdatetime
+from converters import (OFXElement, OFXbool, OFXstr, OneOf, OFXint, OFXdecimal,
+                        OFXdatetime)
 from utils import fixpath
 
 
@@ -73,7 +71,7 @@ class BankAcct(object):
         # **kwargs catches incpos/dtasof
         # Requesting transactions without dtstart/dtend (which is the default)
         # asks for all transactions on record.
-        rq = Element(self.stmtrq_tag)
+        rq = ET.Element(self.stmtrq_tag)
         rq.append(self.acctfrom)
         rq.append(self.inctran(inctran, dtstart, dtend))
         return rq
@@ -81,19 +79,19 @@ class BankAcct(object):
     @property
     def acctfrom(self):
         """ """
-        acctfrom = Element(self.acctfrom_tag)
+        acctfrom = ET.Element(self.acctfrom_tag)
         for tag, text in self._acct.items():
-            SubElement(acctfrom, tag).text = text
+            ET.SubElement(acctfrom, tag).text = text
         return acctfrom
 
     def inctran(self, inctran, dtstart, dtend):
         """ """
-        tran = Element('INCTRAN')
+        tran = ET.Element('INCTRAN')
         if dtstart:
-            SubElement(tran, 'DTSTART').text = OFXdatetime.unconvert(dtstart)
+            ET.SubElement(tran, 'DTSTART').text = OFXdatetime.unconvert(dtstart)
         if dtend:
-            SubElement(tran, 'DTEND').text = OFXdatetime.unconvert(dtend)
-        SubElement(tran, 'INCLUDE').text = OFXbool().unconvert(inctran)
+            ET.SubElement(tran, 'DTEND').text = OFXdatetime.unconvert(dtend)
+        ET.SubElement(tran, 'INCLUDE').text = OFXbool().unconvert(inctran)
         return tran
 
 
@@ -141,19 +139,19 @@ class InvAcct(BankAcct):
 
     def incoo(self):
         # Include Open Orders - not implemented
-        oo = Element('INCOO')
+        oo = ET.Element('INCOO')
         oo.text = OFXbool().unconvert(False)
         return oo
 
     def incpos(self, dtasof, incpos):
-        pos = Element('INCPOS')
+        pos = ET.Element('INCPOS')
         if dtasof:
-            SubElement(pos, 'DTASOF').text = OFXdatetime.unconvert(dtasof)
-        SubElement(pos, 'INCLUDE').text = OFXbool().unconvert(incpos)
+            ET.SubElement(pos, 'DTASOF').text = OFXdatetime.unconvert(dtasof)
+        ET.SubElement(pos, 'INCLUDE').text = OFXbool().unconvert(incpos)
         return pos
 
     def incbal(self, incbal):
-        bal = Element('INCBAL')
+        bal = ET.Element('INCBAL')
         bal.text = OFXbool().unconvert(incbal)
         return bal
 
@@ -227,29 +225,29 @@ class OFXClient:
             raise ValueError
 
     def signon(self, user, password):
-        msgsrq = Element('SIGNONMSGSRQV1')
-        sonrq = SubElement(msgsrq, 'SONRQ')
-        SubElement(sonrq, 'DTCLIENT').text = OFXdatetime.unconvert(datetime.datetime.now())
-        SubElement(sonrq, 'USERID').text = user
-        SubElement(sonrq, 'USERPASS').text = password
-        SubElement(sonrq, 'LANGUAGE').text = 'ENG'
+        msgsrq = ET.Element('SIGNONMSGSRQV1')
+        sonrq = ET.SubElement(msgsrq, 'SONRQ')
+        ET.SubElement(sonrq, 'DTCLIENT').text = OFXdatetime.unconvert(datetime.datetime.now())
+        ET.SubElement(sonrq, 'USERID').text = user
+        ET.SubElement(sonrq, 'USERPASS').text = password
+        ET.SubElement(sonrq, 'LANGUAGE').text = 'ENG'
         if self.org:
-            fi = SubElement(sonrq, 'FI')
-            SubElement(fi, 'ORG').text = self.org
+            fi = ET.SubElement(sonrq, 'FI')
+            ET.SubElement(fi, 'ORG').text = self.org
             if self.fid:
-                SubElement(fi, 'FID').text = self.fid
-        SubElement(sonrq, 'APPID').text = self.appid
-        SubElement(sonrq, 'APPVER').text = str(self.appver)
+                ET.SubElement(fi, 'FID').text = self.fid
+        ET.SubElement(sonrq, 'APPID').text = self.appid
+        ET.SubElement(sonrq, 'APPVER').text = str(self.appver)
         return msgsrq
 
     def statement_request(self, user, password, accounts, **kwargs):
         """ """
-        ofx = Element('OFX')
+        ofx = ET.Element('OFX')
         ofx.append(self.signon(user, password))
 
         # Create MSGSRQ SubElements for each acct type, indexed by tag
         msgsrq_tags = [getattr(a, 'msgsrq_tag') for a in (BankAcct, CcAcct, InvAcct)]
-        msgsrqs = {tag:SubElement(ofx, tag) for tag in msgsrq_tags}
+        msgsrqs = {tag:ET.SubElement(ofx, tag) for tag in msgsrq_tags}
 
         for account in accounts:
             stmtrq = account.stmtrq(**kwargs)
@@ -270,12 +268,12 @@ class OFXClient:
         """ """
         user = user or 'elmerfudd'
         password = password or 'TOPSECRET'
-        ofx = Element('OFX')
+        ofx = ET.Element('OFX')
         ofx.append(self.signon(user, password))
-        msgsrq = SubElement(ofx, 'PROFMSGSRQV1')
-        profrq = Element('PROFRQ')
-        SubElement(profrq, 'CLIENTROUTING').text = 'NONE'
-        SubElement(profrq, 'DTPROFUP').text = OFXdatetime.unconvert(datetime.date(1990,1,1))
+        msgsrq = ET.SubElement(ofx, 'PROFMSGSRQV1')
+        profrq = ET.Element('PROFRQ')
+        ET.SubElement(profrq, 'CLIENTROUTING').text = 'NONE'
+        ET.SubElement(profrq, 'DTPROFUP').text = OFXdatetime.unconvert(datetime.date(1990,1,1))
         msgsrq.append(self._wraptrn(profrq))
         return ofx
 
@@ -284,7 +282,7 @@ class OFXClient:
         mimetype = 'application/x-ofx'
         HTTPheaders = {'Content-type': mimetype, 'Accept': '*/*, %s' % mimetype}
         # py3k - ElementTree.tostring() returns bytes not str
-        request = self.ofxheader + tostring(request).decode()
+        request = self.ofxheader + ET.tostring(request).decode()
         # py3k: urllib.request wants bytes not str
         request = Request(self.url, request.encode(), HTTPheaders)
         try:
@@ -310,8 +308,8 @@ class OFXClient:
         tag = rq.tag
         assert 'TRNRQ' not in tag
         assert tag[-2:] == 'RQ'
-        trnrq = Element(tag.replace('RQ', 'TRNRQ'))
-        SubElement(trnrq, 'TRNUID').text = str(uuid.uuid4())
+        trnrq = ET.Element(tag.replace('RQ', 'TRNRQ'))
+        ET.SubElement(trnrq, 'TRNUID').text = str(uuid.uuid4())
         trnrq.append(rq)
         return trnrq
 
@@ -1338,7 +1336,7 @@ def do_profile(args):
 
     # Handle request
     if args.dry_run:
-        print(client.ofxheader + tostring(request).decode())
+        print(client.ofxheader + ET.tostring(request).decode())
     else:
         response = client.download(request)
         print(response.read())
@@ -1378,7 +1376,7 @@ def do_stmt(args):
 
     # Handle request
     if args.dry_run:
-        print(client.ofxheader + tostring(request).decode())
+        print(client.ofxheader + ET.tostring(request).decode())
     else:
         response = client.download(request)
         print(response.read())
