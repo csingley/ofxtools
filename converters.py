@@ -29,15 +29,14 @@ class OFXElement(object):
             raise ValueError("Unknown args for '%s'- args: %r; kwargs: %r"
                             % (self.__class__.__name__, args, kwargs))
 
-    def convert(self, value):
+    def convert(self, value, strict=True):
         """ Override in subclass """
         raise NotImplementedError
-
 
 class OFXbool(OFXElement):
     mapping = {'Y': True, 'N': False}
 
-    def convert(self, value):
+    def convert(self, value, strict=True):
         if value is None and not self.required:
             return None
         return self.mapping[value]
@@ -57,10 +56,10 @@ class OFXstr(OFXElement):
         self.length = length
         super(OFXstr, self)._init(*args, **kwargs)
 
-    def convert(self, value):
+    def convert(self, value, strict=True):
         if value is None and not self.required:
             return None
-        if self.length is not None and len(value) > self.length:
+        if strict and self.length is not None and len(value) > self.length:
             raise ValueError("'%s' is too long; max length=%s" % (value, self.length))
         return str(value)
 
@@ -70,7 +69,7 @@ class OneOf(OFXElement):
         self.valid = set(args)
         super(OneOf, self)._init(**kwargs)
 
-    def convert(self, value):
+    def convert(self, value, strict=True):
         if value is None and not self.required:
             return None
         if (value in self.valid):
@@ -87,7 +86,7 @@ class OFXint(OFXElement):
         self.length = length
         super(OFXint, self)._init(*args, **kwargs)
 
-    def convert(self, value):
+    def convert(self, value, strict=True):
         if value is None and not self.required:
             return None
         value = int(value)
@@ -105,7 +104,7 @@ class OFXdecimal(OFXElement):
         self.precision = precision
         super(OFXdecimal, self)._init(*args, **kwargs)
 
-    def convert(self, value):
+    def convert(self, value, strict=True):
         if value is None and not self.required:
             return None
         value = decimal.Decimal(value)
@@ -121,7 +120,7 @@ class OFXdatetime(OFXElement):
     formats = {18: '%Y%m%d%H%M%S.%f', 14: '%Y%m%d%H%M%S', 8: '%Y%m%d'}
 
     @classmethod
-    def convert(cls, value):
+    def convert(cls, value, strict=True):
         # If it's a datetime or None, don't touch it.
         if isinstance(value, datetime.datetime) or value is None:
             return value

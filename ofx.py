@@ -401,11 +401,11 @@ class ElementTree(ET.ElementTree):
         parser.feed(source)
         self._root = parser.close()
 
-    def convert(self):
+    def convert(self, strict=True):
         if not hasattr(self, '_root'):
             raise ValueError('Must first call parse() to have data to convert')
         # OFXResponse performs validation & type conversion
-        return OFXResponse(self)
+        return OFXResponse(self, strict=strict)
 
 
 OFXParser = ElementTree
@@ -492,7 +492,7 @@ class Element(ET.Element):
     Subclass of ElementTree.Element extended to handle validation and type
     conversion of OFX Aggregates.
     """
-    def convert(self):
+    def convert(self, strict=True):
         """ 
         Convert a parsed OFX aggregate into a flat dictionary of its elements
         """
@@ -522,7 +522,7 @@ class Element(ET.Element):
             attributes['curtype'] = curtype
 
         # Feed the flattened dictionary of attributes to the converter
-        return converter(**attributes)
+        return converter(strict=strict, **attributes)
 
 
     def _flatten(self):
@@ -572,16 +572,21 @@ class OFXResponse(object):
     statements = []
     seclist = []
 
-    def __init__(self, tree):
-        """ Initialize with ElementTree instance containing parsed OFX """
-        self._root = tree._root
-        self.process()
+    def __init__(self, tree, strict=True):
+        """ 
+        Initialize with ElementTree instance containing parsed OFX.
 
-    def process(self):
+        The strict argument determines whether to throw an error for certain
+        OFX data validation violations.
+        """
+        self._root = tree._root
+        self._process(strict=strict)
+
+    def _process(self, strict=True):
         """ Top-level entry point into validation & conversion of parsed OFX """
         self._processSONRS()
         self._processTRNRS()
-        self._processSECLIST()
+        self._processSECLIST(strict=strict)
 
     def _processSONRS(self):
         """ Validate/convert server response to signon request """
@@ -611,7 +616,7 @@ class OFXResponse(object):
                         stmt.cltcookie = OFXstr(36).convert(cltcookie.text)
                     self.statements.append(stmt)
 
-    def _processSECLIST(self):
+    def _processSECLIST(self, strict=True):
         """ 
         Validate/convert the list of description of securities referenced by
         INVSTMT (investment account statement
@@ -623,18 +628,23 @@ class OFXResponse(object):
             if sec.tag == 'MFINFO':
                 # Strip MFASSETCLASS/FIMFASSETCLASS 
                 # - lists that will blow up _flatten()
+
+                # Do all XPath searches before removing nodes from the tree
+                #   which seems to mess up the DOM in Python3 and throw an
+                #   AttributeError on subsequent searches.
                 mfassetclass = sec.find('./MFASSETCLASS')
+                fimfassetclass = sec.find('./FIMFASSETCLASS')
+
                 if mfassetclass is not None:
                     # Convert PORTIONs; add to list on MFINFO
                     sec.mfassetclass = [p.convert() for p in mfassetclass]
                     sec.remove(mfassetclass)
-                fimfassetclass = sec.find('./FIMFASSETCLASS')
                 if fimfassetclass is not None:
                     # Convert FIPORTIONs; add to list on MFINFO
                     sec.fimfassetclass = [p.convert() for p in fimfassetclass]
                     sec.remove(fimfassetclass)
 
-            self.seclist.append(sec.convert())
+            self.seclist.append(sec.convert(strict=strict))
 
 
     def __repr__(self):
@@ -850,7 +860,12 @@ class Aggregate(object):
     conversion method is called, and the resulting value stored in the
     Aggregate instance's __dict__.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, strict=True, **kwargs):
+        assert strict in (True, False)
+        # Use superclass __setattr__ to avoid AttributeError because
+        # overridden __setattr__ below won't find strict in self.__dict__
+        object.__setattr__(self, 'strict', strict)
+
         for name, element in self.elements.items():
             value = kwargs.pop(name, None)
             if element.required and value is None:
@@ -873,7 +888,8 @@ class Aggregate(object):
         if name.startswith('__'):
             # Short-circuit private attributes to avoid infinite recursion
             attribute = object.__getattribute__(self, name)
-        elif isinstance(getattr(self.__class__, name), OFXElement):
+        elif hasattr(self.__class__, name) and \
+                isinstance(getattr(self.__class__, name), OFXElement):
             # Don't inherit OFXElement attributes from class
             attribute = self.__dict__[name]
         else:
@@ -884,7 +900,8 @@ class Aggregate(object):
         """ If attribute references an OFXElement, convert before setting """
         classattr = getattr(self.__class__, name)
         if isinstance(classattr, OFXElement):
-            value = classattr.convert(value)
+            strict = self.strict
+            value = classattr.convert(value, strict)
         object.__setattr__(self, name, value)
 
     def __repr__(self):
