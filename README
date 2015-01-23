@@ -5,17 +5,18 @@ downloading financial information from banks and stockbrokers.
 pyofx has no external dependencies beyond stdlib.
 
 The primary facilities provided include:
-    * The OFXClient class, which dowloads OFX statements from the Internet
-    * The OFXParser class, which converts OFX data into a standard ElementTree
+    * The OFXClient class; which dowloads OFX statements from the Internet
+    * The OFXParser class; which parses OFX data into a standard ElementTree
       structure for further processing in Python.
-      !! OFXParser is currently broken following some changes to Python 3 !!
+    * The OFXResponse class; which validates and converts OFX data parsed by
+      OFXParser into Python types and exposes them through more Pythonic
+      attribute access (e.g. OFXResponse.statements[0].ledgerbal)
 
 BASIC USAGE TO DOWNLOAD OFX:
     1) Edit pyofx.example.cfg - add a section for your financial institution,
        including URL, account information, login, etc.  See comments within.
        Save as ~/.config/pyofx/pyofx.cfg
-    2) Install Python 3, if you haven't.
-    3) Execute ofx.py as a script, e.g.
-       # python3 ofx.py amex stmt -s 20140101 -e 20140630 > foobar.ofx
+    2) Execute ofx.py as a script, e.g.
+       # python ofx.py amex stmt -s 20140101 -e 20140630 > foobar.ofx
 
 
