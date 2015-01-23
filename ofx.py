@@ -38,7 +38,7 @@ from utils import fixpath
 
 
 ### CLIENT
-class BankAcct:
+class BankAcct(object):
     """ """
     acctkeys = ('BANKID', 'ACCTID', 'ACCTTYPE')
     acctfrom_tag = 'BANKACCTFROM'
