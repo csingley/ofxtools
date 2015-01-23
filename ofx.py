@@ -567,7 +567,8 @@ class OFXResponse(object):
     SECLIST (description of referenced securities), and SONRS (server response
     to signon request).
 
-    After conversion, each of these convenience attributes holds
+    After conversion, each of these convenience attributes holds instances
+    of various Aggregate subclasses.
     """
     sonrs = None
     statements = []
