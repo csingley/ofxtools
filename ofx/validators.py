@@ -1,11 +1,71 @@
+# vim: set fileencoding=utf-8
 """ OFX element type converters """
-# -*- coding: utf-8 -*-
 
 # stdlib imports
 import decimal
 import datetime
 import time
 import re
+
+
+class Aggregate(object):
+    """
+    Base class for Python representation of OFX 'aggregate', i.e. SGML parent
+    node that contains no data.  Data-bearing OFXElements are represented as
+    attributes of the containing Aggregate.
+
+    The Aggregate class is implemented as a data descriptor that, before
+    setting an attribute, checks whether that attribute is defined as
+    an OFXElement in the class definition.  If it is, the OFXElement's type
+    conversion method is called, and the resulting value stored in the
+    Aggregate instance's __dict__.
+    """
+    def __init__(self, strict=True, **kwargs):
+        assert strict in (True, False)
+        # Use superclass __setattr__ to avoid AttributeError because
+        # overridden __setattr__ below won't find strict in self.__dict__
+        object.__setattr__(self, 'strict', strict)
+
+        for name, element in self.elements.items():
+            value = kwargs.pop(name, None)
+            if element.required and value is None:
+                raise ValueError("'%s' attribute is required for %s"
+                                % (name, self.__class__.__name__))
+            setattr(self, name, value)
+        if kwargs:
+            raise ValueError("Undefined element(s) for '%s': %s"
+                            % (self.__class__.__name__, kwargs.keys()))
+
+    @property
+    def elements(self):
+        d = {}
+        for m in self.__class__.__mro__:
+            d.update({k: v for k,v in m.__dict__.items() \
+                                    if isinstance(v, OFXElement)})
+        return d
+
+    def __getattribute__(self, name):
+        if name.startswith('__'):
+            # Short-circuit private attributes to avoid infinite recursion
+            attribute = object.__getattribute__(self, name)
+        elif hasattr(self.__class__, name) and \
+                isinstance(getattr(self.__class__, name), OFXElement):
+            # Don't inherit OFXElement attributes from class
+            attribute = self.__dict__[name]
+        else:
+            attribute = object.__getattribute__(self, name)
+        return attribute
+
+    def __setattr__(self, name, value):
+        """ If attribute references an OFXElement, convert before setting """
+        classattr = getattr(self.__class__, name)
+        if isinstance(classattr, OFXElement):
+            strict = self.strict
+            value = classattr.convert(value, strict)
+        object.__setattr__(self, name, value)
+
+    def __repr__(self):
+        return '<%s %s>' % (self.__class__.__name__, ' '.join(['%s=%r' % (attr, getattr(self, attr)) for attr in self.elements.viewkeys() if getattr(self, attr) is not None]))
 
 
 class OFXElement(object):

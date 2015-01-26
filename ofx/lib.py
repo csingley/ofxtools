@@ -1,18 +1,4 @@
-# -*- coding: utf-8 -*-
-import sys
-import decimal
-import datetime
-import time
-import calendar
-import uuid
-from xml.etree.cElementTree import Element, SubElement, tostring
-from collections import defaultdict, OrderedDict
-import contextlib
-from io import StringIO
-import os
-import re
-import xml.etree.ElementTree as ET
-from getpass import getpass
+# vim: set fileencoding=utf-8
 
 # 3-letter language codes
 ISO639_2 = ('AAR', 'ABK', 'ACE', 'ACH', 'ADA', 'ADY', 'AFA', 'AFH', 'AFR',

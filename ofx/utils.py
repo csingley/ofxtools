@@ -1,5 +1,5 @@
+# vim: set fileencoding=utf-8
 """ Utility functions and classes """
-# -*- coding: utf-8 -*-
 
 # stdlib imports
 import datetime
