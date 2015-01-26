@@ -7,7 +7,8 @@ import re
 
 # local imports
 from header import OFXHeader
-import model
+import aggregates
+import elements
 
 
 class ParseError(SyntaxError):
@@ -37,8 +38,8 @@ class ElementTree(ET.ElementTree):
     def convert(self, strict=True):
         if not hasattr(self, '_root'):
             raise ValueError('Must first call parse() to have data to convert')
-        # model.OFXResponse performs validation & type conversion
-        return model.OFXResponse(self, strict=strict)
+        # OFXResponse performs validation & type conversion
+        return OFXResponse(self, strict=strict)
 
 
 OFXParser = ElementTree
@@ -131,10 +132,9 @@ class Element(ET.Element):
         """
         attributes = self._flatten()
 
-        # Model classes are named after the OFX tags they represent.
-        # Use the tag to look up the right model
-        converter = getattr(model, self.tag)
-        assert issubclass(converter, model.Aggregate)
+        # Aggregate classes are named after the OFX tags they represent.
+        # Use the tag to look up the right aggregate
+        converter = getattr(aggregates, self.tag)
 
         # See OFX spec section 5.2 for currency handling conventions.
         # Flattening the currency definition leaves only the CURRATE/CURSYM
@@ -142,7 +142,7 @@ class Element(ET.Element):
         # a CURRENCY aggregate or ORIGCURRENCY.  Since this distinction is
         # important to interpreting transactions in foreign correncies, we
         # preserve this information by adding a nonstandard curtype element.
-        if issubclass(converter, model.ORIGCURRENCY):
+        if issubclass(converter, aggregates.ORIGCURRENCY):
             currency = self.find('*/CURRENCY')
             origcurrency = self.find('*/ORIGCURRENCY')
             if (currency is not None) and (origcurrency is not None):
@@ -189,5 +189,282 @@ class Element(ET.Element):
             assert key not in leaves
         leaves.update(aggregates)
         return leaves
+
+
+### OFX RESPONSE
+class OFXResponse(object):
+    """ 
+    Top-level object representing an OFX response converted into Python
+    data types, with attributes for convenient access to statements (i.e.
+    OFX *STMT aggregates), security descriptions (i.e. OFX SECLIST aggregate),
+    and SONRS (server response to signon request).
+
+    After conversion, each of these convenience attributes holds instances
+    of various Aggregate subclasses.
+    """
+    sonrs = None
+    statements = []
+    securities = []
+
+    def __init__(self, tree, strict=True):
+        """ 
+        Initialize with ElementTree instance containing parsed OFX.
+
+        The strict argument determines whether to throw an error for certain
+        OFX data validation violations.
+        """
+        self.tree = tree
+        self._processSONRS()
+        self._processTRNRS()
+        self._processSECLIST(strict=strict)
+
+    def _processSONRS(self):
+        """ Validate/convert server response to signon request """
+        sonrs = self.tree.find('SIGNONMSGSRSV1/SONRS')
+        self.sonrs = sonrs.convert()
+
+    def _processTRNRS(self):
+        """
+        Validate/convert transaction response, which is the main section
+        containing account statements
+        """
+        # N.B. This iteration method doesn't preserve the original
+        # ordering of the statements within the OFX response
+        for stmtClass in (STMT, CCSTMT, INVSTMT):
+            classname = stmtClass.__name__
+            for trnrs in self.tree.findall('*/%sTRNRS' % classname):
+                stmtrs = trnrs.find('%sRS' % classname)
+                # *STMTTRNRS may have no *STMTRS (in case of error).
+                # Don't blow up; skip silently.
+                if stmtrs is not None:
+                    stmt = stmtClass(stmtrs)
+                    # Staple the TRNRS wrapper data onto the STMT
+                    stmt.trnuid = elements.String(36).convert(trnrs.find('TRNUID').text)
+                    stmt.status = trnrs.find('STATUS').convert()
+                    cltcookie = trnrs.find('CLTCOOKIE')
+                    if cltcookie is not None:
+                        stmt.cltcookie = elements.String(36).convert(cltcookie.text)
+                    self.statements.append(stmt)
+
+    def _processSECLIST(self, strict=True):
+        """ 
+        Validate/convert the list of description of securities referenced by
+        INVSTMT (investment account statement)
+        """
+        seclist = self.tree.find('SECLISTMSGSRSV1/SECLIST')
+        if seclist is None:
+            return
+        for sec in seclist:
+            if sec.tag == 'MFINFO':
+                # Strip MFASSETCLASS/FIMFASSETCLASS 
+                # - lists that will blow up _flatten()
+
+                # Do all XPath searches before removing nodes from the tree
+                #   which seems to mess up the DOM in Python3 and throw an
+                #   AttributeError on subsequent searches.
+                mfassetclass = sec.find('./MFASSETCLASS')
+                fimfassetclass = sec.find('./FIMFASSETCLASS')
+
+                if mfassetclass is not None:
+                    # Convert PORTIONs; add to list on MFINFO
+                    sec.mfassetclass = [p.convert() for p in mfassetclass]
+                    sec.remove(mfassetclass)
+                if fimfassetclass is not None:
+                    # Convert FIPORTIONs; add to list on MFINFO
+                    sec.fimfassetclass = [p.convert() for p in fimfassetclass]
+                    sec.remove(fimfassetclass)
+
+            self.securities.append(sec.convert(strict=strict))
+
+
+    def __repr__(self):
+        return '<%s at at 0x%x>' % (self.__class__.__name__, id(self))
+
+### STATEMENTS
+class Statement(object):
+    """ Base class for Python representation of OFX *STMT aggregate """
+    # From TRNRS wrapper
+    trnuid = None
+    status = None
+    cltcookie = None
+
+    curdef = None
+    acctfrom = None
+
+    tranlist = None
+    ballist = None
+
+    def __init__(self, stmtrs):
+        """ Initialize with *STMTRS Element """
+        self.curdef = stmtrs.find('CURDEF').text
+        self.acctfrom = stmtrs.find(self._acctTag).convert()
+        self.process(stmtrs)
+
+    def process(self, stmtrs):
+        # Define in subclass
+        raise NotImplementedError
+
+    def __repr__(self):
+        return '<%s at 0x%x>' % (self.__class__.__name__, id(self))
+
+
+class STMT(Statement):
+    """ Python representation of OFX STMT (bank statement) aggregate """
+    ledgerbal = None
+    availbal = None
+
+    _acctTag = 'BANKACCTFROM'
+
+    @property
+    def bankacctfrom(self):
+        return self.acctfrom
+
+    @bankacctfrom.setter
+    def bankacctfrom(self, value):
+        self.acctfrom = value
+
+    @property
+    def banktranlist(self):
+        return self.tranlist
+
+    @banktranlist.setter
+    def banktranlist(self, value):
+        self.tranlist = value
+
+    def process(self, stmtrs):
+        # BANKTRANLIST
+        tranlist = stmtrs.find('BANKTRANLIST')
+        if tranlist is not None:
+            self.tranlist = BANKTRANLIST(tranlist)
+
+        # LEDGERBAL - mandatory
+        self.ledgerbal = stmtrs.find('LEDGERBAL').convert()
+
+        # AVAILBAL
+        availbal = stmtrs.find('AVAILBAL')
+        if availbal is not None:
+            self.availbal = availbal.convert()
+
+        # BALLIST
+        ballist = stmtrs.find('BALLIST')
+        if ballist:
+            self.ballist = [bal.convert() for bal in ballist]
+
+        # Unsupported subaggregates
+        for tag in ('MKTGINFO', ):
+            child = stmtrs.find(tag)
+            if child:
+                stmtrs.remove
+
+
+class CCSTMT(STMT):
+    """ 
+    Python representation of OFX CCSTMT (credit card statement) 
+    aggregate 
+    """
+    _acctTag = 'CCACCTFROM'
+
+    @property
+    def ccacctfrom(self):
+        return self.acctfrom
+
+    @ccacctfrom.setter
+    def ccacctfrom(self, value):
+        self.acctfrom = value
+
+
+class INVSTMT(Statement):
+    """ 
+    Python representation of OFX INVSTMT (investment account statement) 
+    aggregate 
+    """
+    dtasof = None
+
+    invposlist = None
+    invbal = None
+
+    _acctTag = 'INVACCTFROM'
+
+    @property
+    def invacctfrom(self):
+        return self.acctfrom
+
+    @invacctfrom.setter
+    def invacctfrom(self, value):
+        self.acctfrom = value
+
+    @property
+    def invtranlist(self):
+        return self.tranlist
+
+    @invtranlist.setter
+    def invtranlist(self, value):
+        self.tranlist = value
+
+    def process(self, invstmtrs):
+        dtasof = invstmtrs.find('DTASOF').text
+        self.dtasof = elements.DateTime.convert(dtasof)
+
+        # INVTRANLIST
+        tranlist = invstmtrs.find('INVTRANLIST')
+        if tranlist is not None:
+            self.tranlist = INVTRANLIST(tranlist)
+
+        # INVPOSLIST
+        poslist = invstmtrs.find('INVPOSLIST')
+        if poslist is not None:
+            self.invposlist = [pos.convert() for pos in poslist]
+
+        # INVBAL
+        invbal = invstmtrs.find('INVBAL')
+        if invbal is not None:
+            # First strip off BALLIST & process it
+            ballist = invbal.find('BALLIST')
+            if ballist is not None:
+                invbal.remove(ballist)
+                self.ballist = [bal.convert() for bal in ballist]
+            # Now we can flatten the rest of INVBAL
+            self.invbal = invbal.convert()
+
+        # Unsupported subaggregates
+        for tag in ('INVOOLIST', 'INV401K', 'INV401KBAL', 'MKTGINFO'):
+            child = invstmtrs.find(tag)
+            if child is not None:
+                invstmtrs.remove
+
+
+### TRANSACTION LISTS
+class TRANLIST(list):
+    """ 
+    Base class for Python representation of OFX *TRANLIST (transaction list) 
+    aggregate 
+    """
+    def __init__(self, tranlist):
+        # Initialize with *TRANLIST Element
+        dtstart, dtend = tranlist[0:2]
+        tranlist = tranlist[2:]
+        self.dtstart = elements.DateTime.convert(dtstart.text)
+        self.dtend = elements.DateTime.convert(dtend.text)
+        self.extend([tran.convert() for tran in tranlist])
+
+    def __repr__(self):
+        return "<%s dtstart='%s' dtend='%s' #transactions=%s>" % \
+                (self.__class__.__name__, self.dtstart, self.dtend, len(self))
+
+
+class BANKTRANLIST(TRANLIST):
+    """
+    Python representation of OFX BANKTRANLIST (bank transaction list) 
+    aggregate
+    """
+    pass
+
+
+class INVTRANLIST(TRANLIST):
+    """
+    Python representation of OFX INVTRANLIST (investment transaction list)
+    aggregate 
+    """
+    pass
 
 

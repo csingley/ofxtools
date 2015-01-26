@@ -27,7 +27,7 @@ else:
 
 # local imports
 from header import OFXHeader
-from validators import OFXbool, OneOf, OFXdatetime
+from elements import Bool, OneOf, DateTime 
 from utils import fixpath
 
 
@@ -83,10 +83,10 @@ class BankAcct(object):
         """ """
         tran = ET.Element('INCTRAN')
         if dtstart:
-            ET.SubElement(tran, 'DTSTART').text = OFXdatetime.unconvert(dtstart)
+            ET.SubElement(tran, 'DTSTART').text = DateTime.unconvert(dtstart)
         if dtend:
-            ET.SubElement(tran, 'DTEND').text = OFXdatetime.unconvert(dtend)
-        ET.SubElement(tran, 'INCLUDE').text = OFXbool().unconvert(inctran)
+            ET.SubElement(tran, 'DTEND').text = DateTime.unconvert(dtend)
+        ET.SubElement(tran, 'INCLUDE').text = Bool().unconvert(inctran)
         return tran
 
 
@@ -135,19 +135,19 @@ class InvAcct(BankAcct):
     def incoo(self):
         # Include Open Orders - not implemented
         oo = ET.Element('INCOO')
-        oo.text = OFXbool().unconvert(False)
+        oo.text = Bool().unconvert(False)
         return oo
 
     def incpos(self, dtasof, incpos):
         pos = ET.Element('INCPOS')
         if dtasof:
-            ET.SubElement(pos, 'DTASOF').text = OFXdatetime.unconvert(dtasof)
-        ET.SubElement(pos, 'INCLUDE').text = OFXbool().unconvert(incpos)
+            ET.SubElement(pos, 'DTASOF').text = DateTime.unconvert(dtasof)
+        ET.SubElement(pos, 'INCLUDE').text = Bool().unconvert(incpos)
         return pos
 
     def incbal(self, incbal):
         bal = ET.Element('INCBAL')
-        bal.text = OFXbool().unconvert(incbal)
+        bal.text = Bool().unconvert(incbal)
         return bal
 
 
@@ -182,7 +182,7 @@ class OFXClient:
     def signon(self, user, password):
         msgsrq = ET.Element('SIGNONMSGSRQV1')
         sonrq = ET.SubElement(msgsrq, 'SONRQ')
-        ET.SubElement(sonrq, 'DTCLIENT').text = OFXdatetime.unconvert(datetime.datetime.now())
+        ET.SubElement(sonrq, 'DTCLIENT').text = DateTime.unconvert(datetime.datetime.now())
         ET.SubElement(sonrq, 'USERID').text = user
         ET.SubElement(sonrq, 'USERPASS').text = password
         ET.SubElement(sonrq, 'LANGUAGE').text = 'ENG'
@@ -228,7 +228,7 @@ class OFXClient:
         msgsrq = ET.SubElement(ofx, 'PROFMSGSRQV1')
         profrq = ET.Element('PROFRQ')
         ET.SubElement(profrq, 'CLIENTROUTING').text = 'NONE'
-        ET.SubElement(profrq, 'DTPROFUP').text = OFXdatetime.unconvert(datetime.date(1990,1,1))
+        ET.SubElement(profrq, 'DTPROFUP').text = DateTime.unconvert(datetime.date(1990,1,1))
         msgsrq.append(self._wraptrn(profrq))
         return ofx
 
@@ -320,7 +320,7 @@ def do_stmt(args):
     # Statement parameters
     d = vars(args)
     # convert dtstart/dtend/dtasof from str to datetime
-    kwargs = {k:OFXdatetime.convert(v) for k,v in d.items() if k.startswith('dt')}
+    kwargs = {k:DateTime.convert(v) for k,v in d.items() if k.startswith('dt')}
     # inctrans/incpos/incbal 
     kwargs.update({k:v for k,v in d.items() if k.startswith('inc')})
 
