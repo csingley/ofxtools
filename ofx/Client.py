@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 # vim: set fileencoding=utf-8
+""" 
+Classes and functions implementing composing and transmitting OFX request,
+and receiving OFX responses in reply
+"""
 
 # stdlib imports
 import sys

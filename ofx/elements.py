@@ -1,5 +1,5 @@
 # vim: set fileencoding=utf-8
-""" OFX element type converters """
+""" OFX element type converters / validators """
 
 # stdlib imports
 import decimal

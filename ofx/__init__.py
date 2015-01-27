@@ -1,2 +1,2 @@
-from Parser import OFXParser
 from Client import OFXClient
+from Parser import OFXTree

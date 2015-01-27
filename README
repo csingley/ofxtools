@@ -31,10 +31,10 @@ BASIC USAGE TO DOWNLOAD OFX:
 
 PARSER USAGE EXAMPLE
 
->>> from ofx import OFXParser
->>> parser = OFXParser()
->>> parser.parse('foobar.ofx')
->>> response = parser.convert()
+>>> from ofx import OFXTree
+>>> tree = OFXTree()
+>>> tree.parse('foobar.ofx')
+>>> response = tree.convert()
 >>> response                  
 <OFXResponse fid='AIS' org='Ameritrade Technology Group' dtserver='2014-12-01 16:11:44' len(statements)=1 len(securities)=5>
 >>> stmt = response.statements[0] 
