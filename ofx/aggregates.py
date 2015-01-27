@@ -88,7 +88,7 @@ class Aggregate(object):
         object.__setattr__(self, name, value)
 
     def __repr__(self):
-        return '<%s %s>' % (self.__class__.__name__, ' '.join(['%s=%r' % (attr, getattr(self, attr)) for attr in self.elements.viewkeys() if getattr(self, attr) is not None]))
+        return '<%s %s>' % (self.__class__.__name__, ' '.join(['%s=%r' % (attr, str(getattr(self, attr))) for attr in self.elements.viewkeys() if getattr(self, attr) is not None]))
 
 
 class FI(Aggregate):
