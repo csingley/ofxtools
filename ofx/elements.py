@@ -2,6 +2,7 @@
 """ OFX element type converters / validators """
 
 # stdlib imports
+from weakref import WeakKeyDictionary
 import decimal
 import datetime
 import time
@@ -10,15 +11,23 @@ import re
 
 class Element(object):
     """
-    Base class of validator/type converter for OFX 'element', i.e. SGML leaf
-    node that contains text data.
+    Python representation of an OFX 'element', i.e. SGML leaf node that contains
+    text data.
 
-    Element instances store validation parameters relevant to a particular
-    Aggregate subclass (e.g. maximum string length, decimal precision,
-    required vs. optional, etc.) - they don't directly store the data
-    itself (which lives in the __dict__ of an Aggregate instance).
+    Pass validation parameters (e.g. maximum string length, decimal precision,
+    required vs. optional, etc.) as arguments to __init__() when defining
+    an Aggregate subclass.
+
+    Element instances are data descriptors that perform validation (using the
+    arguments passed to __init__()) and type conversion (using the logic
+    implemented in convert()) prior to setting the instance data value.
     """
     def __init__(self, *args, **kwargs):
+        # All instances of an Aggregate subclass share the same Element
+        # instance, so we have to have to handle the instance accounting
+        # here in the self.data dictionary.  We use WeakKeyDictionary
+        # to facilitate memory garbage collection.
+        self.data = WeakKeyDictionary()
         required = kwargs.pop('required', False)
         self.required = required
         self._init(*args, **kwargs)
@@ -32,6 +41,15 @@ class Element(object):
     def convert(self, value, strict=True):
         """ Override in subclass """
         raise NotImplementedError
+
+    def __get__(self, instance, type_):
+        return self.data[instance]
+
+    def __set__(self, instance, value):
+        """ Perform validation and type conversion before setting value """
+        value = self.convert(value)
+        self.data[instance] = value
+
 
 class Bool(Element):
     mapping = {'Y': True, 'N': False}

@@ -141,11 +141,9 @@ class Element(ET.Element):
         whose values have been validated and converted to Python types 
         by subclasses of ofx.elements.Element.
         """
-        # Convert a parsed OFX aggregate into a flat dictionary of its elements
+        # Strip MFASSETCLASS/FIMFASSETCLASS 
+        # - lists that will blow up _flatten()
         if self.tag == 'MFINFO':
-            # Strip MFASSETCLASS/FIMFASSETCLASS 
-            # - lists that will blow up _flatten()
-
             # Do all XPath searches before removing nodes from the tree
             #   which seems to mess up the DOM in Python3 and throw an
             #   AttributeError on subsequent searches.
@@ -153,14 +151,15 @@ class Element(ET.Element):
             fimfassetclass = self.find('./FIMFASSETCLASS')
 
             if mfassetclass is not None:
-                # Convert PORTIONs; add to list on MFINFO
+                # Convert PORTIONs; save for later
                 self.mfassetclass = [p.convert() for p in mfassetclass]
                 self.remove(mfassetclass)
             if fimfassetclass is not None:
-                # Convert FIPORTIONs; add to list on MFINFO
+                # Convert FIPORTIONs; save for later
                 self.fimfassetclass = [p.convert() for p in fimfassetclass]
                 self.remove(fimfassetclass)
                     
+        # Convert parsed OFX aggregate into a flat dictionary of its elements
         attributes = self._flatten()
 
         # Aggregate classes are named after the OFX tags they represent.
@@ -189,6 +188,16 @@ class Element(ET.Element):
         # Feed the flattened dictionary of attributes to the Aggregate
         # subclass for validation and type conversion
         aggregate = AggregateClass(strict=strict, **attributes)
+
+        # Staple MFASSETCLASS/FIMFASSETCLASS onto MFINFO
+        if hasattr(self, 'mfassetclass'):
+            assert self.tag == 'MFINFO'
+            aggregate.mfassetclass = self.mfassetclass
+
+        if hasattr(self, 'fimfassetclass'):
+            assert self.tag == 'MFINFO'
+            aggregate.fimfassetclass = self.fimfassetclass
+
         return aggregate
 
 

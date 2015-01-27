@@ -3,7 +3,7 @@
 
 import argparse
 
-from ofx.Parser import OFXParser
+from ofx.Parser import OFXTree
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -11,7 +11,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    parser = OFXParser()
+    parser = OFXTree()
     for f in args.files:
         print("Parsing %s" % f)
         parser.parse(f) 

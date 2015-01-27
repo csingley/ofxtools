@@ -25,8 +25,8 @@ BASIC USAGE TO DOWNLOAD OFX:
         Add a section for your financial institution, including URL, 
         account information, login, etc.
         See comments within.
-    2) Execute getofx with appropriate arguments, e.g.
-        `# python ofx.py amex stmt -s 20140101 -e 20140630 > foobar.ofx`
+    2) Execute ofxget with appropriate arguments, e.g.
+        `# ofxget amex stmt -s 20140101 -e 20140630 > foobar.ofx`
         See the --help for explanation of the script options
 
 PARSER USAGE EXAMPLE

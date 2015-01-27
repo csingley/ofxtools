@@ -5,9 +5,9 @@ balances, and securities.
 """
 
 # local imports
-from lib import ISO639_2, ISO4217, ISO3166_1a3
 from elements import (Element, Bool, String, OneOf, Integer, Decimal,
                         DateTime)
+from lib import ISO639_2, ISO4217, ISO3166_1a3
 
 
 # Enums used in aggregate validation
@@ -45,9 +45,7 @@ class Aggregate(object):
     """
     def __init__(self, strict=True, **kwargs):
         assert strict in (True, False)
-        # Use superclass __setattr__ to avoid AttributeError because
-        # overridden __setattr__ below won't find strict in self.__dict__
-        object.__setattr__(self, 'strict', strict)
+        self.strict = strict
 
         for name, element in self.elements.items():
             value = kwargs.pop(name, None)
@@ -66,26 +64,6 @@ class Aggregate(object):
             d.update({k: v for k,v in m.__dict__.items() \
                                     if isinstance(v, Element)})
         return d
-
-    def __getattribute__(self, name):
-        if name.startswith('__'):
-            # Short-circuit private attributes to avoid infinite recursion
-            attribute = object.__getattribute__(self, name)
-        elif hasattr(self.__class__, name) and \
-                isinstance(getattr(self.__class__, name), Element):
-            # Don't inherit Element attributes from class
-            attribute = self.__dict__[name]
-        else:
-            attribute = object.__getattribute__(self, name)
-        return attribute
-
-    def __setattr__(self, name, value):
-        """ If attribute references an Element, convert before setting """
-        classattr = getattr(self.__class__, name)
-        if isinstance(classattr, Element):
-            strict = self.strict
-            value = classattr.convert(value, strict)
-        object.__setattr__(self, name, value)
 
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, ' '.join(['%s=%r' % (attr, str(getattr(self, attr))) for attr in self.elements.viewkeys() if getattr(self, attr) is not None]))
@@ -217,6 +195,9 @@ class MFINFO(SECINFO):
     mftype = OneOf('OPENEND', 'CLOSEEND', 'OTHER')
     yld = Decimal(4)
     dtyieldasof = DateTime()
+
+    mfassetclass = []
+    fimfassetclass = []
 
 
 class PORTION(Aggregate):
