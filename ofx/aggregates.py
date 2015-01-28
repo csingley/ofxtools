@@ -232,6 +232,8 @@ class MFINFO(SECINFO):
         """ 
         Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up _flatten()
         """
+        extra_attrs = {}
+
         # Do all XPath searches before removing nodes from the tree
         #   which seems to mess up the DOM in Python3 and throw an
         #   AttributeError on subsequent searches.
@@ -240,24 +242,20 @@ class MFINFO(SECINFO):
 
         if mfassetclass is not None:
             # Convert PORTIONs; save for later
-            elem.mfassetclass = [p.convert() for p in mfassetclass]
+            extra_attrs['mfassetclass'] = [p.convert() for p in mfassetclass]
             elem.remove(mfassetclass)
         if fimfassetclass is not None:
             # Convert FIPORTIONs; save for later
-            elem.fimfassetclass = [p.convert() for p in fimfassetclass]
+            extra_attrs['fimfassetclass'] = [p.convert() for p in fimfassetclass]
             elem.remove(fimfassetclass)
 
         instance = super(MFINFO, cls).from_etree(elem, strict=strict)
 
         # Staple MFASSETCLASS/FIMFASSETCLASS onto MFINFO
-        if hasattr(elem, 'mfassetclass'):
-            instance.mfassetclass = elem.mfassetclass
-
-        if hasattr(elem, 'fimfassetclass'):
-            instance.fimfassetclass = elem.fimfassetclass
+        for attr,val in extra_attrs.items():
+            setattr(instance, attr, val)
 
         return instance
-
          
 
 class PORTION(Aggregate):
