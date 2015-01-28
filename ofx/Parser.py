@@ -135,70 +135,10 @@ class Element(ET.Element):
     ofx.elements.Element.
     """
     def convert(self, strict=True):
-        """ 
-        Convert an OFX 'aggregate' to the ofx.aggregates.Aggregate object model
-        by converting it to a flat dictionary keyed by OFX 'element' tag names,
-        whose values have been validated and converted to Python types 
-        by subclasses of ofx.elements.Element.
-        """
-        # Strip MFASSETCLASS/FIMFASSETCLASS 
-        # - lists that will blow up _flatten()
-        if self.tag == 'MFINFO':
-            # Do all XPath searches before removing nodes from the tree
-            #   which seems to mess up the DOM in Python3 and throw an
-            #   AttributeError on subsequent searches.
-            mfassetclass = self.find('./MFASSETCLASS')
-            fimfassetclass = self.find('./FIMFASSETCLASS')
-
-            if mfassetclass is not None:
-                # Convert PORTIONs; save for later
-                self.mfassetclass = [p.convert() for p in mfassetclass]
-                self.remove(mfassetclass)
-            if fimfassetclass is not None:
-                # Convert FIPORTIONs; save for later
-                self.fimfassetclass = [p.convert() for p in fimfassetclass]
-                self.remove(fimfassetclass)
-                    
-        # Convert parsed OFX aggregate into a flat dictionary of its elements
-        attributes = self._flatten()
-
         # Aggregate classes are named after the OFX tags they represent.
         # Use the tag to look up the right aggregate
         AggregateClass = getattr(aggregates, self.tag)
-
-        # See OFX spec section 5.2 for currency handling conventions.
-        # Flattening the currency definition leaves only the CURRATE/CURSYM
-        # elements, leaving no indication of whether these were sourced from
-        # a CURRENCY aggregate or ORIGCURRENCY.  Since this distinction is
-        # important to interpreting transactions in foreign correncies, we
-        # preserve this information by adding a nonstandard curtype element.
-        if issubclass(AggregateClass, aggregates.ORIGCURRENCY):
-            currency = self.find('*/CURRENCY')
-            origcurrency = self.find('*/ORIGCURRENCY')
-            if (currency is not None) and (origcurrency is not None):
-                raise ParseError("<%s> may not contain both <CURRENCY> and \
-                                 <ORIGCURRENCY>" % self.tag)
-            curtype = currency
-            if curtype is None:
-                 curtype = origcurrency
-            if curtype is not None:
-                curtype = curtype.tag
-            attributes['curtype'] = curtype
-
-        # Feed the flattened dictionary of attributes to the Aggregate
-        # subclass for validation and type conversion
-        aggregate = AggregateClass(strict=strict, **attributes)
-
-        # Staple MFASSETCLASS/FIMFASSETCLASS onto MFINFO
-        if hasattr(self, 'mfassetclass'):
-            assert self.tag == 'MFINFO'
-            aggregate.mfassetclass = self.mfassetclass
-
-        if hasattr(self, 'fimfassetclass'):
-            assert self.tag == 'MFINFO'
-            aggregate.fimfassetclass = self.fimfassetclass
-
-        return aggregate
+        return AggregateClass.from_etree(self)
 
 
     def _flatten(self):

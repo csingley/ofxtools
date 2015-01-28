@@ -5,6 +5,7 @@ transaction lists, etc.)
 """
 
 # local imports
+from aggregates import Aggregate
 import elements
 
 class OFXResponse(object):

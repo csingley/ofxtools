@@ -59,6 +59,14 @@ class Aggregate(object):
                                     if isinstance(v, Element)})
         return d
 
+    @classmethod
+    def from_etree(cls, elem, strict=True):
+        """ 
+        """
+        attributes = elem._flatten()
+        instance = cls(strict=strict, **attributes)
+        return instance
+
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, ' '.join(['%s=%r' % (attr, str(getattr(self, attr))) for attr in self.elements.viewkeys() if getattr(self, attr) is not None]))
 
@@ -95,6 +103,32 @@ class CURRENCY(Aggregate):
 
 class ORIGCURRENCY(CURRENCY):
     curtype = OneOf('CURRENCY', 'ORIGCURRENCY')
+
+    @classmethod
+    def from_etree(cls, elem, strict=True):
+        """ 
+        See OFX spec section 5.2 for currency handling conventions.
+        Flattening the currency definition leaves only the CURRATE/CURSYM
+        elements, leaving no indication of whether these were sourced from
+        a CURRENCY aggregate or ORIGCURRENCY.  Since this distinction is
+        important to interpreting transactions in foreign correncies, we
+        preserve this information by adding a nonstandard curtype element.
+        """
+        instance = super(ORIGCURRENCY, cls).from_etree(elem, strict=strict)
+
+        currency = elem.find('*/CURRENCY')
+        origcurrency = elem.find('*/ORIGCURRENCY')
+        if (currency is not None) and (origcurrency is not None):
+            raise ValueError("<%s> may not contain both <CURRENCY> and \
+                             <ORIGCURRENCY>" % elem.tag)
+        curtype = currency
+        if curtype is None:
+            curtype = origcurrency
+        if curtype is not None:
+            curtype = curtype.tag
+        instance.curtype = curtype
+
+        return instance
 
 
 class ACCTFROM(Aggregate):
@@ -193,6 +227,38 @@ class MFINFO(SECINFO):
     mfassetclass = []
     fimfassetclass = []
 
+    @classmethod
+    def from_etree(cls, elem, strict=True):
+        """ 
+        Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up _flatten()
+        """
+        # Do all XPath searches before removing nodes from the tree
+        #   which seems to mess up the DOM in Python3 and throw an
+        #   AttributeError on subsequent searches.
+        mfassetclass = elem.find('./MFASSETCLASS')
+        fimfassetclass = elem.find('./FIMFASSETCLASS')
+
+        if mfassetclass is not None:
+            # Convert PORTIONs; save for later
+            elem.mfassetclass = [p.convert() for p in mfassetclass]
+            elem.remove(mfassetclass)
+        if fimfassetclass is not None:
+            # Convert FIPORTIONs; save for later
+            elem.fimfassetclass = [p.convert() for p in fimfassetclass]
+            elem.remove(fimfassetclass)
+
+        instance = super(MFINFO, cls).from_etree(elem, strict=strict)
+
+        # Staple MFASSETCLASS/FIMFASSETCLASS onto MFINFO
+        if hasattr(elem, 'mfassetclass'):
+            instance.mfassetclass = elem.mfassetclass
+
+        if hasattr(elem, 'fimfassetclass'):
+            instance.fimfassetclass = elem.fimfassetclass
+
+        return instance
+
+         
 
 class PORTION(Aggregate):
     assetclass = OneOf(*ASSETCLASSES)
