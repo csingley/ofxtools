@@ -28,8 +28,8 @@ class Element(object):
         # here in the self.data dictionary.  We use WeakKeyDictionary
         # to facilitate memory garbage collection.
         self.data = WeakKeyDictionary()
-        required = kwargs.pop('required', False)
-        self.required = required
+        self.required = kwargs.pop('required', False)
+        self.strict = kwargs.pop('strict', True)
         self._init(*args, **kwargs)
 
     def _init(self, *args, **kwargs):
@@ -47,7 +47,7 @@ class Element(object):
 
     def __set__(self, instance, value):
         """ Perform validation and type conversion before setting value """
-        value = self.convert(value)
+        value = self.convert(value, strict=self.strict)
         self.data[instance] = value
 
 

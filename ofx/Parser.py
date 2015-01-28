@@ -125,22 +125,7 @@ class TreeBuilder(ET.TreeBuilder):
 
 
 class Element(ET.Element):
-    """
-    Parse tree node.
-
-    Extends ElementTree.Element with a convert() method that converts OFX
-    'aggregates' to the ofx.aggregates.Aggregate object model by converting
-    them to flat dictionaries keyed by OFX 'element' tag names, whose values
-    have been validated and converted to Python types by subclasses of 
-    ofx.elements.Element.
-    """
-    def convert(self, strict=True):
-        # Aggregate classes are named after the OFX tags they represent.
-        # Use the tag to look up the right aggregate
-        AggregateClass = getattr(aggregates, self.tag)
-        return AggregateClass.from_etree(self)
-
-
+    """ Parse tree node.  """
     def _flatten(self):
         """
         Recurse through aggregate and flatten; return an un-nested dict.

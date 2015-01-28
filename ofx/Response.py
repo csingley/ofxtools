@@ -34,7 +34,7 @@ class OFXResponse(object):
 
         # SONRS - server response to signon request
         sonrs = self.tree.find('SIGNONMSGSRSV1/SONRS')
-        self.sonrs = sonrs.convert()
+        self.sonrs = Aggregate.from_etree(sonrs, strict=strict)
 
         # TRNRS - transaction response, which is the main section
         # containing account statements
@@ -59,7 +59,7 @@ class OFXResponse(object):
         if seclist is None:
             return
         for sec in seclist:
-            self.securities.append(sec.convert(strict=strict))
+            self.securities.append(Aggregate.from_etree(sec, strict=strict))
 
     def __repr__(self):
         s = "<%s fid='%s' org='%s' dtserver='%s' len(statements)=%d len(securities)=%d>"
@@ -88,7 +88,7 @@ class Statement(object):
     def __init__(self, stmtrs):
         """ Initialize with *STMTRS Element """
         self.currency = stmtrs.find('CURDEF').text
-        self.account = stmtrs.find(self._acctTag).convert()
+        self.account = Aggregate.from_etree(stmtrs.find(self._acctTag))
         self._init(stmtrs)
 
     def _init(self, stmtrs):
@@ -98,7 +98,7 @@ class Statement(object):
     def copyTRNRS(self, trnrs):
         """ Attach the data fields from the *TRNRS wrapper to the STMT """
         self.uid = elements.String(36).convert(trnrs.find('TRNUID').text)
-        self.status = trnrs.find('STATUS').convert()
+        self.status = Aggregate.from_etree(trnrs.find('STATUS'))
         cltcookie = trnrs.find('CLTCOOKIE')
         if cltcookie is not None:
             self.cookie = elements.String(36).convert(cltcookie.text)
@@ -123,17 +123,17 @@ class BankStatement(Statement):
             self.transactions = BANKTRANLIST(tranlist)
 
         # LEDGERBAL - mandatory
-        self.ledgerbal = stmtrs.find('LEDGERBAL').convert()
+        self.ledgerbal = Aggregate.from_etree(stmtrs.find('LEDGERBAL'))
 
         # AVAILBAL
         availbal = stmtrs.find('AVAILBAL')
         if availbal is not None:
-            self.availbal = availbal.convert()
+            self.availbal = Aggregate.from_etree(availbal)
 
         # BALLIST
         ballist = stmtrs.find('BALLIST')
         if ballist:
-            self.other_balances = [bal.convert() for bal in ballist]
+            self.other_balances = [Aggregate.from_etree(bal) for bal in ballist]
 
         # Unsupported subaggregates
         for tag in ('MKTGINFO', ):
@@ -187,7 +187,7 @@ class InvestmentStatement(Statement):
         # INVPOSLIST
         poslist = invstmtrs.find('INVPOSLIST')
         if poslist is not None:
-            self.positions = [pos.convert() for pos in poslist]
+            self.positions = [Aggregate.from_etree(pos) for pos in poslist]
 
         # INVBAL
         invbal = invstmtrs.find('INVBAL')
@@ -196,9 +196,9 @@ class InvestmentStatement(Statement):
             ballist = invbal.find('BALLIST')
             if ballist is not None:
                 invbal.remove(ballist)
-                self.other_balances = [bal.convert() for bal in ballist]
+                self.other_balances = [Aggregate.from_etree(bal) for bal in ballist]
             # Now we can flatten the rest of INVBAL
-            self.balances = invbal.convert()
+            self.balances = Aggregate.from_etree(invbal)
 
         # Unsupported subaggregates
         for tag in ('INVOOLIST', 'INV401K', 'INV401KBAL', 'MKTGINFO'):
@@ -231,7 +231,7 @@ class TransactionList(list):
         tranlist = tranlist[2:]
         self.dtstart = elements.DateTime.convert(dtstart.text)
         self.dtend = elements.DateTime.convert(dtend.text)
-        self.extend([tran.convert() for tran in tranlist])
+        self.extend([Aggregate.from_etree(tran) for tran in tranlist])
 
     def __repr__(self):
         return "<%s dtstart='%s' dtend='%s' len(self)=%d>" % \

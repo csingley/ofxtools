@@ -27,6 +27,8 @@ class Aggregate(object):
     Base class for Python representation of OFX 'aggregate', i.e. SGML parent
     node that contains no data.
 
+    Initialize with an instance of ofx.Parser.Element.
+
     This class represents fundamental data aggregates such as transactions,
     balances, and securities.  Subaggregates have been flattened so that
     data-bearing Elements are directly accessed as attributes of the 
@@ -37,19 +39,22 @@ class Aggregate(object):
     per the OFX specification, they are represented here by their own Python
     classes other than Aggregate.
     """
-    def __init__(self, strict=True, **kwargs):
+    def __init__(self, elem, strict=True):
         assert strict in (True, False)
         self.strict = strict
 
+        assert elem.tag == self.__class__.__name__
+        attributes = elem._flatten()
+
         for name, element in self.elements.items():
-            value = kwargs.pop(name, None)
+            value = attributes.pop(name, None)
             if element.required and value is None:
                 raise ValueError("'%s' attribute is required for %s"
                                 % (name, self.__class__.__name__))
             setattr(self, name, value)
-        if kwargs:
+        if attributes:
             raise ValueError("Undefined element(s) for '%s': %s"
-                            % (self.__class__.__name__, kwargs.keys()))
+                            % (self.__class__.__name__, attributes.keys()))
 
     @property
     def elements(self):
@@ -59,12 +64,14 @@ class Aggregate(object):
                                     if isinstance(v, Element)})
         return d
 
-    @classmethod
-    def from_etree(cls, elem, strict=True):
+    @staticmethod
+    def from_etree(elem, strict=True):
         """ 
+        Look up the Aggregate subclass for a given ofx.Parser.Element and
+        feed it the Element to instantiate the Aggregate instance.
         """
-        attributes = elem._flatten()
-        instance = cls(strict=strict, **attributes)
+        SubClass = globals()[elem.tag]
+        instance = SubClass(elem, strict=strict)
         return instance
 
     def __repr__(self):
@@ -104,8 +111,7 @@ class CURRENCY(Aggregate):
 class ORIGCURRENCY(CURRENCY):
     curtype = OneOf('CURRENCY', 'ORIGCURRENCY')
 
-    @classmethod
-    def from_etree(cls, elem, strict=True):
+    def __init__(self, elem, strict=True):
         """ 
         See OFX spec section 5.2 for currency handling conventions.
         Flattening the currency definition leaves only the CURRATE/CURSYM
@@ -114,7 +120,7 @@ class ORIGCURRENCY(CURRENCY):
         important to interpreting transactions in foreign correncies, we
         preserve this information by adding a nonstandard curtype element.
         """
-        instance = super(ORIGCURRENCY, cls).from_etree(elem, strict=strict)
+        super(ORIGCURRENCY, self).__init__(elem, strict=strict)
 
         currency = elem.find('*/CURRENCY')
         origcurrency = elem.find('*/ORIGCURRENCY')
@@ -126,9 +132,7 @@ class ORIGCURRENCY(CURRENCY):
             curtype = origcurrency
         if curtype is not None:
             curtype = curtype.tag
-        instance.curtype = curtype
-
-        return instance
+        self.curtype = curtype
 
 
 class ACCTFROM(Aggregate):
@@ -227,8 +231,7 @@ class MFINFO(SECINFO):
     mfassetclass = []
     fimfassetclass = []
 
-    @classmethod
-    def from_etree(cls, elem, strict=True):
+    def __init__(self, elem, strict=True):
         """ 
         Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up _flatten()
         """
@@ -242,20 +245,18 @@ class MFINFO(SECINFO):
 
         if mfassetclass is not None:
             # Convert PORTIONs; save for later
-            extra_attrs['mfassetclass'] = [p.convert() for p in mfassetclass]
+            extra_attrs['mfassetclass'] = [Aggregate.from_etree(p) for p in mfassetclass]
             elem.remove(mfassetclass)
         if fimfassetclass is not None:
             # Convert FIPORTIONs; save for later
-            extra_attrs['fimfassetclass'] = [p.convert() for p in fimfassetclass]
+            extra_attrs['fimfassetclass'] = [Aggregate.from_etree(p) for p in fimfassetclass]
             elem.remove(fimfassetclass)
 
-        instance = super(MFINFO, cls).from_etree(elem, strict=strict)
+        super(MFINFO, self).__init__(elem, strict=strict)
 
         # Staple MFASSETCLASS/FIMFASSETCLASS onto MFINFO
         for attr,val in extra_attrs.items():
-            setattr(instance, attr, val)
-
-        return instance
+            setattr(self, attr, val)
          
 
 class PORTION(Aggregate):
