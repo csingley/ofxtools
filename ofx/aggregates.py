@@ -36,12 +36,6 @@ class Aggregate(object):
     and statements.  Although such higher-order containers are 'aggregates'
     per the OFX specification, they are represented here by their own Python
     classes other than Aggregate.
-
-    The Aggregate class is implemented as a data descriptor that, before
-    setting an attribute, checks whether that attribute is defined as
-    an Element in the class definition.  If it is, the Element's type
-    conversion method is called, and the resulting value stored in the
-    Aggregate instance's __dict__.
     """
     def __init__(self, strict=True, **kwargs):
         assert strict in (True, False)
