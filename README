@@ -21,7 +21,7 @@ in ~/.local/bin, and a sample configuration file in ~/.config/pyofx
 
 
 BASIC USAGE TO DOWNLOAD OFX:
-    1) Copy ~/.config/pyofx/ofxget.cfg to ~/.config/pyofx/ofxget.cfg and edit.
+    1) Copy ~/.config/pyofx/ofxget_example.cfg to ~/.config/pyofx/ofxget.cfg and edit.
         Add a section for your financial institution, including URL, 
         account information, login, etc.
         See comments within.
