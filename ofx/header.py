@@ -69,7 +69,7 @@ class OFXHeader(object):
                         ('ENCODING', 'USASCII'),
                         ('CHARSET', '1252'),
                         ('COMPRESSION', 'NONE'),
-                        ('OLDFILEUID', 'NONE')
+                        ('OLDFILEUID', 'NONE'),
                         ('NEWFILEUID', str(self.newfileuid)),
             )
             lines = [':'.join(field) for field in fields]
