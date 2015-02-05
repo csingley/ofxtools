@@ -39,7 +39,7 @@ def cusip_checksum(base):
     return str((10 - (check % 10)) % 10)
 
 
-def cusip_valid(cusip):
+def validate_cusip(cusip):
     """
     Validate a CUSIP
     """
@@ -78,7 +78,7 @@ def isin_checksum(base):
     return str((10 - sum([int(d) for d in check]) % 10) % 10)
 
 
-def isin_valid(isin):
+def validate_isin(isin):
     """
     Validate an ISIN
     """
@@ -92,7 +92,7 @@ def isin_valid(isin):
 
 def cusip2isin(cusip, nation=None):
     # Validate inputs
-    if not cusip_valid(cusip):
+    if not validate_cusip(cusip):
         raise ValueError("'%s' is not a valid CUSIP" % cusip)
 
     nation = nation or 'US'
