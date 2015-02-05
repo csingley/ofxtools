@@ -6,6 +6,9 @@ import datetime
 import calendar
 import os
 
+# local imports
+from ofx.lib import NUMBERING_AGENCIES
+
 
 def fixpath(path):
     """Makes paths do the right thing."""
@@ -16,7 +19,7 @@ def fixpath(path):
     return path
 
 
-def cusipChecksum(base):
+def cusip_checksum(base):
     """
     Compute the check digit for a base Committee on Uniform Security
     Identification Procedures (CUSIP) securities identifier.
@@ -36,7 +39,17 @@ def cusipChecksum(base):
     return str((10 - (check % 10)) % 10)
 
 
-def sedolChecksum(base):
+def cusip_valid(cusip):
+    """
+    Validate a CUSIP
+    """
+    if len(cusip) == 9 and cusip_checksum(cusip[:8]) == cusip[9]:
+        return True
+    else:
+        return False
+
+
+def sedol_checksum(base):
     """
     Stock Exchange Daily Official List (SEDOL)
     http://goo.gl/HxFWL
@@ -50,7 +63,7 @@ def sedolChecksum(base):
     return str((10 - (check % 10)) % 10)
 
 
-def isinChecksum(base):
+def isin_checksum(base):
     """
     Compute the check digit for a base International Securities Identification
     Number (ISIN).  Input an 11-char alphanum str, output a single-char str.
@@ -58,17 +71,35 @@ def isinChecksum(base):
     http://goo.gl/8kPzD
     """
     assert len(base) == 11
-    assert base[:2] in numberingAgencies.keys()
+    assert base[:2] in NUMBERING_AGENCIES.keys()
     check = ''.join([int(char, 36) for char in base])
     check = check[::-1] # string reversal
     check = ''.join([d if n%2 else str(int(d)*2) for n, d in enumerate(check)])
     return str((10 - sum([int(d) for d in check]) % 10) % 10)
 
 
+def isin_valid(isin):
+    """
+    Validate an ISIN
+    """
+    if len(isin) == 12 \
+       and isin[:2] in NUMBERING_AGENCIES.keys() \
+       and isin_checksum(isin[:11]) == isin[12]:
+        return True
+    else:
+        return False
+
+
 def cusip2isin(cusip, nation=None):
+    # Validate inputs
+    if not cusip_valid(cusip):
+        raise ValueError("'%s' is not a valid CUSIP" % cusip)
+
     nation = nation or 'US'
-    assert len(cusip) == 9
-    assert CUSIPchecksum(cusip[:8]) == cusip[9]
+    if nation not in NUMBERING_AGENCIES.keys():
+        raise ValueError("'%s' is not a valid country code" % nation)
+
+    # Construct ISIN
     base = nation + cusip
     return base + ISINchecksum(base)
 
@@ -95,10 +126,8 @@ def settleDate(dt):
                 stop = True
         return dt
 
-    #print dt
     for n in range(3):
         dt = nextBizDay(dt)
-    #print dt
     return dt
 
 
