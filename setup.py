@@ -31,6 +31,8 @@ setup(
         'Intended Audience :: Financial and Insurance Industry',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Utilities',
+        'Topic :: Office/Business',
+        'Topic :: Office/Business :: Financial',
         'Topic :: Office/Business :: Financial :: Accounting',
         'Topic :: Office/Business :: Financial :: Investment',
         'License :: OSI Approved :: MIT License',
