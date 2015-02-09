@@ -3,20 +3,20 @@ from codecs import open # To use a consistent encoding
 from os import path
 
 here = path.abspath(path.dirname(__file__))
-usercfgdir = path.join(path.expanduser('~'), '.config', 'pyofx')
+usercfgdir = path.join(path.expanduser('~'), '.config', 'ofxtools')
 
 # Get the long description from the relevant file
 with open(path.join(here, 'README'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='pyofx',
+    name='ofxtools',
     version='0.1',
     description=('Library for downloading and parsing Open Financial Exchange'
                  '(OFX) formatted data from financial institutions'),
     long_description=long_description,
 
-    url='https://github.com/csingley/pyofx',
+    url='https://github.com/csingley/ofxtools',
 
     author='Christopher Singley',
     author_email='csingley@gmail.com',
