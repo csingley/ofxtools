@@ -12,7 +12,6 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name = 'ofxtools',
-    packages = ['ofxtools'],
     version = '0.1',
     description = ('Library for working with Open Financial Exchange (OFX)'
                  'formatted data used by financial institutions'),
@@ -50,12 +49,14 @@ setup(
 
     keywords = ['ofx', 'Open Financial Exchange'],
 
-    data_files=[
+    packages = ['ofx'],
+
+    data_files = [
         ('config', ['config/fi.cfg']),
         (usercfgdir, ['config/ofxget_example.cfg']),
     ],
 
-    entry_points={
+    entry_points = {
         'console_scripts': [
             'ofxget=ofx.Client:main',
         ],
