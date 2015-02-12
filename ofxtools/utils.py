@@ -7,7 +7,7 @@ import calendar
 import os
 
 # local imports
-from ofx.lib import NUMBERING_AGENCIES
+from ofxtools.lib import NUMBERING_AGENCIES
 
 
 def fixpath(path):

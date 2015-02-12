@@ -54,6 +54,8 @@ ISO639_2 = ('AAR', 'ABK', 'ACE', 'ACH', 'ADA', 'ADY', 'AFA', 'AFH', 'AFR',
             'WAR', 'WAS', 'CYM', 'WEN', 'WLN', 'WOL', 'XAL', 'XHO', 'YAO', 
             'YAP', 'YID', 'YOR', 'YPK', 'ZAP', 'ZBL', 'ZEN', 'ZHA', 'ZND',
             'ZUL', 'ZUN', 'ZXX', 'ZZA') 
+            
+LANG_CODES = ISO639_2 
 
 # Currency codes
 ISO4217 = ('AE', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD', 'AWG', 'AZN',
@@ -74,6 +76,8 @@ ISO4217 = ('AE', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD', 'AWG', 'AZN',
            'USD', 'USN', 'USS', 'UYI', 'UY', 'UZS', 'VEF', 'VND', 'VUV', 'WST',
            'XAF', 'XAG', 'XA', 'XBA', 'XBB', 'XBC', 'XBD', 'XCD', 'XDR', 'XF',
            'XOF', 'XPD', 'XPF', 'XPT', 'XTS', 'XXX', 'YER', 'ZAR', 'ZMK', 'ZWL')
+
+CURRENCY_CODES = ISO4217 
 
 # 2-letter Country codes
 ISO3166_1a2 = ('AD', 'AE', 'AF', 'AG', 'AI', 'AL', 'AM', 'AO', 'AQ', 'AR', 'AS',
@@ -129,6 +133,8 @@ ISO3166_1a3 = ('ABW', 'AFG', 'AGO', 'AIA', 'ALA', 'ALB', 'AND', 'ANT', 'ARE',
                'TWN', 'TZA', 'UGA', 'UKR', 'UMI', 'URY', 'USA', 'UZB', 'VAT',
                'VCT', 'VEN', 'VGB', 'VIR', 'VNM', 'VUT', 'WLF', 'WSM', 'YEM',
                'ZAF', 'ZMB', 'ZWE')
+
+COUNTRY_CODES = ISO3166_1a3 
 
 OFXv1 = ('102', '103')
 OFXv2 = ('200', '203', '211')

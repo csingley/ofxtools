@@ -5,8 +5,8 @@ transaction lists, etc.)
 """
 
 # local imports
-from aggregates import Aggregate
-import elements
+from models import Aggregate
+import types
 
 class OFXResponse(object):
     """ 
@@ -97,11 +97,11 @@ class Statement(object):
     
     def copyTRNRS(self, trnrs):
         """ Attach the data fields from the *TRNRS wrapper to the STMT """
-        self.uid = elements.String(36).convert(trnrs.find('TRNUID').text)
+        self.uid = types.String(36).convert(trnrs.find('TRNUID').text)
         self.status = Aggregate.from_etree(trnrs.find('STATUS'))
         cltcookie = trnrs.find('CLTCOOKIE')
         if cltcookie is not None:
-            self.cookie = elements.String(36).convert(cltcookie.text)
+            self.cookie = types.String(36).convert(cltcookie.text)
 
     def __repr__(self):
         # Define in subclass
@@ -177,7 +177,7 @@ class InvestmentStatement(Statement):
 
     def _init(self, invstmtrs):
         dtasof = invstmtrs.find('DTASOF').text
-        self.datetime = elements.DateTime.convert(dtasof)
+        self.datetime = types.DateTime.convert(dtasof)
 
         # INVTRANLIST
         tranlist = invstmtrs.find('INVTRANLIST')
@@ -229,8 +229,8 @@ class TransactionList(list):
         # Initialize with *TRANLIST Element
         dtstart, dtend = tranlist[0:2]
         tranlist = tranlist[2:]
-        self.dtstart = elements.DateTime.convert(dtstart.text)
-        self.dtend = elements.DateTime.convert(dtend.text)
+        self.dtstart = types.DateTime.convert(dtstart.text)
+        self.dtend = types.DateTime.convert(dtend.text)
         self.extend([Aggregate.from_etree(tran) for tran in tranlist])
 
     def __repr__(self):

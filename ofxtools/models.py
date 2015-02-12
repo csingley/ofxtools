@@ -5,9 +5,9 @@ balances, and securities.
 """
 
 # local imports
-from elements import (Element, Bool, String, OneOf, Integer, Decimal,
-                        DateTime)
-from lib import ISO639_2, ISO4217, ISO3166_1a3
+from ofxtools.types import (Element, Bool, String, OneOf, Integer, Decimal,
+                            DateTime)
+from lib import LANG_CODES, CURRENCY_CODES, COUNTRY_CODES
 
 
 # Enums used in aggregate validation
@@ -96,7 +96,7 @@ class SONRS(FI, STATUS):
     dtserver = DateTime(required=True)
     userkey = String(64)
     tskeyexpire = DateTime()
-    language = OneOf(*ISO639_2)
+    language = OneOf(*LANG_CODES)
     dtprofup = DateTime()
     dtacctup = DateTime()
     sesscookie = String(1000)
@@ -104,7 +104,7 @@ class SONRS(FI, STATUS):
 
 
 class CURRENCY(Aggregate):
-    cursym = OneOf(*ISO4217)
+    cursym = OneOf(*CURRENCY_CODES)
     currate = Decimal(8)
 
 
@@ -196,8 +196,12 @@ class SECID(Aggregate):
 
 
 class SECINFO(CURRENCY, SECID):
-    secname = String(120, required=True)
-    ticker = String(32)
+    # FIs abuse SECNAME/TICKER
+    # Relaxing the length constraints from the OFX spec does little harm
+    #secname = String(120, required=True)
+    #ticker = String(32)
+    secname = String(255, required=True)
+    ticker = String(255)
     fiid = String(32)
     rating = String(10)
     unitprice = Decimal()
@@ -302,7 +306,7 @@ class PAYEE(Aggregate):
     city = String(32, required=True)
     state = String(5, required=True)
     postalcode = String(11, required=True)
-    country = OneOf(*ISO3166_1a3)
+    country = OneOf(*COUNTRY_CODES)
     phone = String(32, required=True)
 
 

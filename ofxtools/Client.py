@@ -31,7 +31,7 @@ else:
 
 # local imports
 from header import OFXHeader
-from elements import Bool, OneOf, DateTime 
+from types import Bool, OneOf, DateTime 
 from utils import fixpath
 
 
