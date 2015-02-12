@@ -26,6 +26,7 @@ class OFXTree(ET.ElementTree):
     Overrides ElementTree.ElementTree.parse() to validate and strip the
     the OFX header before feeding the body tags to TreeBuilder
     """
+    ofxresponse = OFXResponse
     def parse(self, source):
         if not hasattr(source, 'read'):
             source = open(source)
@@ -43,7 +44,7 @@ class OFXTree(ET.ElementTree):
         if not hasattr(self, '_root'):
             raise ValueError('Must first call parse() to have data to convert')
         # OFXResponse performs validation & type conversion
-        return OFXResponse(self, strict=strict)
+        return self.ofxresponse(self, strict=strict)
 
 
 class TreeBuilder(ET.TreeBuilder):

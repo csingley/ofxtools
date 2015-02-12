@@ -39,10 +39,8 @@ setup(
         'Operating System :: OS Independent',
         'Natural Language :: English', 
         'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.0',
         'Programming Language :: Python :: 3.1',
         'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
@@ -51,7 +49,11 @@ setup(
 
     keywords = ['ofx', 'Open Financial Exchange'],
 
-    packages = ['ofx'],
+    packages = find_packages(),
+
+    extras_require = {
+        'SQL': ['sqlalchemy',],
+    },
 
     data_files = [
         ('config', ['config/fi.cfg']),
@@ -60,7 +62,7 @@ setup(
 
     entry_points = {
         'console_scripts': [
-            'ofxget=ofx.Client:main',
+            'ofxget=ofxtools.Client:main',
         ],
     },
 )

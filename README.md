@@ -1,27 +1,44 @@
+DESCRIPTION
+====
 ofxtools is a Python library for working with Open Financial Exchange (OFX)
 data - both OFXv1 (SGML) and OFXv2 (pure XML) - which is the standard format
 for downloading financial information from banks and stockbrokers.
 
 ofxtools has no external dependencies beyond stdlib, and is compatible with
-Python version 2.6+ (including Python 3).
+Python version 2.7+ and 3.1+.
 
-The primary faclities provided include:
+The primary facilities provided include:
     * The OFXClient class; which dowloads OFX statements from the Internet
-    * The OFXParser class; which parses OFX data into a standard ElementTree
+    * The OFXTree class; which parses OFX data into a standard ElementTree
       structure for further processing in Python.
     * The OFXResponse class; which validates and converts OFX data parsed by
       OFXParser into Python types and exposes them through more Pythonic
       attribute access (e.g. OFXResponse.statements[0].ledgerbal)
 
+Also included is the ofxtools.ofxalchemy subpackage, with versions of
+OFXTree and OFXResponse that can parse OFX formatted data and persist it
+into an SQL database.
+ofxalchemy depends on [the SQLAlchemy package][http://www.sqlalchemy.org].
+
 INSTALLATION
+====
 Use the Python user installation scheme:
     `python setup.py install --user`
 
 In addition to the Python package, this will also install a script 'ofxget'
-in ~/.local/bin, and a sample configuration file in ~/.config/ofxtools
+in ~/.local/bin, and its sample configuration file in ~/.config/ofxtools .
+
+To use ofxalchemy, you'll need to install SQLAlchemy via:
+    `pip install sqlalchemy`
+or
+    `easy_install sqlalchemy`
+or download and install the package from 
+[the SQLAlchemy website][http://www.sqlalchemy.org]
+or from [PyPI][https://pypi.python.org]
 
 
-BASIC USAGE TO DOWNLOAD OFX:
+BASIC USAGE TO DOWNLOAD OFX
+====
     1) Copy ~/.config/ofxtools/ofxget_example.cfg to ~/.config/ofxtools/ofxget.cfg and edit.
         Add a section for your financial institution, including URL, 
         account information, login, etc.
@@ -31,8 +48,8 @@ BASIC USAGE TO DOWNLOAD OFX:
         See the --help for explanation of the script options
 
 PARSER USAGE EXAMPLE
-
->>> from ofx import OFXTree
+====
+>>> from ofxtools import OFXTree
 >>> tree = OFXTree()
 >>> tree.parse('foobar.ofx')
 >>> response = tree.convert()

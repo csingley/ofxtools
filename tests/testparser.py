@@ -3,7 +3,7 @@
 
 import argparse
 
-from ofx.Parser import OFXTree
+from ofxtools.Parser import OFXTree
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
