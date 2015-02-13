@@ -19,7 +19,6 @@ class OFXResponse(object):
     After conversion, each of these convenience attributes holds instances
     of various Aggregate subclasses.
     """
-    #sonrs = None
     statements = []
     securities = []
 
@@ -35,14 +34,17 @@ class OFXResponse(object):
 
         # SONRS - server response to signon request
         sonrs = self.tree.find('SIGNONMSGSRSV1/SONRS')
-        #self.sonrs = Aggregate.from_etree(sonrs)
+        # Not implemented
+        pass
 
         # SECLIST - list of description of securities referenced by
         # INVSTMT (investment account statement)
         seclist = self.tree.find('SECLISTMSGSRSV1/SECLIST')
         if seclist is not None:
             for sec in seclist:
-                self.securities.append(Aggregate.from_etree(sec, get_or_create=True))
+                self.securities.append(
+                    Aggregate.from_etree(sec, get_or_create=True)
+                )
             DBSession.add_all(self.securities)
             DBSession.commit()
 
@@ -60,17 +62,11 @@ class OFXResponse(object):
                 stmtrs = trnrs.find('%sRS' % tagname)
                 if stmtrs is not None:
                     stmt = stmtClass(stmtrs)
-                    ## Staple the TRNRS wrapper data onto the STMT
-                    #stmt.copyTRNRS(trnrs)
                     self.statements.append(stmt)
 
     def __repr__(self):
-        #s = "<%s fid='%s' org='%s' dtserver='%s' len(statements)=%d len(securities)=%d>"
         s = "<%s len(statements)=%d len(securities)=%d>"
         return s % (self.__class__.__name__, 
-                    #self.sonrs.fid, 
-                    #self.sonrs.org, 
-                    #str(self.sonrs.dtserver), 
                     len(self.statements), 
                     len(self.securities),
                    )
@@ -78,11 +74,6 @@ class OFXResponse(object):
 ### STATEMENTS
 class Statement(object):
     """ Base class for Python representation of OFX *STMT aggregate """
-    # From TRNRS wrapper
-    #uid = None
-    #status = None
-    #cookie = None
-
     currency = None
     account = None
 
@@ -102,14 +93,6 @@ class Statement(object):
         # Define in subclass
         raise NotImplementedError
     
-    #def copyTRNRS(self, trnrs):
-        #""" Attach the data fields from the *TRNRS wrapper to the STMT """
-        #self.uid = types.String(36).convert(trnrs.find('TRNUID').text)
-        #self.status = Aggregate.from_etree(trnrs.find('STATUS'))
-        #cltcookie = trnrs.find('CLTCOOKIE')
-        #if cltcookie is not None:
-            #self.cookie = types.String(36).convert(cltcookie.text)
-
     def from_etree(elem):
         # Define in subclass
         raise NotImplementedError
@@ -137,7 +120,7 @@ class BankStatement(Statement):
         # LEDGERBAL - mandatory
         ledgerbal = stmtrs.find('LEDGERBAL')
         self.ledgerbal = Aggregate.from_etree(
-            ledgerbal, acctfrom=self.account, get_or_create=True
+            ledgerbal, acctfrom_id=self.account.id, get_or_create=True
         )
         DBSession.add(self.ledgerbal)
 
@@ -145,7 +128,7 @@ class BankStatement(Statement):
         availbal = stmtrs.find('AVAILBAL')
         if availbal is not None:
             self.availbal = Aggregate.from_etree(
-                availbal, acctfrom=self.account, get_or_create=True
+                availbal, acctfrom_id=self.account.id, get_or_create=True
             )
             DBSession.add(self.availbal)
 
@@ -208,10 +191,9 @@ class InvestmentStatement(Statement):
         # INVPOSLIST
         poslist = invstmtrs.find('INVPOSLIST')
         if poslist is not None:
-            self.positions = [INVPOS.from_etree(pos, invacctfrom=self.account,
-                                                dtasof=self.datetime,
-                                                get_or_create=True
-                                               ) for pos in poslist]
+            self.positions = [INVPOS.from_etree(
+                pos, invacctfrom_id=self.account.id, dtasof=self.datetime,
+                get_or_create=True) for pos in poslist]
             DBSession.add_all(self.positions)
 
         # INVBAL
@@ -223,12 +205,12 @@ class InvestmentStatement(Statement):
                 invbal.remove(ballist)
                 self.other_balances = [
                     Aggregate.from_etree(
-                        bal, acctfrom=self.account, dtasof=self.datetime
+                        bal, acctfrom_id=self.account.id, dtasof=self.datetime
                     ) for bal in ballist
                 ]
             # Now we can flatten the rest of INVBAL
             self.balances = Aggregate.from_etree(
-                invbal, invacctfrom=self.account, dtasof=self.datetime,
+                invbal, invacctfrom_id=self.account.id, dtasof=self.datetime,
                 get_or_create=True
             )
             DBSession.add(self.balances)
@@ -240,7 +222,10 @@ class InvestmentStatement(Statement):
                 invstmtrs.remove
 
     def __repr__(self):
-        s = "<%s datetime='%s' account=%s currency='%s' balances=%s len(other_balances)=%d len(positions)=%d len(transactions)=%d>"
+        s = """
+            <%s datetime='%s' account=%s currency='%s' balances=%s 
+            \len(other_balances)=%d len(positions)=%d len(transactions)=%d>
+        """
         return s % (self.__class__.__name__, 
                     self.datetime,
                     self.account,
@@ -268,7 +253,7 @@ class TransactionList(list):
 
     def etree_to_sql(self, tran):
             SubClass = getattr(models, tran.tag)
-            instance = SubClass.from_etree(tran, acctfrom=self.account,
+            instance = SubClass.from_etree(tran, acctfrom_id=self.account.id,
                                           get_or_create=True)
             return instance
 
@@ -292,7 +277,8 @@ class INVTRANLIST(TransactionList):
     """
     def etree_to_sql(self, tran):
             SubClass = getattr(models, tran.tag)
-            instance = SubClass.from_etree(tran, invacctfrom=self.account,
-                                          get_or_create=True)
+            instance = SubClass.from_etree(
+                tran, invacctfrom_id=self.account.id, get_or_create=True
+            )
             return instance
 

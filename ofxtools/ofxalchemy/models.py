@@ -82,27 +82,37 @@ class Aggregate(object):
 
     @classmethod
     def get(cls, **attrs):
+        #pks = cls.primary_keys()
+        #pk = {}
+        #for key in pks:
+            #try:
+                #try:
+                    #pk[key] = attrs[key]
+                #except KeyError:
+                    ## Accept object relationship, not just foreign key
+                    #if key.endswith('_id'):
+                        #k = key[:-3]
+                        #attr = attrs[k]
+                        #if isinstance(attr, Aggregate):
+                            #pk[k] = attr
+                        #else:
+                            #raise KeyError
+            #except KeyError:
+                #msg = "%s: Required attributes %s not satisfied by arguments %s" \
+                        #% (cls.__name__, pks, attrs)
+                #raise ValueError(msg)
+        #instance = DBSession.query(cls).filter_by(**pk).one()
+        #return instance
         pks = cls.primary_keys()
-        pk = {}
-        for key in pks:
-            try:
-                try:
-                    pk[key] = attrs[key]
-                except KeyError:
-                    # Accept direct relationship relationship, not just foreign key
-                    if key.endswith('_id'):
-                        k = key[:-3]
-                        attr = attrs[k]
-                        if not isinstance(attr, Aggregate):
-                            raise KeyError
-                        pk[k] = attr
-            except KeyError:
-                msg = "%s: Required attributes %s not satisfied by arguments %s" \
-                        % (cls.__name__, pks, attrs)
-                raise ValueError(msg)
+        try:
+            pk = {k: attrs[k] for k in pks}
+        except KeyError:
+            msg = "%s: Required attributes %s not satisfied by arguments %s" \
+                    % (cls.__name__, pks, attrs)
+            raise ValueError(msg)
         instance = DBSession.query(cls).filter_by(**pk).one()
         return instance
-    
+
     @classmethod
     def get_or_create(cls, **attrs):
         try:
@@ -238,7 +248,7 @@ class BANKACCTFROM(ACCTFROM):
     accttype = Column(Enum(*ACCTTYPES), nullable=False)
     acctkey = Column(String(length=22))
 
-    pks = ['bankfromid', 'acctid']
+    pks = ['bankid', 'acctid']
 
 
 class CCACCTFROM(ACCTFROM):
@@ -301,6 +311,7 @@ class INVBAL(Base, Aggregate):
 
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, ForeignKey('invacctfroms.id'), primary_key=True)
+    invacctfrom = relationship('INVACCTFROM', backref='invbals')
     dtasof = Column(OFXDateTime, primary_key=True)
 
     # Elements from OFX spec
@@ -309,7 +320,6 @@ class INVBAL(Base, Aggregate):
     shortbalance = Column(Numeric(), nullable=False)
     buypower = Column(Numeric())
 
-    invacctfrom = relationship('INVACCTFROM', backref='invbals')
 
 
 class BAL(Base, Aggregate, CURRENCY):
@@ -703,7 +713,6 @@ class BUYDEBT(INVTRAN):
 
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
-    invacctfrom = relationship('INVACCTFROM')
     fitid = Column(String(length=255), primary_key=True)
 
     secinfo_uniqueid = Column(String(length=32), nullable=False)
@@ -732,7 +741,6 @@ class BUYMF(INVTRAN):
 
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
-    invacctfrom = relationship('INVACCTFROM')
     fitid = Column(String(length=255), primary_key=True)
 
     secinfo_uniqueid = Column(String(length=32), nullable=False)
@@ -762,7 +770,6 @@ class BUYOPT(INVTRAN, INVBUY):
 
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
-    invacctfrom = relationship('INVACCTFROM')
     fitid = Column(String(length=255), primary_key=True)
 
     secinfo_uniqueid = Column(String(length=32), nullable=False)
@@ -792,7 +799,6 @@ class BUYOTHER(INVTRAN, INVBUY):
 
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
-    invacctfrom = relationship('INVACCTFROM')
     fitid = Column(String(length=255), primary_key=True)
 
     secinfo_uniqueid = Column(String(length=32), nullable=False)
@@ -818,7 +824,6 @@ class BUYSTOCK(INVTRAN, INVBUY):
 
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
-    invacctfrom = relationship('INVACCTFROM')
     fitid = Column(String(length=255), primary_key=True)
 
     secinfo_uniqueid = Column(String(length=32), nullable=False)
@@ -847,7 +852,6 @@ class CLOSUREOPT(INVTRAN):
 
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
-    invacctfrom = relationship('INVACCTFROM')
     fitid = Column(String(length=255), primary_key=True)
     secinfo_uniqueid = Column(Integer, nullable=False)
     secinfo_uniqueidtype = Column(Integer, nullable=False)
@@ -874,7 +878,6 @@ class INCOME(INVTRAN, ORIGCURRENCY):
 
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
-    invacctfrom = relationship('INVACCTFROM')
     fitid = Column(String(length=255), primary_key=True)
 
     secinfo_uniqueid = Column(String(length=32), nullable=False)
@@ -909,7 +912,6 @@ class INVEXPENSE(INVTRAN, ORIGCURRENCY):
 
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
-    invacctfrom = relationship('INVACCTFROM')
     fitid = Column(String(length=255), primary_key=True)
     secinfo_uniqueid = Column(Integer, nullable=False)
     secinfo_uniqueidtype = Column(Integer, nullable=False)
@@ -940,7 +942,6 @@ class JRNLFUND(INVTRAN):
 
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
-    invacctfrom = relationship('INVACCTFROM')
     fitid = Column(String(length=255), primary_key=True)
     __table_args__ = (
         ForeignKeyConstraint([invacctfrom_id, fitid],
@@ -960,7 +961,6 @@ class JRNLSEC(INVTRAN):
 
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
-    invacctfrom = relationship('INVACCTFROM')
     fitid = Column(String(length=255), primary_key=True)
     secinfo_uniqueid = Column(Integer, nullable=False)
     secinfo_uniqueidtype = Column(Integer, nullable=False)
@@ -989,7 +989,6 @@ class MARGININTEREST(INVTRAN, ORIGCURRENCY):
 
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
-    invacctfrom = relationship('INVACCTFROM')
     fitid = Column(String(length=255), primary_key=True)
     __table_args__ = (
         ForeignKeyConstraint([invacctfrom_id, fitid],
@@ -1008,7 +1007,6 @@ class REINVEST(INVTRAN, ORIGCURRENCY):
 
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
-    invacctfrom = relationship('INVACCTFROM')
     fitid = Column(String(length=255), primary_key=True)
     secinfo_uniqueid = Column(Integer, nullable=False)
     secinfo_uniqueidtype = Column(Integer, nullable=False)
@@ -1045,7 +1043,6 @@ class RETOFCAP(INVTRAN, ORIGCURRENCY):
 
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
-    invacctfrom = relationship('INVACCTFROM')
     fitid = Column(String(length=255), primary_key=True)
     secinfo_uniqueid = Column(Integer, nullable=False)
     secinfo_uniqueidtype = Column(Integer, nullable=False)
@@ -1075,7 +1072,6 @@ class SELLDEBT(INVTRAN, INVSELL):
 
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
-    invacctfrom = relationship('INVACCTFROM')
     fitid = Column(String(length=255), primary_key=True)
 
     secinfo_uniqueid = Column(String(length=32), nullable=False)
@@ -1105,7 +1101,6 @@ class SELLMF(INVTRAN, INVSELL):
 
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
-    invacctfrom = relationship('INVACCTFROM')
     fitid = Column(String(length=255), primary_key=True)
 
     secinfo_uniqueid = Column(String(length=32), nullable=False)
@@ -1136,7 +1131,6 @@ class SELLOPT(INVTRAN, INVSELL):
 
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
-    invacctfrom = relationship('INVACCTFROM')
     fitid = Column(String(length=255), primary_key=True)
 
     secinfo_uniqueid = Column(String(length=32), nullable=False)
@@ -1169,7 +1163,6 @@ class SELLOTHER(INVTRAN, INVSELL):
 
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
-    invacctfrom = relationship('INVACCTFROM')
     fitid = Column(String(length=255), primary_key=True)
 
     secinfo_uniqueid = Column(String(length=32), nullable=False)
@@ -1195,7 +1188,6 @@ class SELLSTOCK(INVTRAN, INVSELL):
 
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
-    invacctfrom = relationship('INVACCTFROM')
     fitid = Column(String(length=255), primary_key=True)
 
     secinfo_uniqueid = Column(String(length=32), nullable=False)
@@ -1224,7 +1216,6 @@ class SPLIT(INVTRAN):
 
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
-    invacctfrom = relationship('INVACCTFROM')
     fitid = Column(String(length=255), primary_key=True)
     secinfo_uniqueid = Column(Integer, nullable=False)
     secinfo_uniqueidtype = Column(Integer, nullable=False)
@@ -1258,7 +1249,6 @@ class TRANSFER(INVTRAN):
 
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
-    invacctfrom = relationship('INVACCTFROM')
     fitid = Column(String(length=255), primary_key=True)
     secinfo_uniqueid = Column(Integer, nullable=False)
     secinfo_uniqueidtype = Column(Integer, nullable=False)
@@ -1322,7 +1312,10 @@ class INVPOS(Base, Aggregate, CURRENCY):
         # Remove SECINFO and instantiate
         invpos = elem[0]
         secid = invpos[0]
-        extra_attrs['secinfo'] = SECID.from_etree(secid)
+        #extra_attrs['secinfo'] = SECID.from_etree(secid)
+        secinfo = SECID.from_etree(secid)
+        extra_attrs['secinfo_uniqueid'] = secinfo.uniqueid
+        extra_attrs['secinfo_uniqueidtype'] = secinfo.uniqueidtype
         invpos.remove(secid)
 
         return Aggregate.from_etree(elem, **extra_attrs)
