@@ -10,7 +10,7 @@ from sqlalchemy import (
     #DateTime,
     Enum,
     Integer,
-    Numeric,
+    #Numeric,
     String,
     Text,
     ForeignKey,
@@ -27,7 +27,7 @@ from sqlalchemy.orm import (
 from sqlalchemy.orm.exc import NoResultFound
 
 # local imports
-from types import OFXDateTime
+from types import Numeric, OFXDateTime
 from ofxtools.lib import LANG_CODES, CURRENCY_CODES, COUNTRY_CODES
 from ofxtools.lib import LANG_CODES, CURRENCY_CODES, COUNTRY_CODES
 
@@ -160,7 +160,8 @@ class Aggregate(object):
 
 #class STATUS(Base, Aggregate):
     #code = Column(Integer(6), nullable=False)
-    #severity = Column(Enum('INFO', 'WARN', 'ERROR'), nullable=False)
+    #severity = Column(Enum('INFO', 'WARN', 'ERROR', name='severity'),
+                      #nullable=False)
     #message = Column(length=String(255))
 
 
@@ -168,7 +169,7 @@ class Aggregate(object):
     #dtserver = Column(OFXDateTime, nullable=False)
     #userkey = Column(String(length=64))
     #tskeyexpire = Column(OFXDateTime)
-    #language = Column(Enum(*LANG_CODES))
+    #language = Column(Enum(*LANG_CODES, name='language'))
     #dtprofup = Column(OFXDateTime)
     #dtacctup = Column(OFXDateTime)
     #sesscookie = Column(String(length=1000))
@@ -177,13 +178,13 @@ class Aggregate(object):
 
 class CURRENCY(object):
     """ Declarative mixin representing OFX <CURRENCY> aggregate """
-    cursym = Column(Enum(*CURRENCY_CODES))
+    cursym = Column(Enum(*CURRENCY_CODES, name='cursym'))
     currate = Column(Numeric())
 
 
 class ORIGCURRENCY(CURRENCY):
     """ Declarative mixin representing OFX <CURRENCY> aggregate """
-    curtype = Column(Enum('CURRENCY', 'ORIGCURRENCY'))
+    curtype = Column(Enum('CURRENCY', 'ORIGCURRENCY', name='curtype'))
 
     @staticmethod
     def from_etree(elem):
@@ -245,7 +246,7 @@ class BANKACCTFROM(ACCTFROM):
     bankid = Column(String(length=9), nullable=False)
     branchid = Column(String(length=22))
     acctid = Column(String(length=9), nullable=False)
-    accttype = Column(Enum(*ACCTTYPES), nullable=False)
+    accttype = Column(Enum(*ACCTTYPES, name='accttype'), nullable=False)
     acctkey = Column(String(length=22))
 
     pks = ['bankid', 'acctid']
@@ -332,7 +333,8 @@ class BAL(Base, Aggregate, CURRENCY):
     # Elements from OFX spec
     name = Column(String(length=32), nullable=False)
     desc = Column(String(length=80), nullable=False)
-    baltype = Column(Enum('DOLLAR', 'PERCENT', 'NUMBER'), nullable=False)
+    baltype = Column(Enum('DOLLAR', 'PERCENT', 'NUMBER', name='baltype'),
+                     nullable=False)
     value = Column(Numeric(), nullable=False)
     dtasof = Column(OFXDateTime)  # @@FIXME we need this to be mandatory
 
@@ -349,7 +351,10 @@ class SECINFO(Base, Aggregate, CURRENCY):
     # Elements from OFX spec
     uniqueid = Column(String(length=32), primary_key=True)
     uniqueidtype = Column(String(length=10), primary_key=True)
-    secname = Column(String(length=120), nullable=False)
+    #secname = Column(String(length=120), nullable=False)
+    # FIs *cough* IBKR *cough* abuse the secname with too much information
+    # Relaxing the length constraint from the OFX spec does little harm
+    secname = Column(String(length=255), nullable=False)
     ticker = Column(String(length=32))
     fiid = Column(String(length=32))
     rating = Column(String(length=10))
@@ -363,8 +368,8 @@ class DEBTINFO(SECINFO):
     __mapper_args__ = {'polymorphic_identity': 'debtinfo'}
 
     # Added for SQLAlchemy object model
-    uniqueid = Column(Integer, primary_key=True)
-    uniqueidtype = Column(Integer, primary_key=True)
+    uniqueid = Column(String(length=32), primary_key=True)
+    uniqueidtype = Column(String(length=10), primary_key=True)
     __table_args__ = (ForeignKeyConstraint([uniqueid, uniqueidtype],
                                            [SECINFO.uniqueid,
                                             SECINFO.uniqueidtype],
@@ -373,19 +378,24 @@ class DEBTINFO(SECINFO):
 
     # Elements from OFX spec
     parvalue = Column(Numeric(), nullable=False)
-    debttype = Column(Enum('COUPON', 'ZERO'), nullable=False)
-    debtclass = Column(Enum('TREASURY', 'MUNICIPAL', 'CORPORATE', 'OTHER'))
+    debttype = Column(Enum('COUPON', 'ZERO', name='debttype'), nullable=False)
+    debtclass = Column(Enum('TREASURY', 'MUNICIPAL', 'CORPORATE', 'OTHER',
+                           name='debtclass')
+                      )
     couponrt = Column(Numeric())
     dtcoupon = Column(OFXDateTime)
     couponfreq = Column(Enum('MONTHLY', 'QUARTERLY', 'SEMIANNUAL', 'ANNUAL',
-                            'OTHER'))
+                            'OTHER', name='couponfreq')
+                       )
     callprice = Column(Numeric())
     yieldtocall = Column(Numeric())
     dtcall = Column(OFXDateTime)
-    calltype = Column(Enum('CALL', 'PUT', 'PREFUND', 'MATURITY'))
+    calltype = Column(Enum('CALL', 'PUT', 'PREFUND', 'MATURITY', 
+                           name='calltype')
+                     )
     ytmat = Column(Numeric())
     dtmat = Column(OFXDateTime)
-    assetclass = Column(Enum(*ASSETCLASSES))
+    assetclass = Column(Enum(*ASSETCLASSES, name='assetclass'))
     fiassetclass = Column(String(length=32))
 
 
@@ -395,8 +405,8 @@ class MFINFO(SECINFO):
     __mapper_args__ = {'polymorphic_identity': 'mfinfo'}
 
     # Added for SQLAlchemy object model
-    uniqueid = Column(Integer, primary_key=True)
-    uniqueidtype = Column(Integer, primary_key=True)
+    uniqueid = Column(String(length=32), primary_key=True)
+    uniqueidtype = Column(String(length=10), primary_key=True)
     __table_args__ = (ForeignKeyConstraint([uniqueid, uniqueidtype],
                                            [SECINFO.uniqueid,
                                             SECINFO.uniqueidtype],
@@ -404,7 +414,7 @@ class MFINFO(SECINFO):
                      )
 
     # Elements from OFX spec
-    mftype = Column(Enum('OPENEND', 'CLOSEEND', 'OTHER'))
+    mftype = Column(Enum('OPENEND', 'CLOSEEND', 'OTHER', name='mftype'))
     yld = Column(Numeric())
     dtyieldasof = Column(OFXDateTime)
 
@@ -453,7 +463,7 @@ class MFINFO(SECINFO):
     #mfinfo_id = Column(Integer, ForeignKey('mfinfos.id'), nullable=False)
 
     ## Elements from OFX spec
-    #assetclass = Column(Enum(*ASSETCLASSES))
+    #assetclass = Column(Enum(*ASSETCLASSES, name='assetclass'))
     #percent = Column(Numeric())
 
     #acct = relationship('MFINFO', backref='mfassetclasses')
@@ -468,7 +478,7 @@ class MFINFO(SECINFO):
     #mfinfo_id = Column(Integer, ForeignKey('mfinfos.id'), nullable=False)
 
     ## Elements from OFX spec
-    #assetclass = Column(Enum(*ASSETCLASSES))
+    #assetclass = Column(Enum(*ASSETCLASSES, name='assetclass'))
     #percent = Column(Numeric())
 
     #acct = relationship('MFINFO', backref='fimfassetclasses')
@@ -479,8 +489,8 @@ class OPTINFO(SECINFO):
     __mapper_args__ = {'polymorphic_identity': 'optinfo'}
 
     # Added for SQLAlchemy object model
-    uniqueid = Column(Integer, primary_key=True)
-    uniqueidtype = Column(Integer, primary_key=True)
+    uniqueid = Column(String(length=32), primary_key=True)
+    uniqueidtype = Column(String(length=10), primary_key=True)
     __table_args__ = (ForeignKeyConstraint([uniqueid, uniqueidtype],
                                            [SECINFO.uniqueid,
                                             SECINFO.uniqueidtype],
@@ -488,11 +498,11 @@ class OPTINFO(SECINFO):
                      )
 
     # Elements from OFX spec
-    opttype = Column(Enum('CALL', 'PUT'), nullable=False)
+    opttype = Column(Enum('CALL', 'PUT', name='opttype'), nullable=False)
     strikeprice = Column(Numeric(), nullable=False)
     dtexpire = Column(OFXDateTime, nullable=False)
     shperctrct = Column(Integer(required=True))
-    assetclass = Column(Enum(*ASSETCLASSES))
+    assetclass = Column(Enum(*ASSETCLASSES, name='assetclass'))
     fiassetclass = Column(String(length=32))
 
 
@@ -501,8 +511,8 @@ class OTHERINFO(SECINFO):
     __mapper_args__ = {'polymorphic_identity': 'otherinfo'}
 
     # Added for SQLAlchemy object model
-    uniqueid = Column(Integer, primary_key=True)
-    uniqueidtype = Column(Integer, primary_key=True)
+    uniqueid = Column(String(length=32), primary_key=True)
+    uniqueidtype = Column(String(length=10), primary_key=True)
     __table_args__ = (ForeignKeyConstraint([uniqueid, uniqueidtype],
                                            [SECINFO.uniqueid,
                                             SECINFO.uniqueidtype],
@@ -511,7 +521,7 @@ class OTHERINFO(SECINFO):
 
     # Elements from OFX spec
     typedesc = Column(String(length=32))
-    assetclass = Column(Enum(*ASSETCLASSES))
+    assetclass = Column(Enum(*ASSETCLASSES, name='assetclass'))
     fiassetclass = Column(String(length=32))
     percent = Column(Numeric())
 
@@ -521,8 +531,8 @@ class STOCKINFO(SECINFO):
     __mapper_args__ = {'polymorphic_identity': 'stockinfo'}
 
     # Added for SQLAlchemy object model
-    uniqueid = Column(Integer, primary_key=True)
-    uniqueidtype = Column(Integer, primary_key=True)
+    uniqueid = Column(String(length=32), primary_key=True)
+    uniqueidtype = Column(String(length=10), primary_key=True)
     __table_args__ = (ForeignKeyConstraint([uniqueid, uniqueidtype],
                                            [SECINFO.uniqueid, 
                                             SECINFO.uniqueidtype],
@@ -531,11 +541,13 @@ class STOCKINFO(SECINFO):
 
     # Elements from OFX spec
     typedesc = Column(String(length=32))
-    stocktype = Column(Enum('COMMON', 'PREFERRED', 'CONVERTIBLE', 'OTHER'))
+    stocktype = Column(Enum('COMMON', 'PREFERRED', 'CONVERTIBLE', 'OTHER',
+                           name='stocktype')
+                      )
     yld = Column(Numeric())
     dtyieldasof = Column(OFXDateTime)
     typedesc = Column(String(length=32))
-    assetclass = Column(Enum(*ASSETCLASSES))
+    assetclass = Column(Enum(*ASSETCLASSES, name='assetclass'))
     fiassetclass = Column(String(length=32))
 
 
@@ -555,7 +567,7 @@ class PAYEE(Base, Aggregate):
     city = Column(String(length=32), nullable=False)
     state = Column(String(length=5), nullable=False)
     postalcode = Column(String(length=11), nullable=False)
-    country = Column(Enum(*COUNTRY_CODES))
+    country = Column(Enum(*COUNTRY_CODES, name='country'))
     phone = Column(String(length=32), nullable=False)
 
 
@@ -567,20 +579,20 @@ class TRAN(ORIGCURRENCY):
     trntype = Column(Enum('CREDIT', 'DEBIT', 'INT', 'DIV', 'FEE', 'SRVCHG',
                     'DEP', 'ATM', 'POS', 'XFER', 'CHECK', 'PAYMENT',
                     'CASH', 'DIRECTDEP', 'DIRECTDEBIT', 'REPEATPMT',
-                    'OTHER'), nullable=False)
+                    'OTHER', name='trntype'), nullable=False)
     dtposted = Column(OFXDateTime, nullable=False)
     dtuser = Column(OFXDateTime)
     dtavail = Column(OFXDateTime)
     trnamt = Column(Numeric(), nullable=False)
     correctfitid = Column(Numeric())
-    correctaction = Column(Enum('REPLACE', 'DELETE'))
+    correctaction = Column(Enum('REPLACE', 'DELETE', name='correctaction'))
     checknum = Column(String(length=12))
     refnum = Column(String(length=32))
     sic = Column(Integer())
     payeeid = Column(String(length=12))
     name = Column(String(length=32))
     memo = Column(String(length=255))
-    inv401ksource = Column(Enum(*INV401KSOURCES))
+    inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
 
 class STMTTRN(Base, Aggregate, TRAN):
@@ -610,7 +622,7 @@ class INVBANKTRAN(Base, Aggregate, TRAN):
     bankacctto = relationship('BANKACCTFROM', foreign_keys=[bankacctto_id,])
     ccacctto = relationship('CCACCTFROM', foreign_keys=[ccacctto_id,])
 
-    subacctfund = Column(Enum(*INVSUBACCTS), nullable=False)
+    subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'), nullable=False)
 
 
 class INVTRAN(Base, Aggregate):
@@ -636,7 +648,8 @@ class INVTRAN(Base, Aggregate):
         secid = elem.find('SECID')
         assert secid is not None
         secinfo = SECID.from_etree(secid)
-        extra_attrs['secinfo'] = SECID.from_etree(secid)
+        extra_attrs['secinfo_uniqueid'] = secinfo.uniqueid
+        extra_attrs['secinfo_uniqueidtype'] = secinfo.uniqueidtype
         elem.remove(secid)
 
         return Aggregate.from_etree(elem, **extra_attrs)
@@ -667,9 +680,9 @@ class INVBUYSELL(ORIGCURRENCY):
     fees = Column(Numeric())
     load = Column(Numeric())
     total = Column(Numeric(), nullable=False)
-    subacctsec = Column(Enum(*INVSUBACCTS))
-    subacctfund = Column(Enum(*INVSUBACCTS))
-    inv401ksource = Column(Enum(*INV401KSOURCES))
+    subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'))
+    subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'))
+    inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
     @staticmethod
     def from_etree(elem, **extra_attrs):
@@ -756,7 +769,7 @@ class BUYMF(INVTRAN):
     )
 
     # Elements from OFX spec
-    buytype = Column(Enum(*BUYTYPES), nullable=False)
+    buytype = Column(Enum(*BUYTYPES, name='buytype'), nullable=False)
     relfitid = Column(String(length=255))
 
     @staticmethod
@@ -785,7 +798,9 @@ class BUYOPT(INVTRAN, INVBUY):
     )
 
     # Elements from OFX spec
-    optbuytype = Column(Enum('BUYTOOPEN', 'BUYTOCLOSE'), nullable=False)
+    optbuytype = Column(Enum('BUYTOOPEN', 'BUYTOCLOSE', name='obtbuytype'),
+                        nullable=False
+                       )
     shperctrct = Column(Integer(required=True))
 
     @staticmethod
@@ -839,7 +854,7 @@ class BUYSTOCK(INVTRAN, INVBUY):
     )
 
     # Elements from OFX spec
-    buytype = Column(Enum(*BUYTYPES), nullable=False)
+    buytype = Column(Enum(*BUYTYPES, name='buytype'), nullable=False)
 
     @staticmethod
     def from_etree(elem, **extra_attrs):
@@ -853,8 +868,8 @@ class CLOSUREOPT(INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
-    secinfo_uniqueid = Column(Integer, nullable=False)
-    secinfo_uniqueidtype = Column(Integer, nullable=False)
+    secinfo_uniqueid = Column(String(length=32), primary_key=True)
+    secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     __table_args__ = (
         ForeignKeyConstraint([invacctfrom_id, fitid,],
                              [INVTRAN.invacctfrom_id, INVTRAN.fitid,]),
@@ -863,10 +878,10 @@ class CLOSUREOPT(INVTRAN):
     )
 
     # Elements from OFX spec
-    optaction = Column(Enum('EXERCISE', 'ASSIGN', 'EXPIRE'))
+    optaction = Column(Enum('EXERCISE', 'ASSIGN', 'EXPIRE', name='optaction'))
     units = Column(Numeric(), nullable=False)
     shperctrct = Column(Integer(required=True))
-    subacctsec = Column(Enum(*INVSUBACCTS), nullable=False)
+    subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'), nullable=False)
     relfitid = Column(String(length=255))
     gain = Column(Numeric())
     
@@ -893,13 +908,13 @@ class INCOME(INVTRAN, ORIGCURRENCY):
     )
 
     # Elements from OFX spec
-    incometype = Column(Enum(*INCOMETYPES), nullable=False)
+    incometype = Column(Enum(*INCOMETYPES, name='incometype'), nullable=False)
     total = Column(Numeric(), nullable=False)
-    subacctsec = Column(Enum(*INVSUBACCTS), nullable=False)
-    subacctfund = Column(Enum(*INVSUBACCTS), nullable=False)
+    subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'), nullable=False)
+    subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'), nullable=False)
     taxexempt = Column(Boolean())
     withholding = Column(Numeric())
-    inv401ksource = Column(Enum(*INV401KSOURCES))
+    inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
     @staticmethod
     def from_etree(elem, **extra_attrs):
@@ -913,8 +928,8 @@ class INVEXPENSE(INVTRAN, ORIGCURRENCY):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
-    secinfo_uniqueid = Column(Integer, nullable=False)
-    secinfo_uniqueidtype = Column(Integer, nullable=False)
+    secinfo_uniqueid = Column(String(length=32), primary_key=True)
+    secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     secinfo = relationship('SECINFO', backref='invexpenses')
     __table_args__ = (
         ForeignKeyConstraint([invacctfrom_id, fitid,],
@@ -927,9 +942,9 @@ class INVEXPENSE(INVTRAN, ORIGCURRENCY):
 
     # Elements from OFX spec
     total = Column(Numeric(), nullable=False)
-    subacctsec = Column(Enum(*INVSUBACCTS), nullable=False)
-    subacctfund = Column(Enum(*INVSUBACCTS), nullable=False)
-    inv401ksource = Column(Enum(*INV401KSOURCES))
+    subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'), nullable=False)
+    subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'), nullable=False)
+    inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
     @staticmethod
     def from_etree(elem, **extra_attrs):
@@ -950,8 +965,8 @@ class JRNLFUND(INVTRAN):
     )
 
     # Elements from OFX spec
-    subacctto = Column(Enum(*INVSUBACCTS), nullable=False)
-    subacctfrom = Column(Enum(*INVSUBACCTS), nullable=False)
+    subacctto = Column(Enum(*INVSUBACCTS, name='subacctto'), nullable=False)
+    subacctfrom = Column(Enum(*INVSUBACCTS, name='subacctfrom'), nullable=False)
     total = Column(Numeric(), nullable=False)
 
 
@@ -962,8 +977,8 @@ class JRNLSEC(INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
-    secinfo_uniqueid = Column(Integer, nullable=False)
-    secinfo_uniqueidtype = Column(Integer, nullable=False)
+    secinfo_uniqueid = Column(String(length=32), primary_key=True)
+    secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     __table_args__ = (
         ForeignKeyConstraint([invacctfrom_id, fitid,],
                              [INVTRAN.invacctfrom_id, INVTRAN.fitid,],
@@ -974,8 +989,8 @@ class JRNLSEC(INVTRAN):
     )
 
     # Elements from OFX spec
-    subacctto = Column(Enum(*INVSUBACCTS), nullable=False)
-    subacctfrom = Column(Enum(*INVSUBACCTS), nullable=False)
+    subacctto = Column(Enum(*INVSUBACCTS, name='subacctto'), nullable=False)
+    subacctfrom = Column(Enum(*INVSUBACCTS, name='subacctfrom'), nullable=False)
     units = Column(Numeric(), nullable=False)
 
     @staticmethod
@@ -998,7 +1013,7 @@ class MARGININTEREST(INVTRAN, ORIGCURRENCY):
 
     # Elements from OFX spec
     total = Column(Numeric(), nullable=False)
-    subacctfund = Column(Enum(*INVSUBACCTS), nullable=False)
+    subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'), nullable=False)
 
 
 class REINVEST(INVTRAN, ORIGCURRENCY):
@@ -1008,8 +1023,8 @@ class REINVEST(INVTRAN, ORIGCURRENCY):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
-    secinfo_uniqueid = Column(Integer, nullable=False)
-    secinfo_uniqueidtype = Column(Integer, nullable=False)
+    secinfo_uniqueid = Column(String(length=32), primary_key=True)
+    secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     __table_args__ = (
         ForeignKeyConstraint([invacctfrom_id, fitid,],
                              [INVTRAN.invacctfrom_id, INVTRAN.fitid,],
@@ -1020,9 +1035,9 @@ class REINVEST(INVTRAN, ORIGCURRENCY):
     )
 
     # Elements from OFX spec
-    incometype = Column(Enum(*INCOMETYPES), nullable=False)
+    incometype = Column(Enum(*INCOMETYPES, name='incometype'), nullable=False)
     total = Column(Numeric(), nullable=False)
-    subacctsec = Column(Enum(*INVSUBACCTS))
+    subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'))
     units = Column(Numeric(), nullable=False)
     unitprice = Column(Numeric(), nullable=False)
     commission = Column(Numeric())
@@ -1030,7 +1045,7 @@ class REINVEST(INVTRAN, ORIGCURRENCY):
     fees = Column(Numeric())
     load = Column(Numeric())
     taxexempt = Column(Boolean())
-    inv401ksource = Column(Enum(*INV401KSOURCES))
+    inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
     @staticmethod
     def from_etree(elem, **extra_attrs):
@@ -1044,8 +1059,8 @@ class RETOFCAP(INVTRAN, ORIGCURRENCY):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
-    secinfo_uniqueid = Column(Integer, nullable=False)
-    secinfo_uniqueidtype = Column(Integer, nullable=False)
+    secinfo_uniqueid = Column(String(length=32), primary_key=True)
+    secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     __table_args__ = (
         ForeignKeyConstraint([invacctfrom_id, fitid,],
                              [INVTRAN.invacctfrom_id, INVTRAN.fitid,],
@@ -1057,9 +1072,9 @@ class RETOFCAP(INVTRAN, ORIGCURRENCY):
 
     # Elements from OFX spec
     total = Column(Numeric(), nullable=False)
-    subacctsec = Column(Enum(*INVSUBACCTS), nullable=False)
-    subacctfund = Column(Enum(*INVSUBACCTS), nullable=False)
-    inv401ksource = Column(Enum(*INV401KSOURCES))
+    subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'), nullable=False)
+    subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'), nullable=False)
+    inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
     @staticmethod
     def from_etree(elem, **extra_attrs):
@@ -1087,7 +1102,9 @@ class SELLDEBT(INVTRAN, INVSELL):
     )
 
     # Elements from OFX spec
-    sellreason = Column(Enum('CALL', 'SELL', 'MATURITY'), nullable=False)
+    sellreason = Column(Enum('CALL', 'SELL', 'MATURITY', name='sellreason'),
+                        nullable=False
+                       )
     accrdint = Column(Numeric())
 
     @staticmethod
@@ -1116,7 +1133,7 @@ class SELLMF(INVTRAN, INVSELL):
     )
 
     # Elements from OFX spec
-    selltype = Column(Enum(*SELLTYPES), nullable=False)
+    selltype = Column(Enum(*SELLTYPES, name='selltype'), nullable=False)
     avgcostbasis = Column(Numeric())
     relfitid = Column(String(length=255))
 
@@ -1146,11 +1163,13 @@ class SELLOPT(INVTRAN, INVSELL):
     )
 
     # Elements from OFX spec
-    optselltype = Column(Enum('SELLTOCLOSE', 'SELLTOOPEN'), nullable=False)
+    optselltype = Column(Enum('SELLTOCLOSE', 'SELLTOOPEN', name='optselltype'),
+                         nullable=False)
     shperctrct = Column(Integer(required=True))
     relfitid = Column(String(length=255))
-    reltype = Column(Enum('SPREAD', 'STRADDLE', 'NONE', 'OTHER'))
-    secured = Column(Enum('NAKED', 'COVERED'))
+    reltype = Column(Enum('SPREAD', 'STRADDLE', 'NONE', 'OTHER', name='reltype')
+                    )
+    secured = Column(Enum('NAKED', 'COVERED', name='secured'))
 
     @staticmethod
     def from_etree(elem, **extra_attrs):
@@ -1203,7 +1222,7 @@ class SELLSTOCK(INVTRAN, INVSELL):
     )
 
     # Elements from OFX spec
-    selltype = Column(Enum(*SELLTYPES), nullable=False)
+    selltype = Column(Enum(*SELLTYPES, name='selltype'), nullable=False)
 
     @staticmethod
     def from_etree(elem, **extra_attrs):
@@ -1217,8 +1236,8 @@ class SPLIT(INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
-    secinfo_uniqueid = Column(Integer, nullable=False)
-    secinfo_uniqueidtype = Column(Integer, nullable=False)
+    secinfo_uniqueid = Column(String(length=32), primary_key=True)
+    secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     __table_args__ = (
         ForeignKeyConstraint([invacctfrom_id, fitid,],
                              [INVTRAN.invacctfrom_id, INVTRAN.fitid,],
@@ -1229,14 +1248,14 @@ class SPLIT(INVTRAN):
     )
 
     # Elements from OFX spec
-    subacctsec = Column(Enum(*INVSUBACCTS), nullable=False)
+    subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'), nullable=False)
     oldunits = Column(Numeric(), nullable=False)
     newunits = Column(Numeric(), nullable=False)
     numerator = Column(Numeric(), nullable=False)
     denominator = Column(Numeric(), nullable=False)
     fraccash = Column(Numeric())
-    subacctfund = Column(Enum(*INVSUBACCTS))
-    inv401ksource = Column(Enum(*INV401KSOURCES))
+    subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'))
+    inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
     @staticmethod
     def from_etree(elem, **extra_attrs):
@@ -1250,8 +1269,8 @@ class TRANSFER(INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
-    secinfo_uniqueid = Column(Integer, nullable=False)
-    secinfo_uniqueidtype = Column(Integer, nullable=False)
+    secinfo_uniqueid = Column(String(length=32), primary_key=True)
+    secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     secinfo = relationship('SECINFO', backref='transfers')
     __table_args__ = (
         ForeignKeyConstraint([invacctfrom_id, fitid,],
@@ -1263,14 +1282,14 @@ class TRANSFER(INVTRAN):
     )
 
     # Elements from OFX spec
-    subacctsec = Column(Enum(*INVSUBACCTS), nullable=False)
+    subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'), nullable=False)
     units = Column(Numeric(), nullable=False)
-    tferaction = Column(Enum('IN', 'OUT'), nullable=False)
-    postype = Column(Enum('SHORT', 'LONG'), nullable=False)
+    tferaction = Column(Enum('IN', 'OUT', name='tferaction'), nullable=False)
+    postype = Column(Enum('SHORT', 'LONG', name='postype'), nullable=False)
     avgcostbasis = Column(Numeric())
     unitprice = Column(Numeric())
     dtpurchase = Column(OFXDateTime)
-    inv401ksource = Column(Enum(*INV401KSOURCES))
+    inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
     @staticmethod
     def from_etree(elem, **extra_attrs):
@@ -1284,8 +1303,8 @@ class INVPOS(Base, Aggregate, CURRENCY):
     subclass = Column(String(length=32), nullable=False)
     invacctfrom_id = Column(Integer, ForeignKey('invacctfroms.id'), primary_key=True)
     invacctfrom = relationship('INVACCTFROM', backref='invposs')
-    secinfo_uniqueid = Column(String, primary_key=True)
-    secinfo_uniqueidtype = Column(String, primary_key=True)
+    secinfo_uniqueid = Column(String(length=32), primary_key=True)
+    secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     secinfo = relationship('SECINFO', backref='invposs')
     dtasof = Column(OFXDateTime, primary_key=True)
 
@@ -1297,14 +1316,14 @@ class INVPOS(Base, Aggregate, CURRENCY):
     __mapper_args__ = {'polymorphic_on': subclass}
 
     # Elements from OFX spec
-    heldinacct = Column(Enum(*INVSUBACCTS), nullable=False)
-    postype = Column(Enum('SHORT', 'LONG'), nullable=False)
+    heldinacct = Column(Enum(*INVSUBACCTS, name='heldinacct'), nullable=False)
+    postype = Column(Enum('SHORT', 'LONG', name='postype'), nullable=False)
     units = Column(Numeric(), nullable=False)
     unitprice = Column(Numeric(), nullable=False)
     mktval = Column(Numeric(), nullable=False)
     dtpriceasof = Column(OFXDateTime, nullable=False)
     memo = Column(String(length=255))
-    inv401ksource = Column(Enum(*INV401KSOURCES))
+    inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
     @staticmethod
     def from_etree(elem, **extra_attrs):
@@ -1312,7 +1331,6 @@ class INVPOS(Base, Aggregate, CURRENCY):
         # Remove SECINFO and instantiate
         invpos = elem[0]
         secid = invpos[0]
-        #extra_attrs['secinfo'] = SECID.from_etree(secid)
         secinfo = SECID.from_etree(secid)
         extra_attrs['secinfo_uniqueid'] = secinfo.uniqueid
         extra_attrs['secinfo_uniqueidtype'] = secinfo.uniqueidtype
@@ -1328,13 +1346,14 @@ class POSDEBT(INVPOS):
     __mapper_args__ = {'polymorphic_identity': 'posdebt'}
 
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, ForeignKey('invacctfroms.id'), primary_key=True)
-    secinfo_uniqueid = Column(Integer, primary_key=True)
-    secinfo_uniqueidtype = Column(Integer, primary_key=True)
+    invacctfrom_id = Column(Integer, primary_key=True)
+    secinfo_uniqueid = Column(String(length=32), primary_key=True)
+    secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     dtasof = Column(OFXDateTime, primary_key=True)
     __table_args__ = (
-        ForeignKeyConstraint([secinfo_uniqueid, secinfo_uniqueidtype,dtasof],
-                             [INVPOS.secinfo_uniqueid, 
+        ForeignKeyConstraint([invacctfrom_id, secinfo_uniqueid,
+                              secinfo_uniqueidtype, dtasof],
+                             [INVPOS.invacctfrom_id, INVPOS.secinfo_uniqueid, 
                               INVPOS.secinfo_uniqueidtype, INVPOS.dtasof],
                             ),
     )
@@ -1345,13 +1364,14 @@ class POSMF(INVPOS):
     __mapper_args__ = {'polymorphic_identity': 'posmf'}
 
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, ForeignKey('invacctfroms.id'), primary_key=True)
-    secinfo_uniqueid = Column(Integer, primary_key=True)
-    secinfo_uniqueidtype = Column(Integer, primary_key=True)
+    invacctfrom_id = Column(Integer, primary_key=True)
+    secinfo_uniqueid = Column(String(length=32), primary_key=True)
+    secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     dtasof = Column(OFXDateTime, primary_key=True)
     __table_args__ = (
-        ForeignKeyConstraint([secinfo_uniqueid, secinfo_uniqueidtype,dtasof],
-                             [INVPOS.secinfo_uniqueid, 
+        ForeignKeyConstraint([invacctfrom_id, secinfo_uniqueid,
+                              secinfo_uniqueidtype, dtasof],
+                             [INVPOS.invacctfrom_id, INVPOS.secinfo_uniqueid, 
                               INVPOS.secinfo_uniqueidtype, INVPOS.dtasof],
                             ),
     )
@@ -1368,19 +1388,20 @@ class POSOPT(INVPOS):
     __mapper_args__ = {'polymorphic_identity': 'posopt'}
 
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, ForeignKey('invacctfroms.id'), primary_key=True)
-    secinfo_uniqueid = Column(Integer, primary_key=True)
-    secinfo_uniqueidtype = Column(Integer, primary_key=True)
+    invacctfrom_id = Column(Integer, primary_key=True)
+    secinfo_uniqueid = Column(String(length=32), primary_key=True)
+    secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     dtasof = Column(OFXDateTime, primary_key=True)
     __table_args__ = (
-        ForeignKeyConstraint([secinfo_uniqueid, secinfo_uniqueidtype,dtasof],
-                             [INVPOS.secinfo_uniqueid, 
+        ForeignKeyConstraint([invacctfrom_id, secinfo_uniqueid,
+                              secinfo_uniqueidtype, dtasof],
+                             [INVPOS.invacctfrom_id, INVPOS.secinfo_uniqueid, 
                               INVPOS.secinfo_uniqueidtype, INVPOS.dtasof],
                             ),
     )
 
     # Elements from OFX spec
-    secured = Column(Enum('NAKED', 'COVERED'))
+    secured = Column(Enum('NAKED', 'COVERED', name='secured'))
 
 
 class POSOTHER(INVPOS):
@@ -1388,13 +1409,14 @@ class POSOTHER(INVPOS):
     __mapper_args__ = {'polymorphic_identity': 'posother'}
 
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, ForeignKey('invacctfroms.id'), primary_key=True)
-    secinfo_uniqueid = Column(Integer, primary_key=True)
-    secinfo_uniqueidtype = Column(Integer, primary_key=True)
+    invacctfrom_id = Column(Integer, primary_key=True)
+    secinfo_uniqueid = Column(String(length=32), primary_key=True)
+    secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     dtasof = Column(OFXDateTime, primary_key=True)
     __table_args__ = (
-        ForeignKeyConstraint([secinfo_uniqueid, secinfo_uniqueidtype,dtasof],
-                             [INVPOS.secinfo_uniqueid, 
+        ForeignKeyConstraint([invacctfrom_id, secinfo_uniqueid,
+                              secinfo_uniqueidtype, dtasof],
+                             [INVPOS.invacctfrom_id, INVPOS.secinfo_uniqueid, 
                               INVPOS.secinfo_uniqueidtype, INVPOS.dtasof],
                             ),
     )
@@ -1404,13 +1426,14 @@ class POSSTOCK(INVPOS):
     __mapper_args__ = {'polymorphic_identity': 'posstock'}
 
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, ForeignKey('invacctfroms.id'), primary_key=True)
-    secinfo_uniqueid = Column(Integer, primary_key=True)
-    secinfo_uniqueidtype = Column(Integer, primary_key=True)
+    invacctfrom_id = Column(Integer, primary_key=True)
+    secinfo_uniqueid = Column(String(length=32), primary_key=True)
+    secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     dtasof = Column(OFXDateTime, primary_key=True)
     __table_args__ = (
-        ForeignKeyConstraint([secinfo_uniqueid, secinfo_uniqueidtype,dtasof],
-                             [INVPOS.secinfo_uniqueid, 
+        ForeignKeyConstraint([invacctfrom_id, secinfo_uniqueid,
+                              secinfo_uniqueidtype, dtasof],
+                             [INVPOS.invacctfrom_id, INVPOS.secinfo_uniqueid, 
                               INVPOS.secinfo_uniqueidtype, INVPOS.dtasof],
                             ),
     )
