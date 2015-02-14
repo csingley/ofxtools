@@ -82,27 +82,6 @@ class Aggregate(object):
 
     @classmethod
     def get(cls, **attrs):
-        #pks = cls.primary_keys()
-        #pk = {}
-        #for key in pks:
-            #try:
-                #try:
-                    #pk[key] = attrs[key]
-                #except KeyError:
-                    ## Accept object relationship, not just foreign key
-                    #if key.endswith('_id'):
-                        #k = key[:-3]
-                        #attr = attrs[k]
-                        #if isinstance(attr, Aggregate):
-                            #pk[k] = attr
-                        #else:
-                            #raise KeyError
-            #except KeyError:
-                #msg = "%s: Required attributes %s not satisfied by arguments %s" \
-                        #% (cls.__name__, pks, attrs)
-                #raise ValueError(msg)
-        #instance = DBSession.query(cls).filter_by(**pk).one()
-        #return instance
         pks = cls.primary_keys()
         try:
             pk = {k: attrs[k] for k in pks}
@@ -280,6 +259,73 @@ class INVACCTFROM(ACCTFROM):
     pk = ['brokerid', 'acctid']
 
 
+class ACCTTO(Base, Aggregate):
+    """ 
+    Uses a synthetic primary key to implement joined-table inheritance;
+    the actual unique identifiers are given as a class attribute 'pks'
+    """
+    __tablename__ = 'accttos'
+
+    # Added for SQLAlchemy object model
+    id = Column(Integer, primary_key=True)
+    subclass = Column(String(length=32), nullable=False)
+    __mapper_args__ = {'polymorphic_on': subclass}
+
+    # Extra attribute definitions not from OFX spec
+    name = Column(Text)
+
+    pks = []
+
+    @classmethod
+    def primary_keys(cls):
+        return cls.pks
+
+
+class BANKACCTTO(ACCTTO):
+    __tablename__ = 'bankaccttos'
+    __mapper_args__ = {'polymorphic_identity': 'bankacctto'}
+
+    # Added for SQLAlchemy object model
+    id = Column(Integer, ForeignKey('accttos.id'), primary_key=True)
+
+    # Elements from OFX spec
+    bankid = Column(String(length=9), nullable=False)
+    branchid = Column(String(length=22))
+    acctid = Column(String(length=9), nullable=False)
+    accttype = Column(Enum(*ACCTTYPES, name='accttype'), nullable=False)
+    acctkey = Column(String(length=22))
+
+    pks = ['bankid', 'acctid']
+
+
+class CCACCTTO(ACCTTO):
+    __tablename__ = 'ccaccttos'
+    __mapper_args__ = {'polymorphic_identity': 'ccacctto'}
+
+    # Added for SQLAlchemy object model
+    id = Column(Integer, ForeignKey('accttos.id'), primary_key=True)
+
+    # Elements from OFX spec
+    acctid = Column(String(length=22), nullable=False)
+    acctkey = Column(String(length=22))
+
+    pks = ['acctid', ]
+
+
+class INVACCTTO(ACCTTO):
+    __tablename__ = 'invaccttos'
+    __mapper_args__ = {'polymorphic_identity': 'invacctto'}
+    
+    # Added for SQLAlchemy object model
+    id = Column(Integer, ForeignKey('accttos.id'), primary_key=True)
+
+    # Elements from OFX spec
+    brokerid = Column(String(length=22), nullable=False)
+    acctid = Column(String(length=9), nullable=False)
+
+    pk = ['brokerid', 'acctid']
+
+
 # Balances
 class LEDGERBAL(Base, Aggregate):
     __tablename__ = 'ledgerbals'
@@ -419,7 +465,7 @@ class MFINFO(SECINFO):
     dtyieldasof = Column(OFXDateTime)
 
     @staticmethod
-    def from_etree(elem):
+    def from_etree(elem, **extra_attrs):
         """ 
         Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up _flatten()
         """
@@ -440,49 +486,62 @@ class MFINFO(SECINFO):
             mfassetclass.append(fimfassetclass)
             elem.remove(fimfassetclass)
 
-        instance = Aggregate.from_etree(elem)
+        instance = Aggregate.from_etree(elem, **extra_attrs)
 
         # Instantiate MFASSETCLASS/FIMFASSETCLASS with foreign key reference
         # to MFINFO
         for mfassetclass in mfassetclasses:
             for portion in mfassetclass:
-                #SubClass = globals()[portion.tag]
-                #attributes = portion._flatten()
-                #attributes['mfinfo'] = instance
-                #SubClass(**atributes)
-                Aggregate.from_etree(portion, {'mfinfo': instance})
+                Aggregate.from_etree(portion, mfinfo=instance)
 
         return instance
 
-# @@FIXME         
-#class PORTION(Base, Aggregate):
-    #__tablename__ = 'portions'
+class PORTION(Base, Aggregate):
+    __tablename__ = 'portions'
 
-    ## Added for SQLAlchemy object model
-    #id = Column(Integer, primary_key=True)
-    #mfinfo_id = Column(Integer, ForeignKey('mfinfos.id'), nullable=False)
+    # Added for SQLAlchemy object model
+    id = Column(Integer, primary_key=True) 
+    mfinfo_uniqueid = Column(String(length=32), nullable=False)
+    mfinfo_uniqueidtype = Column(String(length=10), nullable=False)
+    mfinfo = relationship('MFINFO', backref='mfassetclasses')
+    __table_args__ = (
+        ForeignKeyConstraint([mfinfo_uniqueid, mfinfo_uniqueidtype],
+                             [MFINFO.uniqueid, MFINFO.uniqueidtype],),
+    )
 
-    ## Elements from OFX spec
-    #assetclass = Column(Enum(*ASSETCLASSES, name='assetclass'))
-    #percent = Column(Numeric())
+    # Elements from OFX spec
+    assetclass = Column(Enum(*ASSETCLASSES, name='assetclass'))
+    percent = Column(Numeric())
 
-    #acct = relationship('MFINFO', backref='mfassetclasses')
+    pks = ['mfinfo_uniqueid', 'mfinfo_uniqueidtype']
+
+    @classmethod
+    def primary_keys(cls):
+        return cls.pks
 
 
-# @@FIXME
-#class FIPORTION(Base, Aggregate):
-    #__tablename__ = 'fiportions'
+class FIPORTION(Base, Aggregate):
+    __tablename__ = 'fiportions'
 
-    ## Added for SQLAlchemy object model
-    #id = Column(Integer, primary_key=True)
-    #mfinfo_id = Column(Integer, ForeignKey('mfinfos.id'), nullable=False)
+    # Added for SQLAlchemy object model
+    id = Column(Integer, primary_key=True)
+    mfinfo_uniqueid = Column(String(length=32), nullable=False)
+    mfinfo_uniqueidtype = Column(String(length=10), nullable=False)
+    mfinfo = relationship('MFINFO', backref='fimfassetclasses')
+    __table_args__ = (
+        ForeignKeyConstraint([mfinfo_uniqueid, mfinfo_uniqueidtype],
+                             [MFINFO.uniqueid, MFINFO.uniqueidtype],),
+    )
 
-    ## Elements from OFX spec
-    #assetclass = Column(Enum(*ASSETCLASSES, name='assetclass'))
-    #percent = Column(Numeric())
+    # Elements from OFX spec
+    assetclass = Column(Enum(*ASSETCLASSES, name='assetclass'))
+    percent = Column(Numeric())
 
-    #acct = relationship('MFINFO', backref='fimfassetclasses')
+    pks = ['mfinfo_uniqueid', 'mfinfo_uniqueidtype']
 
+    @classmethod
+    def primary_keys(cls):
+        return cls.pks
 
 class OPTINFO(SECINFO):
     __tablename__ = 'optinfos'
@@ -602,11 +661,24 @@ class STMTTRN(Base, Aggregate, TRAN):
     acctfrom = relationship('ACCTFROM', foreign_keys=[acctfrom_id,], backref='stmttrns')
     payee_id = Column(Integer, ForeignKey('payees.id'))
     payee = relationship('PAYEE', backref='stmttrns')
-    # @FIXME - BANKACCTTO / CCACCTTO need separate tables
-    bankacctto_id = Column(Integer, ForeignKey('bankacctfroms.id'))
-    bankacctto = relationship('BANKACCTFROM', foreign_keys=[bankacctto_id,])
-    ccacctto_id = Column(Integer, ForeignKey('ccacctfroms.id'))
-    ccacctto = relationship('CCACCTFROM', foreign_keys=[ccacctto_id,])
+    acctto_id = Column(Integer, ForeignKey('accttos.id'))
+    acctto = relationship('ACCTTO', foreign_keys=[acctto_id,])
+
+    @staticmethod
+    def from_etree(elem, **extra_attrs):
+        bankacctto = elem.find('BANKACCTTO')
+        if bankacctto:
+            acctfrom = Aggregate.from_etree(bankacctto)
+            extra_attrs['acctto_id'] = acctfrom.id
+            elem.remove(bankacctto)
+        else:
+            ccacctto = elem.find('CCACCTTO')
+            if ccacctto:
+                acctfrom = Aggregate.from_etree(ccacctto)
+                extra_attrs['acctto_id'] = acctfrom.id
+                elem.remove(ccacctto)
+
+        return Aggregate.from_etree(elem, **extra_attrs)
 
 
 class INVBANKTRAN(Base, Aggregate, TRAN):

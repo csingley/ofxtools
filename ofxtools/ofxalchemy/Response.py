@@ -42,8 +42,10 @@ class OFXResponse(object):
         seclist = self.tree.find('SECLISTMSGSRSV1/SECLIST')
         if seclist is not None:
             for sec in seclist:
+                SubClass = getattr(models, sec.tag)
                 self.securities.append(
-                    Aggregate.from_etree(sec, get_or_create=True)
+                    #Aggregate.from_etree(sec, get_or_create=True)
+                    SubClass.from_etree(sec, get_or_create=True)
                 )
             DBSession.add_all(self.securities)
             DBSession.commit()
@@ -252,10 +254,10 @@ class TransactionList(list):
         self.extend([self.etree_to_sql(tran) for tran in tranlist])
 
     def etree_to_sql(self, tran):
-            SubClass = getattr(models, tran.tag)
-            instance = SubClass.from_etree(tran, acctfrom_id=self.account.id,
-                                          get_or_create=True)
-            return instance
+        SubClass = getattr(models, tran.tag)
+        instance = SubClass.from_etree(tran, acctfrom_id=self.account.id,
+                                      get_or_create=True)
+        return instance
 
     def __repr__(self):
         return "<%s dtstart='%s' dtend='%s' len(self)=%d>" % \
