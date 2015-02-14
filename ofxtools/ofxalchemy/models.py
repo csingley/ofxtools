@@ -373,18 +373,20 @@ class BAL(Base, Aggregate, CURRENCY):
     __tablename__ = 'bals'
 
     # Added for SQLAlchemy object model
-    id = Column(Integer, primary_key=True)
-    acctfrom_id = Column(Integer, ForeignKey('acctfroms.id'), nullable=False)
+    acctfrom_id = Column(Integer, ForeignKey('acctfroms.id'), primary_key=True)
+    acctfrom = relationship('ACCTFROM', backref='bals')
 
     # Elements from OFX spec
-    name = Column(String(length=32), nullable=False)
+    name = Column(String(length=32), primary_key=True)
     desc = Column(String(length=80), nullable=False)
     baltype = Column(Enum('DOLLAR', 'PERCENT', 'NUMBER', name='baltype'),
                      nullable=False)
     value = Column(Numeric(), nullable=False)
-    dtasof = Column(OFXDateTime)  # @@FIXME we need this to be mandatory
-
-    acctfrom = relationship('ACCTFROM', backref='bals')
+    # We deviate from the OFX spec by storing the STMT.dtasof in BAL.dtasof
+    # in order to uniquely link the balance with the statement without 
+    # persisting a STMT object. We make BAL.dtasof mandatory and use it
+    # as part of the primary key.
+    dtasof = Column(OFXDateTime, primary_key=True)  
 
 
 class SECINFO(Base, Aggregate, CURRENCY):
