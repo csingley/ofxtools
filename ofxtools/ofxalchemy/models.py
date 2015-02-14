@@ -605,15 +605,11 @@ class STOCKINFO(SECINFO):
 
 
 # Transactions
-# @@FIXME
 class PAYEE(Base, Aggregate):
     __tablename__ = 'payees'
 
-    # Added for SQLAlchemy object model
-    id = Column(Integer, primary_key=True)
-
     # Elements from OFX spec
-    name = Column(String(length=32), nullable=False)
+    name = Column(String(length=32), primary_key=True)
     addr1 = Column(String(length=32), nullable=False)
     addr2 = Column(String(length=32))
     addr3 = Column(String(length=32))
@@ -653,7 +649,7 @@ class STMTTRN(Base, Aggregate, TRAN):
      # Added for SQLAlchemy object model
     acctfrom_id = Column(Integer, ForeignKey('acctfroms.id'), primary_key=True)
     acctfrom = relationship('ACCTFROM', foreign_keys=[acctfrom_id,], backref='stmttrns')
-    payee_id = Column(Integer, ForeignKey('payees.id'))
+    payee_name = Column(String(32), ForeignKey('payees.name'))
     payee = relationship('PAYEE', backref='stmttrns')
     acctto_id = Column(Integer, ForeignKey('accttos.id'))
     acctto = relationship('ACCTTO', foreign_keys=[acctto_id,])
@@ -676,7 +672,7 @@ class STMTTRN(Base, Aggregate, TRAN):
         payee= elem.find('PAYEE')
         if payee:
             instance = Aggregate.from_etree(payee)
-            extra_attrs['payee_id'] = instance.id
+            extra_attrs['payee_name'] = instance.name
             elem.remove(payee)
 
         return Aggregate.from_etree(elem, **extra_attrs)
@@ -687,7 +683,7 @@ class INVBANKTRAN(Base, Aggregate, TRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, ForeignKey('invacctfroms.id'), primary_key=True)
     invacctfrom = relationship('INVACCTFROM')
-    payee_id = Column(Integer, ForeignKey('payees.id'))
+    payee_name = Column(Integer, ForeignKey('payees.name'))
     bankacctto_id = Column(Integer, ForeignKey('bankacctfroms.id'))
     ccacctto_id = Column(Integer, ForeignKey('ccacctfroms.id'))
     invacct = relationship('INVACCTFROM', foreign_keys=[invacctfrom_id,], backref='invbanktrans')
