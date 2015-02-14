@@ -134,11 +134,10 @@ class BankStatement(Statement):
             )
             DBSession.add(self.availbal)
 
-        # @@FIXME - BALLIST needs fixed PK
-        # BALLIST
-        #ballist = stmtrs.find('BALLIST')
-        #if ballist:
-            #self.other_balances = [Aggregate.from_etree(bal) for bal in ballist]
+        ballist = stmtrs.find('BALLIST')
+        if ballist:
+            self.other_balances = [Aggregate.from_etree(bal) for bal in ballist]
+            DBSession.add_all(self.other_balances)
 
         # Unsupported subaggregates
         for tag in ('MKTGINFO', ):
@@ -210,6 +209,7 @@ class InvestmentStatement(Statement):
                         bal, acctfrom_id=self.account.id, dtasof=self.datetime
                     ) for bal in ballist
                 ]
+                DBSession.add_all(self.other_balances)
             # Now we can flatten the rest of INVBAL
             self.balances = Aggregate.from_etree(
                 invbal, invacctfrom_id=self.account.id, dtasof=self.datetime,
