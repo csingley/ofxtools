@@ -492,7 +492,11 @@ class MFINFO(SECINFO):
         # to MFINFO
         for mfassetclass in mfassetclasses:
             for portion in mfassetclass:
-                Aggregate.from_etree(portion, mfinfo=instance)
+                Aggregate.from_etree(
+                    portion, mfinfo_uniqueid=instance.uniqueid,
+                    mfinfo_uniqueidtype=instance.uniqueidtype,
+                    get_or_create=True
+                )
 
         return instance
 
@@ -500,9 +504,8 @@ class PORTION(Base, Aggregate):
     __tablename__ = 'portions'
 
     # Added for SQLAlchemy object model
-    id = Column(Integer, primary_key=True) 
-    mfinfo_uniqueid = Column(String(length=32), nullable=False)
-    mfinfo_uniqueidtype = Column(String(length=10), nullable=False)
+    mfinfo_uniqueid = Column(String(length=32), primary_key=True)
+    mfinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     mfinfo = relationship('MFINFO', backref='mfassetclasses')
     __table_args__ = (
         ForeignKeyConstraint([mfinfo_uniqueid, mfinfo_uniqueidtype],
@@ -510,23 +513,18 @@ class PORTION(Base, Aggregate):
     )
 
     # Elements from OFX spec
-    assetclass = Column(Enum(*ASSETCLASSES, name='assetclass'))
-    percent = Column(Numeric())
-
-    pks = ['mfinfo_uniqueid', 'mfinfo_uniqueidtype']
-
-    @classmethod
-    def primary_keys(cls):
-        return cls.pks
+    assetclass = Column(
+        Enum(*ASSETCLASSES, name='assetclass'), primary_key=True
+    )
+    percent = Column(Numeric(), nullable=False)
 
 
 class FIPORTION(Base, Aggregate):
     __tablename__ = 'fiportions'
 
     # Added for SQLAlchemy object model
-    id = Column(Integer, primary_key=True)
-    mfinfo_uniqueid = Column(String(length=32), nullable=False)
-    mfinfo_uniqueidtype = Column(String(length=10), nullable=False)
+    mfinfo_uniqueid = Column(String(length=32), primary_key=True)
+    mfinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     mfinfo = relationship('MFINFO', backref='fimfassetclasses')
     __table_args__ = (
         ForeignKeyConstraint([mfinfo_uniqueid, mfinfo_uniqueidtype],
@@ -534,14 +532,10 @@ class FIPORTION(Base, Aggregate):
     )
 
     # Elements from OFX spec
-    assetclass = Column(Enum(*ASSETCLASSES, name='assetclass'))
-    percent = Column(Numeric())
+    assetclass = Column(
+        Enum(*ASSETCLASSES, name='assetclass'), primary_key=True
+    )
 
-    pks = ['mfinfo_uniqueid', 'mfinfo_uniqueidtype']
-
-    @classmethod
-    def primary_keys(cls):
-        return cls.pks
 
 class OPTINFO(SECINFO):
     __tablename__ = 'optinfos'
@@ -666,17 +660,24 @@ class STMTTRN(Base, Aggregate, TRAN):
 
     @staticmethod
     def from_etree(elem, **extra_attrs):
+        # BANKACCTTO/CCACCTTO
         bankacctto = elem.find('BANKACCTTO')
         if bankacctto:
-            acctfrom = Aggregate.from_etree(bankacctto)
-            extra_attrs['acctto_id'] = acctfrom.id
-            elem.remove(bankacctto)
+            instance = Aggregate.from_etree(bankacctto)
+            extra_attrs['acctto_id'] = instance.id
+            elem.remove(instance)
         else:
             ccacctto = elem.find('CCACCTTO')
             if ccacctto:
-                acctfrom = Aggregate.from_etree(ccacctto)
-                extra_attrs['acctto_id'] = acctfrom.id
+                instance = Aggregate.from_etree(ccacctto)
+                extra_attrs['acctto_id'] = instance.id
                 elem.remove(ccacctto)
+        # PAYEE
+        payee= elem.find('PAYEE')
+        if payee:
+            instance = Aggregate.from_etree(payee)
+            extra_attrs['payee_id'] = instance.id
+            elem.remove(payee)
 
         return Aggregate.from_etree(elem, **extra_attrs)
 
