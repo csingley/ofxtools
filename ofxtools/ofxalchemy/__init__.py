@@ -1,6 +1,6 @@
 import types
 import models
-from models import DBSession, Base
+from models import DBSession, Aggregate
 import Parser
 from Parser import OFXTree
 import Response

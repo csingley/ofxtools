@@ -29,7 +29,6 @@ from sqlalchemy.orm.exc import NoResultFound
 # local imports
 from types import Numeric, OFXDateTime
 from ofxtools.lib import LANG_CODES, CURRENCY_CODES, COUNTRY_CODES
-from ofxtools.lib import LANG_CODES, CURRENCY_CODES, COUNTRY_CODES
 
 
 # Enums used in aggregate validation
@@ -50,22 +49,7 @@ ASSETCLASSES = ('DOMESTICBOND', 'INTLBOND', 'LARGESTOCK', 'SMALLSTOCK',
 DBSession = scoped_session(sessionmaker())
 
 
-# Custom SQLAlchemy column types
-#class OFXDateTime(sqlalchemy.types.TypeDecorator):
-    #""" """
-    #impl = sqlalchemy.types.DateTime
-
-    #def process_bind_param(self, value, dialect):
-        #return converters.DateTime.convert(value)
-
-    #def process_result_param(self, value, dialect):
-        #pass
-
-
 # Object classes
-Base = declarative_base()
-
-
 class Aggregate(object):
     """
     Declarative mixin of OFX 'aggregate', i.e. SGML parent node that contains
@@ -126,33 +110,8 @@ class Aggregate(object):
              if getattr(self, c.name) is not None]
         ))
 
-# For now we're ignoring the wrappers, which are primarily useful for 
-# automated downloads (as used by Quicken for one-click OFX data downloads)
 
-#class FI(Base, Aggregate):
-    #"""
-    #FI aggregates are optional in SONRQ/SONRS; not all firms use them.
-    #"""
-    #org = Column(String(length=32))
-    #fid = Column(String(length=32))
-
-
-#class STATUS(Base, Aggregate):
-    #code = Column(Integer(6), nullable=False)
-    #severity = Column(Enum('INFO', 'WARN', 'ERROR', name='severity'),
-                      #nullable=False)
-    #message = Column(length=String(255))
-
-
-#class SONRS(FI, STATUS):
-    #dtserver = Column(OFXDateTime, nullable=False)
-    #userkey = Column(String(length=64))
-    #tskeyexpire = Column(OFXDateTime)
-    #language = Column(Enum(*LANG_CODES, name='language'))
-    #dtprofup = Column(OFXDateTime)
-    #dtacctup = Column(OFXDateTime)
-    #sesscookie = Column(String(length=1000))
-    #accesskey = Column(String(length=1000))
+Aggregate = declarative_base(cls=Aggregate)
 
 
 class CURRENCY(object):
@@ -192,7 +151,7 @@ class ORIGCURRENCY(CURRENCY):
         return instance
 
 
-class ACCTFROM(Base, Aggregate):
+class ACCTFROM(Aggregate):
     """ 
     Uses a synthetic primary key to implement joined-table inheritance;
     the actual unique identifiers are given as a class attribute 'pks'
@@ -259,7 +218,7 @@ class INVACCTFROM(ACCTFROM):
     pk = ['brokerid', 'acctid']
 
 
-class ACCTTO(Base, Aggregate):
+class ACCTTO(Aggregate):
     """ 
     Uses a synthetic primary key to implement joined-table inheritance;
     the actual unique identifiers are given as a class attribute 'pks'
@@ -327,7 +286,7 @@ class INVACCTTO(ACCTTO):
 
 
 # Balances
-class LEDGERBAL(Base, Aggregate):
+class LEDGERBAL(Aggregate):
     __tablename__ = 'ledgerbals'
 
     # Added for SQLAlchemy object model
@@ -340,7 +299,7 @@ class LEDGERBAL(Base, Aggregate):
     acctfrom = relationship('ACCTFROM', backref='ledgerbals')
 
 
-class AVAILBAL(Base, Aggregate):
+class AVAILBAL(Aggregate):
     __tablename__ = 'availbals'
 
     # Added for SQLAlchemy object model
@@ -353,7 +312,7 @@ class AVAILBAL(Base, Aggregate):
     acctfrom = relationship('ACCTFROM', backref='availbals')
 
 
-class INVBAL(Base, Aggregate):
+class INVBAL(Aggregate):
     __tablename__ = 'invbals'
 
     # Added for SQLAlchemy object model
@@ -369,7 +328,7 @@ class INVBAL(Base, Aggregate):
 
 
 
-class BAL(Base, Aggregate, CURRENCY):
+class BAL(Aggregate, CURRENCY):
     __tablename__ = 'bals'
 
     # Added for SQLAlchemy object model
@@ -389,7 +348,7 @@ class BAL(Base, Aggregate, CURRENCY):
     dtasof = Column(OFXDateTime, primary_key=True)  
 
 
-class SECINFO(Base, Aggregate, CURRENCY):
+class SECINFO(Aggregate, CURRENCY):
     __tablename__ = 'secinfos'
 
     # Added for SQLAlchemy object model
@@ -502,7 +461,7 @@ class MFINFO(SECINFO):
 
         return instance
 
-class PORTION(Base, Aggregate):
+class PORTION(Aggregate):
     __tablename__ = 'portions'
 
     # Added for SQLAlchemy object model
@@ -521,7 +480,7 @@ class PORTION(Base, Aggregate):
     percent = Column(Numeric(), nullable=False)
 
 
-class FIPORTION(Base, Aggregate):
+class FIPORTION(Aggregate):
     __tablename__ = 'fiportions'
 
     # Added for SQLAlchemy object model
@@ -607,7 +566,7 @@ class STOCKINFO(SECINFO):
 
 
 # Transactions
-class PAYEE(Base, Aggregate):
+class PAYEE(Aggregate):
     __tablename__ = 'payees'
 
     # Elements from OFX spec
@@ -646,7 +605,7 @@ class TRAN(ORIGCURRENCY):
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
 
-class STMTTRN(Base, Aggregate, TRAN):
+class STMTTRN(Aggregate, TRAN):
     __tablename__ = 'stmttrns'
      # Added for SQLAlchemy object model
     acctfrom_id = Column(Integer, ForeignKey('acctfroms.id'), primary_key=True)
@@ -680,12 +639,12 @@ class STMTTRN(Base, Aggregate, TRAN):
         return Aggregate.from_etree(elem, **extra_attrs)
 
 
-class INVBANKTRAN(Base, Aggregate, TRAN):
+class INVBANKTRAN(Aggregate, TRAN):
     __tablename__ = 'invbanktrans'
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, ForeignKey('invacctfroms.id'), primary_key=True)
     invacctfrom = relationship('INVACCTFROM')
-    payee_name = Column(Integer, ForeignKey('payees.name'))
+    payee_name = Column(String(32), ForeignKey('payees.name'))
     bankacctto_id = Column(Integer, ForeignKey('bankacctfroms.id'))
     ccacctto_id = Column(Integer, ForeignKey('ccacctfroms.id'))
     invacct = relationship('INVACCTFROM', foreign_keys=[invacctfrom_id,], backref='invbanktrans')
@@ -696,7 +655,7 @@ class INVBANKTRAN(Base, Aggregate, TRAN):
     subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'), nullable=False)
 
 
-class INVTRAN(Base, Aggregate):
+class INVTRAN(Aggregate):
     __tablename__ = 'invtrans'
 
     # Added for SQLAlchemy object model
@@ -1367,7 +1326,7 @@ class TRANSFER(INVTRAN):
         return INVTRAN.from_etree(elem, **extra_attrs)
 
 # Positions
-class INVPOS(Base, Aggregate, CURRENCY):
+class INVPOS(Aggregate, CURRENCY):
     __tablename__ = 'invposs'
 
     # Added for SQLAlchemy object model

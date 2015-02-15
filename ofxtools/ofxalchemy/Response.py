@@ -6,7 +6,7 @@ transaction lists, etc.)
 
 # local imports
 import models
-from models import DBSession,Aggregate, INVPOS 
+from models import DBSession, Aggregate, INVPOS 
 import types
 
 class OFXResponse(object):
