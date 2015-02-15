@@ -206,7 +206,8 @@ class InvestmentStatement(Statement):
                 invbal.remove(ballist)
                 self.other_balances = [
                     Aggregate.from_etree(
-                        bal, acctfrom_id=self.account.id, dtasof=self.datetime
+                        bal, acctfrom_id=self.account.id, dtasof=self.datetime,
+                        get_or_create=True
                     ) for bal in ballist
                 ]
                 DBSession.add_all(self.other_balances)
