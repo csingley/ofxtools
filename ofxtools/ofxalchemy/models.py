@@ -60,6 +60,10 @@ class Aggregate(object):
     per the OFX specification, they are represented here by their own Python
     classes other than Aggregate.
     """
+    @declared_attr
+    def __tablename__(cls):
+        return cls.__name__.lower()
+
     @classmethod
     def primary_keys(cls):
         return [c.name for c in cls.__table__.c if c.primary_key]
@@ -156,8 +160,6 @@ class ACCTFROM(Aggregate):
     Uses a synthetic primary key to implement joined-table inheritance;
     the actual unique identifiers are given as a class attribute 'pks'
     """
-    __tablename__ = 'acctfroms'
-
     # Added for SQLAlchemy object model
     id = Column(Integer, primary_key=True)
     subclass = Column(String(length=32), nullable=False)
@@ -174,11 +176,10 @@ class ACCTFROM(Aggregate):
 
 
 class BANKACCTFROM(ACCTFROM):
-    __tablename__ = 'bankacctfroms'
     __mapper_args__ = {'polymorphic_identity': 'bankacctfrom'}
 
     # Added for SQLAlchemy object model
-    id = Column(Integer, ForeignKey('acctfroms.id'), primary_key=True)
+    id = Column(Integer, ForeignKey('acctfrom.id'), primary_key=True)
 
     # Elements from OFX spec
     bankid = Column(String(length=9), nullable=False)
@@ -191,11 +192,10 @@ class BANKACCTFROM(ACCTFROM):
 
 
 class CCACCTFROM(ACCTFROM):
-    __tablename__ = 'ccacctfroms'
     __mapper_args__ = {'polymorphic_identity': 'ccacctfrom'}
 
     # Added for SQLAlchemy object model
-    id = Column(Integer, ForeignKey('acctfroms.id'), primary_key=True)
+    id = Column(Integer, ForeignKey('acctfrom.id'), primary_key=True)
 
     # Elements from OFX spec
     acctid = Column(String(length=22), nullable=False)
@@ -205,11 +205,10 @@ class CCACCTFROM(ACCTFROM):
 
 
 class INVACCTFROM(ACCTFROM):
-    __tablename__ = 'invacctfroms'
     __mapper_args__ = {'polymorphic_identity': 'invacctfrom'}
     
     # Added for SQLAlchemy object model
-    id = Column(Integer, ForeignKey('acctfroms.id'), primary_key=True)
+    id = Column(Integer, ForeignKey('acctfrom.id'), primary_key=True)
 
     # Elements from OFX spec
     brokerid = Column(String(length=22), nullable=False)
@@ -223,8 +222,6 @@ class ACCTTO(Aggregate):
     Uses a synthetic primary key to implement joined-table inheritance;
     the actual unique identifiers are given as a class attribute 'pks'
     """
-    __tablename__ = 'accttos'
-
     # Added for SQLAlchemy object model
     id = Column(Integer, primary_key=True)
     subclass = Column(String(length=32), nullable=False)
@@ -241,11 +238,10 @@ class ACCTTO(Aggregate):
 
 
 class BANKACCTTO(ACCTTO):
-    __tablename__ = 'bankaccttos'
     __mapper_args__ = {'polymorphic_identity': 'bankacctto'}
 
     # Added for SQLAlchemy object model
-    id = Column(Integer, ForeignKey('accttos.id'), primary_key=True)
+    id = Column(Integer, ForeignKey('acctto.id'), primary_key=True)
 
     # Elements from OFX spec
     bankid = Column(String(length=9), nullable=False)
@@ -258,11 +254,10 @@ class BANKACCTTO(ACCTTO):
 
 
 class CCACCTTO(ACCTTO):
-    __tablename__ = 'ccaccttos'
     __mapper_args__ = {'polymorphic_identity': 'ccacctto'}
 
     # Added for SQLAlchemy object model
-    id = Column(Integer, ForeignKey('accttos.id'), primary_key=True)
+    id = Column(Integer, ForeignKey('acctto.id'), primary_key=True)
 
     # Elements from OFX spec
     acctid = Column(String(length=22), nullable=False)
@@ -272,11 +267,10 @@ class CCACCTTO(ACCTTO):
 
 
 class INVACCTTO(ACCTTO):
-    __tablename__ = 'invaccttos'
     __mapper_args__ = {'polymorphic_identity': 'invacctto'}
     
     # Added for SQLAlchemy object model
-    id = Column(Integer, ForeignKey('accttos.id'), primary_key=True)
+    id = Column(Integer, ForeignKey('acctto.id'), primary_key=True)
 
     # Elements from OFX spec
     brokerid = Column(String(length=22), nullable=False)
@@ -287,10 +281,8 @@ class INVACCTTO(ACCTTO):
 
 # Balances
 class LEDGERBAL(Aggregate):
-    __tablename__ = 'ledgerbals'
-
     # Added for SQLAlchemy object model
-    acctfrom_id = Column(Integer, ForeignKey('acctfroms.id'), primary_key=True)
+    acctfrom_id = Column(Integer, ForeignKey('acctfrom.id'), primary_key=True)
 
     # Elements from OFX spec
     balamt = Column(Numeric(), nullable=False)
@@ -300,10 +292,8 @@ class LEDGERBAL(Aggregate):
 
 
 class AVAILBAL(Aggregate):
-    __tablename__ = 'availbals'
-
     # Added for SQLAlchemy object model
-    acctfrom_id = Column(Integer, ForeignKey('acctfroms.id'), primary_key=True)
+    acctfrom_id = Column(Integer, ForeignKey('acctfrom.id'), primary_key=True)
 
     # Elements from OFX spec
     balamt = Column(Numeric(), nullable=False)
@@ -313,10 +303,8 @@ class AVAILBAL(Aggregate):
 
 
 class INVBAL(Aggregate):
-    __tablename__ = 'invbals'
-
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, ForeignKey('invacctfroms.id'), primary_key=True)
+    invacctfrom_id = Column(Integer, ForeignKey('invacctfrom.id'), primary_key=True)
     invacctfrom = relationship('INVACCTFROM', backref='invbals')
     dtasof = Column(OFXDateTime, primary_key=True)
 
@@ -329,10 +317,8 @@ class INVBAL(Aggregate):
 
 
 class BAL(Aggregate, CURRENCY):
-    __tablename__ = 'bals'
-
     # Added for SQLAlchemy object model
-    acctfrom_id = Column(Integer, ForeignKey('acctfroms.id'), primary_key=True)
+    acctfrom_id = Column(Integer, ForeignKey('acctfrom.id'), primary_key=True)
     acctfrom = relationship('ACCTFROM', backref='bals')
 
     # Elements from OFX spec
@@ -349,8 +335,6 @@ class BAL(Aggregate, CURRENCY):
 
 
 class SECINFO(Aggregate, CURRENCY):
-    __tablename__ = 'secinfos'
-
     # Added for SQLAlchemy object model
     subclass = Column(String(length=32), nullable=False)
     __mapper_args__ = {'polymorphic_on': subclass}
@@ -371,7 +355,6 @@ class SECINFO(Aggregate, CURRENCY):
 
 
 class DEBTINFO(SECINFO):
-    __tablename__ = 'debtinfos'
     __mapper_args__ = {'polymorphic_identity': 'debtinfo'}
 
     # Added for SQLAlchemy object model
@@ -408,7 +391,6 @@ class DEBTINFO(SECINFO):
 
 
 class MFINFO(SECINFO):
-    __tablename__ = 'mfinfos'
     __mapper_args__ = {'polymorphic_identity': 'mfinfo'}
 
     # Added for SQLAlchemy object model
@@ -462,8 +444,6 @@ class MFINFO(SECINFO):
         return instance
 
 class PORTION(Aggregate):
-    __tablename__ = 'portions'
-
     # Added for SQLAlchemy object model
     mfinfo_uniqueid = Column(String(length=32), primary_key=True)
     mfinfo_uniqueidtype = Column(String(length=10), primary_key=True)
@@ -481,8 +461,6 @@ class PORTION(Aggregate):
 
 
 class FIPORTION(Aggregate):
-    __tablename__ = 'fiportions'
-
     # Added for SQLAlchemy object model
     mfinfo_uniqueid = Column(String(length=32), primary_key=True)
     mfinfo_uniqueidtype = Column(String(length=10), primary_key=True)
@@ -499,7 +477,6 @@ class FIPORTION(Aggregate):
 
 
 class OPTINFO(SECINFO):
-    __tablename__ = 'optinfos'
     __mapper_args__ = {'polymorphic_identity': 'optinfo'}
 
     # Added for SQLAlchemy object model
@@ -521,7 +498,6 @@ class OPTINFO(SECINFO):
 
 
 class OTHERINFO(SECINFO):
-    __tablename__ = 'otherinfos'
     __mapper_args__ = {'polymorphic_identity': 'otherinfo'}
 
     # Added for SQLAlchemy object model
@@ -541,7 +517,6 @@ class OTHERINFO(SECINFO):
 
 
 class STOCKINFO(SECINFO):
-    __tablename__ = 'stockinfos'
     __mapper_args__ = {'polymorphic_identity': 'stockinfo'}
 
     # Added for SQLAlchemy object model
@@ -567,8 +542,6 @@ class STOCKINFO(SECINFO):
 
 # Transactions
 class PAYEE(Aggregate):
-    __tablename__ = 'payees'
-
     # Elements from OFX spec
     name = Column(String(length=32), primary_key=True)
     addr1 = Column(String(length=32), nullable=False)
@@ -606,13 +579,12 @@ class TRAN(ORIGCURRENCY):
 
 
 class STMTTRN(Aggregate, TRAN):
-    __tablename__ = 'stmttrns'
      # Added for SQLAlchemy object model
-    acctfrom_id = Column(Integer, ForeignKey('acctfroms.id'), primary_key=True)
+    acctfrom_id = Column(Integer, ForeignKey('acctfrom.id'), primary_key=True)
     acctfrom = relationship('ACCTFROM', foreign_keys=[acctfrom_id,], backref='stmttrns')
-    payee_name = Column(String(32), ForeignKey('payees.name'))
+    payee_name = Column(String(32), ForeignKey('payee.name'))
     payee = relationship('PAYEE', backref='stmttrns')
-    acctto_id = Column(Integer, ForeignKey('accttos.id'))
+    acctto_id = Column(Integer, ForeignKey('acctto.id'))
     acctto = relationship('ACCTTO', foreign_keys=[acctto_id,])
 
     @staticmethod
@@ -640,13 +612,12 @@ class STMTTRN(Aggregate, TRAN):
 
 
 class INVBANKTRAN(Aggregate, TRAN):
-    __tablename__ = 'invbanktrans'
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, ForeignKey('invacctfroms.id'), primary_key=True)
+    invacctfrom_id = Column(Integer, ForeignKey('invacctfrom.id'), primary_key=True)
     invacctfrom = relationship('INVACCTFROM')
-    payee_name = Column(String(32), ForeignKey('payees.name'))
-    bankacctto_id = Column(Integer, ForeignKey('bankacctfroms.id'))
-    ccacctto_id = Column(Integer, ForeignKey('ccacctfroms.id'))
+    payee_name = Column(String(32), ForeignKey('payee.name'))
+    bankacctto_id = Column(Integer, ForeignKey('bankacctfrom.id'))
+    ccacctto_id = Column(Integer, ForeignKey('ccacctfrom.id'))
     invacct = relationship('INVACCTFROM', foreign_keys=[invacctfrom_id,], backref='invbanktrans')
     payee = relationship('PAYEE', backref='invbanktrans')
     bankacctto = relationship('BANKACCTFROM', foreign_keys=[bankacctto_id,])
@@ -656,10 +627,8 @@ class INVBANKTRAN(Aggregate, TRAN):
 
 
 class INVTRAN(Aggregate):
-    __tablename__ = 'invtrans'
-
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, ForeignKey('invacctfroms.id'), primary_key=True)
+    invacctfrom_id = Column(Integer, ForeignKey('invacctfrom.id'), primary_key=True)
     invacctfrom = relationship('INVACCTFROM', backref='invtrans')
     subclass = Column(String(length=32), nullable=False)
 
@@ -751,7 +720,6 @@ class INVSELL(INVBUYSELL):
 
 
 class BUYDEBT(INVTRAN):
-    __tablename__ = 'buydebts'
     __mapper_args__ = {'polymorphic_identity': 'buydebt'}
 
     # Added for SQLAlchemy object model
@@ -779,7 +747,6 @@ class BUYDEBT(INVTRAN):
 
 
 class BUYMF(INVTRAN):
-    __tablename__ = 'buymfs'
     __mapper_args__ = {'polymorphic_identity': 'buymf'}
 
     # Added for SQLAlchemy object model
@@ -808,7 +775,6 @@ class BUYMF(INVTRAN):
 
 
 class BUYOPT(INVTRAN, INVBUY):
-    __tablename__ = 'buyopts'
     __mapper_args__ = {'polymorphic_identity': 'buyopt'}
 
     # Added for SQLAlchemy object model
@@ -839,7 +805,6 @@ class BUYOPT(INVTRAN, INVBUY):
 
 
 class BUYOTHER(INVTRAN, INVBUY):
-    __tablename__ = 'buyothers'
     __mapper_args__ = {'polymorphic_identity': 'buyother'}
 
     # Added for SQLAlchemy object model
@@ -864,7 +829,6 @@ class BUYOTHER(INVTRAN, INVBUY):
 
 
 class BUYSTOCK(INVTRAN, INVBUY):
-    __tablename__ = 'buystocks'
     __mapper_args__ = {'polymorphic_identity': 'buystock'}
 
     # Added for SQLAlchemy object model
@@ -892,7 +856,6 @@ class BUYSTOCK(INVTRAN, INVBUY):
 
 
 class CLOSUREOPT(INVTRAN):
-    __tablename__ = 'closureopts'
     __mapper_args__ = {'polymorphic_identity': 'closureopt'}
 
     # Added for SQLAlchemy object model
@@ -918,7 +881,6 @@ class CLOSUREOPT(INVTRAN):
 
 
 class INCOME(INVTRAN, ORIGCURRENCY):
-    __tablename__ = 'incomes'
     __mapper_args__ = {'polymorphic_identity': 'income'}
 
     # Added for SQLAlchemy object model
@@ -952,7 +914,6 @@ class INCOME(INVTRAN, ORIGCURRENCY):
 
 
 class INVEXPENSE(INVTRAN, ORIGCURRENCY):
-    __tablename__ = 'invexpenses'
     __mapper_args__ = {'polymorphic_identity': 'invexpense'}
 
     # Added for SQLAlchemy object model
@@ -982,7 +943,6 @@ class INVEXPENSE(INVTRAN, ORIGCURRENCY):
 
 
 class JRNLFUND(INVTRAN):
-    __tablename__ = 'jrnlfunds'
     __mapper_args__ = {'polymorphic_identity': 'jrnlfund'}
 
     # Added for SQLAlchemy object model
@@ -1001,7 +961,6 @@ class JRNLFUND(INVTRAN):
 
 
 class JRNLSEC(INVTRAN):
-    __tablename__ = 'jrnlsecs'
     __mapper_args__ = {'polymorphic_identity': 'jrnlsec'}
 
     # Added for SQLAlchemy object model
@@ -1029,7 +988,6 @@ class JRNLSEC(INVTRAN):
 
 
 class MARGININTEREST(INVTRAN, ORIGCURRENCY):
-    __tablename__ = 'marginterests'
     __mapper_args__ = {'polymorphic_identity': 'margininterest'}
 
     # Added for SQLAlchemy object model
@@ -1047,7 +1005,6 @@ class MARGININTEREST(INVTRAN, ORIGCURRENCY):
 
 
 class REINVEST(INVTRAN, ORIGCURRENCY):
-    __tablename__ = 'reinvests'
     __mapper_args__ = {'polymorphic_identity': 'reinvest'}
 
     # Added for SQLAlchemy object model
@@ -1083,7 +1040,6 @@ class REINVEST(INVTRAN, ORIGCURRENCY):
 
 
 class RETOFCAP(INVTRAN, ORIGCURRENCY):
-    __tablename__ = 'retofcaps'
     __mapper_args__ = {'polymorphic_identity': 'retofcap'}
 
     # Added for SQLAlchemy object model
@@ -1112,7 +1068,6 @@ class RETOFCAP(INVTRAN, ORIGCURRENCY):
 
 
 class SELLDEBT(INVTRAN, INVSELL):
-    __tablename__ = 'selldebts'
     __mapper_args__ = {'polymorphic_identity': 'selldebt'}
 
     # Added for SQLAlchemy object model
@@ -1143,7 +1098,6 @@ class SELLDEBT(INVTRAN, INVSELL):
 
 
 class SELLMF(INVTRAN, INVSELL):
-    __tablename__ = 'sellmf'
     __mapper_args__ = {'polymorphic_identity': 'sellmf'}
 
     # Added for SQLAlchemy object model
@@ -1173,7 +1127,6 @@ class SELLMF(INVTRAN, INVSELL):
 
 
 class SELLOPT(INVTRAN, INVSELL):
-    __tablename__ = 'sellopts'
     __mapper_args__ = {'polymorphic_identity': 'sellopt'}
 
     # Added for SQLAlchemy object model
@@ -1207,7 +1160,6 @@ class SELLOPT(INVTRAN, INVSELL):
 
 
 class SELLOTHER(INVTRAN, INVSELL):
-    __tablename__ = 'sellothers'
     __mapper_args__ = {'polymorphic_identity': 'sellother'}
 
     # Added for SQLAlchemy object model
@@ -1232,7 +1184,6 @@ class SELLOTHER(INVTRAN, INVSELL):
 
 
 class SELLSTOCK(INVTRAN, INVSELL):
-    __tablename__ = 'sellstocks'
     __mapper_args__ = {'polymorphic_identity': 'sellstock'}
 
     # Added for SQLAlchemy object model
@@ -1260,7 +1211,6 @@ class SELLSTOCK(INVTRAN, INVSELL):
 
 
 class SPLIT(INVTRAN):
-    __tablename__ = 'splits'
     __mapper_args__ = {'polymorphic_identity': 'splits'}
 
     # Added for SQLAlchemy object model
@@ -1293,7 +1243,6 @@ class SPLIT(INVTRAN):
 
 
 class TRANSFER(INVTRAN):
-    __tablename__ = 'transfers'
     __mapper_args__ = {'polymorphic_identity': 'transfer'}
 
     # Added for SQLAlchemy object model
@@ -1327,11 +1276,9 @@ class TRANSFER(INVTRAN):
 
 # Positions
 class INVPOS(Aggregate, CURRENCY):
-    __tablename__ = 'invposs'
-
     # Added for SQLAlchemy object model
     subclass = Column(String(length=32), nullable=False)
-    invacctfrom_id = Column(Integer, ForeignKey('invacctfroms.id'), primary_key=True)
+    invacctfrom_id = Column(Integer, ForeignKey('invacctfrom.id'), primary_key=True)
     invacctfrom = relationship('INVACCTFROM', backref='invposs')
     secinfo_uniqueid = Column(String(length=32), primary_key=True)
     secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
@@ -1372,7 +1319,6 @@ class INVPOS(Aggregate, CURRENCY):
 
 
 class POSDEBT(INVPOS):
-    __tablename__ = 'posdebts'
     __mapper_args__ = {'polymorphic_identity': 'posdebt'}
 
     # Added for SQLAlchemy object model
@@ -1390,7 +1336,6 @@ class POSDEBT(INVPOS):
 
 
 class POSMF(INVPOS):
-    __tablename__ = 'posmfs'
     __mapper_args__ = {'polymorphic_identity': 'posmf'}
 
     # Added for SQLAlchemy object model
@@ -1414,7 +1359,6 @@ class POSMF(INVPOS):
 
 
 class POSOPT(INVPOS):
-    __tablename__ = 'posopts'
     __mapper_args__ = {'polymorphic_identity': 'posopt'}
 
     # Added for SQLAlchemy object model
@@ -1435,7 +1379,6 @@ class POSOPT(INVPOS):
 
 
 class POSOTHER(INVPOS):
-    __tablename__ = 'posothers'
     __mapper_args__ = {'polymorphic_identity': 'posother'}
 
     # Added for SQLAlchemy object model
@@ -1452,7 +1395,6 @@ class POSOTHER(INVPOS):
     )
 
 class POSSTOCK(INVPOS):
-    __tablename__ = 'posstocks'
     __mapper_args__ = {'polymorphic_identity': 'posstock'}
 
     # Added for SQLAlchemy object model
