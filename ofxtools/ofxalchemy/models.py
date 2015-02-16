@@ -15,6 +15,7 @@ from sqlalchemy import (
     ForeignKeyConstraint,
     )
 import sqlalchemy.types
+from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.ext.declarative import (
     declarative_base,
     declared_attr,
@@ -206,7 +207,10 @@ class BANKACCTFROM(ACCTFROM):
     accttype = Column(Enum(*ACCTTYPES, name='accttype'), nullable=False)
     acctkey = Column(String(length=22))
 
-    pks = ['bankid', 'acctid']
+    __table_args__ = (UniqueConstraint('bankid', 'acctid'),
+                     )
+
+    pks = ['bankid', 'acctid', ]
 
 
 class CCACCTFROM(ACCTFROM):
@@ -214,7 +218,7 @@ class CCACCTFROM(ACCTFROM):
     id = Column(Integer, ForeignKey('acctfrom.id'), primary_key=True)
 
     # Elements from OFX spec
-    acctid = Column(String(length=22), nullable=False)
+    acctid = Column(String(length=22), nullable=False, unique=True)
     acctkey = Column(String(length=22))
 
     pks = ['acctid', ]
@@ -227,6 +231,9 @@ class INVACCTFROM(ACCTFROM):
     # Elements from OFX spec
     brokerid = Column(String(length=22), nullable=False)
     acctid = Column(String(length=22), nullable=False)
+
+    __table_args__ = (UniqueConstraint('brokerid', 'acctid'),
+                     )
 
     pk = ['brokerid', 'acctid']
 
@@ -270,7 +277,10 @@ class BANKACCTTO(ACCTTO):
     accttype = Column(Enum(*ACCTTYPES, name='accttype'), nullable=False)
     acctkey = Column(String(length=22))
 
-    pks = ['bankid', 'acctid']
+    __table_args__ = (UniqueConstraint('bankid', 'acctid'),
+                     )
+
+    pks = ['bankid', 'acctid', ]
 
 
 class CCACCTTO(ACCTTO):
@@ -278,7 +288,7 @@ class CCACCTTO(ACCTTO):
     id = Column(Integer, ForeignKey('acctto.id'), primary_key=True)
 
     # Elements from OFX spec
-    acctid = Column(String(length=22), nullable=False)
+    acctid = Column(String(length=22), nullable=False, unique=True)
     acctkey = Column(String(length=22))
 
     pks = ['acctid', ]
