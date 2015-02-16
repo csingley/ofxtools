@@ -7,10 +7,8 @@ balances, and securities.
 from sqlalchemy import (
     Column,
     Boolean,
-    #DateTime,
     Enum,
     Integer,
-    #Numeric,
     String,
     Text,
     ForeignKey,
@@ -78,14 +76,18 @@ class Aggregate(object):
         try:
             pk = {k: attrs[k] for k in pks}
         except KeyError:
-            msg = "%s: Required attributes %s not satisfied by arguments %s" \
-                    % (cls.__name__, pks, attrs)
+            msg = "%s: Required attributes %s not satisfied by arguments %s" % (
+                cls.__name__, pks, attrs)
             raise ValueError(msg)
         instance = DBSession.query(cls).filter_by(**pk).one()
         return instance
 
     @classmethod
     def get_or_create(cls, **attrs):
+        """
+        Return existing instance with matching PK if it exists, else create
+        an instance with all attrs given in keywords and return it.
+        """
         try:
             instance = cls.get(**attrs)
         except NoResultFound:
@@ -93,23 +95,31 @@ class Aggregate(object):
             DBSession.add(instance)
         return instance
     
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
+    @classmethod
+    def from_etree(cls, element, **extra_attrs):
         """ 
         Look up the Aggregate subclass for a given ofx.Parser.Element and
         feed it the Element to instantiate the Aggregate instance.
         """
         get_or_create = extra_attrs.pop('get_or_create', False)
-
-        SubClass = globals()[elem.tag]
-        attributes = elem._flatten()
+        element, extra_attrs = cls._preflatten(element, **extra_attrs)
+        attributes = element._flatten()
         attributes.update(extra_attrs)
 
+        SubClass = globals()[element.tag]
         if get_or_create:
             instance = SubClass.get_or_create(**attributes)
         else:
             instance = SubClass(**attributes)
         return instance
+
+    @classmethod
+    def _preflatten(cls, element, **extra_attrs):
+        """ 
+        Hook for subclasses to preprocess incoming SGML data before flattening
+        elements and instantiating to RDBMS.
+        """
+        return element, extra_attrs
 
     def __repr__(self):
         return '<%s(%s)>' % (self.__class__.__name__, ', '.join(
@@ -119,7 +129,7 @@ class Aggregate(object):
         ))
 
 
-Aggregate = declarative_base(cls=Aggregate)
+Aggregate = declarative_base(cls=Aggregate, name='Aggregate')
 
 
 class CURRENCY(object):
@@ -129,11 +139,11 @@ class CURRENCY(object):
 
 
 class ORIGCURRENCY(CURRENCY):
-    """ Declarative mixin representing OFX <CURRENCY> aggregate """
+    """ Declarative mixin representing OFX <ORIGCURRENCY> aggregate """
     curtype = Column(Enum('CURRENCY', 'ORIGCURRENCY', name='curtype'))
 
-    @staticmethod
-    def from_etree(elem):
+    @classmethod
+    def _do_origcurrency(cls, element, **extra_attrs):
         """ 
         See OFX spec section 5.2 for currency handling conventions.
         Flattening the currency definition leaves only the CURRATE/CURSYM
@@ -142,10 +152,8 @@ class ORIGCURRENCY(CURRENCY):
         important to interpreting transactions in foreign correncies, we
         preserve this information by adding a nonstandard curtype element.
         """
-        instance = Aggregate.from_etree(elem)
-
-        currency = elem.find('*/CURRENCY')
-        origcurrency = elem.find('*/ORIGCURRENCY')
+        currency = element.find('*/CURRENCY')
+        origcurrency = element.find('*/ORIGCURRENCY')
         if (currency is not None) and (origcurrency is not None):
             raise ValueError("<%s> may not contain both <CURRENCY> and \
                              <ORIGCURRENCY>" % elem.tag)
@@ -154,13 +162,15 @@ class ORIGCURRENCY(CURRENCY):
             curtype = origcurrency
         if curtype is not None:
             curtype = curtype.tag
-        instance.curtype = curtype
+        extra_attrs['curtype'] = curtype
 
-        return instance
+        return element, extra_attrs
 
 
 class ACCTFROM(Aggregate):
     """ 
+    Synthetic base class of {BANK,CC,INV}ACCTFROM - not in OFX spec. 
+
     Uses a surrogate primary key to implement joined-table inheritance;
     the natural keys are given as a class attribute 'pks'
     """
@@ -223,6 +233,8 @@ class INVACCTFROM(ACCTFROM):
 
 class ACCTTO(Aggregate):
     """ 
+    Synthetic base class of {BANK,CC,INV}ACCTFROM - not in OFX spec. 
+
     Uses a surrogate primary key to implement joined-table inheritance;
     the natural keys are given as a class attribute 'pks'
     """
@@ -319,7 +331,6 @@ class INVBAL(Aggregate):
     buypower = Column(Numeric())
 
 
-
 class BAL(CURRENCY, Aggregate):
     # Added for SQLAlchemy object model
     acctfrom_id = Column(Integer, ForeignKey('acctfrom.id'), primary_key=True)
@@ -352,11 +363,12 @@ class SECINFO(CURRENCY, Aggregate):
     # Elements from OFX spec
     uniqueid = Column(String(length=32), primary_key=True)
     uniqueidtype = Column(String(length=10), primary_key=True)
+    # FIs *cough* IBKR *cough* abuse SECNAME/TICKER with too much information
+    # Relaxing the length constraints from the OFX spec does little harm
     #secname = Column(String(length=120), nullable=False)
-    # FIs *cough* IBKR *cough* abuse the secname with too much information
-    # Relaxing the length constraint from the OFX spec does little harm
     secname = Column(String(length=255), nullable=False)
-    ticker = Column(String(length=32))
+    #ticker = Column(String(length=32))
+    ticker = Column(String(length=255))
     fiid = Column(String(length=32))
     rating = Column(String(length=10))
     unitprice = Column(Numeric())
@@ -413,10 +425,11 @@ class MFINFO(SECINFO):
     yld = Column(Numeric())
     dtyieldasof = Column(OFXDateTime)
 
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
+    @classmethod
+    def from_etree(cls, elem, **extra_attrs):
         """ 
         Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up _flatten()
+        Replace *ASSETCLASS lists with *PORTIONs having FK references to MFINFO
         """
         mfassetclasses = []
 
@@ -448,6 +461,7 @@ class MFINFO(SECINFO):
                 )
 
         return instance
+
 
 class PORTION(Aggregate):
     # Added for SQLAlchemy object model
@@ -587,28 +601,37 @@ class STMTTRN(TRAN, Aggregate):
     acctto_id = Column(Integer, ForeignKey('acctto.id'))
     acctto = relationship('ACCTTO', foreign_keys=[acctto_id,])
 
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
-        # BANKACCTTO/CCACCTTO
-        bankacctto = elem.find('BANKACCTTO')
-        if bankacctto:
-            instance = Aggregate.from_etree(bankacctto)
-            extra_attrs['acctto_id'] = instance.id
-            elem.remove(instance)
-        else:
-            ccacctto = elem.find('CCACCTTO')
-            if ccacctto:
-                instance = Aggregate.from_etree(ccacctto)
-                extra_attrs['acctto_id'] = instance.id
-                elem.remove(ccacctto)
-        # PAYEE
-        payee= elem.find('PAYEE')
-        if payee:
-            instance = Aggregate.from_etree(payee)
-            extra_attrs['payee_name'] = instance.name
-            elem.remove(payee)
+    @classmethod
+    def _preflatten(cls, element, **extra_attrs):
+        """
+        Replace BANKACCTTO/CCACCTTO/PAYEE with FK references.
 
-        return Aggregate.from_etree(elem, **extra_attrs)
+        This is needed for {BANK,CC}ACCTTO because account type information is
+        contained in the aggregate container, which will be lost by _flatten().
+
+        PAYEE will not lose information when _flatten()ed, but it really needs
+        its own object class to be useful to an application.
+        """
+        # BANKACCTTO/CCACCTTO
+        bankacctto = element.find('BANKACCTTO')
+        if bankacctto:
+            instance = Aggregate.from_etree(bankacctto, get_or_create=True)
+            extra_attrs['acctto_id'] = instance.id
+            element.remove(instance)
+        else:
+            ccacctto = element.find('CCACCTTO')
+            if ccacctto:
+                instance = Aggregate.from_etree(ccacctto, get_or_create=True)
+                extra_attrs['acctto_id'] = instance.id
+                element.remove(ccacctto)
+        # PAYEE
+        payee = element.find('PAYEE')
+        if payee:
+            instance = Aggregate.from_etree(payee, get_or_create=True)
+            extra_attrs['payee_name'] = instance.name
+            element.remove(payee)
+
+        return element, extra_attrs
 
 
 class INVBANKTRAN(TRAN, Aggregate):
@@ -647,35 +670,55 @@ class INVTRAN(Aggregate):
         else:
             return {'polymorphic_on': cls.subclass}
 
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
-        secid = elem.find('SECID')
-        assert secid is not None
-        secinfo = SECID.from_etree(secid)
-        extra_attrs['secinfo_uniqueid'] = secinfo.uniqueid
-        extra_attrs['secinfo_uniqueidtype'] = secinfo.uniqueidtype
-        elem.remove(secid)
+    @classmethod
+    def _preflatten(cls, element, **extra_attrs):
+        element, extra_attrs = cls._do_secid(element, **extra_attrs)
+        element, extra_attrs = cls._do_origcurrency(element, **extra_attrs)
+        return element, extra_attrs
 
-        return Aggregate.from_etree(elem, **extra_attrs)
+    @classmethod
+    def _do_secid(cls, element, **extra_attrs):
+        """ Hook for processing SECID in subclass """
+        return element, extra_attrs
+
+    @classmethod
+    def _do_origcurrency(cls, element, **extra_attrs):
+        """ Hook for processing ORIGCURRENCY in subclass """
+        return element, extra_attrs
 
 
 class SECID(object):
     """
     Mixin to hold logic for securities-related investment transactions (INVTRAN)
     """
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
+    @classmethod
+    def _do_secid(cls, element, **extra_attrs):
         """ 
-        Return the SECINFO referred to by (UNIQUEID, UNIQUEDTYPE) elements of
-        a SECID aggregate
+        Replace SECID with FK reference to existing SECINFO
         """
-        uniqueidtype = elem.find('UNIQUEIDTYPE')
-        uniqueid = elem.find('UNIQUEID')
-        return SECINFO.get(uniqueidtype=uniqueidtype.text,
-                               uniqueid=uniqueid.text)
+        secid = element.find('.//SECID')
+        uniqueidtype = secid.find('UNIQUEIDTYPE')
+        uniqueid = secid.find('UNIQUEID')
+        # Our data model uses composite key for SECINFO, which we know will
+        # already have been instantiated by processing SECLISE, so we can use 
+        # the natural key incoming from SGML and save ourselves a DB lookup.
+        #secinfo = SECINFO.get(uniqueidtype=uniqueidtype.text,
+                              #uniqueid=uniqueid.text)
+        #extra_attrs.update({'secinfo_uniqueid': secinfo.uniqueid,
+                            #'secinfo_uniqueidtype': secinfo.uniqueidtype})
+        extra_attrs.update({'secinfo_uniqueid': uniqueid.text,
+                            'secinfo_uniqueidtype': uniqueidtype.text})
+        # SECID aggregates are located at different places in the hierarchy -
+        # under INVBUY{BUY,SELL} or else directly under the parent transaction.
+        # We can use XPath to find SECID anywhere in the aggregate, but
+        # ElementTree doesn't let us find its parent cheaply, so we just
+        # remove its elements and let _flatten() erase the SECID aggregate.
+        secid.remove(uniqueidtype)
+        secid.remove(uniqueid)
+        return element, extra_attrs
 
 
-class INVBUYSELL(ORIGCURRENCY):
+class INVBUYSELL(SECID, ORIGCURRENCY):
     """ Synthetic base class of INVBUY/INVSELL - not in OFX spec """
     units = Column(Numeric(), nullable=False)
     unitprice = Column(Numeric(), nullable=False)
@@ -688,24 +731,9 @@ class INVBUYSELL(ORIGCURRENCY):
     subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'))
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
-        """ """
-        # Remove SECINFO and instantiate
-        invbuysell = elem[0]
-        secid = invbuysell[1]
-        assert secid is not None
-        secinfo = SECID.from_etree(secid)
-        extra_attrs['secinfo_uniqueid'] = secinfo.uniqueid
-        extra_attrs['secinfo_uniqueidtype'] = secinfo.uniqueidtype
-        invbuysell.remove(secid)
-
-        return Aggregate.from_etree(elem, **extra_attrs)
-
 
 class INVBUY(INVBUYSELL):
     """ Declarative mixin for OFX INVBUY aggregate """
-    # Elements from OFX spec
     markup = Column(Numeric())
     loanid = Column(String(length=32))
     loanprincipal = Column(Numeric())
@@ -716,7 +744,6 @@ class INVBUY(INVBUYSELL):
 
 class INVSELL(INVBUYSELL):
     """ Declarative mixin for OFX INVSELL aggregate """
-   # Elements from OFX spec
     markdown = Column(Numeric())
     withholding = Column(Numeric())
     taxexempt = Column(Boolean())
@@ -746,10 +773,6 @@ class BUYDEBT(INVBUY, INVTRAN):
     # Elements from OFX spec
     accrdint = Column(Numeric())
 
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
-        return INVBUYSELL.from_etree(elem, **extra_attrs)
-
 
 class BUYMF(INVBUY, INVTRAN):
     # Added for SQLAlchemy object model
@@ -771,10 +794,6 @@ class BUYMF(INVBUY, INVTRAN):
     # Elements from OFX spec
     buytype = Column(Enum(*BUYTYPES, name='buytype'), nullable=False)
     relfitid = Column(String(length=255))
-
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
-        return INVBUYSELL.from_etree(elem, **extra_attrs)
 
 
 class BUYOPT(INVBUY, INVTRAN):
@@ -800,10 +819,6 @@ class BUYOPT(INVBUY, INVTRAN):
                        )
     shperctrct = Column(Integer(required=True))
 
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
-        return INVBUYSELL.from_etree(elem, **extra_attrs)
-
 
 class BUYOTHER(INVBUY, INVTRAN):
     # Added for SQLAlchemy object model
@@ -821,10 +836,6 @@ class BUYOTHER(INVBUY, INVTRAN):
         ForeignKeyConstraint([secinfo_uniqueid, secinfo_uniqueidtype],
                              [SECINFO.uniqueid, SECINFO.uniqueidtype]),
     )
-
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
-        return INVBUYSELL.from_etree(elem, **extra_attrs)
 
 
 class BUYSTOCK(INVBUY, INVTRAN):
@@ -847,12 +858,8 @@ class BUYSTOCK(INVBUY, INVTRAN):
     # Elements from OFX spec
     buytype = Column(Enum(*BUYTYPES, name='buytype'), nullable=False)
 
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
-        return INVBUYSELL.from_etree(elem, **extra_attrs)
 
-
-class CLOSUREOPT(INVTRAN):
+class CLOSUREOPT(SECID, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -875,7 +882,7 @@ class CLOSUREOPT(INVTRAN):
     
 
 
-class INCOME(ORIGCURRENCY, INVTRAN):
+class INCOME(SECID, ORIGCURRENCY, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -901,12 +908,8 @@ class INCOME(ORIGCURRENCY, INVTRAN):
     withholding = Column(Numeric())
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
-        return INVTRAN.from_etree(elem, **extra_attrs)
 
-
-class INVEXPENSE(ORIGCURRENCY, INVTRAN):
+class INVEXPENSE(SECID, ORIGCURRENCY, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -928,10 +931,6 @@ class INVEXPENSE(ORIGCURRENCY, INVTRAN):
     subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'), nullable=False)
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
-        return INVTRAN.from_etree(elem, **extra_attrs)
-
 
 class JRNLFUND(INVTRAN):
     # Added for SQLAlchemy object model
@@ -949,7 +948,7 @@ class JRNLFUND(INVTRAN):
     total = Column(Numeric(), nullable=False)
 
 
-class JRNLSEC(INVTRAN):
+class JRNLSEC(SECID, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -969,10 +968,6 @@ class JRNLSEC(INVTRAN):
     subacctfrom = Column(Enum(*INVSUBACCTS, name='subacctfrom'), nullable=False)
     units = Column(Numeric(), nullable=False)
 
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
-        return INVTRAN.from_etree(elem, **extra_attrs)
-
 
 class MARGININTEREST(ORIGCURRENCY, INVTRAN):
     # Added for SQLAlchemy object model
@@ -989,7 +984,7 @@ class MARGININTEREST(ORIGCURRENCY, INVTRAN):
     subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'), nullable=False)
 
 
-class REINVEST(ORIGCURRENCY, INVTRAN):
+class REINVEST(SECID, ORIGCURRENCY, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -1017,12 +1012,8 @@ class REINVEST(ORIGCURRENCY, INVTRAN):
     taxexempt = Column(Boolean())
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
-        return INVTRAN.from_etree(elem, **extra_attrs)
 
-
-class RETOFCAP(ORIGCURRENCY, INVTRAN):
+class RETOFCAP(SECID, ORIGCURRENCY, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -1042,10 +1033,6 @@ class RETOFCAP(ORIGCURRENCY, INVTRAN):
     subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'), nullable=False)
     subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'), nullable=False)
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
-
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
-        return INVTRAN.from_etree(elem, **extra_attrs)
 
 
 class SELLDEBT(INVSELL, INVTRAN):
@@ -1071,10 +1058,6 @@ class SELLDEBT(INVSELL, INVTRAN):
                        )
     accrdint = Column(Numeric())
 
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
-        return INVBUYSELL.from_etree(elem, **extra_attrs)
-
 
 class SELLMF(INVSELL, INVTRAN):
     # Added for SQLAlchemy object model
@@ -1097,10 +1080,6 @@ class SELLMF(INVSELL, INVTRAN):
     selltype = Column(Enum(*SELLTYPES, name='selltype'), nullable=False)
     avgcostbasis = Column(Numeric())
     relfitid = Column(String(length=255))
-
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
-        return INVBUYSELL.from_etree(elem, **extra_attrs)
 
 
 class SELLOPT(INVSELL, INVTRAN):
@@ -1129,10 +1108,6 @@ class SELLOPT(INVSELL, INVTRAN):
                     )
     secured = Column(Enum('NAKED', 'COVERED', name='secured'))
 
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
-        return INVBUYSELL.from_etree(elem, **extra_attrs)
-
 
 class SELLOTHER(INVSELL, INVTRAN):
     # Added for SQLAlchemy object model
@@ -1150,10 +1125,6 @@ class SELLOTHER(INVSELL, INVTRAN):
         ForeignKeyConstraint([secinfo_uniqueid, secinfo_uniqueidtype,],
                              [SECINFO.uniqueid, SECINFO.uniqueidtype,]),
     )
-
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
-        return INVBUYSELL.from_etree(elem, **extra_attrs)
 
 
 class SELLSTOCK(INVSELL, INVTRAN):
@@ -1176,12 +1147,8 @@ class SELLSTOCK(INVSELL, INVTRAN):
     # Elements from OFX spec
     selltype = Column(Enum(*SELLTYPES, name='selltype'), nullable=False)
 
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
-        return INVBUYSELL.from_etree(elem, **extra_attrs)
 
-
-class SPLIT(INVTRAN):
+class SPLIT(SECID, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -1206,12 +1173,8 @@ class SPLIT(INVTRAN):
     subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'))
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
-        return INVTRAN.from_etree(elem, **extra_attrs)
 
-
-class TRANSFER(INVTRAN):
+class TRANSFER(SECID, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -1237,12 +1200,9 @@ class TRANSFER(INVTRAN):
     dtpurchase = Column(OFXDateTime)
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
-        return INVTRAN.from_etree(elem, **extra_attrs)
 
 # Positions
-class INVPOS(CURRENCY, Aggregate):
+class INVPOS(SECID, CURRENCY, Aggregate):
     # Added for SQLAlchemy object model
     subclass = Column(String(length=32), nullable=False)
     invacctfrom_id = Column(Integer, ForeignKey('invacctfrom.id'), primary_key=True)
@@ -1274,21 +1234,11 @@ class INVPOS(CURRENCY, Aggregate):
     dtpriceasof = Column(OFXDateTime, nullable=False)
     memo = Column(String(length=255))
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
-
-    @staticmethod
-    def from_etree(elem, **extra_attrs):
-        """ """
-        # Remove SECINFO and instantiate
-        invpos = elem[0]
-        secid = invpos[0]
-        secinfo = SECID.from_etree(secid)
-        extra_attrs['secinfo_uniqueid'] = secinfo.uniqueid
-        extra_attrs['secinfo_uniqueidtype'] = secinfo.uniqueidtype
-        invpos.remove(secid)
-
-        return Aggregate.from_etree(elem, **extra_attrs)
-
-
+  
+    @classmethod
+    def _preflatten(cls, element, **extra_attrs):
+        element, extra_attrs = cls._do_secid(element, **extra_attrs)
+        return element, extra_attrs
 
 
 class POSDEBT(INVPOS):
