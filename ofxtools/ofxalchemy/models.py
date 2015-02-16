@@ -309,8 +309,8 @@ class AVAILBAL(Aggregate):
 
 class INVBAL(Aggregate):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, ForeignKey('invacctfrom.id'), primary_key=True)
-    invacctfrom = relationship('INVACCTFROM', backref='invbals')
+    acctfrom_id = Column(Integer, ForeignKey('invacctfrom.id'), primary_key=True)
+    acctfrom = relationship('INVACCTFROM', backref='invbals')
     dtasof = Column(OFXDateTime, primary_key=True)
 
     # Elements from OFX spec
@@ -637,8 +637,8 @@ class STMTTRN(BANKTRAN, Aggregate):
 
 class INVBANKTRAN(BANKTRAN, Aggregate):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, ForeignKey('invacctfrom.id'), primary_key=True)
-    invacctfrom = relationship('INVACCTFROM')
+    acctfrom_id = Column(Integer, ForeignKey('invacctfrom.id'), primary_key=True)
+    acctfrom = relationship('INVACCTFROM')
 
     # Elements from OFX spec
     subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'), nullable=False)
@@ -646,8 +646,8 @@ class INVBANKTRAN(BANKTRAN, Aggregate):
 
 class INVTRAN(Aggregate):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, ForeignKey('invacctfrom.id'), primary_key=True)
-    invacctfrom = relationship('INVACCTFROM', backref='invtrans')
+    acctfrom_id = Column(Integer, ForeignKey('invacctfrom.id'), primary_key=True)
+    acctfrom = relationship('INVACCTFROM', backref='invtrans')
     subclass = Column(String(length=32), nullable=False)
 
     # Elements from OFX spec
@@ -750,7 +750,7 @@ class INVSELL(INVBUYSELL):
 
 class BUYDEBT(INVBUY, INVTRAN):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
 
     secinfo_uniqueid = Column(String(length=32), nullable=False)
@@ -759,8 +759,8 @@ class BUYDEBT(INVBUY, INVTRAN):
                                                     secinfo_uniqueidtype], 
                            backref='buydebts')
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, fitid],
-                             [INVTRAN.invacctfrom_id, INVTRAN.fitid]),
+        ForeignKeyConstraint([acctfrom_id, fitid],
+                             [INVTRAN.acctfrom_id, INVTRAN.fitid]),
         ForeignKeyConstraint([secinfo_uniqueid, secinfo_uniqueidtype],
                              [SECINFO.uniqueid, SECINFO.uniqueidtype]),
     )
@@ -771,7 +771,7 @@ class BUYDEBT(INVBUY, INVTRAN):
 
 class BUYMF(INVBUY, INVTRAN):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
 
     secinfo_uniqueid = Column(String(length=32), nullable=False)
@@ -780,8 +780,8 @@ class BUYMF(INVBUY, INVTRAN):
                                                     secinfo_uniqueidtype], 
                            backref='buymfs')
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, fitid],
-                             [INVTRAN.invacctfrom_id, INVTRAN.fitid]),
+        ForeignKeyConstraint([acctfrom_id, fitid],
+                             [INVTRAN.acctfrom_id, INVTRAN.fitid]),
         ForeignKeyConstraint([secinfo_uniqueid, secinfo_uniqueidtype],
                              [SECINFO.uniqueid, SECINFO.uniqueidtype]),
     )
@@ -793,7 +793,7 @@ class BUYMF(INVBUY, INVTRAN):
 
 class BUYOPT(INVBUY, INVTRAN):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
 
     secinfo_uniqueid = Column(String(length=32), nullable=False)
@@ -802,8 +802,8 @@ class BUYOPT(INVBUY, INVTRAN):
                                                     secinfo_uniqueidtype], 
                            backref='buyopts')
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, fitid],
-                             [INVTRAN.invacctfrom_id, INVTRAN.fitid]),
+        ForeignKeyConstraint([acctfrom_id, fitid],
+                             [INVTRAN.acctfrom_id, INVTRAN.fitid]),
         ForeignKeyConstraint([secinfo_uniqueid, secinfo_uniqueidtype],
                              [SECINFO.uniqueid, SECINFO.uniqueidtype]),
     )
@@ -817,7 +817,7 @@ class BUYOPT(INVBUY, INVTRAN):
 
 class BUYOTHER(INVBUY, INVTRAN):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
 
     secinfo_uniqueid = Column(String(length=32), nullable=False)
@@ -826,8 +826,8 @@ class BUYOTHER(INVBUY, INVTRAN):
                                                     secinfo_uniqueidtype], 
                            backref='buyothers')
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, fitid],
-                             [INVTRAN.invacctfrom_id, INVTRAN.fitid]),
+        ForeignKeyConstraint([acctfrom_id, fitid],
+                             [INVTRAN.acctfrom_id, INVTRAN.fitid]),
         ForeignKeyConstraint([secinfo_uniqueid, secinfo_uniqueidtype],
                              [SECINFO.uniqueid, SECINFO.uniqueidtype]),
     )
@@ -835,7 +835,7 @@ class BUYOTHER(INVBUY, INVTRAN):
 
 class BUYSTOCK(INVBUY, INVTRAN):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
 
     secinfo_uniqueid = Column(String(length=32), nullable=False)
@@ -844,8 +844,8 @@ class BUYSTOCK(INVBUY, INVTRAN):
                                                     secinfo_uniqueidtype], 
                            backref='buystocks')
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, fitid,],
-                             [INVTRAN.invacctfrom_id, INVTRAN.fitid,]),
+        ForeignKeyConstraint([acctfrom_id, fitid,],
+                             [INVTRAN.acctfrom_id, INVTRAN.fitid,]),
         ForeignKeyConstraint([secinfo_uniqueid, secinfo_uniqueidtype,],
                              [SECINFO.uniqueid, SECINFO.uniqueidtype,]),
     )
@@ -856,13 +856,13 @@ class BUYSTOCK(INVBUY, INVTRAN):
 
 class CLOSUREOPT(SECID, INVTRAN):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
     secinfo_uniqueid = Column(String(length=32), primary_key=True)
     secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, fitid,],
-                             [INVTRAN.invacctfrom_id, INVTRAN.fitid,]),
+        ForeignKeyConstraint([acctfrom_id, fitid,],
+                             [INVTRAN.acctfrom_id, INVTRAN.fitid,]),
         ForeignKeyConstraint([secinfo_uniqueid, secinfo_uniqueidtype,],
                              [SECINFO.uniqueid, SECINFO.uniqueidtype,]),
     )
@@ -879,7 +879,7 @@ class CLOSUREOPT(SECID, INVTRAN):
 
 class INCOME(SECID, ORIGCURRENCY, INVTRAN):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
 
     secinfo_uniqueid = Column(String(length=32), nullable=False)
@@ -888,8 +888,8 @@ class INCOME(SECID, ORIGCURRENCY, INVTRAN):
                                                     secinfo_uniqueidtype], 
                            backref='income')
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, fitid,],
-                             [INVTRAN.invacctfrom_id, INVTRAN.fitid,]),
+        ForeignKeyConstraint([acctfrom_id, fitid,],
+                             [INVTRAN.acctfrom_id, INVTRAN.fitid,]),
         ForeignKeyConstraint([secinfo_uniqueid, secinfo_uniqueidtype,],
                              [SECINFO.uniqueid, SECINFO.uniqueidtype,]),
     )
@@ -906,14 +906,14 @@ class INCOME(SECID, ORIGCURRENCY, INVTRAN):
 
 class INVEXPENSE(SECID, ORIGCURRENCY, INVTRAN):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
     secinfo_uniqueid = Column(String(length=32), primary_key=True)
     secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     secinfo = relationship('SECINFO', backref='invexpenses')
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, fitid,],
-                             [INVTRAN.invacctfrom_id, INVTRAN.fitid,],
+        ForeignKeyConstraint([acctfrom_id, fitid,],
+                             [INVTRAN.acctfrom_id, INVTRAN.fitid,],
                             ),
         ForeignKeyConstraint([ secinfo_uniqueid, secinfo_uniqueidtype,], 
                              [SECINFO.uniqueid, SECINFO.uniqueidtype,],
@@ -929,11 +929,11 @@ class INVEXPENSE(SECID, ORIGCURRENCY, INVTRAN):
 
 class JRNLFUND(INVTRAN):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, fitid],
-                             [INVTRAN.invacctfrom_id, INVTRAN.fitid],
+        ForeignKeyConstraint([acctfrom_id, fitid],
+                             [INVTRAN.acctfrom_id, INVTRAN.fitid],
                             ),
     )
 
@@ -945,13 +945,13 @@ class JRNLFUND(INVTRAN):
 
 class JRNLSEC(SECID, INVTRAN):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
     secinfo_uniqueid = Column(String(length=32), primary_key=True)
     secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, fitid,],
-                             [INVTRAN.invacctfrom_id, INVTRAN.fitid,],
+        ForeignKeyConstraint([acctfrom_id, fitid,],
+                             [INVTRAN.acctfrom_id, INVTRAN.fitid,],
                             ),
         ForeignKeyConstraint([ secinfo_uniqueid, secinfo_uniqueidtype,], 
                              [SECINFO.uniqueid, SECINFO.uniqueidtype,],
@@ -966,11 +966,11 @@ class JRNLSEC(SECID, INVTRAN):
 
 class MARGININTEREST(ORIGCURRENCY, INVTRAN):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, fitid],
-                             [INVTRAN.invacctfrom_id, INVTRAN.fitid],
+        ForeignKeyConstraint([acctfrom_id, fitid],
+                             [INVTRAN.acctfrom_id, INVTRAN.fitid],
                             ),
     )
 
@@ -981,13 +981,13 @@ class MARGININTEREST(ORIGCURRENCY, INVTRAN):
 
 class REINVEST(SECID, ORIGCURRENCY, INVTRAN):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
     secinfo_uniqueid = Column(String(length=32), primary_key=True)
     secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, fitid,],
-                             [INVTRAN.invacctfrom_id, INVTRAN.fitid,],
+        ForeignKeyConstraint([acctfrom_id, fitid,],
+                             [INVTRAN.acctfrom_id, INVTRAN.fitid,],
                             ),
         ForeignKeyConstraint([ secinfo_uniqueid, secinfo_uniqueidtype,], 
                              [SECINFO.uniqueid, SECINFO.uniqueidtype,],
@@ -1010,13 +1010,13 @@ class REINVEST(SECID, ORIGCURRENCY, INVTRAN):
 
 class RETOFCAP(SECID, ORIGCURRENCY, INVTRAN):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
     secinfo_uniqueid = Column(String(length=32), primary_key=True)
     secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, fitid,],
-                             [INVTRAN.invacctfrom_id, INVTRAN.fitid,],
+        ForeignKeyConstraint([acctfrom_id, fitid,],
+                             [INVTRAN.acctfrom_id, INVTRAN.fitid,],
                             ),
         ForeignKeyConstraint([ secinfo_uniqueid, secinfo_uniqueidtype,], 
                              [SECINFO.uniqueid, SECINFO.uniqueidtype,],
@@ -1032,7 +1032,7 @@ class RETOFCAP(SECID, ORIGCURRENCY, INVTRAN):
 
 class SELLDEBT(INVSELL, INVTRAN):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
 
     secinfo_uniqueid = Column(String(length=32), nullable=False)
@@ -1041,8 +1041,8 @@ class SELLDEBT(INVSELL, INVTRAN):
                                                     secinfo_uniqueidtype], 
                            backref='selldebts')
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, fitid,],
-                             [INVTRAN.invacctfrom_id, INVTRAN.fitid,]),
+        ForeignKeyConstraint([acctfrom_id, fitid,],
+                             [INVTRAN.acctfrom_id, INVTRAN.fitid,]),
         ForeignKeyConstraint([secinfo_uniqueid, secinfo_uniqueidtype,],
                              [SECINFO.uniqueid, SECINFO.uniqueidtype,]),
     )
@@ -1056,7 +1056,7 @@ class SELLDEBT(INVSELL, INVTRAN):
 
 class SELLMF(INVSELL, INVTRAN):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
 
     secinfo_uniqueid = Column(String(length=32), nullable=False)
@@ -1065,8 +1065,8 @@ class SELLMF(INVSELL, INVTRAN):
                                                     secinfo_uniqueidtype], 
                            backref='sellmfs')
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, fitid,],
-                             [INVTRAN.invacctfrom_id, INVTRAN.fitid,]),
+        ForeignKeyConstraint([acctfrom_id, fitid,],
+                             [INVTRAN.acctfrom_id, INVTRAN.fitid,]),
         ForeignKeyConstraint([secinfo_uniqueid, secinfo_uniqueidtype,],
                              [SECINFO.uniqueid, SECINFO.uniqueidtype,]),
     )
@@ -1079,7 +1079,7 @@ class SELLMF(INVSELL, INVTRAN):
 
 class SELLOPT(INVSELL, INVTRAN):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
 
     secinfo_uniqueid = Column(String(length=32), nullable=False)
@@ -1088,8 +1088,8 @@ class SELLOPT(INVSELL, INVTRAN):
                                                     secinfo_uniqueidtype], 
                            backref='sellopts')
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, fitid,],
-                             [INVTRAN.invacctfrom_id, INVTRAN.fitid,]),
+        ForeignKeyConstraint([acctfrom_id, fitid,],
+                             [INVTRAN.acctfrom_id, INVTRAN.fitid,]),
         ForeignKeyConstraint([secinfo_uniqueid, secinfo_uniqueidtype,],
                              [SECINFO.uniqueid, SECINFO.uniqueidtype,]),
     )
@@ -1106,7 +1106,7 @@ class SELLOPT(INVSELL, INVTRAN):
 
 class SELLOTHER(INVSELL, INVTRAN):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
 
     secinfo_uniqueid = Column(String(length=32), nullable=False)
@@ -1115,8 +1115,8 @@ class SELLOTHER(INVSELL, INVTRAN):
                                                     secinfo_uniqueidtype], 
                            backref='sellothers')
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, fitid,],
-                             [INVTRAN.invacctfrom_id, INVTRAN.fitid,]),
+        ForeignKeyConstraint([acctfrom_id, fitid,],
+                             [INVTRAN.acctfrom_id, INVTRAN.fitid,]),
         ForeignKeyConstraint([secinfo_uniqueid, secinfo_uniqueidtype,],
                              [SECINFO.uniqueid, SECINFO.uniqueidtype,]),
     )
@@ -1124,7 +1124,7 @@ class SELLOTHER(INVSELL, INVTRAN):
 
 class SELLSTOCK(INVSELL, INVTRAN):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
 
     secinfo_uniqueid = Column(String(length=32), nullable=False)
@@ -1133,8 +1133,8 @@ class SELLSTOCK(INVSELL, INVTRAN):
                                                     secinfo_uniqueidtype], 
                            backref='sellstocks')
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, fitid,],
-                             [INVTRAN.invacctfrom_id, INVTRAN.fitid,]),
+        ForeignKeyConstraint([acctfrom_id, fitid,],
+                             [INVTRAN.acctfrom_id, INVTRAN.fitid,]),
         ForeignKeyConstraint([secinfo_uniqueid, secinfo_uniqueidtype,],
                              [SECINFO.uniqueid, SECINFO.uniqueidtype,]),
     )
@@ -1145,13 +1145,13 @@ class SELLSTOCK(INVSELL, INVTRAN):
 
 class SPLIT(SECID, INVTRAN):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
     secinfo_uniqueid = Column(String(length=32), primary_key=True)
     secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, fitid,],
-                             [INVTRAN.invacctfrom_id, INVTRAN.fitid,],
+        ForeignKeyConstraint([acctfrom_id, fitid,],
+                             [INVTRAN.acctfrom_id, INVTRAN.fitid,],
                             ),
         ForeignKeyConstraint([ secinfo_uniqueid, secinfo_uniqueidtype,], 
                              [SECINFO.uniqueid, SECINFO.uniqueidtype,],
@@ -1171,14 +1171,14 @@ class SPLIT(SECID, INVTRAN):
 
 class TRANSFER(SECID, INVTRAN):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
     secinfo_uniqueid = Column(String(length=32), primary_key=True)
     secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     secinfo = relationship('SECINFO', backref='transfers')
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, fitid,],
-                             [INVTRAN.invacctfrom_id, INVTRAN.fitid,],
+        ForeignKeyConstraint([acctfrom_id, fitid,],
+                             [INVTRAN.acctfrom_id, INVTRAN.fitid,],
                             ),
         ForeignKeyConstraint([ secinfo_uniqueid, secinfo_uniqueidtype,], 
                              [SECINFO.uniqueid, SECINFO.uniqueidtype,],
@@ -1200,8 +1200,8 @@ class TRANSFER(SECID, INVTRAN):
 class INVPOS(SECID, CURRENCY, Aggregate):
     # Added for SQLAlchemy object model
     subclass = Column(String(length=32), nullable=False)
-    invacctfrom_id = Column(Integer, ForeignKey('invacctfrom.id'), primary_key=True)
-    invacctfrom = relationship('INVACCTFROM', backref='invposs')
+    acctfrom_id = Column(Integer, ForeignKey('invacctfrom.id'), primary_key=True)
+    acctfrom = relationship('INVACCTFROM', backref='invposs')
     secinfo_uniqueid = Column(String(length=32), primary_key=True)
     secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     secinfo = relationship('SECINFO', backref='invposs')
@@ -1238,14 +1238,14 @@ class INVPOS(SECID, CURRENCY, Aggregate):
 
 class POSDEBT(INVPOS):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     secinfo_uniqueid = Column(String(length=32), primary_key=True)
     secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     dtasof = Column(OFXDateTime, primary_key=True)
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, secinfo_uniqueid,
+        ForeignKeyConstraint([acctfrom_id, secinfo_uniqueid,
                               secinfo_uniqueidtype, dtasof],
-                             [INVPOS.invacctfrom_id, INVPOS.secinfo_uniqueid, 
+                             [INVPOS.acctfrom_id, INVPOS.secinfo_uniqueid, 
                               INVPOS.secinfo_uniqueidtype, INVPOS.dtasof],
                             ),
     )
@@ -1253,14 +1253,14 @@ class POSDEBT(INVPOS):
 
 class POSMF(INVPOS):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     secinfo_uniqueid = Column(String(length=32), primary_key=True)
     secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     dtasof = Column(OFXDateTime, primary_key=True)
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, secinfo_uniqueid,
+        ForeignKeyConstraint([acctfrom_id, secinfo_uniqueid,
                               secinfo_uniqueidtype, dtasof],
-                             [INVPOS.invacctfrom_id, INVPOS.secinfo_uniqueid, 
+                             [INVPOS.acctfrom_id, INVPOS.secinfo_uniqueid, 
                               INVPOS.secinfo_uniqueidtype, INVPOS.dtasof],
                             ),
     )
@@ -1274,14 +1274,14 @@ class POSMF(INVPOS):
 
 class POSOPT(INVPOS):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     secinfo_uniqueid = Column(String(length=32), primary_key=True)
     secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     dtasof = Column(OFXDateTime, primary_key=True)
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, secinfo_uniqueid,
+        ForeignKeyConstraint([acctfrom_id, secinfo_uniqueid,
                               secinfo_uniqueidtype, dtasof],
-                             [INVPOS.invacctfrom_id, INVPOS.secinfo_uniqueid, 
+                             [INVPOS.acctfrom_id, INVPOS.secinfo_uniqueid, 
                               INVPOS.secinfo_uniqueidtype, INVPOS.dtasof],
                             ),
     )
@@ -1292,28 +1292,28 @@ class POSOPT(INVPOS):
 
 class POSOTHER(INVPOS):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     secinfo_uniqueid = Column(String(length=32), primary_key=True)
     secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     dtasof = Column(OFXDateTime, primary_key=True)
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, secinfo_uniqueid,
+        ForeignKeyConstraint([acctfrom_id, secinfo_uniqueid,
                               secinfo_uniqueidtype, dtasof],
-                             [INVPOS.invacctfrom_id, INVPOS.secinfo_uniqueid, 
+                             [INVPOS.acctfrom_id, INVPOS.secinfo_uniqueid, 
                               INVPOS.secinfo_uniqueidtype, INVPOS.dtasof],
                             ),
     )
 
 class POSSTOCK(INVPOS):
     # Added for SQLAlchemy object model
-    invacctfrom_id = Column(Integer, primary_key=True)
+    acctfrom_id = Column(Integer, primary_key=True)
     secinfo_uniqueid = Column(String(length=32), primary_key=True)
     secinfo_uniqueidtype = Column(String(length=10), primary_key=True)
     dtasof = Column(OFXDateTime, primary_key=True)
     __table_args__ = (
-        ForeignKeyConstraint([invacctfrom_id, secinfo_uniqueid,
+        ForeignKeyConstraint([acctfrom_id, secinfo_uniqueid,
                               secinfo_uniqueidtype, dtasof],
-                             [INVPOS.invacctfrom_id, INVPOS.secinfo_uniqueid, 
+                             [INVPOS.acctfrom_id, INVPOS.secinfo_uniqueid, 
                               INVPOS.secinfo_uniqueidtype, INVPOS.dtasof],
                             ),
     )

@@ -193,7 +193,7 @@ class InvestmentStatement(Statement):
         poslist = invstmtrs.find('INVPOSLIST')
         if poslist is not None:
             self.positions = [INVPOS.from_etree(
-                pos, invacctfrom_id=self.account.id, dtasof=self.datetime,
+                pos, acctfrom_id=self.account.id, dtasof=self.datetime,
                 get_or_create=True) for pos in poslist]
             DBSession.add_all(self.positions)
 
@@ -213,7 +213,7 @@ class InvestmentStatement(Statement):
                 DBSession.add_all(self.other_balances)
             # Now we can flatten the rest of INVBAL
             self.balances = Aggregate.from_etree(
-                invbal, invacctfrom_id=self.account.id, dtasof=self.datetime,
+                invbal, acctfrom_id=self.account.id, dtasof=self.datetime,
                 get_or_create=True
             )
             DBSession.add(self.balances)
@@ -281,7 +281,7 @@ class INVTRANLIST(TransactionList):
     def etree_to_sql(self, tran):
             SubClass = getattr(models, tran.tag)
             instance = SubClass.from_etree(
-                tran, invacctfrom_id=self.account.id, get_or_create=True
+                tran, acctfrom_id=self.account.id, get_or_create=True
             )
             return instance
 
