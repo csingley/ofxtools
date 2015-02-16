@@ -202,7 +202,7 @@ class BANKACCTFROM(ACCTFROM):
     # Elements from OFX spec
     bankid = Column(String(length=9), nullable=False)
     branchid = Column(String(length=22))
-    acctid = Column(String(length=9), nullable=False)
+    acctid = Column(String(length=22), nullable=False)
     accttype = Column(Enum(*ACCTTYPES, name='accttype'), nullable=False)
     acctkey = Column(String(length=22))
 
@@ -226,7 +226,7 @@ class INVACCTFROM(ACCTFROM):
 
     # Elements from OFX spec
     brokerid = Column(String(length=22), nullable=False)
-    acctid = Column(String(length=9), nullable=False)
+    acctid = Column(String(length=22), nullable=False)
 
     pk = ['brokerid', 'acctid']
 
@@ -282,17 +282,6 @@ class CCACCTTO(ACCTTO):
     acctkey = Column(String(length=22))
 
     pks = ['acctid', ]
-
-
-class INVACCTTO(ACCTTO):
-    # Added for SQLAlchemy object model
-    id = Column(Integer, ForeignKey('acctto.id'), primary_key=True)
-
-    # Elements from OFX spec
-    brokerid = Column(String(length=22), nullable=False)
-    acctid = Column(String(length=9), nullable=False)
-
-    pk = ['brokerid', 'acctid']
 
 
 # Balances
@@ -568,8 +557,24 @@ class PAYEE(Aggregate):
     phone = Column(String(length=32), nullable=False)
 
 
-class TRAN(ORIGCURRENCY):
-    """ Synthetic base class of STMTTRN/INVBANKTRAN - not in OFX spec """
+class BANKTRAN(ORIGCURRENCY):
+    """ 
+    Synthetic mixin for common elements of STMTTRN/INVBANKTRAN - not in OFX spec
+    """
+    # Added for SQLAlchemy object model
+    @declared_attr
+    def acctto_id(cls):
+        return Column(Integer, ForeignKey('acctto.id'))
+    @declared_attr
+    def acctto(cls):
+        return relationship('ACCTTO')
+    @declared_attr
+    def payee_name(cls):
+        return Column(String(32), ForeignKey('payee.name'))
+    @declared_attr
+    def payee(cls):
+        return relationship('PAYEE')
+
     # Elements from OFX spec
     fitid = Column(String(length=255), primary_key=True)
     srvrtid = Column(String(length=10))
@@ -590,16 +595,6 @@ class TRAN(ORIGCURRENCY):
     name = Column(String(length=32))
     memo = Column(String(length=255))
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
-
-
-class STMTTRN(TRAN, Aggregate):
-     # Added for SQLAlchemy object model
-    acctfrom_id = Column(Integer, ForeignKey('acctfrom.id'), primary_key=True)
-    acctfrom = relationship('ACCTFROM', foreign_keys=[acctfrom_id,], backref='stmttrns')
-    payee_name = Column(String(32), ForeignKey('payee.name'))
-    payee = relationship('PAYEE', backref='stmttrns')
-    acctto_id = Column(Integer, ForeignKey('acctto.id'))
-    acctto = relationship('ACCTTO', foreign_keys=[acctto_id,])
 
     @classmethod
     def _preflatten(cls, element, **extra_attrs):
@@ -634,18 +629,18 @@ class STMTTRN(TRAN, Aggregate):
         return element, extra_attrs
 
 
-class INVBANKTRAN(TRAN, Aggregate):
+class STMTTRN(BANKTRAN, Aggregate):
+     # Added for SQLAlchemy object model
+    acctfrom_id = Column(Integer, ForeignKey('acctfrom.id'), primary_key=True)
+    acctfrom = relationship('ACCTFROM', foreign_keys=[acctfrom_id,], backref='stmttrns')
+
+
+class INVBANKTRAN(BANKTRAN, Aggregate):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, ForeignKey('invacctfrom.id'), primary_key=True)
     invacctfrom = relationship('INVACCTFROM')
-    payee_name = Column(String(32), ForeignKey('payee.name'))
-    bankacctto_id = Column(Integer, ForeignKey('bankacctfrom.id'))
-    ccacctto_id = Column(Integer, ForeignKey('ccacctfrom.id'))
-    invacct = relationship('INVACCTFROM', foreign_keys=[invacctfrom_id,], backref='invbanktrans')
-    payee = relationship('PAYEE', backref='invbanktrans')
-    bankacctto = relationship('BANKACCTFROM', foreign_keys=[bankacctto_id,])
-    ccacctto = relationship('CCACCTFROM', foreign_keys=[ccacctto_id,])
 
+    # Elements from OFX spec
     subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'), nullable=False)
 
 
