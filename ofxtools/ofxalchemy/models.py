@@ -161,8 +161,8 @@ class ORIGCURRENCY(CURRENCY):
 
 class ACCTFROM(Aggregate):
     """ 
-    Uses a synthetic primary key to implement joined-table inheritance;
-    the actual unique identifiers are given as a class attribute 'pks'
+    Uses a surrogate primary key to implement joined-table inheritance;
+    the natural keys are given as a class attribute 'pks'
     """
     # Added for SQLAlchemy object model
     id = Column(Integer, primary_key=True)
@@ -223,8 +223,8 @@ class INVACCTFROM(ACCTFROM):
 
 class ACCTTO(Aggregate):
     """ 
-    Uses a synthetic primary key to implement joined-table inheritance;
-    the actual unique identifiers are given as a class attribute 'pks'
+    Uses a surrogate primary key to implement joined-table inheritance;
+    the natural keys are given as a class attribute 'pks'
     """
     # Added for SQLAlchemy object model
     id = Column(Integer, primary_key=True)
@@ -320,7 +320,7 @@ class INVBAL(Aggregate):
 
 
 
-class BAL(Aggregate, CURRENCY):
+class BAL(CURRENCY, Aggregate):
     # Added for SQLAlchemy object model
     acctfrom_id = Column(Integer, ForeignKey('acctfrom.id'), primary_key=True)
     acctfrom = relationship('ACCTFROM', backref='bals')
@@ -338,7 +338,7 @@ class BAL(Aggregate, CURRENCY):
     dtasof = Column(OFXDateTime, primary_key=True)  
 
 
-class SECINFO(Aggregate, CURRENCY):
+class SECINFO(CURRENCY, Aggregate):
     # Added for SQLAlchemy object model
     subclass = Column(String(length=32), nullable=False)
 
@@ -578,7 +578,7 @@ class TRAN(ORIGCURRENCY):
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
 
-class STMTTRN(Aggregate, TRAN):
+class STMTTRN(TRAN, Aggregate):
      # Added for SQLAlchemy object model
     acctfrom_id = Column(Integer, ForeignKey('acctfrom.id'), primary_key=True)
     acctfrom = relationship('ACCTFROM', foreign_keys=[acctfrom_id,], backref='stmttrns')
@@ -611,7 +611,7 @@ class STMTTRN(Aggregate, TRAN):
         return Aggregate.from_etree(elem, **extra_attrs)
 
 
-class INVBANKTRAN(Aggregate, TRAN):
+class INVBANKTRAN(TRAN, Aggregate):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, ForeignKey('invacctfrom.id'), primary_key=True)
     invacctfrom = relationship('INVACCTFROM')
@@ -695,7 +695,9 @@ class INVBUYSELL(ORIGCURRENCY):
         invbuysell = elem[0]
         secid = invbuysell[1]
         assert secid is not None
-        extra_attrs['secinfo'] = SECID.from_etree(secid)
+        secinfo = SECID.from_etree(secid)
+        extra_attrs['secinfo_uniqueid'] = secinfo.uniqueid
+        extra_attrs['secinfo_uniqueidtype'] = secinfo.uniqueidtype
         invbuysell.remove(secid)
 
         return Aggregate.from_etree(elem, **extra_attrs)
@@ -724,7 +726,7 @@ class INVSELL(INVBUYSELL):
     penalty = Column(Numeric())
 
 
-class BUYDEBT(INVTRAN):
+class BUYDEBT(INVBUY, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -749,7 +751,7 @@ class BUYDEBT(INVTRAN):
         return INVBUYSELL.from_etree(elem, **extra_attrs)
 
 
-class BUYMF(INVTRAN):
+class BUYMF(INVBUY, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -775,7 +777,7 @@ class BUYMF(INVTRAN):
         return INVBUYSELL.from_etree(elem, **extra_attrs)
 
 
-class BUYOPT(INVTRAN, INVBUY):
+class BUYOPT(INVBUY, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -803,7 +805,7 @@ class BUYOPT(INVTRAN, INVBUY):
         return INVBUYSELL.from_etree(elem, **extra_attrs)
 
 
-class BUYOTHER(INVTRAN, INVBUY):
+class BUYOTHER(INVBUY, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -825,7 +827,7 @@ class BUYOTHER(INVTRAN, INVBUY):
         return INVBUYSELL.from_etree(elem, **extra_attrs)
 
 
-class BUYSTOCK(INVTRAN, INVBUY):
+class BUYSTOCK(INVBUY, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -873,7 +875,7 @@ class CLOSUREOPT(INVTRAN):
     
 
 
-class INCOME(INVTRAN, ORIGCURRENCY):
+class INCOME(ORIGCURRENCY, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -904,7 +906,7 @@ class INCOME(INVTRAN, ORIGCURRENCY):
         return INVTRAN.from_etree(elem, **extra_attrs)
 
 
-class INVEXPENSE(INVTRAN, ORIGCURRENCY):
+class INVEXPENSE(ORIGCURRENCY, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -972,7 +974,7 @@ class JRNLSEC(INVTRAN):
         return INVTRAN.from_etree(elem, **extra_attrs)
 
 
-class MARGININTEREST(INVTRAN, ORIGCURRENCY):
+class MARGININTEREST(ORIGCURRENCY, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -987,7 +989,7 @@ class MARGININTEREST(INVTRAN, ORIGCURRENCY):
     subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'), nullable=False)
 
 
-class REINVEST(INVTRAN, ORIGCURRENCY):
+class REINVEST(ORIGCURRENCY, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -1020,7 +1022,7 @@ class REINVEST(INVTRAN, ORIGCURRENCY):
         return INVTRAN.from_etree(elem, **extra_attrs)
 
 
-class RETOFCAP(INVTRAN, ORIGCURRENCY):
+class RETOFCAP(ORIGCURRENCY, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -1046,7 +1048,7 @@ class RETOFCAP(INVTRAN, ORIGCURRENCY):
         return INVTRAN.from_etree(elem, **extra_attrs)
 
 
-class SELLDEBT(INVTRAN, INVSELL):
+class SELLDEBT(INVSELL, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -1074,7 +1076,7 @@ class SELLDEBT(INVTRAN, INVSELL):
         return INVBUYSELL.from_etree(elem, **extra_attrs)
 
 
-class SELLMF(INVTRAN, INVSELL):
+class SELLMF(INVSELL, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -1101,7 +1103,7 @@ class SELLMF(INVTRAN, INVSELL):
         return INVBUYSELL.from_etree(elem, **extra_attrs)
 
 
-class SELLOPT(INVTRAN, INVSELL):
+class SELLOPT(INVSELL, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -1132,7 +1134,7 @@ class SELLOPT(INVTRAN, INVSELL):
         return INVBUYSELL.from_etree(elem, **extra_attrs)
 
 
-class SELLOTHER(INVTRAN, INVSELL):
+class SELLOTHER(INVSELL, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -1154,7 +1156,7 @@ class SELLOTHER(INVTRAN, INVSELL):
         return INVBUYSELL.from_etree(elem, **extra_attrs)
 
 
-class SELLSTOCK(INVTRAN, INVSELL):
+class SELLSTOCK(INVSELL, INVTRAN):
     # Added for SQLAlchemy object model
     invacctfrom_id = Column(Integer, primary_key=True)
     fitid = Column(String(length=255), primary_key=True)
@@ -1240,7 +1242,7 @@ class TRANSFER(INVTRAN):
         return INVTRAN.from_etree(elem, **extra_attrs)
 
 # Positions
-class INVPOS(Aggregate, CURRENCY):
+class INVPOS(CURRENCY, Aggregate):
     # Added for SQLAlchemy object model
     subclass = Column(String(length=32), nullable=False)
     invacctfrom_id = Column(Integer, ForeignKey('invacctfrom.id'), primary_key=True)
