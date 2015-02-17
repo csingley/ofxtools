@@ -8,12 +8,12 @@ usercfgdir = path.join(path.expanduser('~'), '.config', 'ofxtools')
 
 setup(
     name = 'ofxtools',
-    version = '0.2.2',
+    version = '0.2.3',
     description = ('Library for working with Open Financial Exchange (OFX)'
                  'formatted data used by financial institutions'),
 
     url = 'https://github.com/csingley/ofxtools',
-    download_url = 'https://github.com/csingley/ofxtools/tarball/0.2.w',
+    download_url = 'https://github.com/csingley/ofxtools/tarball/0.2.3',
 
     author = 'Christopher Singley',
     author_email = 'csingley@gmail.com',
