@@ -18,7 +18,7 @@ setup(
     long_description = long_description,
 
     url = 'https://github.com/csingley/ofxtools',
-    download_url = 'https://github.com/csingley/ofxtools/tarball/0.1',
+    download_url = 'https://github.com/csingley/ofxtools/tarball/0.2',
 
     author = 'Christopher Singley',
     author_email = 'csingley@gmail.com',
