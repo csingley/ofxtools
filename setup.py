@@ -12,13 +12,13 @@ with open('README', 'r') as f:
     
 setup(
     name = 'ofxtools',
-    version = '0.2.7',
+    version = '0.2.8',
     description = ('Library for working with Open Financial Exchange (OFX)'
                  'formatted data used by financial institutions'),
     long_description = long_description,
 
     url = 'https://github.com/csingley/ofxtools',
-    download_url = 'https://github.com/csingley/ofxtools/tarball/0.2.7',
+    download_url = 'https://github.com/csingley/ofxtools/tarball/0.2.8',
 
     author = 'Christopher Singley',
     author_email = 'csingley@gmail.com',
@@ -56,7 +56,7 @@ setup(
         'SQL': ['sqlalchemy',],
     },
 
-    package_data = {'ofxtools': ['README.md']},
+    package_data = {'ofxtools': ['README']},
 
     data_files = [
         ('config', ['config/fi.cfg']),
