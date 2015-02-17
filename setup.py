@@ -12,7 +12,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name = 'ofxtools',
-    version = '0.1',
+    version = '0.2',
     description = ('Library for working with Open Financial Exchange (OFX)'
                  'formatted data used by financial institutions'),
     long_description = long_description,
@@ -38,6 +38,7 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Natural Language :: English', 
+        'Programming Language :: Python',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',

@@ -32,24 +32,19 @@ class OFXResponse(object):
         # Keep a reference to the parse tree
         self.tree = tree
 
-        # SONRS - server response to signon request
-        sonrs = self.tree.find('SIGNONMSGSRSV1/SONRS')
-        # Not implemented
-        pass
-
         # SECLIST - list of description of securities referenced by
         # INVSTMT (investment account statement)
         seclist = self.tree.find('SECLISTMSGSRSV1/SECLIST')
         if seclist is not None:
-            for sec in seclist:
-                SubClass = getattr(models, sec.tag)
-                self.securities.append(
-                    #Aggregate.from_etree(sec, get_or_create=True)
-                    SubClass.from_etree(sec, get_or_create=True)
-                )
+            # We need to instantiate on the SECINFO subclass (not Aggregate)
+            # b/c handling MFINFO *ASSETCLASS lists requires overriding
+            # Aggregate.from_etree()
+            self.securities = [
+                getattr(models, sec.tag).from_etree(sec, get_or_create=True) \
+                for sec in seclist
+            ]
             DBSession.add_all(self.securities)
             DBSession.commit()
-
 
         # TRNRS - transaction response, which is the main section
         # containing account statements
@@ -192,7 +187,7 @@ class InvestmentStatement(Statement):
         # INVPOSLIST
         poslist = invstmtrs.find('INVPOSLIST')
         if poslist is not None:
-            self.positions = [INVPOS.from_etree(
+            self.positions = [Aggregate.from_etree(
                 pos, acctfrom_id=self.account.id, dtasof=self.datetime,
                 get_or_create=True) for pos in poslist]
             DBSession.add_all(self.positions)
@@ -255,9 +250,8 @@ class TransactionList(list):
         self.extend([self.etree_to_sql(tran) for tran in tranlist])
 
     def etree_to_sql(self, tran):
-        SubClass = getattr(models, tran.tag)
-        instance = SubClass.from_etree(tran, acctfrom_id=self.account.id,
-                                      get_or_create=True)
+        instance = Aggregate.from_etree(tran, acctfrom_id=self.account.id,
+                                        get_or_create=True)
         return instance
 
     def __repr__(self):
@@ -278,10 +272,5 @@ class INVTRANLIST(TransactionList):
     Python representation of OFX INVTRANLIST (investment transaction list)
     aggregate 
     """
-    def etree_to_sql(self, tran):
-            SubClass = getattr(models, tran.tag)
-            instance = SubClass.from_etree(
-                tran, acctfrom_id=self.account.id, get_or_create=True
-            )
-            return instance
+    pass
 

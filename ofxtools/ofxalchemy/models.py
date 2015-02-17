@@ -103,11 +103,11 @@ class Aggregate(object):
         feed it the Element to instantiate the Aggregate instance.
         """
         get_or_create = extra_attrs.pop('get_or_create', False)
-        element, extra_attrs = cls._preflatten(element, **extra_attrs)
+        SubClass = globals()[element.tag]
+        element, extra_attrs = SubClass._preflatten(element, **extra_attrs)
         attributes = element._flatten()
         attributes.update(extra_attrs)
 
-        SubClass = globals()[element.tag]
         if get_or_create:
             instance = SubClass.get_or_create(**attributes)
         else:
