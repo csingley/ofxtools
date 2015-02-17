@@ -6,19 +6,15 @@ from os import path
 here = path.abspath(path.dirname(__file__))
 usercfgdir = path.join(path.expanduser('~'), '.config', 'ofxtools')
 
-# Get the long description from the relevant file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
-
 setup(
     name = 'ofxtools',
-    version = '0.2',
+    version = '0.2.1',
     description = ('Library for working with Open Financial Exchange (OFX)'
                  'formatted data used by financial institutions'),
     long_description = long_description,
 
     url = 'https://github.com/csingley/ofxtools',
-    download_url = 'https://github.com/csingley/ofxtools/tarball/0.2',
+    download_url = 'https://github.com/csingley/ofxtools/tarball/0.2.1',
 
     author = 'Christopher Singley',
     author_email = 'csingley@gmail.com',
