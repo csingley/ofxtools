@@ -8,6 +8,7 @@ transaction lists, etc.)
 from models import Aggregate
 import types
 
+
 class OFXResponse(object):
     """ 
     Top-level object representing an OFX response converted into Python
