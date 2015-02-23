@@ -3,11 +3,15 @@
 Python object model for Aggregate containers (the OFX response, statements,
 transaction lists, etc.)
 """
+# stdlib imports
+from decimal import Decimal
+
 
 # local imports
 import models
 from models import DBSession, Aggregate, INVPOS 
 import types
+
 
 class OFXResponse(object):
     """ 
@@ -60,6 +64,8 @@ class OFXResponse(object):
                 if stmtrs is not None:
                     stmt = stmtClass(stmtrs)
                     self.statements.append(stmt)
+
+            DBSession.commit()
 
     def __repr__(self):
         s = "<%s len(statements)=%d len(securities)=%d>"
@@ -187,9 +193,29 @@ class InvestmentStatement(Statement):
         # INVPOSLIST
         poslist = invstmtrs.find('INVPOSLIST')
         if poslist is not None:
+            # FIs can list multiple INVPOS lots per security, so we
+            # can't just naively instantiate what they give us or we'll
+            # violate uniqueness constraints on the PKs.
+            # Instead we need to manually tally up the units and instantiate
+            # only a single INVPOS lot per security
+            positions = {}
+            for pos in poslist:
+                secid = pos.find('.//SECID')
+                uniqueid = secid.find('UNIQUEID')
+                uniqueidtype = secid.find('UNIQUEIDTYPE')
+                units = pos.find('./INVPOS/UNITS')
+                seckey = (uniqueid.text, uniqueidtype.text)
+                position = positions.get(seckey, None)
+                if position is None:
+                    positions[seckey] = (pos, Decimal(units.text))
+                else:
+                    positions[seckey] = (position[0], 
+                                         position[1] + Decimal(units.text)
+                                        )
             self.positions = [Aggregate.from_etree(
-                pos, acctfrom_id=self.account.id, dtasof=self.datetime,
-                get_or_create=True) for pos in poslist]
+                pos, units=units, acctfrom_id=self.account.id, 
+                dtasof=self.datetime, get_or_create=True) \
+                for pos, units in positions.values()]
             DBSession.add_all(self.positions)
 
         # INVBAL

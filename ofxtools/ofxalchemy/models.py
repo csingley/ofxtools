@@ -796,7 +796,7 @@ class INVPOS(Inheritor('invpos'), SECID, CURRENCY, Aggregate):
     acctfrom = relationship('INVACCTFROM', backref='invposs')
     dtasof = Column(OFXDateTime)
 
-    pks = ['acctfrom_id', 'heldinacct', 'postype', 'dtasof']
+    pks = ['acctfrom_id', 'secinfo_id', 'dtasof']
     __table_args__ = (UniqueConstraint(*pks),)
 
     # Elements from OFX spec
