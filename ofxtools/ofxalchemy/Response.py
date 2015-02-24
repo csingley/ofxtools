@@ -26,12 +26,9 @@ class OFXResponse(object):
     statements = []
     securities = []
 
-    def __init__(self, tree, strict=True):
+    def __init__(self, tree):
         """ 
         Initialize with ofx.ElementTree instance containing parsed OFX.
-
-        The strict argument determines whether to throw an error for certain
-        OFX data validation violations.
         """
         # Keep a reference to the parse tree
         self.tree = tree

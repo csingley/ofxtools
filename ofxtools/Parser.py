@@ -40,11 +40,11 @@ class OFXTree(ET.ElementTree):
         parser.feed(source)
         self._root = parser.close()
 
-    def convert(self, strict=True):
+    def convert(self):
         if not hasattr(self, '_root'):
             raise ValueError('Must first call parse() to have data to convert')
         # OFXResponse performs validation & type conversion
-        return self.ofxresponse(self, strict=strict)
+        return self.ofxresponse(self)
 
 
 class TreeBuilder(ET.TreeBuilder):

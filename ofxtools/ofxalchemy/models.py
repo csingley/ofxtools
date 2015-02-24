@@ -424,7 +424,7 @@ class MFINFO(SECINFO):
         # to MFINFO
         for mfassetclass in mfassetclasses:
             for portion in mfassetclass:
-                Aggregate.from_etree(
+                p = Aggregate.from_etree(
                     portion, mfinfo_id=instance.id,
                     get_or_create=True
                 )
@@ -450,9 +450,10 @@ class FIPORTION(Aggregate):
     mfinfo = relationship('MFINFO', backref='fimfassetclasses')
 
     # Elements from OFX spec
-    assetclass = Column(
+    fiassetclass = Column(
         Enum(*ASSETCLASSES, name='assetclass'), primary_key=True
     )
+    percent = Column(Numeric(), nullable=False)
 
 
 class OPTINFO(SECINFO):
@@ -462,6 +463,29 @@ class OPTINFO(SECINFO):
     shperctrct = Column(Integer, nullable=False)
     assetclass = Column(Enum(*ASSETCLASSES, name='assetclass'))
     fiassetclass = Column(String(length=32))
+
+    @classmethod
+    def _preflatten(cls, element, **extra_attrs):
+        element, extra_attrs = cls._do_secid(element, **extra_attrs)
+        return element, extra_attrs
+
+    @classmethod
+    def _do_secid(cls, element, **extra_attrs):
+        """ 
+        A <SECID> aggregate referring to the security underlying the option
+        is, in general, *not* going to be contained in <SECLIST>
+        (because you don't necessarily have a position in the underlying).
+        Since the <SECID> for the underlying only gives us fields for
+        (uniqueidtype, uniqueid) we can't really go ahead and use this
+        information to create a corresponding SECINFO instance (since we
+        lack information about the security subclass).  It's not clear that
+        the SECID information is crucially important for anything, so we
+        disregard it.
+        """
+        secid = element.find('./SECID')
+        if secid:
+            element.remove(secid)
+        return element, extra_attrs
 
 
 class OTHERINFO(SECINFO):
