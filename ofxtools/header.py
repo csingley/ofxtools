@@ -106,7 +106,7 @@ class OFXHeader(object):
                 break
 
         if headermatch is None:
-            raise OFXHeaderErro("Can't recognize OFX Header")
+            raise OFXHeaderError("Can't recognize OFX Header")
 
         # Strip OFX header and return body
         return source[headermatch.end():]

@@ -18,7 +18,11 @@ The primary facilities provided include:
 Also included is the ofxtools.ofxalchemy subpackage, with versions of
 OFXTree and OFXResponse that can parse OFX formatted data and persist it
 into an SQL database.
+
 ofxalchemy depends on [the SQLAlchemy package][http://www.sqlalchemy.org].
+You'll need the upcoming version 1.0 of SQLAlchemy, which is still in
+development and can be obtained from [the SQLAlchemy code repository]
+(https://bitbucket.org/zzzeek/sqlalchemy).
 
 INSTALLATION
 ====
@@ -47,6 +51,7 @@ BASIC USAGE TO DOWNLOAD OFX
         `# ofxget amex stmt -s 20140101 -e 20140630 > foobar.ofx`
         See the --help for explanation of the script options
 
+
 PARSER USAGE EXAMPLE
 ====
 >>> from ofxtools import OFXTree
@@ -64,3 +69,4 @@ PARSER USAGE EXAMPLE
 <SELLSTOCK selltype='SELL' uniqueid='404139107' memo='SELL TRADE' subacctfund='MARGIN' units='-2704' uniqueidtype='CUSIP' dttrade='2014-11-13 11:16:59' fees='0.41' total='18376.8' commission='9.99' fitid='12386048052' subacctsec='MARGIN' unitprice='6.8'>
 >>> response.securities[1]
 <STOCKINFO secname='HC 2 HOLDINGS INC (QB)' uniqueidtype='CUSIP' uniqueid='404139107' ticker='HCHC'>
+

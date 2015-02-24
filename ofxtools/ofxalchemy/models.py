@@ -108,6 +108,7 @@ class Aggregate(object):
         SubClass = globals()[element.tag]
         element, extra_attrs = SubClass._preflatten(element, **extra_attrs)
         attributes = element._flatten()
+        attributes, extra_attrs = SubClass._postflatten(attributes, **extra_attrs)
         attributes.update(extra_attrs)
 
         if get_or_create:
@@ -120,7 +121,15 @@ class Aggregate(object):
     def _preflatten(cls, element, **extra_attrs):
         """ 
         Hook for subclasses to preprocess incoming SGML data before flattening
-        elements and instantiating to RDBMS.
+        elements and instantiation.
+        """
+        return element, extra_attrs
+
+    @classmethod
+    def _postflatten(cls, element, **extra_attrs):
+        """ 
+        Hook for subclasses to preprocess incoming SGML data after flattening
+        elements but before instantiation.
         """
         return element, extra_attrs
 
@@ -310,6 +319,35 @@ class BAL(Balance, CURRENCY, Aggregate):
 
 
 ### SECURITIES
+class SECID(object):
+    """
+    Mixin to hold logic for securities-related investment transactions (INVTRAN)
+    and also OPTINFO
+    """
+    @declared_attr
+    def secinfo_id(cls):
+        return Column(Integer, ForeignKey('secinfo.id'))
+
+    @classmethod
+    def _do_secid(cls, element, **extra_attrs):
+        """ 
+        Replace SECID with FK reference to existing SECINFO
+        """
+        secid = element.find('.//SECID')
+        uniqueidtype = secid.find('UNIQUEIDTYPE')
+        uniqueid = secid.find('UNIQUEID')
+        secinfo = SECINFO.get(uniqueidtype=uniqueidtype.text,
+                              uniqueid=uniqueid.text)
+        extra_attrs['secinfo_id'] = secinfo.id
+        # under INVBUY{BUY,SELL} or else directly under the parent transaction.
+        # We can use XPath to find SECID anywhere in the aggregate, but
+        # ElementTree doesn't let us find its parent cheaply, so we just
+        # remove its elements and let _flatten() erase the SECID aggregate.
+        secid.remove(uniqueidtype)
+        secid.remove(uniqueid)
+        return element, extra_attrs
+
+
 class SECINFO(Inheritor('secinfo'), CURRENCY, Aggregate):
     uniqueidtype = Column(String(length=10), nullable=False)
     uniqueid = Column(String(length=32), nullable=False)
@@ -396,7 +434,7 @@ class MFINFO(SECINFO):
 
 class PORTION(Aggregate):
     # Added for SQLAlchemy object model
-    mfinfo_id = Column(Integer, ForeignKey('mfinfo.id'))
+    mfinfo_id = Column(Integer, ForeignKey('mfinfo.id'), primary_key=True)
     mfinfo = relationship('MFINFO', backref='mfassetclasses')
 
     # Elements from OFX spec
@@ -408,7 +446,7 @@ class PORTION(Aggregate):
 
 class FIPORTION(Aggregate):
     # Added for SQLAlchemy object model
-    mfinfo_id = Column(Integer, ForeignKey('mfinfo.id'))
+    mfinfo_id = Column(Integer, ForeignKey('mfinfo.id'), primary_key=True)
     mfinfo = relationship('MFINFO', backref='fimfassetclasses')
 
     # Elements from OFX spec
@@ -438,11 +476,20 @@ class STOCKINFO(SECINFO):
     stocktype = Column(Enum('COMMON', 'PREFERRED', 'CONVERTIBLE', 'OTHER',
                            name='stocktype')
                       )
+    # 'yield' is a reserved word in Python
     yld = Column(Numeric())
     dtyieldasof = Column(OFXDateTime)
     typedesc = Column(String(length=32))
     assetclass = Column(Enum(*ASSETCLASSES, name='assetclass'))
     fiassetclass = Column(String(length=32))
+
+    @classmethod
+    def _postflatten(cls, attributes, **extra_attrs):
+        # Rename 'yield' (a reserved word in Python) to 'yld'
+        yld = attributes.pop('yield', None)
+        if yld:
+            attributes['yld'] = yld
+        return attributes, extra_attrs
 
 
 ### TRANSACTIONS
@@ -582,34 +629,6 @@ class INVTRAN(Inheritor('invtran'), Aggregate):
     @classmethod
     def _do_origcurrency(cls, element, **extra_attrs):
         """ Hook for processing ORIGCURRENCY in subclass """
-        return element, extra_attrs
-
-
-class SECID(object):
-    """
-    Mixin to hold logic for securities-related investment transactions (INVTRAN)
-    """
-    @declared_attr
-    def secinfo_id(cls):
-        return Column(Integer, ForeignKey('secinfo.id'))
-
-    @classmethod
-    def _do_secid(cls, element, **extra_attrs):
-        """ 
-        Replace SECID with FK reference to existing SECINFO
-        """
-        secid = element.find('.//SECID')
-        uniqueidtype = secid.find('UNIQUEIDTYPE')
-        uniqueid = secid.find('UNIQUEID')
-        secinfo = SECINFO.get(uniqueidtype=uniqueidtype.text,
-                              uniqueid=uniqueid.text)
-        extra_attrs['secinfo_id'] = secinfo.id
-        # under INVBUY{BUY,SELL} or else directly under the parent transaction.
-        # We can use XPath to find SECID anywhere in the aggregate, but
-        # ElementTree doesn't let us find its parent cheaply, so we just
-        # remove its elements and let _flatten() erase the SECID aggregate.
-        secid.remove(uniqueidtype)
-        secid.remove(uniqueid)
         return element, extra_attrs
 
 

@@ -13,7 +13,7 @@ with open('README', 'r') as f:
 setup(
     name = 'ofxtools',
     version = '0.2.9',
-    description = ('Library for working with Open Financial Exchange (OFX)'
+    description = ('Library for working with Open Financial Exchange (OFX) '
                  'formatted data used by financial institutions'),
     long_description = long_description,
 
