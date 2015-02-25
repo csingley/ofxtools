@@ -41,7 +41,6 @@ class Numeric(sqlalchemy.types.TypeDecorator):
             return decimal.Decimal(value)
 
 
-# Custom SQLAlchemy column types
 class OFXDateTime(sqlalchemy.types.TypeDecorator):
     """ """
     impl = sqlalchemy.types.DateTime
@@ -53,3 +52,15 @@ class OFXDateTime(sqlalchemy.types.TypeDecorator):
         pass
 
 
+class OFXBoolean(sqlalchemy.types.TypeDecorator):
+    """ """
+    impl = sqlalchemy.types.Boolean
+    mapping = {'Y': True, 'N': False}
+    
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+        return self.mapping[value]
+
+    def process_result_param(self, value, dialect):
+        pass

@@ -6,7 +6,6 @@ balances, and securities.
 # 3rd party imports
 from sqlalchemy import (
     Column,
-    Boolean,
     Enum,
     Integer,
     String,
@@ -31,7 +30,7 @@ from sqlalchemy.orm import (
 from sqlalchemy.orm.exc import NoResultFound
 
 # local imports
-from types import Numeric, OFXDateTime
+from types import Numeric, OFXDateTime, OFXBoolean
 from ofxtools.lib import LANG_CODES, CURRENCY_CODES, COUNTRY_CODES
 
 
@@ -704,14 +703,14 @@ class INVBUY(INVBUYSELL):
     loanprincipal = Column(Numeric())
     loaninterest = Column(Numeric())
     dtpayroll = Column(OFXDateTime)
-    prioryearcontrib = Column(Boolean())
+    prioryearcontrib = Column(OFXBoolean())
 
 
 class INVSELL(INVBUYSELL):
     """ Declarative mixin for OFX INVSELL aggregate """
     markdown = Column(Numeric())
     withholding = Column(Numeric())
-    taxexempt = Column(Boolean())
+    taxexempt = Column(OFXBoolean())
     gain = Column(Numeric())
     loanid = Column(String(length=32))
     statewithholding = Column(Numeric())
@@ -756,7 +755,7 @@ class INCOME(SECID, ORIGCURRENCY, INVTRAN):
     total = Column(Numeric(), nullable=False)
     subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'), nullable=False)
     subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'), nullable=False)
-    taxexempt = Column(Boolean())
+    taxexempt = Column(OFXBoolean())
     withholding = Column(Numeric())
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
@@ -795,7 +794,7 @@ class REINVEST(SECID, ORIGCURRENCY, INVTRAN):
     taxes = Column(Numeric())
     fees = Column(Numeric())
     load = Column(Numeric())
-    taxexempt = Column(Boolean())
+    taxexempt = Column(OFXBoolean())
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
 
@@ -892,8 +891,8 @@ class POSDEBT(INVPOS):
 class POSMF(INVPOS):
     unitsstreet = Column(Numeric())
     unitsuser = Column(Numeric())
-    reinvdiv = Column(Boolean())
-    reinvcg = Column(Boolean())
+    reinvdiv = Column(OFXBoolean())
+    reinvcg = Column(OFXBoolean())
 
 
 class POSOPT(INVPOS):
@@ -906,6 +905,6 @@ class POSOTHER(INVPOS):
 class POSSTOCK(INVPOS):
     unitsstreet = Column(Numeric())
     unitsuser = Column(Numeric())
-    reinvdiv = Column(Boolean())
+    reinvdiv = Column(OFXBoolean())
 
 
