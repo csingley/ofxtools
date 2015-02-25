@@ -30,3 +30,5 @@ if __name__ == "__main__":
         print("Parsing %s" % f)
         parser.parse(f) 
         parser.convert()
+        DBSession.commit()
+

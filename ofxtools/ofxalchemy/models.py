@@ -76,8 +76,16 @@ class Aggregate(object):
     @classmethod
     def get(cls, **attrs):
         pks = cls.primary_keys()
+        pk = {}
         try:
-            pk = {k: attrs[k] for k in pks}
+            for k in pks:
+                try:
+                    pk[k] = attrs[k]
+                except KeyError:
+                    # Allow relationship, not just FK id integer
+                    if k.endswith('_id'):
+                        k = k[:-3]
+                        pk[k] = attrs[k]
         except KeyError:
             msg = "%s: Required attributes %s not satisfied by arguments %s" % (
                 cls.__name__, pks, attrs)
@@ -434,15 +442,13 @@ class MFINFO(SECINFO):
             elem.remove(fimfassetclass)
 
         instance = Aggregate.from_etree(elem, **extra_attrs)
-        # Commit MFINFO to generate PK so we can use it as *MFASSETCLASS FK
-        DBSession.commit()
 
         # Instantiate MFASSETCLASS/FIMFASSETCLASS with foreign key reference
         # to MFINFO
         for (PortionClass, mfassetclass) in assetclass.items():
             for portion in mfassetclass:
                 p = PortionClass.from_etree(
-                    portion, mfinfo_id=instance.id,
+                    portion, mfinfo=instance,
                     get_or_create=True
                 )
 

@@ -53,7 +53,6 @@ class OFXResponse(object):
                 for sec in seclist
             ]
             DBSession.add_all(self.securities)
-            DBSession.commit()
 
         # TRNRS - transaction response, which is the main section
         # containing account statements
@@ -70,7 +69,6 @@ class OFXResponse(object):
                     stmt = stmtClass(stmtrs)
                     self.statements.append(stmt)
 
-            DBSession.commit()
 
     def __repr__(self):
         s = "<%s len(statements)=%d len(securities)=%d>"
@@ -94,7 +92,6 @@ class Statement(object):
         acctfrom = stmtrs.find(self._acctTag)
         self.account = Aggregate.from_etree(acctfrom, get_or_create=True)
         DBSession.add(self.account)
-        DBSession.commit()
         self._init(stmtrs)
 
     def _init(self, stmtrs):
@@ -128,7 +125,7 @@ class BankStatement(Statement):
         # LEDGERBAL - mandatory
         ledgerbal = stmtrs.find('LEDGERBAL')
         self.ledgerbal = LEDGERBAL.from_etree(
-            ledgerbal, acctfrom_id=self.account.id, get_or_create=True
+            ledgerbal, acctfrom=self.account, get_or_create=True
         )
         DBSession.add(self.ledgerbal)
 
@@ -136,7 +133,7 @@ class BankStatement(Statement):
         availbal = stmtrs.find('AVAILBAL')
         if availbal is not None:
             self.availbal = AVAILBAL.from_etree(
-                availbal, acctfrom_id=self.account.id, get_or_create=True
+                availbal, acctfrom=self.account, get_or_create=True
             )
             DBSession.add(self.availbal)
 
@@ -218,7 +215,7 @@ class InvestmentStatement(Statement):
                                          position[1] + Decimal(units.text)
                                         )
             self.positions = [Aggregate.from_etree(
-                pos, units=units, acctfrom_id=self.account.id, 
+                pos, units=units, acctfrom=self.account, 
                 dtasof=self.datetime, get_or_create=True) \
                 for pos, units in positions.values()]
             DBSession.add_all(self.positions)
@@ -232,14 +229,14 @@ class InvestmentStatement(Statement):
                 invbal.remove(ballist)
                 self.other_balances = [
                     BAL.from_etree(
-                        bal, acctfrom_id=self.account.id, dtasof=self.datetime,
+                        bal, acctfrom=self.account, dtasof=self.datetime,
                         get_or_create=True
                     ) for bal in ballist
                 ]
                 DBSession.add_all(self.other_balances)
             # Now we can flatten the rest of INVBAL
             self.balances = INVBAL.from_etree(
-                invbal, acctfrom_id=self.account.id, dtasof=self.datetime,
+                invbal, acctfrom=self.account, dtasof=self.datetime,
                 get_or_create=True
             )
             DBSession.add(self.balances)
@@ -282,7 +279,7 @@ class TransactionList(list):
 
     def etree_to_sql(self, tran):
         """ Convert transaction (OFX *TRAN) """
-        instance = Aggregate.from_etree(tran, acctfrom_id=self.account.id,
+        instance = Aggregate.from_etree(tran, acctfrom=self.account,
                                         get_or_create=True)
         return instance
 

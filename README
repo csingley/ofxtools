@@ -82,6 +82,7 @@ SQL PERSISTENCE EXAMPLE
 >>> tree.parse('invstmtrs.ofx')
 >>> tree.convert()
 <OFXResponse len(statements)=1 len(securities)=3>
+>>> DBSession.commit()
 >>> # Besides the returned OFXResponse object, persisted data can now be
 >>> # accessed by querying the database.  The object model follows the OFX
 >>> # specification fairly closely, with data elements represented as instance
