@@ -287,9 +287,11 @@ class Balance(object):
     @declared_attr
     def acctfrom_id(cls):
         return Column(Integer, ForeignKey('acctfrom.id'), primary_key=True)
+
     @declared_attr
     def acctfrom(cls):
         return relationship('ACCTFROM', backref='%ss' % cls.__name__.lower())
+
     @declared_attr
     def dtasof(cls):
         return Column(OFXDateTime, primary_key=True)
@@ -328,6 +330,10 @@ class SECID(object):
     def secinfo_id(cls):
         return Column(Integer, ForeignKey('secinfo.id'))
 
+    @declared_attr
+    def secinfo(cls):
+        return relationship('SECINFO')
+
     @classmethod
     def _do_secid(cls, element, **extra_attrs):
         """ 
@@ -339,7 +345,8 @@ class SECID(object):
         secinfo = SECINFO.get(uniqueidtype=uniqueidtype.text,
                               uniqueid=uniqueid.text)
         extra_attrs['secinfo_id'] = secinfo.id
-        # under INVBUY{BUY,SELL} or else directly under the parent transaction.
+        # SECID appears either under INV{BUY,SELL} or else directly under 
+        # the parent transaction.
         # We can use XPath to find SECID anywhere in the aggregate, but
         # ElementTree doesn't let us find its parent cheaply, so we just
         # remove its elements and let _flatten() erase the SECID aggregate.
@@ -473,17 +480,16 @@ class OPTINFO(SECINFO):
     def _do_secid(cls, element, **extra_attrs):
         """ 
         A <SECID> aggregate referring to the security underlying the option
-        is, in general, *not* going to be contained in <SECLIST>
-        (because you don't necessarily have a position in the underlying).
-        Since the <SECID> for the underlying only gives us fields for
-        (uniqueidtype, uniqueid) we can't really go ahead and use this
-        information to create a corresponding SECINFO instance (since we
-        lack information about the security subclass).  It's not clear that
-        the SECID information is crucially important for anything, so we
-        disregard it.
+        is, in general, *not* going to be contained in <SECLIST> (because you
+        don't necessarily have a position in the underlying).  Since the <SECID>
+        for the underlying only gives us fields for (uniqueidtype, uniqueid) 
+        we can't really go ahead and use this information to create a 
+        corresponding SECINFO instance (since we lack information about the
+        security subclass).  It's not clear that the SECID of the underlying is 
+        really needed for anything, so we disregard it.
         """
         secid = element.find('./SECID')
-        if secid:
+        if secid is not None:
             element.remove(secid)
         return element, extra_attrs
 
@@ -538,12 +544,15 @@ class BANKTRAN(ORIGCURRENCY):
     @declared_attr
     def acctto_id(cls):
         return Column(Integer, ForeignKey('acctto.id'))
+
     @declared_attr
     def acctto(cls):
         return relationship('ACCTTO')
+
     @declared_attr
     def payee_name(cls):
         return Column(String(32), ForeignKey('payee.name'))
+
     @declared_attr
     def payee(cls):
         return relationship('PAYEE')
@@ -622,9 +631,11 @@ class INVTRAN(Inheritor('invtran'), Aggregate):
     @declared_attr
     def acctfrom_id(cls):
         return Column(Integer, ForeignKey('invacctfrom.id'))
+    
     @declared_attr
     def acctfrom(cls):
         return relationship('INVACCTFROM', backref='invtrans')
+
     subclass = Column(String(length=32), nullable=False)
 
     # Elements from OFX spec

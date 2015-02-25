@@ -144,6 +144,9 @@ class DateTime(Element):
         # If it's a datetime or None, don't touch it.
         if isinstance(value, datetime.datetime) or value is None:
             return value
+        # If it's a date, convert it to datetime (using midnight as the time)
+        elif isinstance(value, datetime.date):
+            return datetime.datetime.combine(value, datetime.time())
 
         # Pristine copy of input for error reporting purposes
         orig_value = value

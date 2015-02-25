@@ -10,7 +10,7 @@ from decimal import Decimal
 # local imports
 import models
 from models import DBSession, Aggregate, INVPOS 
-import types
+import ofxtools.types
 
 
 class OFXResponse(object):
@@ -179,7 +179,7 @@ class InvestmentStatement(Statement):
 
     def _init(self, invstmtrs):
         dtasof = invstmtrs.find('DTASOF').text
-        self.datetime = types.OFXDateTimeConverter.convert(dtasof)
+        self.datetime = ofxtools.types.DateTime.convert(dtasof)
 
         # INVTRANLIST
         tranlist = invstmtrs.find('INVTRANLIST')
@@ -223,14 +223,14 @@ class InvestmentStatement(Statement):
             if ballist is not None:
                 invbal.remove(ballist)
                 self.other_balances = [
-                    Aggregate.from_etree(
+                    BAL.from_etree(
                         bal, acctfrom_id=self.account.id, dtasof=self.datetime,
                         get_or_create=True
                     ) for bal in ballist
                 ]
                 DBSession.add_all(self.other_balances)
             # Now we can flatten the rest of INVBAL
-            self.balances = Aggregate.from_etree(
+            self.balances = INVBAL.from_etree(
                 invbal, acctfrom_id=self.account.id, dtasof=self.datetime,
                 get_or_create=True
             )
@@ -268,11 +268,12 @@ class TransactionList(list):
         self.account = account
         dtstart, dtend = tranlist[0:2]
         tranlist = tranlist[2:]
-        self.dtstart = types.OFXDateTimeConverter.convert(dtstart.text)
-        self.dtend = types.OFXDateTimeConverter.convert(dtend.text)
+        self.dtstart = ofxtools.types.DateTime.convert(dtstart.text)
+        self.dtend = ofxtools.types.DateTime.convert(dtend.text)
         self.extend([self.etree_to_sql(tran) for tran in tranlist])
 
     def etree_to_sql(self, tran):
+        """ Convert transaction (OFX *TRAN) """
         instance = Aggregate.from_etree(tran, acctfrom_id=self.account.id,
                                         get_or_create=True)
         return instance
