@@ -56,17 +56,58 @@ PARSER USAGE EXAMPLE
 ====
 >>> from ofxtools import OFXTree
 >>> tree = OFXTree()
->>> tree.parse('foobar.ofx')
+>>> tree.parse('stmtrs.ofx')
 >>> response = tree.convert()
->>> response                  
-<OFXResponse fid='AIS' org='Ameritrade Technology Group' dtserver='2014-12-01 16:11:44' len(statements)=1 len(securities)=5>
->>> stmt = response.statements[0] 
+>>> response
+<OFXResponse fid='1001' org='NCH' dtserver='2005-10-29 10:10:03' len(statements)=1 len(securities)=0>
+>>> stmt = response.statements[0]
 >>> stmt
-<InvestmentStatement account=<INVACCTFROM acctid='000000000' brokerid='ameritrade.com'> currency='USD' balances=<INVBAL buypower='3466.92' marginbalance='-488.6' shortbalance='-2830.001953' availcash='1469.51'> len(other_balances)=23 len(positions)=4 len(transactions)=5>
->>> stmt.positions[2]
-<POSSTOCK dtpriceasof='2014-11-28 12:00:00' mktval='2313' postype='LONG' heldinacct='MARGIN' uniqueidtype='CUSIP' uniqueid='527288104' units='100' unitprice='23.13'>
->>> stmt.transactions[3]
-<SELLSTOCK selltype='SELL' uniqueid='404139107' memo='SELL TRADE' subacctfund='MARGIN' units='-2704' uniqueidtype='CUSIP' dttrade='2014-11-13 11:16:59' fees='0.41' total='18376.8' commission='9.99' fitid='12386048052' subacctsec='MARGIN' unitprice='6.8'>
->>> response.securities[1]
-<STOCKINFO secname='HC 2 HOLDINGS INC (QB)' uniqueidtype='CUSIP' uniqueid='404139107' ticker='HCHC'>
+<BankStatement account=<BANKACCTFROM acctid='999988' accttype='CHECKING' bankid='121099999'> currency=USD ledgerbal=<LEDGERBAL balamt='200.29' dtasof='2005-10-29 11:20:00'> availbal=<AVAILBAL balamt='200.29' dtasof='2005-10-29 11:20:00'> len(other_balances)=0 len(transactions)=2>
+>>> stmt.transactions[-1]
+<STMTTRN dtposted='2005-10-20 00:00:00' trntype='ATM' trnamt='-300.00' fitid='00003' dtuser='2005-10-20 00:00:00'>
+
+
+SQL PERSISTENCE EXAMPLE
+====
+>>> # Housekeeping to set up database connection
+...
+>>> from ofxtools import ofxalchemy
+>>> from sqlalchemy import create_engine
+>>> engine = create_engine('sqlite://', echo=False)
+>>> ofxalchemy.models.DBSession.configure(bind=engine)
+>>> ofxalchemy.models.Aggregate.metadata.create_all(engine)
+>>> # Parse and persist the OFX data
+...
+>>> tree = ofxalchemy.OFXTree()
+>>> tree.parse('invstmtrs.ofx')
+>>> tree.convert()
+<OFXResponse len(statements)=1 len(securities)=3>
+>>> # Besides the returned OFXResponse object, persisted data can now be
+>>> # accessed by querying the database.  The object model follows the OFX
+>>> # specification fairly closely, with data elements represented as instance
+>>> # attributes, subaggregate type nesting modeled by polymorphic inheritance,
+>>> # and references to other data types replaced by foreign key relationships.
+>>> #
+>>> # N.B. There is no database structure representing account statements
+>>> # (OFX *STMT aggregates); only the transactions, balances, etc. contained
+>>> # within a statement are persisted.
+...
+>>> from ofxtools.ofxalchemy.models import *
+>>> acct = DBSession.query(ACCTFROM).one()
+>>> acct
+<INVACCTFROM(brokerid='121099999', acctid='999988', id='1')>
+>>> acct.invbals
+[<INVBAL(availcash='200.00', marginbalance='-50.00', shortbalance='0', acctfrom_id='1', dtasof='2005-08-27 01:00:00')>]
+>>> # The full range of SQLAlchemy query expressions is available.
+...
+>>> from datetime import datetime
+>>> invtrans = DBSession.query(INVTRAN).filter_by(acctfrom=acct).filter(INVTRAN.dttrade >= datetime(2005,1,1)).filter(INVTRAN.dttrade <= datetime(2005,12,31)).order_by(INVTRAN.dttrade).all()
+>>> invtrans
+[<BUYSTOCK(units='100', unitprice='50.00', commission='25.00', total='-5025.00', subacctsec='CASH', subacctfund='CASH', buytype='BUY', secinfo_id='1', id='1')>]
+>>> # OFX text data has been validated and converted to Python types, so it
+>>> # can be worked with directly.
+...
+>>> t = invtrans[0]
+>>> assert -t.units * t.unitprice - t.commission == t.total
+>>>
 
