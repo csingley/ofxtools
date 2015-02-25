@@ -43,7 +43,9 @@ class OFXDateTimeConverter(object):
     # Valid datetime formats given by OFX spec in section 3.2.8.2
     tz_re = re.compile(r'\[([-+]?\d{0,2}\.?\d*):?(\w*)\]')
     # strftime formats keyed by the length of the corresponding string
-    formats = {18: '%Y%m%d%H%M%S.%f', 14: '%Y%m%d%H%M%S', 8: '%Y%m%d'}
+    formats = {
+        18: '%Y%m%d%H%M%S.%f', 14: '%Y%m%d%H%M%S', 12: '%Y%m%d%H%M', 8: '%Y%m%d'
+    }
 
     @classmethod
     def convert(cls, value, strict=True):
