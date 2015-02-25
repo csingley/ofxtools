@@ -12,13 +12,13 @@ with open('README', 'r') as f:
     
 setup(
     name = 'ofxtools',
-    version = '0.3',
+    version = '0.3.1',
     description = ('Library for working with Open Financial Exchange (OFX) '
                  'formatted data used by financial institutions'),
     long_description = long_description,
 
     url = 'https://github.com/csingley/ofxtools',
-    download_url = 'https://github.com/csingley/ofxtools/tarball/0.3',
+    download_url = 'https://github.com/csingley/ofxtools/tarball/0.3.1',
 
     author = 'Christopher Singley',
     author_email = 'csingley@gmail.com',
