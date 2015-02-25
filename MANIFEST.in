@@ -1,1 +1,2 @@
-recursive-include config *.cfg
+recursive-include config *
+recursive-include tests *

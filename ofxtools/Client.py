@@ -339,7 +339,7 @@ def do_stmt(args):
 
 class OFXConfigParser(SafeConfigParser):
     """ """
-    fi_config = path.join(path.dirname(path.dirname(__file__)), 'config', 'fi.cfg')
+    fi_config = path.join(path.dirname(__file__), 'config', 'fi.cfg')
 
     def __init__(self):
         SafeConfigParser.__init__(self)

@@ -56,13 +56,6 @@ setup(
         'SQL': ['sqlalchemy > 0.9.8',],
     },
 
-    package_data = {'ofxtools': ['README']},
-
-    data_files = [
-        ('config', ['config/fi.cfg']),
-        (usercfgdir, ['config/ofxget_example.cfg']),
-    ],
-
     entry_points = {
         'console_scripts': [
             'ofxget=ofxtools.Client:main',
