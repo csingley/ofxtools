@@ -9,7 +9,15 @@ from decimal import Decimal
 
 # local imports
 import models
-from models import DBSession, Aggregate, INVPOS 
+from models import (
+    DBSession,
+    Aggregate,
+    INVPOS,
+    BAL,
+    INVBAL,
+    LEDGERBAL,
+    AVAILBAL,
+    )
 import ofxtools.types
 
 
@@ -119,7 +127,7 @@ class BankStatement(Statement):
 
         # LEDGERBAL - mandatory
         ledgerbal = stmtrs.find('LEDGERBAL')
-        self.ledgerbal = Aggregate.from_etree(
+        self.ledgerbal = LEDGERBAL.from_etree(
             ledgerbal, acctfrom_id=self.account.id, get_or_create=True
         )
         DBSession.add(self.ledgerbal)
@@ -127,14 +135,14 @@ class BankStatement(Statement):
         # AVAILBAL
         availbal = stmtrs.find('AVAILBAL')
         if availbal is not None:
-            self.availbal = Aggregate.from_etree(
+            self.availbal = AVAILBAL.from_etree(
                 availbal, acctfrom_id=self.account.id, get_or_create=True
             )
             DBSession.add(self.availbal)
 
         ballist = stmtrs.find('BALLIST')
         if ballist:
-            self.other_balances = [Aggregate.from_etree(bal) for bal in ballist]
+            self.other_balances = [BAL.from_etree(bal) for bal in ballist]
             DBSession.add_all(self.other_balances)
 
         # Unsupported subaggregates

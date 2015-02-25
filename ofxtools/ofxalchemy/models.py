@@ -105,7 +105,13 @@ class Aggregate(object):
         feed it the Element to instantiate the Aggregate instance.
         """
         get_or_create = extra_attrs.pop('get_or_create', False)
-        SubClass = globals()[element.tag]
+        # If called on Aggregate base class, look at the element tag to
+        # determine what subclass to instantiate
+        if cls.__name__ == 'Aggregate':
+            SubClass = globals()[element.tag]
+        # If called on a subclass, instantiate instance of subclass
+        else:
+            SubClass = cls
         element, extra_attrs = SubClass._preflatten(element, **extra_attrs)
         attributes = element._flatten()
         attributes, extra_attrs = SubClass._postflatten(attributes, **extra_attrs)
@@ -408,7 +414,7 @@ class MFINFO(SECINFO):
         Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up _flatten()
         Replace *ASSETCLASS lists with *PORTIONs having FK references to MFINFO
         """
-        mfassetclasses = []
+        assetclass = {PORTION: [], FIPORTION: []}
 
         # Do all XPath searches before removing nodes from the tree
         #   which seems to mess up the DOM in Python3 and throw an
@@ -417,21 +423,25 @@ class MFINFO(SECINFO):
         fimfassetclass = elem.find('./FIMFASSETCLASS')
 
         if mfassetclass is not None:
-            # Convert PORTIONs; save for later
-            mfassetclasses.append(mfassetclass)
+            # Strip PORTIONs; save for later
+            #mfassetclasses.append(mfassetclass)
+            assetclass[PORTION] = mfassetclass
             elem.remove(mfassetclass)
         if fimfassetclass is not None:
-            # Convert FIPORTIONs; save for later
-            mfassetclass.append(fimfassetclass)
+            # Strip FIPORTIONs; save for later
+            #mfassetclass.append(fimfassetclass)
+            assetclass[FIPORTION] = fimfassetclass
             elem.remove(fimfassetclass)
 
         instance = Aggregate.from_etree(elem, **extra_attrs)
+        # Commit MFINFO to generate PK so we can use it as *MFASSETCLASS FK
+        DBSession.commit()
 
         # Instantiate MFASSETCLASS/FIMFASSETCLASS with foreign key reference
         # to MFINFO
-        for mfassetclass in mfassetclasses:
+        for (PortionClass, mfassetclass) in assetclass.items():
             for portion in mfassetclass:
-                p = Aggregate.from_etree(
+                p = PortionClass.from_etree(
                     portion, mfinfo_id=instance.id,
                     get_or_create=True
                 )
@@ -592,19 +602,19 @@ class BANKTRAN(ORIGCURRENCY):
         # BANKACCTTO/CCACCTTO
         bankacctto = element.find('BANKACCTTO')
         if bankacctto:
-            instance = Aggregate.from_etree(bankacctto, get_or_create=True)
+            instance = BANKACCTTO.from_etree(bankacctto, get_or_create=True)
             extra_attrs['acctto_id'] = instance.id
             element.remove(instance)
         else:
             ccacctto = element.find('CCACCTTO')
             if ccacctto:
-                instance = Aggregate.from_etree(ccacctto, get_or_create=True)
+                instance = CCACCTTO.from_etree(ccacctto, get_or_create=True)
                 extra_attrs['acctto_id'] = instance.id
                 element.remove(ccacctto)
         # PAYEE
         payee = element.find('PAYEE')
         if payee:
-            instance = Aggregate.from_etree(payee, get_or_create=True)
+            instance = PAYEE.from_etree(payee, get_or_create=True)
             extra_attrs['payee_name'] = instance.name
             element.remove(payee)
 
