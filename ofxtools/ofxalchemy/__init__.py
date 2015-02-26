@@ -1,5 +1,8 @@
-from sqlalchemy.orm import (
-    scoped_session,
-    sessionmaker,
+import models
+from models import (
+    DBSession,
+    Base
     )
-DBSession = scoped_session(sessionmaker())
+import Parser
+from Parser import OFXTree as OFXParser
+import types

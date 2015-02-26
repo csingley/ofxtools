@@ -75,12 +75,12 @@ SQL PERSISTENCE EXAMPLE
 >>> from sqlalchemy import create_engine
 >>> engine = create_engine('sqlite://', echo=False)
 >>> ofxalchemy.DBSession.configure(bind=engine)
->>> ofxalchemy.models.Aggregate.metadata.create_all(engine)
+>>> ofxalchemy.Base.metadata.create_all(engine)
 >>> # Parse and persist the OFX data
 ...
->>> tree = ofxalchemy.OFXTree()
->>> tree.parse('invstmtrs.ofx')
->>> tree.convert()
+>>> parser = ofxalchemy.OFXParser()
+>>> parser.parse('invstmtrs.ofx')
+>>> parser.instantiate()
 <OFXResponse len(statements)=1 len(securities)=3>
 >>> DBSession.commit()
 >>> # Besides the returned OFXResponse object, persisted data can now be

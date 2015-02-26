@@ -22,8 +22,8 @@ from sqlalchemy.ext.declarative import (
     has_inherited_table,
     )
 from sqlalchemy.orm import (
-    #scoped_session,
-    #sessionmaker,
+    scoped_session,
+    sessionmaker,
     relationship,
     backref,
     )
@@ -47,22 +47,20 @@ ASSETCLASSES = ('DOMESTICBOND', 'INTLBOND', 'LARGESTOCK', 'SMALLSTOCK',
 
 
 # DB setup
-# We need a session for Aggregate.get() to construct queries and
-# Aggregate.get_or_create() to add transient instances
-#DBSession = scoped_session(sessionmaker())
+DBSession = scoped_session(sessionmaker())
 
 
 # Object classes
 @as_declarative()
-class Aggregate(object):
+class Base(object):
     """
-    Declarative mixin of OFX 'aggregate', i.e. SGML parent node that contains
-    no data.
+    Base class representing the main OFX 'aggregates', i.e. SGML parent nodes
+    that contain no data.
 
-    Aggregates are grouped into higher-order containers such as lists
+    These aggregates are grouped into higher-order containers such as lists
     and statements.  Although such higher-order containers are 'aggregates'
-    per the OFX specification, they are represented here by their own Python
-    classes other than Aggregate.
+    per the OFX specification, they are not persisted by our model; their
+    transitory representations are modelled in ofxalchemy.Parser.
     """
     @declared_attr
     def __tablename__(cls):
@@ -149,7 +147,7 @@ class ORIGCURRENCY(CURRENCY):
 
 
 ### ACCOUNTS
-class ACCTFROM(Inheritor('acctfrom'), Aggregate):
+class ACCTFROM(Inheritor('acctfrom'), Base):
     """ 
     Synthetic base class of {BANK,CC,INV}ACCTFROM - not in OFX spec. 
     """
@@ -186,7 +184,7 @@ class INVACCTFROM(ACCTFROM):
     __table_args__ = (UniqueConstraint(*pks),)
 
 
-class ACCTTO(Inheritor('acctto'), Aggregate):
+class ACCTTO(Inheritor('acctto'), Base):
     """ 
     Synthetic base class of {BANK,CC,INV}ACCTTO - not in OFX spec. 
     """
@@ -238,22 +236,22 @@ class Balance(object):
         return Column(OFXDateTime, primary_key=True)
 
 
-class LEDGERBAL(Balance, Aggregate):
+class LEDGERBAL(Balance, Base):
     balamt = Column(Numeric(), nullable=False)
 
 
-class AVAILBAL(Balance, Aggregate):
+class AVAILBAL(Balance, Base):
     balamt = Column(Numeric(), nullable=False)
 
 
-class INVBAL(Balance, Aggregate):
+class INVBAL(Balance, Base):
     availcash = Column(Numeric(), nullable=False)
     marginbalance = Column(Numeric(), nullable=False)
     shortbalance = Column(Numeric(), nullable=False)
     buypower = Column(Numeric())
 
 
-class BAL(Balance, CURRENCY, Aggregate):
+class BAL(Balance, CURRENCY, Base):
     name = Column(String(length=32), primary_key=True)
     desc = Column(String(length=80), nullable=False)
     baltype = Column(Enum('DOLLAR', 'PERCENT', 'NUMBER', name='baltype'),
@@ -276,7 +274,7 @@ class SECID(object):
         return relationship('SECINFO')
 
 
-class SECINFO(Inheritor('secinfo'), CURRENCY, Aggregate):
+class SECINFO(Inheritor('secinfo'), CURRENCY, Base):
     uniqueidtype = Column(String(length=10), nullable=False)
     uniqueid = Column(String(length=32), nullable=False)
     # FIs *cough* IBKR *cough* abuse SECNAME/TICKER with too much information
@@ -324,7 +322,7 @@ class MFINFO(SECINFO):
     dtyieldasof = Column(OFXDateTime)
 
 
-class PORTION(Aggregate):
+class PORTION(Base):
     # Added for SQLAlchemy object model
     mfinfo_id = Column(Integer, ForeignKey('mfinfo.id'), primary_key=True)
     mfinfo = relationship('MFINFO', backref='mfassetclasses')
@@ -336,7 +334,7 @@ class PORTION(Aggregate):
     percent = Column(Numeric(), nullable=False)
 
 
-class FIPORTION(Aggregate):
+class FIPORTION(Base):
     # Added for SQLAlchemy object model
     mfinfo_id = Column(Integer, ForeignKey('mfinfo.id'), primary_key=True)
     mfinfo = relationship('MFINFO', backref='fimfassetclasses')
@@ -377,7 +375,7 @@ class STOCKINFO(SECINFO):
 
 
 ### TRANSACTIONS
-class PAYEE(Aggregate):
+class PAYEE(Base):
     # Elements from OFX spec
     name = Column(String(length=32), primary_key=True)
     addr1 = Column(String(length=32), nullable=False)
@@ -433,13 +431,13 @@ class BANKTRAN(ORIGCURRENCY):
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
 
-class STMTTRN(BANKTRAN, Aggregate):
+class STMTTRN(BANKTRAN, Base):
      # Added for SQLAlchemy object model
     acctfrom_id = Column(Integer, ForeignKey('acctfrom.id'), primary_key=True)
     acctfrom = relationship('ACCTFROM', foreign_keys=[acctfrom_id,], backref='stmttrns')
 
 
-class INVBANKTRAN(BANKTRAN, Aggregate):
+class INVBANKTRAN(BANKTRAN, Base):
     # Added for SQLAlchemy object model
     acctfrom_id = Column(Integer, ForeignKey('invacctfrom.id'), primary_key=True)
     acctfrom = relationship('INVACCTFROM')
@@ -448,7 +446,7 @@ class INVBANKTRAN(BANKTRAN, Aggregate):
     subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'), nullable=False)
 
 
-class INVTRAN(Inheritor('invtran'), Aggregate):
+class INVTRAN(Inheritor('invtran'), Base):
     # Added for SQLAlchemy object model
     @declared_attr
     def acctfrom_id(cls):
@@ -650,7 +648,7 @@ class TRANSFER(SECID, INVTRAN):
 
 
 ### POSITIONS
-class INVPOS(Inheritor('invpos'), SECID, CURRENCY, Aggregate):
+class INVPOS(Inheritor('invpos'), SECID, CURRENCY, Base):
     # Added for SQLAlchemy object model
     acctfrom_id = Column(Integer, ForeignKey('invacctfrom.id'))
     acctfrom = relationship('INVACCTFROM', backref='invposs')

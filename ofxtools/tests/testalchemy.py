@@ -8,10 +8,10 @@ import argparse
 from sqlalchemy import create_engine
 
 # local imports
-from ofxtools.ofxalchemy import DBSession
-from ofxtools.ofxalchemy.models import Aggregate
-from ofxtools.ofxalchemy.Parser import (
-    OFXTree,
+from ofxtools.ofxalchemy import (
+    DBSession,
+    Base,
+    OFXParser,
     )
 
 
@@ -26,9 +26,9 @@ if __name__ == "__main__":
     # DB setup
     engine = create_engine('sqlite:///test.db', echo=args.verbose)
     DBSession.configure(bind=engine)
-    Aggregate.metadata.create_all(engine)
+    Base.metadata.create_all(engine)
     
-    parser = OFXTree()
+    parser = OFXParser()
     for f in args.files:
         print("Parsing %s" % f)
         parser.parse(f) 
