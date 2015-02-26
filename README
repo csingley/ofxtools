@@ -74,7 +74,7 @@ SQL PERSISTENCE EXAMPLE
 >>> from ofxtools import ofxalchemy
 >>> from sqlalchemy import create_engine
 >>> engine = create_engine('sqlite://', echo=False)
->>> ofxalchemy.models.DBSession.configure(bind=engine)
+>>> ofxalchemy.DBSession.configure(bind=engine)
 >>> ofxalchemy.models.Aggregate.metadata.create_all(engine)
 >>> # Parse and persist the OFX data
 ...

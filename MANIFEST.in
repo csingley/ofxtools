@@ -1,2 +1,2 @@
-recursive-include config *
-recursive-include tests *
+recursive-include ofxtools/config *
+recursive-include ofxtools/tests *

@@ -19,6 +19,40 @@ class ParseError(SyntaxError):
     pass
 
 
+class Element(ET.Element):
+    """ Parse tree node """
+    def _flatten(self):
+        """
+        Recurse through aggregate and flatten; return an un-nested dict.
+
+        This method will blow up if the aggregate contains LISTs, or if it
+        contains multiple subaggregates whose namespaces will collide when
+        flattened (e.g. BALAMT/DTASOF elements in LEDGERBAL and AVAILBAL).
+        Remove all such hair from any element before passing it in here.
+        """
+        aggs = {}
+        leaves = {}
+        for child in self:
+            tag = child.tag
+            data = child.text or ''
+            data = data.strip()
+            if data:
+                # it's a data-bearing leaf element.
+                assert tag not in leaves
+                # Silently drop all private tags (e.g. <INTU.XXXX>
+                if '.' not in tag:
+                    leaves[tag.lower()] = data
+            else:
+                # it's an aggregate.
+                assert tag not in aggs
+                aggs.update(child._flatten())
+        # Double-check no key collisions as we flatten aggregates & leaves
+        for key in aggs.keys():
+            assert key not in leaves
+        leaves.update(aggs)
+        return leaves
+
+
 class OFXTree(ET.ElementTree):
     """ 
     OFX parse tree.
@@ -26,7 +60,8 @@ class OFXTree(ET.ElementTree):
     Overrides ElementTree.ElementTree.parse() to validate and strip the
     the OFX header before feeding the body tags to TreeBuilder
     """
-    ofxresponse = OFXResponse
+    element_factory = Element
+
     def parse(self, source):
         if not hasattr(source, 'read'):
             source = open(source)
@@ -36,7 +71,7 @@ class OFXTree(ET.ElementTree):
         source = OFXHeader.strip(source)
 
         # Then parse tag soup into tree of Elements
-        parser = TreeBuilder(element_factory=Element)
+        parser = TreeBuilder(element_factory=self.element_factory)
         parser.feed(source)
         self._root = parser.close()
 
@@ -44,7 +79,7 @@ class OFXTree(ET.ElementTree):
         if not hasattr(self, '_root'):
             raise ValueError('Must first call parse() to have data to convert')
         # OFXResponse performs validation & type conversion
-        return self.ofxresponse(self)
+        return OFXResponse(self)
 
 
 class TreeBuilder(ET.TreeBuilder):
@@ -124,37 +159,4 @@ class TreeBuilder(ET.TreeBuilder):
             else:
                 raise
 
-
-class Element(ET.Element):
-    """ Parse tree node.  """
-    def _flatten(self):
-        """
-        Recurse through aggregate and flatten; return an un-nested dict.
-
-        This method will blow up if the aggregate contains LISTs, or if it
-        contains multiple subaggregates whose namespaces will collide when
-        flattened (e.g. BALAMT/DTASOF elements in LEDGERBAL and AVAILBAL).
-        Remove all such hair from any element before passing it in here.
-        """
-        aggs = {}
-        leaves = {}
-        for child in self:
-            tag = child.tag
-            data = child.text or ''
-            data = data.strip()
-            if data:
-                # it's a data-bearing leaf element.
-                assert tag not in leaves
-                # Silently drop all private tags (e.g. <INTU.XXXX>
-                if '.' not in tag:
-                    leaves[tag.lower()] = data
-            else:
-                # it's an aggregate.
-                assert tag not in aggs
-                aggs.update(child._flatten())
-        # Double-check no key collisions as we flatten aggregates & leaves
-        for key in aggs.keys():
-            assert key not in leaves
-        leaves.update(aggs)
-        return leaves
 

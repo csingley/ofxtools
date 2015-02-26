@@ -22,12 +22,12 @@ from sqlalchemy.ext.declarative import (
     has_inherited_table,
     )
 from sqlalchemy.orm import (
-    scoped_session,
-    sessionmaker,
+    #scoped_session,
+    #sessionmaker,
     relationship,
     backref,
     )
-from sqlalchemy.orm.exc import NoResultFound
+#from sqlalchemy.orm.exc import NoResultFound
 
 # local imports
 from types import Numeric, OFXDateTime, OFXBoolean
@@ -49,7 +49,7 @@ ASSETCLASSES = ('DOMESTICBOND', 'INTLBOND', 'LARGESTOCK', 'SMALLSTOCK',
 # DB setup
 # We need a session for Aggregate.get() to construct queries and
 # Aggregate.get_or_create() to add transient instances
-DBSession = scoped_session(sessionmaker())
+#DBSession = scoped_session(sessionmaker())
 
 
 # Object classes
@@ -73,78 +73,30 @@ class Aggregate(object):
         return [c.name for c in cls.__table__.c if c.primary_key]
 
     @classmethod
-    def get(cls, **attrs):
-        pks = cls.primary_keys()
-        pk = {}
+    def _fingerprint(cls, **attrs):
+        """ Extract an instance's primary key dict from a dict of attributes """
+        def bindkey(key):
+            """ 
+            Look up a primary key's value in the given dict of attributes
+            """
+            k = key
+            try: 
+                v = attrs[k]
+            except KeyError:
+                # Allow relationship, not just FK id integer
+                if k.endswith('_id'):
+                    k = k[:-3]
+                    v = attrs[k]
+                else:
+                    raise
+            return k, v
+
         try:
-            for k in pks:
-                try:
-                    pk[k] = attrs[k]
-                except KeyError:
-                    # Allow relationship, not just FK id integer
-                    if k.endswith('_id'):
-                        k = k[:-3]
-                        pk[k] = attrs[k]
+            return dict([bindkey(pk) for pk in cls.primary_keys()])
         except KeyError:
             msg = "%s: Required attributes %s not satisfied by arguments %s" % (
-                cls.__name__, pks, attrs)
+                cls.__name__, cls.primary_keys(), attrs)
             raise ValueError(msg)
-        instance = DBSession.query(cls).filter_by(**pk).one()
-        return instance
-
-    @classmethod
-    def get_or_create(cls, **attrs):
-        """
-        Return existing instance with matching PK if it exists, else create
-        an instance with all attrs given in keywords and return it.
-        """
-        try:
-            instance = cls.get(**attrs)
-        except NoResultFound:
-            instance = cls(**attrs)
-            DBSession.add(instance)
-        return instance
-    
-    @classmethod
-    def from_etree(cls, element, **extra_attrs):
-        """ 
-        Look up the Aggregate subclass for a given ofx.Parser.Element and
-        feed it the Element to instantiate the Aggregate instance.
-        """
-        get_or_create = extra_attrs.pop('get_or_create', False)
-        # If called on Aggregate base class, look at the element tag to
-        # determine what subclass to instantiate
-        if cls.__name__ == 'Aggregate':
-            SubClass = globals()[element.tag]
-        # If called on a subclass, instantiate instance of subclass
-        else:
-            SubClass = cls
-        element, extra_attrs = SubClass._preflatten(element, **extra_attrs)
-        attributes = element._flatten()
-        attributes, extra_attrs = SubClass._postflatten(attributes, **extra_attrs)
-        attributes.update(extra_attrs)
-
-        if get_or_create:
-            instance = SubClass.get_or_create(**attributes)
-        else:
-            instance = SubClass(**attributes)
-        return instance
-
-    @classmethod
-    def _preflatten(cls, element, **extra_attrs):
-        """ 
-        Hook for subclasses to preprocess incoming SGML data before flattening
-        elements and instantiation.
-        """
-        return element, extra_attrs
-
-    @classmethod
-    def _postflatten(cls, element, **extra_attrs):
-        """ 
-        Hook for subclasses to preprocess incoming SGML data after flattening
-        elements but before instantiation.
-        """
-        return element, extra_attrs
 
     def __repr__(self):
         return '<%s(%s)>' % (self.__class__.__name__, ', '.join(
@@ -194,30 +146,6 @@ class CURRENCY(object):
 class ORIGCURRENCY(CURRENCY):
     """ Declarative mixin representing OFX <ORIGCURRENCY> aggregate """
     curtype = Column(Enum('CURRENCY', 'ORIGCURRENCY', name='curtype'))
-
-    @classmethod
-    def _do_origcurrency(cls, element, **extra_attrs):
-        """ 
-        See OFX spec section 5.2 for currency handling conventions.
-        Flattening the currency definition leaves only the CURRATE/CURSYM
-        elements, leaving no indication of whether these were sourced from
-        a CURRENCY aggregate or ORIGCURRENCY.  Since this distinction is
-        important to interpreting transactions in foreign correncies, we
-        preserve this information by adding a nonstandard curtype element.
-        """
-        currency = element.find('*/CURRENCY')
-        origcurrency = element.find('*/ORIGCURRENCY')
-        if (currency is not None) and (origcurrency is not None):
-            raise ValueError("<%s> may not contain both <CURRENCY> and \
-                             <ORIGCURRENCY>" % elem.tag)
-        curtype = currency
-        if curtype is None:
-            curtype = origcurrency
-        if curtype is not None:
-            curtype = curtype.tag
-        extra_attrs['curtype'] = curtype
-
-        return element, extra_attrs
 
 
 ### ACCOUNTS
@@ -347,26 +275,6 @@ class SECID(object):
     def secinfo(cls):
         return relationship('SECINFO')
 
-    @classmethod
-    def _do_secid(cls, element, **extra_attrs):
-        """ 
-        Replace SECID with FK reference to existing SECINFO
-        """
-        secid = element.find('.//SECID')
-        uniqueidtype = secid.find('UNIQUEIDTYPE')
-        uniqueid = secid.find('UNIQUEID')
-        secinfo = SECINFO.get(uniqueidtype=uniqueidtype.text,
-                              uniqueid=uniqueid.text)
-        extra_attrs['secinfo_id'] = secinfo.id
-        # SECID appears either under INV{BUY,SELL} or else directly under 
-        # the parent transaction.
-        # We can use XPath to find SECID anywhere in the aggregate, but
-        # ElementTree doesn't let us find its parent cheaply, so we just
-        # remove its elements and let _flatten() erase the SECID aggregate.
-        secid.remove(uniqueidtype)
-        secid.remove(uniqueid)
-        return element, extra_attrs
-
 
 class SECINFO(Inheritor('secinfo'), CURRENCY, Aggregate):
     uniqueidtype = Column(String(length=10), nullable=False)
@@ -415,44 +323,6 @@ class MFINFO(SECINFO):
     yld = Column(Numeric())
     dtyieldasof = Column(OFXDateTime)
 
-    @classmethod
-    def from_etree(cls, elem, **extra_attrs):
-        """ 
-        Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up _flatten()
-        Replace *ASSETCLASS lists with *PORTIONs having FK references to MFINFO
-        """
-        assetclass = {PORTION: [], FIPORTION: []}
-
-        # Do all XPath searches before removing nodes from the tree
-        #   which seems to mess up the DOM in Python3 and throw an
-        #   AttributeError on subsequent searches.
-        mfassetclass = elem.find('./MFASSETCLASS')
-        fimfassetclass = elem.find('./FIMFASSETCLASS')
-
-        if mfassetclass is not None:
-            # Strip PORTIONs; save for later
-            #mfassetclasses.append(mfassetclass)
-            assetclass[PORTION] = mfassetclass
-            elem.remove(mfassetclass)
-        if fimfassetclass is not None:
-            # Strip FIPORTIONs; save for later
-            #mfassetclass.append(fimfassetclass)
-            assetclass[FIPORTION] = fimfassetclass
-            elem.remove(fimfassetclass)
-
-        instance = Aggregate.from_etree(elem, **extra_attrs)
-
-        # Instantiate MFASSETCLASS/FIMFASSETCLASS with foreign key reference
-        # to MFINFO
-        for (PortionClass, mfassetclass) in assetclass.items():
-            for portion in mfassetclass:
-                p = PortionClass.from_etree(
-                    portion, mfinfo=instance,
-                    get_or_create=True
-                )
-
-        return instance
-
 
 class PORTION(Aggregate):
     # Added for SQLAlchemy object model
@@ -486,28 +356,6 @@ class OPTINFO(SECINFO):
     assetclass = Column(Enum(*ASSETCLASSES, name='assetclass'))
     fiassetclass = Column(String(length=32))
 
-    @classmethod
-    def _preflatten(cls, element, **extra_attrs):
-        element, extra_attrs = cls._do_secid(element, **extra_attrs)
-        return element, extra_attrs
-
-    @classmethod
-    def _do_secid(cls, element, **extra_attrs):
-        """ 
-        A <SECID> aggregate referring to the security underlying the option
-        is, in general, *not* going to be contained in <SECLIST> (because you
-        don't necessarily have a position in the underlying).  Since the <SECID>
-        for the underlying only gives us fields for (uniqueidtype, uniqueid) 
-        we can't really go ahead and use this information to create a 
-        corresponding SECINFO instance (since we lack information about the
-        security subclass).  It's not clear that the SECID of the underlying is 
-        really needed for anything, so we disregard it.
-        """
-        secid = element.find('./SECID')
-        if secid is not None:
-            element.remove(secid)
-        return element, extra_attrs
-
 
 class OTHERINFO(SECINFO):
     typedesc = Column(String(length=32))
@@ -521,20 +369,11 @@ class STOCKINFO(SECINFO):
     stocktype = Column(Enum('COMMON', 'PREFERRED', 'CONVERTIBLE', 'OTHER',
                            name='stocktype')
                       )
-    # 'yield' is a reserved word in Python
-    yld = Column(Numeric())
+    yld = Column(Numeric()) # 'yield' is a reserved word in Python
     dtyieldasof = Column(OFXDateTime)
     typedesc = Column(String(length=32))
     assetclass = Column(Enum(*ASSETCLASSES, name='assetclass'))
     fiassetclass = Column(String(length=32))
-
-    @classmethod
-    def _postflatten(cls, attributes, **extra_attrs):
-        # Rename 'yield' (a reserved word in Python) to 'yld'
-        yld = attributes.pop('yield', None)
-        if yld:
-            attributes['yld'] = yld
-        return attributes, extra_attrs
 
 
 ### TRANSACTIONS
@@ -593,38 +432,6 @@ class BANKTRAN(ORIGCURRENCY):
     memo = Column(String(length=255))
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
-    @classmethod
-    def _preflatten(cls, element, **extra_attrs):
-        """
-        Replace BANKACCTTO/CCACCTTO/PAYEE with FK references.
-
-        This is needed for {BANK,CC}ACCTTO because account type information is
-        contained in the aggregate container, which will be lost by _flatten().
-
-        PAYEE will not lose information when _flatten()ed, but it really needs
-        its own object class to be useful to an application.
-        """
-        # BANKACCTTO/CCACCTTO
-        bankacctto = element.find('BANKACCTTO')
-        if bankacctto:
-            instance = BANKACCTTO.from_etree(bankacctto, get_or_create=True)
-            extra_attrs['acctto_id'] = instance.id
-            element.remove(instance)
-        else:
-            ccacctto = element.find('CCACCTTO')
-            if ccacctto:
-                instance = CCACCTTO.from_etree(ccacctto, get_or_create=True)
-                extra_attrs['acctto_id'] = instance.id
-                element.remove(ccacctto)
-        # PAYEE
-        payee = element.find('PAYEE')
-        if payee:
-            instance = PAYEE.from_etree(payee, get_or_create=True)
-            extra_attrs['payee_name'] = instance.name
-            element.remove(payee)
-
-        return element, extra_attrs
-
 
 class STMTTRN(BANKTRAN, Aggregate):
      # Added for SQLAlchemy object model
@@ -664,22 +471,6 @@ class INVTRAN(Inheritor('invtran'), Aggregate):
 
     pks = ['acctfrom_id', 'fitid']
     __table_args__ = (UniqueConstraint(*pks),)
-
-    @classmethod
-    def _preflatten(cls, element, **extra_attrs):
-        element, extra_attrs = cls._do_secid(element, **extra_attrs)
-        element, extra_attrs = cls._do_origcurrency(element, **extra_attrs)
-        return element, extra_attrs
-
-    classmethod
-    def _do_secid(cls, element, **extra_attrs):
-        """ Hook for processing SECID in subclass """
-        return element, extra_attrs
-
-    @classmethod
-    def _do_origcurrency(cls, element, **extra_attrs):
-        """ Hook for processing ORIGCURRENCY in subclass """
-        return element, extra_attrs
 
 
 class INVBUYSELL(SECID, ORIGCURRENCY):
@@ -878,11 +669,6 @@ class INVPOS(Inheritor('invpos'), SECID, CURRENCY, Aggregate):
     memo = Column(String(length=255))
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
   
-    @classmethod
-    def _preflatten(cls, element, **extra_attrs):
-        element, extra_attrs = cls._do_secid(element, **extra_attrs)
-        return element, extra_attrs
-
 
 class POSDEBT(INVPOS):
     pass
@@ -906,5 +692,4 @@ class POSSTOCK(INVPOS):
     unitsstreet = Column(Numeric())
     unitsuser = Column(Numeric())
     reinvdiv = Column(OFXBoolean())
-
 

@@ -8,8 +8,11 @@ import argparse
 from sqlalchemy import create_engine
 
 # local imports
-from ofxtools.ofxalchemy.models import DBSession, Aggregate
-from ofxtools.ofxalchemy.Parser import OFXTree
+from ofxtools.ofxalchemy import DBSession
+from ofxtools.ofxalchemy.models import Aggregate
+from ofxtools.ofxalchemy.Parser import (
+    OFXTree,
+    )
 
 
 if __name__ == "__main__":
@@ -29,6 +32,6 @@ if __name__ == "__main__":
     for f in args.files:
         print("Parsing %s" % f)
         parser.parse(f) 
-        parser.convert()
+        parser.instantiate()
         DBSession.commit()
 

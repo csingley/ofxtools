@@ -1,7 +1,5 @@
-import types
-import models
-from models import DBSession, Aggregate
-import Parser
-from Parser import OFXTree
-import Response
-from Response import OFXResponse
+from sqlalchemy.orm import (
+    scoped_session,
+    sessionmaker,
+    )
+DBSession = scoped_session(sessionmaker())
