@@ -14,7 +14,10 @@ from sqlalchemy import (
     ForeignKeyConstraint,
     )
 import sqlalchemy.types
-from sqlalchemy.schema import UniqueConstraint
+from sqlalchemy.schema import (
+    UniqueConstraint,
+    CheckConstraint,
+    )
 from sqlalchemy.ext.declarative import (
     declarative_base,
     as_declarative,
@@ -27,7 +30,6 @@ from sqlalchemy.orm import (
     relationship,
     backref,
     )
-#from sqlalchemy.orm.exc import NoResultFound
 
 # local imports
 from types import Numeric, OFXDateTime, OFXBoolean
@@ -494,6 +496,15 @@ class INVBUY(INVBUYSELL):
     dtpayroll = Column(OFXDateTime)
     prioryearcontrib = Column(OFXBoolean())
 
+    __table_args__ = (
+        CheckConstraint(
+            """ 
+            total = units * (unitprice + markup) 
+                    + (commission + fees + load + taxes)
+            """
+        ),
+    ) 
+
 
 class INVSELL(INVBUYSELL):
     """ Declarative mixin for OFX INVSELL aggregate """
@@ -504,6 +515,16 @@ class INVSELL(INVBUYSELL):
     loanid = Column(String(length=32))
     statewithholding = Column(Numeric())
     penalty = Column(Numeric())
+
+    __table_args__ = (
+        CheckConstraint(
+            """ 
+            total = units * (unitprice - markdown) 
+                    - (commission + fees + load + taxes + penalty 
+                        + withholding + statewithholding)
+            """
+        ),
+    ) 
 
 
 class BUYDEBT(INVBUY, INVTRAN):
@@ -585,6 +606,14 @@ class REINVEST(SECID, ORIGCURRENCY, INVTRAN):
     load = Column(Numeric())
     taxexempt = Column(OFXBoolean())
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
+
+    __table_args__ = (
+        CheckConstraint(
+            """ 
+            total = units * (unitprice) + (commission + fees + load + taxes)
+            """
+        ),
+    ) 
 
 
 class RETOFCAP(SECID, ORIGCURRENCY, INVTRAN):
