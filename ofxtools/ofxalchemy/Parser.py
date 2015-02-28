@@ -40,7 +40,9 @@ class Element(ofxtools.Parser.Element):
             if (currency is not None) and (origcurrency is not None):
                 msg = '<%s> may not contain both <CURRENCY> and <ORIGCURRENCY>' % elem.tag
                 raise ofxtools.Parser.ParseError(msg)
-            curtype = currency or origcurrency
+            curtype = currency 
+            if curtype is None:
+                curtype = origcurrency
             if (curtype is not None):
                 self.extra_attributes['curtype'] = curtype.tag 
 
@@ -249,7 +251,7 @@ class BankStatement(Statement):
         # AVAILBAL
         availbal = stmtrs.find('AVAILBAL')
         if availbal is not None:
-            self.ledgerbal = ledgerbal.instantiate(acctfrom=self.account)
+            self.availbal = ledgerbal.instantiate(acctfrom=self.account)
             DBSession.add(self.availbal)
 
         ballist = stmtrs.find('BALLIST')
