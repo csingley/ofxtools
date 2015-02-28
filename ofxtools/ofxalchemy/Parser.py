@@ -251,7 +251,7 @@ class BankStatement(Statement):
         # AVAILBAL
         availbal = stmtrs.find('AVAILBAL')
         if availbal is not None:
-            self.availbal = ledgerbal.instantiate(acctfrom=self.account)
+            self.availbal = availbal.instantiate(acctfrom=self.account)
             DBSession.add(self.availbal)
 
         ballist = stmtrs.find('BALLIST')
