@@ -133,6 +133,21 @@ def Inheritor(parent_table):
         def primary_keys(cls):
             return cls.pks
 
+        # Be careful about multiple inheritance.  Subclasses of INV{BUY,SELL}
+        # also use __table_args__ to define constraints checking that the
+        # dollar amounts total correctly.  This is OK because the polymorphic 
+        # inheritance scheme for INVTRAN subclasses only requires the uniqueness 
+        # constraint on the base table (i.e. INVTRAN) which holds these PKs, 
+        # so INVTRAN subclasses are free to clobber __table_args__ by inheriting 
+        # it from INV{BUY,SELL}...
+        # ...but be careful.
+        @declared_attr.cascading
+        def __table_args__(cls):
+            if has_inherited_table(cls):
+                return None
+            else:
+                return (UniqueConstraint(*cls.pks),)
+
     return InheritanceMixin
 
 
@@ -149,7 +164,20 @@ class ORIGCURRENCY(CURRENCY):
 
 
 ### ACCOUNTS
-class ACCTFROM(Inheritor('acctfrom'), Base):
+class AcctMixin(object):
+    """ """
+    # This version of __table_args__ overrides that provided by
+    # InheritanceMixin to move definition of UniqueConstraint from the base
+    # table to the child table, as required for *ACCT{FROM,TO}
+    @declared_attr.cascading
+    def __table_args__(cls):
+        if has_inherited_table(cls):
+            return (UniqueConstraint(*cls.pks),)
+        else:
+            return None
+
+
+class ACCTFROM(AcctMixin, Inheritor('acctfrom'), Base):
     """ 
     Synthetic base class of {BANK,CC,INV}ACCTFROM - not in OFX spec. 
     """
@@ -165,28 +193,23 @@ class BANKACCTFROM(ACCTFROM):
     acctkey = Column(String(length=22))
 
     pks = ['bankid', 'acctid', ]
-    __table_args__ = (UniqueConstraint(*pks),)
 
 
 class CCACCTFROM(ACCTFROM):
-    # Elements from OFX spec
     acctid = Column(String(length=22), nullable=False)
     acctkey = Column(String(length=22))
 
     pks = ['acctid', ]
-    __table_args__ = (UniqueConstraint(*pks),)
 
 
 class INVACCTFROM(ACCTFROM):
-    # Elements from OFX spec
     brokerid = Column(String(length=22), nullable=False)
     acctid = Column(String(length=22), nullable=False)
 
     pks = ['brokerid', 'acctid']
-    __table_args__ = (UniqueConstraint(*pks),)
 
 
-class ACCTTO(Inheritor('acctto'), Base):
+class ACCTTO(AcctMixin, Inheritor('acctto'), Base):
     """ 
     Synthetic base class of {BANK,CC,INV}ACCTTO - not in OFX spec. 
     """
@@ -203,7 +226,6 @@ class BANKACCTTO(ACCTTO):
     acctkey = Column(String(length=22))
 
     pks = ['bankid', 'acctid', ]
-    __table_args__ = (UniqueConstraint(*pks),)
 
 
 class CCACCTTO(ACCTTO):
@@ -212,7 +234,6 @@ class CCACCTTO(ACCTTO):
     acctkey = Column(String(length=22))
 
     pks = ['acctid', ]
-    __table_args__ = (UniqueConstraint(*pks),)
 
 
 ### BALANCES
@@ -292,7 +313,6 @@ class SECINFO(Inheritor('secinfo'), CURRENCY, Base):
     memo = Column(String(length=255))
 
     pks = ['uniqueid', 'uniqueidtype']
-    __table_args__ = (UniqueConstraint(*pks),)
    
 
 class DEBTINFO(SECINFO):
@@ -470,15 +490,6 @@ class INVTRAN(Inheritor('invtran'), Base):
 
 
     pks = ['acctfrom_id', 'fitid']
-    # Be careful about multiple inheritance.  Subclasses of INV{BUY,SELL}
-    # also use __table_args__ to define constraints checking that the
-    # dollar amounts total correctly.  This is OK because the polymorphic 
-    # inheritance scheme for INVTRAN subclasses only requires the uniqueness 
-    # constraint on the base table (i.e. INVTRAN) which holds these PKs, 
-    # so INVTRAN subclasses are free to clobber __table_args__ by inheriting 
-    # it from INV{BUY,SELL}...
-    # ...but be careful.
-    __table_args__ = (UniqueConstraint(*pks),)
 
 
 class INVBUYSELL(SECID, ORIGCURRENCY):
@@ -715,9 +726,6 @@ class INVPOS(Inheritor('invpos'), SECID, CURRENCY, Base):
     acctfrom = relationship('INVACCTFROM', backref='invposs')
     dtasof = Column(OFXDateTime)
 
-    pks = ['acctfrom_id', 'secinfo_id', 'dtasof']
-    __table_args__ = (UniqueConstraint(*pks),)
-
     # Elements from OFX spec
     heldinacct = Column(Enum(*INVSUBACCTS, name='heldinacct'), nullable=False)
     postype = Column(Enum('SHORT', 'LONG', name='postype'), nullable=False)
@@ -728,6 +736,8 @@ class INVPOS(Inheritor('invpos'), SECID, CURRENCY, Base):
     memo = Column(String(length=255))
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
   
+    pks = ['acctfrom_id', 'secinfo_id', 'dtasof']
+
 
 class POSDEBT(INVPOS):
     pass
