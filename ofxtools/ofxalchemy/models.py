@@ -470,6 +470,14 @@ class INVTRAN(Inheritor('invtran'), Base):
 
 
     pks = ['acctfrom_id', 'fitid']
+    # Be careful about multiple inheritance.  Subclasses of INV{BUY,SELL}
+    # also use __table_args__ to define constraints checking that the
+    # dollar amounts total correctly.  This is OK because the polymorphic 
+    # inheritance scheme for INVTRAN subclasses only requires the uniqueness 
+    # constraint on the base table (i.e. INVTRAN) which holds these PKs, 
+    # so INVTRAN subclasses are free to clobber __table_args__ by inheriting 
+    # it from INV{BUY,SELL}...
+    # ...but be careful.
     __table_args__ = (UniqueConstraint(*pks),)
 
 
@@ -496,6 +504,14 @@ class INVBUY(INVBUYSELL):
     dtpayroll = Column(OFXDateTime)
     prioryearcontrib = Column(OFXBoolean())
 
+    # Be careful about multiple inheritance.  Subclasses of INV{BUY,SELL}
+    # also inherit from INVTRAN, which also uses __table_args__ to define
+    # define uniqueness constraint for the natural PKs (acctfrom_id, fitid).
+    # This is OK because the polymorphic inheritance scheme for INVTRAN
+    # subclasses only requires the uniqueness constraint on the base table
+    # (i.e. INVTRAN) which holds these PKs, so INVTRAN subclasses are free
+    # to clobber __table_args__ by inheriting it from INV{BUY,SELL}...
+    # ...but be careful.
     __table_args__ = (
         CheckConstraint(
             """ 
@@ -516,6 +532,14 @@ class INVSELL(INVBUYSELL):
     statewithholding = Column(Numeric())
     penalty = Column(Numeric())
 
+    # Be careful about multiple inheritance.  Subclasses of INV{BUY,SELL}
+    # also inherit from INVTRAN, which also uses __table_args__ to define
+    # define uniqueness constraint for the natural PKs (acctfrom_id, fitid).
+    # This is OK because the polymorphic inheritance scheme for INVTRAN
+    # subclasses only requires the uniqueness constraint on the base table
+    # (i.e. INVTRAN) which holds these PKs, so INVTRAN subclasses are free
+    # to clobber __table_args__ by inheriting it from INV{BUY,SELL}...
+    # ...but be careful.
     __table_args__ = (
         CheckConstraint(
             """ 
@@ -607,6 +631,14 @@ class REINVEST(SECID, ORIGCURRENCY, INVTRAN):
     taxexempt = Column(OFXBoolean())
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
+    
+    # Be careful about multiple inheritance.  REINVEST  also inherits from 
+    # INVTRAN, which also uses __table_args__ to define uniqueness constraint
+    # for the natural PKs (acctfrom_id, fitid).   This is OK because the 
+    # polymorphic inheritance scheme for INVTRAN subclasses only requires the 
+    # uniqueness constraint on the base table (i.e. INVTRAN) 
+    # which holds these PKs, so REINVEST is free to clobber __table_args__ ...
+    # ...but be careful.
     __table_args__ = (
         CheckConstraint(
             """ 
