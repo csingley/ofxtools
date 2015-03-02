@@ -33,6 +33,7 @@ else:
 from header import OFXHeader
 from types import Bool, OneOf, DateTime 
 from utils import fixpath
+from models import ACCTTYPES
 
 
 class BankAcct(object):

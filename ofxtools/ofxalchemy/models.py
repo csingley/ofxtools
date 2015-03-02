@@ -267,7 +267,21 @@ class AVAILBAL(Balance, Base):
     balamt = Column(Numeric(), nullable=False)
 
 
-class INVBAL(Balance, Base):
+class INVBAL(Base):
+    """
+    We deviate from the OFX spec by storing the STMT.dtasof in INVBAL.dtasof
+    in order to uniquely link the balance with the statement without persisting 
+    an INVSTMT object. We make INVBAL.dtasof mandatory and use it as part of 
+    the primary key.
+    """
+    # Added for SQLAlchemy object model
+    acctfrom_id = Column(Integer, ForeignKey('invacctfrom.id'), primary_key=True)
+    acctfrom = relationship('INVACCTFROM', backref='%ss' % cls.__name__.lower())
+
+    # Extra attribute definitions not from OFX spec
+    dtasof = Column(OFXDateTime, primary_key=True)
+
+    # Elements from OFX spec
     availcash = Column(Numeric(), nullable=False)
     marginbalance = Column(Numeric(), nullable=False)
     shortbalance = Column(Numeric(), nullable=False)
