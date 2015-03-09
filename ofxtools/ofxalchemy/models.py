@@ -11,15 +11,12 @@ from sqlalchemy import (
     String,
     Text,
     ForeignKey,
-    ForeignKeyConstraint,
     )
-import sqlalchemy.types
 from sqlalchemy.schema import (
     UniqueConstraint,
     CheckConstraint,
     )
 from sqlalchemy.ext.declarative import (
-    declarative_base,
     as_declarative,
     declared_attr,
     has_inherited_table,
@@ -33,7 +30,7 @@ from sqlalchemy.orm import (
 
 # local imports
 from types import Numeric, OFXDateTime, OFXBoolean
-from ofxtools.lib import LANG_CODES, CURRENCY_CODES, COUNTRY_CODES
+from ofxtools.lib import CURRENCY_CODES, COUNTRY_CODES
 
 
 # Enums used in aggregate validation
@@ -107,16 +104,20 @@ class Base(object):
 
 
 def Inheritor(parent_table):
+    """
+    Mixin factory implementing joined-table inheritance.
+
+    Uses a surrogate primary key; the natural keys are given as a class 
+    attribute 'pks'.
+    """
     class InheritanceMixin(object):
-        """
-        Uses a surrogate primary key to implement joined-table inheritance;
-        the natural keys are given as a class attribute 'pks'
-        """
         @declared_attr.cascading
         def id(cls): 
             if has_inherited_table(cls):
-                return Column(Integer, ForeignKey('%s.id' % parent_table),
-                              primary_key=True)
+                return Column(
+                    Integer, ForeignKey('%s.id' % parent_table, 
+                                        onupdate='CASCADE', ondelete='CASCADE'),
+                    primary_key=True)
             else:
                 return Column(Integer, primary_key=True)
 
@@ -165,10 +166,16 @@ class ORIGCURRENCY(CURRENCY):
 
 ### ACCOUNTS
 class AcctMixin(object):
-    """ """
+    """
+    Declarative mixin holding object model common to all OFX <*ACCT{FROM,TO}>
+    aggregates
+    """
+    # Extra attribute definitions not from OFX spec
+    name = Column(Text)
+
     # This version of __table_args__ overrides that provided by
-    # InheritanceMixin to move definition of UniqueConstraint from the base
-    # table to the child table, as required for *ACCT{FROM,TO}
+    # Inheritor.InheritanceMixin to move definition of UniqueConstraint from 
+    # the base table to the child table, as required for *ACCT{FROM,TO}
     @declared_attr.cascading
     def __table_args__(cls):
         if has_inherited_table(cls):
@@ -177,15 +184,8 @@ class AcctMixin(object):
             return None
 
 
-class ACCTFROM(AcctMixin, Inheritor('acctfrom'), Base):
-    """ 
-    Synthetic base class of {BANK,CC,INV}ACCTFROM - not in OFX spec. 
-    """
-    # Extra attribute definitions not from OFX spec
-    name = Column(Text)
-
-
-class BANKACCTFROM(ACCTFROM):
+class BankAcctMixin(object):
+    """ Declarative mixin representing OFX <BANKACCT{FROM,TO}> aggregate """
     bankid = Column(String(length=9), nullable=False)
     branchid = Column(String(length=22))
     acctid = Column(String(length=22), nullable=False)
@@ -195,11 +195,27 @@ class BANKACCTFROM(ACCTFROM):
     pks = ['bankid', 'acctid', ]
 
 
-class CCACCTFROM(ACCTFROM):
+class CcAcctMixin(object):
+    """ Declarative mixin representing OFX <CCACCT{FROM,TO}> aggregate """
     acctid = Column(String(length=22), nullable=False)
     acctkey = Column(String(length=22))
 
     pks = ['acctid', ]
+
+
+class ACCTFROM(AcctMixin, Inheritor('acctfrom'), Base):
+    """ 
+    Synthetic base class of {BANK,CC,INV}ACCTFROM - not in OFX spec. 
+    """
+    pass
+
+
+class BANKACCTFROM(BankAcctMixin, ACCTFROM):
+    pass
+
+
+class CCACCTFROM(CcAcctMixin, ACCTFROM):
+    pass
 
 
 class INVACCTFROM(ACCTFROM):
@@ -217,29 +233,18 @@ class ACCTTO(AcctMixin, Inheritor('acctto'), Base):
     name = Column(Text)
 
 
-class BANKACCTTO(ACCTTO):
-    # Elements from OFX spec
-    bankid = Column(String(length=9), nullable=False)
-    branchid = Column(String(length=22))
-    acctid = Column(String(length=9), nullable=False)
-    accttype = Column(Enum(*ACCTTYPES, name='accttype'), nullable=False)
-    acctkey = Column(String(length=22))
-
-    pks = ['bankid', 'acctid', ]
+class BANKACCTTO(BankAcctMixin, ACCTTO):
+    pass
 
 
-class CCACCTTO(ACCTTO):
-    # Elements from OFX spec
-    acctid = Column(String(length=22), nullable=False, unique=True)
-    acctkey = Column(String(length=22))
-
-    pks = ['acctid', ]
+class CCACCTTO(CcAcctMixin, ACCTTO):
+    pass
 
 
 ### BALANCES
 class Balance(object):
     """
-    Declarative mixin holding object model common to OFX *BAL aggregates.
+    Declarative mixin holding object model common to OFX <*BAL> aggregates.
 
     We deviate from the OFX spec by storing the STMT.dtasof in *BAL.dtasof
     in order to uniquely link the balance with the statement without 
@@ -248,11 +253,19 @@ class Balance(object):
     """
     @declared_attr
     def acctfrom_id(cls):
-        return Column(Integer, ForeignKey('acctfrom.id'), primary_key=True)
+        return Column(
+            Integer, ForeignKey('acctfrom.id', 
+                                onupdate='CASCADE', ondelete='CASCADE'), 
+            primary_key=True)
 
     @declared_attr
     def acctfrom(cls):
-        return relationship('ACCTFROM', backref='%ss' % cls.__name__.lower())
+        return relationship(
+            'ACCTFROM', backref=backref('%ss' % cls.__name__.lower(),
+                                        cascade='all, delete-orphan',
+                                        passive_deletes=True,
+                                       )
+        )
 
     @declared_attr
     def dtasof(cls):
@@ -275,8 +288,16 @@ class INVBAL(Base):
     the primary key.
     """
     # Added for SQLAlchemy object model
-    acctfrom_id = Column(Integer, ForeignKey('invacctfrom.id'), primary_key=True)
-    acctfrom = relationship('INVACCTFROM', backref='%ss' % cls.__name__.lower())
+    acctfrom_id = Column(
+        Integer, ForeignKey('invacctfrom.id', 
+                            onupdate='CASCADE', ondelete='CASCADE'),
+        primary_key=True)
+    acctfrom = relationship(
+        'INVACCTFROM', backref=backref('invbals', 
+                                       cascade='all, delete-orphan',
+                                       passive_deletes=True,
+                                      )
+    )
 
     # Extra attribute definitions not from OFX spec
     dtasof = Column(OFXDateTime, primary_key=True)
@@ -300,14 +321,17 @@ class BAL(Balance, CURRENCY, Base):
 class SECID(object):
     """
     Mixin to hold logic for securities-related investment transactions (INVTRAN)
-    and also OPTINFO
+    and also INVPOS and OPTINFO
     """
     @declared_attr
     def secinfo_id(cls):
-        return Column(Integer, ForeignKey('secinfo.id'))
+        return Column(
+            Integer, ForeignKey('secinfo.id', 
+                                onupdate='CASCADE', ondelete='CASCADE'))
 
     @declared_attr
     def secinfo(cls):
+        # @@FIXME backrefs don't work b/c used by INVTRAN/INVPOS/OPTINFO
         return relationship('SECINFO')
 
 
@@ -360,8 +384,16 @@ class MFINFO(SECINFO):
 
 class PORTION(Base):
     # Added for SQLAlchemy object model
-    mfinfo_id = Column(Integer, ForeignKey('mfinfo.id'), primary_key=True)
-    mfinfo = relationship('MFINFO', backref='mfassetclasses')
+    mfinfo_id = Column(
+        Integer, ForeignKey('mfinfo.id', 
+                            onupdate='CASCADE', ondelete='CASCADE'),
+        primary_key=True)
+    mfinfo = relationship(
+        'MFINFO', backref=backref('mfassetclasses', 
+                                  cascade='all, delete-orphan',
+                                  passive_deletes=True,
+                                 )
+    )
 
     # Elements from OFX spec
     assetclass = Column(
@@ -372,8 +404,16 @@ class PORTION(Base):
 
 class FIPORTION(Base):
     # Added for SQLAlchemy object model
-    mfinfo_id = Column(Integer, ForeignKey('mfinfo.id'), primary_key=True)
-    mfinfo = relationship('MFINFO', backref='fimfassetclasses')
+    mfinfo_id = Column(
+        Integer, ForeignKey('mfinfo.id',
+                            onupdate='CASCADE', ondelete='CASCADE'),
+        primary_key=True)
+    mfinfo = relationship(
+        'MFINFO', backref=backref('fimfassetclasses', 
+                                  cascade='all, delete-orphan',
+                                  passive_deletes=True,
+                                 )
+    )
 
     # Elements from OFX spec
     fiassetclass = Column(
@@ -431,19 +471,15 @@ class BANKTRAN(ORIGCURRENCY):
     # Added for SQLAlchemy object model
     @declared_attr
     def acctto_id(cls):
-        return Column(Integer, ForeignKey('acctto.id'))
-
-    @declared_attr
-    def acctto(cls):
-        return relationship('ACCTTO')
+        return Column(
+            Integer, ForeignKey('acctto.id', 
+                                onupdate='CASCADE', ondelete='CASCADE'))
 
     @declared_attr
     def payee_name(cls):
-        return Column(String(32), ForeignKey('payee.name'))
-
-    @declared_attr
-    def payee(cls):
-        return relationship('PAYEE')
+        return Column(
+            String(32), ForeignKey('payee.name', 
+                                   onupdate='CASCADE', ondelete='CASCADE'))
 
     # Elements from OFX spec
     fitid = Column(String(length=255), primary_key=True)
@@ -469,14 +505,70 @@ class BANKTRAN(ORIGCURRENCY):
 
 class STMTTRN(BANKTRAN, Base):
      # Added for SQLAlchemy object model
-    acctfrom_id = Column(Integer, ForeignKey('acctfrom.id'), primary_key=True)
-    acctfrom = relationship('ACCTFROM', foreign_keys=[acctfrom_id,], backref='stmttrns')
+    acctfrom_id = Column(
+        Integer, ForeignKey('acctfrom.id', 
+                            onupdate='CASCADE', ondelete='CASCADE'),
+        primary_key=True)
+
+    acctfrom = relationship(
+        # @@FIXME - do we need foreign_keys here??
+        #'ACCTFROM', foreign_keys=[acctfrom_id,], 
+        'ACCTFROM', backref=backref('stmttrns', 
+                                    cascade='all, delete-orphan',
+                                    passive_deletes=True,
+                                   )
+    )
+
+    @declared_attr
+    def acctto(cls):
+        return relationship(
+            'ACCTTO', backref=backref('stmttrns', 
+                                      cascade='all, delete-orphan',
+                                      passive_deletes=True,
+                                     )
+        )
+
+    @declared_attr
+    def payee(cls):
+        return relationship(
+            'PAYEE', backref=backref('stmttrns', 
+                                     cascade='all, delete-orphan',
+                                     passive_deletes=True,
+                                    )
+        )
+
 
 
 class INVBANKTRAN(BANKTRAN, Base):
     # Added for SQLAlchemy object model
-    acctfrom_id = Column(Integer, ForeignKey('invacctfrom.id'), primary_key=True)
-    acctfrom = relationship('INVACCTFROM')
+    acctfrom_id = Column(
+        Integer, ForeignKey('invacctfrom.id', 
+                            onupdate='CASCADE', ondelete='CASCADE'),
+        primary_key=True)
+    acctfrom = relationship(
+        'INVACCTFROM', backref=backref('invbanktrans', 
+                                       cascade='all, delete-orphan',
+                                       passive_deletes=True,
+                                      )
+        )
+
+    @declared_attr
+    def acctto(cls):
+        return relationship(
+            'ACCTTO', backref=backref('invbanktrans', 
+                                      cascade='all, delete-orphan',
+                                      passive_deletes=True,
+                                     )
+        )
+
+    @declared_attr
+    def payee(cls):
+        return relationship(
+            'PAYEE', backref=backref('invbanktrans', 
+                                     cascade='all, delete-orphan',
+                                     passive_deletes=True,
+                                    )
+        )
 
     # Elements from OFX spec
     subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'), nullable=False)
@@ -486,13 +578,18 @@ class INVTRAN(Inheritor('invtran'), Base):
     # Added for SQLAlchemy object model
     @declared_attr
     def acctfrom_id(cls):
-        return Column(Integer, ForeignKey('invacctfrom.id'))
+        return Column(
+            Integer, ForeignKey('invacctfrom.id',
+                                onupdate='CASCADE', ondelete='CASCADE'))
     
     @declared_attr
     def acctfrom(cls):
-        return relationship('INVACCTFROM', backref='invtrans')
-
-    subclass = Column(String(length=32), nullable=False)
+        return relationship(
+        'INVACCTFROM', backref=backref('invtrans', 
+                                       cascade='all, delete-orphan',
+                                       passive_deletes=True,
+                                      )
+        )
 
     # Elements from OFX spec
     fitid = Column(String(length=255))
@@ -501,7 +598,6 @@ class INVTRAN(Inheritor('invtran'), Base):
     dtsettle = Column(OFXDateTime)
     reversalfitid = Column(String(length=255))
     memo = Column(String(length=255))
-
 
     pks = ['acctfrom_id', 'fitid']
 
@@ -736,8 +832,15 @@ class TRANSFER(SECID, INVTRAN):
 ### POSITIONS
 class INVPOS(Inheritor('invpos'), SECID, CURRENCY, Base):
     # Added for SQLAlchemy object model
-    acctfrom_id = Column(Integer, ForeignKey('invacctfrom.id'))
-    acctfrom = relationship('INVACCTFROM', backref='invposs')
+    acctfrom_id = Column(
+        Integer, ForeignKey('invacctfrom.id',
+                            onupdate='CASCADE', ondelete='CASCADE'))
+    acctfrom = relationship(
+        'INVACCTFROM', backref=backref('invposs', 
+                                       cascade='all, delete-orphan',
+                                       passive_deletes=True,
+                                      )
+    )
     dtasof = Column(OFXDateTime)
 
     # Elements from OFX spec

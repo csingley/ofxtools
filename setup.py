@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages
-from distutils.core import setup
 
 # Get the long description from the relevant file
 with open('README', 'r') as f:
