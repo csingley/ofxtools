@@ -206,6 +206,15 @@ class CcAcctMixin(object):
 class ACCTFROM(AcctMixin, Inheritor('acctfrom'), Base):
     """ 
     Synthetic base class of {BANK,CC,INV}ACCTFROM - not in OFX spec. 
+
+    We need a parent DB table mostly for the benefit of <BAL> which can be 
+    related to either <BANKACCTFROM>/<CCACCTFROM> or <INVACCTFROM>.
+
+    @@TODO - it would be nice to define a child table of ACCTFROM that's the
+    parent for {BANK,CC}ACCTFROM but not INVACCTFROM, to ensure that *ACCTFROM
+    foreign key references inserted into STMTTRN, LEDGERBAL, etc. cannot
+    refer to INVACCTFROM.  However, that will require some reworking of
+    AcctMixin and InheritanceMixin.
     """
     pass
 
@@ -229,8 +238,7 @@ class ACCTTO(AcctMixin, Inheritor('acctto'), Base):
     """ 
     Synthetic base class of {BANK,CC,INV}ACCTTO - not in OFX spec. 
     """
-    # Extra attribute definitions not from OFX spec
-    name = Column(Text)
+    pass
 
 
 class BANKACCTTO(BankAcctMixin, ACCTTO):
@@ -511,8 +519,6 @@ class STMTTRN(BANKTRAN, Base):
         primary_key=True)
 
     acctfrom = relationship(
-        # @@FIXME - do we need foreign_keys here??
-        #'ACCTFROM', foreign_keys=[acctfrom_id,], 
         'ACCTFROM', backref=backref('stmttrns', 
                                     cascade='all, delete-orphan',
                                     passive_deletes=True,

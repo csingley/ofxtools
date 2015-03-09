@@ -1,18 +1,20 @@
 from setuptools import setup, find_packages
+import os.path
 
 # Get the long description from the relevant file
-with open('README', 'r') as f:
+__here__ = os.path.dirname(os.path.realpath(__file__))
+with open(os.path.join(__here__, 'README'), 'r') as f:
     long_description = f.read()
     
 setup(
     name = 'ofxtools',
-    version = '0.3.7.1',
+    version = '0.3.7.2',
     description = ('Library for working with Open Financial Exchange (OFX) '
                  'formatted data used by financial institutions'),
     long_description = long_description,
 
     url = 'https://github.com/csingley/ofxtools',
-    download_url = 'https://github.com/csingley/ofxtools/tarball/0.3.7.1',
+    download_url = 'https://github.com/csingley/ofxtools/tarball/0.3.7.2',
 
     author = 'Christopher Singley',
     author_email = 'csingley@gmail.com',
