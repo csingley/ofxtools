@@ -97,7 +97,7 @@ class BankAcct(object):
 
 class CcAcct(BankAcct):
     """ """
-    acctkeys = ('ACCTID')
+    acctkeys = ('ACCTID',)
     acctfrom_tag = 'CCACCTFROM'
     stmtrq_tag = 'CCSTMTRQ'
     msgsrq_tag = 'CREDITCARDMSGSRQV1'
