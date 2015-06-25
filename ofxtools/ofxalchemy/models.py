@@ -11,7 +11,9 @@ from sqlalchemy import (
     String,
     Text,
     ForeignKey,
+    event,
     )
+from sqlalchemy.engine import Engine
 from sqlalchemy.schema import (
     UniqueConstraint,
     CheckConstraint,
@@ -45,11 +47,18 @@ ASSETCLASSES = ('DOMESTICBOND', 'INTLBOND', 'LARGESTOCK', 'SMALLSTOCK',
                 'INTLSTOCK', 'MONEYMRKT', 'OTHER')
 
 
-# DB setup
+### DB SETUP
 DBSession = scoped_session(sessionmaker())
 
+# Configure SQLite to support foreign key constraints
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
 
-# Object classes
+
+### OBJECT CLASSES
 @as_declarative()
 class Base(object):
     """
@@ -69,27 +78,28 @@ class Base(object):
     def primary_keys(cls):
         return [c.name for c in cls.__table__.c if c.primary_key]
 
+    @staticmethod
+    def _bindattr(key, attrs):
+        """ 
+        Look up the given primary key's value in the given dict of attributes
+        """
+        k = key
+        try: 
+            v = attrs[k]
+        except KeyError:
+            # Allow relationship, not just FK id integer
+            if k.endswith('_id'):
+                k = k[:-3]
+                v = attrs[k]
+            else:
+                raise
+        return k, v
+
     @classmethod
     def _fingerprint(cls, **attrs):
         """ Extract an instance's primary key dict from a dict of attributes """
-        def bindkey(key):
-            """ 
-            Look up a primary key's value in the given dict of attributes
-            """
-            k = key
-            try: 
-                v = attrs[k]
-            except KeyError:
-                # Allow relationship, not just FK id integer
-                if k.endswith('_id'):
-                    k = k[:-3]
-                    v = attrs[k]
-                else:
-                    raise
-            return k, v
-
         try:
-            return dict([bindkey(pk) for pk in cls.primary_keys()])
+            return dict([cls._bindattr(pk, attrs) for pk in cls.primary_keys()])
         except KeyError:
             msg = "%s: Required attributes %s not satisfied by arguments %s" % (
                 cls.__name__, cls.primary_keys(), attrs)
