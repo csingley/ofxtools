@@ -19,10 +19,6 @@ class OFXResponse(object):
     After conversion, each of these convenience attributes holds instances
     of various Aggregate subclasses.
     """
-    sonrs = None
-    statements = []
-    securities = []
-
     def __init__(self, tree, strict=True):
         """ 
         Initialize with ofx.ElementTree instance containing parsed OFX.
@@ -39,7 +35,8 @@ class OFXResponse(object):
 
         # TRNRS - transaction response, which is the main section
         # containing account statements
-        #
+        self.statements = []
+
         # N.B. This iteration method doesn't preserve the original
         # ordering of the statements within the OFX response
         for stmtClass in (BankStatement, CreditCardStatement, InvestmentStatement):
@@ -56,6 +53,7 @@ class OFXResponse(object):
 
         # SECLIST - list of description of securities referenced by
         # INVSTMT (investment account statement)
+        self.securities = []
         seclist = self.tree.find('SECLISTMSGSRSV1/SECLIST')
         if seclist is None:
             return
@@ -75,17 +73,6 @@ class OFXResponse(object):
 ### STATEMENTS
 class Statement(object):
     """ Base class for Python representation of OFX *STMT aggregate """
-    # From TRNRS wrapper
-    uid = None
-    status = None
-    cookie = None
-
-    currency = None
-    account = None
-
-    transactions = []
-    other_balances =[] 
-
     def __init__(self, stmtrs):
         """ Initialize with *STMTRS Element """
         self.currency = stmtrs.find('CURDEF').text
@@ -103,6 +90,8 @@ class Statement(object):
         cltcookie = trnrs.find('CLTCOOKIE')
         if cltcookie is not None:
             self.cookie = types.String(36).convert(cltcookie.text)
+        else:
+            self.cookie = None
 
     def __repr__(self):
         # Define in subclass
@@ -111,9 +100,6 @@ class Statement(object):
 
 class BankStatement(Statement):
     """ Python representation of OFX STMT (bank statement) aggregate """
-    ledgerbal = None
-    availbal = None
-
     _tagName = 'STMT'
     _acctTag = 'BANKACCTFROM'
 
@@ -122,6 +108,8 @@ class BankStatement(Statement):
         tranlist = stmtrs.find('BANKTRANLIST')
         if tranlist is not None:
             self.transactions = BANKTRANLIST(tranlist)
+        else:
+            self.transactions = []
 
         # LEDGERBAL - mandatory
         self.ledgerbal = Aggregate.from_etree(stmtrs.find('LEDGERBAL'))
@@ -130,11 +118,15 @@ class BankStatement(Statement):
         availbal = stmtrs.find('AVAILBAL')
         if availbal is not None:
             self.availbal = Aggregate.from_etree(availbal)
+        else:
+            self.availbal = None
 
         # BALLIST
         ballist = stmtrs.find('BALLIST')
         if ballist:
             self.other_balances = [Aggregate.from_etree(bal) for bal in ballist]
+        else:
+            self.other_balances = [] 
 
         # Unsupported subaggregates
         for tag in ('MKTGINFO', ):
@@ -168,11 +160,6 @@ class InvestmentStatement(Statement):
     Python representation of OFX InvestmentStatement (investment account statement) 
     aggregate 
     """
-    datetime = None
-
-    positions = []
-    balances = []
-
     _tagName = 'INVSTMT'
     _acctTag = 'INVACCTFROM'
 
@@ -184,11 +171,15 @@ class InvestmentStatement(Statement):
         tranlist = invstmtrs.find('INVTRANLIST')
         if tranlist is not None:
             self.transactions = INVTRANLIST(tranlist)
+        else:
+            self.transactions = []
 
         # INVPOSLIST
         poslist = invstmtrs.find('INVPOSLIST')
         if poslist is not None:
             self.positions = [Aggregate.from_etree(pos) for pos in poslist]
+        else:
+            self.positions = []
 
         # INVBAL
         invbal = invstmtrs.find('INVBAL')
@@ -198,8 +189,13 @@ class InvestmentStatement(Statement):
             if ballist is not None:
                 invbal.remove(ballist)
                 self.other_balances = [Aggregate.from_etree(bal) for bal in ballist]
+            else:
+                self.other_balances = []
             # Now we can flatten the rest of INVBAL
             self.balances = Aggregate.from_etree(invbal)
+        else:
+            self.balances = []
+            self.other_balances = []
 
         # Unsupported subaggregates
         for tag in ('INVOOLIST', 'INV401K', 'INV401KBAL', 'MKTGINFO'):

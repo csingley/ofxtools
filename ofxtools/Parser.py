@@ -10,7 +10,6 @@ import re
 
 # local imports
 from header import OFXHeader
-import models
 from Response import OFXResponse
 
 
