@@ -2,8 +2,6 @@
 """ Extended SQLAlchemy column types """
 
 # stdlib imports
-import re
-import datetime
 import decimal
 
 # 3rd party imports
@@ -11,6 +9,7 @@ import sqlalchemy
 
 # local imports
 import ofxtools.types
+
 
 class Numeric(sqlalchemy.types.TypeDecorator):
     """

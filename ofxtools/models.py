@@ -7,7 +7,7 @@ balances, and securities.
 # local imports
 from ofxtools.types import (Element, Bool, String, OneOf, Integer, Decimal,
                             DateTime)
-from lib import LANG_CODES, CURRENCY_CODES, COUNTRY_CODES
+from ofxtools.lib import LANG_CODES, CURRENCY_CODES, COUNTRY_CODES
 
 
 # Enums used in aggregate validation

@@ -9,8 +9,8 @@ import re
 
 
 # local imports
-from header import OFXHeader
-from Response import OFXResponse
+from ofxtools.header import OFXHeader
+from ofxtools.Response import OFXResponse
 
 
 class ParseError(SyntaxError):

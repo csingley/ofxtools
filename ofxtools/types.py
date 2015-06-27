@@ -175,17 +175,14 @@ class DateTime(Element):
 
     @classmethod
     def unconvert(cls, value):
-        """ Input datetime.datetime in local time; output str in GMT. """
-        # Pristine copy of input for error reporting purposes
-        orig_value = value
+        """ 
+        Input datetime.date or datetime.datetime in local time; output str in GMT.
+        """
+        if not hasattr(value, 'timetuple'):
+            raise ValueError("'%s' isn't a datetime; can't convert to GMT" % value)
 
-        try:
-            # Transform to GMT
-            value = time.gmtime(time.mktime(value.timetuple()))
-            # timetuples don't have usec precision
-            #value = time.strftime('%s[0:GMT]' % cls.formats[14], value)
-            value = time.strftime(cls.formats[14], value)
-        except:
-            raise # FIXME
-        return value
+        # Transform to GMT
+        gmt_value = time.gmtime(time.mktime(value.timetuple()))
+        # timetuples don't have usec precision
+        return time.strftime(cls.formats[14], gmt_value)
 

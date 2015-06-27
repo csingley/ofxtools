@@ -30,10 +30,10 @@ else:
 
 
 # local imports
-from header import OFXHeader
-from types import Bool, OneOf, DateTime 
-from utils import fixpath
-from models import ACCTTYPES
+from ofxtools.header import OFXHeader
+from ofxtools.types import Bool, OneOf, DateTime 
+from ofxtools.utils import fixpath
+from ofxtools.models import ACCTTYPES
 
 
 class BankAcct(object):
@@ -275,28 +275,29 @@ class OFXClient:
 
 
 ### CLI COMMANDS
-def do_config(args):
-    # FIXME
-    server = args.server
-    if server not in config.fi_index:
-        raise ValueError("Unknown FI '%s' not in %s"
-                        % (server, str(config.fi_index)))
-    print(str(dict(config.items(server))))
+#def do_config(args):
+    ## FIXME
+    #server = args.server
+    #if server not in config.fi_index:
+        #raise ValueError("Unknown FI '%s' not in %s"
+                        #% (server, str(config.fi_index)))
+    #print(str(dict(config.items(server))))
 
-def do_profile(args):
-    client = OFXClient(args.url, args.org, args.fid, version=args.version, 
-                       appid=args.appid, appver=args.appver)
+#def do_profile(args):
+    #client = OFXClient(args.url, args.org, args.fid, version=args.version, 
+                       #appid=args.appid, appver=args.appver)
 
-    # Always use dummy password - initial profile request
-    password = 'T0PS3CR3T'
-    request = client.profile_request(args.user, password)
+    ## Always use dummy password - initial profile request
+    #password = 'T0PS3CR3T'
+    #request = client.profile_request(args.user, password)
 
-    # Handle request
-    if args.dry_run:
-        print(client.ofxheader + ET.tostring(request).decode())
-    else:
-        response = client.download(request)
-        print(response.read())
+    ## Handle request
+    #if args.dry_run:
+        #print(client.ofxheader + ET.tostring(request).decode())
+    #else:
+        #response = client.download(request)
+        #print(response.read())
+
 
 def do_stmt(args):
     client = OFXClient(args.url, args.org, args.fid, version=args.version,
@@ -305,7 +306,6 @@ def do_stmt(args):
     # Define accounts
     accts = []
     for accttype in ('checking', 'savings', 'moneymrkt', 'creditline'):
-        #print(accts)
         for acctid in getattr(args, accttype):
             a = BankAcct(args.bankid, acctid, accttype)
             accts.append(a)
@@ -338,6 +338,7 @@ def do_stmt(args):
         response = client.download(request)
         print(response.read())
 
+
 class OFXConfigParser(SafeConfigParser):
     """ """
     fi_config = path.join(path.dirname(__file__), 'config', 'fi.cfg')
@@ -366,17 +367,13 @@ def main():
 
     from argparse import ArgumentParser
 
-    #usage = "usage: %(prog)s [options] institution"
-    #argparser = ArgumentParser(usage=usage)
     argparser = ArgumentParser(description='Download OFX financial data',
                                 epilog='FIs configured: %s' % config.fi_index)
     argparser.add_argument('server', help='OFX server - URL or FI name from config')
-    #argparser.add_argument('action', nargs='?', choices=('stmt', 'profile', 'config'),
-                          #default='stmt', help='OFX statement|OFX profile|Configured settings')
     argparser.add_argument('-n', '--dry-run', action='store_true', 
                            default=False, help='display OFX request and exit')
 
-    signon_group = argparser.add_argument_group(title='signon options')
+    signon_group = argparser.add_argument_group(title='Signon Options')
     signon_group.add_argument('-u', '--user', help='FI login username')
     signon_group.add_argument('--org', help='FI.ORG')
     signon_group.add_argument('--fid', help='FI.FID')
@@ -384,22 +381,7 @@ def main():
     signon_group.add_argument('--appid', help='OFX client app identifier')
     signon_group.add_argument('--appver', help='OFX client app version')
 
-    subparsers = argparser.add_subparsers(title='subcommands',
-                                          description='FOOBAR',
-                                          # Would be nice to add this:
-                                          # http://bugs.python.org/issue9253
-                                          #default='stmt',
-                                          help='help help help')
-    subparser_config = subparsers.add_parser('config', help='Display FI configurations and exit')
-    subparser_config.set_defaults(func=do_config)
-
-    subparser_profile = subparsers.add_parser('profile', help='helpity help')
-    subparser_profile.set_defaults(func=do_profile)
-
-    subparser_stmt = subparsers.add_parser('stmt', help='helpity help')
-    subparser_stmt.set_defaults(func=do_stmt)
-
-    acct_group = subparser_stmt.add_argument_group(title='account options')
+    acct_group = argparser.add_argument_group(title='Account Options')
     acct_group.add_argument('--bankid', help='ABA routing#')
     acct_group.add_argument('--brokerid', help='Broker ID string')
     acct_group.add_argument('-C', '--checking', metavar='acct#', action='append', default=[])
@@ -409,16 +391,22 @@ def main():
     acct_group.add_argument('-c', '--creditcard', '--cc', metavar='acct#', action='append', default=[])
     acct_group.add_argument('-i', '--investment', metavar='acct#', action='append', default=[])
 
-    stmt_group = subparser_stmt.add_argument_group(title='statement options')
-    stmt_group.add_argument('-s', '--start', dest='dtstart', help='Start date/time for transactions')
-    stmt_group.add_argument('-e', '--end', dest='dtend', help='End date/time for transactions')
+    stmt_group = argparser.add_argument_group(title='Statement Options')
+    stmt_group.add_argument('-s', '--start', dest='dtstart', 
+                            help='(YYYYmmdd) Transactions list start date')
+    stmt_group.add_argument('-e', '--end', dest='dtend', 
+                            help='(YYYYmmdd) Transactions list end date')
+    stmt_group.add_argument('-d', '--date', dest='dtasof', 
+                            help='(YYYYmmdd) As-of date for investment positions')
     stmt_group.add_argument('--no-transactions', dest='inctran',
-                            action='store_false', default=True)
-    stmt_group.add_argument('-d', '--date', dest='dtasof', help='As-of date for investment positions')
+                            action='store_false', default=True,
+                           help='Omit transactions list')
     stmt_group.add_argument('--no-positions', dest='incpos',
-                            action='store_false', default=True)
+                            action='store_false', default=True,
+                           help='Omit investment positions')
     stmt_group.add_argument('--no-balances', dest='incbal',
-                            action='store_false', default=True)
+                            action='store_false', default=True,
+                           help='Omit balances')
 
     args = argparser.parse_args()
 
@@ -446,8 +434,8 @@ def main():
             else:
                 setattr(args, cfg, value)
 
-    # Execute subparser callback, passing merged argparse/configparser args
-    args.func(args)
+    # Pass the parsed args to the statement-request function
+    do_stmt(args)
 
 
 if __name__ == '__main__':
