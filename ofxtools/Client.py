@@ -241,7 +241,7 @@ class OFXClient:
         """ """
         mimetype = 'application/x-ofx'
         HTTPheaders = {'Content-type': mimetype, 'Accept': '*/*, %s' % mimetype}
-        # py3k - ElementTree.tostring() returns bytes not str
+        # py3k: ElementTree.tostring() returns bytes not str
         request = self.ofxheader + ET.tostring(request).decode()
         # py3k: urllib.request wants bytes not str
         request = Request(self.url, request.encode(), HTTPheaders)
@@ -275,30 +275,6 @@ class OFXClient:
 
 
 ### CLI COMMANDS
-#def do_config(args):
-    ## FIXME
-    #server = args.server
-    #if server not in config.fi_index:
-        #raise ValueError("Unknown FI '%s' not in %s"
-                        #% (server, str(config.fi_index)))
-    #print(str(dict(config.items(server))))
-
-#def do_profile(args):
-    #client = OFXClient(args.url, args.org, args.fid, version=args.version, 
-                       #appid=args.appid, appver=args.appver)
-
-    ## Always use dummy password - initial profile request
-    #password = 'T0PS3CR3T'
-    #request = client.profile_request(args.user, password)
-
-    ## Handle request
-    #if args.dry_run:
-        #print(client.ofxheader + ET.tostring(request).decode())
-    #else:
-        #response = client.download(request)
-        #print(response.read())
-
-
 def do_stmt(args):
     client = OFXClient(args.url, args.org, args.fid, version=args.version,
                        appid=args.appid, appver=args.appver)
