@@ -10,8 +10,8 @@ from sqlalchemy.orm.exc import NoResultFound
 
 # local imports
 import ofxtools
-from ofxtools import models
-from ofxtools.models import DBSession
+from ofxtools.ofxalchemy import models
+from ofxtools.ofxalchemy.models import DBSession
 
 
 class Element(ofxtools.Parser.Element):

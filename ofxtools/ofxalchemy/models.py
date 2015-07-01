@@ -31,7 +31,7 @@ from sqlalchemy.orm import (
     )
 
 # local imports
-from ofxtools.types import Numeric, OFXDateTime, OFXBoolean
+from ofxtools.ofxalchemy.types import Numeric, OFXDateTime, OFXBoolean
 from ofxtools.lib import CURRENCY_CODES, COUNTRY_CODES
 
 
@@ -652,8 +652,8 @@ class INVBUY(INVBUYSELL):
     __table_args__ = (
         CheckConstraint(
             """ 
-            total = units * (unitprice + markup) 
-                    + (commission + fees + load + taxes)
+            total = -1 * units * (unitprice + markup) 
+                    - (commission + fees + load + taxes)
             """
         ),
     ) 
@@ -680,7 +680,7 @@ class INVSELL(INVBUYSELL):
     __table_args__ = (
         CheckConstraint(
             """ 
-            total = units * (unitprice - markdown) 
+            total = -1 * units * (unitprice - markdown) 
                     - (commission + fees + load + taxes + penalty 
                         + withholding + statewithholding)
             """
