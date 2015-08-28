@@ -15,4 +15,4 @@ if __name__ == "__main__":
     for f in args.files:
         print("Parsing %s" % f)
         parser.parse(f) 
-        parser.convert(strict=False)
+        parser.convert()

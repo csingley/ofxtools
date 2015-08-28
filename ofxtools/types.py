@@ -119,15 +119,23 @@ class Decimal(Element):
         if args:
             precision = args[0]
             args = args[1:]
-        self.precision = precision
+        self.precision = decimal.Decimal('0.' + '0'*(precision-1) + '1')
         super(Decimal, self)._init(*args, **kwargs)
 
     def convert(self, value, strict=True):
         if value is None and not self.required:
             return None
-        value = decimal.Decimal(value)
-        precision = decimal.Decimal('0.' + '0'*(self.precision-1) + '1')
-        value.quantize(precision)
+
+        # Handle Euro-style decimal separators (comma)
+        try:
+            value = decimal.Decimal(value)
+        except decimal.InvalidOperation:
+            if isinstance(value, basestring):
+                value = decimal.Decimal(value.replace(',', '.'))
+            else:
+                raise
+
+        value.quantize(self.precision)
         return value
 
 

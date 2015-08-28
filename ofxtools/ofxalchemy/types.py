@@ -31,7 +31,16 @@ class Numeric(sqlalchemy.types.TypeDecorator):
             else:
                 return ''
         elif value:
-            return decimal.Decimal(value)
+            # Handle Euro-style decimal separators (comma)
+            try:
+                value = decimal.Decimal(value)
+            except decimal.InvalidOperation:
+                if isinstance(value, basestring):
+                    value = decimal.Decimal(value.replace(',', '.'))
+                else:
+                    raise
+
+            return value
 
     def process_result_value(self, value, dialect):
         if value == 0:
