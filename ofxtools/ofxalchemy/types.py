@@ -11,25 +11,15 @@ import sqlalchemy
 import ofxtools.types
 
 
-class Numeric(sqlalchemy.types.TypeDecorator):
-    """
-    Stores Decimal as String on sqlite, which doesn't have a NUMERIC type
-    and by default stores Decimal as float, leading to rounding errors
+class OFXNumeric(sqlalchemy.types.TypeDecorator):
+    """ 
+    Handles Euro-style decimal separators (comma) inbound to the DB
     """
     impl = sqlalchemy.types.Numeric
 
-    def load_dialect_impl(self, dialect):
-        if dialect.name == 'sqlite':
-            return dialect.type_descriptor(sqlalchemy.types.CHAR(32))
-        else:
-            return dialect.type_descriptor(sqlalchemy.types.Numeric)
-
     def process_bind_param(self, value, dialect):
-        if dialect.name == 'sqlite':
-            if value:
-                return str(value)
-            else:
-                return ''
+        if value == 0:
+            return decimal.Decimal('0')
         elif value:
             # Handle Euro-style decimal separators (comma)
             try:
@@ -39,29 +29,23 @@ class Numeric(sqlalchemy.types.TypeDecorator):
                     value = decimal.Decimal(value.replace(',', '.'))
                 else:
                     raise
-
             return value
-
-    def process_result_value(self, value, dialect):
-        if value == 0:
-            return decimal.Decimal('0')
-        elif value:
-            return decimal.Decimal(value)
 
 
 class OFXDateTime(sqlalchemy.types.TypeDecorator):
-    """ """
+    """ 
+    Handles datetimes inbound to the DB in formats given by OFX spec
+    """
     impl = sqlalchemy.types.DateTime
 
     def process_bind_param(self, value, dialect):
         return ofxtools.types.DateTime.convert(value)
 
-    def process_result_param(self, value, dialect):
-        pass
-
 
 class OFXBoolean(sqlalchemy.types.TypeDecorator):
-    """ """
+    """ 
+    Handles bools inbound to the DB in format given by OFX spec
+    """
     impl = sqlalchemy.types.Boolean
     mapping = {'Y': True, 'N': False}
     
@@ -70,5 +54,3 @@ class OFXBoolean(sqlalchemy.types.TypeDecorator):
             return None
         return self.mapping[value]
 
-    def process_result_param(self, value, dialect):
-        pass

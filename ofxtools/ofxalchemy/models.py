@@ -3,6 +3,10 @@
 SQLAlchemy object model for fundamental OFX data aggregates such as transactions, 
 balances, and securities.
 """
+# stdlib imports
+import sqlite3
+
+
 # 3rd party imports
 from sqlalchemy import (
     Column,
@@ -30,8 +34,9 @@ from sqlalchemy.orm import (
     backref,
     )
 
-# local imports
-from ofxtools.ofxalchemy.types import Numeric, OFXDateTime, OFXBoolean
+
+# local import
+from ofxtools.ofxalchemy.types import OFXNumeric, OFXDateTime, OFXBoolean
 from ofxtools.lib import CURRENCY_CODES, COUNTRY_CODES
 
 
@@ -53,9 +58,10 @@ DBSession = scoped_session(sessionmaker())
 # Configure SQLite to support foreign key constraints
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
+    if isinstance(dbapi_connection, sqlite3.Connection):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
 
 
 ### OBJECT CLASSES
@@ -166,7 +172,7 @@ def Inheritor(parent_table):
 class CURRENCY(object):
     """ Declarative mixin representing OFX <CURRENCY> aggregate """
     cursym = Column(Enum(*CURRENCY_CODES, name='cursym'))
-    currate = Column(Numeric())
+    currate = Column(OFXNumeric())
 
 
 class ORIGCURRENCY(CURRENCY):
@@ -291,11 +297,11 @@ class Balance(object):
 
 
 class LEDGERBAL(Balance, Base):
-    balamt = Column(Numeric(), nullable=False)
+    balamt = Column(OFXNumeric(), nullable=False)
 
 
 class AVAILBAL(Balance, Base):
-    balamt = Column(Numeric(), nullable=False)
+    balamt = Column(OFXNumeric(), nullable=False)
 
 
 class INVBAL(Base):
@@ -321,10 +327,10 @@ class INVBAL(Base):
     dtasof = Column(OFXDateTime, primary_key=True)
 
     # Elements from OFX spec
-    availcash = Column(Numeric(), nullable=False)
-    marginbalance = Column(Numeric(), nullable=False)
-    shortbalance = Column(Numeric(), nullable=False)
-    buypower = Column(Numeric())
+    availcash = Column(OFXNumeric(), nullable=False)
+    marginbalance = Column(OFXNumeric(), nullable=False)
+    shortbalance = Column(OFXNumeric(), nullable=False)
+    buypower = Column(OFXNumeric())
 
 
 class BAL(Balance, CURRENCY, Base):
@@ -332,7 +338,7 @@ class BAL(Balance, CURRENCY, Base):
     desc = Column(String(length=80), nullable=False)
     baltype = Column(Enum('DOLLAR', 'PERCENT', 'NUMBER', name='baltype'),
                      nullable=False)
-    value = Column(Numeric(), nullable=False)
+    value = Column(OFXNumeric(), nullable=False)
 
 
 ### SECURITIES
@@ -364,7 +370,7 @@ class SECINFO(Inheritor('secinfo'), CURRENCY, Base):
     ticker = Column(String(length=255))
     fiid = Column(String(length=32))
     rating = Column(String(length=10))
-    unitprice = Column(Numeric())
+    unitprice = Column(OFXNumeric())
     dtasof = Column(OFXDateTime)
     memo = Column(String(length=255))
 
@@ -372,23 +378,23 @@ class SECINFO(Inheritor('secinfo'), CURRENCY, Base):
    
 
 class DEBTINFO(SECINFO):
-    parvalue = Column(Numeric(), nullable=False)
+    parvalue = Column(OFXNumeric(), nullable=False)
     debttype = Column(Enum('COUPON', 'ZERO', name='debttype'), nullable=False)
     debtclass = Column(Enum('TREASURY', 'MUNICIPAL', 'CORPORATE', 'OTHER',
                            name='debtclass')
                       )
-    couponrt = Column(Numeric())
+    couponrt = Column(OFXNumeric())
     dtcoupon = Column(OFXDateTime)
     couponfreq = Column(Enum('MONTHLY', 'QUARTERLY', 'SEMIANNUAL', 'ANNUAL',
                             'OTHER', name='couponfreq')
                        )
-    callprice = Column(Numeric())
-    yieldtocall = Column(Numeric())
+    callprice = Column(OFXNumeric())
+    yieldtocall = Column(OFXNumeric())
     dtcall = Column(OFXDateTime)
     calltype = Column(Enum('CALL', 'PUT', 'PREFUND', 'MATURITY', 
                            name='calltype')
                      )
-    ytmat = Column(Numeric())
+    ytmat = Column(OFXNumeric())
     dtmat = Column(OFXDateTime)
     assetclass = Column(Enum(*ASSETCLASSES, name='assetclass'))
     fiassetclass = Column(String(length=32))
@@ -396,7 +402,7 @@ class DEBTINFO(SECINFO):
 
 class MFINFO(SECINFO):
     mftype = Column(Enum('OPENEND', 'CLOSEEND', 'OTHER', name='mftype'))
-    yld = Column(Numeric())
+    yld = Column(OFXNumeric())
     dtyieldasof = Column(OFXDateTime)
 
 
@@ -417,7 +423,7 @@ class PORTION(Base):
     assetclass = Column(
         Enum(*ASSETCLASSES, name='assetclass'), primary_key=True
     )
-    percent = Column(Numeric(), nullable=False)
+    percent = Column(OFXNumeric(), nullable=False)
 
 
 class FIPORTION(Base):
@@ -437,12 +443,12 @@ class FIPORTION(Base):
     fiassetclass = Column(
         Enum(*ASSETCLASSES, name='assetclass'), primary_key=True
     )
-    percent = Column(Numeric(), nullable=False)
+    percent = Column(OFXNumeric(), nullable=False)
 
 
 class OPTINFO(SECINFO):
     opttype = Column(Enum('CALL', 'PUT', name='opttype'), nullable=False)
-    strikeprice = Column(Numeric(), nullable=False)
+    strikeprice = Column(OFXNumeric(), nullable=False)
     dtexpire = Column(OFXDateTime, nullable=False)
     shperctrct = Column(Integer, nullable=False)
     assetclass = Column(Enum(*ASSETCLASSES, name='assetclass'))
@@ -453,7 +459,7 @@ class OTHERINFO(SECINFO):
     typedesc = Column(String(length=32))
     assetclass = Column(Enum(*ASSETCLASSES, name='assetclass'))
     fiassetclass = Column(String(length=32))
-    percent = Column(Numeric())
+    percent = Column(OFXNumeric())
 
 
 class STOCKINFO(SECINFO):
@@ -461,7 +467,7 @@ class STOCKINFO(SECINFO):
     stocktype = Column(Enum('COMMON', 'PREFERRED', 'CONVERTIBLE', 'OTHER',
                            name='stocktype')
                       )
-    yld = Column(Numeric()) # 'yield' is a reserved word in Python
+    yld = Column(OFXNumeric()) # 'yield' is a reserved word in Python
     dtyieldasof = Column(OFXDateTime)
     typedesc = Column(String(length=32))
     assetclass = Column(Enum(*ASSETCLASSES, name='assetclass'))
@@ -509,8 +515,8 @@ class BANKTRAN(ORIGCURRENCY):
     dtposted = Column(OFXDateTime, nullable=False)
     dtuser = Column(OFXDateTime)
     dtavail = Column(OFXDateTime)
-    trnamt = Column(Numeric(), nullable=False)
-    correctfitid = Column(Numeric())
+    trnamt = Column(OFXNumeric(), nullable=False)
+    correctfitid = Column(OFXNumeric())
     correctaction = Column(Enum('REPLACE', 'DELETE', name='correctaction'))
     checknum = Column(String(length=12))
     refnum = Column(String(length=32))
@@ -620,13 +626,13 @@ class INVTRAN(Inheritor('invtran'), Base):
 
 class INVBUYSELL(SECID, ORIGCURRENCY):
     """ Synthetic base class of INVBUY/INVSELL - not in OFX spec """
-    units = Column(Numeric(), nullable=False)
-    unitprice = Column(Numeric(), nullable=False)
-    commission = Column(Numeric())
-    taxes = Column(Numeric())
-    fees = Column(Numeric())
-    load = Column(Numeric())
-    total = Column(Numeric(), nullable=False)
+    units = Column(OFXNumeric(), nullable=False)
+    unitprice = Column(OFXNumeric(), nullable=False)
+    commission = Column(OFXNumeric())
+    taxes = Column(OFXNumeric())
+    fees = Column(OFXNumeric())
+    load = Column(OFXNumeric())
+    total = Column(OFXNumeric(), nullable=False)
     subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'))
     subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'))
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
@@ -634,10 +640,10 @@ class INVBUYSELL(SECID, ORIGCURRENCY):
 
 class INVBUY(INVBUYSELL):
     """ Declarative mixin for OFX INVBUY aggregate """
-    markup = Column(Numeric())
+    markup = Column(OFXNumeric())
     loanid = Column(String(length=32))
-    loanprincipal = Column(Numeric())
-    loaninterest = Column(Numeric())
+    loanprincipal = Column(OFXNumeric())
+    loaninterest = Column(OFXNumeric())
     dtpayroll = Column(OFXDateTime)
     prioryearcontrib = Column(OFXBoolean())
 
@@ -661,13 +667,13 @@ class INVBUY(INVBUYSELL):
 
 class INVSELL(INVBUYSELL):
     """ Declarative mixin for OFX INVSELL aggregate """
-    markdown = Column(Numeric())
-    withholding = Column(Numeric())
+    markdown = Column(OFXNumeric())
+    withholding = Column(OFXNumeric())
     taxexempt = Column(OFXBoolean())
-    gain = Column(Numeric())
+    gain = Column(OFXNumeric())
     loanid = Column(String(length=32))
-    statewithholding = Column(Numeric())
-    penalty = Column(Numeric())
+    statewithholding = Column(OFXNumeric())
+    penalty = Column(OFXNumeric())
 
     # Be careful about multiple inheritance.  Subclasses of INV{BUY,SELL}
     # also inherit from INVTRAN, which also uses __table_args__ to define
@@ -689,7 +695,7 @@ class INVSELL(INVBUYSELL):
 
 
 class BUYDEBT(INVBUY, INVTRAN):
-    accrdint = Column(Numeric())
+    accrdint = Column(OFXNumeric())
 
 
 class BUYMF(INVBUY, INVTRAN):
@@ -714,25 +720,25 @@ class BUYSTOCK(INVBUY, INVTRAN):
 
 class CLOSUREOPT(SECID, INVTRAN):
     optaction = Column(Enum('EXERCISE', 'ASSIGN', 'EXPIRE', name='optaction'))
-    units = Column(Numeric(), nullable=False)
+    units = Column(OFXNumeric(), nullable=False)
     shperctrct = Column(Integer, nullable=False)
     subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'), nullable=False)
     relfitid = Column(String(length=255))
-    gain = Column(Numeric())
+    gain = Column(OFXNumeric())
     
 
 class INCOME(SECID, ORIGCURRENCY, INVTRAN):
     incometype = Column(Enum(*INCOMETYPES, name='incometype'), nullable=False)
-    total = Column(Numeric(), nullable=False)
+    total = Column(OFXNumeric(), nullable=False)
     subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'), nullable=False)
     subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'), nullable=False)
     taxexempt = Column(OFXBoolean())
-    withholding = Column(Numeric())
+    withholding = Column(OFXNumeric())
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
 
 class INVEXPENSE(SECID, ORIGCURRENCY, INVTRAN):
-    total = Column(Numeric(), nullable=False)
+    total = Column(OFXNumeric(), nullable=False)
     subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'), nullable=False)
     subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'), nullable=False)
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
@@ -741,30 +747,30 @@ class INVEXPENSE(SECID, ORIGCURRENCY, INVTRAN):
 class JRNLFUND(INVTRAN):
     subacctto = Column(Enum(*INVSUBACCTS, name='subacctto'), nullable=False)
     subacctfrom = Column(Enum(*INVSUBACCTS, name='subacctfrom'), nullable=False)
-    total = Column(Numeric(), nullable=False)
+    total = Column(OFXNumeric(), nullable=False)
 
 
 class JRNLSEC(SECID, INVTRAN):
     subacctto = Column(Enum(*INVSUBACCTS, name='subacctto'), nullable=False)
     subacctfrom = Column(Enum(*INVSUBACCTS, name='subacctfrom'), nullable=False)
-    units = Column(Numeric(), nullable=False)
+    units = Column(OFXNumeric(), nullable=False)
 
 
 class MARGININTEREST(ORIGCURRENCY, INVTRAN):
-    total = Column(Numeric(), nullable=False)
+    total = Column(OFXNumeric(), nullable=False)
     subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'), nullable=False)
 
 
 class REINVEST(SECID, ORIGCURRENCY, INVTRAN):
     incometype = Column(Enum(*INCOMETYPES, name='incometype'), nullable=False)
-    total = Column(Numeric(), nullable=False)
+    total = Column(OFXNumeric(), nullable=False)
     subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'))
-    units = Column(Numeric(), nullable=False)
-    unitprice = Column(Numeric(), nullable=False)
-    commission = Column(Numeric())
-    taxes = Column(Numeric())
-    fees = Column(Numeric())
-    load = Column(Numeric())
+    units = Column(OFXNumeric(), nullable=False)
+    unitprice = Column(OFXNumeric(), nullable=False)
+    commission = Column(OFXNumeric())
+    taxes = Column(OFXNumeric())
+    fees = Column(OFXNumeric())
+    load = Column(OFXNumeric())
     taxexempt = Column(OFXBoolean())
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
@@ -786,7 +792,7 @@ class REINVEST(SECID, ORIGCURRENCY, INVTRAN):
 
 
 class RETOFCAP(SECID, ORIGCURRENCY, INVTRAN):
-    total = Column(Numeric(), nullable=False)
+    total = Column(OFXNumeric(), nullable=False)
     subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'), nullable=False)
     subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'), nullable=False)
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
@@ -796,12 +802,12 @@ class SELLDEBT(INVSELL, INVTRAN):
     sellreason = Column(Enum('CALL', 'SELL', 'MATURITY', name='sellreason'),
                         nullable=False
                        )
-    accrdint = Column(Numeric())
+    accrdint = Column(OFXNumeric())
 
 
 class SELLMF(INVSELL, INVTRAN):
     selltype = Column(Enum(*SELLTYPES, name='selltype'), nullable=False)
-    avgcostbasis = Column(Numeric())
+    avgcostbasis = Column(OFXNumeric())
     relfitid = Column(String(length=255))
 
 
@@ -825,22 +831,22 @@ class SELLSTOCK(INVSELL, INVTRAN):
 
 class SPLIT(SECID, INVTRAN):
     subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'), nullable=False)
-    oldunits = Column(Numeric(), nullable=False)
-    newunits = Column(Numeric(), nullable=False)
-    numerator = Column(Numeric(), nullable=False)
-    denominator = Column(Numeric(), nullable=False)
-    fraccash = Column(Numeric())
+    oldunits = Column(OFXNumeric(), nullable=False)
+    newunits = Column(OFXNumeric(), nullable=False)
+    numerator = Column(OFXNumeric(), nullable=False)
+    denominator = Column(OFXNumeric(), nullable=False)
+    fraccash = Column(OFXNumeric())
     subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'))
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
 
 class TRANSFER(SECID, INVTRAN):
     subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'), nullable=False)
-    units = Column(Numeric(), nullable=False)
+    units = Column(OFXNumeric(), nullable=False)
     tferaction = Column(Enum('IN', 'OUT', name='tferaction'), nullable=False)
     postype = Column(Enum('SHORT', 'LONG', name='postype'), nullable=False)
-    avgcostbasis = Column(Numeric())
-    unitprice = Column(Numeric())
+    avgcostbasis = Column(OFXNumeric())
+    unitprice = Column(OFXNumeric())
     dtpurchase = Column(OFXDateTime)
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
@@ -862,9 +868,9 @@ class INVPOS(Inheritor('invpos'), SECID, CURRENCY, Base):
     # Elements from OFX spec
     heldinacct = Column(Enum(*INVSUBACCTS, name='heldinacct'), nullable=False)
     postype = Column(Enum('SHORT', 'LONG', name='postype'), nullable=False)
-    units = Column(Numeric(), nullable=False)
-    unitprice = Column(Numeric(), nullable=False)
-    mktval = Column(Numeric(), nullable=False)
+    units = Column(OFXNumeric(), nullable=False)
+    unitprice = Column(OFXNumeric(), nullable=False)
+    mktval = Column(OFXNumeric(), nullable=False)
     dtpriceasof = Column(OFXDateTime, nullable=False)
     memo = Column(String(length=255))
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
@@ -877,8 +883,8 @@ class POSDEBT(INVPOS):
 
 
 class POSMF(INVPOS):
-    unitsstreet = Column(Numeric())
-    unitsuser = Column(Numeric())
+    unitsstreet = Column(OFXNumeric())
+    unitsuser = Column(OFXNumeric())
     reinvdiv = Column(OFXBoolean())
     reinvcg = Column(OFXBoolean())
 
@@ -891,7 +897,7 @@ class POSOTHER(INVPOS):
     pass
 
 class POSSTOCK(INVPOS):
-    unitsstreet = Column(Numeric())
-    unitsuser = Column(Numeric())
+    unitsstreet = Column(OFXNumeric())
+    unitsuser = Column(OFXNumeric())
     reinvdiv = Column(OFXBoolean())
 
