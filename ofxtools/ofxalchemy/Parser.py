@@ -288,8 +288,6 @@ class InvestmentStatement(Statement):
     Python representation of OFX InvestmentStatement (investment account statement) 
     aggregate 
     """
-    datetime = None
-
     _tagName = 'INVSTMT'
     _acctTag = 'INVACCTFROM'
 
