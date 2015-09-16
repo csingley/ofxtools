@@ -161,9 +161,6 @@ class OFXTree(ofxtools.Parser.OFXTree):
     """ """
     element_factory = Element
 
-    statements = []
-    securities = []
-
     def convert(self):
         raise NotImplementedError
 
@@ -180,12 +177,15 @@ class OFXTree(ofxtools.Parser.OFXTree):
                 for sec in seclist
             ]
             DBSession.add_all(self.securities)
+        else:
+            self.securities = []
 
         # TRNRS - transaction response, which is the main section
         # containing account statements
         #
         # N.B. This iteration method doesn't preserve the original
         # ordering of the statements within the OFX response
+        self.statements = []
         for stmtClass in (BankStatement, CreditCardStatement, InvestmentStatement):
             tagname = stmtClass._tagName
             for trnrs in self.findall('*/%sTRNRS' % tagname):
@@ -197,15 +197,11 @@ class OFXTree(ofxtools.Parser.OFXTree):
                     self.statements.append(stmt)
 
 
-
 ### STATEMENTS
 class Statement(object):
     """ Base class for Python representation of OFX *STMT aggregate """
     currency = None
     account = None
-
-    transactions = []
-    other_balances =[] 
 
     def __init__(self, stmtrs):
         """ Initialize with *STMTRS Element """
@@ -213,6 +209,8 @@ class Statement(object):
         acctfrom = stmtrs.find(self._acctTag)
         self.account = acctfrom.instantiate()
         DBSession.add(self.account)
+        self.transactions = []
+        self.other_balances =[] 
         self._init(stmtrs)
 
     def _init(self, stmtrs):
@@ -230,9 +228,6 @@ class Statement(object):
 
 class BankStatement(Statement):
     """ Python representation of OFX STMT (bank statement) aggregate """
-    ledgerbal = None
-    availbal = None
-
     _tagName = 'STMT'
     _acctTag = 'BANKACCTFROM'
 
@@ -253,6 +248,8 @@ class BankStatement(Statement):
         if availbal is not None:
             self.availbal = availbal.instantiate(acctfrom=self.account)
             DBSession.add(self.availbal)
+        else:
+            self.availbal = None
 
         ballist = stmtrs.find('BALLIST')
         if ballist:
@@ -292,9 +289,6 @@ class InvestmentStatement(Statement):
     aggregate 
     """
     datetime = None
-
-    positions = []
-    balances = []
 
     _tagName = 'INVSTMT'
     _acctTag = 'INVACCTFROM'
@@ -336,6 +330,8 @@ class InvestmentStatement(Statement):
                 dtasof=self.datetime) \
                 for pos, units in positions.values()]
             DBSession.add_all(self.positions)
+        else:
+            self.positions = []
 
         # INVBAL
         invbal = invstmtrs.find('INVBAL')
@@ -354,6 +350,8 @@ class InvestmentStatement(Statement):
                 acctfrom=self.account, dtasof=self.datetime,
             )
             DBSession.add(self.balances)
+        else:
+            self.balances = []
 
         # Unsupported subaggregates
         for tag in ('INVOOLIST', 'INV401K', 'INV401KBAL', 'MKTGINFO'):
