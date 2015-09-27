@@ -110,4 +110,3 @@ class OFXHeader(object):
 
         # Strip OFX header and return body
         return source[headermatch.end():]
-

@@ -1,5 +1,5 @@
 # vim: set fileencoding=utf-8
-""" 
+"""
 Version of ofxtools.Parser that uses SQLAlchemy for conversion
 """
 # stdlib imports
@@ -26,7 +26,7 @@ class Element(ofxtools.Parser.Element):
         return reference
 
     def _do_origcurrency(self):
-        """ 
+        """
         See OFX spec section 5.2 for currency handling conventions.
         Flattening the currency definition leaves only the CURRATE/CURSYM
         elements, leaving no indication of whether these were sourced from
@@ -40,22 +40,22 @@ class Element(ofxtools.Parser.Element):
             if (currency is not None) and (origcurrency is not None):
                 msg = '<%s> may not contain both <CURRENCY> and <ORIGCURRENCY>' % elem.tag
                 raise ofxtools.Parser.ParseError(msg)
-            curtype = currency 
+            curtype = currency
             if curtype is None:
                 curtype = origcurrency
             if (curtype is not None):
-                self.extra_attributes['curtype'] = curtype.tag 
+                self.extra_attributes['curtype'] = curtype.tag
 
     def _preflatten(self):
         if self.tag == 'OPTINFO':
-            # A <SECID> aggregate referring to the security underlying the 
+            # A <SECID> aggregate referring to the security underlying the
             # option is, in general, *not* going to be contained in <SECLIST>
             # (because you don't necessarily have a position in the underlying).
-            # Since the <SECID> for the underlying only gives us fields for 
+            # Since the <SECID> for the underlying only gives us fields for
             # (uniqueidtype, uniqueid) we can't really go ahead and use this
-            # information to create a corresponding SECINFO instance (since we 
+            # information to create a corresponding SECINFO instance (since we
             # lack information about the security subclass).  It's unclear that
-            # the SECID of the underlying is really needed for anything, so we 
+            # the SECID of the underlying is really needed for anything, so we
             # disregard it.
             secid = self.find('./SECID')
             if secid is not None:
@@ -86,10 +86,10 @@ class Element(ofxtools.Parser.Element):
             self.extra_attributes['secinfo'] = secid._dereference()
 
         elif self.tag in ('STMTTRN', 'INVBANKTRAN'):
-            # Replace BANKACCTTO/CCACCTTO/PAYEE with FK references.  This is 
+            # Replace BANKACCTTO/CCACCTTO/PAYEE with FK references.  This is
             # needed for {BANK,CC}ACCTTO because account type information is
-            # contained in the aggregate container, which will be lost by 
-            # _flatten().  PAYEE will not lose information when _flatten()ed, 
+            # contained in the aggregate container, which will be lost by
+            # _flatten().  PAYEE will not lose information when _flatten()ed,
             # but it really needs its own object class to be useful.
             #
             # Do all XPath searches before removing nodes from the tree
@@ -128,7 +128,7 @@ class Element(ofxtools.Parser.Element):
             self.attributes['yld'] = yld
 
     def instantiate(self, **extra_attrs):
-        """ 
+        """
         Create an instance of a SQLAlchemy model class corresponding to
         my OFX tag, with attributes given by my contained OFX elements.
 
@@ -210,13 +210,13 @@ class Statement(object):
         self.account = acctfrom.instantiate()
         DBSession.add(self.account)
         self.transactions = []
-        self.other_balances =[] 
+        self.other_balances =[]
         self._init(stmtrs)
 
     def _init(self, stmtrs):
         # Define in subclass
         raise NotImplementedError
-    
+
     def from_etree(elem):
         # Define in subclass
         raise NotImplementedError
@@ -264,29 +264,29 @@ class BankStatement(Statement):
 
     def __repr__(self):
         s = "<%s account=%s currency=%s ledgerbal=%s availbal=%s len(other_balances)=%d len(transactions)=%d>"
-        return s % (self.__class__.__name__, 
+        return s % (self.__class__.__name__,
                     self.account,
                     self.currency,
-                    self.ledgerbal, 
-                    self.availbal, 
+                    self.ledgerbal,
+                    self.availbal,
                     len(self.other_balances),
-                    len(self.transactions), 
+                    len(self.transactions),
                    )
 
 
 class CreditCardStatement(BankStatement):
-    """ 
-    Python representation of OFX CCSTMT (credit card statement) 
-    aggregate 
+    """
+    Python representation of OFX CCSTMT (credit card statement)
+    aggregate
     """
     _tagName = 'CCSTMT'
     _acctTag = 'CCACCTFROM'
 
 
 class InvestmentStatement(Statement):
-    """ 
-    Python representation of OFX InvestmentStatement (investment account statement) 
-    aggregate 
+    """
+    Python representation of OFX InvestmentStatement (investment account statement)
+    aggregate
     """
     _tagName = 'INVSTMT'
     _acctTag = 'INVACCTFROM'
@@ -320,11 +320,11 @@ class InvestmentStatement(Statement):
                 if position is None:
                     positions[seckey] = (pos, Decimal(units.text))
                 else:
-                    positions[seckey] = (position[0], 
+                    positions[seckey] = (position[0],
                                          position[1] + Decimal(units.text)
                                         )
             self.positions = [pos.instantiate(
-                units=units, acctfrom=self.account, 
+                units=units, acctfrom=self.account,
                 dtasof=self.datetime) \
                 for pos, units in positions.values()]
             DBSession.add_all(self.positions)
@@ -359,25 +359,25 @@ class InvestmentStatement(Statement):
 
     def __repr__(self):
         s = """
-            <%s datetime='%s' account=%s currency='%s' balances=%s 
+            <%s datetime='%s' account=%s currency='%s' balances=%s
             \len(other_balances)=%d len(positions)=%d len(transactions)=%d>
         """
-        return s % (self.__class__.__name__, 
+        return s % (self.__class__.__name__,
                     self.datetime,
                     self.account,
                     self.currency,
-                    self.balances, 
+                    self.balances,
                     len(self.other_balances),
-                    len(self.positions), 
-                    len(self.transactions), 
+                    len(self.positions),
+                    len(self.transactions),
                    )
 
 
 ### TRANSACTION LISTS
 class TransactionList(list):
-    """ 
-    Base class for Python representation of OFX *TRANLIST (transaction list) 
-    aggregate 
+    """
+    Base class for Python representation of OFX *TRANLIST (transaction list)
+    aggregate
     """
     def __init__(self, account, tranlist):
         self.account = account
@@ -395,5 +395,3 @@ class TransactionList(list):
     def __repr__(self):
         return "<%s dtstart='%s' dtend='%s' len(self)=%d>" % \
                 (self.__class__.__name__, self.dtstart, self.dtend, len(self))
-
-

@@ -1,6 +1,6 @@
 # vim: set fileencoding=utf-8
-""" 
-Python object model for fundamental data aggregates such as transactions, 
+"""
+Python object model for fundamental data aggregates such as transactions,
 balances, and securities.
 """
 
@@ -31,7 +31,7 @@ class Aggregate(object):
 
     This class represents fundamental data aggregates such as transactions,
     balances, and securities.  Subaggregates have been flattened so that
-    data-bearing Elements are directly accessed as attributes of the 
+    data-bearing Elements are directly accessed as attributes of the
     containing Aggregate.
 
     Aggregates are grouped into higher-order containers such as lists
@@ -66,7 +66,7 @@ class Aggregate(object):
 
     @staticmethod
     def from_etree(elem, strict=True):
-        """ 
+        """
         Look up the Aggregate subclass for a given ofx.Parser.Element and
         feed it the Element to instantiate the Aggregate instance.
         """
@@ -112,7 +112,7 @@ class ORIGCURRENCY(CURRENCY):
     curtype = OneOf('CURRENCY', 'ORIGCURRENCY')
 
     def __init__(self, elem, strict=True):
-        """ 
+        """
         See OFX spec section 5.2 for currency handling conventions.
         Flattening the currency definition leaves only the CURRATE/CURSYM
         elements, leaving no indication of whether these were sourced from
@@ -236,7 +236,7 @@ class MFINFO(SECINFO):
     fimfassetclass = []
 
     def __init__(self, elem, strict=True):
-        """ 
+        """
         Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up _flatten()
         """
         extra_attrs = {}
@@ -259,9 +259,9 @@ class MFINFO(SECINFO):
         super(MFINFO, self).__init__(elem, strict=strict)
 
         # Staple MFASSETCLASS/FIMFASSETCLASS onto MFINFO
-        for attr,val in extra_attrs.items():
+        for attr, val in extra_attrs.items():
             setattr(self, attr, val)
-         
+
 
 class PORTION(Aggregate):
     assetclass = OneOf(*ASSETCLASSES)

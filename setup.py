@@ -5,12 +5,12 @@ import os.path
 __here__ = os.path.dirname(os.path.realpath(__file__))
 with open(os.path.join(__here__, 'README'), 'r') as f:
     long_description = f.read()
-    
+
 setup(
     name = 'ofxtools',
     version = '0.3.8',
     description = ('Library for working with Open Financial Exchange (OFX) '
-                 'formatted data used by financial institutions'),
+                   'formatted data used by financial institutions'),
     long_description = long_description,
 
     url = 'https://github.com/csingley/ofxtools',
@@ -33,7 +33,7 @@ setup(
         'Topic :: Office/Business :: Financial :: Investment',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
-        'Natural Language :: English', 
+        'Natural Language :: English',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',

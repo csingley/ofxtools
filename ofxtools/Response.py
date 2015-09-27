@@ -1,5 +1,5 @@
 # vim: set fileencoding=utf-8
-""" 
+"""
 Python object model for Aggregate containers (the OFX response, statements,
 transaction lists, etc.)
 """
@@ -10,7 +10,7 @@ from ofxtools.types import String, DateTime
 
 
 class OFXResponse(object):
-    """ 
+    """
     Top-level object representing an OFX response converted into Python
     data types, with attributes for convenient access to statements (i.e.
     OFX *STMT aggregates), security descriptions (i.e. OFX SECLIST aggregate),
@@ -20,7 +20,7 @@ class OFXResponse(object):
     of various Aggregate subclasses.
     """
     def __init__(self, tree, strict=True):
-        """ 
+        """
         Initialize with ofx.ElementTree instance containing parsed OFX.
 
         The strict argument determines whether to throw an error for certain
@@ -62,11 +62,11 @@ class OFXResponse(object):
 
     def __repr__(self):
         s = "<%s fid='%s' org='%s' dtserver='%s' len(statements)=%d len(securities)=%d>"
-        return s % (self.__class__.__name__, 
-                    self.sonrs.fid, 
-                    self.sonrs.org, 
-                    str(self.sonrs.dtserver), 
-                    len(self.statements), 
+        return s % (self.__class__.__name__,
+                    self.sonrs.fid,
+                    self.sonrs.org,
+                    str(self.sonrs.dtserver),
+                    len(self.statements),
                     len(self.securities),
                    )
 
@@ -82,7 +82,7 @@ class Statement(object):
     def _init(self, stmtrs):
         # Define in subclass
         raise NotImplementedError
-    
+
     def copyTRNRS(self, trnrs):
         """ Attach the data fields from the *TRNRS wrapper to the STMT """
         self.uid = String(36).convert(trnrs.find('TRNUID').text)
@@ -126,7 +126,7 @@ class BankStatement(Statement):
         if ballist:
             self.other_balances = [Aggregate.from_etree(bal) for bal in ballist]
         else:
-            self.other_balances = [] 
+            self.other_balances = []
 
         # Unsupported subaggregates
         for tag in ('MKTGINFO', ):
@@ -136,29 +136,29 @@ class BankStatement(Statement):
 
     def __repr__(self):
         s = "<%s account=%s currency=%s ledgerbal=%s availbal=%s len(other_balances)=%d len(transactions)=%d>"
-        return s % (self.__class__.__name__, 
+        return s % (self.__class__.__name__,
                     self.account,
                     self.currency,
-                    self.ledgerbal, 
-                    self.availbal, 
+                    self.ledgerbal,
+                    self.availbal,
                     len(self.other_balances),
-                    len(self.transactions), 
+                    len(self.transactions),
                    )
 
 
 class CreditCardStatement(BankStatement):
-    """ 
-    Python representation of OFX CCSTMT (credit card statement) 
-    aggregate 
+    """
+    Python representation of OFX CCSTMT (credit card statement)
+    aggregate
     """
     _tagName = 'CCSTMT'
     _acctTag = 'CCACCTFROM'
 
 
 class InvestmentStatement(Statement):
-    """ 
-    Python representation of OFX InvestmentStatement (investment account statement) 
-    aggregate 
+    """
+    Python representation of OFX InvestmentStatement (investment account statement)
+    aggregate
     """
     _tagName = 'INVSTMT'
     _acctTag = 'INVACCTFROM'
@@ -205,22 +205,22 @@ class InvestmentStatement(Statement):
 
     def __repr__(self):
         s = "<%s datetime='%s' account=%s currency='%s' balances=%s len(other_balances)=%d len(positions)=%d len(transactions)=%d>"
-        return s % (self.__class__.__name__, 
+        return s % (self.__class__.__name__,
                     self.datetime,
                     self.account,
                     self.currency,
-                    self.balances, 
+                    self.balances,
                     len(self.other_balances),
-                    len(self.positions), 
-                    len(self.transactions), 
+                    len(self.positions),
+                    len(self.transactions),
                    )
 
 
 ### TRANSACTION LISTS
 class TransactionList(list):
-    """ 
-    Base class for Python representation of OFX *TRANLIST (transaction list) 
-    aggregate 
+    """
+    Base class for Python representation of OFX *TRANLIST (transaction list)
+    aggregate
     """
     def __init__(self, tranlist):
         # Initialize with *TRANLIST Element
@@ -237,7 +237,7 @@ class TransactionList(list):
 
 class BANKTRANLIST(TransactionList):
     """
-    Python representation of OFX BANKTRANLIST (bank transaction list) 
+    Python representation of OFX BANKTRANLIST (bank transaction list)
     aggregate
     """
     pass
@@ -246,8 +246,6 @@ class BANKTRANLIST(TransactionList):
 class INVTRANLIST(TransactionList):
     """
     Python representation of OFX INVTRANLIST (investment transaction list)
-    aggregate 
+    aggregate
     """
     pass
-
-

@@ -1,6 +1,6 @@
 # vim: set fileencoding=utf-8
-""" 
-SQLAlchemy object model for fundamental OFX data aggregates such as transactions, 
+"""
+SQLAlchemy object model for fundamental OFX data aggregates such as transactions,
 balances, and securities.
 """
 # stdlib imports
@@ -86,11 +86,11 @@ class Base(object):
 
     @staticmethod
     def _bindattr(key, attrs):
-        """ 
+        """
         Look up the given primary key's value in the given dict of attributes
         """
         k = key
-        try: 
+        try:
             v = attrs[k]
         except KeyError:
             # Allow relationship, not just FK id integer
@@ -123,15 +123,15 @@ def Inheritor(parent_table):
     """
     Mixin factory implementing joined-table inheritance.
 
-    Uses a surrogate primary key; the natural keys are given as a class 
+    Uses a surrogate primary key; the natural keys are given as a class
     attribute 'pks'.
     """
     class InheritanceMixin(object):
         @declared_attr.cascading
-        def id(cls): 
+        def id(cls):
             if has_inherited_table(cls):
                 return Column(
-                    Integer, ForeignKey('%s.id' % parent_table, 
+                    Integer, ForeignKey('%s.id' % parent_table,
                                         onupdate='CASCADE', ondelete='CASCADE'),
                     primary_key=True)
             else:
@@ -152,10 +152,10 @@ def Inheritor(parent_table):
 
         # Be careful about multiple inheritance.  Subclasses of INV{BUY,SELL}
         # also use __table_args__ to define constraints checking that the
-        # dollar amounts total correctly.  This is OK because the polymorphic 
-        # inheritance scheme for INVTRAN subclasses only requires the uniqueness 
-        # constraint on the base table (i.e. INVTRAN) which holds these PKs, 
-        # so INVTRAN subclasses are free to clobber __table_args__ by inheriting 
+        # dollar amounts total correctly.  This is OK because the polymorphic
+        # inheritance scheme for INVTRAN subclasses only requires the uniqueness
+        # constraint on the base table (i.e. INVTRAN) which holds these PKs,
+        # so INVTRAN subclasses are free to clobber __table_args__ by inheriting
         # it from INV{BUY,SELL}...
         # ...but be careful.
         @declared_attr.cascading
@@ -190,7 +190,7 @@ class AcctMixin(object):
     name = Column(Text)
 
     # This version of __table_args__ overrides that provided by
-    # Inheritor.InheritanceMixin to move definition of UniqueConstraint from 
+    # Inheritor.InheritanceMixin to move definition of UniqueConstraint from
     # the base table to the child table, as required for *ACCT{FROM,TO}
     @declared_attr.cascading
     def __table_args__(cls):
@@ -220,10 +220,10 @@ class CcAcctMixin(object):
 
 
 class ACCTFROM(AcctMixin, Inheritor('acctfrom'), Base):
-    """ 
-    Synthetic base class of {BANK,CC,INV}ACCTFROM - not in OFX spec. 
+    """
+    Synthetic base class of {BANK,CC,INV}ACCTFROM - not in OFX spec.
 
-    We need a parent DB table mostly for the benefit of <BAL> which can be 
+    We need a parent DB table mostly for the benefit of <BAL> which can be
     related to either <BANKACCTFROM>/<CCACCTFROM> or <INVACCTFROM>.
 
     @@TODO - it would be nice to define a child table of ACCTFROM that's the
@@ -251,8 +251,8 @@ class INVACCTFROM(ACCTFROM):
 
 
 class ACCTTO(AcctMixin, Inheritor('acctto'), Base):
-    """ 
-    Synthetic base class of {BANK,CC,INV}ACCTTO - not in OFX spec. 
+    """
+    Synthetic base class of {BANK,CC,INV}ACCTTO - not in OFX spec.
     """
     pass
 
@@ -271,15 +271,15 @@ class Balance(object):
     Declarative mixin holding object model common to OFX <*BAL> aggregates.
 
     We deviate from the OFX spec by storing the STMT.dtasof in *BAL.dtasof
-    in order to uniquely link the balance with the statement without 
+    in order to uniquely link the balance with the statement without
     persisting a STMT object. We make *BAL.dtasof mandatory and use it
     as part of the primary key.
     """
     @declared_attr
     def acctfrom_id(cls):
         return Column(
-            Integer, ForeignKey('acctfrom.id', 
-                                onupdate='CASCADE', ondelete='CASCADE'), 
+            Integer, ForeignKey('acctfrom.id',
+                                onupdate='CASCADE', ondelete='CASCADE'),
             primary_key=True)
 
     @declared_attr
@@ -307,17 +307,17 @@ class AVAILBAL(Balance, Base):
 class INVBAL(Base):
     """
     We deviate from the OFX spec by storing the STMT.dtasof in INVBAL.dtasof
-    in order to uniquely link the balance with the statement without persisting 
-    an INVSTMT object. We make INVBAL.dtasof mandatory and use it as part of 
+    in order to uniquely link the balance with the statement without persisting
+    an INVSTMT object. We make INVBAL.dtasof mandatory and use it as part of
     the primary key.
     """
     # Added for SQLAlchemy object model
     acctfrom_id = Column(
-        Integer, ForeignKey('invacctfrom.id', 
+        Integer, ForeignKey('invacctfrom.id',
                             onupdate='CASCADE', ondelete='CASCADE'),
         primary_key=True)
     acctfrom = relationship(
-        'INVACCTFROM', backref=backref('invbals', 
+        'INVACCTFROM', backref=backref('invbals',
                                        cascade='all, delete-orphan',
                                        passive_deletes=True,
                                       )
@@ -350,7 +350,7 @@ class SECID(object):
     @declared_attr
     def secinfo_id(cls):
         return Column(
-            Integer, ForeignKey('secinfo.id', 
+            Integer, ForeignKey('secinfo.id',
                                 onupdate='CASCADE', ondelete='CASCADE'))
 
     @declared_attr
@@ -375,7 +375,7 @@ class SECINFO(Inheritor('secinfo'), CURRENCY, Base):
     memo = Column(String(length=255))
 
     pks = ['uniqueid', 'uniqueidtype']
-   
+
 
 class DEBTINFO(SECINFO):
     parvalue = Column(OFXNumeric(), nullable=False)
@@ -391,7 +391,7 @@ class DEBTINFO(SECINFO):
     callprice = Column(OFXNumeric())
     yieldtocall = Column(OFXNumeric())
     dtcall = Column(OFXDateTime)
-    calltype = Column(Enum('CALL', 'PUT', 'PREFUND', 'MATURITY', 
+    calltype = Column(Enum('CALL', 'PUT', 'PREFUND', 'MATURITY',
                            name='calltype')
                      )
     ytmat = Column(OFXNumeric())
@@ -409,11 +409,11 @@ class MFINFO(SECINFO):
 class PORTION(Base):
     # Added for SQLAlchemy object model
     mfinfo_id = Column(
-        Integer, ForeignKey('mfinfo.id', 
+        Integer, ForeignKey('mfinfo.id',
                             onupdate='CASCADE', ondelete='CASCADE'),
         primary_key=True)
     mfinfo = relationship(
-        'MFINFO', backref=backref('mfassetclasses', 
+        'MFINFO', backref=backref('mfassetclasses',
                                   cascade='all, delete-orphan',
                                   passive_deletes=True,
                                  )
@@ -433,7 +433,7 @@ class FIPORTION(Base):
                             onupdate='CASCADE', ondelete='CASCADE'),
         primary_key=True)
     mfinfo = relationship(
-        'MFINFO', backref=backref('fimfassetclasses', 
+        'MFINFO', backref=backref('fimfassetclasses',
                                   cascade='all, delete-orphan',
                                   passive_deletes=True,
                                  )
@@ -489,20 +489,20 @@ class PAYEE(Base):
 
 
 class BANKTRAN(ORIGCURRENCY):
-    """ 
+    """
     Synthetic mixin for common elements of STMTTRN/INVBANKTRAN - not in OFX spec
     """
     # Added for SQLAlchemy object model
     @declared_attr
     def acctto_id(cls):
         return Column(
-            Integer, ForeignKey('acctto.id', 
+            Integer, ForeignKey('acctto.id',
                                 onupdate='CASCADE', ondelete='CASCADE'))
 
     @declared_attr
     def payee_name(cls):
         return Column(
-            String(32), ForeignKey('payee.name', 
+            String(32), ForeignKey('payee.name',
                                    onupdate='CASCADE', ondelete='CASCADE'))
 
     # Elements from OFX spec
@@ -530,12 +530,12 @@ class BANKTRAN(ORIGCURRENCY):
 class STMTTRN(BANKTRAN, Base):
      # Added for SQLAlchemy object model
     acctfrom_id = Column(
-        Integer, ForeignKey('acctfrom.id', 
+        Integer, ForeignKey('acctfrom.id',
                             onupdate='CASCADE', ondelete='CASCADE'),
         primary_key=True)
 
     acctfrom = relationship(
-        'ACCTFROM', backref=backref('stmttrns', 
+        'ACCTFROM', backref=backref('stmttrns',
                                     cascade='all, delete-orphan',
                                     passive_deletes=True,
                                    )
@@ -544,7 +544,7 @@ class STMTTRN(BANKTRAN, Base):
     @declared_attr
     def acctto(cls):
         return relationship(
-            'ACCTTO', backref=backref('stmttrns', 
+            'ACCTTO', backref=backref('stmttrns',
                                       cascade='all, delete-orphan',
                                       passive_deletes=True,
                                      )
@@ -553,7 +553,7 @@ class STMTTRN(BANKTRAN, Base):
     @declared_attr
     def payee(cls):
         return relationship(
-            'PAYEE', backref=backref('stmttrns', 
+            'PAYEE', backref=backref('stmttrns',
                                      cascade='all, delete-orphan',
                                      passive_deletes=True,
                                     )
@@ -564,11 +564,11 @@ class STMTTRN(BANKTRAN, Base):
 class INVBANKTRAN(BANKTRAN, Base):
     # Added for SQLAlchemy object model
     acctfrom_id = Column(
-        Integer, ForeignKey('invacctfrom.id', 
+        Integer, ForeignKey('invacctfrom.id',
                             onupdate='CASCADE', ondelete='CASCADE'),
         primary_key=True)
     acctfrom = relationship(
-        'INVACCTFROM', backref=backref('invbanktrans', 
+        'INVACCTFROM', backref=backref('invbanktrans',
                                        cascade='all, delete-orphan',
                                        passive_deletes=True,
                                       )
@@ -577,7 +577,7 @@ class INVBANKTRAN(BANKTRAN, Base):
     @declared_attr
     def acctto(cls):
         return relationship(
-            'ACCTTO', backref=backref('invbanktrans', 
+            'ACCTTO', backref=backref('invbanktrans',
                                       cascade='all, delete-orphan',
                                       passive_deletes=True,
                                      )
@@ -586,7 +586,7 @@ class INVBANKTRAN(BANKTRAN, Base):
     @declared_attr
     def payee(cls):
         return relationship(
-            'PAYEE', backref=backref('invbanktrans', 
+            'PAYEE', backref=backref('invbanktrans',
                                      cascade='all, delete-orphan',
                                      passive_deletes=True,
                                     )
@@ -603,11 +603,11 @@ class INVTRAN(Inheritor('invtran'), Base):
         return Column(
             Integer, ForeignKey('invacctfrom.id',
                                 onupdate='CASCADE', ondelete='CASCADE'))
-    
+
     @declared_attr
     def acctfrom(cls):
         return relationship(
-        'INVACCTFROM', backref=backref('invtrans', 
+        'INVACCTFROM', backref=backref('invtrans',
                                        cascade='all, delete-orphan',
                                        passive_deletes=True,
                                       )
@@ -657,12 +657,12 @@ class INVBUY(INVBUYSELL):
     # ...but be careful.
     __table_args__ = (
         CheckConstraint(
-            """ 
-            total = -1 * units * (unitprice + markup) 
+            """
+            total = -1 * units * (unitprice + markup)
                     - (commission + fees + load + taxes)
             """
         ),
-    ) 
+    )
 
 
 class INVSELL(INVBUYSELL):
@@ -685,13 +685,13 @@ class INVSELL(INVBUYSELL):
     # ...but be careful.
     __table_args__ = (
         CheckConstraint(
-            """ 
-            total = -1 * units * (unitprice - markdown) 
-                    - (commission + fees + load + taxes + penalty 
+            """
+            total = -1 * units * (unitprice - markdown)
+                    - (commission + fees + load + taxes + penalty
                         + withholding + statewithholding)
             """
         ),
-    ) 
+    )
 
 
 class BUYDEBT(INVBUY, INVTRAN):
@@ -725,7 +725,7 @@ class CLOSUREOPT(SECID, INVTRAN):
     subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'), nullable=False)
     relfitid = Column(String(length=255))
     gain = Column(OFXNumeric())
-    
+
 
 class INCOME(SECID, ORIGCURRENCY, INVTRAN):
     incometype = Column(Enum(*INCOMETYPES, name='incometype'), nullable=False)
@@ -774,21 +774,21 @@ class REINVEST(SECID, ORIGCURRENCY, INVTRAN):
     taxexempt = Column(OFXBoolean())
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
-    
-    # Be careful about multiple inheritance.  REINVEST  also inherits from 
+
+    # Be careful about multiple inheritance.  REINVEST  also inherits from
     # INVTRAN, which also uses __table_args__ to define uniqueness constraint
-    # for the natural PKs (acctfrom_id, fitid).   This is OK because the 
-    # polymorphic inheritance scheme for INVTRAN subclasses only requires the 
-    # uniqueness constraint on the base table (i.e. INVTRAN) 
+    # for the natural PKs (acctfrom_id, fitid).   This is OK because the
+    # polymorphic inheritance scheme for INVTRAN subclasses only requires the
+    # uniqueness constraint on the base table (i.e. INVTRAN)
     # which holds these PKs, so REINVEST is free to clobber __table_args__ ...
     # ...but be careful.
     __table_args__ = (
         CheckConstraint(
-            """ 
+            """
             total = units * (unitprice) + (commission + fees + load + taxes)
             """
         ),
-    ) 
+    )
 
 
 class RETOFCAP(SECID, ORIGCURRENCY, INVTRAN):
@@ -858,7 +858,7 @@ class INVPOS(Inheritor('invpos'), SECID, CURRENCY, Base):
         Integer, ForeignKey('invacctfrom.id',
                             onupdate='CASCADE', ondelete='CASCADE'))
     acctfrom = relationship(
-        'INVACCTFROM', backref=backref('invposs', 
+        'INVACCTFROM', backref=backref('invposs',
                                        cascade='all, delete-orphan',
                                        passive_deletes=True,
                                       )
@@ -874,7 +874,7 @@ class INVPOS(Inheritor('invpos'), SECID, CURRENCY, Base):
     dtpriceasof = Column(OFXDateTime, nullable=False)
     memo = Column(String(length=255))
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
-  
+
     pks = ['acctfrom_id', 'secinfo_id', 'dtasof']
 
 
@@ -900,4 +900,3 @@ class POSSTOCK(INVPOS):
     unitsstreet = Column(OFXNumeric())
     unitsuser = Column(OFXNumeric())
     reinvdiv = Column(OFXBoolean())
-

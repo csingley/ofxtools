@@ -12,7 +12,7 @@ import ofxtools.types
 
 
 class OFXNumeric(sqlalchemy.types.TypeDecorator):
-    """ 
+    """
     Handles Euro-style decimal separators (comma) inbound to the DB
     """
     impl = sqlalchemy.types.Numeric
@@ -33,7 +33,7 @@ class OFXNumeric(sqlalchemy.types.TypeDecorator):
 
 
 class OFXDateTime(sqlalchemy.types.TypeDecorator):
-    """ 
+    """
     Handles datetimes inbound to the DB in formats given by OFX spec
     """
     impl = sqlalchemy.types.DateTime
@@ -43,14 +43,13 @@ class OFXDateTime(sqlalchemy.types.TypeDecorator):
 
 
 class OFXBoolean(sqlalchemy.types.TypeDecorator):
-    """ 
+    """
     Handles bools inbound to the DB in format given by OFX spec
     """
     impl = sqlalchemy.types.Boolean
     mapping = {'Y': True, 'N': False}
-    
+
     def process_bind_param(self, value, dialect):
         if value is None:
             return None
         return self.mapping[value]
-

@@ -183,7 +183,7 @@ class DateTime(Element):
 
     @classmethod
     def unconvert(cls, value):
-        """ 
+        """
         Input datetime.date or datetime.datetime in local time; output str in GMT.
         """
         if not hasattr(value, 'timetuple'):
@@ -193,4 +193,3 @@ class DateTime(Element):
         gmt_value = time.gmtime(time.mktime(value.timetuple()))
         # timetuples don't have usec precision
         return time.strftime(cls.formats[14], gmt_value)
-

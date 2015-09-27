@@ -243,4 +243,3 @@ def findEaster(year):
     d = 1+(p+27+(p+6)/40)%31
     m = 3+(p+26)/30
     return datetime.date(y,m,d)
-
