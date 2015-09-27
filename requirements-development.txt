@@ -10,4 +10,4 @@ pylint
 
 # python dependencies
 
-sqlalchemy
+sqlalchemy>=1

@@ -51,7 +51,7 @@ setup(
     packages = find_packages(),
 
     extras_require = {
-        'SQL': ['sqlalchemy > 0.9.8',],
+        'SQL': ['sqlalchemy > 1.0.0',],
     },
 
     package_data = {

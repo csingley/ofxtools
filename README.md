@@ -22,9 +22,7 @@ and OFXResponse that can parse OFX formatted data and persist it into an SQL
 database.
 
 `ofxalchemy` depends on [the SQLAlchemy package](http://www.sqlalchemy.org).
-You'll need the upcoming version 1.0 of SQLAlchemy, which is still in
-development and can be obtained from [the SQLAlchemy code repository]
-(https://bitbucket.org/zzzeek/sqlalchemy).
+You'll need SQLAlchemy version 1.0 or higher.
 
 
 # Installation
