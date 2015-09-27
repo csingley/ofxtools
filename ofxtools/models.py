@@ -238,6 +238,7 @@ class MFINFO(SECINFO):
     def __init__(self, elem, strict=True):
         """
         Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up _flatten()
+        Rename 'yield' (Python reserved word) to 'yld'
         """
         extra_attrs = {}
 
@@ -246,6 +247,7 @@ class MFINFO(SECINFO):
         #   AttributeError on subsequent searches.
         mfassetclass = elem.find('./MFASSETCLASS')
         fimfassetclass = elem.find('./FIMFASSETCLASS')
+        yld = elem.find('./YIELD')
 
         if mfassetclass is not None:
             # Convert PORTIONs; save for later
@@ -255,10 +257,14 @@ class MFINFO(SECINFO):
             # Convert FIPORTIONs; save for later
             extra_attrs['fimfassetclass'] = [Aggregate.from_etree(p) for p in fimfassetclass]
             elem.remove(fimfassetclass)
+        if yld is not None:
+            # Rename; save for later
+            extra_attrs['yld'] = Aggregate.from_etree(yld)
+            elem.remove(yld)
 
         super(MFINFO, self).__init__(elem, strict=strict)
 
-        # Staple MFASSETCLASS/FIMFASSETCLASS onto MFINFO
+        # Add back data previously stripped/mangled
         for attr, val in extra_attrs.items():
             setattr(self, attr, val)
 
@@ -295,6 +301,28 @@ class STOCKINFO(SECINFO):
     typedesc = String(32)
     assetclass = OneOf(*ASSETCLASSES)
     fiassetclass = String(32)
+
+    def __init__(self, elem, strict=True):
+        """
+        Rename 'yield' (Python reserved word) to 'yld'
+        """
+        extra_attrs = {}
+
+        # Do all XPath searches before removing nodes from the tree
+        #   which seems to mess up the DOM in Python3 and throw an
+        #   AttributeError on subsequent searches.
+        yld = elem.find('./YIELD')
+
+        if yld is not None:
+            # Rename; save for later
+            extra_attrs['yld'] = Aggregate.from_etree(yld)
+            elem.remove(yld)
+
+        super(STOCKINFO, self).__init__(elem, strict=strict)
+
+        # Add back data previously stripped/mangled
+        for attr, val in extra_attrs.items():
+            setattr(self, attr, val)
 
 
 # Transactions
