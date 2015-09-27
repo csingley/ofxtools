@@ -3,7 +3,19 @@
 
 <OFX>
     <SIGNONMSGSRSV1>
-            <SONRS>
+        <SONRS>
+            <STATUS>
+                <CODE>0</CODE>
+                <SEVERITY>INFO</SEVERITY>
+            </STATUS>
+            <DTSERVER>20051029101003</DTSERVER>
+            <LANGUAGE>ENG</LANGUAGE>
+            <DTPROFUP>19991029101003</DTPROFUP>
+            <DTACCTUP>20031029101003</DTACCTUP>
+            <FI>
+                <ORG>NCH</ORG>
+                <FID>1001</FID>
+            </FI>
         </SONRS>
     </SIGNONMSGSRSV1>
     <INVSTMTMSGSRSV1>
