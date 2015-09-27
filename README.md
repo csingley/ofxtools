@@ -123,3 +123,25 @@ website](http://www.sqlalchemy.org) or from
 >>> t = invtrans[0]
 >>> assert -t.units * t.unitprice - t.commission == t.total
 ```
+
+## Contributing
+
+If you want to contribute with this project, create a virtualenv and install
+all development requirements:
+
+    virtualenv .venv
+    source .venv/bin/activate
+    pip install -r requirements-development.txt
+
+
+Then, run the tests with `make`:
+
+    make test
+
+Or directly with `nosetests`:
+
+    nosetests -dsv --with-yanc --with-coverage --cover-package ofxtools
+
+Feel free to [create pull
+requests](https://help.github.com/articles/using-pull-requests/) on [ofxtools
+repository on GitHub](https://github.com/csingley/ofxtools).
