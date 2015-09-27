@@ -49,6 +49,10 @@ class Element(ET.Element):
         for key in aggs.keys():
             assert key not in leaves
         leaves.update(aggs)
+
+        yld = leaves.pop('yield', None)
+        if yld is not None:
+            leaves['yld'] = yld
         return leaves
 
 
