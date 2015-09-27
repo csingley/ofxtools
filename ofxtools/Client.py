@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # vim: set fileencoding=utf-8
-""" 
+"""
 Classes and functions implementing composing and transmitting OFX request,
 and receiving OFX responses in reply
 """
@@ -31,7 +31,7 @@ else:
 
 # local imports
 from ofxtools.header import OFXHeader
-from ofxtools.types import Bool, OneOf, DateTime 
+from ofxtools.types import Bool, OneOf, DateTime
 from ofxtools.utils import fixpath
 from ofxtools.models import ACCTTYPES
 
@@ -171,7 +171,7 @@ class OFXClient:
         self.url = url
         self.org = org
         self.fid = fid
-        # Defaults 
+        # Defaults
         if version:
             self.version = int(version)
         if appid:
@@ -302,7 +302,7 @@ def do_stmt(args):
     d = vars(args)
     # convert dtstart/dtend/dtasof from str to datetime
     kwargs = {k:DateTime.convert(v) for k,v in d.items() if k.startswith('dt')}
-    # inctrans/incpos/incbal 
+    # inctrans/incpos/incbal
     kwargs.update({k:v for k,v in d.items() if k.startswith('inc')})
 
     request = client.statement_request(args.user, password, accts, **kwargs)
@@ -346,7 +346,7 @@ def main():
     argparser = ArgumentParser(description='Download OFX financial data',
                                 epilog='FIs configured: %s' % config.fi_index)
     argparser.add_argument('server', help='OFX server - URL or FI name from config')
-    argparser.add_argument('-n', '--dry-run', action='store_true', 
+    argparser.add_argument('-n', '--dry-run', action='store_true',
                            default=False, help='display OFX request and exit')
 
     signon_group = argparser.add_argument_group(title='Signon Options')
@@ -368,11 +368,11 @@ def main():
     acct_group.add_argument('-i', '--investment', metavar='acct#', action='append', default=[])
 
     stmt_group = argparser.add_argument_group(title='Statement Options')
-    stmt_group.add_argument('-s', '--start', dest='dtstart', 
+    stmt_group.add_argument('-s', '--start', dest='dtstart',
                             help='(YYYYmmdd) Transactions list start date')
-    stmt_group.add_argument('-e', '--end', dest='dtend', 
+    stmt_group.add_argument('-e', '--end', dest='dtend',
                             help='(YYYYmmdd) Transactions list end date')
-    stmt_group.add_argument('-d', '--date', dest='dtasof', 
+    stmt_group.add_argument('-d', '--date', dest='dtasof',
                             help='(YYYYmmdd) As-of date for investment positions')
     stmt_group.add_argument('--no-transactions', dest='inctran',
                             action='store_false', default=True,

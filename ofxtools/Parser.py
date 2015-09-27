@@ -1,5 +1,5 @@
 # vim: set fileencoding=utf-8
-""" 
+"""
 Regex-based parser for OFXv1/v2 based on subclasses of ElemenTree from stdlib.
 """
 
@@ -49,11 +49,15 @@ class Element(ET.Element):
         for key in aggs.keys():
             assert key not in leaves
         leaves.update(aggs)
+
+        yld = leaves.pop('yield', None)
+        if yld is not None:
+            leaves['yld'] = yld
         return leaves
 
 
 class OFXTree(ET.ElementTree):
-    """ 
+    """
     OFX parse tree.
 
     Overrides ElementTree.ElementTree.parse() to validate and strip the
@@ -82,7 +86,7 @@ class OFXTree(ET.ElementTree):
 
 
 class TreeBuilder(ET.TreeBuilder):
-    """ 
+    """
     OFX parser.
 
     Overrides ElementTree.TreeBuilder.feed() with a regex-based parser that
@@ -157,5 +161,3 @@ class TreeBuilder(ET.TreeBuilder):
                 raise ParseError(err.message)
             else:
                 raise
-
-
