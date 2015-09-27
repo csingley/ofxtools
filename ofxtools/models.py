@@ -259,7 +259,7 @@ class MFINFO(SECINFO):
             elem.remove(fimfassetclass)
         if yld is not None:
             # Rename; save for later
-            extra_attrs['yld'] = Aggregate.from_etree(yld)
+            extra_attrs['yld'] = yld.text
             elem.remove(yld)
 
         super(MFINFO, self).__init__(elem, strict=strict)
@@ -315,7 +315,7 @@ class STOCKINFO(SECINFO):
 
         if yld is not None:
             # Rename; save for later
-            extra_attrs['yld'] = Aggregate.from_etree(yld)
+            extra_attrs['yld'] = yld.text
             elem.remove(yld)
 
         super(STOCKINFO, self).__init__(elem, strict=strict)
