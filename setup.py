@@ -3,7 +3,7 @@ import os.path
 
 # Get the long description from the relevant file
 __here__ = os.path.dirname(os.path.realpath(__file__))
-with open(os.path.join(__here__, 'README'), 'r') as f:
+with open(os.path.join(__here__, 'README.md'), 'r') as f:
     long_description = f.read()
 
 setup(
