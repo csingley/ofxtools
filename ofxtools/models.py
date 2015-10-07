@@ -39,10 +39,7 @@ class Aggregate(object):
     per the OFX specification, they are represented here by their own Python
     classes other than Aggregate.
     """
-    def __init__(self, elem, strict=True):
-        assert strict in (True, False)
-        self.strict = strict
-
+    def __init__(self, elem):
         assert elem.tag == self.__class__.__name__
         attributes = elem._flatten()
 
@@ -65,13 +62,13 @@ class Aggregate(object):
         return d
 
     @staticmethod
-    def from_etree(elem, strict=True):
+    def from_etree(elem):
         """
         Look up the Aggregate subclass for a given ofx.Parser.Element and
         feed it the Element to instantiate the Aggregate instance.
         """
         SubClass = globals()[elem.tag]
-        instance = SubClass(elem, strict=strict)
+        instance = SubClass(elem)
         return instance
 
     def __repr__(self):
@@ -111,7 +108,7 @@ class CURRENCY(Aggregate):
 class ORIGCURRENCY(CURRENCY):
     curtype = OneOf('CURRENCY', 'ORIGCURRENCY')
 
-    def __init__(self, elem, strict=True):
+    def __init__(self, elem):
         """
         See OFX spec section 5.2 for currency handling conventions.
         Flattening the currency definition leaves only the CURRATE/CURSYM
@@ -120,7 +117,7 @@ class ORIGCURRENCY(CURRENCY):
         important to interpreting transactions in foreign correncies, we
         preserve this information by adding a nonstandard curtype element.
         """
-        super(ORIGCURRENCY, self).__init__(elem, strict=strict)
+        super(ORIGCURRENCY, self).__init__(elem)
 
         currency = elem.find('*/CURRENCY')
         origcurrency = elem.find('*/ORIGCURRENCY')
@@ -235,7 +232,7 @@ class MFINFO(SECINFO):
     mfassetclass = []
     fimfassetclass = []
 
-    def __init__(self, elem, strict=True):
+    def __init__(self, elem):
         """
         Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up _flatten()
         Rename 'yield' (Python reserved word) to 'yld'
@@ -262,7 +259,7 @@ class MFINFO(SECINFO):
             extra_attrs['yld'] = yld.text
             elem.remove(yld)
 
-        super(MFINFO, self).__init__(elem, strict=strict)
+        super(MFINFO, self).__init__(elem)
 
         # Add back data previously stripped/mangled
         for attr, val in extra_attrs.items():
@@ -302,7 +299,7 @@ class STOCKINFO(SECINFO):
     assetclass = OneOf(*ASSETCLASSES)
     fiassetclass = String(32)
 
-    def __init__(self, elem, strict=True):
+    def __init__(self, elem):
         """
         Rename 'yield' (Python reserved word) to 'yld'
         """
@@ -318,7 +315,7 @@ class STOCKINFO(SECINFO):
             extra_attrs['yld'] = yld.text
             elem.remove(yld)
 
-        super(STOCKINFO, self).__init__(elem, strict=strict)
+        super(STOCKINFO, self).__init__(elem)
 
         # Add back data previously stripped/mangled
         for attr, val in extra_attrs.items():

@@ -25,11 +25,10 @@ class Element(object):
     def __init__(self, *args, **kwargs):
         # All instances of an Aggregate subclass share the same Element
         # instance, so we have to have to handle the instance accounting
-        # here in the self.data dictionary.  We use WeakKeyDictionary
-        # to facilitate memory garbage collection.
+        # here in the self.data dictionary.
+        # We use WeakKeyDictionary to facilitate memory garbage collection.
         self.data = WeakKeyDictionary()
         self.required = kwargs.pop('required', False)
-        self.strict = kwargs.pop('strict', True)
         self._init(*args, **kwargs)
 
     def _init(self, *args, **kwargs):
@@ -38,7 +37,7 @@ class Element(object):
             raise ValueError("Unknown args for '%s'- args: %r; kwargs: %r"
                             % (self.__class__.__name__, args, kwargs))
 
-    def convert(self, value, strict=True):
+    def convert(self, value):
         """ Override in subclass """
         raise NotImplementedError
 
@@ -47,22 +46,32 @@ class Element(object):
 
     def __set__(self, instance, value):
         """ Perform validation and type conversion before setting value """
-        value = self.convert(value, strict=self.strict)
+        value = self.convert(value)
         self.data[instance] = value
 
 
 class Bool(Element):
     mapping = {'Y': True, 'N': False}
 
-    def convert(self, value, strict=True):
+    def convert(self, value):
         if value is None and not self.required:
             return None
-        return self.mapping[value]
+        try:
+            return self.mapping[value]
+        except KeyError as e:
+            raise ValueError("Value must be in %s, not %s" % (
+                self.mapping.keys(), e.message)
+            )
 
     def unconvert(self, value):
         if value is None and not self.required:
             return None
-        return {v:k for k,v in self.mapping.items()}[value]
+        try:
+            return {v:k for k,v in self.mapping.items()}[value]
+        except KeyError as e:
+            raise ValueError("Value must be in %s, not %s" % (
+                self.mapping.keys(), e.message)
+            )
 
 
 class String(Element):
@@ -74,10 +83,10 @@ class String(Element):
         self.length = length
         super(String, self)._init(*args, **kwargs)
 
-    def convert(self, value, strict=True):
+    def convert(self, value):
         if value is None and not self.required:
             return None
-        if strict and self.length is not None and len(value) > self.length:
+        if self.length is not None and len(value) > self.length:
             raise ValueError("'%s' is too long; max length=%s" % (value, self.length))
         return str(value)
 
@@ -87,7 +96,7 @@ class OneOf(Element):
         self.valid = set(args)
         super(OneOf, self)._init(**kwargs)
 
-    def convert(self, value, strict=True):
+    def convert(self, value):
         if value is None and not self.required:
             return None
         if (value in self.valid):
@@ -104,7 +113,7 @@ class Integer(Element):
         self.length = length
         super(Integer, self)._init(*args, **kwargs)
 
-    def convert(self, value, strict=True):
+    def convert(self, value):
         if value is None and not self.required:
             return None
         value = int(value)
@@ -122,7 +131,7 @@ class Decimal(Element):
         self.precision = decimal.Decimal('0.' + '0'*(precision-1) + '1')
         super(Decimal, self)._init(*args, **kwargs)
 
-    def convert(self, value, strict=True):
+    def convert(self, value):
         if value is None and not self.required:
             return None
 
@@ -148,7 +157,7 @@ class DateTime(Element):
     }
 
     @classmethod
-    def convert(cls, value, strict=True):
+    def convert(cls, value):
         # If it's a datetime or None, don't touch it.
         if isinstance(value, datetime.datetime) or value is None:
             return value

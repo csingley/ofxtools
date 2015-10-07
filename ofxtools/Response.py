@@ -19,19 +19,16 @@ class OFXResponse(object):
     After conversion, each of these convenience attributes holds instances
     of various Aggregate subclasses.
     """
-    def __init__(self, tree, strict=True):
+    def __init__(self, tree):
         """
         Initialize with ofx.ElementTree instance containing parsed OFX.
-
-        The strict argument determines whether to throw an error for certain
-        OFX data validation violations.
         """
         # Keep a copy of the parse tree
         self.tree = tree
 
         # SONRS - server response to signon request
         sonrs = self.tree.find('SIGNONMSGSRSV1/SONRS')
-        self.sonrs = Aggregate.from_etree(sonrs, strict=strict)
+        self.sonrs = Aggregate.from_etree(sonrs)
 
         # TRNRS - transaction response, which is the main section
         # containing account statements
@@ -58,7 +55,7 @@ class OFXResponse(object):
         if seclist is None:
             return
         for sec in seclist:
-            self.securities.append(Aggregate.from_etree(sec, strict=strict))
+            self.securities.append(Aggregate.from_etree(sec))
 
     def __repr__(self):
         s = "<%s fid='%s' org='%s' dtserver='%s' len(statements)=%d len(securities)=%d>"
