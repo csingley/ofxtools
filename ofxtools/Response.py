@@ -162,7 +162,7 @@ class InvestmentStatement(Statement):
 
     def _init(self, invstmtrs):
         dtasof = invstmtrs.find('DTASOF').text
-        self.datetime = DateTime.convert(dtasof)
+        self.datetime = DateTime().convert(dtasof)
 
         # INVTRANLIST
         tranlist = invstmtrs.find('INVTRANLIST')
@@ -223,8 +223,8 @@ class TransactionList(list):
         # Initialize with *TRANLIST Element
         dtstart, dtend = tranlist[0:2]
         tranlist = tranlist[2:]
-        self.dtstart = DateTime.convert(dtstart.text)
-        self.dtend = DateTime.convert(dtend.text)
+        self.dtstart = DateTime().convert(dtstart.text)
+        self.dtend = DateTime().convert(dtend.text)
         self.extend([Aggregate.from_etree(tran) for tran in tranlist])
 
     def __repr__(self):

@@ -54,8 +54,11 @@ class Bool(Element):
     mapping = {'Y': True, 'N': False}
 
     def convert(self, value):
-        if value is None and not self.required:
-            return None
+        if value is None:
+            if self.required:
+                raise ValueError("Value is required")
+            else:
+                return None
         try:
             return self.mapping[value]
         except KeyError as e:
@@ -64,8 +67,13 @@ class Bool(Element):
             )
 
     def unconvert(self, value):
-        if value is None and not self.required:
+        if value is None:
             return None
+        if not isinstance(value, bool):
+            raise ValueError("Value must be in %s, not %s" % (
+                self.mapping.keys(), value)
+            )
+
         try:
             return {v:k for k,v in self.mapping.items()}[value]
         except KeyError as e:
@@ -84,7 +92,9 @@ class String(Element):
         super(String, self)._init(*args, **kwargs)
 
     def convert(self, value):
-        if value in (None, ''):
+        if value == '':
+            value = None
+        if value is None:
             if self.required:
                 raise ValueError("Value is required")
             else:
@@ -100,8 +110,13 @@ class OneOf(Element):
         super(OneOf, self)._init(**kwargs)
 
     def convert(self, value):
-        if value in (None, '') and not self.required:
-            return None
+        if value == '':
+            value = None
+        if value is None:
+            if self.required:
+                raise ValueError("Value is required")
+            else:
+                return None
         if value in self.valid:
             return value
         raise ValueError("'%s' is not OneOf %r" % (value, self.valid))
@@ -164,12 +179,14 @@ class DateTime(Element):
         18: '%Y%m%d%H%M%S.%f', 14: '%Y%m%d%H%M%S', 12: '%Y%m%d%H%M', 8: '%Y%m%d'
     }
 
-    # @@FIXME - using class method instead of instance method means that
-    # setting 'required' attribute on instance has no effect
-    @classmethod
-    def convert(cls, value):
-        # If it's a datetime or None, don't touch it.
-        if isinstance(value, datetime.datetime) or value is None:
+    def convert(self, value):
+        if value is None:
+            if self.required:
+                raise ValueError("Value is required")
+            else:
+                return None
+        # If it's a datetime, don't touch it.
+        if isinstance(value, datetime.datetime):
             return value
         # If it's a date, convert it to datetime (using midnight as the time)
         elif isinstance(value, datetime.date):
@@ -179,7 +196,7 @@ class DateTime(Element):
         orig_value = value
 
         # Strip out timezone, on which strptime() chokes
-        chunks = cls.tz_re.split(value)
+        chunks = self.tz_re.split(value)
         value = chunks.pop(0)
         if chunks:
             gmt_offset, tz_name = chunks[:2]
@@ -190,7 +207,7 @@ class DateTime(Element):
         else:
             gmt_offset = 0
 
-        format = cls.formats[len(value)]
+        format = self.formats[len(value)]
 
         # OFX spec gives fractional seconds as milliseconds; convert to
         # microseconds as required by strptime()
@@ -201,14 +218,13 @@ class DateTime(Element):
             value = datetime.datetime.strptime(value, format)
         except ValueError:
             raise ValueError("Datetime '%s' does not match OFX formats %s" %
-                            (orig_value, cls.formats.values()))
+                            (orig_value, self.formats.values()))
 
         # Adjust timezone to GMT
         value -= datetime.timedelta(seconds=gmt_offset)
         return value
 
-    @classmethod
-    def unconvert(cls, value):
+    def unconvert(self, value):
         """
         Input datetime.date or datetime.datetime in local time; output str in GMT.
         """
@@ -218,4 +234,4 @@ class DateTime(Element):
         # Transform to GMT
         gmt_value = time.gmtime(time.mktime(value.timetuple()))
         # timetuples don't have usec precision
-        return time.strftime(cls.formats[14], gmt_value)
+        return time.strftime(self.formats[14], gmt_value)

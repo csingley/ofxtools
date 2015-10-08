@@ -293,7 +293,7 @@ class InvestmentStatement(Statement):
 
     def _init(self, invstmtrs):
         dtasof = invstmtrs.find('DTASOF').text
-        self.datetime = ofxtools.types.DateTime.convert(dtasof)
+        self.datetime = ofxtools.types.DateTime().convert(dtasof)
 
         # INVTRANLIST
         tranlist = invstmtrs.find('INVTRANLIST')
@@ -383,8 +383,8 @@ class TransactionList(list):
         self.account = account
         dtstart, dtend = tranlist[0:2]
         tranlist = tranlist[2:]
-        self.dtstart = ofxtools.types.DateTime.convert(dtstart.text)
-        self.dtend = ofxtools.types.DateTime.convert(dtend.text)
+        self.dtstart = ofxtools.types.DateTime().convert(dtstart.text)
+        self.dtend = ofxtools.types.DateTime().convert(dtend.text)
         self.extend([self.etree_to_sql(tran) for tran in tranlist])
 
     def etree_to_sql(self, tran):

@@ -88,9 +88,9 @@ class BankAcct(object):
         """ """
         tran = ET.Element('INCTRAN')
         if dtstart:
-            ET.SubElement(tran, 'DTSTART').text = DateTime.unconvert(dtstart)
+            ET.SubElement(tran, 'DTSTART').text = DateTime().unconvert(dtstart)
         if dtend:
-            ET.SubElement(tran, 'DTEND').text = DateTime.unconvert(dtend)
+            ET.SubElement(tran, 'DTEND').text = DateTime().unconvert(dtend)
         ET.SubElement(tran, 'INCLUDE').text = Bool().unconvert(inctran)
         return tran
 
@@ -146,7 +146,7 @@ class InvAcct(BankAcct):
     def incpos(self, dtasof, incpos):
         pos = ET.Element('INCPOS')
         if dtasof:
-            ET.SubElement(pos, 'DTASOF').text = DateTime.unconvert(dtasof)
+            ET.SubElement(pos, 'DTASOF').text = DateTime().unconvert(dtasof)
         ET.SubElement(pos, 'INCLUDE').text = Bool().unconvert(incpos)
         return pos
 
@@ -187,7 +187,7 @@ class OFXClient:
     def signon(self, user, password):
         msgsrq = ET.Element('SIGNONMSGSRQV1')
         sonrq = ET.SubElement(msgsrq, 'SONRQ')
-        ET.SubElement(sonrq, 'DTCLIENT').text = DateTime.unconvert(datetime.datetime.now())
+        ET.SubElement(sonrq, 'DTCLIENT').text = DateTime().unconvert(datetime.datetime.now())
         ET.SubElement(sonrq, 'USERID').text = user
         ET.SubElement(sonrq, 'USERPASS').text = password
         ET.SubElement(sonrq, 'LANGUAGE').text = 'ENG'
@@ -233,7 +233,7 @@ class OFXClient:
         msgsrq = ET.SubElement(ofx, 'PROFMSGSRQV1')
         profrq = ET.Element('PROFRQ')
         ET.SubElement(profrq, 'CLIENTROUTING').text = 'NONE'
-        ET.SubElement(profrq, 'DTPROFUP').text = DateTime.unconvert(datetime.date(1990,1,1))
+        ET.SubElement(profrq, 'DTPROFUP').text = DateTime().unconvert(datetime.date(1990,1,1))
         msgsrq.append(self._wraptrn(profrq))
         return ofx
 
@@ -301,7 +301,7 @@ def do_stmt(args):
     # Statement parameters
     d = vars(args)
     # convert dtstart/dtend/dtasof from str to datetime
-    kwargs = {k:DateTime.convert(v) for k,v in d.items() if k.startswith('dt')}
+    kwargs = {k:DateTime().convert(v) for k,v in d.items() if k.startswith('dt')}
     # inctrans/incpos/incbal
     kwargs.update({k:v for k,v in d.items() if k.startswith('inc')})
 
