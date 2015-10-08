@@ -84,8 +84,11 @@ class String(Element):
         super(String, self)._init(*args, **kwargs)
 
     def convert(self, value):
-        if value is None and not self.required:
-            return None
+        if value in (None, ''):
+            if self.required:
+                raise ValueError("Value is required")
+            else:
+                return None
         if self.length is not None and len(value) > self.length:
             raise ValueError("'%s' is too long; max length=%s" % (value, self.length))
         return str(value)
@@ -97,9 +100,9 @@ class OneOf(Element):
         super(OneOf, self)._init(**kwargs)
 
     def convert(self, value):
-        if value is None and not self.required:
+        if value in (None, '') and not self.required:
             return None
-        if (value in self.valid):
+        if value in self.valid:
             return value
         raise ValueError("'%s' is not OneOf %r" % (value, self.valid))
 
@@ -114,8 +117,11 @@ class Integer(Element):
         super(Integer, self)._init(*args, **kwargs)
 
     def convert(self, value):
-        if value is None and not self.required:
-            return None
+        if value is None:
+            if self.required:
+                raise ValueError("Value is required")
+            else:
+                return None
         value = int(value)
         if self.length is not None and value >= 10**self.length:
             raise ValueError('%s has too many digits; max digits=%s' % (value, self.length))
@@ -132,8 +138,11 @@ class Decimal(Element):
         super(Decimal, self)._init(*args, **kwargs)
 
     def convert(self, value):
-        if value is None and not self.required:
-            return None
+        if value is None:
+            if self.required:
+                raise ValueError("Value is required")
+            else:
+                return None
 
         # Handle Euro-style decimal separators (comma)
         try:
@@ -144,8 +153,7 @@ class Decimal(Element):
             else:
                 raise
 
-        value.quantize(self.precision)
-        return value
+        return value.quantize(self.precision)
 
 
 class DateTime(Element):
@@ -156,6 +164,8 @@ class DateTime(Element):
         18: '%Y%m%d%H%M%S.%f', 14: '%Y%m%d%H%M%S', 12: '%Y%m%d%H%M', 8: '%Y%m%d'
     }
 
+    # @@FIXME - using class method instead of instance method means that
+    # setting 'required' attribute on instance has no effect
     @classmethod
     def convert(cls, value):
         # If it's a datetime or None, don't touch it.
@@ -179,7 +189,14 @@ class DateTime(Element):
             gmt_offset = int(decimal.Decimal(gmt_offset)*3600) # hours -> seconds
         else:
             gmt_offset = 0
+
         format = cls.formats[len(value)]
+
+        # OFX spec gives fractional seconds as milliseconds; convert to
+        # microseconds as required by strptime()
+        if len(value) == 18:
+            value = value.replace('.', '.000')
+
         try:
             value = datetime.datetime.strptime(value, format)
         except ValueError:
