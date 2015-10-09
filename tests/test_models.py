@@ -477,18 +477,18 @@ class ModelTestCase(unittest.TestCase):
         optinfo = seclist[2]
 
         # Test missing required elements
-        #c = deepcopy(optinfo)
-        #secid = c[0][0]
-        #secid.remove(secid[0]) # uniqueid
-        #with self.assertRaises(ValueError):
-            #Aggregate.from_etree(c)
+        c = deepcopy(optinfo)
+        secid = c[0][0]
+        secid.remove(secid[0]) # uniqueid
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(c)
 
         # @@FIXME - we don't handle two <SECID> aggregates within <OPTINFO>
-        #c = deepcopy(optinfo)
-        #secid = c[0][0]
-        #secid.remove(secid[1]) # uniqueidtype
-        #with self.assertRaises(ValueError):
-            #Aggregate.from_etree(c)
+        c = deepcopy(optinfo)
+        secid = c[0][0]
+        secid.remove(secid[1]) # uniqueidtype
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(c)
 
         c = deepcopy(optinfo)
         secinfo = c[0]
@@ -526,8 +526,8 @@ class ModelTestCase(unittest.TestCase):
         # Aggregate instance attributes with the result
         optinfo = Aggregate.from_etree(optinfo)
         # @@FIXME - we don't handle two <SECID> aggregates within <OPTINFO>
-        #self.assertEqual(optinfo.uniqueid, '000342222')
-        #self.assertEqual(optinfo.uniqueidtype, 'CUSIP')
+        self.assertEqual(optinfo.uniqueid, '000342222')
+        self.assertEqual(optinfo.uniqueidtype, 'CUSIP')
         self.assertEqual(optinfo.secname , 'Lucky Airlines Jan 97 Put')
         self.assertEqual(optinfo.ticker, 'LUAXX')
         self.assertEqual(optinfo.fiid, '0013')
