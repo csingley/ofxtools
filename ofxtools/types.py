@@ -164,9 +164,13 @@ class Decimal(Element):
             value = decimal.Decimal(value)
         except decimal.InvalidOperation:
             if isinstance(value, basestring):
-                value = decimal.Decimal(value.replace(',', '.'))
+                try:
+                    value = decimal.Decimal(value.replace(',', '.'))
+                except decimal.InvalidOperation:
+                    raise ValueError("'%s' can't be converted to Decimal" %
+                                     value)
             else:
-                raise
+                raise ValueError("'%s' can't be converted to Decimal" % value)
 
         return value.quantize(self.precision)
 
