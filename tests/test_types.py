@@ -73,11 +73,13 @@ class OneOfTestCase(unittest.TestCase, Base):
     type_ = ofxtools.types.OneOf
 
     def test_convert(self):
-        t = self.type_('A', 'B')
-        self.assertEqual('A', t.convert('A'))
-        self.assertEqual('B', t.convert('B'))
+        t = self.type_('1', '2')
+        self.assertEqual('1', t.convert('1'))
+        self.assertEqual('2', t.convert('2'))
         with self.assertRaises(ValueError):
-            t.convert('C')
+            t.convert('3')
+        with self.assertRaises(ValueError):
+            t.convert(1)
 
 
 class IntegerTestCase(unittest.TestCase, Base):
@@ -94,6 +96,12 @@ class IntegerTestCase(unittest.TestCase, Base):
         self.assertEqual(1, t.convert('1'))
         with self.assertRaises(ValueError):
             t.convert('100')
+
+    def test_illegal(self):
+        t = self.type_()
+        # Don't accept strings that can't be converted to int
+        with self.assertRaises(ValueError):
+            t.convert('foobar')
 
 
 class DecimalTestCase(unittest.TestCase, Base):
@@ -118,6 +126,12 @@ class DecimalTestCase(unittest.TestCase, Base):
     def test_euro_decimal_separator(self):
         t = self.type_()
         self.assertEqual(decimal.Decimal('1.23'), t.convert('1,23'))
+
+    def test_illegal(self):
+        t = self.type_()
+        # Don't accept strings that can't be converted to Decimal
+        with self.assertRaises(ValueError):
+            t.convert('foobar')
 
 
 class DateTimeTestCase(unittest.TestCase, Base):
@@ -145,4 +159,11 @@ class DateTimeTestCase(unittest.TestCase, Base):
         check = datetime.datetime(2011, 11, 17, 3, 30, 45, 150)
         self.assertEqual(check, t.convert('20111117033045.150'))
 
-
+    def test_illegal(self):
+        t = self.type_()
+        # Don't accept string
+        with self.assertRaises(ValueError):
+            t.convert('2015-10-29')
+        # Don't accept integer
+        with self.assertRaises(ValueError):
+            t.convert(123)
