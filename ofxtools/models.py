@@ -281,6 +281,31 @@ class OPTINFO(SECINFO):
     assetclass = OneOf(*ASSETCLASSES)
     fiassetclass = String(32)
 
+    def __init__(self, elem):
+        """
+        Strip SECID of underlying so it doesn't overwrite SECID of option
+        during _flatten()
+        """
+        # Do all XPath searches before removing nodes from the tree
+        #   which seems to mess up the DOM in Python3 and throw an
+        #   AttributeError on subsequent searches.
+        secid = elem.find('./SECID')
+
+        if secid is not None:
+            # A <SECID> aggregate referring to the security underlying the
+            # option is, in general, *not* going to be contained in <SECLIST>
+            # (because you don't necessarily have a position in the underlying).
+            # Since the <SECID> for the underlying only gives us fields for
+            # (uniqueidtype, uniqueid) we can't really go ahead and use this
+            # information to create a corresponding SECINFO instance (since we
+            # lack information about the security subclass).  It's unclear that
+            # the SECID of the underlying is really needed for anything, so we
+            # disregard it.
+            # Convert PORTIONs; save for later
+            elem.remove(secid)
+
+        super(OPTINFO, self).__init__(elem)
+
 
 class OTHERINFO(SECINFO):
     typedesc = String(32)
