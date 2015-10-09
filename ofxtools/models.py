@@ -45,9 +45,6 @@ class Aggregate(object):
 
         for name, element in self.elements.items():
             value = attributes.pop(name, None)
-            if element.required and value is None:
-                raise ValueError("'%s' attribute is required for %s"
-                                % (name, self.__class__.__name__))
             setattr(self, name, value)
         if attributes:
             raise ValueError("Undefined element(s) for '%s': %s"
