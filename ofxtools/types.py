@@ -192,6 +192,11 @@ class DateTime(Element):
         elif isinstance(value, datetime.date):
             return datetime.datetime.combine(value, datetime.time())
 
+        # By this point, if it's not a string something's wrong
+        if not isinstance(value, str):
+            raise ValueError("'%s' is type '%s'; can't convert to datetime" %
+                            (value, type(value)))
+
         # Pristine copy of input for error reporting purposes
         orig_value = value
 
@@ -207,7 +212,11 @@ class DateTime(Element):
         else:
             gmt_offset = 0
 
-        format = self.formats[len(value)]
+        try:
+            format = self.formats[len(value)]
+        except KeyError:
+            raise ValueError("Datetime '%s' does not match OFX formats %s" %
+                            (orig_value, self.formats.values()))
 
         # OFX spec gives fractional seconds as milliseconds; convert to
         # microseconds as required by strptime()
