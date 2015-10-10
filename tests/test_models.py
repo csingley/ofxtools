@@ -525,7 +525,6 @@ class ModelTestCase(unittest.TestCase):
         # Make sure Aggregate.from_etree() calls Element.convert() and sets
         # Aggregate instance attributes with the result
         optinfo = Aggregate.from_etree(optinfo)
-        # @@FIXME - we don't handle two <SECID> aggregates within <OPTINFO>
         self.assertEqual(optinfo.uniqueid, '000342222')
         self.assertEqual(optinfo.uniqueidtype, 'CUSIP')
         self.assertEqual(optinfo.secname , 'Lucky Airlines Jan 97 Put')

@@ -301,7 +301,6 @@ class OPTINFO(SECINFO):
             # lack information about the security subclass).  It's unclear that
             # the SECID of the underlying is really needed for anything, so we
             # disregard it.
-            # Convert PORTIONs; save for later
             elem.remove(secid)
 
         super(OPTINFO, self).__init__(elem)
