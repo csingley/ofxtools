@@ -1,2 +1,2 @@
-from Client import OFXClient
-from Parser import OFXTree
+from ofxtools.Client import OFXClient
+from ofxtools.Parser import OFXTree
