@@ -20,6 +20,18 @@ class ParseError(SyntaxError):
 
 class Element(ET.Element):
     """ Parse tree node """
+    def makeelement(self, tag, attrib):
+        """Create a new element with the same type.
+
+        *tag* is a string containing the element name.
+        *attrib* is a dictionary containing the element attributes.
+
+        Override xml.etree.ElementTree.Element.makeelement() in order to
+        make it actually return an instance of our custom Element subclass.
+
+        """
+        return self.__class__(tag, attrib)
+
     def _flatten(self):
         """
         Recurse through aggregate and flatten; return an un-nested dict.
@@ -51,6 +63,28 @@ class Element(ET.Element):
         leaves.update(aggs)
 
         return leaves
+
+
+def SubElement(parent, tag, attrib={}, **extra):
+    """Subelement factory which creates an element instance, and appends it
+    to an existing parent.
+
+    The element tag, attribute names, and attribute values can be either
+    bytes or Unicode strings.
+
+    *parent* is the parent element, *tag* is the subelements name, *attrib* is
+    an optional directory containing element attributes, *extra* are
+    additional attributes given as keyword arguments.
+
+    Override xml.etree.ElementTree.SubElement() in order to make it actually
+    return an instance of our custom Element subclass.
+
+    """
+    attrib = attrib.copy()
+    attrib.update(extra)
+    element = parent.makeelement(tag, attrib)
+    parent.append(element)
+    return element
 
 
 class OFXTree(ET.ElementTree):

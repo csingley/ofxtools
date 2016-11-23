@@ -62,23 +62,23 @@ class Bool(Element):
         try:
             return self.mapping[value]
         except KeyError as e:
-            raise ValueError("Value must be in %s, not %s" % (
-                self.mapping.keys(), e.message)
+            raise ValueError("%s is not one of the allowed values %s" % (
+                e.args[0], self.mapping.keys(), )
             )
 
     def unconvert(self, value):
         if value is None:
             return None
         if not isinstance(value, bool):
-            raise ValueError("Value must be in %s, not %s" % (
-                self.mapping.keys(), value)
+            raise ValueError("%s is not one of the allowed values %s" % (
+                value, self.mapping.keys(), )
             )
 
         try:
             return {v:k for k,v in self.mapping.items()}[value]
         except KeyError as e:
-            raise ValueError("Value must be in %s, not %s" % (
-                self.mapping.keys(), e.message)
+            raise ValueError("%s is not one of the allowed values %s" % (
+                e.args[0], self.mapping.keys(), )
             )
 
 
@@ -163,7 +163,7 @@ class Decimal(Element):
         try:
             value = decimal.Decimal(value)
         except decimal.InvalidOperation:
-            if isinstance(value, basestring):
+            if isinstance(value, str):
                 try:
                     value = decimal.Decimal(value.replace(',', '.'))
                 except decimal.InvalidOperation:

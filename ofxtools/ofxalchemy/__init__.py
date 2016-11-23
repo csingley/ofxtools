@@ -1,8 +1,5 @@
-import models
-from models import (
+from ofxtools.ofxalchemy.models import (
     DBSession,
     Base
     )
-import Parser
-from Parser import OFXTree as OFXParser
-import types
+from ofxtools.ofxalchemy.Parser import OFXTree as OFXParser

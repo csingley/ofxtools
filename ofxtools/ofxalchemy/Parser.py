@@ -10,6 +10,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 # local imports
 import ofxtools
+from ofxtools.Parser import SubElement
 from ofxtools.ofxalchemy import models
 from ofxtools.ofxalchemy.models import DBSession
 
@@ -44,7 +45,9 @@ class Element(ofxtools.Parser.Element):
             if curtype is None:
                 curtype = origcurrency
             if (curtype is not None):
-                self.extra_attributes['curtype'] = curtype.tag
+                extra_attributes = self.get('extra_attributes')
+                extra_attributes['curtype'] = curtype.tag
+                self.set('extra_attributes', extra_attributes)
 
     def _preflatten(self):
         if self.tag == 'OPTINFO':
@@ -83,7 +86,9 @@ class Element(ofxtools.Parser.Element):
             if secid is None:
                 msg = '<%s> does not contain <SECID>'
                 raise ofxtools.Parser.ParseError(msg)
-            self.extra_attributes['secinfo'] = secid._dereference()
+            extra_attributes = self.get('extra_attributes')
+            extra_attributes['secinfo'] = secid._dereference()
+            self.set('extra_attributes', extra_attributes)
 
         elif self.tag in ('STMTTRN', 'INVBANKTRAN'):
             # Replace BANKACCTTO/CCACCTTO/PAYEE with FK references.  This is
@@ -102,14 +107,20 @@ class Element(ofxtools.Parser.Element):
             self._do_origcurrency()
 
             if bankacctto is not None:
-                self.extra_attributes['acctto'] = bankacctto._dereference()
+                extra_attributes = self.get('extra_attributes')
+                extra_attributes['acctto'] = bankacctto._dereference()
+                self.set('extra_attributes', extra_attributes)
             if ccacctto is not None:
-                self.extra_attributes['acctto'] = ccacctto._dereference()
+                extra_attributes = self.get('extra_attributes')
+                extra_attributes['acctto'] = ccacctto._dereference()
+                self.set('extra_attributes', extra_attributes)
             if (bankacctto is not None) and (ccacctto is not None):
                 msg = '<%s> may not contain both <BANKACCTTO> and <CCACCTTO>' % self.tag
                 raise ofxtools.Parser.ParseError(msg)
             if payee is not None:
-                self.extra_attributes['payee'] = payee._dereference()
+                extra_attributes = self.get('extra_attributes')
+                extra_attributes['payee'] = payee._dereference()
+                self.set('extra_attributes', extra_attributes)
 
         elif self.find('.//INVTRAN') is not None:
             # Do all XPath searches before removing nodes from the tree
@@ -119,13 +130,17 @@ class Element(ofxtools.Parser.Element):
 
             secid = self.find('.//SECID')
             if secid is not None:
-                self.extra_attributes['secinfo'] = secid._dereference()
+                extra_attributes = self.get('extra_attributes')
+                extra_attributes['secinfo'] = secid._dereference()
+                self.set('extra_attributes', extra_attributes)
 
     def _postflatten(self):
         # Rename 'yield' (a reserved word in Python) to 'yld'
-        yld = self.attributes.pop('yield', None)
+        attributes = self.get('attributes')
+        yld = attributes.pop('yield', None)
         if yld:
-            self.attributes['yld'] = yld
+            attributes['yld'] = yld
+            self.set('attributes', attributes)
 
     def instantiate(self, **extra_attrs):
         """
@@ -135,23 +150,30 @@ class Element(ofxtools.Parser.Element):
         If an instance that matches the given primary key signature has
         already been given, return that instead of creating a new one.
         """
-        self.extra_attributes = extra_attrs
+        self.set('extra_attributes', extra_attrs)
+
         # SECID needs to instantiate as SECINFO
         if self.tag == 'SECID':
             SubClass = models.SECINFO
         else:
             SubClass = getattr(models, self.tag)
         self._preflatten()
-        self.attributes = self._flatten()
+        flatattrs = self._flatten()
+        self.set('attributes', flatattrs)
+
         self._postflatten()
-        self.attributes.update(self.extra_attributes)
-        self.extra_attributes = {}
+        # Combine extra_attributes into attributes
+        attributes = self.get('attributes')
+        attributes.update(self.get('extra_attributes'))
+        self.set('attributes', attributes)
+        self.set('extra_attributes', {})
 
         try:
-            fingerprint = SubClass._fingerprint(**self.attributes)
+            fingerprint = SubClass._fingerprint(**attributes)
             instance = DBSession.query(SubClass).filter_by(**fingerprint).one()
         except NoResultFound:
-            instance = SubClass(**self.attributes)
+            attributes = self.get('attributes')
+            instance = SubClass(**attributes)
             DBSession.add(instance)
 
         return instance
