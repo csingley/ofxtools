@@ -50,3 +50,7 @@ class AlchemyTestCase(unittest.TestCase):
         filename = 'tests/data/invstmtrs.ofx'
         ofx_to_database(filename)
         # TODO: test the created database
+
+
+if __name__=='__main__':
+    unittest.main()

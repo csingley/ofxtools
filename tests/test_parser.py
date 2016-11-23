@@ -1,19 +1,20 @@
 # coding: utf-8
 
+# stdlib imports
 import unittest
+import datetime as dt
 
+# local imports
 import ofxtools
-from ofxtools.Parser import OFXTree
 
 
 def ofx_parse(filename):
-    tree = OFXTree()
+    tree = ofxtools.Parser.OFXTree()
     tree.parse(filename)
     return tree.convert()
 
 
 class ParserTestCase(unittest.TestCase):
-
     def assert_result(self, result):
         expected_attributes = ['securities', 'sonrs', 'statements', 'tree']
         result_attributes = dir(result)
@@ -36,7 +37,6 @@ class ParserTestCase(unittest.TestCase):
         filename = 'tests/data/invstmtrs.ofx'
         result = ofx_parse(filename)
         self.assert_result(result)
-        # TODO: do something with 'result'
 
 
 with open('tests/data/stmtrs.ofx') as f:
