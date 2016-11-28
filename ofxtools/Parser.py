@@ -91,7 +91,8 @@ class OFXTree(ET.ElementTree):
     def parse(self, source):
         if not hasattr(source, 'read'):
             source = open(source)
-        source = source.read()
+        with source as s:
+            source = s.read()
 
         # Validate and strip the OFX header
         source = OFXHeader.strip(source)
