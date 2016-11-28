@@ -3,6 +3,8 @@
 # stdlib imports
 import re
 
+# local imports
+from ofxtools import types
 
 class OFXHeaderError(SyntaxError):
     """ Exception raised by parsing errors in this module """
@@ -12,97 +14,149 @@ class OFXHeaderError(SyntaxError):
 class OFXHeader(object):
     """ """
     class v1(object):
+        ofxheader = types.OneOf(100,)
+        data = types.OneOf('OFXSGML',)
+        version = types.OneOf(102, 103, 151, 160)
+        security = types.OneOf('NONE', 'TYPE1')
+        encoding = types.OneOf('USASCII','UNICODE', 'UTF-8')
+        charset = types.OneOf('ISO-8859-1', '1252', 'NONE')
+        compression = types.OneOf('NONE',)
+        oldfileuid = types.String(36)
+        newfileuid = types.String(36)
+
         regex = re.compile(r"""\s*
                                 OFXHEADER:(?P<OFXHEADER>\d+)\s+
                                 DATA:(?P<DATA>[A-Z]+)\s+
                                 VERSION:(?P<VERSION>\d+)\s+
-                                SECURITY:(?P<SECURITY>[A-Z]+)\s+
+                                SECURITY:(?P<SECURITY>[\w]+)\s+
                                 ENCODING:(?P<ENCODING>[A-Z]+)\s+
-                                CHARSET:(?P<CHARSET>\d+)\s+
-                                COMPRESSION:(?P<COMPRESjION>[A-Z]+)\s+
+                                CHARSET:(?P<CHARSET>\w+)\s+
+                                COMPRESSION:(?P<COMPRESSION>[A-Z]+)\s+
                                 OLDFILEUID:(?P<OLDFILEUID>[\w-]+)\s+
                                 NEWFILEUID:(?P<NEWFILEUID>[\w-]+)\s+
                                 """, re.VERBOSE)
 
-        tests = { 'OFXHEADER': ('100',),
-                 'DATA': ('OFXSGML',),
-                 'VERSION': ('102', '103'),
-                 'SECURITY': ('NONE', 'TYPE1'),
-                 'ENCODING': ('UNICODE', 'USASCII')
-                }
+        def __init__(self, version, ofxheader=None, data=None, security=None,
+                     encoding=None, charset=None, compression=None,
+                     oldfileuid=None, newfileuid=None):
+            try:
+                self.ofxheader = int(ofxheader or 100)
+                self.data = data or 'OFXSGML'
+                self.version = int(version)
+                self.security = security or 'NONE'
+                self.encoding = encoding or 'USASCII'
+                self.charset = charset or 'NONE'
+                self.compression = compression or 'NONE'
+                self.oldfileuid = oldfileuid or 'NONE'
+                self.newfileuid = newfileuid or 'NONE'
+            except ValueError as e:
+                raise OFXHeaderError('Invalid OFX header - %s' % e.args[0])
 
-    class v2(object):
-        regex = re.compile(r"""(<\?xml\s+
-                                (version=\"(?P<XMLVERSION>[\d.]+)\")?\s*
-                                (encoding=\"(?P<ENCODING>[\w-]+)\")?\s*
-                                (standalone=\"(?P<STANDALONE>[\w]+)\")?\s*
-                                \?>)\s*
-                                <\?OFX\s+
-                                OFXHEADER=\"(?P<OFXHEADER>\d+)\"\s+
-                                VERSION=\"(?P<VERSION>\d+)\"\s+
-                                SECURITY=\"(?P<SECURITY>[A-Z]+)\"\s+
-                                OLDFILEUID=\"(?P<OLDFILEUID>[\w-]+)\"\s+
-                                NEWFILEUID=\"(?P<NEWFILEUID>[\w-]+)\"\s*
-                                \?>\s+""", re.VERBOSE)
-
-        tests = { 'OFXHEADER': ('200',),
-                 'VERSION': ('200', '203', '211'),
-                 'SECURITY': ('NONE', 'TYPE1'),
-                }
-
-    @property
-    def major_version(self):
-        """ Return 1 for OFXv1; 2 for OFXv2 """
-        return int(self.version)//100
-
-    def __init__(self, version, newfileuid):
-        self.version = version
-        self.newfileuid = newfileuid
-
-    def __str__(self):
-        if self.major_version == 1:
+        def __str__(self):
             # Flat text header
-            fields = (  ('OFXHEADER', '100'),
-                        ('DATA', 'OFXSGML'),
-                        ('VERSION', str(self.version)),
-                        ('SECURITY', 'NONE'),
-                        ('ENCODING', 'USASCII'),
-                        ('CHARSET', '1252'),
-                        ('COMPRESSION', 'NONE'),
-                        ('OLDFILEUID', 'NONE'),
-                        ('NEWFILEUID', str(self.newfileuid)),
-            )
+            fields = (  ('OFXHEADER', str(self.ofxheader)),
+                      ('DATA', self.data),
+                      ('VERSION', str(self.version)),
+                      ('SECURITY', self.security),
+                      ('ENCODING', self.encoding),
+                      ('CHARSET', self.charset),
+                      ('COMPRESSION', self.compression),
+                      ('OLDFILEUID', self.oldfileuid),
+                      ('NEWFILEUID', self.newfileuid),
+                     )
             lines = [':'.join(field) for field in fields]
             lines = '\r\n'.join(lines)
             lines += '\r\n'*2
             return lines
-        elif self.major_version == 2:
+
+    class v2(object):
+        xmlversion = types.OneOf('1.0',)
+        encoding = types.OneOf('UTF-8',)
+        standalone = types.OneOf('no',)
+        ofxheader = types.OneOf(200,)
+        version = types.OneOf(200, 201, 202, 203, 210, 211, 220)
+        security = types.OneOf('NONE', 'TYPE1')
+        oldfileuid = types.String(36)
+        newfileuid = types.String(36)
+
+        regex = re.compile(r"""(<\?xml\s+
+                           (version=\"(?P<XMLVERSION>[\d.]+)\")?\s*
+                           (encoding=\"(?P<ENCODING>[\w-]+)\")?\s*
+                           (standalone=\"(?P<STANDALONE>[\w]+)\")?\s*
+                           \?>)\s*
+                           <\?OFX\s+
+                           OFXHEADER=\"(?P<OFXHEADER>\d+)\"\s+
+                           VERSION=\"(?P<VERSION>\d+)\"\s+
+                           SECURITY=\"(?P<SECURITY>[\w]+)\"\s+
+                           OLDFILEUID=\"(?P<OLDFILEUID>[\w-]+)\"\s+
+                           NEWFILEUID=\"(?P<NEWFILEUID>[\w-]+)\"\s*
+                           \?>\s*""", re.VERBOSE)
+
+        def __init__(self, version, xmlversion=None, encoding=None,
+                     standalone=None, ofxheader=None, security=None,
+                     oldfileuid=None, newfileuid=None):
+            try:
+                self.version = int(version)
+                self.xmlversion = xmlversion or '1.0'
+                self.encoding = encoding or 'UTF-8'
+                self.standalone = standalone or 'no'
+                self.ofxheader = int(ofxheader or 200)
+                self.security = security or 'NONE'
+                self.oldfileuid = oldfileuid or 'NONE'
+                self.newfileuid = newfileuid or 'NONE'
+            except ValueError as e:
+                raise OFXHeaderError('Invalid OFX header - %s' % e.args[0])
+
+        def __str__(self):
             # XML header
-            xml_decl = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>'
-            fields = (  ('OFXHEADER', '200'),
-                        ('VERSION', str(self.version)),
-                        ('SECURITY', 'NONE'),
-                        ('OLDFILEUID', 'NONE'),
-                        ('NEWFILEUID', str(self.newfileuid)),
-            )
+            xmlfields = (('version', self.xmlversion),
+                         ('encoding', self.encoding),
+                         ('standalone', self.standalone),
+                        )
+            xmlattrs = ['='.join((attr, '"%s"' %val)) for attr,val in xmlfields]
+            xml_decl = '<?xml %s?>' % ' '.join(xmlattrs)
+            fields = (('OFXHEADER', str(self.ofxheader)),
+                      ('VERSION', str(self.version)),
+                      ('SECURITY', self.security),
+                      ('OLDFILEUID', self.oldfileuid),
+                      ('NEWFILEUID', self.newfileuid),
+                     )
             attrs = ['='.join((attr, '"%s"' %val)) for attr,val in fields]
             ofx_decl = '<?OFX %s?>' % ' '.join(attrs)
             return '\r\n'.join((xml_decl, ofx_decl))
-        else:
-            raise ValueError('Bad OFX version# %s' % self.version)
+
+    headerSpecs = {1: v1, 2: v2}
+
+    def __init__(self, version, security=None, oldfileuid=None, 
+                 newfileuid=None):
+        try:
+            majorVersion = int(version)//100
+        except ValueError:
+            raise OFXHeaderError('Invalid OFX version %s' % version)
+        headerClass = self.headerSpecs[majorVersion]
+        self._instance = headerClass(version=version, security=security,
+                                     oldfileuid=oldfileuid,
+                                     newfileuid=newfileuid
+                                    )
+
+    def __str__(self):
+        return str(self._instance)
 
     @classmethod
     def strip(cls, source):
         # First validate OFX header
-        for headerspec in (cls.v1, cls.v2):
+        for headerspec in cls.headerSpecs.values():
             headermatch = headerspec.regex.match(source)
             if headermatch is not None:
-                header = headermatch.groupdict()
+                headerattrs = headermatch.groupdict()
+                headerattrs = {k.lower():v for k,v in headerattrs.items()}
                 try:
-                    for (field, valid) in headerspec.tests.items():
-                        assert header[field] in valid
-                except AssertionError:
-                    raise OFXHeaderError('Malformed OFX header %s' % str(header))
+                    header = headerspec(**headerattrs)
+                except ValueError as e:
+                    raise OFXHeaderError(
+                        'Invalid OFX header - %s (header fields: %s)' \
+                        % (e.args[0], headerattrs)
+                    )
                 break
 
         if headermatch is None:

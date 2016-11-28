@@ -278,3 +278,5 @@ class TreeBuilderTestCase(unittest.TestCase):
         self.assertEqual(availbal, {'balamt': '200.29',
                                     'dtasof': '200510291120'})
 
+if __name__=='__main__':
+    unittest.main()
