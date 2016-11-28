@@ -25,7 +25,7 @@ class OFXNumeric(sqlalchemy.types.TypeDecorator):
             try:
                 value = decimal.Decimal(value)
             except decimal.InvalidOperation:
-                if isinstance(value, basestring):
+                if isinstance(value, str):
                     value = decimal.Decimal(value.replace(',', '.'))
                 else:
                     raise

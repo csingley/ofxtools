@@ -46,10 +46,16 @@ class Aggregate(object):
 
         for name, element in self.elements.items():
             value = attributes.pop(name, None)
-            setattr(self, name, value)
+            try:
+                setattr(self, name, value)
+            except ValueError as e:
+                raise ValueError("Can't create %s.%s: %s" 
+                                 % (self.__class__.__name__, name, e.args[0]),
+                                )
         if attributes:
             raise ValueError("Undefined element(s) for '%s': %s"
-                            % (self.__class__.__name__, attributes.keys()))
+                            % (self.__class__.__name__, attributes.keys())
+                            )
 
     @property
     def elements(self):
@@ -70,7 +76,7 @@ class Aggregate(object):
         return instance
 
     def __repr__(self):
-        return '<%s %s>' % (self.__class__.__name__, ' '.join(['%s=%r' % (attr, str(getattr(self, attr))) for attr in self.elements.viewkeys() if getattr(self, attr) is not None]))
+        return '<%s %s>' % (self.__class__.__name__, ' '.join(['%s=%r' % (attr, str(getattr(self, attr))) for attr in self.elements.keys() if getattr(self, attr) is not None]))
 
 
 class FI(Aggregate):
@@ -216,7 +222,7 @@ class DEBTINFO(SECINFO):
     yieldtocall = Decimal(4)
     dtcall = DateTime()
     calltype = OneOf('CALL', 'PUT', 'PREFUND', 'MATURITY')
-    ytmat = Decimal(4)
+    yieldtomat = Decimal(4)
     dtmat = DateTime()
     assetclass = OneOf(*ASSETCLASSES)
     fiassetclass = String(32)
