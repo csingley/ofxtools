@@ -8,9 +8,9 @@ with open(os.path.join(__here__, 'README.md'), 'r') as f:
 
 setup(
     name = 'ofxtools',
-    version = '0.3.9',
+    version = '0.3.10',
     # Note: change 'master' to the tag name when release a new verion
-    download_url = 'https://github.com/csingley/ofxtools/tarball/0.3.9',
+    download_url = 'https://github.com/csingley/ofxtools/tarball/0.3.10',
 
     description = ('Library for working with Open Financial Exchange (OFX) '
                    'formatted data used by financial institutions'),
