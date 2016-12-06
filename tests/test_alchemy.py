@@ -1,27 +1,53 @@
 # coding: utf-8
-
+# stdlib imports
+import unittest
+from contextlib import contextmanager
 import os
 import sys
-import unittest
 
+
+# 3rd part imports
 from sqlalchemy import create_engine
+from sqlalchemy.orm import (
+    scoped_session,
+    sessionmaker,
+)
 
-from ofxtools.ofxalchemy import Base, DBSession, OFXParser
+# local imports
+from ofxtools.ofxalchemy import Base, OFXParser
+
+
+### DB SETUP
+verbose = '-v' in sys.argv
+engine = create_engine('sqlite:///test.db', echo=verbose)
+DBSession = scoped_session(sessionmaker())
+DBSession.configure(bind=engine)
+
+@contextmanager
+def session_scope():
+    """
+    Provide a transactional scope around a series of database operations.
+    """
+    session = DBSession()
+    try:
+        yield session
+        session.commit()
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
 
 def ofx_to_database(filename):
     parser = OFXParser()
     parser.parse(filename)
-    parser.instantiate()
-    DBSession.commit()
+    with session_scope() as session:
+        parser.instantiate(session)
 
 
 class AlchemyTestCase(unittest.TestCase):
-
     def setUp(self):
-        verbose = '-v' in sys.argv
-        engine = create_engine('sqlite:///test.db', echo=verbose)
-        DBSession.configure(bind=engine)
         Base.metadata.create_all(engine)
 
     def tearDown(self):

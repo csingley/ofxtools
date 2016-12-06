@@ -28,14 +28,12 @@ from sqlalchemy.ext.declarative import (
     has_inherited_table,
     )
 from sqlalchemy.orm import (
-    scoped_session,
-    sessionmaker,
     relationship,
     backref,
     )
 
 
-# local import
+# local imports
 from ofxtools.ofxalchemy.types import OFXNumeric, OFXDateTime, OFXBoolean
 from ofxtools.lib import CURRENCY_CODES, COUNTRY_CODES
 
@@ -51,9 +49,6 @@ INCOMETYPES = ('CGLONG', 'CGSHORT', 'DIV', 'INTEREST', 'MISC')
 ASSETCLASSES = ('DOMESTICBOND', 'INTLBOND', 'LARGESTOCK', 'SMALLSTOCK',
                 'INTLSTOCK', 'MONEYMRKT', 'OTHER')
 
-
-### DB SETUP
-DBSession = scoped_session(sessionmaker())
 
 # Configure SQLite to support foreign key constraints
 @event.listens_for(Engine, "connect")
@@ -79,6 +74,16 @@ class Base(object):
     @declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()
+
+    def __repr__(self):
+        """
+        Lists all non-NULL instance attributes.
+        """
+        return '<%s(%s)>' % (self.__class__.__name__, ', '.join(
+            ['%s=%r' % (c.name, str(getattr(self, c.name))) \
+             for c in self.__class__.__table__.c \
+             if getattr(self, c.name) is not None]
+        ))
 
     @classmethod
     def primary_keys(cls):
@@ -110,13 +115,6 @@ class Base(object):
             msg = "%s: Required attributes %s not satisfied by arguments %s" % (
                 cls.__name__, cls.primary_keys(), attrs)
             raise ValueError(msg)
-
-    def __repr__(self):
-        return '<%s(%s)>' % (self.__class__.__name__, ', '.join(
-            ['%s=%r' % (c.name, str(getattr(self, c.name))) \
-             for c in self.__class__.__table__.c \
-             if getattr(self, c.name) is not None]
-        ))
 
 
 def Inheritor(parent_table):

@@ -1,5 +1,7 @@
 from ofxtools.ofxalchemy.models import (
-    DBSession,
-    Base
+    Base,
     )
-from ofxtools.ofxalchemy.Parser import OFXTree as OFXParser
+from ofxtools.ofxalchemy.Parser import (
+    OFXTree,
+    OFXParser,
+)

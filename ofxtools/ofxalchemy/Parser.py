@@ -5,14 +5,19 @@ Version of ofxtools.Parser that uses SQLAlchemy for conversion
 # stdlib imports
 from decimal import Decimal
 
+
 # 3rd party imports
+from sqlalchemy.orm import (
+    scoped_session,
+    sessionmaker,
+    )
 from sqlalchemy.orm.exc import NoResultFound
+
 
 # local imports
 import ofxtools
 from ofxtools.Parser import SubElement
 from ofxtools.ofxalchemy import models
-from ofxtools.ofxalchemy.models import DBSession
 
 
 class Element(ofxtools.Parser.Element):
@@ -20,9 +25,9 @@ class Element(ofxtools.Parser.Element):
     attributes = {}
     extra_attributes = {}
 
-    def _dereference(self):
+    def _dereference(self, DBSession):
         """ """
-        reference = self.instantiate()
+        reference = self.instantiate(DBSession)
         self.clear()
         return reference
 
@@ -49,7 +54,8 @@ class Element(ofxtools.Parser.Element):
                 extra_attributes['curtype'] = curtype.tag
                 self.set('extra_attributes', extra_attributes)
 
-    def _preflatten(self):
+    def _preflatten(self, DBSession):
+        """ """
         if self.tag == 'OPTINFO':
             # A <SECID> aggregate referring to the security underlying the
             # option is, in general, *not* going to be contained in <SECLIST>
@@ -87,7 +93,7 @@ class Element(ofxtools.Parser.Element):
                 msg = '<%s> does not contain <SECID>'
                 raise ofxtools.Parser.ParseError(msg)
             extra_attributes = self.get('extra_attributes')
-            extra_attributes['secinfo'] = secid._dereference()
+            extra_attributes['secinfo'] = secid._dereference(DBSession)
             self.set('extra_attributes', extra_attributes)
 
         elif self.tag in ('STMTTRN', 'INVBANKTRAN'):
@@ -108,18 +114,18 @@ class Element(ofxtools.Parser.Element):
 
             if bankacctto is not None:
                 extra_attributes = self.get('extra_attributes')
-                extra_attributes['acctto'] = bankacctto._dereference()
+                extra_attributes['acctto'] = bankacctto._dereference(DBSession)
                 self.set('extra_attributes', extra_attributes)
             if ccacctto is not None:
                 extra_attributes = self.get('extra_attributes')
-                extra_attributes['acctto'] = ccacctto._dereference()
+                extra_attributes['acctto'] = ccacctto._dereference(DBSession)
                 self.set('extra_attributes', extra_attributes)
             if (bankacctto is not None) and (ccacctto is not None):
                 msg = '<%s> may not contain both <BANKACCTTO> and <CCACCTTO>' % self.tag
                 raise ofxtools.Parser.ParseError(msg)
             if payee is not None:
                 extra_attributes = self.get('extra_attributes')
-                extra_attributes['payee'] = payee._dereference()
+                extra_attributes['payee'] = payee._dereference(DBSession)
                 self.set('extra_attributes', extra_attributes)
 
         elif self.find('.//INVTRAN') is not None:
@@ -131,7 +137,7 @@ class Element(ofxtools.Parser.Element):
             secid = self.find('.//SECID')
             if secid is not None:
                 extra_attributes = self.get('extra_attributes')
-                extra_attributes['secinfo'] = secid._dereference()
+                extra_attributes['secinfo'] = secid._dereference(DBSession)
                 self.set('extra_attributes', extra_attributes)
 
     def _postflatten(self):
@@ -142,7 +148,7 @@ class Element(ofxtools.Parser.Element):
             attributes['yld'] = yld
             self.set('attributes', attributes)
 
-    def instantiate(self, **extra_attrs):
+    def instantiate(self, DBSession, **extra_attrs):
         """
         Create an instance of a SQLAlchemy model class corresponding to
         my OFX tag, with attributes given by my contained OFX elements.
@@ -157,7 +163,7 @@ class Element(ofxtools.Parser.Element):
             SubClass = models.SECINFO
         else:
             SubClass = getattr(models, self.tag)
-        self._preflatten()
+        self._preflatten(DBSession)
         flatattrs = self._flatten()
         self.set('attributes', flatattrs)
 
@@ -186,7 +192,7 @@ class OFXTree(ofxtools.Parser.OFXTree):
     def convert(self):
         raise NotImplementedError
 
-    def instantiate(self):
+    def instantiate(self, DBSession):
         """ """
         if not hasattr(self, '_root'):
             raise ValueError('Must first call parse() to have data to instantiate')
@@ -195,7 +201,7 @@ class OFXTree(ofxtools.Parser.OFXTree):
         seclist = self.find('SECLISTMSGSRSV1/SECLIST')
         if seclist is not None:
             self.securities = [
-                sec.instantiate()
+                sec.instantiate(DBSession)
                 for sec in seclist
             ]
             DBSession.add_all(self.securities)
@@ -215,8 +221,12 @@ class OFXTree(ofxtools.Parser.OFXTree):
                 # Don't blow up; skip silently.
                 stmtrs = trnrs.find('%sRS' % tagname)
                 if stmtrs is not None:
-                    stmt = stmtClass(stmtrs)
+                    stmt = stmtClass(DBSession, stmtrs)
                     self.statements.append(stmt)
+
+
+# More intuitive name for external use
+OFXParser = OFXTree
 
 
 ### STATEMENTS
@@ -225,15 +235,15 @@ class Statement(object):
     currency = None
     account = None
 
-    def __init__(self, stmtrs):
+    def __init__(self, DBSession, stmtrs):
         """ Initialize with *STMTRS Element """
         self.currency = stmtrs.find('CURDEF').text
         acctfrom = stmtrs.find(self._acctTag)
-        self.account = acctfrom.instantiate()
+        self.account = acctfrom.instantiate(DBSession)
         DBSession.add(self.account)
         self.transactions = []
         self.other_balances =[]
-        self._init(stmtrs)
+        self._init(DBSession, stmtrs)
 
     def _init(self, stmtrs):
         # Define in subclass
@@ -253,29 +263,31 @@ class BankStatement(Statement):
     _tagName = 'STMT'
     _acctTag = 'BANKACCTFROM'
 
-    def _init(self, stmtrs):
+    def _init(self, DBSession, stmtrs):
         # BANKTRANLIST
         tranlist = stmtrs.find('BANKTRANLIST')
         if tranlist is not None:
-            self.transactions = TransactionList(self.account, tranlist)
+            self.transactions = TransactionList(
+                DBSession, self.account, tranlist,
+            )
             DBSession.add_all(self.transactions)
 
         # LEDGERBAL - mandatory
         ledgerbal = stmtrs.find('LEDGERBAL')
-        self.ledgerbal = ledgerbal.instantiate(acctfrom=self.account)
+        self.ledgerbal = ledgerbal.instantiate(DBSession, acctfrom=self.account)
         DBSession.add(self.ledgerbal)
 
         # AVAILBAL
         availbal = stmtrs.find('AVAILBAL')
         if availbal is not None:
-            self.availbal = availbal.instantiate(acctfrom=self.account)
+            self.availbal = availbal.instantiate(DBSession, acctfrom=self.account)
             DBSession.add(self.availbal)
         else:
             self.availbal = None
 
         ballist = stmtrs.find('BALLIST')
         if ballist:
-            self.other_balances = [bal.instantiate() for bal in ballist]
+            self.other_balances = [bal.instantiate(DBSession) for bal in ballist]
             DBSession.add_all(self.other_balances)
 
         # Unsupported subaggregates
@@ -313,14 +325,16 @@ class InvestmentStatement(Statement):
     _tagName = 'INVSTMT'
     _acctTag = 'INVACCTFROM'
 
-    def _init(self, invstmtrs):
+    def _init(self, DBSession, invstmtrs):
         dtasof = invstmtrs.find('DTASOF').text
         self.datetime = ofxtools.types.DateTime().convert(dtasof)
 
         # INVTRANLIST
         tranlist = invstmtrs.find('INVTRANLIST')
         if tranlist is not None:
-            self.transactions = TransactionList(self.account, tranlist)
+            self.transactions = TransactionList(
+                DBSession, self.account, tranlist
+            )
             DBSession.add_all(self.transactions)
 
         # INVPOSLIST
@@ -346,6 +360,7 @@ class InvestmentStatement(Statement):
                                          position[1] + Decimal(units.text)
                                         )
             self.positions = [pos.instantiate(
+                DBSession,
                 units=units, acctfrom=self.account,
                 dtasof=self.datetime) \
                 for pos, units in positions.values()]
@@ -361,12 +376,15 @@ class InvestmentStatement(Statement):
             if ballist is not None:
                 invbal.remove(ballist)
                 self.other_balances = [
-                    bal.instantiate(acctfrom=self.account, dtasof=self.datetime,
-                                   ) for bal in ballist
+                    bal.instantiate(
+                        DBSession,
+                        acctfrom=self.account, dtasof=self.datetime,
+                    ) for bal in ballist
                 ]
                 DBSession.add_all(self.other_balances)
             # Now we can flatten the rest of INVBAL
             self.balances = invbal.instantiate(
+                DBSession,
                 acctfrom=self.account, dtasof=self.datetime,
             )
             DBSession.add(self.balances)
@@ -401,17 +419,17 @@ class TransactionList(list):
     Base class for Python representation of OFX *TRANLIST (transaction list)
     aggregate
     """
-    def __init__(self, account, tranlist):
+    def __init__(self, DBSession, account, tranlist):
         self.account = account
         dtstart, dtend = tranlist[0:2]
         tranlist = tranlist[2:]
         self.dtstart = ofxtools.types.DateTime().convert(dtstart.text)
         self.dtend = ofxtools.types.DateTime().convert(dtend.text)
-        self.extend([self.etree_to_sql(tran) for tran in tranlist])
+        self.extend([self.etree_to_sql(DBSession, tran) for tran in tranlist])
 
-    def etree_to_sql(self, tran):
+    def etree_to_sql(self, DBSession, tran):
         """ Convert transaction (OFX *TRAN) """
-        instance = tran.instantiate(acctfrom=self.account)
+        instance = tran.instantiate(DBSession, acctfrom=self.account)
         return instance
 
     def __repr__(self):
