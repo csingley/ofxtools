@@ -4,6 +4,7 @@ Version of ofxtools.Parser that uses SQLAlchemy for conversion
 """
 # stdlib imports
 from decimal import Decimal
+from contextlib import contextmanager
 
 
 # 3rd party imports
