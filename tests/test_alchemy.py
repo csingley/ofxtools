@@ -23,27 +23,11 @@ engine = create_engine('sqlite:///test.db', echo=verbose)
 DBSession = scoped_session(sessionmaker())
 DBSession.configure(bind=engine)
 
-@contextmanager
-def session_scope():
-    """
-    Provide a transactional scope around a series of database operations.
-    """
-    session = DBSession()
-    try:
-        yield session
-        session.commit()
-    except:
-        session.rollback()
-        raise
-    finally:
-        session.close()
-
 
 def ofx_to_database(filename):
     parser = OFXParser()
     parser.parse(filename)
-    with session_scope() as session:
-        parser.instantiate(session)
+    parser.instantiate(DBSession)
 
 
 class AlchemyTestCase(unittest.TestCase):
