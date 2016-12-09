@@ -631,7 +631,10 @@ class INVBUYSELL(SECID, ORIGCURRENCY):
     units = Column(OFXNumeric(), nullable=False)
     unitprice = Column(OFXNumeric(), CheckConstraint('unitprice >= 0'),
                        nullable=False)
-    commission = Column(OFXNumeric(), CheckConstraint('commission >= 0'))
+    # Alas, some FIs (*cough* IBKR) violate the OFX spec by booking trade
+    # reversals that include negative commissions
+    #commission = Column(OFXNumeric(), CheckConstraint('commission >= 0'))
+    commission = Column(OFXNumeric(),)
     taxes = Column(OFXNumeric(), CheckConstraint('taxes >= 0'))
     fees = Column(OFXNumeric(), CheckConstraint('fees >= 0'))
     load = Column(OFXNumeric(), CheckConstraint('load >= 0'))
