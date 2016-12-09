@@ -273,6 +273,7 @@ class Balance(object):
     persisting a STMT object. We make *BAL.dtasof mandatory and use it
     as part of the primary key.
     """
+    # Added for SQLAlchemy object model
     @declared_attr
     def acctfrom_id(cls):
         return Column(
@@ -289,6 +290,7 @@ class Balance(object):
                                        )
         )
 
+    # Extra attribute definitions not from OFX spec
     @declared_attr
     def dtasof(cls):
         return Column(OFXDateTime, primary_key=True)
@@ -347,9 +349,11 @@ class SECID(object):
     """
     @declared_attr
     def secinfo_id(cls):
-        return Column(
-            Integer, ForeignKey('secinfo.id',
-                                onupdate='CASCADE', ondelete='CASCADE'))
+        return Column(Integer,
+                      ForeignKey('secinfo.id',
+                                 onupdate='CASCADE', ondelete='CASCADE'),
+                      nullable=False,
+                     )
 
     @declared_attr
     def secinfo(cls):
@@ -612,7 +616,7 @@ class INVTRAN(Inheritor('invtran'), Base):
         )
 
     # Elements from OFX spec
-    fitid = Column(String(length=255))
+    fitid = Column(String(length=255), nullable=False)
     srvrtid = Column(String(length=10))
     dttrade = Column(OFXDateTime, nullable=False)
     dtsettle = Column(OFXDateTime)
@@ -625,20 +629,21 @@ class INVTRAN(Inheritor('invtran'), Base):
 class INVBUYSELL(SECID, ORIGCURRENCY):
     """ Synthetic base class of INVBUY/INVSELL - not in OFX spec """
     units = Column(OFXNumeric(), nullable=False)
-    unitprice = Column(OFXNumeric(), nullable=False)
-    commission = Column(OFXNumeric())
-    taxes = Column(OFXNumeric())
-    fees = Column(OFXNumeric())
-    load = Column(OFXNumeric())
+    unitprice = Column(OFXNumeric(), CheckConstraint('unitprice >= 0'),
+                       nullable=False)
+    commission = Column(OFXNumeric(), CheckConstraint('commission >= 0'))
+    taxes = Column(OFXNumeric(), CheckConstraint('taxes >= 0'))
+    fees = Column(OFXNumeric(), CheckConstraint('fees >= 0'))
+    load = Column(OFXNumeric(), CheckConstraint('load >= 0'))
     total = Column(OFXNumeric(), nullable=False)
-    subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'))
-    subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'))
+    subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'), nullable=False)
+    subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'), nullable=False)
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
 
 class INVBUY(INVBUYSELL):
     """ Declarative mixin for OFX INVBUY aggregate """
-    markup = Column(OFXNumeric())
+    markup = Column(OFXNumeric(), CheckConstraint('markup >= 0'))
     loanid = Column(String(length=32))
     loanprincipal = Column(OFXNumeric())
     loaninterest = Column(OFXNumeric())
@@ -665,12 +670,13 @@ class INVBUY(INVBUYSELL):
 
 class INVSELL(INVBUYSELL):
     """ Declarative mixin for OFX INVSELL aggregate """
-    markdown = Column(OFXNumeric())
-    withholding = Column(OFXNumeric())
+    markdown = Column(OFXNumeric(), CheckConstraint('markdown >= 0'))
+    withholding = Column(OFXNumeric(), CheckConstraint('withholding >= 0'))
     taxexempt = Column(OFXBoolean())
     gain = Column(OFXNumeric())
     loanid = Column(String(length=32))
-    statewithholding = Column(OFXNumeric())
+    statewithholding = Column(OFXNumeric(), 
+                              CheckConstraint('statewithholding >= 0'))
     penalty = Column(OFXNumeric())
 
     # Be careful about multiple inheritance.  Subclasses of INV{BUY,SELL}
@@ -703,7 +709,7 @@ class BUYMF(INVBUY, INVTRAN):
 
 class BUYOPT(INVBUY, INVTRAN):
     optbuytype = Column(Enum('BUYTOOPEN', 'BUYTOCLOSE', name='obtbuytype'),
-                        nullable=False
+                        nullable=False,
                        )
     shperctrct = Column(Integer, nullable=False)
 
@@ -717,7 +723,9 @@ class BUYSTOCK(INVBUY, INVTRAN):
 
 
 class CLOSUREOPT(SECID, INVTRAN):
-    optaction = Column(Enum('EXERCISE', 'ASSIGN', 'EXPIRE', name='optaction'))
+    optaction = Column(Enum('EXERCISE', 'ASSIGN', 'EXPIRE', name='optaction'),
+                      nullable=False,
+                      )
     units = Column(OFXNumeric(), nullable=False)
     shperctrct = Column(Integer, nullable=False)
     subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'), nullable=False)
@@ -731,7 +739,7 @@ class INCOME(SECID, ORIGCURRENCY, INVTRAN):
     subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'), nullable=False)
     subacctfund = Column(Enum(*INVSUBACCTS, name='subacctfund'), nullable=False)
     taxexempt = Column(OFXBoolean())
-    withholding = Column(OFXNumeric())
+    withholding = Column(OFXNumeric(), CheckConstraint('withholding >= 0'))
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 
 
@@ -762,13 +770,13 @@ class MARGININTEREST(ORIGCURRENCY, INVTRAN):
 class REINVEST(SECID, ORIGCURRENCY, INVTRAN):
     incometype = Column(Enum(*INCOMETYPES, name='incometype'), nullable=False)
     total = Column(OFXNumeric(), nullable=False)
-    subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'))
+    subacctsec = Column(Enum(*INVSUBACCTS, name='subacctsec'), nullable=False)
     units = Column(OFXNumeric(), nullable=False)
     unitprice = Column(OFXNumeric(), nullable=False)
-    commission = Column(OFXNumeric())
-    taxes = Column(OFXNumeric())
-    fees = Column(OFXNumeric())
-    load = Column(OFXNumeric())
+    commission = Column(OFXNumeric(), CheckConstraint('commission >= 0'))
+    taxes = Column(OFXNumeric(), CheckConstraint('taxes >= 0'))
+    fees = Column(OFXNumeric(), CheckConstraint('fees >= 0'))
+    load = Column(OFXNumeric(), CheckConstraint('load >= 0'))
     taxexempt = Column(OFXBoolean())
     inv401ksource = Column(Enum(*INV401KSOURCES, name='inv401ksource'))
 

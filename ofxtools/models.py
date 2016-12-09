@@ -217,7 +217,7 @@ class DEBTINFO(SECINFO):
     couponrt = Decimal(4)
     dtcoupon = DateTime()
     couponfreq = OneOf('MONTHLY', 'QUARTERLY', 'SEMIANNUAL', 'ANNUAL',
-                            'OTHER')
+                       'OTHER')
     callprice = Decimal(4)
     yieldtocall = Decimal(4)
     dtcall = DateTime()
@@ -271,13 +271,13 @@ class MFINFO(SECINFO):
 
 
 class PORTION(Aggregate):
-    assetclass = OneOf(*ASSETCLASSES)
-    percent = Decimal()
+    assetclass = OneOf(*ASSETCLASSES, required=True)
+    percent = Decimal(required=True)
 
 
 class FIPORTION(Aggregate):
-    fiassetclass = String(32)
-    percent = Decimal()
+    fiassetclass = String(32, required=True)
+    percent = Decimal(required=True)
 
 
 class OPTINFO(SECINFO):
@@ -510,7 +510,7 @@ class MARGININTEREST(INVTRAN, ORIGCURRENCY):
 class REINVEST(INVTRAN, SECID, ORIGCURRENCY):
     incometype = OneOf(*INCOMETYPES, required=True)
     total = Decimal(required=True)
-    subacctsec = OneOf(*INVSUBACCTS)
+    subacctsec = OneOf(*INVSUBACCTS, required=True)
     units = Decimal(required=True)
     unitprice = Decimal(4, required=True)
     commission = Decimal()
@@ -612,5 +612,3 @@ class POSSTOCK(INVPOS):
     unitsstreet = Decimal()
     unitsuser = Decimal()
     reinvdiv = Bool()
-
-
