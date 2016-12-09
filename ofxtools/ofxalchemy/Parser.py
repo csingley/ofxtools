@@ -8,10 +8,6 @@ from contextlib import contextmanager
 
 
 # 3rd party imports
-from sqlalchemy.orm import (
-    scoped_session,
-    sessionmaker,
-    )
 from sqlalchemy.orm.exc import NoResultFound
 
 
@@ -159,11 +155,6 @@ class Element(ofxtools.Parser.Element):
         """
         self.set('extra_attributes', extra_attrs)
 
-        # SECID needs to instantiate as SECINFO
-        if self.tag == 'SECID':
-            SubClass = models.SECINFO
-        else:
-            SubClass = getattr(models, self.tag)
         self._preflatten(DBSession)
         flatattrs = self._flatten()
         self.set('attributes', flatattrs)
@@ -175,12 +166,49 @@ class Element(ofxtools.Parser.Element):
         self.set('attributes', attributes)
         self.set('extra_attributes', {})
 
+        # SECID needs to instantiate as SECINFO
+        if self.tag == 'SECID':
+            LookupSubclass = models.SECINFO
+            # A SECID aggregate refers to a SECINFO that should be known from
+            # SECLIST.  We really don't want to be seeing a CUSIP for the
+            # first time here and then persisting it as the SECINFO
+            # superclass (which doesn't exist in the OFX spec) rather than
+            # a DEBTINFO, STOCKINFO, or other subclass.
+            Subclass = None
+        else:
+            Subclass = getattr(models, self.tag)
+
+            # Some brokers (*cough* *cough* IBKR *cough* *cough*) are in the
+            # habit of arbitrarily changing the SECINFO subclass of a security
+            # (e.g. for reorgs where they don't know what the hell they've
+            # received, the same CUSIP will be given as an OTHERINFO in one
+            # response, and a DEBTINFO in another response).  This breaks our
+            # inheritance model, which defines a
+            # UniqueConstraint(uniqueid, uniqueidtype) on the SECINFO
+            # superclass, and therefore throws a violation error when  we try
+            # to persist a DEBTINFO with the same fingerprint as an existing
+            # OTHERINFO.
+            #
+            # To deal with this, we have all SECINFO subclasses look up their
+            # surrogate primary key on the superclass itself rather than the
+            # subclass.  Upon instantiation all subsequent OFX aggregates
+            # will have their data changed to refer to the first imported
+            # SECINFO subclass with a given CUSIP.  We lose information this
+            # way, but the information isn't terribly significant (as evidenced
+            # by FIs constantly screwing this up without Quicken users throwing
+            # a fit about it) and certainly far less important than maintaining
+            # database consistency.
+            if issubclass(Subclass, models.SECINFO):
+                LookupSubclass = models.SECINFO
+            else:
+                LookupSubclass = Subclass
+
         try:
-            fingerprint = SubClass._fingerprint(**attributes)
-            instance = DBSession.query(SubClass).filter_by(**fingerprint).one()
+            fingerprint = LookupSubclass._fingerprint(**attributes)
+            instance = DBSession.query(LookupSubclass).filter_by(**fingerprint).one()
         except NoResultFound:
             attributes = self.get('attributes')
-            instance = SubClass(**attributes)
+            instance = Subclass(**attributes)
             DBSession.add(instance)
 
         return instance
