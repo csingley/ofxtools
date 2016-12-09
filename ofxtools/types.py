@@ -99,9 +99,10 @@ class String(Element):
                 raise ValueError("Value is required")
             else:
                 return None
+        value = str(value)
         if self.length is not None and len(value) > self.length:
             raise ValueError("'%s' is too long; max length=%s" % (value, self.length))
-        return str(value)
+        return value
 
 
 class OneOf(Element):
