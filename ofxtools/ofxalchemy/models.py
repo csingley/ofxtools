@@ -34,7 +34,7 @@ from sqlalchemy.orm import (
 
 
 # local imports
-from ofxtools.ofxalchemy.types import OFXNumeric, OFXDateTime, OFXBoolean
+from ofxtools.ofxalchemy.Types import OFXNumeric, OFXDateTime, OFXBoolean
 from ofxtools.lib import CURRENCY_CODES, COUNTRY_CODES
 
 

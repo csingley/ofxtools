@@ -4,7 +4,7 @@
 import re
 
 # local imports
-from ofxtools import types
+from ofxtools import Types
 
 class OFXHeaderError(SyntaxError):
     """ Exception raised by parsing errors in this module """
@@ -14,15 +14,15 @@ class OFXHeaderError(SyntaxError):
 class OFXHeader(object):
     """ """
     class v1(object):
-        ofxheader = types.OneOf(100,)
-        data = types.OneOf('OFXSGML',)
-        version = types.OneOf(102, 103, 151, 160)
-        security = types.OneOf('NONE', 'TYPE1')
-        encoding = types.OneOf('USASCII','UNICODE', 'UTF-8')
-        charset = types.OneOf('ISO-8859-1', '1252', 'NONE')
-        compression = types.OneOf('NONE',)
-        oldfileuid = types.String(36)
-        newfileuid = types.String(36)
+        ofxheader = Types.OneOf(100,)
+        data = Types.OneOf('OFXSGML',)
+        version = Types.OneOf(102, 103, 151, 160)
+        security = Types.OneOf('NONE', 'TYPE1')
+        encoding = Types.OneOf('USASCII','UNICODE', 'UTF-8')
+        charset = Types.OneOf('ISO-8859-1', '1252', 'NONE')
+        compression = Types.OneOf('NONE',)
+        oldfileuid = Types.String(36)
+        newfileuid = Types.String(36)
 
         regex = re.compile(r"""\s*
                                 OFXHEADER:(?P<OFXHEADER>\d+)\s+
@@ -70,14 +70,14 @@ class OFXHeader(object):
             return lines
 
     class v2(object):
-        xmlversion = types.OneOf('1.0',)
-        encoding = types.OneOf('UTF-8',)
-        standalone = types.OneOf('no',)
-        ofxheader = types.OneOf(200,)
-        version = types.OneOf(200, 201, 202, 203, 210, 211, 220)
-        security = types.OneOf('NONE', 'TYPE1')
-        oldfileuid = types.String(36)
-        newfileuid = types.String(36)
+        xmlversion = Types.OneOf('1.0',)
+        encoding = Types.OneOf('UTF-8',)
+        standalone = Types.OneOf('no',)
+        ofxheader = Types.OneOf(200,)
+        version = Types.OneOf(200, 201, 202, 203, 210, 211, 220)
+        security = Types.OneOf('NONE', 'TYPE1')
+        oldfileuid = Types.String(36)
+        newfileuid = Types.String(36)
 
         regex = re.compile(r"""(<\?xml\s+
                            (version=\"(?P<XMLVERSION>[\d.]+)\")?\s*

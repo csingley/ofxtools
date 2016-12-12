@@ -6,7 +6,7 @@ import os
 import sys
 
 
-# 3rd part imports
+# 3rd party imports
 from sqlalchemy import create_engine
 from sqlalchemy.orm import (
     scoped_session,
@@ -20,14 +20,28 @@ from ofxtools.ofxalchemy import Base, OFXParser
 ### DB SETUP
 verbose = '-v' in sys.argv
 engine = create_engine('sqlite:///test.db', echo=verbose)
-DBSession = scoped_session(sessionmaker())
-DBSession.configure(bind=engine)
+Session = sessionmaker(bind=engine)
 
+@contextmanager
+def session_scope(DBSession):
+    """
+    Provide a transactional scope around a series of database operations.
+    """
+    session = DBSession()
+    try:
+        yield session
+        session.commit()
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
 def ofx_to_database(filename):
-    parser = OFXParser()
-    parser.parse(filename)
-    parser.instantiate(DBSession)
+    with session_scope(Session) as DBSession:
+        parser = OFXParser()
+        parser.parse(filename)
+        parser.instantiate(DBSession)
 
 
 class AlchemyTestCase(unittest.TestCase):

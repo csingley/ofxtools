@@ -8,7 +8,7 @@ import decimal
 import sqlalchemy
 
 # local imports
-import ofxtools.types
+import ofxtools.Types
 
 
 class OFXNumeric(sqlalchemy.types.TypeDecorator):
@@ -39,7 +39,7 @@ class OFXDateTime(sqlalchemy.types.TypeDecorator):
     impl = sqlalchemy.types.DateTime
 
     def process_bind_param(self, value, dialect):
-        return ofxtools.types.DateTime().convert(value)
+        return ofxtools.Types.DateTime().convert(value)
 
 
 class OFXBoolean(sqlalchemy.types.TypeDecorator):

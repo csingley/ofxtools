@@ -6,7 +6,7 @@ transaction lists, etc.)
 
 # local imports
 from ofxtools.models import Aggregate
-from ofxtools.types import String, DateTime
+from ofxtools.Types import String, DateTime
 
 
 class OFXResponse(object):

@@ -4,10 +4,10 @@ Version of ofxtools.Parser that uses SQLAlchemy for conversion
 """
 # stdlib imports
 from decimal import Decimal
-from contextlib import contextmanager
 
 
 # 3rd party imports
+import sqlalchemy
 from sqlalchemy.orm.exc import NoResultFound
 
 
@@ -214,22 +214,6 @@ class Element(ofxtools.Parser.Element):
         return instance
 
 
-@contextmanager
-def session_scope(DBSession):
-    """
-    Provide a transactional scope around a series of database operations.
-    """
-    session = DBSession()
-    try:
-        yield session
-        session.commit()
-    except:
-        session.rollback()
-        raise
-    finally:
-        session.close()
-
-
 class OFXTree(ofxtools.Parser.OFXTree):
     """ """
     element_factory = Element
@@ -244,36 +228,35 @@ class OFXTree(ofxtools.Parser.OFXTree):
                 'Must first call parse() to have data to instantiate'
             )
 
-        with session_scope(DBSession) as DBSession:
-            # SECLIST - list of description of securities referenced by
-            # INVSTMT (investment account statement)
-            seclist = self.find('SECLISTMSGSRSV1/SECLIST')
-            if seclist is not None:
-                self.securities = [
-                    sec.instantiate(DBSession)
-                    for sec in seclist
-                ]
-                DBSession.add_all(self.securities)
-            else:
-                self.securities = []
+        # SECLIST - list of description of securities referenced by
+        # INVSTMT (investment account statement)
+        seclist = self.find('SECLISTMSGSRSV1/SECLIST')
+        if seclist is not None:
+            self.securities = [
+                sec.instantiate(DBSession)
+                for sec in seclist
+            ]
+            DBSession.add_all(self.securities)
+        else:
+            self.securities = []
 
-            # TRNRS - transaction response, which is the main section
-            # containing account statements
-            #
-            # N.B. This iteration method doesn't preserve the original
-            # ordering of the statements within the OFX response
-            self.statements = []
-            for stmtClass in (
-                BankStatement, CreditCardStatement, InvestmentStatement
-            ):
-                tagname = stmtClass._tagName
-                for trnrs in self.findall('*/%sTRNRS' % tagname):
-                    # *STMTTRNRS may have no *STMTRS (in case of error).
-                    # Don't blow up; skip silently.
-                    stmtrs = trnrs.find('%sRS' % tagname)
-                    if stmtrs is not None:
-                        stmt = stmtClass(DBSession, stmtrs)
-                        self.statements.append(stmt)
+        # TRNRS - transaction response, which is the main section
+        # containing account statements
+        #
+        # N.B. This iteration method doesn't preserve the original
+        # ordering of the statements within the OFX response
+        self.statements = []
+        for stmtClass in (
+            BankStatement, CreditCardStatement, InvestmentStatement
+        ):
+            tagname = stmtClass._tagName
+            for trnrs in self.findall('*/%sTRNRS' % tagname):
+                # *STMTTRNRS may have no *STMTRS (in case of error).
+                # Don't blow up; skip silently.
+                stmtrs = trnrs.find('%sRS' % tagname)
+                if stmtrs is not None:
+                    stmt = stmtClass(DBSession, stmtrs)
+                    self.statements.append(stmt)
 
 
 # More intuitive name for external use
@@ -378,7 +361,7 @@ class InvestmentStatement(Statement):
 
     def _init(self, DBSession, invstmtrs):
         dtasof = invstmtrs.find('DTASOF').text
-        self.datetime = ofxtools.types.DateTime().convert(dtasof)
+        self.datetime = ofxtools.Types.DateTime().convert(dtasof)
 
         # INVTRANLIST
         tranlist = invstmtrs.find('INVTRANLIST')
@@ -474,8 +457,8 @@ class TransactionList(list):
         self.account = account
         dtstart, dtend = tranlist[0:2]
         tranlist = tranlist[2:]
-        self.dtstart = ofxtools.types.DateTime().convert(dtstart.text)
-        self.dtend = ofxtools.types.DateTime().convert(dtend.text)
+        self.dtstart = ofxtools.Types.DateTime().convert(dtstart.text)
+        self.dtend = ofxtools.Types.DateTime().convert(dtend.text)
         self.extend([self.etree_to_sql(DBSession, tran) for tran in tranlist])
 
     def etree_to_sql(self, DBSession, tran):
@@ -486,3 +469,35 @@ class TransactionList(list):
     def __repr__(self):
         return "<%s dtstart='%s' dtend='%s' len(self)=%d>" % \
                 (self.__class__.__name__, self.dtstart, self.dtend, len(self))
+
+
+def main():
+    from argparse import ArgumentParser
+
+    argparser = ArgumentParser(description='Import OFX data')
+    argparser.add_argument('-d', '--database', default='sqlite://',
+                           help='Database connection')
+    argparser.add_argument('file', nargs='+', help='OFX file(s)')
+    args = argparser.parse_args()
+
+    # DB setup
+    engine = sqlalchemy.create_engine(args.database)
+    models.Base.metadata.create_all(engine)
+
+    Session = sqlalchemy.orm.sessionmaker(bind=engine)
+    session = Session()
+
+    for file in args.file:
+        ofxparser = OFXTree()
+        ofxparser.parse(file)
+        try:
+            ofxparser.instantiate(session)
+            session.commit()
+        except:
+            session.rollback()
+
+    session.close()
+
+
+if __name__ == '__main__':
+    main()

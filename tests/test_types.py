@@ -21,7 +21,7 @@ class Base:
 
 
 class BoolTestCase(unittest.TestCase, Base):
-    type_ = ofxtools.types.Bool
+    type_ = ofxtools.Types.Bool
 
     def test_convert(self):
         t = self.type_()
@@ -47,7 +47,7 @@ class BoolTestCase(unittest.TestCase, Base):
 
 
 class StringTestCase(unittest.TestCase, Base):
-    type_ = ofxtools.types.String
+    type_ = ofxtools.Types.String
 
     def test_convert(self):
         t = self.type_()
@@ -70,7 +70,7 @@ class StringTestCase(unittest.TestCase, Base):
 
 
 class OneOfTestCase(unittest.TestCase, Base):
-    type_ = ofxtools.types.OneOf
+    type_ = ofxtools.Types.OneOf
 
     def test_convert(self):
         t = self.type_('1', '2')
@@ -83,7 +83,7 @@ class OneOfTestCase(unittest.TestCase, Base):
 
 
 class IntegerTestCase(unittest.TestCase, Base):
-    type_ = ofxtools.types.Integer
+    type_ = ofxtools.Types.Integer
 
     def test_convert(self):
         t = self.type_()
@@ -105,7 +105,7 @@ class IntegerTestCase(unittest.TestCase, Base):
 
 
 class DecimalTestCase(unittest.TestCase, Base):
-    type_ = ofxtools.types.Decimal
+    type_ = ofxtools.Types.Decimal
 
     def test_convert(self):
         t = self.type_()
@@ -135,7 +135,7 @@ class DecimalTestCase(unittest.TestCase, Base):
 
 
 class DateTimeTestCase(unittest.TestCase, Base):
-    type_ = ofxtools.types.DateTime
+    type_ = ofxtools.Types.DateTime
 
     def test_convert(self):
         t = self.type_()

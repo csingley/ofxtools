@@ -6,7 +6,7 @@ balances, and securities.
 
 # local imports
 import ofxtools
-from ofxtools.types import (Element, Bool, String, OneOf, Integer, Decimal,
+from ofxtools.Types import (Element, Bool, String, OneOf, Integer, Decimal,
                             DateTime)
 from ofxtools.lib import LANG_CODES, CURRENCY_CODES, COUNTRY_CODES
 

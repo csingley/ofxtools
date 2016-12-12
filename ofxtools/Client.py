@@ -31,7 +31,7 @@ else:
 
 # local imports
 from ofxtools.header import OFXHeader
-from ofxtools.types import Bool, OneOf, DateTime
+from ofxtools.Types import Bool, OneOf, DateTime
 from ofxtools.utils import fixpath
 from ofxtools.models import ACCTTYPES
 
