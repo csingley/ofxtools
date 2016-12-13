@@ -16,6 +16,7 @@ from sqlalchemy import (
     Text,
     ForeignKey,
     event,
+    and_,
     )
 from sqlalchemy.engine import Engine
 from sqlalchemy.schema import (
@@ -115,6 +116,15 @@ class Base(object):
             msg = "%s: Required attributes %s not satisfied by arguments %s" % (
                 cls.__name__, cls.primary_keys(), attrs)
             raise ValueError(msg)
+
+    @classmethod
+    def lookupByPk(cls, DBSession, **attrs):
+        """ Return a unique instance (or None) with the given primary key"""
+        fingerprint = cls._fingerprint(**attrs)
+        query = DBSession.query(cls)
+        for attr, val in fingerprint.items():
+            query = query.filter(getattr(cls, attr) == val)
+        return query.one_or_none()
 
 
 def Inheritor(parent_table):
