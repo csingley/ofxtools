@@ -287,9 +287,10 @@ class Balance(object):
     @declared_attr
     def acctfrom_id(cls):
         return Column(
-            Integer, ForeignKey('acctfrom.id',
-                                onupdate='CASCADE', ondelete='CASCADE'),
-            primary_key=True)
+            Integer, ForeignKey(
+                'acctfrom.id', onupdate='CASCADE', ondelete='CASCADE'
+            ), primary_key=True
+        )
 
     @declared_attr
     def acctfrom(cls):
@@ -421,9 +422,10 @@ class MFINFO(SECINFO):
 class PORTION(Base):
     # Added for SQLAlchemy object model
     mfinfo_id = Column(
-        Integer, ForeignKey('mfinfo.id',
-                            onupdate='CASCADE', ondelete='CASCADE'),
-        primary_key=True)
+        Integer, ForeignKey(
+            'mfinfo.id', onupdate='CASCADE', ondelete='CASCADE'
+        ), primary_key=True
+    )
     mfinfo = relationship(
         'MFINFO', backref=backref('mfassetclasses',
                                   cascade='all, delete-orphan',
@@ -441,9 +443,10 @@ class PORTION(Base):
 class FIPORTION(Base):
     # Added for SQLAlchemy object model
     mfinfo_id = Column(
-        Integer, ForeignKey('mfinfo.id',
-                            onupdate='CASCADE', ondelete='CASCADE'),
-        primary_key=True)
+        Integer, ForeignKey(
+            'mfinfo.id', onupdate='CASCADE', ondelete='CASCADE'
+        ), primary_key=True
+    )
     mfinfo = relationship(
         'MFINFO', backref=backref('fimfassetclasses',
                                   cascade='all, delete-orphan',
@@ -542,9 +545,10 @@ class BANKTRAN(ORIGCURRENCY):
 class STMTTRN(BANKTRAN, Base):
      # Added for SQLAlchemy object model
     acctfrom_id = Column(
-        Integer, ForeignKey('acctfrom.id',
-                            onupdate='CASCADE', ondelete='CASCADE'),
-        primary_key=True)
+        Integer, ForeignKey(
+            'acctfrom.id', onupdate='CASCADE', ondelete='CASCADE'
+        ), primary_key=True
+    )
 
     acctfrom = relationship(
         'ACCTFROM', backref=backref('stmttrns',
@@ -576,9 +580,10 @@ class STMTTRN(BANKTRAN, Base):
 class INVBANKTRAN(BANKTRAN, Base):
     # Added for SQLAlchemy object model
     acctfrom_id = Column(
-        Integer, ForeignKey('invacctfrom.id',
-                            onupdate='CASCADE', ondelete='CASCADE'),
-        primary_key=True)
+        Integer, ForeignKey(
+            'invacctfrom.id', onupdate='CASCADE', ondelete='CASCADE'
+        ), primary_key=True
+    )
     acctfrom = relationship(
         'INVACCTFROM', backref=backref('invbanktrans',
                                        cascade='all, delete-orphan',
@@ -613,8 +618,10 @@ class INVTRAN(Inheritor('invtran'), Base):
     @declared_attr
     def acctfrom_id(cls):
         return Column(
-            Integer, ForeignKey('invacctfrom.id',
-                                onupdate='CASCADE', ondelete='CASCADE'))
+            Integer, ForeignKey(
+                'invacctfrom.id', onupdate='CASCADE', ondelete='CASCADE'
+            ), nullable=False,
+        )
 
     @declared_attr
     def acctfrom(cls):
@@ -874,8 +881,10 @@ class TRANSFER(SECID, INVTRAN):
 class INVPOS(Inheritor('invpos'), SECID, CURRENCY, Base):
     # Added for SQLAlchemy object model
     acctfrom_id = Column(
-        Integer, ForeignKey('invacctfrom.id',
-                            onupdate='CASCADE', ondelete='CASCADE'))
+        Integer, ForeignKey(
+            'invacctfrom.id', onupdate='CASCADE', ondelete='CASCADE'
+        ), nullable=False
+    )
     acctfrom = relationship(
         'INVACCTFROM', backref=backref('invposs',
                                        cascade='all, delete-orphan',
