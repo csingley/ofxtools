@@ -3,6 +3,7 @@
 
 # stdlib imports
 import decimal
+import warnings
 
 # 3rd party imports
 import sqlalchemy
@@ -53,3 +54,45 @@ class OFXBoolean(sqlalchemy.types.TypeDecorator):
         if value is None:
             return None
         return self.mapping[value]
+
+
+class NagString(sqlalchemy.types.TypeDecorator):
+    """
+    Text that raises a warning length is exceeded.
+
+    Used to handle OFX data that violates the spec with respect to string length
+    on non-critical fields.
+    """
+    impl = sqlalchemy.types.Text
+
+    def __init__(self, *args, **kwargs):
+        """
+        Pop the input length, store as self.nagLength, and continue.
+        """
+        if not hasattr(self.__class__, 'impl'):
+            raise AssertionError("TypeDecorator implementations "
+                                 "require a class-level variable "
+                                 "'impl' which refers to the class of "
+                                 "type being decorated")
+        args = list(args)
+        try:
+            length = kwargs.pop('length', None) or args.pop(0)
+        except IndexError:
+            length = None
+        self.length = length
+
+        self.impl = sqlalchemy.sql.type_api.to_instance(
+            self.__class__.impl, *args, **kwargs
+        )
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            value = ''
+        value = str(value)
+
+        if self.length is not None and len(value) > self.length:
+            msg = "Value '%s' exceeds length=%s" % (value, self.length)
+            warnings.warn(msg, category=ofxtools.Types.OFXTypeWarning) 
+
+        return value
+        

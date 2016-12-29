@@ -7,6 +7,12 @@ import decimal
 import datetime
 import time
 import re
+import warnings
+
+
+class OFXTypeWarning(UserWarning):
+    """ Base class for warnings in this module """
+    pass
 
 
 class Element(object):
@@ -102,6 +108,28 @@ class String(Element):
         value = str(value)
         if self.length is not None and len(value) > self.length:
             raise ValueError("'%s' is too long; max length=%s" % (value, self.length))
+        return value
+
+
+class NagString(String):
+    """
+    String that raises a warning length is exceeded.
+
+    Used to handle OFX data that violates the spec with respect to string length
+    on non-critical fields.
+    """
+    def convert(self, value):
+        if value == '':
+            value = None
+        if value is None:
+            if self.required:
+                raise ValueError("Value is required")
+            else:
+                return None
+        value = str(value)
+        if self.length is not None and len(value) > self.length:
+            msg = "Value '%s' exceeds length=%s" % (value, self.length)
+            warnings.warn(msg, category=OFXTypeWarning) 
         return value
 
 

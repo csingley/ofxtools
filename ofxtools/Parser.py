@@ -186,24 +186,18 @@ class TreeBuilder(ET.TreeBuilder):
             else:
                 raise
 
+def main():
+    from argparse import ArgumentParser
 
-#def SubElement(parent, tag, attrib={}, **extra):
-    #"""Subelement factory which creates an element instance, and appends it
-    #to an existing parent.
+    argparser = ArgumentParser(description='Parse OFX data')
+    argparser.add_argument('file', nargs='+', help='OFX file(s)')
+    args = argparser.parse_args()
 
-    #The element tag, attribute names, and attribute values can be either
-    #bytes or Unicode strings.
+    for file in args.file:
+        ofxparser = OFXTree()
+        ofxparser.parse(file)
+        response = ofxparser.convert()
 
-    #*parent* is the parent element, *tag* is the subelements name, *attrib* is
-    #an optional directory containing element attributes, *extra* are
-    #additional attributes given as keyword arguments.
 
-    #We recreate the old pure Python xml.etree.ElementTree.SubElement() in order
-    #to make it actually return an instance of our custom Element subclass.
-
-    #"""
-    #attrib = attrib.copy()
-    #attrib.update(extra)
-    #element = parent.makeelement(tag, attrib)
-    #parent.append(element)
-    #return element
+if __name__ == '__main__':
+    main()

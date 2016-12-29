@@ -5,10 +5,10 @@ Version of ofxtools.Parser that uses SQLAlchemy for conversion
 # stdlib imports
 from decimal import Decimal
 
-
 # 3rd party imports
 import sqlalchemy
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.exc import SAWarning
 
 
 # local imports

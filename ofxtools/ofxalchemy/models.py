@@ -35,7 +35,12 @@ from sqlalchemy.orm import (
 
 
 # local imports
-from ofxtools.ofxalchemy.Types import OFXNumeric, OFXDateTime, OFXBoolean
+from ofxtools.ofxalchemy.Types import (
+    OFXNumeric,
+    OFXDateTime,
+    OFXBoolean,
+    NagString,
+)
 from ofxtools.lib import CURRENCY_CODES, COUNTRY_CODES
 
 
@@ -378,9 +383,9 @@ class SECINFO(Inheritor('secinfo'), CURRENCY, Base):
     # FIs *cough* IBKR *cough* abuse SECNAME/TICKER with too much information
     # Relaxing the length constraints from the OFX spec does little harm
     #secname = Column(String(length=120), nullable=False)
-    secname = Column(String(length=255), nullable=False)
+    secname = Column(NagString(length=120), nullable=False)
     #ticker = Column(String(length=32))
-    ticker = Column(String(length=255))
+    ticker = NagString(String(length=32))
     fiid = Column(String(length=32))
     rating = Column(String(length=10))
     unitprice = Column(OFXNumeric())
@@ -492,7 +497,8 @@ class STOCKINFO(SECINFO):
 ### TRANSACTIONS
 class PAYEE(Base):
     # Elements from OFX spec
-    name = Column(String(length=32), primary_key=True)
+    #name = Column(String(length=32), primary_key=True)
+    name = Column(NagString(length=32), primary_key=True)
     addr1 = Column(String(length=32), nullable=False)
     addr2 = Column(String(length=32))
     addr3 = Column(String(length=32))

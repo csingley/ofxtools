@@ -6,8 +6,16 @@ balances, and securities.
 
 # local imports
 import ofxtools
-from ofxtools.Types import (Element, Bool, String, OneOf, Integer, Decimal,
-                            DateTime)
+from ofxtools.Types import (
+    Element,
+    Bool,
+    String,
+    OneOf,
+    Integer,
+    Decimal,
+    DateTime,
+    NagString,
+)
 from ofxtools.lib import LANG_CODES, CURRENCY_CODES, COUNTRY_CODES
 
 
@@ -200,9 +208,9 @@ class SECINFO(CURRENCY, SECID):
     # FIs abuse SECNAME/TICKER
     # Relaxing the length constraints from the OFX spec does little harm
     #secname = String(120, required=True)
+    secname = NagString(120, required=True)
     #ticker = String(32)
-    secname = String(255, required=True)
-    ticker = String(255)
+    ticker = NagString(32)
     fiid = String(32)
     rating = String(10)
     unitprice = Decimal()
@@ -352,7 +360,8 @@ class STOCKINFO(SECINFO):
 
 # Transactions
 class PAYEE(Aggregate):
-    name = String(32, required=True)
+    #name = String(32, required=True)
+    name = NagString(32, required=True)
     addr1 = String(32, required=True)
     addr2 = String(32)
     addr3 = String(32)
