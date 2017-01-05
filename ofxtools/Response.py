@@ -1,4 +1,4 @@
-# vim: set fileencoding=utf-8
+# coding: utf-8
 """
 Python object model for Aggregate containers (the OFX response, statements,
 transaction lists, etc.)

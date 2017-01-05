@@ -1,4 +1,4 @@
-# vim: set fileencoding=utf-8
+# coding: utf-8
 """
 Regex-based parser for OFXv1/v2 based on subclasses of ElemenTree from stdlib.
 """

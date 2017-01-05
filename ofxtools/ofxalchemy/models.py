@@ -4,7 +4,7 @@ SQLAlchemy object model for fundamental OFX data aggregates such as transactions
 balances, and securities.
 """
 # stdlib imports
-import sqlite3
+#import sqlite3
 
 
 # 3rd party imports
@@ -41,6 +41,7 @@ from ofxtools.ofxalchemy.Types import (
     OFXBoolean,
     NagString,
 )
+from ofxtools.ofxalchemy.database import Base
 from ofxtools.lib import CURRENCY_CODES, COUNTRY_CODES
 
 
@@ -56,82 +57,7 @@ ASSETCLASSES = ('DOMESTICBOND', 'INTLBOND', 'LARGESTOCK', 'SMALLSTOCK',
                 'INTLSTOCK', 'MONEYMRKT', 'OTHER')
 
 
-# Configure SQLite to support foreign key constraints
-@event.listens_for(Engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    if isinstance(dbapi_connection, sqlite3.Connection):
-        cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA foreign_keys=ON")
-        cursor.close()
-
-
 ### OBJECT CLASSES
-@as_declarative()
-class Base(object):
-    """
-    Base class representing the main OFX 'aggregates', i.e. SGML parent nodes
-    that contain no data.
-
-    These aggregates are grouped into higher-order containers such as lists
-    and statements.  Although such higher-order containers are 'aggregates'
-    per the OFX specification, they are not persisted by our model; their
-    transitory representations are modelled in ofxalchemy.Parser.
-    """
-    @declared_attr
-    def __tablename__(cls):
-        return cls.__name__.lower()
-
-    def __repr__(self):
-        """
-        Lists all non-NULL instance attributes.
-        """
-        return '<%s(%s)>' % (self.__class__.__name__, ', '.join(
-            ['%s=%r' % (c.name, str(getattr(self, c.name))) \
-             for c in self.__class__.__table__.c \
-             if getattr(self, c.name) is not None]
-        ))
-
-    @classmethod
-    def primary_keys(cls):
-        return [c.name for c in cls.__table__.c if c.primary_key]
-
-    @staticmethod
-    def _bindattr(key, attrs):
-        """
-        Look up the given primary key's value in the given dict of attributes
-        """
-        k = key
-        try:
-            v = attrs[k]
-        except KeyError:
-            # Allow relationship, not just FK id integer
-            if k.endswith('_id'):
-                k = k[:-3]
-                v = attrs[k]
-            else:
-                raise
-        return k, v
-
-    @classmethod
-    def _fingerprint(cls, **attrs):
-        """ Extract an instance's primary key dict from a dict of attributes """
-        try:
-            return dict([cls._bindattr(pk, attrs) for pk in cls.primary_keys()])
-        except KeyError:
-            msg = "%s: Required attributes %s not satisfied by arguments %s" % (
-                cls.__name__, cls.primary_keys(), attrs)
-            raise ValueError(msg)
-
-    @classmethod
-    def lookupByPk(cls, DBSession, **attrs):
-        """ Return a unique instance (or None) with the given primary key"""
-        fingerprint = cls._fingerprint(**attrs)
-        query = DBSession.query(cls)
-        for attr, val in fingerprint.items():
-            query = query.filter(getattr(cls, attr) == val)
-        return query.one_or_none()
-
-
 def Inheritor(parent_table):
     """
     Mixin factory implementing joined-table inheritance.
@@ -385,7 +311,7 @@ class SECINFO(Inheritor('secinfo'), CURRENCY, Base):
     #secname = Column(String(length=120), nullable=False)
     secname = Column(NagString(length=120), nullable=False)
     #ticker = Column(String(length=32))
-    ticker = NagString(String(length=32))
+    ticker = Column(NagString(length=32))
     fiid = Column(String(length=32))
     rating = Column(String(length=10))
     unitprice = Column(OFXNumeric())
@@ -497,6 +423,7 @@ class STOCKINFO(SECINFO):
 ### TRANSACTIONS
 class PAYEE(Base):
     # Elements from OFX spec
+    # Relaxing the length restriction from OFX spec does little harm
     #name = Column(String(length=32), primary_key=True)
     name = Column(NagString(length=32), primary_key=True)
     addr1 = Column(String(length=32), nullable=False)
