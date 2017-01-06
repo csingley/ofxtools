@@ -41,11 +41,10 @@ def sessionmanager():
 
 
 def init_db(db_uri, **kwargs):
-    #import ofxtools.ofxalchemy.models
-
     engine = create_engine(db_uri, **kwargs)
     Base.metadata.create_all(bind=engine)
     Session.configure(bind=engine)
+    return engine
 
 
 @as_declarative()
@@ -111,8 +110,6 @@ class Base(object):
         """ Return a unique instance (or None) with the given primary key"""
         fingerprint = cls._fingerprint(**attrs)
         query = cls.query().filter_by(**fingerprint)
-        #for attr, val in fingerprint.items():
-            #query = query.filter(getattr(cls, attr) == val)
         return query.one_or_none()
 
 

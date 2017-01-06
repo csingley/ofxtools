@@ -14,34 +14,25 @@ from sqlalchemy.orm import (
 )
 
 # local imports
-from ofxtools.ofxalchemy import Base, OFXParser
+from ofxtools.ofxalchemy import (
+    init_db, 
+    Base,
+    sessionmanager,
+    OFXParser,
+)
 
 
 ### DB SETUP
 verbose = '-v' in sys.argv
-engine = create_engine('sqlite:///test.db', echo=verbose)
-Session = sessionmaker(bind=engine)
+database = 'sqlite:///test.db'
+engine = init_db(database)
 
-@contextmanager
-def session_scope(DBSession):
-    """
-    Provide a transactional scope around a series of database operations.
-    """
-    session = DBSession()
-    try:
-        yield session
-        session.commit()
-    except:
-        session.rollback()
-        raise
-    finally:
-        session.close()
 
 def ofx_to_database(filename):
-    with session_scope(Session) as DBSession:
+    with sessionmanager() as DBSession:
         parser = OFXParser()
         parser.parse(filename)
-        parser.instantiate(DBSession)
+        parser.instantiate()
 
 
 class AlchemyTestCase(unittest.TestCase):

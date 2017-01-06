@@ -82,21 +82,16 @@ website](http://www.sqlalchemy.org) or from
 ## SQL Persistence Example
 
 ```python
->>> # SQLAlchemy housekeeping to set up database connection
->>> from ofxtools import ofxalchemy
->>> from sqlalchemy import create_engine
->>> engine = create_engine('sqlite://', echo=False)
->>> from sqlalchemy.orm import sessionmaker
->>> DBSession = sessionmaker(bind=engine)
->>> # Create tables in database 
->>> ofxalchemy.Base.metadata.create_all(engine)
+>>> # Housekeeping to set up database connection
+>>> from ofxtools.ofxalchemy.database import init_db, Session
+>>> init_db('sqlite://', echo=False)
 
 >>> # Parse and persist the OFX data
 >>> parser = ofxalchemy.OFXParser() # a/k/a ofxalchemy.OFXTree
 >>> parser.parse('invstmtrs.ofx')
 >>> parser.instantiate(DBSession)
 <OFXResponse len(statements)=1 len(securities)=3>
->>> DBSession.commit()
+>>> Session.commit()
 >>> # Besides the returned OFXResponse object, persisted data can now be
 >>> # accessed by querying the database.  The object model follows the OFX
 >>> # specification fairly closely, with data elements represented as instance
@@ -108,14 +103,14 @@ website](http://www.sqlalchemy.org) or from
 >>> # within a statement are persisted.
 
 >>> from ofxtools.ofxalchemy.models import *
->>> acct = DBSession.query(ACCTFROM).one()
+>>> acct = ACCTFROM.query.one()
 >>> acct
 <INVACCTFROM(brokerid='121099999', acctid='999988', id='1')>
 >>> acct.invbals
 [<INVBAL(availcash='200.00', marginbalance='-50.00', shortbalance='0', acctfrom_id='1', dtasof='2005-08-27 01:00:00')>]
 >>> # The full range of SQLAlchemy query expressions is available.
 >>> from datetime import datetime
->>> invtrans = DBSession.query(INVTRAN).filter_by(acctfrom=acct).filter(INVTRAN.dttrade >= datetime(2005,1,1)).filter(INVTRAN.dttrade <= datetime(2005,12,31)).order_by(INVTRAN.dttrade).all()
+>>> invtrans = INVTRAN.query.filter_by(acctfrom=acct).filter(INVTRAN.dttrade >= datetime(2005,1,1)).filter(INVTRAN.dttrade <= datetime(2005,12,31)).order_by(INVTRAN.dttrade).all()
 >>> invtrans
 [<BUYSTOCK(units='100', unitprice='50.00', commission='25.00', total='-5025.00', subacctsec='CASH', subacctfund='CASH', buytype='BUY', secinfo_id='1', id='1')>]
 >>> # OFX text data has been validated and converted to Python types, so it
