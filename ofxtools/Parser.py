@@ -93,6 +93,8 @@ class OFXTree(ET.ElementTree):
             source = open(source)
         with source as s:
             source = s.read()
+            if hasattr(source, 'decode'):
+                source = source.decode()
 
         # Validate and strip the OFX header
         source = OFXHeader.strip(source)
