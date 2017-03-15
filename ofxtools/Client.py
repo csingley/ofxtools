@@ -17,16 +17,21 @@ from os import path
 import re
 from getpass import getpass
 
+
 PYTHON_VERSION = sys.version_info.major
 
 if  PYTHON_VERSION == 3:
     from configparser import SafeConfigParser
-    from urllib.request import Request, urlopen, HTTPError
+    from urllib.request import urlopen, HTTPError
     from urllib.parse import urlparse
 else:
     from ConfigParser import SafeConfigParser
-    from urllib2 import Request, urlopen, HTTPError
+    from urllib2 import urlopen, HTTPError
     from urlparse import urlparse
+
+
+# 3rd party imports
+import requests
 
 
 # local imports
@@ -239,25 +244,14 @@ class OFXClient:
 
     def download(self, request):
         """ """
-        mimetype = 'application/x-ofx'
-        HTTPheaders = {'Content-type': mimetype, 'Accept': '*/*, %s' % mimetype}
         # py3k: ElementTree.tostring() returns bytes not str
-        request = self.ofxheader + ET.tostring(request).decode()
-        # py3k: urllib.request wants bytes not str
-        request = Request(self.url, request.encode(), HTTPheaders)
+        data = self.ofxheader + ET.tostring(request).decode()
+
+        mimetype = 'application/x-ofx'
+        headers = {'Content-type': mimetype, 'Accept': '*/*, %s' % mimetype}
+
         try:
-            with contextlib.closing(urlopen(request)) as response:
-                # py3k: urlopen returns bytes not str
-                response_ = response.read().decode()
-                # urllib2.urlopen returns an addinfourl instance, which supports
-                # a limited subset of file methods.  Copy response to a StringIO
-                # so that we can use tell() and seek().
-                source = StringIO()
-                source.write(response_)
-                # After writing, rewind to the beginning.
-                source.seek(0)
-                self.response = source
-                return source
+            return requests.put(self.url, data=data, headers=headers)
         except HTTPError as err:
             # FIXME
             print(err.info())
@@ -312,7 +306,7 @@ def do_stmt(args):
         print(client.ofxheader + ET.tostring(request).decode())
     else:
         response = client.download(request)
-        print(response.read())
+        print(response.text)
 
 
 class OFXConfigParser(SafeConfigParser):

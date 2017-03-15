@@ -51,6 +51,8 @@ setup(
 
     packages = find_packages(),
 
+    install_requires = ['requests',],
+
     extras_require = {
         'SQL': ['sqlalchemy > 1.0.0',],
     },
