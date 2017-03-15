@@ -6,8 +6,8 @@
 data - both OFXv1 (SGML) and OFXv2 (pure XML) - which is the standard format
 for downloading financial information from banks and stockbrokers.
 
-`ofxtools` has no external dependencies beyond stdlib, and is compatible with
-Python version 2.7+ and 3.1+.
+`ofxtools` is compatible with Python version 2.7+ and 3.1+.
+It depends on [the Requests package](http://docs.python-requests.org/en/master/)
 
 The primary facilities provided include:
 - The `OFXClient` class; which dowloads OFX statements from the Internet
