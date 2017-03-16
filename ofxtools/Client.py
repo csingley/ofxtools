@@ -251,7 +251,7 @@ class OFXClient:
         headers = {'Content-type': mimetype, 'Accept': '*/*, %s' % mimetype}
 
         try:
-            return requests.put(self.url, data=data, headers=headers)
+            return requests.post(self.url, data=data, headers=headers)
         except HTTPError as err:
             # FIXME
             print(err.info())
