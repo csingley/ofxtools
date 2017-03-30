@@ -74,13 +74,23 @@ class Aggregate(object):
         return d
 
     @staticmethod
+    def _preflatten(elem):
+        pass
+
+    @staticmethod
+    def _postflatten(instance, ctx):
+        pass
+
+    @staticmethod
     def from_etree(elem):
         """
         Look up the Aggregate subclass for a given ofx.Parser.Element and
         feed it the Element to instantiate the Aggregate instance.
         """
         SubClass = globals()[elem.tag]
+        ctx = SubClass._preflatten(elem)
         instance = SubClass(elem)
+        SubClass._postflatten(instance, ctx)
         return instance
 
     def __repr__(self):
@@ -400,6 +410,38 @@ class STMTTRN(TRAN, ORIGCURRENCY):
     bankacctto = None
     ccacctto = None
 
+    @staticmethod
+    def _preflatten(elem):
+        ctx = {}
+
+        # TODO: maybe this should be factored out into an
+        #       Aggregate._verify()?
+        for dual_relationships in [
+                ["CCACCTTO", "BANKACCTTO"],
+                ["NAME", "PAYEE"],
+                # Handled somewhere else
+                # ["CURRENCY", "ORIGCURRENCY"],
+        ]:
+            if (elem.find(dual_relationships[0]) is not None and
+                elem.find(dual_relationships[1]) is not None):
+                raise ValueError(
+                    "<%s> may not contain both <%s> and <%s>" %
+                    (elem.tag, dual_relationships[0],
+                     dual_relationships[1]))
+
+        # Handle "sub-aggregates"
+        for tag in ["CCACCTTO", "BANKACCTTO", "PAYEE"]:
+            ccacctto = elem.find(tag)
+            if ccacctto is not None:
+                elem.remove(ccacctto)
+                ctx[tag] = ccacctto
+
+        return ctx
+
+    @staticmethod
+    def _postflatten(instance, ctx):
+        for tag, elem in ctx.items():
+            setattr(instance, tag.lower(), Aggregate.from_etree(elem))
 
 class INVBANKTRAN(STMTTRN):
     subacctfund = OneOf(*INVSUBACCTS, required=True)
