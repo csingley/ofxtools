@@ -89,7 +89,10 @@ class Aggregate(object):
 
     @staticmethod
     def _groom(elem):
-        """ """
+        """
+        Enforce Aggregate-level structural constraints of the OFX spec
+        and Python language naming constraints.
+        """
         # Rename all Elements tagged YIELD (reserved Python keyword) to YLD
         yld = elem.find('./YIELD')
         if yld is not None:
@@ -112,8 +115,26 @@ class Aggregate(object):
 
     @staticmethod
     def _preflatten(elem):
-        """ Extend in subclass """
-        return {}, {}
+        """ 
+        Strip any elements that will blow up _flatten(), and store them for
+        postprocessing either as directly set attributes or stapled-on
+        subaggregates.
+
+        Returns a 2-tuple of (attributes, subaggregates) where:
+            * attributes is a dict of {name: value} where:
+                - name is a string (the attribute name)
+                - value is any type (to which the attribute will be set)
+            * subaggregates is a dict of {name: value}, where:
+                - name is a string (the attribute name)
+                - value is either:
+                    + an Aggregate instance, or
+                    + a list of Aggregate instances
+
+        Extend in subclass.
+        """
+        attrs = {}
+        subaggs = {}
+        return attrs, subaggs
 
     @classmethod
     def _flatten(cls, element):
@@ -150,18 +171,20 @@ class Aggregate(object):
 
     @staticmethod
     def _postflatten(instance, attrs, subaggs):
-        """ """
+        """
+        Staple on attributes and subaggregates stripped during preprocessing.
+        """
         for attr, value in attrs.items():
             setattr(instance, attr, value)
         for tag, elem in subaggs.items():
             if isinstance(elem, ET.Element):
                 setattr(instance, tag.lower(), Aggregate.from_etree(elem))
-            elif isinstance(elem, (list, tuple)):
-                lst = [Aggregate.from_etree(elem) for e in elem]
+            elif isinstance(elem, list):
+                lst = [Aggregate.from_etree(e) for e in elem]
                 setattr(instance, tag.lower(), lst)
             else:
                 msg = "'{}' must be type {} or {}, not {}".format(
-                    tag, 'ElementTree.Element', 'list', type(elem)
+                    tag, 'ElementTree.Element', type(elem), 'list' 
                 )
                 raise ValueError(msg)
 
@@ -336,10 +359,10 @@ class MFINFO(SECINFO):
         fimfassetclass = elem.find('./FIMFASSETCLASS')
 
         if mfassetclass is not None:
-            subaggs['MFASSETCLASS'] = mfassetclass
+            subaggs['MFASSETCLASS'] = [p for p in mfassetclass]
             elem.remove(mfassetclass)
         if fimfassetclass is not None:
-            subaggs['FIMFASSETCLASS'] = fimfassetclass
+            subaggs['FIMFASSETCLASS'] = [p for p in fimfassetclass]
             elem.remove(fimfassetclass)
 
         return attrs, subaggs
