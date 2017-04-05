@@ -128,13 +128,34 @@ class Aggregate(object):
 
     @staticmethod
     def _preflatten(elem):
-        pass
+        """ """
+        # Do all XPath searches before removing nodes from the tree
+        #   which seems to mess up the DOM in Python3 and throw an
+        #   AttributeError on subsequent searches.
+        yld = elem.find('./YIELD')
+
+        if yld is not None:
+            yld.tag = 'YLD'
+
+        return {}, {}
 
     @staticmethod
-    def _postflatten(instance, ctx):
-        if ctx is not None:
-            for tag, elem in ctx.items():
+    def _postflatten(instance, attrs, subaggs):
+        """ """
+        for attr, value in attrs.items():
+            setattr(instance, attr, value)
+        for tag, elem in subaggs.items():
+            if isinstance(elem, ET.Element):
                 setattr(instance, tag.lower(), Aggregate.from_etree(elem))
+            elif isinstance(elem, (list, tuple)):
+                lst = [Aggregate.from_etree(elem) for e in elem]
+                setattr(instance, tag.lower(), lst)
+            else:
+                msg = "'{}' must be type {} or {}, not {}".format(
+                    tag, 'ElementTree.Element', 'list', type(elem)
+                )
+                raise ValueError(msg)
+
 
     @staticmethod
     def from_etree(elem):
@@ -142,13 +163,11 @@ class Aggregate(object):
         Look up the Aggregate subclass for a given ofx.Parser.Element and
         feed it the Element to instantiate the Aggregate instance.
         """
-        # First do a sanity check on the input element
-        Aggregate._verify(elem)
-
-        SubClass = globals()[elem.tag]
-        ctx = SubClass._preflatten(elem)
+        Aggregate._verify(elem) # First do sanity check on input Element
+        SubClass = globals()[elem.tag] # Look up Aggregate subclass by tag
+        attrs, subaggs = SubClass._preflatten(elem)
         instance = SubClass(elem)
-        SubClass._postflatten(instance, ctx)
+        SubClass._postflatten(instance, attrs, subaggs)
         return instance
 
     def __repr__(self):
@@ -198,13 +217,14 @@ class ORIGCURRENCY(CURRENCY):
         important to interpreting transactions in foreign correncies, we
         preserve this information by adding a nonstandard curtype element.
         """
+        attr, subagg = super(ORIGCURRENCY, ORIGCURRENCY)._preflatten(elem)
+
         curtype = elem.find('*/CURRENCY') or elem.find('*/ORIGCURRENCY')
         if curtype is not None:
-            c = ET.SubElement(elem, 'CURTYPE')
-            c.text = curtype.tag
+            assert 'curtype' not in attr
+            attr['curtype'] = curtype.text
 
-        ctx = super(ORIGCURRENCY, ORIGCURRENCY)._preflatten(elem) or {}
-        return ctx
+        return attr, subagg
 
 
 class ACCTFROM(Aggregate):
@@ -307,39 +327,27 @@ class MFINFO(SECINFO):
     mfassetclass = []
     fimfassetclass = []
 
-    def __init__(self, elem):
+    @staticmethod
+    def _preflatten(elem):
         """
         Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up _flatten()
-        Rename 'yield' (Python reserved word) to 'yld'
         """
-        extra_attrs = {}
-
         # Do all XPath searches before removing nodes from the tree
         #   which seems to mess up the DOM in Python3 and throw an
         #   AttributeError on subsequent searches.
+        attrs, subaggs = super(MFINFO, MFINFO)._preflatten(elem)
+
         mfassetclass = elem.find('./MFASSETCLASS')
         fimfassetclass = elem.find('./FIMFASSETCLASS')
-        yld = elem.find('./YIELD')
 
         if mfassetclass is not None:
-            # Convert PORTIONs; save for later
-            extra_attrs['mfassetclass'] = [Aggregate.from_etree(p) for p in mfassetclass]
+            subaggs['MFASSETCLASS'] = mfassetclass
             elem.remove(mfassetclass)
         if fimfassetclass is not None:
-            # Convert FIPORTIONs; save for later
-            extra_attrs['fimfassetclass'] = [Aggregate.from_etree(p) for p in fimfassetclass]
+            subaggs['FIMFASSETCLASS'] = fimfassetclass
             elem.remove(fimfassetclass)
-        if yld is not None:
-            # Rename; save for later
-            extra_attrs['yld'] = yld.text
-            elem.remove(yld)
 
-        super(MFINFO, self).__init__(elem)
-
-        # Add back data previously stripped/mangled
-        for attr, val in extra_attrs.items():
-            setattr(self, attr, val)
-
+        return attrs, subaggs
 
 class PORTION(Aggregate):
     assetclass = OneOf(*ASSETCLASSES, required=True)
@@ -359,7 +367,8 @@ class OPTINFO(SECINFO):
     assetclass = OneOf(*ASSETCLASSES)
     fiassetclass = String(32)
 
-    def __init__(self, elem):
+    @staticmethod
+    def _preflatten(elem):
         """
         Strip SECID of underlying so it doesn't overwrite SECID of option
         during _flatten()
@@ -367,8 +376,9 @@ class OPTINFO(SECINFO):
         # Do all XPath searches before removing nodes from the tree
         #   which seems to mess up the DOM in Python3 and throw an
         #   AttributeError on subsequent searches.
-        secid = elem.find('./SECID')
+        attrs, subaggs = super(OPTINFO, OPTINFO)._preflatten(elem)
 
+        secid = elem.find('./SECID')
         if secid is not None:
             # A <SECID> aggregate referring to the security underlying the
             # option is, in general, *not* going to be contained in <SECLIST>
@@ -381,7 +391,7 @@ class OPTINFO(SECINFO):
             # disregard it.
             elem.remove(secid)
 
-        super(OPTINFO, self).__init__(elem)
+        return attrs, subaggs
 
 
 class OTHERINFO(SECINFO):
@@ -397,28 +407,6 @@ class STOCKINFO(SECINFO):
     typedesc = String(32)
     assetclass = OneOf(*ASSETCLASSES)
     fiassetclass = String(32)
-
-    def __init__(self, elem):
-        """
-        Rename 'yield' (Python reserved word) to 'yld'
-        """
-        extra_attrs = {}
-
-        # Do all XPath searches before removing nodes from the tree
-        #   which seems to mess up the DOM in Python3 and throw an
-        #   AttributeError on subsequent searches.
-        yld = elem.find('./YIELD')
-
-        if yld is not None:
-            # Rename; save for later
-            extra_attrs['yld'] = yld.text
-            elem.remove(yld)
-
-        super(STOCKINFO, self).__init__(elem)
-
-        # Add back data previously stripped/mangled
-        for attr, val in extra_attrs.items():
-            setattr(self, attr, val)
 
 
 # Transactions
@@ -465,16 +453,19 @@ class STMTTRN(TRAN, ORIGCURRENCY):
 
     @staticmethod
     def _preflatten(elem):
-        ctx = super(STMTTRN, STMTTRN)._preflatten(elem) or {}
+        """ Handle CCACCTO/BANKACCTTO/PAYEE as 'sub-aggregates' """
+        attrs, subaggs = super(STMTTRN, STMTTRN)._preflatten(elem)
 
-        # Handle "sub-aggregates"
+        # Do all XPath searches before removing nodes from the tree
+        #   which seems to mess up the DOM in Python3 and throw an
+        #   AttributeError on subsequent searches.
         for tag in ["CCACCTTO", "BANKACCTTO", "PAYEE"]:
             ccacctto = elem.find(tag)
             if ccacctto is not None:
                 elem.remove(ccacctto)
-                ctx[tag] = ccacctto
+                subaggs[tag] = ccacctto
 
-        return ctx
+        return attrs, subaggs
 
 class INVBANKTRAN(STMTTRN):
     subacctfund = OneOf(*INVSUBACCTS, required=True)
