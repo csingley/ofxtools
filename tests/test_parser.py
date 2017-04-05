@@ -6,6 +6,7 @@ import datetime as dt
 
 # local imports
 import ofxtools
+from ofxtools.models import Aggregate
 
 
 def ofx_parse(filename):
@@ -42,7 +43,8 @@ class ParserTestCase(unittest.TestCase):
 with open('tests/data/stmtrs.ofx') as f:
     # Strip the OFX header
     sgml = ''.join(f.readlines()[3:])
-    parser = ofxtools.Parser.TreeBuilder(element_factory=ofxtools.Parser.Element)
+    #parser = ofxtools.Parser.TreeBuilder(element_factory=ofxtools.Parser.Element)
+    parser = ofxtools.Parser.TreeBuilder()
     parser.feed(sgml)
     ofx = parser.close()
 
@@ -246,7 +248,7 @@ class TreeBuilderTestCase(unittest.TestCase):
         self.element(dtasof, tag='DTASOF', data='200510291120')
 
     def test_flatten(self):
-        sonrs = ofx[0][0]._flatten()
+        sonrs = Aggregate._flatten(ofx[0][0])
         self.assertEqual(sonrs, {'code': '0', 'severity': 'INFO',
                                  'dtserver': '20051029101003',
                                  'language': 'ENG',
@@ -255,26 +257,26 @@ class TreeBuilderTestCase(unittest.TestCase):
                                  'org': 'NCH', 'fid': '1001'})
 
         stmttrnrs = ofx[1][0]
-        stmttrnrs_status = stmttrnrs[1]._flatten()
+        stmttrnrs_status = Aggregate._flatten(stmttrnrs[1])
         self.assertEqual(stmttrnrs_status, {'code': '0', 'severity': 'INFO'})
 
         stmtrs = stmttrnrs[2]
-        acctfrom = stmtrs[1]._flatten()
+        acctfrom = Aggregate._flatten(stmtrs[1])
         self.assertEqual(acctfrom, {'bankid': '121099999','acctid': '999988',
                                     'accttype': 'CHECKING'})
         tranlist = stmtrs[2]
-        stmttrn1 = tranlist[2]._flatten()
+        stmttrn1 = Aggregate._flatten(tranlist[2])
         self.assertEqual(stmttrn1, {'trntype': 'CHECK', 'dtposted': '20051004',
                                     'trnamt': '-200.00', 'fitid': '00002',
                                     'checknum': '1000'})
-        stmttrn2 = tranlist[3]._flatten()
+        stmttrn2 = Aggregate._flatten(tranlist[3])
         self.assertEqual(stmttrn2, {'trntype': 'ATM', 'dtposted': '20051020',
                                     'dtuser': '20051020', 'trnamt': '-300.00',
                                     'fitid': '00003'})
-        ledgerbal = stmtrs[3]._flatten()
+        ledgerbal = Aggregate._flatten(stmtrs[3])
         self.assertEqual(ledgerbal, {'balamt': '200.29',
                                      'dtasof': '200510291120'})
-        availbal = stmtrs[4]._flatten()
+        availbal = Aggregate._flatten(stmtrs[4])
         self.assertEqual(availbal, {'balamt': '200.29',
                                     'dtasof': '200510291120'})
 

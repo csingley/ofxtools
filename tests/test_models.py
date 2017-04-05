@@ -1,15 +1,19 @@
 # coding: utf-8
 
+# stdlib imports
 import unittest
 from datetime import datetime
 from decimal import Decimal
 import xml.etree.ElementTree as ET
-
-import ofxtools
-from ofxtools.Parser import (
+from xml.etree.ElementTree import (
     Element,
     SubElement,
 )
+from copy import deepcopy
+
+
+# local imports
+import ofxtools
 from ofxtools.models import (
     Aggregate,
     SONRS,
@@ -61,7 +65,7 @@ class TestAggregate(object):
     def testRequired(self):
         if self.requiredElements:
             for tag in self.requiredElements:
-                root = self.root.copy()
+                root = deepcopy(self.root)
                 parent = root.find('.//%s/..' % tag)
                 if parent is None:
                     raise ValueError("Can't find parent of %s" % tag)
@@ -73,7 +77,7 @@ class TestAggregate(object):
     def testOptional(self):
         if self.optionalElements:
             for tag in self.optionalElements:
-                root = self.root.copy()
+                root = deepcopy(self.root)
                 parent = root.find('.//%s/..' % tag)
                 if parent is None:
                     raise ValueError("Can't find parent of %s" % tag)
@@ -86,7 +90,7 @@ class TestAggregate(object):
         Adding an extra Element not in the spec makes Aggregate.__init__()
         throw a ValueError.
         """
-        root = self.root.copy()
+        root = deepcopy(self.root)
         SubElement(root, 'FAKEELEMENT').text = 'garbage'
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
@@ -95,12 +99,12 @@ class TestAggregate(object):
         # Make sure OneOf validator allows all legal values and disallows
         # illegal values
         for text in texts:
-            root = self.root.copy()
+            root = deepcopy(self.root)
             target = root.find('.//%s' % tag)
             target.text = text
             Aggregate.from_etree(root)
 
-        root = self.root.copy()
+        root = deepcopy(self.root)
         target = root.find('.//%s' % tag)
         target.text = 'garbage'
         with self.assertRaises(ValueError):
@@ -153,7 +157,7 @@ class SonrsTestCase(unittest.TestCase, TestAggregate):
     def testRequired(self):
         if self.requiredElements:
             for tag in self.requiredElements:
-                root = self.root.copy()
+                root = deepcopy(self.root)
                 parent = root.find('.//%s/..' % tag)
                 parent = root.find('.//%s/..' % tag)
                 if parent is None:
@@ -287,7 +291,7 @@ class InvbalTestCase(unittest.TestCase, TestAggregate):
     __test__ = True
     requiredElements = ('AVAILCASH', 'MARGINBALANCE', 'SHORTBALANCE',)
     optionalElements = ('BUYPOWER',)
-    # BALLIST blows up Element._flatten(); don't test it here
+    # BALLIST blows up _flatten(); don't test it here
 
     @property
     def root(self):

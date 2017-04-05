@@ -50,7 +50,7 @@ class Aggregate(object):
     """
     def __init__(self, elem):
         assert elem.tag == self.__class__.__name__
-        attributes = elem._flatten()
+        attributes = self._flatten(elem)
 
         for name, element in self.elements.items():
             value = attributes.pop(name, None)
@@ -72,6 +72,39 @@ class Aggregate(object):
             d.update({k: v for k,v in m.__dict__.items() \
                                     if isinstance(v, Element)})
         return d
+
+    @classmethod
+    def _flatten(cls, element):
+        """
+        Recurse through aggregate and flatten; return an un-nested dict.
+
+        This method will blow up if the aggregate contains LISTs, or if it
+        contains multiple subaggregates whose namespaces will collide when
+        flattened (e.g. BALAMT/DTASOF elements in LEDGERBAL and AVAILBAL).
+        Remove all such hair from any element before passing it in here.
+        """
+        aggs = {}
+        leaves = {}
+        for child in element:
+            tag = child.tag
+            data = child.text or ''
+            data = data.strip()
+            if data:
+                # it's a data-bearing leaf element.
+                assert tag not in leaves
+                # Silently drop all private tags (e.g. <INTU.XXXX>
+                if '.' not in tag:
+                    leaves[tag.lower()] = data
+            else:
+                # it's an aggregate.
+                assert tag not in aggs
+                aggs.update(cls._flatten(child))
+        # Double-check no key collisions as we flatten aggregates & leaves
+        for key in aggs.keys():
+            assert key not in leaves
+        leaves.update(aggs)
+
+        return leaves
 
     @staticmethod
     def _preflatten(elem):

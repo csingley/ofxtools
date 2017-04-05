@@ -6,32 +6,6 @@ Regex-based parser for OFXv1/v2 based on subclasses of ElemenTree from stdlib.
 # stdlib imports
 import re
 import xml.etree.ElementTree as ET
-# ElementTree's new C accelerators will break our parser; use old Python version
-if '_Element_Py' in dir(ET):
-    ET.Element = ET._Element_Py
-
-    def SubElement(parent, tag, attrib={}, **extra):
-        """Subelement factory which creates an element instance, and appends it
-        to an existing parent.
-
-        The element tag, attribute names, and attribute values can be either
-        bytes or Unicode strings.
-
-        *parent* is the parent element, *tag* is the subelements name, *attrib* is
-        an optional directory containing element attributes, *extra* are
-        additional attributes given as keyword arguments.
-
-        We recreate the old pure Python xml.etree.ElementTree.SubElement() in order
-        to make it actually return an instance of our custom Element subclass.
-
-        """
-        attrib = attrib.copy()
-        attrib.update(extra)
-        element = parent.makeelement(tag, attrib)
-        parent.append(element)
-        return element
-
-    ET.SubElement = SubElement
 
 
 # local imports
@@ -44,41 +18,6 @@ class ParseError(SyntaxError):
     pass
 
 
-class Element(ET.Element):
-    """ Parse tree node """
-    def _flatten(self):
-        """
-        Recurse through aggregate and flatten; return an un-nested dict.
-
-        This method will blow up if the aggregate contains LISTs, or if it
-        contains multiple subaggregates whose namespaces will collide when
-        flattened (e.g. BALAMT/DTASOF elements in LEDGERBAL and AVAILBAL).
-        Remove all such hair from any element before passing it in here.
-        """
-        aggs = {}
-        leaves = {}
-        for child in self:
-            tag = child.tag
-            data = child.text or ''
-            data = data.strip()
-            if data:
-                # it's a data-bearing leaf element.
-                assert tag not in leaves
-                # Silently drop all private tags (e.g. <INTU.XXXX>
-                if '.' not in tag:
-                    leaves[tag.lower()] = data
-            else:
-                # it's an aggregate.
-                assert tag not in aggs
-                aggs.update(child._flatten())
-        # Double-check no key collisions as we flatten aggregates & leaves
-        for key in aggs.keys():
-            assert key not in leaves
-        leaves.update(aggs)
-
-        return leaves
-
-
 class OFXTree(ET.ElementTree):
     """
     OFX parse tree.
@@ -86,8 +25,6 @@ class OFXTree(ET.ElementTree):
     Overrides ElementTree.ElementTree.parse() to validate and strip the
     the OFX header before feeding the body tags to TreeBuilder
     """
-    element_factory = Element
-
     def parse(self, source):
         if not hasattr(source, 'read'):
             source = open(source)
@@ -100,7 +37,8 @@ class OFXTree(ET.ElementTree):
         source = OFXHeader.strip(source)
 
         # Then parse tag soup into tree of Elements
-        parser = TreeBuilder(element_factory=self.element_factory)
+        #parser = TreeBuilder(element_factory=self.element_factory)
+        parser = TreeBuilder()
         parser.feed(source)
         self._root = parser.close()
 
