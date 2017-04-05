@@ -12,7 +12,6 @@ import uuid
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
 import contextlib
-from io import StringIO
 from os import path
 import re
 from getpass import getpass
@@ -24,10 +23,12 @@ if  PYTHON_VERSION == 3:
     from configparser import SafeConfigParser
     from urllib.request import urlopen, HTTPError
     from urllib.parse import urlparse
+    from io import StringIO
 else:
     from ConfigParser import SafeConfigParser
     from urllib2 import urlopen, HTTPError
     from urlparse import urlparse
+    from StringIO import StringIO
 
 
 # 3rd party imports
@@ -251,7 +252,8 @@ class OFXClient:
         headers = {'Content-type': mimetype, 'Accept': '*/*, %s' % mimetype}
 
         try:
-            return requests.post(self.url, data=data, headers=headers)
+            response = requests.post(self.url, data=data, headers=headers)
+            return StringIO(response.text)
         except HTTPError as err:
             # FIXME
             print(err.info())
@@ -306,7 +308,7 @@ def do_stmt(args):
         print(client.ofxheader + ET.tostring(request).decode())
     else:
         response = client.download(request)
-        print(response.text)
+        print(response.getvalue())
 
 
 class OFXConfigParser(SafeConfigParser):
