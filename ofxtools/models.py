@@ -466,7 +466,7 @@ class STMTTRN(TRAN, ORIGCURRENCY):
     dtuser = DateTime()
     dtavail = DateTime()
     trnamt = Decimal(required=True)
-    correctfitid = Decimal()
+    correctfitid = String(255)
     correctaction = OneOf('REPLACE', 'DELETE')
     checknum = String(12)
     refnum = String(32)
