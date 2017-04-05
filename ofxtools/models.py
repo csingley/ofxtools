@@ -3,6 +3,8 @@
 Python object model for fundamental data aggregates such as transactions,
 balances, and securities.
 """
+# stdlib imports
+import xml.etree.ElementTree as ET
 
 # local imports
 import ofxtools
@@ -115,8 +117,7 @@ class Aggregate(object):
         for dual_relationships in [
                 ["CCACCTTO", "BANKACCTTO"],
                 ["NAME", "PAYEE"],
-                # Handled somewhere else
-                # ["CURRENCY", "ORIGCURRENCY"],
+                ["CURRENCY", "ORIGCURRENCY"],
         ]:
             if (elem.find(dual_relationships[0]) is not None and
                 elem.find(dual_relationships[1]) is not None):
@@ -187,7 +188,8 @@ class CURRENCY(Aggregate):
 class ORIGCURRENCY(CURRENCY):
     curtype = OneOf('CURRENCY', 'ORIGCURRENCY')
 
-    def __init__(self, elem):
+    @staticmethod
+    def _preflatten(elem):
         """
         See OFX spec section 5.2 for currency handling conventions.
         Flattening the currency definition leaves only the CURRATE/CURSYM
@@ -196,19 +198,13 @@ class ORIGCURRENCY(CURRENCY):
         important to interpreting transactions in foreign correncies, we
         preserve this information by adding a nonstandard curtype element.
         """
-        super(ORIGCURRENCY, self).__init__(elem)
-
-        currency = elem.find('*/CURRENCY')
-        origcurrency = elem.find('*/ORIGCURRENCY')
-        if (currency is not None) and (origcurrency is not None):
-            raise ValueError("<%s> may not contain both <CURRENCY> and \
-                             <ORIGCURRENCY>" % elem.tag)
-        curtype = currency
-        if curtype is None:
-            curtype = origcurrency
+        curtype = elem.find('*/CURRENCY') or elem.find('*/ORIGCURRENCY')
         if curtype is not None:
-            curtype = curtype.tag
-        self.curtype = curtype
+            c = ET.SubElement(elem, 'CURTYPE')
+            c.text = curtype.tag
+
+        ctx = super(ORIGCURRENCY, ORIGCURRENCY)._preflatten(elem) or {}
+        return ctx
 
 
 class ACCTFROM(Aggregate):
@@ -469,7 +465,7 @@ class STMTTRN(TRAN, ORIGCURRENCY):
 
     @staticmethod
     def _preflatten(elem):
-        ctx = {}
+        ctx = super(STMTTRN, STMTTRN)._preflatten(elem) or {}
 
         # Handle "sub-aggregates"
         for tag in ["CCACCTTO", "BANKACCTTO", "PAYEE"]:
