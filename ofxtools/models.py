@@ -51,22 +51,28 @@ class Aggregate(object):
     classes other than Aggregate.
     """
     def __init__(self, **kwargs):
-        for name, element in self.elements.items():
-            value = kwargs.pop(name, None)
+        # Set instance attributes for all input kwargs that are defined by
+        # the class
+        for attr in self.elements:
+            value = kwargs.pop(attr, None)
             try:
-                setattr(self, name, value)
+                setattr(self, attr, value)
             except ValueError as e:
-                raise ValueError("Can't create %s.%s: %s" 
-                                 % (self.__class__.__name__, name, e.args[0]),
-                                )
+                msg = "Can't set {}.{} to {}".format(
+                    self.__class__.__name__, attr, e.args[0]
+                )
+                raise ValueError(msg)
+
+        # Check that no kwargs (not part of the class definition) are left over
         if kwargs:
-            raise ValueError("Undefined element(s) for '%s': %s"
-                            % (self.__class__.__name__, kwargs.keys())
-                            )
+            msg = "Parsed Element {} is undefined for {}".format(
+                            self.__class__.__name__, kwargs.keys()
+            )
+            raise ValueError(msg)
 
     @property
     def elements(self):
-        """ """
+        """ dict of all Aggregate attributes that are Elements """
         d = {}
         for m in self.__class__.__mro__:
             d.update({k: v for k,v in m.__dict__.items() \
@@ -77,7 +83,12 @@ class Aggregate(object):
     def from_etree(cls, elem):
         """
         Look up the Aggregate subclass for a given ofx.Parser.Element and
-        feed it the Element to instantiate the Aggregate instance.
+        feed it the Element to instantiate an Aggregate corresponding to the
+        Element.tag.
+
+        Main entry point for type conversion from ElementTree to Aggregate;
+        invoked by Response.OFXResponse which is in turn invoked by
+        Parser.OFXTree.convert()
         """
         cls._groom(elem)
         SubClass = globals()[elem.tag]

@@ -2,7 +2,6 @@
 """
 Regex-based parser for OFXv1/v2 based on subclasses of ElemenTree from stdlib.
 """
-
 # stdlib imports
 import re
 import xml.etree.ElementTree as ET
@@ -27,7 +26,7 @@ class OFXTree(ET.ElementTree):
     """
     def parse(self, source):
         if not hasattr(source, 'read'):
-            source = open(source)
+            source = open(sourj/ce)
         with source as s:
             source = s.read()
             if hasattr(source, 'decode'):
