@@ -26,7 +26,7 @@ class OFXTree(ET.ElementTree):
     """
     def parse(self, source):
         if not hasattr(source, 'read'):
-            source = open(sourj/ce)
+            source = open(source)
         with source as s:
             source = s.read()
             if hasattr(source, 'decode'):
