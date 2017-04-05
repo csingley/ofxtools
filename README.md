@@ -17,13 +17,6 @@ The primary facilities provided include:
   OFXParser into Python types and exposes them through more Pythonic
   attribute access (e.g. `OFXResponse.statements[0].ledgerbal`).
 
-Also included is the `ofxtools.ofxalchemy` subpackage, with versions of OFXTree
-and OFXResponse that can parse OFX formatted data and persist it into an SQL
-database.
-
-`ofxalchemy` depends on [the SQLAlchemy package](http://www.sqlalchemy.org).
-You'll need SQLAlchemy version 1.0 or higher.
-
 
 # Installation
 
@@ -33,18 +26,6 @@ Use the Python user installation scheme:
 
 In addition to the Python package, this will also install a script `ofxget`
 in `~/.local/bin`, and its sample configuration file in `~/.config/ofxtools`.
-
-To use `ofxalchemy`, you'll need to install SQLAlchemy via:
-
-    pip install sqlalchemy
-
-or
-
-    easy_install sqlalchemy
-
-or download and install the package from [the SQLAlchemy
-website](http://www.sqlalchemy.org) or from
-[PyPI](https://pypi.python.org/pypi/SQLAlchemy).
 
 
 # Basic Usage to Download OFX
@@ -79,45 +60,6 @@ website](http://www.sqlalchemy.org) or from
 <STMTTRN dtposted='2005-10-20 00:00:00' trntype='ATM' trnamt='-300.00' fitid='00003' dtuser='2005-10-20 00:00:00'>
 ```
 
-## SQL Persistence Example
-
-```python
->>> # Housekeeping to set up database connection
->>> from ofxtools.ofxalchemy.database import init_db, Session
->>> init_db('sqlite://', echo=False)
-
->>> # Parse and persist the OFX data
->>> parser = ofxalchemy.OFXParser() # a/k/a ofxalchemy.OFXTree
->>> parser.parse('invstmtrs.ofx')
->>> parser.instantiate(DBSession)
-<OFXResponse len(statements)=1 len(securities)=3>
->>> Session.commit()
->>> # Besides the returned OFXResponse object, persisted data can now be
->>> # accessed by querying the database.  The object model follows the OFX
->>> # specification fairly closely, with data elements represented as instance
->>> # attributes, subaggregate type nesting modeled by polymorphic inheritance,
->>> # and references to other data types replaced by foreign key relationships.
->>> #
->>> # N.B. There is no database structure representing account statements
->>> # (OFX *STMT aggregates); only the transactions, balances, etc. contained
->>> # within a statement are persisted.
-
->>> from ofxtools.ofxalchemy.models import *
->>> acct = ACCTFROM.query.one()
->>> acct
-<INVACCTFROM(brokerid='121099999', acctid='999988', id='1')>
->>> acct.invbals
-[<INVBAL(availcash='200.00', marginbalance='-50.00', shortbalance='0', acctfrom_id='1', dtasof='2005-08-27 01:00:00')>]
->>> # The full range of SQLAlchemy query expressions is available.
->>> from datetime import datetime
->>> invtrans = INVTRAN.query.filter_by(acctfrom=acct).filter(INVTRAN.dttrade >= datetime(2005,1,1)).filter(INVTRAN.dttrade <= datetime(2005,12,31)).order_by(INVTRAN.dttrade).all()
->>> invtrans
-[<BUYSTOCK(units='100', unitprice='50.00', commission='25.00', total='-5025.00', subacctsec='CASH', subacctfund='CASH', buytype='BUY', secinfo_id='1', id='1')>]
->>> # OFX text data has been validated and converted to Python types, so it
->>> # can be worked with directly.
->>> t = invtrans[0]
->>> assert -t.units * t.unitprice - t.commission == t.total
-```
 
 ## Contributing
 

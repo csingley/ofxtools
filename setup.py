@@ -53,10 +53,6 @@ setup(
 
     install_requires = ['requests',],
 
-    extras_require = {
-        'SQL': ['sqlalchemy > 1.0.0',],
-    },
-
     package_data = {
         'ofxtools': ['README.md', 'config/*.cfg', 'tests/*'],
     },
