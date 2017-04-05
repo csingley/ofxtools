@@ -131,7 +131,9 @@ class Aggregate(object):
 
     @staticmethod
     def _postflatten(instance, ctx):
-        pass
+        if ctx is not None:
+            for tag, elem in ctx.items():
+                setattr(instance, tag.lower(), Aggregate.from_etree(elem))
 
     @staticmethod
     def from_etree(elem):
@@ -477,11 +479,6 @@ class STMTTRN(TRAN, ORIGCURRENCY):
                 ctx[tag] = ccacctto
 
         return ctx
-
-    @staticmethod
-    def _postflatten(instance, ctx):
-        for tag, elem in ctx.items():
-            setattr(instance, tag.lower(), Aggregate.from_etree(elem))
 
 class INVBANKTRAN(STMTTRN):
     subacctfund = OneOf(*INVSUBACCTS, required=True)
