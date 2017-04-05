@@ -50,30 +50,70 @@ class Aggregate(object):
     per the OFX specification, they are represented here by their own Python
     classes other than Aggregate.
     """
-    def __init__(self, elem):
-        assert elem.tag == self.__class__.__name__
-        attributes = self._flatten(elem)
-
+    def __init__(self, **kwargs):
         for name, element in self.elements.items():
-            value = attributes.pop(name, None)
+            value = kwargs.pop(name, None)
             try:
                 setattr(self, name, value)
             except ValueError as e:
                 raise ValueError("Can't create %s.%s: %s" 
                                  % (self.__class__.__name__, name, e.args[0]),
                                 )
-        if attributes:
+        if kwargs:
             raise ValueError("Undefined element(s) for '%s': %s"
-                            % (self.__class__.__name__, attributes.keys())
+                            % (self.__class__.__name__, kwargs.keys())
                             )
 
     @property
     def elements(self):
+        """ """
         d = {}
         for m in self.__class__.__mro__:
             d.update({k: v for k,v in m.__dict__.items() \
                                     if isinstance(v, Element)})
         return d
+
+    @classmethod
+    def from_etree(cls, elem):
+        """
+        Look up the Aggregate subclass for a given ofx.Parser.Element and
+        feed it the Element to instantiate the Aggregate instance.
+        """
+        cls._groom(elem)
+        SubClass = globals()[elem.tag]
+        attrs, subaggs = SubClass._preflatten(elem)
+        attributes = cls._flatten(elem)
+        instance = SubClass(**attributes)
+        cls._postflatten(instance, attrs, subaggs)
+        return instance
+
+    @staticmethod
+    def _groom(elem):
+        """ """
+        # Rename all Elements tagged YIELD (reserved Python keyword) to YLD
+        yld = elem.find('./YIELD')
+        if yld is not None:
+            yld.tag = 'YLD'
+
+        # Throw an error for Elements containing sub-Elements that are
+        # mutually exclusive per the OFX spec, and which will cause
+        # problems for _flatten()
+        for dual_relationships in [
+                ["CCACCTTO", "BANKACCTTO"],
+                ["NAME", "PAYEE"],
+                ["CURRENCY", "ORIGCURRENCY"],
+        ]:
+            if (elem.find(dual_relationships[0]) is not None and
+                elem.find(dual_relationships[1]) is not None):
+                raise ValueError(
+                    "<%s> may not contain both <%s> and <%s>" %
+                    (elem.tag, dual_relationships[0],
+                     dual_relationships[1]))
+
+    @staticmethod
+    def _preflatten(elem):
+        """ Extend in subclass """
+        return {}, {}
 
     @classmethod
     def _flatten(cls, element):
@@ -109,37 +149,6 @@ class Aggregate(object):
         return leaves
 
     @staticmethod
-    def _verify(elem):
-        """
-        Throw an error for Elements containing sub-Elements that are mutually
-        exclusive per the OFX spec, and which will cause problems for _flatten()
-        """
-        for dual_relationships in [
-                ["CCACCTTO", "BANKACCTTO"],
-                ["NAME", "PAYEE"],
-                ["CURRENCY", "ORIGCURRENCY"],
-        ]:
-            if (elem.find(dual_relationships[0]) is not None and
-                elem.find(dual_relationships[1]) is not None):
-                raise ValueError(
-                    "<%s> may not contain both <%s> and <%s>" %
-                    (elem.tag, dual_relationships[0],
-                     dual_relationships[1]))
-
-    @staticmethod
-    def _preflatten(elem):
-        """ """
-        # Do all XPath searches before removing nodes from the tree
-        #   which seems to mess up the DOM in Python3 and throw an
-        #   AttributeError on subsequent searches.
-        yld = elem.find('./YIELD')
-
-        if yld is not None:
-            yld.tag = 'YLD'
-
-        return {}, {}
-
-    @staticmethod
     def _postflatten(instance, attrs, subaggs):
         """ """
         for attr, value in attrs.items():
@@ -155,20 +164,6 @@ class Aggregate(object):
                     tag, 'ElementTree.Element', 'list', type(elem)
                 )
                 raise ValueError(msg)
-
-
-    @staticmethod
-    def from_etree(elem):
-        """
-        Look up the Aggregate subclass for a given ofx.Parser.Element and
-        feed it the Element to instantiate the Aggregate instance.
-        """
-        Aggregate._verify(elem) # First do sanity check on input Element
-        SubClass = globals()[elem.tag] # Look up Aggregate subclass by tag
-        attrs, subaggs = SubClass._preflatten(elem)
-        instance = SubClass(elem)
-        SubClass._postflatten(instance, attrs, subaggs)
-        return instance
 
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, ' '.join(['%s=%r' % (attr, str(getattr(self, attr))) for attr in self.elements.keys() if getattr(self, attr) is not None]))
