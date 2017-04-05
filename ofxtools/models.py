@@ -107,6 +107,25 @@ class Aggregate(object):
         return leaves
 
     @staticmethod
+    def _verify(elem):
+        """
+        Throw an error for Elements containing sub-Elements that are mutually
+        exclusive per the OFX spec, and which will cause problems for _flatten()
+        """
+        for dual_relationships in [
+                ["CCACCTTO", "BANKACCTTO"],
+                ["NAME", "PAYEE"],
+                # Handled somewhere else
+                # ["CURRENCY", "ORIGCURRENCY"],
+        ]:
+            if (elem.find(dual_relationships[0]) is not None and
+                elem.find(dual_relationships[1]) is not None):
+                raise ValueError(
+                    "<%s> may not contain both <%s> and <%s>" %
+                    (elem.tag, dual_relationships[0],
+                     dual_relationships[1]))
+
+    @staticmethod
     def _preflatten(elem):
         pass
 
@@ -120,6 +139,9 @@ class Aggregate(object):
         Look up the Aggregate subclass for a given ofx.Parser.Element and
         feed it the Element to instantiate the Aggregate instance.
         """
+        # First do a sanity check on the input element
+        Aggregate._verify(elem)
+
         SubClass = globals()[elem.tag]
         ctx = SubClass._preflatten(elem)
         instance = SubClass(elem)
@@ -446,21 +468,6 @@ class STMTTRN(TRAN, ORIGCURRENCY):
     @staticmethod
     def _preflatten(elem):
         ctx = {}
-
-        # TODO: maybe this should be factored out into an
-        #       Aggregate._verify()?
-        for dual_relationships in [
-                ["CCACCTTO", "BANKACCTTO"],
-                ["NAME", "PAYEE"],
-                # Handled somewhere else
-                # ["CURRENCY", "ORIGCURRENCY"],
-        ]:
-            if (elem.find(dual_relationships[0]) is not None and
-                elem.find(dual_relationships[1]) is not None):
-                raise ValueError(
-                    "<%s> may not contain both <%s> and <%s>" %
-                    (elem.tag, dual_relationships[0],
-                     dual_relationships[1]))
 
         # Handle "sub-aggregates"
         for tag in ["CCACCTTO", "BANKACCTTO", "PAYEE"]:
