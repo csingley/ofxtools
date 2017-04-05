@@ -246,14 +246,14 @@ class ORIGCURRENCY(CURRENCY):
         important to interpreting transactions in foreign correncies, we
         preserve this information by adding a nonstandard curtype element.
         """
-        attr, subagg = super(ORIGCURRENCY, ORIGCURRENCY)._preflatten(elem)
+        attrs, subaggs = super(ORIGCURRENCY, ORIGCURRENCY)._preflatten(elem)
 
-        curtype = elem.find('*/CURRENCY') or elem.find('*/ORIGCURRENCY')
+        curtype = elem.find('CURRENCY') or elem.find('ORIGCURRENCY')
         if curtype is not None:
-            assert 'curtype' not in attr
-            attr['curtype'] = curtype.text
+            assert 'curtype' not in attrs
+            attrs['curtype'] = curtype.tag
 
-        return attr, subagg
+        return attrs, subaggs
 
 
 class ACCTFROM(Aggregate):
