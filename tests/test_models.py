@@ -32,6 +32,7 @@ from ofxtools.models import (
     STOCKINFO,
     PORTION,
     FIPORTION,
+    STMTTRN,
 )
 from ofxtools.lib import (
     LANG_CODES,
@@ -698,6 +699,93 @@ class StockinfoTestCase(unittest.TestCase, TestAggregate):
         self.assertEqual(root.dtyieldasof, datetime(2003, 5, 1))
         self.assertEqual(root.assetclass, 'SMALLSTOCK')
         self.assertEqual(root.fiassetclass, 'FOO')
+
+
+class StmttrnTestCase(unittest.TestCase, TestAggregate):
+    __test__ = True
+    requiredElements = ('DTPOSTED', 'TRNAMT', 'FITID', 'TRNTYPE',)
+    optionalElements = ('DTUSER', 'DTAVAIL', 'CORRECTFITID', 'CORRECTACTION',
+                        'SRVRTID', 'CHECKNUM', 'REFNUM', 'SIC', 'PAYEEID',
+                        'NAME', 'MEMO', 'INV401KSOURCE', 'CURSYM', 'CURRATE',)
+
+    @property
+    def root(self):
+        root = Element('STMTTRN')
+        SubElement(root, 'TRNTYPE').text = 'CHECK'
+        SubElement(root, 'DTPOSTED').text = '20130615'
+        SubElement(root, 'DTUSER').text = '20130614'
+        SubElement(root, 'DTAVAIL').text = '20130616'
+        SubElement(root, 'TRNAMT').text = '-433.25'
+        SubElement(root, 'FITID').text = 'DEADBEEF'
+        SubElement(root, 'CORRECTFITID').text = 'B00B5'
+        SubElement(root, 'CORRECTACTION').text = 'REPLACE'
+        SubElement(root, 'SRVRTID').text = '101A2'
+        SubElement(root, 'CHECKNUM').text = '101'
+        SubElement(root, 'REFNUM').text = '5A6B'
+        SubElement(root, 'SIC').text = '171103'
+        SubElement(root, 'PAYEEID').text = '77810'
+        SubElement(root, 'NAME').text = 'Tweet E. Bird'
+        SubElement(root, 'MEMO').text = 'Protection money'
+        currency = SubElement(root, 'CURRENCY')
+        SubElement(currency, 'CURSYM').text = 'CAD'
+        SubElement(currency, 'CURRATE').text = '1.1'
+        SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, STMTTRN)
+        self.assertEqual(root.trntype, 'CHECK')
+        self.assertEqual(root.dtposted, datetime(2013, 6, 15))
+        self.assertEqual(root.dtuser, datetime(2013, 6, 14))
+        self.assertEqual(root.dtavail, datetime(2013, 6, 16))
+        self.assertEqual(root.trnamt, Decimal('-433.25'))
+        self.assertEqual(root.fitid, 'DEADBEEF')
+        self.assertEqual(root.correctfitid, 'B00B5')
+        self.assertEqual(root.correctaction, 'REPLACE')
+        self.assertEqual(root.srvrtid, '101A2')
+        self.assertEqual(root.checknum, '101')
+        self.assertEqual(root.refnum, '5A6B')
+        self.assertEqual(root.sic, 171103)
+        self.assertEqual(root.payeeid, '77810')
+        self.assertEqual(root.name, 'Tweet E. Bird')
+        self.assertEqual(root.memo, 'Protection money')
+        self.assertEqual(root.curtype, 'CURRENCY')
+        self.assertEqual(root.cursym, 'CAD')
+        self.assertEqual(root.currate, Decimal('1.1'))
+        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
+
+
+class StmttrnOrigcurrencyTestCase(StmttrnTestCase):
+    @property
+    def root(self):
+        root = super(StmttrnOrigcurrencyTestCase, self).root
+        currency = root.find('CURRENCY')
+        currency.tag = 'ORIGCURRENCY'
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, STMTTRN)
+        self.assertEqual(root.trntype, 'CHECK')
+        self.assertEqual(root.dtposted, datetime(2013, 6, 15))
+        self.assertEqual(root.dtuser, datetime(2013, 6, 14))
+        self.assertEqual(root.dtavail, datetime(2013, 6, 16))
+        self.assertEqual(root.trnamt, Decimal('-433.25'))
+        self.assertEqual(root.fitid, 'DEADBEEF')
+        self.assertEqual(root.correctfitid, 'B00B5')
+        self.assertEqual(root.correctaction, 'REPLACE')
+        self.assertEqual(root.srvrtid, '101A2')
+        self.assertEqual(root.checknum, '101')
+        self.assertEqual(root.refnum, '5A6B')
+        self.assertEqual(root.sic, 171103)
+        self.assertEqual(root.payeeid, '77810')
+        self.assertEqual(root.name, 'Tweet E. Bird')
+        self.assertEqual(root.memo, 'Protection money')
+        self.assertEqual(root.curtype, 'ORIGCURRENCY')
+        self.assertEqual(root.cursym, 'CAD')
+        self.assertEqual(root.currate, Decimal('1.1'))
+        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
 
 
 ##class ModelTestCase(unittest.TestCase, TestAggregate):
