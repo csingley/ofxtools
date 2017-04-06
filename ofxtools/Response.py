@@ -5,7 +5,7 @@ transaction lists, etc.)
 """
 
 # local imports
-from ofxtools.models import Aggregate
+from ofxtools.models import (Aggregate, STMTTRNRS, CCSTMTTRNRS, INVSTMTTRNRS)
 from ofxtools.Types import String, DateTime
 
 
@@ -36,26 +36,22 @@ class OFXResponse(object):
 
         # N.B. This iteration method doesn't preserve the original
         # ordering of the statements within the OFX response
-        for stmtClass in (BankStatement, CreditCardStatement, InvestmentStatement):
-            tagname = stmtClass._tagName
-            for trnrs in self.tree.findall('*/%sTRNRS' % tagname):
+        for stmtClass in (STMTTRNRS, CCSTMTTRNRS, INVSTMTTRNRS):
+            tagname = stmtClass.__name__
+            for trnrs in self.tree.findall('*/%s' % tagname):
                 # *STMTTRNRS may have no *STMTRS (in case of error).
                 # Don't blow up; skip silently.
-                stmtrs = trnrs.find('%sRS' % tagname)
+                stmtrs = trnrs.find(stmtClass._rsTag)
                 if stmtrs is not None:
-                    stmt = stmtClass(stmtrs)
-                    # Staple the TRNRS wrapper data onto the STMT
-                    stmt.copyTRNRS(trnrs)
+                    stmt = Aggregate.from_etree(trnrs)
                     self.statements.append(stmt)
 
         # SECLIST - list of description of securities referenced by
         # INVSTMT (investment account statement)
         self.securities = []
         seclist = self.tree.find('SECLISTMSGSRSV1/SECLIST')
-        if seclist is None:
-            return
-        for sec in seclist:
-            self.securities.append(Aggregate.from_etree(sec))
+        if seclist is not None:
+            self.securities = Aggregate.from_etree(seclist)
 
     def __repr__(self):
         s = "<%s fid='%s' org='%s' dtserver='%s' len(statements)=%d len(securities)=%d>"
@@ -66,183 +62,3 @@ class OFXResponse(object):
                     len(self.statements),
                     len(self.securities),
                    )
-
-### STATEMENTS
-class Statement(object):
-    """ Base class for Python representation of OFX *STMT aggregate """
-    def __init__(self, stmtrs):
-        """ Initialize with *STMTRS Element """
-        self.currency = stmtrs.find('CURDEF').text
-        self.account = Aggregate.from_etree(stmtrs.find(self._acctTag))
-        self._init(stmtrs)
-
-    def _init(self, stmtrs):
-        # Define in subclass
-        raise NotImplementedError
-
-    def copyTRNRS(self, trnrs):
-        """ Attach the data fields from the *TRNRS wrapper to the STMT """
-        self.uid = String(36).convert(trnrs.find('TRNUID').text)
-        self.status = Aggregate.from_etree(trnrs.find('STATUS'))
-        cltcookie = trnrs.find('CLTCOOKIE')
-        if cltcookie is not None:
-            self.cookie = String(36).convert(cltcookie.text)
-        else:
-            self.cookie = None
-
-    def __repr__(self):
-        # Define in subclass
-        raise NotImplementedError
-
-
-class BankStatement(Statement):
-    """ Python representation of OFX STMT (bank statement) aggregate """
-    _tagName = 'STMT'
-    _acctTag = 'BANKACCTFROM'
-
-    def _init(self, stmtrs):
-        # BANKTRANLIST
-        tranlist = stmtrs.find('BANKTRANLIST')
-        if tranlist is not None:
-            self.transactions = BANKTRANLIST(tranlist)
-        else:
-            self.transactions = []
-
-        # LEDGERBAL - mandatory
-        self.ledgerbal = Aggregate.from_etree(stmtrs.find('LEDGERBAL'))
-
-        # AVAILBAL
-        availbal = stmtrs.find('AVAILBAL')
-        if availbal is not None:
-            self.availbal = Aggregate.from_etree(availbal)
-        else:
-            self.availbal = None
-
-        # BALLIST
-        ballist = stmtrs.find('BALLIST')
-        if ballist:
-            self.other_balances = [Aggregate.from_etree(bal) for bal in ballist]
-        else:
-            self.other_balances = []
-
-        # Unsupported subaggregates
-        for tag in ('MKTGINFO', ):
-            child = stmtrs.find(tag)
-            if child:
-                stmtrs.remove
-
-    def __repr__(self):
-        s = "<%s account=%s currency=%s ledgerbal=%s availbal=%s len(other_balances)=%d len(transactions)=%d>"
-        return s % (self.__class__.__name__,
-                    self.account,
-                    self.currency,
-                    self.ledgerbal,
-                    self.availbal,
-                    len(self.other_balances),
-                    len(self.transactions),
-                   )
-
-
-class CreditCardStatement(BankStatement):
-    """
-    Python representation of OFX CCSTMT (credit card statement)
-    aggregate
-    """
-    _tagName = 'CCSTMT'
-    _acctTag = 'CCACCTFROM'
-
-
-class InvestmentStatement(Statement):
-    """
-    Python representation of OFX InvestmentStatement (investment account statement)
-    aggregate
-    """
-    _tagName = 'INVSTMT'
-    _acctTag = 'INVACCTFROM'
-
-    def _init(self, invstmtrs):
-        dtasof = invstmtrs.find('DTASOF').text
-        self.datetime = DateTime().convert(dtasof)
-
-        # INVTRANLIST
-        tranlist = invstmtrs.find('INVTRANLIST')
-        if tranlist is not None:
-            self.transactions = INVTRANLIST(tranlist)
-        else:
-            self.transactions = []
-
-        # INVPOSLIST
-        poslist = invstmtrs.find('INVPOSLIST')
-        if poslist is not None:
-            self.positions = [Aggregate.from_etree(pos) for pos in poslist]
-        else:
-            self.positions = []
-
-        # INVBAL
-        invbal = invstmtrs.find('INVBAL')
-        if invbal is not None:
-            # First strip off BALLIST & process it
-            ballist = invbal.find('BALLIST')
-            if ballist is not None:
-                invbal.remove(ballist)
-                self.other_balances = [Aggregate.from_etree(bal) for bal in ballist]
-            else:
-                self.other_balances = []
-            # Now we can flatten the rest of INVBAL
-            self.balances = Aggregate.from_etree(invbal)
-        else:
-            self.balances = []
-            self.other_balances = []
-
-        # Unsupported subaggregates
-        for tag in ('INVOOLIST', 'INV401K', 'INV401KBAL', 'MKTGINFO'):
-            child = invstmtrs.find(tag)
-            if child is not None:
-                invstmtrs.remove
-
-    def __repr__(self):
-        s = "<%s datetime='%s' account=%s currency='%s' balances=%s len(other_balances)=%d len(positions)=%d len(transactions)=%d>"
-        return s % (self.__class__.__name__,
-                    self.datetime,
-                    self.account,
-                    self.currency,
-                    self.balances,
-                    len(self.other_balances),
-                    len(self.positions),
-                    len(self.transactions),
-                   )
-
-
-### TRANSACTION LISTS
-class TransactionList(list):
-    """
-    Base class for Python representation of OFX *TRANLIST (transaction list)
-    aggregate
-    """
-    def __init__(self, tranlist):
-        # Initialize with *TRANLIST Element
-        dtstart, dtend = tranlist[0:2]
-        tranlist = tranlist[2:]
-        self.dtstart = DateTime().convert(dtstart.text)
-        self.dtend = DateTime().convert(dtend.text)
-        self.extend([Aggregate.from_etree(tran) for tran in tranlist])
-
-    def __repr__(self):
-        return "<%s dtstart='%s' dtend='%s' len(self)=%d>" % \
-                (self.__class__.__name__, self.dtstart, self.dtend, len(self))
-
-
-class BANKTRANLIST(TransactionList):
-    """
-    Python representation of OFX BANKTRANLIST (bank transaction list)
-    aggregate
-    """
-    pass
-
-
-class INVTRANLIST(TransactionList):
-    """
-    Python representation of OFX INVTRANLIST (investment transaction list)
-    aggregate
-    """
-    pass

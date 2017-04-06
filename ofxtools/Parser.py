@@ -36,7 +36,7 @@ class OFXTree(ET.ElementTree):
         source = OFXHeader.strip(source)
 
         # Then parse tag soup into tree of Elements
-        #parser = TreeBuilder(element_factory=self.element_factory)
+        # parser = TreeBuilder(element_factory=self.element_factory)
         parser = TreeBuilder()
         parser.feed(source)
         self._root = parser.close()
@@ -73,7 +73,7 @@ class TreeBuilder(ET.TreeBuilder):
         """
         for match in self.regex.finditer(data):
             tag, text, closeTag = match.groups()
-            text = (text or '').strip() # None has no strip() method
+            text = (text or '').strip()  # None has no strip() method
             if len(text):
                 # OFX "element" (i.e. data-bearing leaf)
                 if tag.startswith('/'):
@@ -87,7 +87,7 @@ class TreeBuilder(ET.TreeBuilder):
                 try:
                     self.end(tag)
                 except ParseError as err:
-                    err.message += ' </%s>' % tag # FIXME
+                    err.message += ' </%s>' % tag  # FIXME
                     raise ParseError(err.message)
             else:
                 # OFX "aggregate" (tagged branch w/ no data)
@@ -96,7 +96,7 @@ class TreeBuilder(ET.TreeBuilder):
                     try:
                         self.end(tag[1:])
                     except ParseError as err:
-                        err.message += ' </%s>' % tag # FIXME
+                        err.message += ' </%s>' % tag  # FIXME
                         raise ParseError(err.message)
                 else:
                     # aggregate start tag
@@ -104,12 +104,12 @@ class TreeBuilder(ET.TreeBuilder):
                     # empty aggregates are legal, so handle them
                     if closeTag:
                         # regex captures the entire closing tag
-                       assert closeTag.replace(tag, '') == '</>'
-                       try:
-                           self.end(tag)
-                       except ParseError as err:
-                           err.message += ' </%s>' % tag # FIXME
-                           raise ParseError(err.message)
+                        assert closeTag.replace(tag, '') == '</>'
+                        try:
+                            self.end(tag)
+                        except ParseError as err:
+                            err.message += ' </%s>' % tag  # FIXME
+                            raise ParseError(err.message)
 
     def end(self, tag):
         try:
@@ -124,6 +124,7 @@ class TreeBuilder(ET.TreeBuilder):
                 raise ParseError(err.message)
             else:
                 raise
+
 
 def main():
     from argparse import ArgumentParser

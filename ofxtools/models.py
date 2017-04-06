@@ -5,6 +5,7 @@ balances, and securities.
 """
 # stdlib imports
 import xml.etree.ElementTree as ET
+from collections import UserList
 
 # local imports
 from ofxtools.Types import (
@@ -37,17 +38,13 @@ class Aggregate(object):
     Base class for Python representation of OFX 'aggregate', i.e. SGML parent
     node that contains no data.
 
-    Initialize with an instance of ofx.Parser.Element.
+    Most subaggregates have been flattened so that data-bearing Elements are
+    directly accessed as attributes of the containing Aggregate.
 
-    This class represents fundamental data aggregates such as transactions,
-    balances, and securities.  Subaggregates have been flattened so that
-    data-bearing Elements are directly accessed as attributes of the
-    containing Aggregate.
-
-    Aggregates are grouped into higher-order containers such as lists
-    and statements.  Although such higher-order containers are 'aggregates'
-    per the OFX specification, they are represented here by their own Python
-    classes other than Aggregate.
+    The constructor takes an instance of ofx.Parser.Element, but this only
+    works for simple Aggregates that don't contain structure that needs to
+    be maintained (e.g. lists or subaggregates).  In general, we need to call
+    Aggregate.from_etree() as a constructor to do pre- and post-processing.
     """
     def __init__(self, **kwargs):
         # Set instance attributes for all input kwargs that are defined by
@@ -65,7 +62,7 @@ class Aggregate(object):
         # Check that no kwargs (not part of the class definition) are left over
         if kwargs:
             msg = "Parsed Element {} is undefined for {}".format(
-                            self.__class__.__name__, kwargs.keys()
+                            self.__class__.__name__, str(list(kwargs.keys()))
             )
             raise ValueError(msg)
 
@@ -198,12 +195,12 @@ class Aggregate(object):
         for tag, elem in subaggs.items():
             if isinstance(elem, ET.Element):
                 setattr(instance, tag.lower(), Aggregate.from_etree(elem))
-            elif isinstance(elem, list):
+            elif isinstance(elem, (list, UserList)):
                 lst = [Aggregate.from_etree(e) for e in elem]
                 setattr(instance, tag.lower(), lst)
             else:
                 msg = "'{}' must be type {} or {}, not {}".format(
-                    tag, 'ElementTree.Element', type(elem), 'list'
+                    tag, 'ElementTree.Element', 'list', type(elem) 
                 )
                 raise ValueError(msg)
 
@@ -212,6 +209,41 @@ class Aggregate(object):
                  for attr in self.elements
                  if getattr(self, attr) is not None]
         return '<%s %s>' % (self.__class__.__name__, ' '.join(attrs))
+
+
+class List(Aggregate, UserList):
+    """
+    Base class for OFX *LIST
+    """
+    def __init__(self, **kwargs):
+        UserList.__init__(self)
+        Aggregate.__init__(self, **kwargs)
+
+    def __hash__(self):
+        """
+        HACK - as a subclass of UserList, List is unhashable, but we need to
+        use it as a dict key in Type.Element.{__get__, __set__}
+        """
+        return object.__hash__(self)
+
+    @staticmethod
+    def _preflatten(elem):
+        """
+        UserList is a wrapper around a standard list, accessible through its
+        'data' attribute.  If we create a synthetic subaggregate
+        named 'data', whose value is a list of Etree.Elements, then
+        Aggregate._postflatten() will set List.data to a list of converted
+        Aggregates, and the Userlist interface will work normally.
+        """
+        attrs, subaggs = super(List, List)._preflatten(elem)
+
+        lst = []
+        for tran in elem[:]:
+            lst.append(tran)
+            elem.remove(tran)
+        subaggs['data'] = lst
+
+        return attrs, subaggs
 
 
 class FI(Aggregate):
@@ -329,11 +361,29 @@ class AVAILBAL(Aggregate):
 
 
 class INVBAL(Aggregate):
-    """ """
+    """ OFX section 13.9.2.7 """
     availcash = Decimal(required=True)
     marginbalance = Decimal(required=True)
     shortbalance = Decimal(required=True)
     buypower = Decimal()
+
+    @staticmethod
+    def _preflatten(elem):
+        """
+        Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up _flatten()
+        """
+        attrs, subaggs = super(MFINFO, MFINFO)._preflatten(elem)
+
+        # Do all XPath searches before removing nodes from the tree
+        #   which seems to mess up the DOM in Python3 and throw an
+        #   AttributeError on subsequent searches.
+        ballist = elem.find('./BALLIST')
+
+        if ballist is not None:
+            subaggs['BALLIST'] = ballist
+            elem.remove(ballist)
+
+        return attrs, subaggs
 
 
 class BAL(CURRENCY):
@@ -387,7 +437,7 @@ class DEBTINFO(SECINFO):
 
 
 class MFINFO(SECINFO):
-    """ """
+    """ OFX section 13.8.5.3 """
     mftype = OneOf('OPENEND', 'CLOSEEND', 'OTHER')
     yld = Decimal(4)
     dtyieldasof = DateTime()
@@ -420,10 +470,10 @@ class MFINFO(SECINFO):
         fimfassetclass = elem.find('./FIMFASSETCLASS')
 
         if mfassetclass is not None:
-            subaggs['MFASSETCLASS'] = [p for p in mfassetclass]
+            subaggs['MFASSETCLASS'] = mfassetclass
             elem.remove(mfassetclass)
         if fimfassetclass is not None:
-            subaggs['FIMFASSETCLASS'] = [p for p in fimfassetclass]
+            subaggs['FIMFASSETCLASS'] = fimfassetclass
             elem.remove(fimfassetclass)
 
         return attrs, subaggs
@@ -826,3 +876,178 @@ class POSSTOCK(INVPOS):
     unitsstreet = Decimal()
     unitsuser = Decimal()
     reinvdiv = Bool()
+
+
+# Lists
+class BANKTRANLIST(List):
+    """ OFX section 11.4.2.2 """
+    dtstart = DateTime(required=True)
+    dtend = DateTime(required=True)
+
+    @staticmethod
+    def _preflatten(elem):
+        """
+        The first two children of the list are DTSTART/DTEND; don't remove.
+        """
+        attrs, subaggs = super(List, List)._preflatten(elem)
+
+        lst = []
+        for tran in elem[2:]:
+            lst.append(tran)
+            elem.remove(tran)
+        subaggs['data'] = lst
+
+        return attrs, subaggs
+
+
+class INVTRANLIST(BANKTRANLIST):
+    """ OFX section 13.9.2.2 """
+    pass
+
+
+class SECLIST(List):
+    """ OFX section 13.8.4.4 """
+    pass
+
+
+class BALLIST(List):
+    """ OFX section 11.4.2.2 & 13.9.2.7 """
+    pass
+
+
+class MFASSETCLASS(List):
+    """ OFX section 13.8.5.3 """
+    pass
+
+
+class FIMFASSETCLASS(List):
+    """ OFX section 13.8.5.3 """
+    pass
+
+
+class INVPOSLIST(List):
+    """ OFX section 13.9.2.2 """
+    pass
+
+
+# Statements
+class STMTTRNRS(Aggregate):
+    """ OFX section 11.4.2.2 """
+    trnuid = String(36, required=True)
+    curdef = OneOf(*CURRENCY_CODES, required=True)
+
+    _rsTag = 'STMTRS'
+    _acctTag = 'BANKACCTFROM'
+    _tranList = 'BANKTRANLIST'
+    _unsupported = ('BANKTRANLISTP', 'CASHADVBALAMT', 'INTRATE', 'MKTGINFO')
+
+    @classmethod
+    def _preflatten(cls, elem):
+        """
+        """
+        attrs, subaggs = super(STMTTRNRS, STMTTRNRS)._preflatten(elem)
+
+        status = elem.find('STATUS')
+        subaggs['STATUS'] = status
+        elem.remove(status)
+
+        stmtrs = elem.find(cls._rsTag)
+
+        acctfrom = stmtrs.find(cls._acctTag)
+        subaggs[cls._acctTag] = acctfrom
+        stmtrs.remove(acctfrom)
+
+        tranlist = stmtrs.find(cls._tranList)
+        if tranlist is not None:
+            subaggs[cls._tranList] = tranlist
+            stmtrs.remove(tranlist)
+
+        ledgerbal = stmtrs.find('LEDGERBAL')
+        if ledgerbal is not None:
+            subaggs['LEDGERBAL'] = ledgerbal
+            stmtrs.remove(ledgerbal)
+
+        availbal = stmtrs.find('AVAILBAL')
+        if availbal is not None:
+            subaggs['AVAILBAL'] = availbal
+            stmtrs.remove(availbal)
+
+        ballist = stmtrs.find('BALLIST')
+        if ballist is not None:
+            subaggs['BALLIST'] = ballist
+            stmtrs.remove(ballist)
+
+        # Unsupported subaggregates
+        for tag in cls._unsupported:
+            child = stmtrs.find(tag)
+            if child is not None:
+                stmtrs.remove(child)
+
+        return attrs, subaggs
+
+    # Human-friendly attribute aliases
+    @property
+    def currency(self):
+        return self.curdef
+
+    @property
+    def account(self):
+        attr = getattr(self, self._acctTag.lower())
+        return attr
+
+    @property
+    def transactions(self):
+        attr = getattr(self, self._tranList.lower())
+        return attr
+
+
+class CCSTMTTRNRS(STMTTRNRS):
+    """ OFX section 11.4.3.2 """
+    trnuid = String(36, required=True)
+    curdef = OneOf(*CURRENCY_CODES, required=True)
+
+    _rsTag = 'CCSTMTRS'
+    _acctTag = 'CCACCTFROM'
+    _unsupported = ('BANKTRANLISTP', 'CASHADVBALAMT', 'INTRATEPURCH',
+                    'INTRATECASH', 'INTRATEXFER', 'REWARDINFO', 'MKTGINFO')
+
+
+class INVSTMTTRNRS(STMTTRNRS):
+    """ OFX section 13.9.2.1 """
+    trnuid = String(36, required=True)
+    dtasof = DateTime(required=True)
+    curdef = OneOf(*CURRENCY_CODES, required=True)
+
+    _rsTag = 'INVSTMTRS'
+    _acctTag = 'INVACCTFROM'
+    _tranList = 'INVTRANLIST'
+    _unsupported = ('INVOOLIST', 'MKTGINFO', 'INV401K', 'INV401KBAL')
+
+    @classmethod
+    def _preflatten(cls, elem):
+        """
+        """
+        attrs, subaggs = super(INVSTMTTRNRS, cls)._preflatten(elem)
+
+        invstmtrs = elem.find(cls._rsTag)
+
+        invposlist = invstmtrs.find('INVPOSLIST')
+        if invposlist is not None:
+            subaggs['INVPOSLIST'] = invposlist
+            invstmtrs.remove(invposlist)
+
+        invbal = invstmtrs.find('INVBAL')
+        if invbal is not None:
+            subaggs['INVBAL'] = invbal
+            invstmtrs.remove(invbal)
+
+        return attrs, subaggs
+
+    # Human-friendly attribute aliases
+    @property
+    def datetime(self):
+        return self.dtasof
+
+    @property
+    def positions(self):
+        return self.invposlist
