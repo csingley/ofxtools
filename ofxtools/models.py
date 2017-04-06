@@ -242,7 +242,7 @@ class SONRS(FI, STATUS):
 
 
 class CURRENCY(Aggregate):
-    """ """"
+    """ """
     cursym = OneOf(*CURRENCY_CODES)
     currate = Decimal(8)
 
