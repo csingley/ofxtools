@@ -23,7 +23,7 @@ from ofxtools.lib import LANG_CODES, CURRENCY_CODES, COUNTRY_CODES
 
 # Enums used in aggregate validation
 INV401KSOURCES = ('PRETAX', 'AFTERTAX', 'MATCH', 'PROFITSHARING',
-                    'ROLLOVER', 'OTHERVEST', 'OTHERNONVEST')
+                  'ROLLOVER', 'OTHERVEST', 'OTHERNONVEST')
 ACCTTYPES = ('CHECKING', 'SAVINGS', 'MONEYMRKT', 'CREDITLINE')
 INVSUBACCTS = ('CASH', 'MARGIN', 'SHORT', 'OTHER')
 BUYTYPES = ('BUY', 'BUYTOCOVER')
@@ -75,8 +75,8 @@ class Aggregate(object):
         """ dict of all Aggregate attributes that are Elements """
         d = {}
         for m in self.__class__.__mro__:
-            d.update({k: v for k,v in m.__dict__.items() \
-                                    if isinstance(v, Element)})
+            d.update({k: v for k, v in m.__dict__.items() \
+                      if isinstance(v, Element)})
         return d
 
     @classmethod
@@ -126,7 +126,7 @@ class Aggregate(object):
 
     @staticmethod
     def _preflatten(elem):
-        """ 
+        """
         Strip any elements that will blow up _flatten(), and store them for
         postprocessing either as directly set attributes or stapled-on
         subaggregates.
@@ -195,12 +195,15 @@ class Aggregate(object):
                 setattr(instance, tag.lower(), lst)
             else:
                 msg = "'{}' must be type {} or {}, not {}".format(
-                    tag, 'ElementTree.Element', type(elem), 'list' 
+                    tag, 'ElementTree.Element', type(elem), 'list'
                 )
                 raise ValueError(msg)
 
     def __repr__(self):
-        return '<%s %s>' % (self.__class__.__name__, ' '.join(['%s=%r' % (attr, str(getattr(self, attr))) for attr in self.elements.keys() if getattr(self, attr) is not None]))
+        attrs = ['%s=%r' % (attr, str(getattr(self, attr)))
+                 for attr in self.elements.keys()
+                 if getattr(self, attr) is not None]
+        return '<%s %s>' % (self.__class__.__name__, ' '.join(attrs))
 
 
 class FI(Aggregate):
@@ -264,7 +267,7 @@ class BANKACCTFROM(ACCTFROM):
     bankid = String(9, required=True)
     branchid = String(22)
     accttype = OneOf(*ACCTTYPES,
-                    required=True)
+                     required=True)
     acctkey = String(22)
 
 
@@ -319,9 +322,9 @@ class SECID(Aggregate):
 class SECINFO(CURRENCY, SECID):
     # FIs abuse SECNAME/TICKER
     # Relaxing the length constraints from the OFX spec does little harm
-    #secname = String(120, required=True)
+    # secname = String(120, required=True)
     secname = NagString(120, required=True)
-    #ticker = String(32)
+    # ticker = String(32)
     ticker = NagString(32)
     fiid = String(32)
     rating = String(10)
@@ -378,6 +381,7 @@ class MFINFO(SECINFO):
 
         return attrs, subaggs
 
+
 class PORTION(Aggregate):
     assetclass = OneOf(*ASSETCLASSES, required=True)
     percent = Decimal(required=True)
@@ -411,7 +415,7 @@ class OPTINFO(SECINFO):
         if secid is not None:
             # A <SECID> aggregate referring to the security underlying the
             # option is, in general, *not* going to be contained in <SECLIST>
-            # (because you don't necessarily have a position in the underlying).
+            # (because we don't necessarily have a position in the underlying).
             # Since the <SECID> for the underlying only gives us fields for
             # (uniqueidtype, uniqueid) we can't really go ahead and use this
             # information to create a corresponding SECINFO instance (since we
@@ -440,7 +444,7 @@ class STOCKINFO(SECINFO):
 
 # Transactions
 class PAYEE(Aggregate):
-    #name = String(32, required=True)
+    # name = String(32, required=True)
     name = NagString(32, required=True)
     addr1 = String(32, required=True)
     addr2 = String(32)
@@ -495,6 +499,7 @@ class STMTTRN(TRAN, ORIGCURRENCY):
                 subaggs[tag] = subagg
 
         return attrs, subaggs
+
 
 class INVBANKTRAN(STMTTRN):
     subacctfund = OneOf(*INVSUBACCTS, required=True)
