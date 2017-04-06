@@ -79,8 +79,8 @@ class Aggregate(object):
                       if isinstance(v, Element)})
         return d
 
-    @classmethod
-    def from_etree(cls, elem):
+    @staticmethod
+    def from_etree(elem):
         """
         Look up the Aggregate subclass for a given ofx.Parser.Element and
         feed it the Element to instantiate an Aggregate corresponding to the
@@ -90,39 +90,50 @@ class Aggregate(object):
         invoked by Response.OFXResponse which is in turn invoked by
         Parser.OFXTree.convert()
         """
-        cls._groom(elem)
         SubClass = globals()[elem.tag]
+        SubClass._verify(elem)
+        SubClass._groom(elem)
         attrs, subaggs = SubClass._preflatten(elem)
-        attributes = cls._flatten(elem)
+        attributes = SubClass._flatten(elem)
         instance = SubClass(**attributes)
-        cls._postflatten(instance, attrs, subaggs)
+        SubClass._postflatten(instance, attrs, subaggs)
         return instance
+
+    @staticmethod
+    def _verify(elem):
+        """
+        Enforce Aggregate-level structural constraints of the OFX spec.
+
+        Extend in subclass.
+        """
+        pass
 
     @staticmethod
     def _groom(elem):
         """
-        Enforce Aggregate-level structural constraints of the OFX spec
-        and Python language naming constraints.
-        """
-        # Rename all Elements tagged YIELD (reserved Python keyword) to YLD
-        yld = elem.find('./YIELD')
-        if yld is not None:
-            yld.tag = 'YLD'
+        Modify incoming XML data to play nice with our Python scheme.
 
-        # Throw an error for Elements containing sub-Elements that are
-        # mutually exclusive per the OFX spec, and which will cause
-        # problems for _flatten()
-        for dual_relationships in [
-                ["CCACCTTO", "BANKACCTTO"],
-                ["NAME", "PAYEE"],
-                ["CURRENCY", "ORIGCURRENCY"],
-        ]:
-            if (elem.find(dual_relationships[0]) is not None and
-                elem.find(dual_relationships[1]) is not None):
+        Extend in subclass.
+        """
+        pass
+
+    @staticmethod
+    def _mutex(elem, mutexes):
+        """
+        Throw an error for Elements containing sub-Elements that are
+        mutually exclusive per the OFX spec, and which will cause
+        problems for _flatten().
+
+        Used in subclass _verify() methods.
+        """
+        for mutex in mutexes:
+            if (elem.find(mutex[0]) is not None and
+                elem.find(mutex[1]) is not None):
                 raise ValueError(
                     "<%s> may not contain both <%s> and <%s>" %
-                    (elem.tag, dual_relationships[0],
-                     dual_relationships[1]))
+                    (elem.tag, mutex[0], mutex[1]))
+
+        pass
 
     @staticmethod
     def _preflatten(elem):
@@ -238,6 +249,16 @@ class CURRENCY(Aggregate):
 
 class ORIGCURRENCY(CURRENCY):
     curtype = OneOf('CURRENCY', 'ORIGCURRENCY')
+
+    @staticmethod
+    def _verify(elem):
+        """
+        Aggregates may not contain both CURRENCY and ORIGCURRENCY per OFX spec.
+        """
+        super(ORIGCURRENCY, ORIGCURRENCY)._verify(elem)
+
+        mutexes = [("CURRENCY", "ORIGCURRENCY")]
+        ORIGCURRENCY._mutex(elem, mutexes)
 
     @staticmethod
     def _preflatten(elem):
@@ -360,15 +381,26 @@ class MFINFO(SECINFO):
     fimfassetclass = []
 
     @staticmethod
+    def _groom(elem):
+        """
+        Rename all Elements tagged YIELD (reserved Python keyword) to YLD
+        """
+        super(MFINFO, MFINFO)._groom(elem)
+
+        yld = elem.find('./YIELD')
+        if yld is not None:
+            yld.tag = 'YLD'
+
+    @staticmethod
     def _preflatten(elem):
         """
         Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up _flatten()
         """
+        attrs, subaggs = super(MFINFO, MFINFO)._preflatten(elem)
+
         # Do all XPath searches before removing nodes from the tree
         #   which seems to mess up the DOM in Python3 and throw an
         #   AttributeError on subsequent searches.
-        attrs, subaggs = super(MFINFO, MFINFO)._preflatten(elem)
-
         mfassetclass = elem.find('./MFASSETCLASS')
         fimfassetclass = elem.find('./FIMFASSETCLASS')
 
@@ -441,6 +473,17 @@ class STOCKINFO(SECINFO):
     assetclass = OneOf(*ASSETCLASSES)
     fiassetclass = String(32)
 
+    @staticmethod
+    def _groom(elem):
+        """
+        Rename all Elements tagged YIELD (reserved Python keyword) to YLD
+        """
+        super(STOCKINFO, STOCKINFO)._groom(elem)
+
+        yld = elem.find('./YIELD')
+        if yld is not None:
+            yld.tag = 'YLD'
+
 
 # Transactions
 class PAYEE(Aggregate):
@@ -485,13 +528,22 @@ class STMTTRN(TRAN, ORIGCURRENCY):
     ccacctto = None
 
     @staticmethod
+    def _verify(elem):
+        """
+        Throw an error for Elements containing sub-Elements that are
+        mutually exclusive per the OFX spec, and which will cause
+        problems for _flatten()
+        """
+        super(STMTTRN, STMTTRN)._verify(elem)
+
+        mutexes = [("CCACCTTO", "BANKACCTTO"), ("NAME", "PAYEE")]
+        STMTTRN._mutex(elem, mutexes)
+
+    @staticmethod
     def _preflatten(elem):
         """ Handle CCACCTO/BANKACCTTO/PAYEE as 'sub-aggregates' """
         attrs, subaggs = super(STMTTRN, STMTTRN)._preflatten(elem)
 
-        # Do all XPath searches before removing nodes from the tree
-        #   which seems to mess up the DOM in Python3 and throw an
-        #   AttributeError on subsequent searches.
         for tag in ["CCACCTTO", "BANKACCTTO", "PAYEE"]:
             subagg = elem.find(tag)
             if subagg is not None:
