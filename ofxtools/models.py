@@ -174,7 +174,7 @@ class Aggregate(object):
             if data:
                 # it's a data-bearing leaf element.
                 assert tag not in leaves
-                # Silently drop all private tags (e.g. <INTU.XXXX>
+                # Silently drop all private tags (e.g. <INTU.XXXX>)
                 if '.' not in tag:
                     leaves[tag.lower()] = data
             else:
