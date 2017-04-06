@@ -1001,5 +1001,27 @@ class StmttrnNamePayeeTestCase(StmttrnTestCase):
             Aggregate.from_etree(self.root)
 
 
+class StmttrnCurrencyOrigCurrencyTestCase(StmttrnTestCase):
+    """
+    STMTTRN with both CURRENCY and ORIGCURRENCY - not allowed per OFX spec
+    """
+    requiredElements = ()
+    optionalElements = ()
+
+    @property
+    def root(self):
+        root = super(self.__class__, self).root
+
+        origcurrency = SubElement(root, 'ORIGCURRENCY')
+        SubElement(origcurrency, 'CURSYM').text = 'USD'
+        SubElement(origcurrency, 'CURRATE').text = '1.0'
+
+        return root
+
+    def testConvert(self):
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(self.root)
+
+
 if __name__=='__main__':
     unittest.main()
