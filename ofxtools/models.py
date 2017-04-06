@@ -7,7 +7,6 @@ balances, and securities.
 import xml.etree.ElementTree as ET
 
 # local imports
-import ofxtools
 from ofxtools.Types import (
     Element,
     Bool,
@@ -75,7 +74,7 @@ class Aggregate(object):
         """ dict of all Aggregate attributes that are Elements """
         d = {}
         for m in self.__class__.__mro__:
-            d.update({k: v for k, v in m.__dict__.items() \
+            d.update({k: v for k, v in m.__dict__.items()
                       if isinstance(v, Element)})
         return d
 
@@ -128,12 +127,10 @@ class Aggregate(object):
         """
         for mutex in mutexes:
             if (elem.find(mutex[0]) is not None and
-                elem.find(mutex[1]) is not None):
-                raise ValueError(
-                    "<%s> may not contain both <%s> and <%s>" %
-                    (elem.tag, mutex[0], mutex[1]))
-
-        pass
+                    elem.find(mutex[1]) is not None):
+                msg = "{} may not contain both {} and {}".format(
+                    elem.tag, mutex[0], mutex[1])
+                raise ValueError(msg)
 
     @staticmethod
     def _preflatten(elem):
@@ -185,7 +182,7 @@ class Aggregate(object):
                 assert tag not in aggs
                 aggs.update(cls._flatten(child))
         # Double-check no key collisions as we flatten aggregates & leaves
-        for key in aggs.keys():
+        for key in aggs:
             assert key not in leaves
         leaves.update(aggs)
 
@@ -212,7 +209,7 @@ class Aggregate(object):
 
     def __repr__(self):
         attrs = ['%s=%r' % (attr, str(getattr(self, attr)))
-                 for attr in self.elements.keys()
+                 for attr in self.elements
                  if getattr(self, attr) is not None]
         return '<%s %s>' % (self.__class__.__name__, ' '.join(attrs))
 
@@ -226,12 +223,14 @@ class FI(Aggregate):
 
 
 class STATUS(Aggregate):
+    """ """
     code = Integer(6, required=True)
     severity = OneOf('INFO', 'WARN', 'ERROR', required=True)
     message = String(255)
 
 
 class SONRS(FI, STATUS):
+    """ """
     dtserver = DateTime(required=True)
     userkey = String(64)
     tskeyexpire = DateTime()
@@ -243,11 +242,13 @@ class SONRS(FI, STATUS):
 
 
 class CURRENCY(Aggregate):
+    """ """"
     cursym = OneOf(*CURRENCY_CODES)
     currate = Decimal(8)
 
 
 class ORIGCURRENCY(CURRENCY):
+    """" """
     curtype = OneOf('CURRENCY', 'ORIGCURRENCY')
 
     @staticmethod
@@ -281,10 +282,12 @@ class ORIGCURRENCY(CURRENCY):
 
 
 class ACCTFROM(Aggregate):
+    """ """
     acctid = String(22, required=True)
 
 
 class BANKACCTFROM(ACCTFROM):
+    """ """
     bankid = String(9, required=True)
     branchid = String(22)
     accttype = OneOf(*ACCTTYPES,
@@ -293,33 +296,40 @@ class BANKACCTFROM(ACCTFROM):
 
 
 class BANKACCTTO(BANKACCTFROM):
+    """ """
     pass
 
 
 class CCACCTFROM(ACCTFROM):
+    """ """
     acctkey = String(22)
 
 
 class CCACCTTO(CCACCTFROM):
+    """ """
     pass
 
 
 class INVACCTFROM(ACCTFROM):
+    """ """
     brokerid = String(22, required=True)
 
 
 # Balances
 class LEDGERBAL(Aggregate):
+    """ """
     balamt = Decimal(required=True)
     dtasof = DateTime(required=True)
 
 
 class AVAILBAL(Aggregate):
+    """ """
     balamt = Decimal(required=True)
     dtasof = DateTime(required=True)
 
 
 class INVBAL(Aggregate):
+    """ """
     availcash = Decimal(required=True)
     marginbalance = Decimal(required=True)
     shortbalance = Decimal(required=True)
@@ -327,6 +337,7 @@ class INVBAL(Aggregate):
 
 
 class BAL(CURRENCY):
+    """ """
     name = String(32, required=True)
     desc = String(80, required=True)
     baltype = OneOf('DOLLAR', 'PERCENT', 'NUMBER', required=True)
@@ -336,11 +347,13 @@ class BAL(CURRENCY):
 
 # Securities
 class SECID(Aggregate):
+    """ """
     uniqueid = String(32, required=True)
     uniqueidtype = String(10, required=True)
 
 
 class SECINFO(CURRENCY, SECID):
+    """ """
     # FIs abuse SECNAME/TICKER
     # Relaxing the length constraints from the OFX spec does little harm
     # secname = String(120, required=True)
@@ -355,6 +368,7 @@ class SECINFO(CURRENCY, SECID):
 
 
 class DEBTINFO(SECINFO):
+    """ """
     parvalue = Decimal(required=True)
     debttype = OneOf('COUPON', 'ZERO', required=True)
     debtclass = OneOf('TREASURY', 'MUNICIPAL', 'CORPORATE', 'OTHER')
@@ -373,6 +387,7 @@ class DEBTINFO(SECINFO):
 
 
 class MFINFO(SECINFO):
+    """ """
     mftype = OneOf('OPENEND', 'CLOSEEND', 'OTHER')
     yld = Decimal(4)
     dtyieldasof = DateTime()
@@ -415,16 +430,19 @@ class MFINFO(SECINFO):
 
 
 class PORTION(Aggregate):
+    """ """
     assetclass = OneOf(*ASSETCLASSES, required=True)
     percent = Decimal(required=True)
 
 
 class FIPORTION(Aggregate):
+    """ """
     fiassetclass = String(32, required=True)
     percent = Decimal(required=True)
 
 
 class OPTINFO(SECINFO):
+    """ """
     opttype = OneOf('CALL', 'PUT', required=True)
     strikeprice = Decimal(required=True)
     dtexpire = DateTime(required=True)
@@ -460,12 +478,14 @@ class OPTINFO(SECINFO):
 
 
 class OTHERINFO(SECINFO):
+    """ """
     typedesc = String(32)
     assetclass = OneOf(*ASSETCLASSES)
     fiassetclass = String(32)
 
 
 class STOCKINFO(SECINFO):
+    """ """
     stocktype = OneOf('COMMON', 'PREFERRED', 'CONVERTIBLE', 'OTHER')
     yld = Decimal(4)
     dtyieldasof = DateTime()
@@ -487,6 +507,7 @@ class STOCKINFO(SECINFO):
 
 # Transactions
 class PAYEE(Aggregate):
+    """ """
     # name = String(32, required=True)
     name = NagString(32, required=True)
     addr1 = String(32, required=True)
@@ -500,11 +521,13 @@ class PAYEE(Aggregate):
 
 
 class TRAN(Aggregate):
+    """ """
     fitid = String(255, required=True)
     srvrtid = String(10)
 
 
 class STMTTRN(TRAN, ORIGCURRENCY):
+    """ """
     trntype = OneOf('CREDIT', 'DEBIT', 'INT', 'DIV', 'FEE', 'SRVCHG',
                     'DEP', 'ATM', 'POS', 'XFER', 'CHECK', 'PAYMENT',
                     'CASH', 'DIRECTDEP', 'DIRECTDEBIT', 'REPEATPMT',
@@ -554,10 +577,12 @@ class STMTTRN(TRAN, ORIGCURRENCY):
 
 
 class INVBANKTRAN(STMTTRN):
+    """ """
     subacctfund = OneOf(*INVSUBACCTS, required=True)
 
 
 class INVTRAN(TRAN):
+    """ """
     dttrade = DateTime(required=True)
     dtsettle = DateTime()
     reversalfitid = String(255)
@@ -565,6 +590,7 @@ class INVTRAN(TRAN):
 
 
 class INVBUY(INVTRAN, SECID, ORIGCURRENCY):
+    """ """
     units = Decimal(required=True)
     unitprice = Decimal(4, required=True)
     markup = Decimal()
@@ -584,6 +610,7 @@ class INVBUY(INVTRAN, SECID, ORIGCURRENCY):
 
 
 class INVSELL(INVTRAN, SECID, ORIGCURRENCY):
+    """ """
     units = Decimal(required=True)
     unitprice = Decimal(4, required=True)
     markdown = Decimal()
@@ -604,28 +631,34 @@ class INVSELL(INVTRAN, SECID, ORIGCURRENCY):
 
 
 class BUYDEBT(INVBUY):
+    """ """
     accrdint = Decimal()
 
 
 class BUYMF(INVBUY):
+    """ """
     buytype = OneOf(*BUYTYPES, required=True)
     relfitid = String(255)
 
 
 class BUYOPT(INVBUY):
+    """ """
     optbuytype = OneOf('BUYTOOPEN', 'BUYTOCLOSE', required=True)
     shperctrct = Integer(required=True)
 
 
 class BUYOTHER(INVBUY):
+    """ """
     pass
 
 
 class BUYSTOCK(INVBUY):
+    """ """
     buytype = OneOf(*BUYTYPES, required=True)
 
 
 class CLOSUREOPT(INVTRAN, SECID):
+    """ """
     optaction = OneOf('EXERCISE', 'ASSIGN', 'EXPIRE')
     units = Decimal(required=True)
     shperctrct = Integer(required=True)
@@ -635,6 +668,7 @@ class CLOSUREOPT(INVTRAN, SECID):
 
 
 class INCOME(INVTRAN, SECID, ORIGCURRENCY):
+    """ """
     incometype = OneOf(*INCOMETYPES, required=True)
     total = Decimal(required=True)
     subacctsec = OneOf(*INVSUBACCTS, required=True)
@@ -645,6 +679,7 @@ class INCOME(INVTRAN, SECID, ORIGCURRENCY):
 
 
 class INVEXPENSE(INVTRAN, SECID, ORIGCURRENCY):
+    """ """
     total = Decimal(required=True)
     subacctsec = OneOf(*INVSUBACCTS, required=True)
     subacctfund = OneOf(*INVSUBACCTS, required=True)
@@ -652,23 +687,27 @@ class INVEXPENSE(INVTRAN, SECID, ORIGCURRENCY):
 
 
 class JRNLFUND(INVTRAN):
+    """ """
     subacctto = OneOf(*INVSUBACCTS, required=True)
     subacctfrom = OneOf(*INVSUBACCTS, required=True)
     total = Decimal(required=True)
 
 
 class JRNLSEC(INVTRAN, SECID):
+    """ """
     subacctto = OneOf(*INVSUBACCTS, required=True)
     subacctfrom = OneOf(*INVSUBACCTS, required=True)
     units = Decimal(required=True)
 
 
 class MARGININTEREST(INVTRAN, ORIGCURRENCY):
+    """ """
     total = Decimal(required=True)
     subacctfund = OneOf(*INVSUBACCTS, required=True)
 
 
 class REINVEST(INVTRAN, SECID, ORIGCURRENCY):
+    """ """
     incometype = OneOf(*INCOMETYPES, required=True)
     total = Decimal(required=True)
     subacctsec = OneOf(*INVSUBACCTS, required=True)
@@ -683,6 +722,7 @@ class REINVEST(INVTRAN, SECID, ORIGCURRENCY):
 
 
 class RETOFCAP(INVTRAN, SECID, ORIGCURRENCY):
+    """ """
     total = Decimal(required=True)
     subacctsec = OneOf(*INVSUBACCTS, required=True)
     subacctfund = OneOf(*INVSUBACCTS, required=True)
@@ -690,17 +730,20 @@ class RETOFCAP(INVTRAN, SECID, ORIGCURRENCY):
 
 
 class SELLDEBT(INVSELL):
+    """ """
     sellreason = OneOf('CALL', 'SELL', 'MATURITY', required=True)
     accrdint = Decimal()
 
 
 class SELLMF(INVSELL):
+    """ """
     selltype = OneOf(*SELLTYPES, required=True)
     avgcostbasis = Decimal()
     relfitid = String(255)
 
 
 class SELLOPT(INVSELL):
+    """ """
     optselltype = OneOf('SELLTOCLOSE', 'SELLTOOPEN', required=True)
     shperctrct = Integer(required=True)
     relfitid = String(255)
@@ -709,14 +752,17 @@ class SELLOPT(INVSELL):
 
 
 class SELLOTHER(INVSELL):
+    """ """
     pass
 
 
 class SELLSTOCK(INVSELL):
+    """ """
     selltype = OneOf(*SELLTYPES, required=True)
 
 
 class SPLIT(INVTRAN, SECID):
+    """ """
     subacctsec = OneOf(*INVSUBACCTS, required=True)
     oldunits = Decimal(required=True)
     newunits = Decimal(required=True)
@@ -728,6 +774,7 @@ class SPLIT(INVTRAN, SECID):
 
 
 class TRANSFER(INVTRAN, SECID):
+    """ """
     subacctsec = OneOf(*INVSUBACCTS, required=True)
     units = Decimal(required=True)
     tferaction = OneOf('IN', 'OUT', required=True)
@@ -740,6 +787,7 @@ class TRANSFER(INVTRAN, SECID):
 
 # Positions
 class INVPOS(SECID, CURRENCY):
+    """ """
     heldinacct = OneOf(*INVSUBACCTS, required=True)
     postype = OneOf('SHORT', 'LONG', required=True)
     units = Decimal(required=True)
@@ -751,10 +799,12 @@ class INVPOS(SECID, CURRENCY):
 
 
 class POSDEBT(INVPOS):
+    """ """
     pass
 
 
 class POSMF(INVPOS):
+    """ """
     unitsstreet = Decimal()
     unitsuser = Decimal()
     reinvdiv = Bool()
@@ -762,14 +812,17 @@ class POSMF(INVPOS):
 
 
 class POSOPT(INVPOS):
+    """ """
     secured = OneOf('NAKED', 'COVERED')
 
 
 class POSOTHER(INVPOS):
+    """ """
     pass
 
 
 class POSSTOCK(INVPOS):
+    """ """
     unitsstreet = Decimal()
     unitsuser = Decimal()
     reinvdiv = Bool()
