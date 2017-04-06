@@ -248,6 +248,8 @@ class List(Aggregate, UserList):
 
 class FI(Aggregate):
     """
+    OFX section 2.5.1.8
+
     FI aggregates are optional in SONRQ/SONRS; not all firms use them.
     """
     org = String(32)
@@ -255,14 +257,14 @@ class FI(Aggregate):
 
 
 class STATUS(Aggregate):
-    """ """
+    """ OFX section 3.1.5 """
     code = Integer(6, required=True)
     severity = OneOf('INFO', 'WARN', 'ERROR', required=True)
     message = String(255)
 
 
 class SONRS(FI, STATUS):
-    """ """
+    """ OFX section 2.5.1.6 """
     dtserver = DateTime(required=True)
     userkey = String(64)
     tskeyexpire = DateTime()
@@ -274,13 +276,13 @@ class SONRS(FI, STATUS):
 
 
 class CURRENCY(Aggregate):
-    """ """
+    """ OFX section 5.2 """
     cursym = OneOf(*CURRENCY_CODES)
     currate = Decimal(8)
 
 
 class ORIGCURRENCY(CURRENCY):
-    """" """
+    """ OFX section 5.2 """
     curtype = OneOf('CURRENCY', 'ORIGCURRENCY')
 
     @staticmethod
@@ -314,12 +316,12 @@ class ORIGCURRENCY(CURRENCY):
 
 
 class ACCTFROM(Aggregate):
-    """ """
+    """ Base class (not in OFX spec) for *ACCTFROM/*ACCTTO """
     acctid = String(22, required=True)
 
 
 class BANKACCTFROM(ACCTFROM):
-    """ """
+    """ OFX section 11.3.1 """
     bankid = String(9, required=True)
     branchid = String(22)
     accttype = OneOf(*ACCTTYPES,
@@ -328,17 +330,17 @@ class BANKACCTFROM(ACCTFROM):
 
 
 class BANKACCTTO(BANKACCTFROM):
-    """ """
+    """ OFX section 11.3.1 """
     pass
 
 
 class CCACCTFROM(ACCTFROM):
-    """ """
+    """ OFX section 11.3.2 """
     acctkey = String(22)
 
 
 class CCACCTTO(CCACCTFROM):
-    """ """
+    """ OFX section 11.3.2 """
     pass
 
 
@@ -387,7 +389,7 @@ class INVBAL(Aggregate):
 
 
 class BAL(CURRENCY):
-    """ """
+    """ OFX section 3.1.4 """
     name = String(32, required=True)
     desc = String(80, required=True)
     baltype = OneOf('DOLLAR', 'PERCENT', 'NUMBER', required=True)
@@ -571,13 +573,13 @@ class PAYEE(Aggregate):
 
 
 class TRAN(Aggregate):
-    """ """
+    """ Base class (not in OFX spec) for *TRN """
     fitid = String(255, required=True)
     srvrtid = String(10)
 
 
 class STMTTRN(TRAN, ORIGCURRENCY):
-    """ """
+    """ OFX section 11.4.4.1 """
     trntype = OneOf('CREDIT', 'DEBIT', 'INT', 'DIV', 'FEE', 'SRVCHG',
                     'DEP', 'ATM', 'POS', 'XFER', 'CHECK', 'PAYMENT',
                     'CASH', 'DIRECTDEP', 'DIRECTDEBIT', 'REPEATPMT',
