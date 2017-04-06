@@ -33,6 +33,7 @@ from ofxtools.models import (
     PORTION,
     FIPORTION,
     STMTTRN,
+    PAYEE,
 )
 from ofxtools.lib import (
     LANG_CODES,
@@ -87,10 +88,6 @@ class TestAggregate(object):
                 Aggregate.from_etree(root)
 
     def testExtraElement(self):
-        """
-        Adding an extra Element not in the spec makes Aggregate.__init__()
-        throw a ValueError.
-        """
         root = deepcopy(self.root)
         SubElement(root, 'FAKEELEMENT').text = 'garbage'
         with self.assertRaises(ValueError):
@@ -702,6 +699,7 @@ class StockinfoTestCase(unittest.TestCase, TestAggregate):
 
 
 class StmttrnTestCase(unittest.TestCase, TestAggregate):
+    """ STMTTRN with CURRENCY """
     __test__ = True
     requiredElements = ('DTPOSTED', 'TRNAMT', 'FITID', 'TRNTYPE',)
     optionalElements = ('DTUSER', 'DTAVAIL', 'CORRECTFITID', 'CORRECTACTION',
@@ -757,6 +755,7 @@ class StmttrnTestCase(unittest.TestCase, TestAggregate):
 
 
 class StmttrnOrigcurrencyTestCase(StmttrnTestCase):
+    """ STMTTRN with ORIGCURRENCY """
     @property
     def root(self):
         root = super(StmttrnOrigcurrencyTestCase, self).root
@@ -788,441 +787,61 @@ class StmttrnOrigcurrencyTestCase(StmttrnTestCase):
         self.assertEqual(root.inv401ksource, 'PROFITSHARING')
 
 
-##class ModelTestCase(unittest.TestCase, TestAggregate):
-    ##testfile = 'tests/data/invstmtrs.ofx'
+class StmttrnPayeeTestCase(StmttrnTestCase):
+    """ STMTTRN with PAYEE """
+    requiredElements = ('DTPOSTED', 'TRNAMT', 'FITID', 'TRNTYPE', 'NAME', 
+                        'ADDR1', 'CITY', 'STATE', 'POSTALCODE', 'PHONE',)
+    optionalElements = ('DTUSER', 'DTAVAIL', 'CORRECTFITID', 'CORRECTACTION',
+                        'SRVRTID', 'CHECKNUM', 'REFNUM', 'SIC', 'PAYEEID',
+                        'MEMO', 'INV401KSOURCE', 'CURSYM', 'CURRATE', 'ADDR2',
+                        'ADDR3', 'COUNTRY',)
+    @property
+    def root(self):
+        root = super(StmttrnPayeeTestCase, self).root
+        name = root.find('NAME')
+        root.remove(name)
+        payee = SubElement(root, 'PAYEE')
+        SubElement(payee, 'NAME').text = 'Wrigley Field'
+        SubElement(payee, 'ADDR1').text = '3717 N Clark St'
+        SubElement(payee, 'ADDR2').text = 'Dugout Box, Aisle 19'
+        SubElement(payee, 'ADDR3').text = 'Seat A1'
+        SubElement(payee, 'CITY').text = 'Chicago'
+        SubElement(payee, 'STATE').text = 'IL'
+        SubElement(payee, 'POSTALCODE').text = '60613'
+        SubElement(payee, 'COUNTRY').text = 'USA'
+        SubElement(payee, 'PHONE').text = '(773) 309-1027'
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, STMTTRN)
+        self.assertEqual(root.trntype, 'CHECK')
+        self.assertEqual(root.dtposted, datetime(2013, 6, 15))
+        self.assertEqual(root.dtuser, datetime(2013, 6, 14))
+        self.assertEqual(root.dtavail, datetime(2013, 6, 16))
+        self.assertEqual(root.trnamt, Decimal('-433.25'))
+        self.assertEqual(root.fitid, 'DEADBEEF')
+        self.assertEqual(root.correctfitid, 'B00B5')
+        self.assertEqual(root.correctaction, 'REPLACE')
+        self.assertEqual(root.srvrtid, '101A2')
+        self.assertEqual(root.checknum, '101')
+        self.assertEqual(root.refnum, '5A6B')
+        self.assertEqual(root.sic, 171103)
+        self.assertEqual(root.payeeid, '77810')
+        self.assertEqual(root.memo, 'Protection money')
+        self.assertEqual(root.curtype, 'CURRENCY')
+        self.assertEqual(root.cursym, 'CAD')
+        self.assertEqual(root.currate, Decimal('1.1'))
+        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
+        payee = root.payee
+        self.assertIsInstance(payee, PAYEE)
+        self.assertEqual(payee.name, 'Wrigley Field')
+        self.assertEqual(payee.addr1, '3717 N Clark St')
+        self.assertEqual(payee.city, 'Chicago')
+        self.assertEqual(payee.state, 'IL')
+        self.assertEqual(payee.postalcode, '60613')
+        self.assertEqual(payee.phone, '(773) 309-1027')
 
-    ##def setUp(self):
-        ##parser = ofxtools.Parser.TreeBuilder(element_factory=ofxtools.Parser.Element)
-        ##with open(self.testfile) as f:
-            ### Strip the OFX header
-            ##sgml = ''.join(f.readlines()[3:])
-            ##parser.feed(sgml)
-            ##self.ofx = parser.close()
-
-            ### Some useful locations
-            ##self.sonrs = self.ofx[0][0]
-            ##self.invstmtrs = self.ofx[1][0][2]
-            ##self.invtranlist = self.invstmtrs[3]
-            ##self.invposlist = self.invstmtrs[4]
-            ##self.seclist = self.ofx[2][0]
-
-    ##def test_invtran(self):
-        ##buystock = invtranlist[2]
-
-        ### Test missing required elements
-        ##c = deepcopy(buystock)
-        ##invtran = c[0][0]
-        ##invtran.remove(invtran[0]) # fitid
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(buystock)
-        ##invtran = c[0][0]
-        ##invtran.remove(invtran[1]) # dttrade
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(buystock)
-        ##secid = c[0][1]
-        ##secid.remove(secid[0]) # uniqueid
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(buystock)
-        ##secid = c[0][1]
-        ##secid.remove(secid[1]) # uniqueidtype
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(buystock)
-        ##invbuy = c[0]
-        ##invbuy.remove(invbuy[2]) # units
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(buystock)
-        ##invbuy = c[0]
-        ##invbuy.remove(invbuy[3]) # unitprice
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(buystock)
-        ##invbuy = c[0]
-        ##invbuy.remove(invbuy[5]) # total
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(buystock)
-        ##invbuy = c[0]
-        ##invbuy.remove(invbuy[6]) # subacctsec
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(buystock)
-        ##invbuy = c[0]
-        ##invbuy.remove(invbuy[6]) # subacctfund
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(buystock)
-        ##c.remove(c[1]) # buytype
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ### Test invalid extra elements
-        ##c = deepcopy(buystock)
-        ##ET.SubElement(c, 'FAKEELEMENT').text = 'garbage'
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ### Make sure Aggregate.from_etree() calls Element.convert() and sets
-        ### Aggregate instance attributes with the result
-        ##buystock = Aggregate.from_etree(buystock)
-        ##self.assertEqual(buystock.fitid, '23321')
-        ##self.assertEqual(buystock.dttrade, datetime(2005, 8, 25))
-        ##self.assertEqual(buystock.dtsettle, datetime(2005, 8, 28))
-        ##self.assertEqual(buystock.uniqueid, '123456789')
-        ##self.assertEqual(buystock.uniqueidtype, 'CUSIP')
-        ##self.assertEqual(buystock.units, Decimal('100'))
-        ##self.assertEqual(buystock.unitprice, Decimal('50.00'))
-        ##self.assertEqual(buystock.commission, Decimal('25.00'))
-        ##self.assertEqual(buystock.total, Decimal('-5025.00'))
-        ##self.assertEqual(buystock.subacctsec, 'CASH')
-        ##self.assertEqual(buystock.subacctfund, 'CASH')
-
-    ##def test_invbanktran(self):
-        ##invbanktran = invtranlist[3]
-
-        ### Test missing required elements
-        ##c = deepcopy(invbanktran)
-        ##stmttrn = c[0]
-        ##stmttrn.remove(stmttrn[0]) # trntype
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(invbanktran)
-        ##stmttrn = c[0]
-        ##stmttrn.remove(stmttrn[1]) # dtposted
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(invbanktran)
-        ##stmttrn = c[0]
-        ##stmttrn.remove(stmttrn[3]) # trnamt
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(invbanktran)
-        ##stmttrn = c[0]
-        ##stmttrn.remove(stmttrn[4]) # fitid
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(invbanktran)
-        ##c.remove(c[1]) # subacctfund
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ### Test invalid extra elements
-        ##c = deepcopy(invbanktran)
-        ##ET.SubElement(c, 'FAKEELEMENT').text = 'garbage'
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ### Make sure Aggregate.from_etree() calls Element.convert() and sets
-        ### Aggregate instance attributes with the result
-        ##invbanktran = Aggregate.from_etree(invbanktran)
-        ##self.assertEqual(invbanktran.trntype, 'CREDIT')
-        ##self.assertEqual(invbanktran.dtposted, datetime(2005, 8, 25))
-        ##self.assertEqual(invbanktran.dtuser, datetime(2005, 8, 25))
-        ##self.assertEqual(invbanktran.trnamt, Decimal('1000.00'))
-        ##self.assertEqual(invbanktran.fitid, '12345')
-        ##self.assertEqual(invbanktran.name, 'Customer deposit')
-        ##self.assertEqual(invbanktran.memo, 'Your check #1034')
-        ##self.assertEqual(invbanktran.subacctfund, 'CASH')
-
-    ##def test_posstock(self):
-        ##posstock = invposlist[0]
-
-        ### Test missing required elements
-        ##c = deepcopy(posstock)
-        ##secinfo = c[0][0]
-        ##secinfo.remove(secinfo[0]) # uniqueid
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(posstock)
-        ##secinfo = c[0][0]
-        ##secinfo.remove(secinfo[1]) # uniqueidtype
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(posstock)
-        ##invpos = c[0]
-        ##invpos.remove(invpos[1]) # heldinacct
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(posstock)
-        ##invpos = c[0]
-        ##invpos.remove(invpos[2]) # postype
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(posstock)
-        ##invpos = c[0]
-        ##invpos.remove(invpos[3]) # units
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(posstock)
-        ##invpos = c[0]
-        ##invpos.remove(invpos[4]) # unitprice
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(posstock)
-        ##invpos = c[0]
-        ##invpos.remove(invpos[4]) # mktval
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(posstock)
-        ##invpos = c[0]
-        ##invpos.remove(invpos[4]) # dtpriceasof
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ### Test invalid extra elements
-        ##c = deepcopy(posstock)
-        ##ET.SubElement(c, 'FAKEELEMENT').text = 'garbage'
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ### Make sure Aggregate.from_etree() calls Element.convert() and sets
-        ### Aggregate instance attributes with the result
-        ##posstock = Aggregate.from_etree(posstock)
-        ##self.assertEqual(posstock.uniqueid, '123456789')
-        ##self.assertEqual(posstock.uniqueidtype, 'CUSIP')
-        ##self.assertEqual(posstock.heldinacct, 'CASH')
-        ##self.assertEqual(posstock.postype, 'LONG')
-        ##self.assertEqual(posstock.units, Decimal('200'))
-        ##self.assertEqual(posstock.unitprice, Decimal('49.50'))
-        ##self.assertEqual(posstock.mktval, Decimal('9900.00'))
-        ##self.assertEqual(posstock.dtpriceasof, datetime(2005, 8, 27, 1, 0, 0))
-        ##self.assertEqual(posstock.memo, 'Next dividend payable Sept 1')
-
-    ##def test_posopt(self):
-        ##posopt = invposlist[1]
-
-        ### Test missing required elements
-        ##c = deepcopy(posopt)
-        ##secinfo = c[0][0]
-        ##secinfo.remove(secinfo[0]) # uniqueid
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(posopt)
-        ##secinfo = c[0][0]
-        ##secinfo.remove(secinfo[1]) # uniqueidtype
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(posopt)
-        ##invpos = c[0]
-        ##invpos.remove(invpos[1]) # heldinacct
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(posopt)
-        ##invpos = c[0]
-        ##invpos.remove(invpos[2]) # postype
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(posopt)
-        ##invpos = c[0]
-        ##invpos.remove(invpos[3]) # units
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(posopt)
-        ##invpos = c[0]
-        ##invpos.remove(invpos[4]) # unitprice
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(posopt)
-        ##invpos = c[0]
-        ##invpos.remove(invpos[4]) # mktval
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(posopt)
-        ##invpos = c[0]
-        ##invpos.remove(invpos[4]) # dtpriceasof
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ### Test invalid extra elements
-        ##c = deepcopy(posopt)
-        ##ET.SubElement(c, 'FAKEELEMENT').text = 'garbage'
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ### Make sure Aggregate.from_etree() calls Element.convert() and sets
-        ### Aggregate instance attributes with the result
-        ##posopt = Aggregate.from_etree(posopt)
-        ##self.assertEqual(posopt.uniqueid, '000342222')
-        ##self.assertEqual(posopt.uniqueidtype, 'CUSIP')
-        ##self.assertEqual(posopt.heldinacct, 'CASH')
-        ##self.assertEqual(posopt.postype, 'LONG')
-        ##self.assertEqual(posopt.units, Decimal('1'))
-        ##self.assertEqual(posopt.unitprice, Decimal('5'))
-        ##self.assertEqual(posopt.mktval, Decimal('500'))
-        ##self.assertEqual(posopt.dtpriceasof, datetime(2005, 8, 27, 1, 0, 0))
-        ##self.assertEqual(posopt.memo, 'Option is in the money')
-
-    ##def test_bal(self):
-        ##bal = invstmtrs[5][3][0]
-
-        ### Test missing required elements
-        ##c = deepcopy(bal)
-        ##c.remove(c[0]) # name
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(bal)
-        ##c.remove(c[1]) # desc
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(bal)
-        ##c.remove(c[2]) # baltype
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(bal)
-        ##c.remove(c[3]) # value
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ### Test invalid extra elements
-        ##c = deepcopy(bal)
-        ##ET.SubElement(c, 'FAKEELEMENT').text = 'garbage'
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ### Make sure Aggregate.from_etree() calls Element.convert() and sets
-        ### Aggregate instance attributes with the result
-        ##bal = Aggregate.from_etree(bal)
-        ##self.assertEqual(bal.name, 'Margin Interest Rate')
-        ##self.assertEqual(bal.desc, 'Current interest rate on margin balances')
-        ##self.assertEqual(bal.baltype, 'PERCENT')
-        ##self.assertEqual(bal.value, Decimal('7.85'))
-        ##self.assertEqual(bal.dtasof, datetime(2005, 8, 27, 1, 0, 0))
-
-    ##def test_stockinfo(self):
-        ##stockinfo = seclist[1]
-
-        ### Test missing required elements
-        ##c = deepcopy(stockinfo)
-        ##secid = c[0][0]
-        ##secid.remove(secid[0]) # uniqueid
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(stockinfo)
-        ##secid = c[0][0]
-        ##secid.remove(secid[1]) # uniqueidtype
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(stockinfo)
-        ##secinfo = c[0]
-        ##secinfo.remove(secinfo[1]) # secname
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ### Test invalid extra elements
-        ##c = deepcopy(stockinfo)
-        ##ET.SubElement(c, 'FAKEELEMENT').text = 'garbage'
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ### Make sure Aggregate.from_etree() calls Element.convert() and sets
-        ### Aggregate instance attributes with the result
-        ##stockinfo = Aggregate.from_etree(stockinfo)
-        ##self.assertEqual(stockinfo.uniqueid, '666678578')
-        ##self.assertEqual(stockinfo.uniqueidtype, 'CUSIP')
-        ##self.assertEqual(stockinfo.secname , 'Hackson Unlimited, Inc.')
-        ##self.assertEqual(stockinfo.ticker, 'HACK')
-        ##self.assertEqual(stockinfo.fiid, '1027')
-        ##self.assertEqual(stockinfo.yld, Decimal('17'))
-        ##self.assertEqual(stockinfo.assetclass, 'SMALLSTOCK')
-
-    ##def test_optinfo(self):
-        ##optinfo = seclist[2]
-
-        ### Test missing required elements
-        ##c = deepcopy(optinfo)
-        ##secid = c[0][0]
-        ##secid.remove(secid[0]) # uniqueid
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ### @@FIXME - we don't handle two <SECID> aggregates within <OPTINFO>
-        ##c = deepcopy(optinfo)
-        ##secid = c[0][0]
-        ##secid.remove(secid[1]) # uniqueidtype
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(optinfo)
-        ##secinfo = c[0]
-        ##secinfo.remove(secinfo[1]) # secname
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(optinfo)
-        ##c.remove(c[1]) # opttype
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(optinfo)
-        ##c.remove(c[2]) # strikeprice
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(optinfo)
-        ##c.remove(c[3]) # dtexpire
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ##c = deepcopy(optinfo)
-        ##c.remove(c[4]) # shperctrct
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ### Test invalid extra elements
-        ##c = deepcopy(optinfo)
-        ##ET.SubElement(c, 'FAKEELEMENT').text = 'garbage'
-        ##with self.assertRaises(ValueError):
-            ##Aggregate.from_etree(c)
-
-        ### Make sure Aggregate.from_etree() calls Element.convert() and sets
-        ### Aggregate instance attributes with the result
-        ##optinfo = Aggregate.from_etree(optinfo)
-        ##self.assertEqual(optinfo.uniqueid, '000342222')
-        ##self.assertEqual(optinfo.uniqueidtype, 'CUSIP')
-        ##self.assertEqual(optinfo.secname , 'Lucky Airlines Jan 97 Put')
-        ##self.assertEqual(optinfo.ticker, 'LUAXX')
-        ##self.assertEqual(optinfo.fiid, '0013')
-        ##self.assertEqual(optinfo.opttype, 'PUT')
-        ##self.assertEqual(optinfo.strikeprice, Decimal('35.00'))
-        ##self.assertEqual(optinfo.dtexpire, datetime(2005, 1, 21))
-        ##self.assertEqual(optinfo.shperctrct, 100)
-        ##self.assertEqual(optinfo.assetclass, 'LARGESTOCK')
 
 if __name__=='__main__':
     unittest.main()

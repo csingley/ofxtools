@@ -58,8 +58,8 @@ class Aggregate(object):
             try:
                 setattr(self, attr, value)
             except ValueError as e:
-                msg = "Can't set {}.{} to {}".format(
-                    self.__class__.__name__, attr, e.args[0]
+                msg = "Can't set {}.{} to {}: {}".format(
+                    self.__class__.__name__, attr, value, e.args[0]
                 )
                 raise ValueError(msg)
 
@@ -489,10 +489,10 @@ class STMTTRN(TRAN, ORIGCURRENCY):
         #   which seems to mess up the DOM in Python3 and throw an
         #   AttributeError on subsequent searches.
         for tag in ["CCACCTTO", "BANKACCTTO", "PAYEE"]:
-            ccacctto = elem.find(tag)
-            if ccacctto is not None:
-                elem.remove(ccacctto)
-                subaggs[tag] = ccacctto
+            subagg = elem.find(tag)
+            if subagg is not None:
+                elem.remove(subagg)
+                subaggs[tag] = subagg
 
         return attrs, subaggs
 
