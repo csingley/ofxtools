@@ -760,9 +760,11 @@ class StmttrnOrigcurrencyTestCase(StmttrnTestCase):
     """ STMTTRN with ORIGCURRENCY """
     @property
     def root(self):
-        root = super(StmttrnOrigcurrencyTestCase, self).root
+        root = super(self.__class__, self).root
+
         currency = root.find('CURRENCY')
         currency.tag = 'ORIGCURRENCY'
+
         return root
 
     def testConvert(self):
@@ -799,9 +801,11 @@ class StmttrnPayeeTestCase(StmttrnTestCase):
                         'ADDR3', 'COUNTRY',)
     @property
     def root(self):
-        root = super(StmttrnPayeeTestCase, self).root
+        root = super(self.__class__, self).root
+
         name = root.find('NAME')
         root.remove(name)
+
         payee = SubElement(root, 'PAYEE')
         SubElement(payee, 'NAME').text = 'Wrigley Field'
         SubElement(payee, 'ADDR1').text = '3717 N Clark St'
@@ -812,6 +816,7 @@ class StmttrnPayeeTestCase(StmttrnTestCase):
         SubElement(payee, 'POSTALCODE').text = '60613'
         SubElement(payee, 'COUNTRY').text = 'USA'
         SubElement(payee, 'PHONE').text = '(773) 309-1027'
+
         return root
 
     def testConvert(self):
@@ -856,13 +861,15 @@ class StmttrnBankaccttoTestCase(StmttrnTestCase):
 
     @property
     def root(self):
-        root = super(StmttrnBankaccttoTestCase, self).root
+        root = super(self.__class__, self).root
+
         bankacctto = SubElement(root, 'BANKACCTTO')
         SubElement(bankacctto, 'BANKID').text = '111000614'
         SubElement(bankacctto, 'BRANCHID').text = 'N/A'
         SubElement(bankacctto, 'ACCTID').text = '9876543210'
         SubElement(bankacctto, 'ACCTTYPE').text = 'CHECKING'
         SubElement(bankacctto, 'ACCTKEY').text = 'NONE'
+
         return root
 
     def testConvert(self):
@@ -905,10 +912,12 @@ class StmttrnCcaccttoTestCase(StmttrnTestCase):
 
     @property
     def root(self):
-        root = super(StmttrnCcaccttoTestCase, self).root
+        root = super(self.__class__, self).root
+
         ccacctto = SubElement(root, 'CCACCTTO')
         SubElement(ccacctto, 'ACCTID').text = '9876543210'
         SubElement(ccacctto, 'ACCTKEY').text = 'NONE'
+
         return root
 
     def testConvert(self):
@@ -936,6 +945,33 @@ class StmttrnCcaccttoTestCase(StmttrnTestCase):
         self.assertIsInstance(ccacctto, CCACCTTO)
         self.assertEqual(ccacctto.acctid, '9876543210')
         self.assertEqual(ccacctto.acctkey, 'NONE')
+
+
+class StmttrnBankaccttoCcaccttoTestCase(StmttrnTestCase):
+    """ STMTTRN with both BANKACCTTO and CCACCTTO - not allowed per OFX spec """
+    requiredElements = ()
+    optionalElements = ()
+
+    @property
+    def root(self):
+        root = super(self.__class__, self).root
+
+        bankacctto = SubElement(root, 'BANKACCTTO')
+        SubElement(bankacctto, 'BANKID').text = '111000614'
+        SubElement(bankacctto, 'BRANCHID').text = 'N/A'
+        SubElement(bankacctto, 'ACCTID').text = '9876543210'
+        SubElement(bankacctto, 'ACCTTYPE').text = 'CHECKING'
+        SubElement(bankacctto, 'ACCTKEY').text = 'NONE'
+
+        ccacctto = SubElement(root, 'CCACCTTO')
+        SubElement(ccacctto, 'ACCTID').text = '9876543210'
+        SubElement(ccacctto, 'ACCTKEY').text = 'NONE'
+
+        return root
+
+    def testConvert(self):
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(self.root)
 
 
 if __name__=='__main__':
