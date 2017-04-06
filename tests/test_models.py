@@ -34,6 +34,7 @@ from ofxtools.models import (
     FIPORTION,
     STMTTRN,
     PAYEE,
+    BANKACCTTO,
 )
 from ofxtools.lib import (
     LANG_CODES,
@@ -841,6 +842,56 @@ class StmttrnPayeeTestCase(StmttrnTestCase):
         self.assertEqual(payee.state, 'IL')
         self.assertEqual(payee.postalcode, '60613')
         self.assertEqual(payee.phone, '(773) 309-1027')
+
+
+class StmttrnBankaccttoTestCase(StmttrnTestCase):
+    """ STMTTRN with BANKACCTTO """
+    requiredElements = ('DTPOSTED', 'TRNAMT', 'FITID', 'TRNTYPE', 'BANKID',
+                        'ACCTID', 'ACCTTYPE',)
+    optionalElements = ('DTUSER', 'DTAVAIL', 'CORRECTFITID', 'CORRECTACTION',
+                        'SRVRTID', 'CHECKNUM', 'REFNUM', 'SIC', 'PAYEEID',
+                        'NAME', 'MEMO', 'INV401KSOURCE', 'CURSYM', 'CURRATE',
+                        'BRANCHID', 'ACCTKEY',)
+
+    @property
+    def root(self):
+        root = super(StmttrnBankaccttoTestCase, self).root
+        bankacctto = SubElement(root, 'BANKACCTTO')
+        SubElement(bankacctto, 'BANKID').text = '111000614'
+        SubElement(bankacctto, 'BRANCHID').text = 'N/A'
+        SubElement(bankacctto, 'ACCTID').text = '9876543210'
+        SubElement(bankacctto, 'ACCTTYPE').text = 'CHECKING'
+        SubElement(bankacctto, 'ACCTKEY').text = 'NONE'
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, STMTTRN)
+        self.assertEqual(root.trntype, 'CHECK')
+        self.assertEqual(root.dtposted, datetime(2013, 6, 15))
+        self.assertEqual(root.dtuser, datetime(2013, 6, 14))
+        self.assertEqual(root.dtavail, datetime(2013, 6, 16))
+        self.assertEqual(root.trnamt, Decimal('-433.25'))
+        self.assertEqual(root.fitid, 'DEADBEEF')
+        self.assertEqual(root.correctfitid, 'B00B5')
+        self.assertEqual(root.correctaction, 'REPLACE')
+        self.assertEqual(root.srvrtid, '101A2')
+        self.assertEqual(root.checknum, '101')
+        self.assertEqual(root.refnum, '5A6B')
+        self.assertEqual(root.sic, 171103)
+        self.assertEqual(root.payeeid, '77810')
+        self.assertEqual(root.memo, 'Protection money')
+        self.assertEqual(root.curtype, 'CURRENCY')
+        self.assertEqual(root.cursym, 'CAD')
+        self.assertEqual(root.currate, Decimal('1.1'))
+        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
+        bankacctto = root.bankacctto
+        self.assertIsInstance(bankacctto, BANKACCTTO)
+        self.assertEqual(bankacctto.bankid, '111000614')
+        self.assertEqual(bankacctto.branchid, 'N/A')
+        self.assertEqual(bankacctto.acctid, '9876543210')
+        self.assertEqual(bankacctto.accttype, 'CHECKING')
+        self.assertEqual(bankacctto.acctkey, 'NONE')
 
 
 if __name__=='__main__':
