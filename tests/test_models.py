@@ -974,5 +974,32 @@ class StmttrnBankaccttoCcaccttoTestCase(StmttrnTestCase):
             Aggregate.from_etree(self.root)
 
 
+class StmttrnNamePayeeTestCase(StmttrnTestCase):
+    """ STMTTRN with both NAME and PAYEE - not allowed per OFX spec """
+    requiredElements = ()
+    optionalElements = ()
+
+    @property
+    def root(self):
+        root = super(self.__class__, self).root
+
+        payee = SubElement(root, 'PAYEE')
+        SubElement(payee, 'NAME').text = 'Wrigley Field'
+        SubElement(payee, 'ADDR1').text = '3717 N Clark St'
+        SubElement(payee, 'ADDR2').text = 'Dugout Box, Aisle 19'
+        SubElement(payee, 'ADDR3').text = 'Seat A1'
+        SubElement(payee, 'CITY').text = 'Chicago'
+        SubElement(payee, 'STATE').text = 'IL'
+        SubElement(payee, 'POSTALCODE').text = '60613'
+        SubElement(payee, 'COUNTRY').text = 'USA'
+        SubElement(payee, 'PHONE').text = '(773) 309-1027'
+
+        return root
+
+    def testConvert(self):
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(self.root)
+
+
 if __name__=='__main__':
     unittest.main()
