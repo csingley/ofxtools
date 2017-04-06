@@ -35,6 +35,7 @@ from ofxtools.models import (
     STMTTRN,
     PAYEE,
     BANKACCTTO,
+    CCACCTTO,
 )
 from ofxtools.lib import (
     LANG_CODES,
@@ -892,6 +893,49 @@ class StmttrnBankaccttoTestCase(StmttrnTestCase):
         self.assertEqual(bankacctto.acctid, '9876543210')
         self.assertEqual(bankacctto.accttype, 'CHECKING')
         self.assertEqual(bankacctto.acctkey, 'NONE')
+
+
+class StmttrnCcaccttoTestCase(StmttrnTestCase):
+    """ STMTTRN with CCACCTTO """
+    requiredElements = ('DTPOSTED', 'TRNAMT', 'FITID', 'TRNTYPE', 'ACCTID')
+    optionalElements = ('DTUSER', 'DTAVAIL', 'CORRECTFITID', 'CORRECTACTION',
+                        'SRVRTID', 'CHECKNUM', 'REFNUM', 'SIC', 'PAYEEID',
+                        'NAME', 'MEMO', 'INV401KSOURCE', 'CURSYM', 'CURRATE',
+                        'ACCTKEY',)
+
+    @property
+    def root(self):
+        root = super(StmttrnCcaccttoTestCase, self).root
+        ccacctto = SubElement(root, 'CCACCTTO')
+        SubElement(ccacctto, 'ACCTID').text = '9876543210'
+        SubElement(ccacctto, 'ACCTKEY').text = 'NONE'
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, STMTTRN)
+        self.assertEqual(root.trntype, 'CHECK')
+        self.assertEqual(root.dtposted, datetime(2013, 6, 15))
+        self.assertEqual(root.dtuser, datetime(2013, 6, 14))
+        self.assertEqual(root.dtavail, datetime(2013, 6, 16))
+        self.assertEqual(root.trnamt, Decimal('-433.25'))
+        self.assertEqual(root.fitid, 'DEADBEEF')
+        self.assertEqual(root.correctfitid, 'B00B5')
+        self.assertEqual(root.correctaction, 'REPLACE')
+        self.assertEqual(root.srvrtid, '101A2')
+        self.assertEqual(root.checknum, '101')
+        self.assertEqual(root.refnum, '5A6B')
+        self.assertEqual(root.sic, 171103)
+        self.assertEqual(root.payeeid, '77810')
+        self.assertEqual(root.memo, 'Protection money')
+        self.assertEqual(root.curtype, 'CURRENCY')
+        self.assertEqual(root.cursym, 'CAD')
+        self.assertEqual(root.currate, Decimal('1.1'))
+        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
+        ccacctto = root.ccacctto
+        self.assertIsInstance(ccacctto, CCACCTTO)
+        self.assertEqual(ccacctto.acctid, '9876543210')
+        self.assertEqual(ccacctto.acctkey, 'NONE')
 
 
 if __name__=='__main__':
