@@ -41,5 +41,5 @@ class CCACCTTO(CCACCTFROM):
 
 
 class INVACCTFROM(ACCTFROM):
-    """ """
+    """ OFX section 13.6.1 """
     brokerid = String(22, required=True)

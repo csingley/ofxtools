@@ -80,12 +80,7 @@ class Bool(Element):
                 value, self.mapping.keys(), )
             )
 
-        try:
-            return {v:k for k,v in self.mapping.items()}[value]
-        except KeyError as e:
-            raise ValueError("%s is not one of the allowed values %s" % (
-                e.args[0], self.mapping.keys(), )
-            )
+        return {v:k for k,v in self.mapping.items()}[value]
 
 
 class String(Element):
@@ -193,13 +188,7 @@ class Decimal(Element):
             value = decimal.Decimal(value)
         except decimal.InvalidOperation:
             if isinstance(value, str):
-                try:
-                    value = decimal.Decimal(value.replace(',', '.'))
-                except decimal.InvalidOperation:
-                    raise ValueError("'%s' can't be converted to Decimal" %
-                                     value)
-            else:
-                raise ValueError("'%s' can't be converted to Decimal" % value)
+                value = decimal.Decimal(value.replace(',', '.'))
 
         return value.quantize(self.precision)
 
@@ -209,7 +198,8 @@ class DateTime(Element):
     tz_re = re.compile(r'\[([-+]?\d{0,2}\.?\d*):?(\w*)\]')
     # strftime formats keyed by the length of the corresponding string
     formats = {
-        18: '%Y%m%d%H%M%S.%f', 14: '%Y%m%d%H%M%S', 12: '%Y%m%d%H%M', 8: '%Y%m%d'
+        18: '%Y%m%d%H%M%S.%f', 14: '%Y%m%d%H%M%S',
+        12: '%Y%m%d%H%M', 8: '%Y%m%d'
     }
 
     def convert(self, value):
@@ -228,7 +218,7 @@ class DateTime(Element):
         # By this point, if it's not a string something's wrong
         if not isinstance(value, str):
             raise ValueError("'%s' is type '%s'; can't convert to datetime" %
-                            (value, type(value)))
+                             (value, type(value)))
 
         # Pristine copy of input for error reporting purposes
         orig_value = value
@@ -239,9 +229,11 @@ class DateTime(Element):
         if chunks:
             gmt_offset, tz_name = chunks[:2]
             # Some FIs *cough* IBKR *cough* write crap for the TZ offset
+            # FIXME - don't set gmt_offset to 0; instead parse tz_name and use
             if gmt_offset == '-':
                 gmt_offset = '0'
-            gmt_offset = int(decimal.Decimal(gmt_offset)*3600) # hours -> seconds
+            # hours -> seconds
+            gmt_offset = int(decimal.Decimal(gmt_offset)*3600)
         else:
             gmt_offset = 0
 
@@ -249,7 +241,7 @@ class DateTime(Element):
             format = self.formats[len(value)]
         except KeyError:
             raise ValueError("Datetime '%s' does not match OFX formats %s" %
-                            (orig_value, self.formats.values()))
+                             (orig_value, self.formats.values()))
 
         # OFX spec gives fractional seconds as milliseconds; convert to
         # microseconds as required by strptime()
@@ -260,7 +252,7 @@ class DateTime(Element):
             value = datetime.datetime.strptime(value, format)
         except ValueError:
             raise ValueError("Datetime '%s' does not match OFX formats %s" %
-                            (orig_value, self.formats.values()))
+                             (orig_value, self.formats.values()))
 
         # Adjust timezone to GMT
         value -= datetime.timedelta(seconds=gmt_offset)

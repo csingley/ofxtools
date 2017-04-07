@@ -25,7 +25,7 @@ ASSETCLASSES = ('DOMESTICBOND', 'INTLBOND', 'LARGESTOCK', 'SMALLSTOCK',
 
 
 class SECINFO(CURRENCY, SECID):
-    """ """
+    """ OFX Section 13.8.5.1 """
     # FIs abuse SECNAME/TICKER
     # Relaxing the length constraints from the OFX spec does little harm
     # secname = String(120, required=True)
@@ -40,7 +40,7 @@ class SECINFO(CURRENCY, SECID):
 
 
 class DEBTINFO(SECINFO):
-    """ """
+    """ OFX Section 13.8.5.2 """
     parvalue = Decimal(required=True)
     debttype = OneOf('COUPON', 'ZERO', required=True)
     debtclass = OneOf('TREASURY', 'MUNICIPAL', 'CORPORATE', 'OTHER')
@@ -82,19 +82,19 @@ class MFINFO(SECINFO):
 
 
 class PORTION(Aggregate):
-    """ """
+    """ OFX section 13.8.5.3 """
     assetclass = OneOf(*ASSETCLASSES, required=True)
     percent = Decimal(required=True)
 
 
 class FIPORTION(Aggregate):
-    """ """
+    """ OFX section 13.8.5.3 """
     fiassetclass = String(32, required=True)
     percent = Decimal(required=True)
 
 
 class OPTINFO(SECINFO):
-    """ """
+    """ OFX Section 13.8.5.4 """
     opttype = OneOf('CALL', 'PUT', required=True)
     strikeprice = Decimal(required=True)
     dtexpire = DateTime(required=True)
@@ -106,14 +106,14 @@ class OPTINFO(SECINFO):
 
 
 class OTHERINFO(SECINFO):
-    """ """
+    """ OFX Section 13.8.5.5 """
     typedesc = String(32)
     assetclass = OneOf(*ASSETCLASSES)
     fiassetclass = String(32)
 
 
 class STOCKINFO(SECINFO):
-    """ """
+    """ OFX Section 13.8.5.6 """
     stocktype = OneOf('COMMON', 'PREFERRED', 'CONVERTIBLE', 'OTHER')
     yld = Decimal(4)
     dtyieldasof = DateTime()

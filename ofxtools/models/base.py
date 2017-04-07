@@ -197,7 +197,7 @@ class Aggregate(object):
                 setattr(instance, tag.lower(), lst)
             else:
                 msg = "'{}' must be type {} or {}, not {}".format(
-                    tag, 'ElementTree.Element', 'list', type(elem) 
+                    tag, 'ElementTree.Element', 'list', type(elem)
                 )
                 raise ValueError(msg)
 
@@ -212,7 +212,9 @@ class FI(Aggregate):
     """
     OFX section 2.5.1.8
 
-    FI aggregates are optional in SONRQ/SONRS; not all firms use them.
+    <FI> aggregates are optional in SONRQ/SONRS; not all firms use them.
+    Therefore we don't mark ORG as required, so SONRS (which inherits from FI)
+    won't throw an error if <FI> is absent.
     """
     org = String(32)
     fid = String(32)
@@ -238,13 +240,23 @@ class SONRS(FI, STATUS):
 
 
 class CURRENCY(Aggregate):
-    """ OFX section 5.2 """
+    """
+    OFX section 5.2
+
+    <CURRENCY> aggregates are mostly optional, so its elements
+    (which are mandatory per the OFX spec) aren't marked as required.
+    """
     cursym = OneOf(*CURRENCY_CODES)
     currate = Decimal(8)
 
 
 class ORIGCURRENCY(CURRENCY):
-    """ OFX section 5.2 """
+    """
+    OFX section 5.2
+
+    <ORIGCURRENCY> aggregates are mostly optional, so its elements
+    (which are mandatory per the OFX spec) aren't marked as required.
+    """
     curtype = OneOf('CURRENCY', 'ORIGCURRENCY')
 
     @staticmethod
@@ -277,6 +289,6 @@ class ORIGCURRENCY(CURRENCY):
 
 
 class SECID(Aggregate):
-    """ """
+    """ OFX section 13.8.1 """
     uniqueid = String(32, required=True)
     uniqueidtype = String(10, required=True)

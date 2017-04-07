@@ -4,27 +4,16 @@
 import unittest
 from datetime import datetime
 from decimal import Decimal
-import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import (
     Element,
     SubElement,
 )
-from copy import deepcopy
 
 
 # local imports
-import ofxtools
+from . import common
 from ofxtools.models import (
     Aggregate,
-    SONRS,
-    CURRENCY,
-    BANKACCTFROM,
-    CCACCTFROM,
-    INVACCTFROM,
-    LEDGERBAL,
-    AVAILBAL,
-    INVBAL,
-    BAL,
     DEBTINFO,
     MFINFO,
     OPTINFO,
@@ -32,83 +21,19 @@ from ofxtools.models import (
     STOCKINFO,
     PORTION,
     FIPORTION,
-    STMTTRN,
-    PAYEE,
-    BANKACCTTO,
-    CCACCTTO,
 )
-from ofxtools.lib import (
-    LANG_CODES,
-    CURRENCY_CODES,
-)
-
-class TestAggregate(object):
-    """ """
-    __test__ = False
-    requiredElements = ()
-    optionalElements = ()
-
-    @property
-    def root(self):
-        """Define in subclass"""
-        raise NotImplementedError
-
-    def testRequired(self):
-        if self.requiredElements:
-            for tag in self.requiredElements:
-                root = deepcopy(self.root)
-                parent = root.find('.//%s/..' % tag)
-                if parent is None:
-                    raise ValueError("Can't find parent of %s" % tag)
-                required = parent.find('./%s' % tag)
-                parent.remove(required)
-                with self.assertRaises(ValueError):
-                    Aggregate.from_etree(root)
-
-    def testOptional(self):
-        if self.optionalElements:
-            for tag in self.optionalElements:
-                root = deepcopy(self.root)
-                parent = root.find('.//%s/..' % tag)
-                if parent is None:
-                    raise ValueError("Can't find parent of %s" % tag)
-                optional = parent.find('./%s' % tag)
-                parent.remove(optional)
-                Aggregate.from_etree(root)
-
-    def testExtraElement(self):
-        root = deepcopy(self.root)
-        SubElement(root, 'FAKEELEMENT').text = 'garbage'
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
-
-    def oneOfTest(self, tag, texts):
-        # Make sure OneOf validator allows all legal values and disallows
-        # illegal values
-        for text in texts:
-            root = deepcopy(self.root)
-            target = root.find('.//%s' % tag)
-            target.text = text
-            Aggregate.from_etree(root)
-
-        root = deepcopy(self.root)
-        target = root.find('.//%s' % tag)
-        target.text = 'garbage'
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
+from ofxtools.lib import CURRENCY_CODES
 
 
-class DebtinfoTestCase(unittest.TestCase, TestAggregate):
+class DebtinfoTestCase(unittest.TestCase, common.TestAggregate):
     __test__ = True
-    requiredElements = ('UNIQUEID', 'UNIQUEIDTYPE', 'SECNAME', 'PARVALUE', 
-                        'DEBTTYPE'
-                       )
+    requiredElements = ('UNIQUEID', 'UNIQUEIDTYPE', 'SECNAME', 'PARVALUE',
+                        'DEBTTYPE',)
     optionalElements = ('TICKER', 'FIID', 'RATING', 'UNITPRICE', 'DTASOF',
                         'CURSYM', 'CURRATE', 'MEMO', 'DEBTCLASS', 'COUPONRT',
                         'DTCOUPON', 'COUPONFREQ', 'CALLPRICE', 'YIELDTOCALL',
                         'DTCALL', 'CALLTYPE', 'YIELDTOMAT', 'DTMAT',
-                        'ASSETCLASS', 'FIASSETCLASS',
-                       )
+                        'ASSETCLASS', 'FIASSETCLASS',)
 
     @property
     def root(self):
@@ -176,21 +101,19 @@ class DebtinfoTestCase(unittest.TestCase, TestAggregate):
         self.oneOfTest('CURSYM', CURRENCY_CODES)
         self.oneOfTest('DEBTTYPE', ('COUPON', 'ZERO'))
         self.oneOfTest('DEBTCLASS',
-                       ('TREASURY', 'MUNICIPAL', 'CORPORATE', 'OTHER')
-                      )
-        self.oneOfTest('COUPONFREQ', 
-                       ('MONTHLY', 'QUARTERLY', 'SEMIANNUAL', 'ANNUAL', 'OTHER')
-                      )
+                       ('TREASURY', 'MUNICIPAL', 'CORPORATE', 'OTHER'))
+        self.oneOfTest('COUPONFREQ',
+                       ('MONTHLY', 'QUARTERLY', 'SEMIANNUAL', 'ANNUAL',
+                        'OTHER'))
         self.oneOfTest('CALLTYPE', ('CALL', 'PUT', 'PREFUND', 'MATURITY'))
 
 
-class MfinfoTestCase(unittest.TestCase, TestAggregate):
+class MfinfoTestCase(unittest.TestCase, common.TestAggregate):
     __test__ = True
     requiredElements = ('UNIQUEID', 'UNIQUEIDTYPE', 'SECNAME',)
     optionalElements = ('TICKER', 'FIID', 'RATING', 'UNITPRICE', 'DTASOF',
-                        'CURSYM', 'CURRATE', 'MEMO', 'YIELD', 'DTYIELDASOF', 
-                        'MFASSETCLASS', 'FIMFASSETCLASS',
-                       )
+                        'CURSYM', 'CURRATE', 'MEMO', 'YIELD', 'DTYIELDASOF',
+                        'MFASSETCLASS', 'FIMFASSETCLASS',)
 
     @property
     def root(self):
@@ -258,7 +181,7 @@ class MfinfoTestCase(unittest.TestCase, TestAggregate):
         self.assertEqual(root.memo, 'Foobar')
         self.assertEqual(root.yld, Decimal('5.0'))
         self.assertEqual(root.dtyieldasof, datetime(2003, 5, 1))
-        
+       
         for p in root.mfassetclass:
             self.assertIsInstance(p, PORTION)
         p = root.mfassetclass
@@ -289,12 +212,12 @@ class MfinfoTestCase(unittest.TestCase, TestAggregate):
         self.oneOfTest('CURSYM', CURRENCY_CODES)
 
 
-class OptinfoTestCase(unittest.TestCase, TestAggregate):
+class OptinfoTestCase(unittest.TestCase, common.TestAggregate):
     __test__ = True
     requiredElements = ('UNIQUEID', 'UNIQUEIDTYPE', 'SECNAME', 'OPTTYPE',
                         'STRIKEPRICE', 'DTEXPIRE', 'SHPERCTRCT')
     optionalElements = ('TICKER', 'FIID', 'RATING', 'UNITPRICE', 'DTASOF',
-                        'CURSYM', 'CURRATE', 'MEMO', 'ASSETCLASS', 
+                        'CURSYM', 'CURRATE', 'MEMO', 'ASSETCLASS',
                         'FIASSETCLASS')
 
     @property
@@ -347,13 +270,12 @@ class OptinfoTestCase(unittest.TestCase, TestAggregate):
         self.assertEqual(root.fiassetclass, 'FOO')
 
 
-class OtherinfoTestCase(unittest.TestCase, TestAggregate):
+class OtherinfoTestCase(unittest.TestCase, common.TestAggregate):
     __test__ = True
     requiredElements = ('UNIQUEID', 'UNIQUEIDTYPE', 'SECNAME',)
     optionalElements = ('TICKER', 'FIID', 'RATING', 'UNITPRICE', 'DTASOF',
-                        'CURSYM', 'CURRATE', 'MEMO', 'TYPEDESC', 'ASSETCLASS', 
-                        'FIASSETCLASS',
-                       )
+                        'CURSYM', 'CURRATE', 'MEMO', 'TYPEDESC', 'ASSETCLASS',
+                        'FIASSETCLASS',)
 
     @property
     def root(self):
@@ -396,13 +318,12 @@ class OtherinfoTestCase(unittest.TestCase, TestAggregate):
         self.assertEqual(root.fiassetclass, 'FOO')
 
 
-class StockinfoTestCase(unittest.TestCase, TestAggregate):
+class StockinfoTestCase(unittest.TestCase, common.TestAggregate):
     __test__ = True
     requiredElements = ('UNIQUEID', 'UNIQUEIDTYPE', 'SECNAME',)
     optionalElements = ('TICKER', 'FIID', 'RATING', 'UNITPRICE', 'DTASOF',
-                        'CURSYM', 'CURRATE', 'MEMO', 'STOCKTYPE', 'YIELD', 
-                        'DTYIELDASOF', 'ASSETCLASS', 'FIASSETCLASS',
-                       )
+                        'CURSYM', 'CURRATE', 'MEMO', 'STOCKTYPE', 'YIELD',
+                        'DTYIELDASOF', 'ASSETCLASS', 'FIASSETCLASS',)
 
     @property
     def root(self):
@@ -449,5 +370,5 @@ class StockinfoTestCase(unittest.TestCase, TestAggregate):
         self.assertEqual(root.fiassetclass, 'FOO')
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()

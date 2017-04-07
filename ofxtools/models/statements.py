@@ -32,7 +32,7 @@ class TRNRS(Aggregate):
         # For statements we want to interpret cls._subaggregates
         # differently than Aggregate._preflatten()
         subaggs = {}
-                               
+
         status = elem.find('STATUS')
         subaggs['STATUS'] = status
         elem.remove(status)

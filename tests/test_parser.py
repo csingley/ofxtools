@@ -2,7 +2,7 @@
 
 # stdlib imports
 import unittest
-import datetime as dt
+
 
 # local imports
 import ofxtools
@@ -43,10 +43,10 @@ class ParserTestCase(unittest.TestCase):
 with open('tests/data/stmtrs.ofx') as f:
     # Strip the OFX header
     sgml = ''.join(f.readlines()[3:])
-    #parser = ofxtools.Parser.TreeBuilder(element_factory=ofxtools.Parser.Element)
     parser = ofxtools.Parser.TreeBuilder()
     parser.feed(sgml)
     ofx = parser.close()
+
 
 class TreeBuilderTestCase(unittest.TestCase):
     def aggregate(self, node, tag, num_children):
@@ -164,7 +164,7 @@ class TreeBuilderTestCase(unittest.TestCase):
         self.element(accttype, tag='ACCTTYPE', data='CHECKING')
 
         # <BANKMSGSRSV1> - <STMTTRNRS> - <STMTRS> - <BANKTRANLIST>
-        banktranlist  = stmtrs[2]
+        banktranlist = stmtrs[2]
         self.aggregate(banktranlist, tag='BANKTRANLIST', num_children=4)
 
         # <BANKMSGSRSV1> - <STMTTRNRS> - <STMTRS> - <BANKTRANLIST> - <DTSTART>
@@ -172,7 +172,7 @@ class TreeBuilderTestCase(unittest.TestCase):
         self.element(dtstart, tag='DTSTART', data='20051001')
 
         # <BANKMSGSRSV1> - <STMTTRNRS> - <STMTRS> - <BANKTRANLIST> - <DTEND>
-        dtend= banktranlist[1]
+        dtend = banktranlist[1]
         self.element(dtend, tag='DTEND', data='20051028')
 
         # <BANKMSGSRSV1> - <STMTTRNRS> - <STMTRS> - <BANKTRANLIST> - <STMTTRN> #1
@@ -224,7 +224,7 @@ class TreeBuilderTestCase(unittest.TestCase):
         self.element(fitid, tag='FITID', data='00003')
 
         # <BANKMSGSRSV1> - <STMTTRNRS> - <STMTRS> - <LEDGERBAL>
-        ledgerbal  = stmtrs[3]
+        ledgerbal = stmtrs[3]
         self.aggregate(ledgerbal, tag='LEDGERBAL', num_children=2)
 
         # <BANKMSGSRSV1> - <STMTTRNRS> - <STMTRS> - <LEDGERBAL> - <BALAMT>
@@ -236,7 +236,7 @@ class TreeBuilderTestCase(unittest.TestCase):
         self.element(dtasof, tag='DTASOF', data='200510291120')
 
         # <BANKMSGSRSV1> - <STMTTRNRS> - <STMTRS> - <AVAILBAL>
-        availbal  = stmtrs[4]
+        availbal = stmtrs[4]
         self.aggregate(availbal, tag='AVAILBAL', num_children=2)
 
         # <BANKMSGSRSV1> - <STMTTRNRS> - <STMTRS> - <AVAILBAL> - <BALAMT>
@@ -262,7 +262,7 @@ class TreeBuilderTestCase(unittest.TestCase):
 
         stmtrs = stmttrnrs[2]
         acctfrom = Aggregate._flatten(stmtrs[1])
-        self.assertEqual(acctfrom, {'bankid': '121099999','acctid': '999988',
+        self.assertEqual(acctfrom, {'bankid': '121099999', 'acctid': '999988',
                                     'accttype': 'CHECKING'})
         tranlist = stmtrs[2]
         stmttrn1 = Aggregate._flatten(tranlist[2])
@@ -280,5 +280,6 @@ class TreeBuilderTestCase(unittest.TestCase):
         self.assertEqual(availbal, {'balamt': '200.29',
                                     'dtasof': '200510291120'})
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     unittest.main()

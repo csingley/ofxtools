@@ -1,10 +1,15 @@
 # coding: utf-8
-
+""" Unit tests for ofxtools.Types """
+# stdlib imports
 import unittest
 import decimal
 import datetime
+import warnings
 
+
+# local imports
 import ofxtools
+from ofxtools.Types import OFXTypeWarning
 
 
 class Base:
@@ -29,7 +34,8 @@ class BoolTestCase(unittest.TestCase, Base):
         self.assertTrue(t.convert('Y'))
         # Per OFX spec, 'N' converts to False
         self.assertFalse(t.convert('N'))
-        # All other inputs (except None) are illegal
+        self.assertEqual(t.convert(None), None)
+        # All other inputs are illegal
         for illegal in (True, False, 0, 1):
             with self.assertRaises(ValueError):
                 t.convert(illegal)
@@ -40,7 +46,8 @@ class BoolTestCase(unittest.TestCase, Base):
         self.assertEqual(t.unconvert(True), 'Y')
         # Per OFX spec, 'N' converts to False
         self.assertEqual(t.unconvert(False), 'N')
-        # All other inputs (except None) are illegal
+        self.assertEqual(t.unconvert(None), None)
+        # All other inputs are illegal
         for illegal in ('Y', 'N', 0, 1):
             with self.assertRaises(ValueError):
                 t.unconvert(illegal)
@@ -69,6 +76,19 @@ class StringTestCase(unittest.TestCase, Base):
         self.assertEqual(t.convert(''), None)
 
 
+class NagstringTestCase(StringTestCase):
+    type_ = ofxtools.Types.NagString
+
+    def test_max_length(self):
+        t = self.type_(5)
+        self.assertEqual('foo', t.convert('foo'))
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            t.convert('foobar')
+            self.assertEqual(len(w), 1)
+            self.assertEqual(w[0].category, OFXTypeWarning)
+
+
 class OneOfTestCase(unittest.TestCase, Base):
     type_ = ofxtools.Types.OneOf
 
@@ -76,6 +96,7 @@ class OneOfTestCase(unittest.TestCase, Base):
         t = self.type_('1', '2')
         self.assertEqual('1', t.convert('1'))
         self.assertEqual('2', t.convert('2'))
+        self.assertEqual(None, t.convert(''))
         with self.assertRaises(ValueError):
             t.convert('3')
         with self.assertRaises(ValueError):
@@ -126,12 +147,18 @@ class DecimalTestCase(unittest.TestCase, Base):
     def test_euro_decimal_separator(self):
         t = self.type_()
         self.assertEqual(decimal.Decimal('1.23'), t.convert('1,23'))
+        # Separators other than . and , are illegal
+        with self.assertRaises(decimal.InvalidOperation):
+            t.convert('1:23')
 
     def test_illegal(self):
         t = self.type_()
         # Don't accept strings that can't be converted to Decimal
-        with self.assertRaises(ValueError):
+        with self.assertRaises(decimal.InvalidOperation):
             t.convert('foobar')
+        # Don't accept random types
+        with self.assertRaises(TypeError):
+            t.convert(object)
 
 
 class DateTimeTestCase(unittest.TestCase, Base):
@@ -159,11 +186,39 @@ class DateTimeTestCase(unittest.TestCase, Base):
         check = datetime.datetime(2011, 11, 17, 3, 30, 45, 150)
         self.assertEqual(check, t.convert('20111117033045.150'))
 
-    def test_illegal(self):
+        # FIXME - these TZ offset tests only work in CST
+
+        # Accept YYYYMMDDHHMMSS.XXX[offset]
+        check = datetime.datetime(2011, 11, 17, 9, 30, 45, 150)
+        self.assertEqual(check, t.convert('20111117033045.150[-6]'))
+        # Accept YYYYMMDDHHMMSS.XXX[offset:TZ]
+        check = datetime.datetime(2011, 11, 17, 9, 30, 45, 150)
+        self.assertEqual(check, t.convert('20111117033045.150[-6:CST]'))
+        # Accept YYYYMMDDHHMMSS.XXX[offset:--]
+        check = datetime.datetime(2011, 11, 17, 3, 30, 45, 150)
+        self.assertEqual(check, t.convert('20111117033045.150[-:CST]'))
+
+    def test_convert_illegal(self):
         t = self.type_()
-        # Don't accept string
+        # Don't accept strings of the wrong length
         with self.assertRaises(ValueError):
-            t.convert('2015-10-29')
+            t.convert('2015129')
+        # Don't accept strings of the wrong format
+        with self.assertRaises(ValueError):
+            t.convert('20151A29')
         # Don't accept integer
         with self.assertRaises(ValueError):
             t.convert(123)
+
+    def test_unconvert(self):
+        t = self.type_()
+        check = datetime.datetime(2007, 1, 1)
+        self.assertEqual(t.unconvert(check), '20070101060000')
+        check = datetime.date(2007, 1, 1)
+        self.assertEqual(t.unconvert(check), '20070101060000')
+
+    def test_unconvert_illegal(self):
+        t = self.type_()
+        # Don't accept string
+        with self.assertRaises(ValueError):
+            t.unconvert('20070101')
