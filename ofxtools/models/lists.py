@@ -11,7 +11,7 @@ from ofxtools.models import Aggregate
 from ofxtools.Types import DateTime
 
 
-class List(Aggregate, UserList):
+class List(Aggregate, UserList):  # pylint: disable=too-many-ancestors
     """
     Base class for OFX *LIST
     """
@@ -38,7 +38,11 @@ class List(Aggregate, UserList):
         subaggs = super(List, cls)._preflatten(elem)
 
         lst = []
-        for tran in elem[:]:
+
+        # The first two children of *TRANLIST are DTSTART/DTEND; don't remove.
+        dataStart = ('TRANLIST' in cls.__name__) * 2
+
+        for tran in elem[dataStart:]:
             lst.append(tran)
             elem.remove(tran)
         subaggs['data'] = lst
@@ -46,52 +50,37 @@ class List(Aggregate, UserList):
         return subaggs
 
 
-class BANKTRANLIST(List):
+class BANKTRANLIST(List):  # pylint: disable=too-many-ancestors
     """ OFX section 11.4.2.2 """
     dtstart = DateTime(required=True)
     dtend = DateTime(required=True)
 
-    @classmethod
-    def _preflatten(cls, elem):
-        """
-        The first two children of the list are DTSTART/DTEND; don't remove.
-        """
-        subaggs = super(List, cls)._preflatten(elem)
 
-        lst = []
-        for tran in elem[2:]:
-            lst.append(tran)
-            elem.remove(tran)
-        subaggs['data'] = lst
-
-        return subaggs
-
-
-class INVTRANLIST(BANKTRANLIST):
+class INVTRANLIST(BANKTRANLIST):  # pylint: disable=too-many-ancestors
     """ OFX section 13.9.2.2 """
     pass
 
 
-class SECLIST(List):
+class SECLIST(List):  # pylint: disable=too-many-ancestors
     """ OFX section 13.8.4.4 """
     pass
 
 
-class BALLIST(List):
+class BALLIST(List):  # pylint: disable=too-many-ancestors
     """ OFX section 11.4.2.2 & 13.9.2.7 """
     pass
 
 
-class MFASSETCLASS(List):
+class MFASSETCLASS(List):  # pylint: disable=too-many-ancestors
     """ OFX section 13.8.5.3 """
     pass
 
 
-class FIMFASSETCLASS(List):
+class FIMFASSETCLASS(List):  # pylint: disable=too-many-ancestors
     """ OFX section 13.8.5.3 """
     pass
 
 
-class INVPOSLIST(List):
+class INVPOSLIST(List):  # pylint: disable=too-many-ancestors
     """ OFX section 13.9.2.2 """
     pass
