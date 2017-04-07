@@ -89,10 +89,10 @@ class Aggregate(object):
         SubClass = globals()[elem.tag]
         SubClass._verify(elem)
         SubClass._groom(elem)
-        attrs, subaggs = SubClass._preflatten(elem)
+        subaggs = SubClass._preflatten(elem)
         attributes = SubClass._flatten(elem)
         instance = SubClass(**attributes)
-        SubClass._postflatten(instance, attrs, subaggs)
+        SubClass._postflatten(instance, subaggs)
         return instance
 
     @staticmethod
@@ -133,24 +133,17 @@ class Aggregate(object):
     def _preflatten(elem):
         """
         Strip any elements that will blow up _flatten(), and store them for
-        postprocessing either as directly set attributes or stapled-on
-        subaggregates.
+        postprocessing as stapled-on subaggregates.
 
-        Returns a 2-tuple of (attributes, subaggregates) where:
-            * attributes is a dict of {name: value} where:
-                - name is a string (the attribute name)
-                - value is any type (to which the attribute will be set)
-            * subaggregates is a dict of {name: value}, where:
-                - name is a string (the attribute name)
-                - value is either:
-                    + an Aggregate instance, or
-                    + a list of Aggregate instances
+        Returns a 'subaggregates' dict of {name: value}, where:
+            * name is a string (the attribute name)
+            * value is either:
+                - an Aggregate instance, or
+                - a list of Aggregate instances
 
         Extend in subclass.
         """
-        attrs = {}
-        subaggs = {}
-        return attrs, subaggs
+        return {}
 
     @classmethod
     def _flatten(cls, element):
@@ -186,12 +179,10 @@ class Aggregate(object):
         return leaves
 
     @staticmethod
-    def _postflatten(instance, attrs, subaggs):
+    def _postflatten(instance, subaggs):
         """
         Staple on attributes and subaggregates stripped during preprocessing.
         """
-        for attr, value in attrs.items():
-            setattr(instance, attr, value)
         for tag, elem in subaggs.items():
             if isinstance(elem, ET.Element):
                 setattr(instance, tag.lower(), Aggregate.from_etree(elem))
@@ -226,8 +217,8 @@ class List(Aggregate, UserList):
         """
         return object.__hash__(self)
 
-    @staticmethod
-    def _preflatten(elem):
+    @classmethod
+    def _preflatten(cls, elem):
         """
         UserList is a wrapper around a standard list, accessible through its
         'data' attribute.  If we create a synthetic subaggregate
@@ -235,7 +226,7 @@ class List(Aggregate, UserList):
         Aggregate._postflatten() will set List.data to a list of converted
         Aggregates, and the Userlist interface will work normally.
         """
-        attrs, subaggs = super(List, List)._preflatten(elem)
+        subaggs = super(List, cls)._preflatten(elem)
 
         lst = []
         for tran in elem[:]:
@@ -243,7 +234,7 @@ class List(Aggregate, UserList):
             elem.remove(tran)
         subaggs['data'] = lst
 
-        return attrs, subaggs
+        return subaggs
 
 
 class FI(Aggregate):
@@ -295,8 +286,8 @@ class ORIGCURRENCY(CURRENCY):
         mutexes = [("CURRENCY", "ORIGCURRENCY")]
         ORIGCURRENCY._mutex(elem, mutexes)
 
-    @staticmethod
-    def _preflatten(elem):
+    @classmethod
+    def _preflatten(cls, elem):
         """
         See OFX spec section 5.2 for currency handling conventions.
         Flattening the currency definition leaves only the CURRATE/CURSYM
@@ -305,13 +296,13 @@ class ORIGCURRENCY(CURRENCY):
         important to interpreting transactions in foreign correncies, we
         preserve this information by adding a nonstandard curtype element.
         """
-        attrs, subaggs = super(ORIGCURRENCY, ORIGCURRENCY)._preflatten(elem)
+        subaggs = super(ORIGCURRENCY, cls)._preflatten(elem)
 
         curtype = elem.find('CURRENCY') or elem.find('ORIGCURRENCY')
         if curtype is not None:
             ET.SubElement(elem, 'CURTYPE').text = curtype.tag
 
-        return attrs, subaggs
+        return subaggs
 
 
 class ACCTFROM(Aggregate):
@@ -368,12 +359,12 @@ class INVBAL(Aggregate):
     shortbalance = Decimal(required=True)
     buypower = Decimal()
 
-    @staticmethod
-    def _preflatten(elem):
+    @classmethod
+    def _preflatten(cls, elem):
         """
         Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up _flatten()
         """
-        attrs, subaggs = super(MFINFO, MFINFO)._preflatten(elem)
+        subaggs = super(INVBAL, cls)._preflatten(elem)
 
         # Do all XPath searches before removing nodes from the tree
         #   which seems to mess up the DOM in Python3 and throw an
@@ -384,7 +375,7 @@ class INVBAL(Aggregate):
             subaggs['BALLIST'] = ballist
             elem.remove(ballist)
 
-        return attrs, subaggs
+        return subaggs
 
 
 class BAL(CURRENCY):
@@ -457,12 +448,12 @@ class MFINFO(SECINFO):
         if yld is not None:
             yld.tag = 'YLD'
 
-    @staticmethod
-    def _preflatten(elem):
+    @classmethod
+    def _preflatten(cls, elem):
         """
         Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up _flatten()
         """
-        attrs, subaggs = super(MFINFO, MFINFO)._preflatten(elem)
+        subaggs = super(MFINFO, cls)._preflatten(elem)
 
         # Do all XPath searches before removing nodes from the tree
         #   which seems to mess up the DOM in Python3 and throw an
@@ -477,7 +468,7 @@ class MFINFO(SECINFO):
             subaggs['FIMFASSETCLASS'] = fimfassetclass
             elem.remove(fimfassetclass)
 
-        return attrs, subaggs
+        return subaggs
 
 
 class PORTION(Aggregate):
@@ -501,8 +492,8 @@ class OPTINFO(SECINFO):
     assetclass = OneOf(*ASSETCLASSES)
     fiassetclass = String(32)
 
-    @staticmethod
-    def _preflatten(elem):
+    @classmethod
+    def _preflatten(cls, elem):
         """
         Strip SECID of underlying so it doesn't overwrite SECID of option
         during _flatten()
@@ -510,14 +501,14 @@ class OPTINFO(SECINFO):
         # Do all XPath searches before removing nodes from the tree
         #   which seems to mess up the DOM in Python3 and throw an
         #   AttributeError on subsequent searches.
-        attrs, subaggs = super(OPTINFO, OPTINFO)._preflatten(elem)
+        subaggs = super(OPTINFO, cls)._preflatten(elem)
 
         secid = elem.find('./SECID')
         if secid is not None:
             subaggs['SECID'] = secid
             elem.remove(secid)
 
-        return attrs, subaggs
+        return subaggs
 
 
 class OTHERINFO(SECINFO):
@@ -605,10 +596,10 @@ class STMTTRN(TRAN, ORIGCURRENCY):
         mutexes = [("CCACCTTO", "BANKACCTTO"), ("NAME", "PAYEE")]
         STMTTRN._mutex(elem, mutexes)
 
-    @staticmethod
-    def _preflatten(elem):
+    @classmethod
+    def _preflatten(cls, elem):
         """ Handle CCACCTO/BANKACCTTO/PAYEE as 'sub-aggregates' """
-        attrs, subaggs = super(STMTTRN, STMTTRN)._preflatten(elem)
+        subaggs = super(STMTTRN, cls)._preflatten(elem)
 
         for tag in ["CCACCTTO", "BANKACCTTO", "PAYEE"]:
             subagg = elem.find(tag)
@@ -616,7 +607,7 @@ class STMTTRN(TRAN, ORIGCURRENCY):
                 elem.remove(subagg)
                 subaggs[tag] = subagg
 
-        return attrs, subaggs
+        return subaggs
 
 
 class INVBANKTRAN(STMTTRN):
@@ -877,12 +868,12 @@ class BANKTRANLIST(List):
     dtstart = DateTime(required=True)
     dtend = DateTime(required=True)
 
-    @staticmethod
-    def _preflatten(elem):
+    @classmethod
+    def _preflatten(cls, elem):
         """
         The first two children of the list are DTSTART/DTEND; don't remove.
         """
-        attrs, subaggs = super(List, List)._preflatten(elem)
+        subaggs = super(List, cls)._preflatten(elem)
 
         lst = []
         for tran in elem[2:]:
@@ -890,7 +881,7 @@ class BANKTRANLIST(List):
             elem.remove(tran)
         subaggs['data'] = lst
 
-        return attrs, subaggs
+        return subaggs
 
 
 class INVTRANLIST(BANKTRANLIST):
@@ -938,7 +929,7 @@ class STMTTRNRS(Aggregate):
     def _preflatten(cls, elem):
         """
         """
-        attrs, subaggs = super(STMTTRNRS, STMTTRNRS)._preflatten(elem)
+        subaggs = super(STMTTRNRS, cls)._preflatten(elem)
 
         status = elem.find('STATUS')
         subaggs['STATUS'] = status
@@ -976,7 +967,7 @@ class STMTTRNRS(Aggregate):
             if child is not None:
                 stmtrs.remove(child)
 
-        return attrs, subaggs
+        return subaggs
 
     # Human-friendly attribute aliases
     @property
@@ -1020,7 +1011,7 @@ class INVSTMTTRNRS(STMTTRNRS):
     def _preflatten(cls, elem):
         """
         """
-        attrs, subaggs = super(INVSTMTTRNRS, cls)._preflatten(elem)
+        subaggs = super(INVSTMTTRNRS, cls)._preflatten(elem)
 
         invstmtrs = elem.find(cls._rsTag)
 
@@ -1034,7 +1025,7 @@ class INVSTMTTRNRS(STMTTRNRS):
             subaggs['INVBAL'] = invbal
             invstmtrs.remove(invbal)
 
-        return attrs, subaggs
+        return subaggs
 
     # Human-friendly attribute aliases
     @property
