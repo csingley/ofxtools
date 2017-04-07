@@ -8,6 +8,8 @@ from ofxtools.models import (
     Aggregate,
     ORIGCURRENCY,
     SECID,
+    INV401KSOURCES, INVSUBACCTS,
+    BUYTYPES, SELLTYPES, INCOMETYPES,
 )
 from ofxtools.Types import (
     Bool,
@@ -19,18 +21,6 @@ from ofxtools.Types import (
     NagString,
 )
 from ofxtools.lib import COUNTRY_CODES
-
-
-# Enums used in aggregate validation
-INV401KSOURCES = ('PRETAX', 'AFTERTAX', 'MATCH', 'PROFITSHARING',
-                  'ROLLOVER', 'OTHERVEST', 'OTHERNONVEST')
-ACCTTYPES = ('CHECKING', 'SAVINGS', 'MONEYMRKT', 'CREDITLINE')
-INVSUBACCTS = ('CASH', 'MARGIN', 'SHORT', 'OTHER')
-BUYTYPES = ('BUY', 'BUYTOCOVER')
-SELLTYPES = ('SELL', 'SELLSHORT')
-INCOMETYPES = ('CGLONG', 'CGSHORT', 'DIV', 'INTEREST', 'MISC')
-ASSETCLASSES = ('DOMESTICBOND', 'INTLBOND', 'LARGESTOCK', 'SMALLSTOCK',
-                'INTLSTOCK', 'MONEYMRKT', 'OTHER')
 
 
 class PAYEE(Aggregate):

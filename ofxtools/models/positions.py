@@ -5,7 +5,6 @@ balances, and securities.
 """
 # local imports
 from ofxtools.models import (
-    Aggregate,
     CURRENCY,
     SECID,
     INVSUBACCTS,
