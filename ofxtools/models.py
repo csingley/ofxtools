@@ -309,8 +309,7 @@ class ORIGCURRENCY(CURRENCY):
 
         curtype = elem.find('CURRENCY') or elem.find('ORIGCURRENCY')
         if curtype is not None:
-            assert 'curtype' not in attrs
-            attrs['curtype'] = curtype.tag
+            ET.SubElement(elem, 'CURTYPE').text = curtype.tag
 
         return attrs, subaggs
 
@@ -515,15 +514,7 @@ class OPTINFO(SECINFO):
 
         secid = elem.find('./SECID')
         if secid is not None:
-            # A <SECID> aggregate referring to the security underlying the
-            # option is, in general, *not* going to be contained in <SECLIST>
-            # (because we don't necessarily have a position in the underlying).
-            # Since the <SECID> for the underlying only gives us fields for
-            # (uniqueidtype, uniqueid) we can't really go ahead and use this
-            # information to create a corresponding SECINFO instance (since we
-            # lack information about the security subclass).  It's unclear that
-            # the SECID of the underlying is really needed for anything, so we
-            # disregard it.
+            subaggs['SECID'] = secid
             elem.remove(secid)
 
         return attrs, subaggs
