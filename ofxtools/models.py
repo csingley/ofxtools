@@ -338,24 +338,6 @@ class INVBAL(Aggregate):
 
     _subaggregates = ('BALLIST',)
 
-    #@classmethod
-    #def _preflatten(cls, elem):
-        #"""
-        #Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up _flatten()
-        #"""
-        #subaggs = super(INVBAL, cls)._preflatten(elem)
-
-        ## Do all XPath searches before removing nodes from the tree
-        ##   which seems to mess up the DOM in Python3 and throw an
-        ##   AttributeError on subsequent searches.
-        #ballist = elem.find('./BALLIST')
-
-        #if ballist is not None:
-            #subaggs['BALLIST'] = ballist
-            #elem.remove(ballist)
-
-        #return subaggs
-
 
 class BAL(CURRENCY):
     """ OFX section 3.1.4 """
@@ -429,28 +411,6 @@ class MFINFO(SECINFO):
         if yld is not None:
             yld.tag = 'YLD'
 
-    #@classmethod
-    #def _preflatten(cls, elem):
-        #"""
-        #Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up _flatten()
-        #"""
-        #subaggs = super(MFINFO, cls)._preflatten(elem)
-
-        ## Do all XPath searches before removing nodes from the tree
-        ##   which seems to mess up the DOM in Python3 and throw an
-        ##   AttributeError on subsequent searches.
-        #mfassetclass = elem.find('./MFASSETCLASS')
-        #fimfassetclass = elem.find('./FIMFASSETCLASS')
-
-        #if mfassetclass is not None:
-            #subaggs['MFASSETCLASS'] = mfassetclass
-            #elem.remove(mfassetclass)
-        #if fimfassetclass is not None:
-            #subaggs['FIMFASSETCLASS'] = fimfassetclass
-            #elem.remove(fimfassetclass)
-
-        #return subaggs
-
 
 class PORTION(Aggregate):
     """ """
@@ -474,24 +434,6 @@ class OPTINFO(SECINFO):
     fiassetclass = String(32)
 
     _subaggregates = ('SECID',)
-
-    #@classmethod
-    #def _preflatten(cls, elem):
-        #"""
-        #Strip SECID of underlying so it doesn't overwrite SECID of option
-        #during _flatten()
-        #"""
-        ## Do all XPath searches before removing nodes from the tree
-        ##   which seems to mess up the DOM in Python3 and throw an
-        ##   AttributeError on subsequent searches.
-        #subaggs = super(OPTINFO, cls)._preflatten(elem)
-
-        #secid = elem.find('./SECID')
-        #if secid is not None:
-            #subaggs['SECID'] = secid
-            #elem.remove(secid)
-
-        #return subaggs
 
 
 class OTHERINFO(SECINFO):
@@ -580,19 +522,6 @@ class STMTTRN(TRAN, ORIGCURRENCY):
 
         mutexes = [("CCACCTTO", "BANKACCTTO"), ("NAME", "PAYEE")]
         STMTTRN._mutex(elem, mutexes)
-
-    #@classmethod
-    #def _preflatten(cls, elem):
-        #""" Handle CCACCTO/BANKACCTTO/PAYEE as 'sub-aggregates' """
-        #subaggs = super(STMTTRN, cls)._preflatten(elem)
-
-        #for tag in ["CCACCTTO", "BANKACCTTO", "PAYEE"]:
-            #subagg = elem.find(tag)
-            #if subagg is not None:
-                #elem.remove(subagg)
-                #subaggs[tag] = subagg
-
-        #return subaggs
 
 
 class INVBANKTRAN(STMTTRN):
