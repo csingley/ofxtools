@@ -25,11 +25,6 @@ INV401KSOURCES = ('PRETAX', 'AFTERTAX', 'MATCH', 'PROFITSHARING',
                   'ROLLOVER', 'OTHERVEST', 'OTHERNONVEST')
 ACCTTYPES = ('CHECKING', 'SAVINGS', 'MONEYMRKT', 'CREDITLINE')
 INVSUBACCTS = ('CASH', 'MARGIN', 'SHORT', 'OTHER')
-BUYTYPES = ('BUY', 'BUYTOCOVER')
-SELLTYPES = ('SELL', 'SELLSHORT')
-INCOMETYPES = ('CGLONG', 'CGSHORT', 'DIV', 'INTEREST', 'MISC')
-ASSETCLASSES = ('DOMESTICBOND', 'INTLBOND', 'LARGESTOCK', 'SMALLSTOCK',
-                'INTLSTOCK', 'MONEYMRKT', 'OTHER')
 
 
 class Aggregate(object):
@@ -285,69 +280,3 @@ class SECID(Aggregate):
     """ """
     uniqueid = String(32, required=True)
     uniqueidtype = String(10, required=True)
-
-
-class ACCTFROM(Aggregate):
-    """ Base class (not in OFX spec) for *ACCTFROM/*ACCTTO """
-    acctid = String(22, required=True)
-
-
-class BANKACCTFROM(ACCTFROM):
-    """ OFX section 11.3.1 """
-    bankid = String(9, required=True)
-    branchid = String(22)
-    accttype = OneOf(*ACCTTYPES,
-                     required=True)
-    acctkey = String(22)
-
-
-class BANKACCTTO(BANKACCTFROM):
-    """ OFX section 11.3.1 """
-    pass
-
-
-class CCACCTFROM(ACCTFROM):
-    """ OFX section 11.3.2 """
-    acctkey = String(22)
-
-
-class CCACCTTO(CCACCTFROM):
-    """ OFX section 11.3.2 """
-    pass
-
-
-class INVACCTFROM(ACCTFROM):
-    """ """
-    brokerid = String(22, required=True)
-
-
-# Balances
-class LEDGERBAL(Aggregate):
-    """ """
-    balamt = Decimal(required=True)
-    dtasof = DateTime(required=True)
-
-
-class AVAILBAL(Aggregate):
-    """ """
-    balamt = Decimal(required=True)
-    dtasof = DateTime(required=True)
-
-
-class INVBAL(Aggregate):
-    """ OFX section 13.9.2.7 """
-    availcash = Decimal(required=True)
-    marginbalance = Decimal(required=True)
-    shortbalance = Decimal(required=True)
-    buypower = Decimal()
-
-    _subaggregates = ('BALLIST',)
-
-
-class BAL(CURRENCY):
-    """ OFX section 3.1.4 """
-    name = String(32, required=True)
-    desc = String(80, required=True)
-    baltype = OneOf('DOLLAR', 'PERCENT', 'NUMBER', required=True)
-    value = Decimal(required=True)
-    dtasof = DateTime()

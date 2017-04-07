@@ -4,10 +4,7 @@ Python object model for fundamental data aggregates such as transactions,
 balances, and securities.
 """
 # local imports
-from ofxtools.models import (
-    Aggregate,
-    ACCTTYPES,
-)
+from ofxtools.models import Aggregate, ACCTTYPES
 from ofxtools.Types import (
     String,
     OneOf,

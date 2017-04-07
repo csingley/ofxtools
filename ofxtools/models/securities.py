@@ -8,7 +8,6 @@ from ofxtools.models import (
     Aggregate,
     SECID,
     CURRENCY,
-    ASSETCLASSES,
 )
 from ofxtools.Types import (
     String,
@@ -18,6 +17,11 @@ from ofxtools.Types import (
     DateTime,
     NagString,
 )
+
+
+# Enums used in aggregate validation
+ASSETCLASSES = ('DOMESTICBOND', 'INTLBOND', 'LARGESTOCK', 'SMALLSTOCK',
+                'INTLSTOCK', 'MONEYMRKT', 'OTHER')
 
 
 class SECINFO(CURRENCY, SECID):

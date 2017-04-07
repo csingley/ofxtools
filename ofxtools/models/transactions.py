@@ -6,10 +6,8 @@ balances, and securities.
 # local imports
 from ofxtools.models import (
     Aggregate,
-    ORIGCURRENCY,
-    SECID,
+    ORIGCURRENCY, SECID,
     INV401KSOURCES, INVSUBACCTS,
-    BUYTYPES, SELLTYPES, INCOMETYPES,
 )
 from ofxtools.Types import (
     Bool,
@@ -21,6 +19,12 @@ from ofxtools.Types import (
     NagString,
 )
 from ofxtools.lib import COUNTRY_CODES
+
+
+# Enums used in aggregate validation
+BUYTYPES = ('BUY', 'BUYTOCOVER')
+SELLTYPES = ('SELL', 'SELLSHORT')
+INCOMETYPES = ('CGLONG', 'CGSHORT', 'DIV', 'INTEREST', 'MISC')
 
 
 class PAYEE(Aggregate):
