@@ -87,7 +87,7 @@ class Aggregate(object):
         Element.tag.
 
         Main entry point for type conversion from ElementTree to Aggregate;
-        invoked by Response.OFXResponse which is in turn invoked by
+        invoked by Parser.OFXResponse which is in turn invoked by
         Parser.OFXTree.convert()
         """
         SubClass = globals()[elem.tag]
