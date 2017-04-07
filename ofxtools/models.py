@@ -46,6 +46,10 @@ class Aggregate(object):
     be maintained (e.g. lists or subaggregates).  In general, we need to call
     Aggregate.from_etree() as a constructor to do pre- and post-processing.
     """
+    # Sequence of subaggregates to strip before _flatten()ing and staple
+    # on afterward intact
+    _subaggregates = ()
+
     def __init__(self, **kwargs):
         # Set instance attributes for all input kwargs that are defined by
         # the class
@@ -129,8 +133,8 @@ class Aggregate(object):
                     elem.tag, mutex[0], mutex[1])
                 raise ValueError(msg)
 
-    @staticmethod
-    def _preflatten(elem):
+    @classmethod
+    def _preflatten(cls, elem):
         """
         Strip any elements that will blow up _flatten(), and store them for
         postprocessing as stapled-on subaggregates.
@@ -143,7 +147,15 @@ class Aggregate(object):
 
         Extend in subclass.
         """
-        return {}
+        subaggs = {}
+
+        for tag in cls._subaggregates:
+            subagg = elem.find(tag)
+            if subagg is not None:
+                elem.remove(subagg)
+                subaggs[tag] = subagg
+
+        return subaggs
 
     @classmethod
     def _flatten(cls, element):
@@ -200,41 +212,6 @@ class Aggregate(object):
                  for attr in self.elements
                  if getattr(self, attr) is not None]
         return '<%s %s>' % (self.__class__.__name__, ' '.join(attrs))
-
-
-class List(Aggregate, UserList):
-    """
-    Base class for OFX *LIST
-    """
-    def __init__(self, **kwargs):
-        UserList.__init__(self)
-        Aggregate.__init__(self, **kwargs)
-
-    def __hash__(self):
-        """
-        HACK - as a subclass of UserList, List is unhashable, but we need to
-        use it as a dict key in Type.Element.{__get__, __set__}
-        """
-        return object.__hash__(self)
-
-    @classmethod
-    def _preflatten(cls, elem):
-        """
-        UserList is a wrapper around a standard list, accessible through its
-        'data' attribute.  If we create a synthetic subaggregate
-        named 'data', whose value is a list of Etree.Elements, then
-        Aggregate._postflatten() will set List.data to a list of converted
-        Aggregates, and the Userlist interface will work normally.
-        """
-        subaggs = super(List, cls)._preflatten(elem)
-
-        lst = []
-        for tran in elem[:]:
-            lst.append(tran)
-            elem.remove(tran)
-        subaggs['data'] = lst
-
-        return subaggs
 
 
 class FI(Aggregate):
@@ -359,23 +336,25 @@ class INVBAL(Aggregate):
     shortbalance = Decimal(required=True)
     buypower = Decimal()
 
-    @classmethod
-    def _preflatten(cls, elem):
-        """
-        Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up _flatten()
-        """
-        subaggs = super(INVBAL, cls)._preflatten(elem)
+    _subaggregates = ('BALLIST',)
 
-        # Do all XPath searches before removing nodes from the tree
-        #   which seems to mess up the DOM in Python3 and throw an
-        #   AttributeError on subsequent searches.
-        ballist = elem.find('./BALLIST')
+    #@classmethod
+    #def _preflatten(cls, elem):
+        #"""
+        #Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up _flatten()
+        #"""
+        #subaggs = super(INVBAL, cls)._preflatten(elem)
 
-        if ballist is not None:
-            subaggs['BALLIST'] = ballist
-            elem.remove(ballist)
+        ## Do all XPath searches before removing nodes from the tree
+        ##   which seems to mess up the DOM in Python3 and throw an
+        ##   AttributeError on subsequent searches.
+        #ballist = elem.find('./BALLIST')
 
-        return subaggs
+        #if ballist is not None:
+            #subaggs['BALLIST'] = ballist
+            #elem.remove(ballist)
+
+        #return subaggs
 
 
 class BAL(CURRENCY):
@@ -437,6 +416,8 @@ class MFINFO(SECINFO):
     mfassetclass = []
     fimfassetclass = []
 
+    _subaggregates = ('MFASSETCLASS', 'FIMFASSETCLASS')
+
     @staticmethod
     def _groom(elem):
         """
@@ -448,27 +429,27 @@ class MFINFO(SECINFO):
         if yld is not None:
             yld.tag = 'YLD'
 
-    @classmethod
-    def _preflatten(cls, elem):
-        """
-        Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up _flatten()
-        """
-        subaggs = super(MFINFO, cls)._preflatten(elem)
+    #@classmethod
+    #def _preflatten(cls, elem):
+        #"""
+        #Strip MFASSETCLASS/FIMFASSETCLASS - lists that will blow up _flatten()
+        #"""
+        #subaggs = super(MFINFO, cls)._preflatten(elem)
 
-        # Do all XPath searches before removing nodes from the tree
-        #   which seems to mess up the DOM in Python3 and throw an
-        #   AttributeError on subsequent searches.
-        mfassetclass = elem.find('./MFASSETCLASS')
-        fimfassetclass = elem.find('./FIMFASSETCLASS')
+        ## Do all XPath searches before removing nodes from the tree
+        ##   which seems to mess up the DOM in Python3 and throw an
+        ##   AttributeError on subsequent searches.
+        #mfassetclass = elem.find('./MFASSETCLASS')
+        #fimfassetclass = elem.find('./FIMFASSETCLASS')
 
-        if mfassetclass is not None:
-            subaggs['MFASSETCLASS'] = mfassetclass
-            elem.remove(mfassetclass)
-        if fimfassetclass is not None:
-            subaggs['FIMFASSETCLASS'] = fimfassetclass
-            elem.remove(fimfassetclass)
+        #if mfassetclass is not None:
+            #subaggs['MFASSETCLASS'] = mfassetclass
+            #elem.remove(mfassetclass)
+        #if fimfassetclass is not None:
+            #subaggs['FIMFASSETCLASS'] = fimfassetclass
+            #elem.remove(fimfassetclass)
 
-        return subaggs
+        #return subaggs
 
 
 class PORTION(Aggregate):
@@ -492,23 +473,25 @@ class OPTINFO(SECINFO):
     assetclass = OneOf(*ASSETCLASSES)
     fiassetclass = String(32)
 
-    @classmethod
-    def _preflatten(cls, elem):
-        """
-        Strip SECID of underlying so it doesn't overwrite SECID of option
-        during _flatten()
-        """
-        # Do all XPath searches before removing nodes from the tree
-        #   which seems to mess up the DOM in Python3 and throw an
-        #   AttributeError on subsequent searches.
-        subaggs = super(OPTINFO, cls)._preflatten(elem)
+    _subaggregates = ('SECID',)
 
-        secid = elem.find('./SECID')
-        if secid is not None:
-            subaggs['SECID'] = secid
-            elem.remove(secid)
+    #@classmethod
+    #def _preflatten(cls, elem):
+        #"""
+        #Strip SECID of underlying so it doesn't overwrite SECID of option
+        #during _flatten()
+        #"""
+        ## Do all XPath searches before removing nodes from the tree
+        ##   which seems to mess up the DOM in Python3 and throw an
+        ##   AttributeError on subsequent searches.
+        #subaggs = super(OPTINFO, cls)._preflatten(elem)
 
-        return subaggs
+        #secid = elem.find('./SECID')
+        #if secid is not None:
+            #subaggs['SECID'] = secid
+            #elem.remove(secid)
+
+        #return subaggs
 
 
 class OTHERINFO(SECINFO):
@@ -584,6 +567,8 @@ class STMTTRN(TRAN, ORIGCURRENCY):
     bankacctto = None
     ccacctto = None
 
+    _subaggregates = ("CCACCTTO", "BANKACCTTO", "PAYEE")
+
     @staticmethod
     def _verify(elem):
         """
@@ -596,18 +581,18 @@ class STMTTRN(TRAN, ORIGCURRENCY):
         mutexes = [("CCACCTTO", "BANKACCTTO"), ("NAME", "PAYEE")]
         STMTTRN._mutex(elem, mutexes)
 
-    @classmethod
-    def _preflatten(cls, elem):
-        """ Handle CCACCTO/BANKACCTTO/PAYEE as 'sub-aggregates' """
-        subaggs = super(STMTTRN, cls)._preflatten(elem)
+    #@classmethod
+    #def _preflatten(cls, elem):
+        #""" Handle CCACCTO/BANKACCTTO/PAYEE as 'sub-aggregates' """
+        #subaggs = super(STMTTRN, cls)._preflatten(elem)
 
-        for tag in ["CCACCTTO", "BANKACCTTO", "PAYEE"]:
-            subagg = elem.find(tag)
-            if subagg is not None:
-                elem.remove(subagg)
-                subaggs[tag] = subagg
+        #for tag in ["CCACCTTO", "BANKACCTTO", "PAYEE"]:
+            #subagg = elem.find(tag)
+            #if subagg is not None:
+                #elem.remove(subagg)
+                #subaggs[tag] = subagg
 
-        return subaggs
+        #return subaggs
 
 
 class INVBANKTRAN(STMTTRN):
@@ -863,6 +848,41 @@ class POSSTOCK(INVPOS):
 
 
 # Lists
+class List(Aggregate, UserList):
+    """
+    Base class for OFX *LIST
+    """
+    def __init__(self, **kwargs):
+        UserList.__init__(self)
+        Aggregate.__init__(self, **kwargs)
+
+    def __hash__(self):
+        """
+        HACK - as a subclass of UserList, List is unhashable, but we need to
+        use it as a dict key in Type.Element.{__get__, __set__}
+        """
+        return object.__hash__(self)
+
+    @classmethod
+    def _preflatten(cls, elem):
+        """
+        UserList is a wrapper around a standard list, accessible through its
+        'data' attribute.  If we create a synthetic subaggregate
+        named 'data', whose value is a list of Etree.Elements, then
+        Aggregate._postflatten() will set List.data to a list of converted
+        Aggregates, and the Userlist interface will work normally.
+        """
+        subaggs = super(List, cls)._preflatten(elem)
+
+        lst = []
+        for tran in elem[:]:
+            lst.append(tran)
+            elem.remove(tran)
+        subaggs['data'] = lst
+
+        return subaggs
+
+
 class BANKTRANLIST(List):
     """ OFX section 11.4.2.2 """
     dtstart = DateTime(required=True)
@@ -915,22 +935,26 @@ class INVPOSLIST(List):
 
 
 # Statements
-class STMTTRNRS(Aggregate):
-    """ OFX section 11.4.2.2 """
+class TRNRS(Aggregate):
+    """ Base class for *TRNRS (not in OFX spec) """
     trnuid = String(36, required=True)
     curdef = OneOf(*CURRENCY_CODES, required=True)
 
-    _rsTag = 'STMTRS'
-    _acctTag = 'BANKACCTFROM'
-    _tranList = 'BANKTRANLIST'
-    _unsupported = ('BANKTRANLISTP', 'CASHADVBALAMT', 'INTRATE', 'MKTGINFO')
+    _subaggregates = ()
+
+    _rsTag = None
+    _acctTag = None
+    _tranList = None
+    _unsupported = ()
 
     @classmethod
     def _preflatten(cls, elem):
-        """
-        """
-        subaggs = super(STMTTRNRS, cls)._preflatten(elem)
-
+        """ """
+        # Don't call super() - start with a clean sheet
+        # For statements we want to interpret cls._subaggregates
+        # differently than Aggregate._preflatten()
+        subaggs = {}
+                               
         status = elem.find('STATUS')
         subaggs['STATUS'] = status
         elem.remove(status)
@@ -946,20 +970,13 @@ class STMTTRNRS(Aggregate):
             subaggs[cls._tranList] = tranlist
             stmtrs.remove(tranlist)
 
-        ledgerbal = stmtrs.find('LEDGERBAL')
-        if ledgerbal is not None:
-            subaggs['LEDGERBAL'] = ledgerbal
-            stmtrs.remove(ledgerbal)
-
-        availbal = stmtrs.find('AVAILBAL')
-        if availbal is not None:
-            subaggs['AVAILBAL'] = availbal
-            stmtrs.remove(availbal)
-
-        ballist = stmtrs.find('BALLIST')
-        if ballist is not None:
-            subaggs['BALLIST'] = ballist
-            stmtrs.remove(ballist)
+        # N.B. as opposed to Aggregate._preflatten(), TRNRS._preflatten()
+        # searches for _subaggregates in the *RS child, not the *TRNRS itself.
+        for tag in cls._subaggregates:
+            subagg = stmtrs.find(tag)
+            if subagg is not None:
+                stmtrs.remove(subagg)
+                subaggs[tag] = subagg
 
         # Unsupported subaggregates
         for tag in cls._unsupported:
@@ -985,47 +1002,34 @@ class STMTTRNRS(Aggregate):
         return attr
 
 
+class STMTTRNRS(TRNRS):
+    """ OFX section 11.4.2.2 """
+    _subaggregates = ('LEDGERBAL', 'AVAILBAL', 'BALLIST')
+
+    _rsTag = 'STMTRS'
+    _acctTag = 'BANKACCTFROM'
+    _tranList = 'BANKTRANLIST'
+    _unsupported = ('BANKTRANLISTP', 'CASHADVBALAMT', 'INTRATE', 'MKTGINFO')
+
+
 class CCSTMTTRNRS(STMTTRNRS):
     """ OFX section 11.4.3.2 """
-    trnuid = String(36, required=True)
-    curdef = OneOf(*CURRENCY_CODES, required=True)
-
     _rsTag = 'CCSTMTRS'
     _acctTag = 'CCACCTFROM'
     _unsupported = ('BANKTRANLISTP', 'CASHADVBALAMT', 'INTRATEPURCH',
                     'INTRATECASH', 'INTRATEXFER', 'REWARDINFO', 'MKTGINFO')
 
 
-class INVSTMTTRNRS(STMTTRNRS):
+class INVSTMTTRNRS(TRNRS):
     """ OFX section 13.9.2.1 """
-    trnuid = String(36, required=True)
     dtasof = DateTime(required=True)
-    curdef = OneOf(*CURRENCY_CODES, required=True)
+
+    _subaggregates = ('INVPOSLIST', 'INVBAL')
 
     _rsTag = 'INVSTMTRS'
     _acctTag = 'INVACCTFROM'
     _tranList = 'INVTRANLIST'
     _unsupported = ('INVOOLIST', 'MKTGINFO', 'INV401K', 'INV401KBAL')
-
-    @classmethod
-    def _preflatten(cls, elem):
-        """
-        """
-        subaggs = super(INVSTMTTRNRS, cls)._preflatten(elem)
-
-        invstmtrs = elem.find(cls._rsTag)
-
-        invposlist = invstmtrs.find('INVPOSLIST')
-        if invposlist is not None:
-            subaggs['INVPOSLIST'] = invposlist
-            invstmtrs.remove(invposlist)
-
-        invbal = invstmtrs.find('INVBAL')
-        if invbal is not None:
-            subaggs['INVBAL'] = invbal
-            invstmtrs.remove(invbal)
-
-        return subaggs
 
     # Human-friendly attribute aliases
     @property
