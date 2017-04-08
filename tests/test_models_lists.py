@@ -12,11 +12,15 @@ from xml.etree.ElementTree import (
 
 # local imports
 from . import common
+from . import test_models_base
 from . import test_models_banktransactions
+from . import test_models_securities
 from ofxtools.models import (
     Aggregate,
     STMTTRN,
-    BANKTRANLIST, BALLIST,
+    BANKTRANLIST, SECLIST, BALLIST,
+    DEBTINFO, MFINFO, OPTINFO, OTHERINFO, STOCKINFO,
+    BAL,
 )
 
 
@@ -75,6 +79,62 @@ class InvtranlistTestCase(unittest.TestCase, common.TestAggregate):
         # self.assertEqual(len(root), 2)
         # for i in range(2):
             # self.assertIsInstance(root[i], INVTRAN)
+
+
+class SeclistTestCase(unittest.TestCase, common.TestAggregate):
+    """ """
+    __test__ = True
+    optionalElements = ()  # FIXME - how to handle SECINFO subclasses?
+
+    @property
+    def root(self):
+        root = Element('SECLIST')
+        secinfo = test_models_securities.DebtinfoTestCase().root
+        root.append(secinfo)
+        secinfo = test_models_securities.MfinfoTestCase().root
+        root.append(secinfo)
+        secinfo = test_models_securities.OptinfoTestCase().root
+        root.append(secinfo)
+        secinfo = test_models_securities.OtherinfoTestCase().root
+        root.append(secinfo)
+        secinfo = test_models_securities.StockinfoTestCase().root
+        root.append(secinfo)
+        return root
+
+    def testConvert(self):
+        # Test *TRANLIST wrapper.  STMTTRN is tested elsewhere.
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, SECLIST)
+        self.assertEqual(len(root), 5)
+        self.assertIsInstance(root[0], DEBTINFO)
+        self.assertIsInstance(root[1], MFINFO)
+        self.assertIsInstance(root[2], OPTINFO)
+        self.assertIsInstance(root[3], OTHERINFO)
+        self.assertIsInstance(root[4], STOCKINFO)
+
+
+class BallistTestCase(unittest.TestCase, common.TestAggregate):
+    """ """
+    __test__ = True
+    optionalElements = ()  # FIXME - how to handle multiple BALs?
+
+    @property
+    def root(self):
+        root = Element('BALLIST')
+        bal1 = test_models_base.BalTestCase().root
+        bal2 = test_models_base.BalTestCase().root
+        root.append(bal1)
+        root.append(bal2)
+
+        return root
+
+    def testConvert(self):
+        # Test *TRANLIST wrapper.  STMTTRN is tested elsewhere.
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, BALLIST)
+        self.assertEqual(len(root), 2)
+        self.assertIsInstance(root[0], BAL)
+        self.assertIsInstance(root[1], BAL)
 
 
 if __name__ == '__main__':

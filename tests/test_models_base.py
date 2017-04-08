@@ -19,7 +19,9 @@ from ofxtools.models import (
     STATUS,
     SONRS,
     CURRENCY,
+    BAL,
     SECID,
+    ACCTTYPES,
 )
 from ofxtools.lib import LANG_CODES, CURRENCY_CODES
 
@@ -180,6 +182,41 @@ class OrigcurrencyTestCase(CurrencyTestCase):
         self.assertIsInstance(root, CURRENCY)
         self.assertEqual(root.currate, Decimal('59.773'))
         self.assertEqual(root.cursym, 'EUR')
+
+
+class BalTestCase(unittest.TestCase, common.TestAggregate):
+    # <BAL> aggregates are mostly optional, so its elements
+    # (which are mandatory per the OFX spec) aren't marked as required.
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element('BAL')
+        SubElement(root, 'NAME').text = 'balance'
+        SubElement(root, 'DESC').text = 'Balance'
+        SubElement(root, 'BALTYPE').text = 'DOLLAR'
+        SubElement(root, 'VALUE').text = '111.22'
+        SubElement(root, 'DTASOF').text = '20010630'
+        currency = CurrencyTestCase().root
+        root.append(currency)
+        return root
+
+    def testConvert(self):
+        # Make sure Aggregate.from_etree() calls Element.convert() and sets
+        # Aggregate instance attributes with the result
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, BAL)
+        self.assertEqual(root.name, 'balance')
+        self.assertEqual(root.desc, 'Balance')
+        self.assertEqual(root.baltype, 'DOLLAR')
+        self.assertEqual(root.value, Decimal('111.22'))
+        self.assertEqual(root.dtasof, datetime(2001, 6, 30))
+        self.assertEqual(root.currate, Decimal('59.773'))
+        self.assertEqual(root.cursym, 'EUR')
+
+    def testOneOf(self):
+        self.oneOfTest('BALTYPE', ('DOLLAR', 'PERCENT', 'NUMBER'))
+        self.oneOfTest('CURSYM', CURRENCY_CODES)
 
 
 class SecidTestCase(unittest.TestCase, common.TestAggregate):
