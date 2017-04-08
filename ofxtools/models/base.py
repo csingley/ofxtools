@@ -84,7 +84,11 @@ class Aggregate(object):
         invoked by Parser.OFXResponse which is in turn invoked by
         Parser.OFXTree.convert()
         """
-        SubClass = getattr(ofxtools.models, elem.tag)
+        try:
+            SubClass = getattr(ofxtools.models, elem.tag)
+        except AttributeError:
+            msg = "ofxtools.models doesn't define {}".format(elem.tag)
+            raise ValueError(msg)
         SubClass._verify(elem)
         SubClass._groom(elem)
         subaggs = SubClass._preflatten(elem)
