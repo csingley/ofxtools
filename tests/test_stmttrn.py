@@ -4,97 +4,27 @@
 import unittest
 from datetime import datetime
 from decimal import Decimal
-import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import (
     Element,
     SubElement,
 )
-from copy import deepcopy
 
 
 # local imports
-import ofxtools
+from . import common
 from ofxtools.models import (
     Aggregate,
-    SONRS,
-    CURRENCY,
-    BANKACCTFROM,
-    CCACCTFROM,
-    INVACCTFROM,
-    LEDGERBAL,
-    AVAILBAL,
-    INVBAL,
-    BAL,
-    DEBTINFO,
-    MFINFO,
-    OPTINFO,
-    OTHERINFO,
-    STOCKINFO,
-    PORTION,
-    FIPORTION,
-    STMTTRN,
+    STMTTRNRS, STMTTRN,
+    STATUS,
     PAYEE,
-    BANKACCTTO,
-    CCACCTTO,
+    BANKACCTFROM, BANKACCTTO, CCACCTTO,
+    BANKTRANLIST, BALLIST,
+    LEDGERBAL, AVAILBAL,
+
 )
 
-class TestAggregate(object):
-    """ """
-    __test__ = False
-    requiredElements = ()
-    optionalElements = ()
 
-    @property
-    def root(self):
-        """Define in subclass"""
-        raise NotImplementedError
-
-    def testRequired(self):
-        if self.requiredElements:
-            for tag in self.requiredElements:
-                root = deepcopy(self.root)
-                parent = root.find('.//%s/..' % tag)
-                if parent is None:
-                    raise ValueError("Can't find parent of %s" % tag)
-                required = parent.find('./%s' % tag)
-                parent.remove(required)
-                with self.assertRaises(ValueError):
-                    Aggregate.from_etree(root)
-
-    def testOptional(self):
-        if self.optionalElements:
-            for tag in self.optionalElements:
-                root = deepcopy(self.root)
-                parent = root.find('.//%s/..' % tag)
-                if parent is None:
-                    raise ValueError("Can't find parent of %s" % tag)
-                optional = parent.find('./%s' % tag)
-                parent.remove(optional)
-                Aggregate.from_etree(root)
-
-    def testExtraElement(self):
-        root = deepcopy(self.root)
-        SubElement(root, 'FAKEELEMENT').text = 'garbage'
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
-
-    def oneOfTest(self, tag, texts):
-        # Make sure OneOf validator allows all legal values and disallows
-        # illegal values
-        for text in texts:
-            root = deepcopy(self.root)
-            target = root.find('.//%s' % tag)
-            target.text = text
-            Aggregate.from_etree(root)
-
-        root = deepcopy(self.root)
-        target = root.find('.//%s' % tag)
-        target.text = 'garbage'
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
-
-
-class StmttrnTestCase(unittest.TestCase, TestAggregate):
+class StmttrnTestCase(unittest.TestCase, common.TestAggregate):
     """ STMTTRN with CURRENCY """
     __test__ = True
     requiredElements = ('DTPOSTED', 'TRNAMT', 'FITID', 'TRNTYPE',)
@@ -187,12 +117,13 @@ class StmttrnOrigcurrencyTestCase(StmttrnTestCase):
 
 class StmttrnPayeeTestCase(StmttrnTestCase):
     """ STMTTRN with PAYEE """
-    requiredElements = ('DTPOSTED', 'TRNAMT', 'FITID', 'TRNTYPE', 'NAME', 
+    requiredElements = ('DTPOSTED', 'TRNAMT', 'FITID', 'TRNTYPE', 'NAME',
                         'ADDR1', 'CITY', 'STATE', 'POSTALCODE', 'PHONE',)
     optionalElements = ('DTUSER', 'DTAVAIL', 'CORRECTFITID', 'CORRECTACTION',
                         'SRVRTID', 'CHECKNUM', 'REFNUM', 'SIC', 'PAYEEID',
                         'MEMO', 'INV401KSOURCE', 'CURSYM', 'CURRATE', 'ADDR2',
                         'ADDR3', 'COUNTRY',)
+
     @property
     def root(self):
         root = super(self.__class__, self).root
@@ -343,6 +274,7 @@ class StmttrnCcaccttoTestCase(StmttrnTestCase):
 
 class StmttrnBankaccttoCcaccttoTestCase(StmttrnTestCase):
     """ STMTTRN with both BANKACCTTO and CCACCTTO - not allowed per OFX spec """
+    # required/optional have already been tested in parent; skip here
     requiredElements = ()
     optionalElements = ()
 
@@ -370,6 +302,7 @@ class StmttrnBankaccttoCcaccttoTestCase(StmttrnTestCase):
 
 class StmttrnNamePayeeTestCase(StmttrnTestCase):
     """ STMTTRN with both NAME and PAYEE - not allowed per OFX spec """
+    # required/optional have already been tested in parent; skip here
     requiredElements = ()
     optionalElements = ()
 
@@ -399,6 +332,7 @@ class StmttrnCurrencyOrigCurrencyTestCase(StmttrnTestCase):
     """
     STMTTRN with both CURRENCY and ORIGCURRENCY - not allowed per OFX spec
     """
+    # required/optional have already been tested in parent; skip here
     requiredElements = ()
     optionalElements = ()
 
@@ -417,5 +351,84 @@ class StmttrnCurrencyOrigCurrencyTestCase(StmttrnTestCase):
             Aggregate.from_etree(self.root)
 
 
-if __name__=='__main__':
+class StmttrnrsTestCase(StmttrnTestCase):
+    """
+    """
+    requiredElements = ('TRNUID', 'CODE', 'SEVERITY', 'CURDEF',
+                        'BANKACCTFROM', 'LEDGERBAL',)
+    optionalElements = ('BANKTRANLIST', 'AVAILBAL', 'CASHADVBALAMT', 'INTRATE',
+                        'BALLIST', 'MKTGINFO',)
+
+    @property
+    def root(self):
+        root = Element('STMTTRNRS')
+        SubElement(root, 'TRNUID').text = '1001'
+        status = SubElement(root, 'STATUS')
+        SubElement(status, 'CODE').text = '0'
+        SubElement(status, 'SEVERITY').text = 'INFO'
+        stmtrs = SubElement(root, 'STMTRS')
+        SubElement(stmtrs, 'CURDEF').text = 'USD'
+        acctfrom = SubElement(stmtrs, 'BANKACCTFROM')
+        SubElement(acctfrom, 'BANKID').text = '111000614'
+        SubElement(acctfrom, 'ACCTID').text = '3456789012'
+        SubElement(acctfrom, 'ACCTTYPE').text = 'SAVINGS'
+        tranlist = SubElement(stmtrs, 'BANKTRANLIST')
+        SubElement(tranlist, 'DTSTART').text = '20010601'
+        SubElement(tranlist, 'DTEND').text = '20010630'
+        stmttrn = super(self.__class__, self).root
+        tranlist.append(stmttrn)
+        ledgerbal = SubElement(stmtrs, 'LEDGERBAL')
+        SubElement(ledgerbal, 'BALAMT').text = '2350.51'
+        SubElement(ledgerbal, 'DTASOF').text = '20010630'
+        availbal = SubElement(stmtrs, 'AVAILBAL')
+        SubElement(availbal, 'BALAMT').text = '13100.00'
+        SubElement(availbal, 'DTASOF').text = '20010630'
+        SubElement(stmtrs, 'CASHADVBALAMT').text = '10000.00'
+        SubElement(stmtrs, 'INTRATE').text = '20.99'
+        ballist = SubElement(stmtrs, 'BALLIST')
+        bal1 = SubElement(ballist, 'BAL')
+        SubElement(bal1, 'NAME').text = 'BAL1'
+        SubElement(bal1, 'DESC').text = 'Balance 1'
+        SubElement(bal1, 'BALTYPE').text = 'DOLLAR'
+        SubElement(bal1, 'VALUE').text = '111.22'
+        SubElement(bal1, 'DTASOF').text = '20010630'
+        currency = SubElement(bal1, 'CURRENCY')
+        SubElement(currency, 'CURRATE').text = '1.0'
+        SubElement(currency, 'CURSYM').text = 'USD'
+        bal2 = SubElement(ballist, 'BAL')
+        SubElement(bal2, 'NAME').text = 'BAL2'
+        SubElement(bal2, 'DESC').text = 'Balance 2'
+        SubElement(bal2, 'BALTYPE').text = 'PERCENT'
+        SubElement(bal2, 'VALUE').text = '1.39'
+        SubElement(bal2, 'DTASOF').text = '20010630'
+        currency = SubElement(bal2, 'CURRENCY')
+        SubElement(currency, 'CURRATE').text = '8.00'
+        SubElement(currency, 'CURSYM').text = 'CNY'
+        SubElement(stmtrs, 'MKTGINFO').text = 'Get Free Stuff NOW!!'
+
+        return root
+
+    def testConvert(self):
+        # Test *TRNRS wrapper and **RS Aggregate.
+        # Everything below that is tested elsewhere.
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, STMTTRNRS)
+        self.assertEqual(root.trnuid, '1001')
+        self.assertIsInstance(root.status, STATUS)
+        self.assertEqual(root.curdef, 'USD')
+        self.assertIsInstance(root.bankacctfrom, BANKACCTFROM)
+        self.assertIsInstance(root.banktranlist, BANKTRANLIST)
+        self.assertEqual(len(root.banktranlist), 1)
+        self.assertIsInstance(root.ledgerbal, LEDGERBAL)
+        self.assertIsInstance(root.availbal, AVAILBAL)
+        self.assertIsInstance(root.ballist, BALLIST)
+        self.assertEqual(len(root.ballist), 2)
+
+        # Unsupported
+        for tag in STMTTRNRS._unsupported:
+            self.assertIsNone(getattr(root, tag, None))
+
+
+
+if __name__ == '__main__':
     unittest.main()

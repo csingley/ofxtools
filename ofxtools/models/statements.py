@@ -40,6 +40,9 @@ class TRNRS(Aggregate):
         stmtrs = elem.find(cls._rsTag)
 
         acctfrom = stmtrs.find(cls._acctTag)
+        if acctfrom is None:
+            msg = "Can't find {}".format(cls._acctTag)
+            raise ValueError(msg)
         subaggs[cls._acctTag] = acctfrom
         stmtrs.remove(acctfrom)
 
@@ -80,22 +83,34 @@ class TRNRS(Aggregate):
         return attr
 
 
-class STMTTRNRS(TRNRS):
-    """ OFX section 11.4.2.2 """
+class CCSTMTTRNRS(TRNRS):
+    """ OFX section 11.4.3.2 """
     _subaggregates = ('LEDGERBAL', 'AVAILBAL', 'BALLIST')
 
+    _rsTag = 'CCSTMTRS'
+    _acctTag = 'CCACCTFROM'
+    _unsupported = ('BANKTRANLISTP', 'CASHADVBALAMT', 'INTRATEPURCH',
+                    'INTRATECASH', 'INTRATEXFER', 'REWARDINFO', 'MKTGINFO')
+
+
+class STMTTRNRS(CCSTMTTRNRS):
+    """ OFX section 11.4.2.2 """
     _rsTag = 'STMTRS'
     _acctTag = 'BANKACCTFROM'
     _tranList = 'BANKTRANLIST'
     _unsupported = ('BANKTRANLISTP', 'CASHADVBALAMT', 'INTRATE', 'MKTGINFO')
 
+    @classmethod
+    def _preflatten(cls, elem):
+        """
+        LEDGERBAL is a required subaggregate for STMTTRNRS
+        """
+        subaggs = super(STMTTRNRS, cls)._preflatten(elem)
+        if 'LEDGERBAL' not in subaggs:
+            msg = "Can't find {}".format('LEDGERBAL')
+            raise ValueError(msg)
 
-class CCSTMTTRNRS(STMTTRNRS):
-    """ OFX section 11.4.3.2 """
-    _rsTag = 'CCSTMTRS'
-    _acctTag = 'CCACCTFROM'
-    _unsupported = ('BANKTRANLISTP', 'CASHADVBALAMT', 'INTRATEPURCH',
-                    'INTRATECASH', 'INTRATEXFER', 'REWARDINFO', 'MKTGINFO')
+        return subaggs
 
 
 class INVSTMTTRNRS(TRNRS):
