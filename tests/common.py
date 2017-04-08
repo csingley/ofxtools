@@ -48,6 +48,7 @@ class TestAggregate(object):
         root = deepcopy(self.root)
         SubElement(root, 'FAKEELEMENT').text = 'garbage'
         with self.assertRaises(ValueError):
+        # with self.assertRaises(AttributeError):
             Aggregate.from_etree(root)
 
     def oneOfTest(self, tag, texts):

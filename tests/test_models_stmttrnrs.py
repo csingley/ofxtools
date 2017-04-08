@@ -20,7 +20,6 @@ from ofxtools.models import (
     BANKACCTFROM, BANKACCTTO, CCACCTTO,
     BANKTRANLIST, BALLIST,
     LEDGERBAL, AVAILBAL,
-
 )
 
 
@@ -428,6 +427,11 @@ class StmttrnrsTestCase(StmttrnTestCase):
         for tag in STMTTRNRS._unsupported:
             self.assertIsNone(getattr(root, tag, None))
 
+    def testPropertyAliases(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIs(root.currency, root.curdef)
+        self.assertIs(root.account, root.bankacctfrom)
+        self.assertIs(root.transactions, root.banktranlist)
 
 
 if __name__ == '__main__':
