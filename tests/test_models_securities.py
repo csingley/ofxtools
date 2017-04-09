@@ -14,14 +14,10 @@ from xml.etree.ElementTree import (
 from . import common
 from ofxtools.models import (
     Aggregate,
-    DEBTINFO,
-    MFINFO,
-    OPTINFO,
-    OTHERINFO,
-    STOCKINFO,
-    PORTION,
-    FIPORTION,
+    DEBTINFO, MFINFO, OPTINFO, OTHERINFO, STOCKINFO,
+    PORTION, FIPORTION,
 )
+from ofxtools.models.securities import ASSETCLASSES
 from ofxtools.lib import CURRENCY_CODES
 
 
@@ -368,6 +364,45 @@ class StockinfoTestCase(unittest.TestCase, common.TestAggregate):
         self.assertEqual(root.dtyieldasof, datetime(2003, 5, 1))
         self.assertEqual(root.assetclass, 'SMALLSTOCK')
         self.assertEqual(root.fiassetclass, 'FOO')
+
+
+class PortionTestCase(unittest.TestCase, common.TestAggregate):
+    __test__ = True
+    requiredElements = ('ASSETCLASS', 'PERCENT')
+
+    @property
+    def root(self):
+        root = Element('PORTION')
+        SubElement(root, 'ASSETCLASS').text = 'INTLBOND'
+        SubElement(root, 'PERCENT').text = '35'
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, PORTION)
+        self.assertEqual(root.assetclass, 'INTLBOND')
+        self.assertEqual(root.percent, Decimal('35'))
+
+    def testOneOf(self):
+        self.oneOfTest('ASSETCLASS', ASSETCLASSES)
+
+
+class FiportionTestCase(unittest.TestCase, common.TestAggregate):
+    __test__ = True
+    requiredElements = ('FIASSETCLASS', 'PERCENT')
+
+    @property
+    def root(self):
+        root = Element('FIPORTION')
+        SubElement(root, 'FIASSETCLASS').text = 'PRIVATE REIT'
+        SubElement(root, 'PERCENT').text = '100'
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, FIPORTION)
+        self.assertEqual(root.fiassetclass, 'PRIVATE REIT')
+        self.assertEqual(root.percent, Decimal('100'))
 
 
 if __name__ == '__main__':

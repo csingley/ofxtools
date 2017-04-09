@@ -20,24 +20,26 @@ from ofxtools.Types import (
 
 
 class INVPOS(SECID, CURRENCY):
-    """ """
+    """ OFX section 13.9.2.6.1 """
     heldinacct = OneOf(*INVSUBACCTS, required=True)
     postype = OneOf('SHORT', 'LONG', required=True)
     units = Decimal(required=True)
     unitprice = Decimal(4, required=True)
     mktval = Decimal(required=True)
+    avgcostbasis = Decimal()
     dtpriceasof = DateTime(required=True)
     memo = String(255)
     inv401ksource = OneOf(*INV401KSOURCES)
 
 
 class POSDEBT(INVPOS):
+    """ OFX section 13.9.2.6.1 """
     """ """
     pass
 
 
 class POSMF(INVPOS):
-    """ """
+    """ OFX section 13.9.2.6.1 """
     unitsstreet = Decimal()
     unitsuser = Decimal()
     reinvdiv = Bool()
@@ -45,17 +47,17 @@ class POSMF(INVPOS):
 
 
 class POSOPT(INVPOS):
-    """ """
+    """ OFX section 13.9.2.6.1 """
     secured = OneOf('NAKED', 'COVERED')
 
 
 class POSOTHER(INVPOS):
-    """ """
+    """ OFX section 13.9.2.6.1 """
     pass
 
 
 class POSSTOCK(INVPOS):
-    """ """
+    """ OFX section 13.9.2.6.1 """
     unitsstreet = Decimal()
     unitsuser = Decimal()
     reinvdiv = Bool()

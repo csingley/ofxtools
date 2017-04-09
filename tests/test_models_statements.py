@@ -130,6 +130,10 @@ class CctmttrnrsTestCase(StmttrnrsTestCase):
         SubElement(stmtrs, 'INTRATEPURCH').text = '20.99'
         SubElement(stmtrs, 'INTRATECASH').text = '25.99'
         SubElement(stmtrs, 'INTRATEXFER').text = '21.99'
+        rewardinfo = SubElement(stmtrs, 'REWARDINFO')
+        SubElement(rewardinfo, 'NAME').text = 'Cash Back'
+        SubElement(rewardinfo, 'REWARDBAL').text = '655'
+        SubElement(rewardinfo, 'rewardearched').text = '200'
         ballist = test_models_lists.BallistTestCase().root
         stmtrs.append(ballist)
         SubElement(stmtrs, 'MKTGINFO').text = 'Get Free Stuff NOW!!'

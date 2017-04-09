@@ -1,7 +1,5 @@
 # vim: set fileencoding=utf-8
 """
-Python object model for fundamental data aggregates such as transactions,
-balances, and securities.
 """
 # stdlib imports
 from collections import UserList

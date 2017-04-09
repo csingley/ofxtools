@@ -3,7 +3,6 @@
 # stdlib imports
 import unittest
 from datetime import datetime
-from decimal import Decimal
 from xml.etree.ElementTree import (
     Element,
     SubElement,
@@ -20,7 +19,7 @@ from ofxtools.models import (
     STMTTRN,
     BANKTRANLIST, SECLIST, BALLIST,
     DEBTINFO, MFINFO, OPTINFO, OTHERINFO, STOCKINFO,
-    BAL,
+    MFASSETCLASS, PORTION, BAL,
 )
 
 
@@ -135,6 +134,50 @@ class BallistTestCase(unittest.TestCase, common.TestAggregate):
         self.assertEqual(len(root), 2)
         self.assertIsInstance(root[0], BAL)
         self.assertIsInstance(root[1], BAL)
+
+
+class MfassetclassTestCase(unittest.TestCase, common.TestAggregate):
+    """ """
+    __test__ = True
+    # requiredElements = ('PORTION',)  # FIXME - how to handle multiple PORTIONs?
+
+    @property
+    def root(self):
+        root = Element('MFASSETCLASS')
+        for i in range(4):
+            portion = test_models_securities.PortionTestCase().root
+            root.append(portion)
+        return root
+
+    def testConvert(self):
+        # Test *TRANLIST wrapper.  STMTTRN is tested elsewhere.
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, MFASSETCLASS)
+        self.assertEqual(len(root), 4)
+        for i in range(4):
+            self.assertIsInstance(root[i], PORTION)
+
+
+class FimfassetclassTestCase(unittest.TestCase, common.TestAggregate):
+    """ """
+    __test__ = True
+    # requiredElements = ('FIPORTION',)  # FIXME - how to handle multiple FIPORTIONs?
+
+    @property
+    def root(self):
+        root = Element('MFASSETCLASS')
+        for i in range(4):
+            portion = test_models_securities.PortionTestCase().root
+            root.append(portion)
+        return root
+
+    def testConvert(self):
+        # Test *TRANLIST wrapper.  STMTTRN is tested elsewhere.
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, MFASSETCLASS)
+        self.assertEqual(len(root), 4)
+        for i in range(4):
+            self.assertIsInstance(root[i], PORTION)
 
 
 if __name__ == '__main__':
