@@ -14,11 +14,14 @@ from . import common
 from . import test_models_base
 from . import test_models_banktransactions
 from . import test_models_securities
+from . import test_models_positions
+
 from ofxtools.models import (
     Aggregate,
     STMTTRN,
-    BANKTRANLIST, SECLIST, BALLIST,
+    BANKTRANLIST, SECLIST, BALLIST, INVPOSLIST,
     DEBTINFO, MFINFO, OPTINFO, OTHERINFO, STOCKINFO,
+    POSDEBT, POSMF, POSOPT, POSOTHER, POSSTOCK,
     MFASSETCLASS, PORTION, BAL,
 )
 
@@ -178,6 +181,31 @@ class FimfassetclassTestCase(unittest.TestCase, common.TestAggregate):
         self.assertEqual(len(root), 4)
         for i in range(4):
             self.assertIsInstance(root[i], PORTION)
+
+
+class InvposlistTestCase(unittest.TestCase, common.TestAggregate):
+    """ """
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element('INVPOSLIST')
+        for invpos in ('Posdebt', 'Posmf', 'Posopt', 'Posother', 'Posstock'):
+            testCase = '{}TestCase'.format(invpos)
+            elem = getattr(test_models_positions, testCase)().root
+            root.append(elem)
+        return root
+
+    def testConvert(self):
+        # Test INVPOSLIST wrapper.  INVPOS members are tested elsewhere.
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, INVPOSLIST)
+        self.assertEqual(len(root), 5)
+        self.assertIsInstance(root[0], POSDEBT)
+        self.assertIsInstance(root[1], POSMF)
+        self.assertIsInstance(root[2], POSOPT)
+        self.assertIsInstance(root[3], POSOTHER)
+        self.assertIsInstance(root[4], POSSTOCK)
 
 
 if __name__ == '__main__':
