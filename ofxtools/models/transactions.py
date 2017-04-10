@@ -1,7 +1,6 @@
 # vim: set fileencoding=utf-8
 """
-Python object model for fundamental data aggregates such as transactions,
-balances, and securities.
+Python object model for transactions,
 """
 # local imports
 from ofxtools.models import (
@@ -16,29 +15,13 @@ from ofxtools.Types import (
     Integer,
     Decimal,
     DateTime,
-    NagString,
 )
-from ofxtools.lib import COUNTRY_CODES
 
 
 # Enums used in aggregate validation
 BUYTYPES = ('BUY', 'BUYTOCOVER')
 SELLTYPES = ('SELL', 'SELLSHORT')
 INCOMETYPES = ('CGLONG', 'CGSHORT', 'DIV', 'INTEREST', 'MISC')
-
-
-class PAYEE(Aggregate):
-    """ """
-    # name = String(32, required=True)
-    name = NagString(32, required=True)
-    addr1 = String(32, required=True)
-    addr2 = String(32)
-    addr3 = String(32)
-    city = String(32, required=True)
-    state = String(5, required=True)
-    postalcode = String(11, required=True)
-    country = OneOf(*COUNTRY_CODES)
-    phone = String(32, required=True)
 
 
 class TRAN(Aggregate):
@@ -64,6 +47,7 @@ class STMTTRN(TRAN, ORIGCURRENCY):
     sic = Integer()
     payeeid = String(12)
     name = String(32)
+    extdname = String(100)
     memo = String(255)
     inv401ksource = OneOf(*INV401KSOURCES)
 
@@ -87,7 +71,7 @@ class STMTTRN(TRAN, ORIGCURRENCY):
 
 
 class INVBANKTRAN(STMTTRN):
-    """ """
+    """ OFX section 13.9.2.3 """
     subacctfund = OneOf(*INVSUBACCTS, required=True)
 
 

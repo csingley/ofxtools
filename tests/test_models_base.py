@@ -20,8 +20,8 @@ from ofxtools.models import (
     SONRS,
     CURRENCY,
     BAL,
+    PAYEE,
     SECID,
-    ACCTTYPES,
 )
 from ofxtools.lib import LANG_CODES, CURRENCY_CODES
 
@@ -217,6 +217,42 @@ class BalTestCase(unittest.TestCase, common.TestAggregate):
     def testOneOf(self):
         self.oneOfTest('BALTYPE', ('DOLLAR', 'PERCENT', 'NUMBER'))
         self.oneOfTest('CURSYM', CURRENCY_CODES)
+
+
+class PayeeTestCase(unittest.TestCase, common.TestAggregate):
+    """ """
+    __test__ = True
+    requiredElements = ('NAME', 'ADDR1', 'CITY', 'STATE', 'POSTALCODE',
+                        'PHONE')
+    optionalElements = ('ADDR2', 'ADDR3', 'COUNTRY')
+
+    @property
+    def root(self):
+        root = Element('PAYEE')
+        SubElement(root, 'NAME').text = 'Wrigley Field'
+        SubElement(root, 'ADDR1').text = '3717 N Clark St'
+        SubElement(root, 'ADDR2').text = 'Dugout Box, Aisle 19'
+        SubElement(root, 'ADDR3').text = 'Seat A1'
+        SubElement(root, 'CITY').text = 'Chicago'
+        SubElement(root, 'STATE').text = 'IL'
+        SubElement(root, 'POSTALCODE').text = '60613'
+        SubElement(root, 'COUNTRY').text = 'USA'
+        SubElement(root, 'PHONE').text = '(773) 309-1027'
+
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, PAYEE)
+        self.assertEqual(root.name, 'Wrigley Field')
+        self.assertEqual(root.addr1, '3717 N Clark St')
+        self.assertEqual(root.addr2, 'Dugout Box, Aisle 19')
+        self.assertEqual(root.addr3, 'Seat A1')
+        self.assertEqual(root.city, 'Chicago')
+        self.assertEqual(root.state, 'IL')
+        self.assertEqual(root.postalcode, '60613')
+        self.assertEqual(root.country, 'USA')
+        self.assertEqual(root.phone, '(773) 309-1027')
 
 
 class SecidTestCase(unittest.TestCase, common.TestAggregate):

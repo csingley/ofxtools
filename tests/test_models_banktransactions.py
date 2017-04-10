@@ -12,6 +12,8 @@ from xml.etree.ElementTree import (
 
 # local imports
 from . import common
+from . import test_models_base
+from . import test_models_accounts
 from ofxtools.models import (
     Aggregate,
     STMTTRN,
@@ -27,6 +29,7 @@ class StmttrnTestCase(unittest.TestCase, common.TestAggregate):
     optionalElements = ('DTUSER', 'DTAVAIL', 'CORRECTFITID', 'CORRECTACTION',
                         'SRVRTID', 'CHECKNUM', 'REFNUM', 'SIC', 'PAYEEID',
                         'NAME', 'MEMO', 'INV401KSOURCE', 'CURSYM', 'CURRATE',)
+    currencyTag = 'CURRENCY'
 
     @property
     def root(self):
@@ -45,8 +48,9 @@ class StmttrnTestCase(unittest.TestCase, common.TestAggregate):
         SubElement(root, 'SIC').text = '171103'
         SubElement(root, 'PAYEEID').text = '77810'
         SubElement(root, 'NAME').text = 'Tweet E. Bird'
+        SubElement(root, 'EXTDNAME').text = 'Singing yellow canary'
         SubElement(root, 'MEMO').text = 'Protection money'
-        currency = SubElement(root, 'CURRENCY')
+        currency = SubElement(root, self.currencyTag)
         SubElement(currency, 'CURSYM').text = 'CAD'
         SubElement(currency, 'CURRATE').text = '1.1'
         SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
@@ -69,75 +73,33 @@ class StmttrnTestCase(unittest.TestCase, common.TestAggregate):
         self.assertEqual(root.sic, 171103)
         self.assertEqual(root.payeeid, '77810')
         self.assertEqual(root.name, 'Tweet E. Bird')
+        self.assertEqual(root.extdname, 'Singing yellow canary')
         self.assertEqual(root.memo, 'Protection money')
-        self.assertEqual(root.curtype, 'CURRENCY')
+        self.assertEqual(root.curtype, self.currencyTag)
         self.assertEqual(root.cursym, 'CAD')
         self.assertEqual(root.currate, Decimal('1.1'))
         self.assertEqual(root.inv401ksource, 'PROFITSHARING')
+        return root
 
 
 class StmttrnOrigcurrencyTestCase(StmttrnTestCase):
     """ STMTTRN with ORIGCURRENCY """
-    @property
-    def root(self):
-        root = super(self.__class__, self).root
-
-        currency = root.find('CURRENCY')
-        currency.tag = 'ORIGCURRENCY'
-
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, STMTTRN)
-        self.assertEqual(root.trntype, 'CHECK')
-        self.assertEqual(root.dtposted, datetime(2013, 6, 15))
-        self.assertEqual(root.dtuser, datetime(2013, 6, 14))
-        self.assertEqual(root.dtavail, datetime(2013, 6, 16))
-        self.assertEqual(root.trnamt, Decimal('-433.25'))
-        self.assertEqual(root.fitid, 'DEADBEEF')
-        self.assertEqual(root.correctfitid, 'B00B5')
-        self.assertEqual(root.correctaction, 'REPLACE')
-        self.assertEqual(root.srvrtid, '101A2')
-        self.assertEqual(root.checknum, '101')
-        self.assertEqual(root.refnum, '5A6B')
-        self.assertEqual(root.sic, 171103)
-        self.assertEqual(root.payeeid, '77810')
-        self.assertEqual(root.name, 'Tweet E. Bird')
-        self.assertEqual(root.memo, 'Protection money')
-        self.assertEqual(root.curtype, 'ORIGCURRENCY')
-        self.assertEqual(root.cursym, 'CAD')
-        self.assertEqual(root.currate, Decimal('1.1'))
-        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
+    currencyTag = 'CURRENCY'
 
 
 class StmttrnPayeeTestCase(StmttrnTestCase):
     """ STMTTRN with PAYEE """
-    requiredElements = ('DTPOSTED', 'TRNAMT', 'FITID', 'TRNTYPE', 'NAME',
-                        'ADDR1', 'CITY', 'STATE', 'POSTALCODE', 'PHONE',)
     optionalElements = ('DTUSER', 'DTAVAIL', 'CORRECTFITID', 'CORRECTACTION',
                         'SRVRTID', 'CHECKNUM', 'REFNUM', 'SIC', 'PAYEEID',
-                        'MEMO', 'INV401KSOURCE', 'CURSYM', 'CURRATE', 'ADDR2',
-                        'ADDR3', 'COUNTRY',)
+                        'PAYEE', 'MEMO', 'INV401KSOURCE', 'CURSYM', 'CURRATE',)
 
     @property
     def root(self):
         root = super(self.__class__, self).root
-
         name = root.find('NAME')
         root.remove(name)
-
-        payee = SubElement(root, 'PAYEE')
-        SubElement(payee, 'NAME').text = 'Wrigley Field'
-        SubElement(payee, 'ADDR1').text = '3717 N Clark St'
-        SubElement(payee, 'ADDR2').text = 'Dugout Box, Aisle 19'
-        SubElement(payee, 'ADDR3').text = 'Seat A1'
-        SubElement(payee, 'CITY').text = 'Chicago'
-        SubElement(payee, 'STATE').text = 'IL'
-        SubElement(payee, 'POSTALCODE').text = '60613'
-        SubElement(payee, 'COUNTRY').text = 'USA'
-        SubElement(payee, 'PHONE').text = '(773) 309-1027'
-
+        payee = test_models_base.PayeeTestCase().root
+        root.append(payee)
         return root
 
     def testConvert(self):
@@ -156,19 +118,14 @@ class StmttrnPayeeTestCase(StmttrnTestCase):
         self.assertEqual(root.refnum, '5A6B')
         self.assertEqual(root.sic, 171103)
         self.assertEqual(root.payeeid, '77810')
+        self.assertIsInstance(root.payee, PAYEE)
+        self.assertEqual(root.extdname, 'Singing yellow canary')
         self.assertEqual(root.memo, 'Protection money')
-        self.assertEqual(root.curtype, 'CURRENCY')
+        self.assertEqual(root.curtype, self.currencyTag)
         self.assertEqual(root.cursym, 'CAD')
         self.assertEqual(root.currate, Decimal('1.1'))
         self.assertEqual(root.inv401ksource, 'PROFITSHARING')
-        payee = root.payee
-        self.assertIsInstance(payee, PAYEE)
-        self.assertEqual(payee.name, 'Wrigley Field')
-        self.assertEqual(payee.addr1, '3717 N Clark St')
-        self.assertEqual(payee.city, 'Chicago')
-        self.assertEqual(payee.state, 'IL')
-        self.assertEqual(payee.postalcode, '60613')
-        self.assertEqual(payee.phone, '(773) 309-1027')
+        return root
 
 
 class StmttrnBankaccttoTestCase(StmttrnTestCase):
@@ -183,44 +140,13 @@ class StmttrnBankaccttoTestCase(StmttrnTestCase):
     @property
     def root(self):
         root = super(self.__class__, self).root
-
-        bankacctto = SubElement(root, 'BANKACCTTO')
-        SubElement(bankacctto, 'BANKID').text = '111000614'
-        SubElement(bankacctto, 'BRANCHID').text = 'N/A'
-        SubElement(bankacctto, 'ACCTID').text = '9876543210'
-        SubElement(bankacctto, 'ACCTTYPE').text = 'CHECKING'
-        SubElement(bankacctto, 'ACCTKEY').text = 'NONE'
-
+        bankacctto = test_models_accounts.BankaccttoTestCase().root
+        root.append(bankacctto)
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, STMTTRN)
-        self.assertEqual(root.trntype, 'CHECK')
-        self.assertEqual(root.dtposted, datetime(2013, 6, 15))
-        self.assertEqual(root.dtuser, datetime(2013, 6, 14))
-        self.assertEqual(root.dtavail, datetime(2013, 6, 16))
-        self.assertEqual(root.trnamt, Decimal('-433.25'))
-        self.assertEqual(root.fitid, 'DEADBEEF')
-        self.assertEqual(root.correctfitid, 'B00B5')
-        self.assertEqual(root.correctaction, 'REPLACE')
-        self.assertEqual(root.srvrtid, '101A2')
-        self.assertEqual(root.checknum, '101')
-        self.assertEqual(root.refnum, '5A6B')
-        self.assertEqual(root.sic, 171103)
-        self.assertEqual(root.payeeid, '77810')
-        self.assertEqual(root.memo, 'Protection money')
-        self.assertEqual(root.curtype, 'CURRENCY')
-        self.assertEqual(root.cursym, 'CAD')
-        self.assertEqual(root.currate, Decimal('1.1'))
-        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
-        bankacctto = root.bankacctto
-        self.assertIsInstance(bankacctto, BANKACCTTO)
-        self.assertEqual(bankacctto.bankid, '111000614')
-        self.assertEqual(bankacctto.branchid, 'N/A')
-        self.assertEqual(bankacctto.acctid, '9876543210')
-        self.assertEqual(bankacctto.accttype, 'CHECKING')
-        self.assertEqual(bankacctto.acctkey, 'NONE')
+        root = super(StmttrnBankaccttoTestCase, self).testConvert()
+        self.assertIsInstance(root.bankacctto, BANKACCTTO)
 
 
 class StmttrnCcaccttoTestCase(StmttrnTestCase):
@@ -234,42 +160,19 @@ class StmttrnCcaccttoTestCase(StmttrnTestCase):
     @property
     def root(self):
         root = super(self.__class__, self).root
-
-        ccacctto = SubElement(root, 'CCACCTTO')
-        SubElement(ccacctto, 'ACCTID').text = '9876543210'
-        SubElement(ccacctto, 'ACCTKEY').text = 'NONE'
-
+        ccacctto = test_models_accounts.CcaccttoTestCase().root
+        root.append(ccacctto)
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, STMTTRN)
-        self.assertEqual(root.trntype, 'CHECK')
-        self.assertEqual(root.dtposted, datetime(2013, 6, 15))
-        self.assertEqual(root.dtuser, datetime(2013, 6, 14))
-        self.assertEqual(root.dtavail, datetime(2013, 6, 16))
-        self.assertEqual(root.trnamt, Decimal('-433.25'))
-        self.assertEqual(root.fitid, 'DEADBEEF')
-        self.assertEqual(root.correctfitid, 'B00B5')
-        self.assertEqual(root.correctaction, 'REPLACE')
-        self.assertEqual(root.srvrtid, '101A2')
-        self.assertEqual(root.checknum, '101')
-        self.assertEqual(root.refnum, '5A6B')
-        self.assertEqual(root.sic, 171103)
-        self.assertEqual(root.payeeid, '77810')
-        self.assertEqual(root.memo, 'Protection money')
-        self.assertEqual(root.curtype, 'CURRENCY')
-        self.assertEqual(root.cursym, 'CAD')
-        self.assertEqual(root.currate, Decimal('1.1'))
-        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
-        ccacctto = root.ccacctto
-        self.assertIsInstance(ccacctto, CCACCTTO)
-        self.assertEqual(ccacctto.acctid, '9876543210')
-        self.assertEqual(ccacctto.acctkey, 'NONE')
+        root = super(StmttrnCcaccttoTestCase, self).testConvert()
+        self.assertIsInstance(root.ccacctto, CCACCTTO)
 
 
 class StmttrnBankaccttoCcaccttoTestCase(StmttrnTestCase):
-    """ STMTTRN with both BANKACCTTO and CCACCTTO - not allowed per OFX spec """
+    """
+    STMTTRN with both BANKACCTTO and CCACCTTO - not allowed per OFX spec
+    """
     # required/optional have already been tested in parent; skip here
     requiredElements = ()
     optionalElements = ()
@@ -277,18 +180,10 @@ class StmttrnBankaccttoCcaccttoTestCase(StmttrnTestCase):
     @property
     def root(self):
         root = super(self.__class__, self).root
-
-        bankacctto = SubElement(root, 'BANKACCTTO')
-        SubElement(bankacctto, 'BANKID').text = '111000614'
-        SubElement(bankacctto, 'BRANCHID').text = 'N/A'
-        SubElement(bankacctto, 'ACCTID').text = '9876543210'
-        SubElement(bankacctto, 'ACCTTYPE').text = 'CHECKING'
-        SubElement(bankacctto, 'ACCTKEY').text = 'NONE'
-
-        ccacctto = SubElement(root, 'CCACCTTO')
-        SubElement(ccacctto, 'ACCTID').text = '9876543210'
-        SubElement(ccacctto, 'ACCTKEY').text = 'NONE'
-
+        bankacctto = test_models_accounts.BankaccttoTestCase().root
+        root.append(bankacctto)
+        ccacctto = test_models_accounts.CcaccttoTestCase().root
+        root.append(ccacctto)
         return root
 
     def testConvert(self):
@@ -305,18 +200,8 @@ class StmttrnNamePayeeTestCase(StmttrnTestCase):
     @property
     def root(self):
         root = super(self.__class__, self).root
-
-        payee = SubElement(root, 'PAYEE')
-        SubElement(payee, 'NAME').text = 'Wrigley Field'
-        SubElement(payee, 'ADDR1').text = '3717 N Clark St'
-        SubElement(payee, 'ADDR2').text = 'Dugout Box, Aisle 19'
-        SubElement(payee, 'ADDR3').text = 'Seat A1'
-        SubElement(payee, 'CITY').text = 'Chicago'
-        SubElement(payee, 'STATE').text = 'IL'
-        SubElement(payee, 'POSTALCODE').text = '60613'
-        SubElement(payee, 'COUNTRY').text = 'USA'
-        SubElement(payee, 'PHONE').text = '(773) 309-1027'
-
+        payee = test_models_base.PayeeTestCase().root
+        root.append(payee)
         return root
 
     def testConvert(self):
@@ -335,11 +220,8 @@ class StmttrnCurrencyOrigCurrencyTestCase(StmttrnTestCase):
     @property
     def root(self):
         root = super(self.__class__, self).root
-
-        origcurrency = SubElement(root, 'ORIGCURRENCY')
-        SubElement(origcurrency, 'CURSYM').text = 'USD'
-        SubElement(origcurrency, 'CURRATE').text = '1.0'
-
+        origcurrency = test_models_base.OrigcurrencyTestCase().root
+        root.append(origcurrency)
         return root
 
     def testConvert(self):

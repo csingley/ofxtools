@@ -18,12 +18,12 @@ class TRNRS(Aggregate):
     trnuid = String(36, required=True)
     curdef = OneOf(*CURRENCY_CODES, required=True)
 
-    _subaggregates = ()
+    # _subaggregates = ()
+    # _unsupported = ()
 
     _rsTag = None
     _acctTag = None
     _tranList = None
-    _unsupported = ()
 
     @classmethod
     def _preflatten(cls, elem):
@@ -85,7 +85,7 @@ class TRNRS(Aggregate):
 
 class STMTTRNRS(TRNRS):
     """ OFX section 11.4.2.2 """
-    _subaggregates = ('LEDGERBAL', 'AVAILBAL', 'BALLIST')
+    _subaggregates = ('LEDGERBAL', 'AVAILBAL', 'BALLIST', 'BANKACCTTO')
 
     _rsTag = 'STMTRS'
     _acctTag = 'BANKACCTFROM'

@@ -12,12 +12,13 @@ import ofxtools.models
 from ofxtools.Types import (
     Element,
     String,
+    NagString,
     OneOf,
     Integer,
     Decimal,
     DateTime,
 )
-from ofxtools.lib import LANG_CODES, CURRENCY_CODES
+from ofxtools.lib import LANG_CODES, CURRENCY_CODES, COUNTRY_CODES
 
 
 # Enums used in aggregate validation
@@ -43,6 +44,8 @@ class Aggregate(object):
     # Sequence of subaggregates to strip before _flatten()ing and staple
     # on afterward intact
     _subaggregates = ()
+    # Sequence of unsupported subaggregates to strip and remove
+    _unsupported = ()
 
     def __init__(self, **kwargs):
         # Set instance attributes for all input kwargs that are defined by
@@ -152,6 +155,12 @@ class Aggregate(object):
             if subagg is not None:
                 elem.remove(subagg)
                 subaggs[tag] = subagg
+
+        # Unsupported subaggregates
+        for tag in cls._unsupported:
+            subagg = elem.find(tag)
+            if subagg is not None:
+                elem.remove(subagg)
 
         return subaggs
 
@@ -285,11 +294,25 @@ class ORIGCURRENCY(CURRENCY):
         """
         subaggs = super(ORIGCURRENCY, cls)._preflatten(elem)
 
-        curtype = elem.find('CURRENCY') or elem.find('ORIGCURRENCY')
+        curtype = elem.find('.//CURRENCY') or elem.find('.//ORIGCURRENCY')
         if curtype is not None:
             ET.SubElement(elem, 'CURTYPE').text = curtype.tag
 
         return subaggs
+
+
+class PAYEE(Aggregate):
+    """ OFX section 12.5.2.1 """
+    # name = String(32, required=True)
+    name = NagString(32, required=True)
+    addr1 = String(32, required=True)
+    addr2 = String(32)
+    addr3 = String(32)
+    city = String(32, required=True)
+    state = String(5, required=True)
+    postalcode = String(11, required=True)
+    country = OneOf(*COUNTRY_CODES)
+    phone = String(32, required=True)
 
 
 class SECID(Aggregate):
