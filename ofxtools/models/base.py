@@ -62,7 +62,7 @@ class Aggregate(object):
 
         # Check that no kwargs (not part of the class definition) are left over
         if kwargs:
-            msg = "Parsed Element {} is undefined for {}".format(
+            msg = "Parsed Element {} does not define {}".format(
                             self.__class__.__name__, str(list(kwargs.keys()))
             )
             raise ValueError(msg)

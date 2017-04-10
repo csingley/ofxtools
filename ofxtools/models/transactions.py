@@ -125,34 +125,34 @@ class INVSELL(INVTRAN, SECID, ORIGCURRENCY):
 
 
 class BUYDEBT(INVBUY):
-    """ """
+    """ OFX section 13.9.2.4.4 """
     accrdint = Decimal()
 
 
 class BUYMF(INVBUY):
-    """ """
+    """ OFX section 13.9.2.4.4 """
     buytype = OneOf(*BUYTYPES, required=True)
     relfitid = String(255)
 
 
 class BUYOPT(INVBUY):
-    """ """
+    """ OFX section 13.9.2.4.4 """
     optbuytype = OneOf('BUYTOOPEN', 'BUYTOCLOSE', required=True)
     shperctrct = Integer(required=True)
 
 
 class BUYOTHER(INVBUY):
-    """ """
+    """ OFX section 13.9.2.4.4 """
     pass
 
 
 class BUYSTOCK(INVBUY):
-    """ """
+    """ OFX section 13.9.2.4.4 """
     buytype = OneOf(*BUYTYPES, required=True)
 
 
 class CLOSUREOPT(INVTRAN, SECID):
-    """ """
+    """ OFX section 13.9.2.4.4 """
     optaction = OneOf('EXERCISE', 'ASSIGN', 'EXPIRE')
     units = Decimal(required=True)
     shperctrct = Integer(required=True)
@@ -162,7 +162,7 @@ class CLOSUREOPT(INVTRAN, SECID):
 
 
 class INCOME(INVTRAN, SECID, ORIGCURRENCY):
-    """ """
+    """ OFX section 13.9.2.4.4 """
     incometype = OneOf(*INCOMETYPES, required=True)
     total = Decimal(required=True)
     subacctsec = OneOf(*INVSUBACCTS, required=True)
@@ -173,7 +173,7 @@ class INCOME(INVTRAN, SECID, ORIGCURRENCY):
 
 
 class INVEXPENSE(INVTRAN, SECID, ORIGCURRENCY):
-    """ """
+    """ OFX section 13.9.2.4.4 """
     total = Decimal(required=True)
     subacctsec = OneOf(*INVSUBACCTS, required=True)
     subacctfund = OneOf(*INVSUBACCTS, required=True)
@@ -181,27 +181,27 @@ class INVEXPENSE(INVTRAN, SECID, ORIGCURRENCY):
 
 
 class JRNLFUND(INVTRAN):
-    """ """
+    """ OFX section 13.9.2.4.4 """
     subacctto = OneOf(*INVSUBACCTS, required=True)
     subacctfrom = OneOf(*INVSUBACCTS, required=True)
     total = Decimal(required=True)
 
 
 class JRNLSEC(INVTRAN, SECID):
-    """ """
+    """ OFX section 13.9.2.4.4 """
     subacctto = OneOf(*INVSUBACCTS, required=True)
     subacctfrom = OneOf(*INVSUBACCTS, required=True)
     units = Decimal(required=True)
 
 
 class MARGININTEREST(INVTRAN, ORIGCURRENCY):
-    """ """
+    """ OFX section 13.9.2.4.4 """
     total = Decimal(required=True)
     subacctfund = OneOf(*INVSUBACCTS, required=True)
 
 
 class REINVEST(INVTRAN, SECID, ORIGCURRENCY):
-    """ """
+    """ OFX section 13.9.2.4.4 """
     incometype = OneOf(*INCOMETYPES, required=True)
     total = Decimal(required=True)
     subacctsec = OneOf(*INVSUBACCTS, required=True)
@@ -216,7 +216,7 @@ class REINVEST(INVTRAN, SECID, ORIGCURRENCY):
 
 
 class RETOFCAP(INVTRAN, SECID, ORIGCURRENCY):
-    """ """
+    """ OFX section 13.9.2.4.4 """
     total = Decimal(required=True)
     subacctsec = OneOf(*INVSUBACCTS, required=True)
     subacctfund = OneOf(*INVSUBACCTS, required=True)
@@ -224,20 +224,20 @@ class RETOFCAP(INVTRAN, SECID, ORIGCURRENCY):
 
 
 class SELLDEBT(INVSELL):
-    """ """
+    """ OFX section 13.9.2.4.4 """
     sellreason = OneOf('CALL', 'SELL', 'MATURITY', required=True)
     accrdint = Decimal()
 
 
 class SELLMF(INVSELL):
-    """ """
+    """ OFX section 13.9.2.4.4 """
     selltype = OneOf(*SELLTYPES, required=True)
     avgcostbasis = Decimal()
     relfitid = String(255)
 
 
 class SELLOPT(INVSELL):
-    """ """
+    """ OFX section 13.9.2.4.4 """
     optselltype = OneOf('SELLTOCLOSE', 'SELLTOOPEN', required=True)
     shperctrct = Integer(required=True)
     relfitid = String(255)
@@ -246,17 +246,17 @@ class SELLOPT(INVSELL):
 
 
 class SELLOTHER(INVSELL):
-    """ """
+    """ OFX section 13.9.2.4.4 """
     pass
 
 
 class SELLSTOCK(INVSELL):
-    """ """
+    """ OFX section 13.9.2.4.4 """
     selltype = OneOf(*SELLTYPES, required=True)
 
 
 class SPLIT(INVTRAN, SECID):
-    """ """
+    """ OFX section 13.9.2.4.4 """
     subacctsec = OneOf(*INVSUBACCTS, required=True)
     oldunits = Decimal(required=True)
     newunits = Decimal(required=True)
@@ -268,7 +268,7 @@ class SPLIT(INVTRAN, SECID):
 
 
 class TRANSFER(INVTRAN, SECID):
-    """ """
+    """ OFX section 13.9.2.4.4 """
     subacctsec = OneOf(*INVSUBACCTS, required=True)
     units = Decimal(required=True)
     tferaction = OneOf('IN', 'OUT', required=True)
