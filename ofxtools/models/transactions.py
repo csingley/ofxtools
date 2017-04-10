@@ -76,7 +76,7 @@ class INVBANKTRAN(STMTTRN):
 
 
 class INVTRAN(TRAN):
-    """ """
+    """ OFX section 13.9.2.4.2 """
     dttrade = DateTime(required=True)
     dtsettle = DateTime()
     reversalfitid = String(255)
@@ -84,7 +84,7 @@ class INVTRAN(TRAN):
 
 
 class INVBUY(INVTRAN, SECID, ORIGCURRENCY):
-    """ """
+    """ OFX section 13.9.2.4.3 """
     units = Decimal(required=True)
     unitprice = Decimal(4, required=True)
     markup = Decimal()
@@ -104,7 +104,7 @@ class INVBUY(INVTRAN, SECID, ORIGCURRENCY):
 
 
 class INVSELL(INVTRAN, SECID, ORIGCURRENCY):
-    """ """
+    """ OFX section 13.9.2.4.3 """
     units = Decimal(required=True)
     unitprice = Decimal(4, required=True)
     markdown = Decimal()
