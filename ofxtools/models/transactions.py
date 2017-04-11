@@ -255,7 +255,7 @@ class SELLSTOCK(INVSELL):
     selltype = OneOf(*SELLTYPES, required=True)
 
 
-class SPLIT(INVTRAN, SECID):
+class SPLIT(INVTRAN, SECID, ORIGCURRENCY):
     """ OFX section 13.9.2.4.4 """
     subacctsec = OneOf(*INVSUBACCTS, required=True)
     oldunits = Decimal(required=True)
@@ -273,6 +273,11 @@ class TRANSFER(INVTRAN, SECID):
     units = Decimal(required=True)
     tferaction = OneOf('IN', 'OUT', required=True)
     postype = OneOf('SHORT', 'LONG', required=True)
+    # INVACCTFROM has (acctid, brokerid) as required=True, but the entire
+    # aggregate is optional for TRANSFER, so we can't just inherit from
+    # INVACCTFROM; instead we duplicate the fields here with required=False.
+    acctid = String(22)
+    brokerid = String(22)
     avgcostbasis = Decimal()
     unitprice = Decimal()
     dtpurchase = DateTime()

@@ -511,12 +511,12 @@ class JrnlfundTestCase(InvtranTestCase):
 
     @property
     def requiredElements(self):
-        req = super(InvbuyTestCase, self).requiredElements
+        req = super(JrnlfundTestCase, self).requiredElements
         req += ('SECID', 'DTTRADE', 'SUBACCTTO', 'SUBACCTFROM', 'TOTAL',)
         return req
 
     def testConvert(self):
-        root = super(InvbuyTestCase, self).testConvert()
+        root = super(JrnlfundTestCase, self).testConvert()
         self.assertEqual(root.subacctto, 'MARGIN')
         self.assertEqual(root.subacctfrom, 'CASH')
         self.assertEqual(root.total, Decimal('161.49'))
@@ -531,7 +531,7 @@ class JrnlsecTestCase(InvtranTestCase):
     @property
     def root(self):
         root = Element('JRNLSEC')
-        invtran = super(JrnlfundTestCase, self).root
+        invtran = super(JrnlsecTestCase, self).root
         root.append(invtran)
         secid = test_models_base.SecidTestCase().root
         root.append(secid)
@@ -542,12 +542,12 @@ class JrnlsecTestCase(InvtranTestCase):
 
     @property
     def requiredElements(self):
-        req = super(InvbuyTestCase, self).requiredElements
+        req = super(JrnlsecTestCase, self).requiredElements
         req += ('SECID', 'DTTRADE', 'SUBACCTTO', 'SUBACCTFROM', 'UNITS',)
         return req
 
     def testConvert(self):
-        root = super(InvbuyTestCase, self).testConvert()
+        root = super(JrnlsecTestCase, self).testConvert()
         test_models_base.SecidTestCase().root
         self.assertEqual(root.subacctto, 'MARGIN')
         self.assertEqual(root.subacctfrom, 'CASH')

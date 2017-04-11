@@ -13,6 +13,7 @@ from xml.etree.ElementTree import (
 from . import common
 from . import test_models_base
 from . import test_models_banktransactions
+from . import test_models_invtransactions
 from . import test_models_securities
 from . import test_models_positions
 
@@ -23,6 +24,9 @@ from ofxtools.models import (
     DEBTINFO, MFINFO, OPTINFO, OTHERINFO, STOCKINFO,
     POSDEBT, POSMF, POSOPT, POSOTHER, POSSTOCK,
     MFASSETCLASS, PORTION, BAL,
+    INVBANKTRAN, BUYDEBT, BUYMF, BUYOPT, BUYOTHER, BUYSTOCK, CLOSUREOPT,
+    INCOME, INVEXPENSE, JRNLFUND, JRNLSEC, MARGININTEREST, REINVEST, RETOFCAP,
+    SELLDEBT, SELLMF, SELLOPT, SELLOTHER, SELLSTOCK, SPLIT, TRANSFER,
 )
 
 
@@ -53,7 +57,6 @@ class BanktranlistTestCase(unittest.TestCase, common.TestAggregate):
             self.assertIsInstance(root[i], STMTTRN)
 
 
-# FIXME - need INVTRAN Elements for list!!!
 class InvtranlistTestCase(unittest.TestCase, common.TestAggregate):
     """ """
     __test__ = True
@@ -65,10 +68,14 @@ class InvtranlistTestCase(unittest.TestCase, common.TestAggregate):
         root = Element('INVTRANLIST')
         SubElement(root, 'DTSTART').text = '20130601'
         SubElement(root, 'DTEND').text = '20130630'
-        # FIXME
-        # for i in range(2):
-            # invtran = test_models_invtransactions.InvtranTestCase().root
-            # root.append(invtran)
+        for it in ('Invbanktran', 'Buydebt', 'Buymf', 'Buyopt', 'Buyother',
+                   'Buystock', 'Closureopt', 'Income', 'Invexpense',
+                   'Jrnlfund', 'Jrnlsec', 'Margininterest', 'Reinvest',
+                   'Retofcap', 'Selldebt', 'Sellmf', 'Sellopt', 'Sellother',
+                   'Sellstock', 'Split', 'Transfer',):
+            invtran = getattr(test_models_invtransactions,
+                              '{}TestCase'.format(it))
+            root.append(invtran().root)
         return root
 
     def testConvert(self):
@@ -77,10 +84,12 @@ class InvtranlistTestCase(unittest.TestCase, common.TestAggregate):
         self.assertIsInstance(root, BANKTRANLIST)
         self.assertEqual(root.dtstart, datetime(2013, 6, 1))
         self.assertEqual(root.dtend, datetime(2013, 6, 30))
-        # FIXME
-        # self.assertEqual(len(root), 2)
-        # for i in range(2):
-            # self.assertIsInstance(root[i], INVTRAN)
+        for i, it in enumerate((INVBANKTRAN, BUYDEBT, BUYMF, BUYOPT, BUYOTHER,
+                                BUYSTOCK, CLOSUREOPT, INCOME, INVEXPENSE,
+                                JRNLFUND, JRNLSEC, MARGININTEREST, REINVEST,
+                                RETOFCAP, SELLDEBT, SELLMF, SELLOPT, SELLOTHER,
+                                SELLSTOCK, SPLIT, TRANSFER,)):
+            self.assertIsInstance(root[i], it)
 
 
 class SeclistTestCase(unittest.TestCase, common.TestAggregate):
