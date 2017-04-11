@@ -149,6 +149,19 @@ class INVSTMTTRNRS(TRNRS):
     _tranList = 'INVTRANLIST'
     _unsupported = ('INV401K',)
 
+    @classmethod
+    def _preflatten(cls, elem):
+        """ """
+        subaggs = super(INVSTMTTRNRS, cls)._preflatten(elem)
+
+        # Find OFXEXTENSION directly in INVSTMTTRNRS, not INVSTMTRS
+        ofxextension = elem.find('OFXEXTENSION')
+        if ofxextension:
+            subaggs['OFXEXTENSION'] = ofxextension
+            elem.remove(ofxextension)
+
+        return subaggs
+
     # Human-friendly attribute aliases
     @property
     def datetime(self):

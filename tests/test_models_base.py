@@ -27,6 +27,19 @@ from ofxtools.models import (
 from ofxtools.lib import LANG_CODES, CURRENCY_CODES
 
 
+class AggregateTestCase(unittest.TestCase, common.TestAggregate):
+    """ Test miscellaneous code paths in base.Aggregate) """
+    __test__ = True
+
+    def testExtraElement(self):
+        pass
+
+    def testPostFlatten(self):
+        subaggs = {'a': object()}
+        with self.assertRaises(ValueError):
+            Aggregate._postflatten(self, subaggs)
+    
+
 class FiTestCase(unittest.TestCase, common.TestAggregate):
     # <FI> aggregates are optional in SONRQ/SONRS; not all firms use them.
     # Therefore we don't mark ORG as required, so SONRS (inherits from FI)

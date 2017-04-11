@@ -17,7 +17,7 @@ from ofxtools.models import (
     STATUS,
     BANKACCTFROM, CCACCTFROM, INVACCTFROM,
     BANKTRANLIST, INVTRANLIST, INVPOSLIST, BALLIST,
-    LEDGERBAL, AVAILBAL, INVBAL,
+    LEDGERBAL, AVAILBAL, INVBAL, OFXEXTENSION,
 )
 from ofxtools.lib import CURRENCY_CODES
 
@@ -189,7 +189,8 @@ class InvstmttrnrsTestCase(unittest.TestCase, common.TestAggregate):
     __test__ = True
     requiredElements = ('TRNUID', 'CODE', 'SEVERITY', 'DTASOF', 'CURDEF',
                         'BROKERID', 'INVACCTFROM',)
-    optionalElements = ('INVTRANLIST', 'INVPOSLIST', 'INVBAL',)
+    optionalElements = ('CLIENTCOOKIE', 'INVTRANLIST', 'INVPOSLIST', 'INVBAL',
+                        'INVOOLIST', 'MKTGINFO', 'INV401KBAL',)
 
     @property
     def root(self):
@@ -198,7 +199,8 @@ class InvstmttrnrsTestCase(unittest.TestCase, common.TestAggregate):
         status = test_models_base.StatusTestCase().root
         root.append(status)
         SubElement(root, 'CLIENTCOOKIE').text = 'DEADBEEF'
-        # FIXME - OFXEXTENSION
+        ofxextension = test_models_lists.OfxextensionTestCase().root
+        root.append(ofxextension)
         stmtrs = SubElement(root, 'INVSTMTRS')
         SubElement(stmtrs, 'DTASOF').text = '20010530'
         SubElement(stmtrs, 'CURDEF').text = 'USD'
@@ -227,6 +229,7 @@ class InvstmttrnrsTestCase(unittest.TestCase, common.TestAggregate):
         self.assertEqual(root.trnuid, '1001')
         self.assertIsInstance(root.status, STATUS)
         self.assertEqual(root.clientcookie, 'DEADBEEF')
+        self.assertIsInstance(root.ofxextension, OFXEXTENSION)
         self.assertEqual(root.dtasof, datetime(2001, 5, 30))
         self.assertEqual(root.curdef, 'USD')
         self.assertIsInstance(root.invacctfrom, INVACCTFROM)
