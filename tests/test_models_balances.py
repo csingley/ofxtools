@@ -14,12 +14,12 @@ from copy import deepcopy
 # local imports
 from ofxtools.models import (
     Aggregate,
-    LEDGERBAL,
-    AVAILBAL,
-    INVBAL,
-    BAL,
+    LEDGERBAL, AVAILBAL, INVBAL, BAL, INV401KBAL,
+    BALLIST,
 )
 from ofxtools.lib import CURRENCY_CODES
+
+from . import test_models_lists
 
 
 class TestAggregate(object):
@@ -178,6 +178,46 @@ class BalTestCase(unittest.TestCase, TestAggregate):
     def testOneOf(self):
         self.oneOfTest('BALTYPE', ('DOLLAR', 'PERCENT', 'NUMBER'))
         self.oneOfTest('CURSYM', CURRENCY_CODES)
+
+
+class Inv401kbalTestCase(unittest.TestCase, TestAggregate):
+    __test__ = True
+    requiredElements = ('TOTAL',)
+    optionalElements = ('CASHBAL', 'PRETAX', 'AFTERTAX', 'MATCH',
+                        'PROFITSHARING', 'ROLLOVER', 'OTHERVEST',
+                        'OTHERNONVEST',)
+
+    @property
+    def root(self):
+        root = Element('INV401KBAL')
+        SubElement(root, 'CASHBAL').text = '1'
+        SubElement(root, 'PRETAX').text = '2'
+        SubElement(root, 'AFTERTAX').text = '3'
+        SubElement(root, 'MATCH').text = '4'
+        SubElement(root, 'PROFITSHARING').text = '5'
+        SubElement(root, 'ROLLOVER').text = '6'
+        SubElement(root, 'OTHERVEST').text = '7'
+        SubElement(root, 'OTHERNONVEST').text = '8'
+        SubElement(root, 'TOTAL').text = '36'
+        ballist = test_models_lists.BallistTestCase().root
+        root.append(ballist)
+        return root
+
+    def testConvert(self):
+        # Make sure Aggregate.from_etree() calls Element.convert() and sets
+        # Aggregate instance attributes with the result
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, INV401KBAL)
+        self.assertEqual(root.cashbal, Decimal('1'))
+        self.assertEqual(root.pretax, Decimal('2'))
+        self.assertEqual(root.aftertax, Decimal('3'))
+        self.assertEqual(root.match, Decimal('4'))
+        self.assertEqual(root.profitsharing, Decimal('5'))
+        self.assertEqual(root.rollover, Decimal('6'))
+        self.assertEqual(root.othervest, Decimal('7'))
+        self.assertEqual(root.othernonvest, Decimal('8'))
+        self.assertEqual(root.total, Decimal('36'))
+        self.assertIsInstance(root.ballist, BALLIST)
 
 
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
 # coding: utf-8
-
+""" """
 # stdlib imports
 import unittest
 from xml.etree.ElementTree import (
@@ -7,15 +7,10 @@ from xml.etree.ElementTree import (
     SubElement,
 )
 from datetime import datetime
+from decimal import Decimal
 
 
 # local imports
-from . import common
-from . import test_models_base
-from . import test_models_accounts
-from . import test_models_balances
-from . import test_models_lists
-
 from ofxtools.models import (
     Aggregate,
     STMTTRNRS, CCSTMTTRNRS, INVSTMTTRNRS,
@@ -25,6 +20,12 @@ from ofxtools.models import (
     LEDGERBAL, AVAILBAL, INVBAL,
 )
 from ofxtools.lib import CURRENCY_CODES
+
+from . import common
+from . import test_models_base
+from . import test_models_accounts
+from . import test_models_balances
+from . import test_models_lists
 
 
 class StmttrnrsTestCase(unittest.TestCase, common.TestAggregate):
@@ -79,7 +80,10 @@ class StmttrnrsTestCase(unittest.TestCase, common.TestAggregate):
         self.assertIsInstance(root.banktranlist, BANKTRANLIST)
         self.assertIsInstance(root.ledgerbal, LEDGERBAL)
         self.assertIsInstance(root.availbal, AVAILBAL)
+        self.assertEqual(root.cashadvbalamt, Decimal('10000')) 
+        self.assertEqual(root.intrate, Decimal('20.99')) 
         self.assertIsInstance(root.ballist, BALLIST)
+        self.assertEqual(root.mktginfo, 'Get Free Stuff NOW!!')
 
     def testUnsupported(self):
         root = self.root
@@ -135,7 +139,7 @@ class CctmttrnrsTestCase(StmttrnrsTestCase):
         rewardinfo = SubElement(stmtrs, 'REWARDINFO')
         SubElement(rewardinfo, 'NAME').text = 'Cash Back'
         SubElement(rewardinfo, 'REWARDBAL').text = '655'
-        SubElement(rewardinfo, 'rewardearched').text = '200'
+        SubElement(rewardinfo, 'REWARDEARNED').text = '200'
         ballist = test_models_lists.BallistTestCase().root
         stmtrs.append(ballist)
         SubElement(stmtrs, 'MKTGINFO').text = 'Get Free Stuff NOW!!'
@@ -154,7 +158,15 @@ class CctmttrnrsTestCase(StmttrnrsTestCase):
         self.assertIsInstance(root.banktranlist, BANKTRANLIST)
         self.assertIsInstance(root.ledgerbal, LEDGERBAL)
         self.assertIsInstance(root.availbal, AVAILBAL)
+        self.assertEqual(root.cashadvbalamt, Decimal('10000'))
+        self.assertEqual(root.intratepurch, Decimal('20.99'))
+        self.assertEqual(root.intratecash, Decimal('25.99'))
+        self.assertEqual(root.intratexfer, Decimal('21.99'))
+        self.assertEqual(root.rewardname, 'Cash Back')
+        self.assertEqual(root.rewardbal, Decimal('655'))
+        self.assertEqual(root.rewardearned, Decimal('200'))
         self.assertIsInstance(root.ballist, BALLIST)
+        self.assertEqual(root.mktginfo, 'Get Free Stuff NOW!!')
 
     def testUnsupported(self):
         root = self.root
@@ -185,7 +197,7 @@ class InvstmttrnrsTestCase(unittest.TestCase, common.TestAggregate):
         SubElement(root, 'TRNUID').text = '1001'
         status = test_models_base.StatusTestCase().root
         root.append(status)
-        # FIXME - CLTCOOKIE
+        SubElement(root, 'CLIENTCOOKIE').text = 'DEADBEEF'
         # FIXME - OFXEXTENSION
         stmtrs = SubElement(root, 'INVSTMTRS')
         SubElement(stmtrs, 'DTASOF').text = '20010530'
@@ -198,10 +210,12 @@ class InvstmttrnrsTestCase(unittest.TestCase, common.TestAggregate):
         stmtrs.append(poslist)
         invbal = test_models_balances.InvbalTestCase().root
         stmtrs.append(invbal)
-        # FIXME - INVOOLIST
+        invoolist = test_models_lists.InvoolistTestCase().root
+        stmtrs.append(invoolist)
         SubElement(stmtrs, 'MKTGINFO').text = 'Get Free Stuff NOW!!'
         # FIXME - INV401K
-        # FIXME - INV401KBAL
+        inv401kbal = test_models_balances.Inv401kbalTestCase().root
+        stmtrs.append(inv401kbal)
 
         return root
 
@@ -212,6 +226,7 @@ class InvstmttrnrsTestCase(unittest.TestCase, common.TestAggregate):
         self.assertIsInstance(root, INVSTMTTRNRS)
         self.assertEqual(root.trnuid, '1001')
         self.assertIsInstance(root.status, STATUS)
+        self.assertEqual(root.clientcookie, 'DEADBEEF')
         self.assertEqual(root.dtasof, datetime(2001, 5, 30))
         self.assertEqual(root.curdef, 'USD')
         self.assertIsInstance(root.invacctfrom, INVACCTFROM)

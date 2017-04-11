@@ -319,3 +319,11 @@ class SECID(Aggregate):
     """ OFX section 13.8.1 """
     uniqueid = String(32, required=True)
     uniqueidtype = String(10, required=True)
+
+
+class OFXELEMENT(Aggregate):
+    """ OFX section 2.7.2 """
+    tagname = String(32)
+    name = String(32)
+    tagtype = String(20)
+    tagvalue = String(1000)

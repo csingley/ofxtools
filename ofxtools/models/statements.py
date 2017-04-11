@@ -6,6 +6,7 @@ balances, and securities.
 # local imports
 from ofxtools.Types import (
     String,
+    Decimal,
     OneOf,
     DateTime,
 )
@@ -19,6 +20,7 @@ class TRNRS(Aggregate):
     """ Base class for *TRNRS (not in OFX spec) """
     trnuid = String(36, required=True)
     curdef = OneOf(*CURRENCY_CODES, required=True)
+    mktginfo = String(360)
 
     _rsTag = None
     _acctTag = None
@@ -84,12 +86,15 @@ class TRNRS(Aggregate):
 
 class STMTTRNRS(TRNRS):
     """ OFX section 11.4.2.2 """
-    _subaggregates = ('LEDGERBAL', 'AVAILBAL', 'BALLIST', 'BANKACCTTO')
+    cashadvbalamt = Decimal()
+    intrate = Decimal()
+
+    _subaggregates = ('LEDGERBAL', 'AVAILBAL', 'BALLIST',)
 
     _rsTag = 'STMTRS'
     _acctTag = 'BANKACCTFROM'
     _tranList = 'BANKTRANLIST'
-    _unsupported = ('BANKTRANLISTP', 'CASHADVBALAMT', 'INTRATE', 'MKTGINFO')
+    _unsupported = ('BANKTRANLISTP',)
 
     @classmethod
     def _preflatten(cls, elem):
@@ -106,22 +111,43 @@ class STMTTRNRS(TRNRS):
 
 class CCSTMTTRNRS(STMTTRNRS):
     """ OFX section 11.4.3.2 """
+    intrate = None
+    intratepurch = Decimal()
+    intratecash = Decimal()
+    intratexfer = Decimal()
+    rewardname = String(32)
+    rewardbal = Decimal()
+    rewardearned = Decimal()
+
+    _subaggregates = ('LEDGERBAL', 'AVAILBAL', 'BALLIST',)
+
     _rsTag = 'CCSTMTRS'
     _acctTag = 'CCACCTFROM'
-    _unsupported = ('BANKTRANLISTP', 'CASHADVBALAMT', 'INTRATEPURCH',
-                    'INTRATECASH', 'INTRATEXFER', 'REWARDINFO', 'MKTGINFO')
+    _unsupported = ('BANKTRANLISTP',)
+
+    @staticmethod
+    def _groom(elem):
+        """
+        Rename NAME (from REWARDINFO) to REWARDNAME.
+        """
+        super(CCSTMTTRNRS, CCSTMTTRNRS)._groom(elem)
+
+        yld = elem.find('./*/REWARDINFO/NAME')
+        if yld is not None:
+            yld.tag = 'REWARDNAME'
 
 
 class INVSTMTTRNRS(TRNRS):
     """ OFX section 13.9.2.1 """
     dtasof = DateTime(required=True)
+    clientcookie = String(32)
 
-    _subaggregates = ('INVPOSLIST', 'INVBAL')
+    _subaggregates = ('INVPOSLIST', 'INVBAL', 'INVOOLIST', 'INV401KBAL')
 
     _rsTag = 'INVSTMTRS'
     _acctTag = 'INVACCTFROM'
     _tranList = 'INVTRANLIST'
-    _unsupported = ('INVOOLIST', 'MKTGINFO', 'INV401K', 'INV401KBAL')
+    _unsupported = ('INV401K',)
 
     # Human-friendly attribute aliases
     @property

@@ -6,6 +6,7 @@ from datetime import datetime
 from xml.etree.ElementTree import (
     Element,
     SubElement,
+    tostring,
 )
 
 
@@ -20,13 +21,16 @@ from . import test_models_positions
 from ofxtools.models import (
     Aggregate,
     STMTTRN,
-    BANKTRANLIST, SECLIST, BALLIST, INVPOSLIST,
+    BANKTRANLIST, SECLIST, BALLIST, INVPOSLIST, INVOOLIST,
     DEBTINFO, MFINFO, OPTINFO, OTHERINFO, STOCKINFO,
     POSDEBT, POSMF, POSOPT, POSOTHER, POSSTOCK,
     MFASSETCLASS, PORTION, BAL,
     INVBANKTRAN, BUYDEBT, BUYMF, BUYOPT, BUYOTHER, BUYSTOCK, CLOSUREOPT,
     INCOME, INVEXPENSE, JRNLFUND, JRNLSEC, MARGININTEREST, REINVEST, RETOFCAP,
     SELLDEBT, SELLMF, SELLOPT, SELLOTHER, SELLSTOCK, SPLIT, TRANSFER,
+    OOBUYDEBT, OOBUYMF, OOBUYOPT, OOBUYOTHER, OOBUYSTOCK,
+    OOSELLDEBT, OOSELLMF, OOSELLOPT, OOSELLOTHER, OOSELLSTOCK, SWITCHMF,
+    OFXEXTENSION, OFXELEMENT,
 )
 
 
@@ -215,6 +219,63 @@ class InvposlistTestCase(unittest.TestCase, common.TestAggregate):
         self.assertIsInstance(root[2], POSOPT)
         self.assertIsInstance(root[3], POSOTHER)
         self.assertIsInstance(root[4], POSSTOCK)
+
+
+class InvoolistTestCase(unittest.TestCase, common.TestAggregate):
+    """ """
+    __test__ = True
+    optionalElements = ()  # FIXME - how to handle OO subclasses?
+
+    @property
+    def root(self):
+        root = Element('INVOOLIST')
+        for oo in ('Oobuydebt', 'Oobuymf', 'Oobuyopt', 'Oobuyother',
+                   'Oobuystock', 'Ooselldebt', 'Oosellmf', 'Oosellopt',
+                   'Oosellother', 'Oosellstock', 'Switchmf',):
+            testCase = '{}TestCase'.format(oo)
+            elem = getattr(test_models_invtransactions, testCase)().root
+            root.append(elem)
+        return root
+
+    def testConvert(self):
+        # Test OOLIST wrapper.  OO members are tested elsewhere.
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, INVOOLIST)
+        self.assertEqual(len(root), 11)
+        self.assertIsInstance(root[0], OOBUYDEBT)
+        self.assertIsInstance(root[1], OOBUYMF)
+        self.assertIsInstance(root[2], OOBUYOPT)
+        self.assertIsInstance(root[3], OOBUYOTHER)
+        self.assertIsInstance(root[4], OOBUYSTOCK)
+        self.assertIsInstance(root[5], OOSELLDEBT)
+        self.assertIsInstance(root[6], OOSELLMF)
+        self.assertIsInstance(root[7], OOSELLOPT)
+        self.assertIsInstance(root[8], OOSELLOTHER)
+        self.assertIsInstance(root[9], OOSELLSTOCK)
+        self.assertIsInstance(root[10], SWITCHMF)
+
+
+class OfxextensionTestCase(unittest.TestCase, common.TestAggregate):
+    """ """
+    __test__ = True
+    optionalElements = ()  # FIXME - how to handle multiple OFXELEMENTs?
+
+    @property
+    def root(self):
+        root = Element('OFXEXTENSION')
+        ofxelement1 = test_models_base.OfxelementTestCase().root
+        ofxelement2 = test_models_base.OfxelementTestCase().root
+        root.append(ofxelement1)
+        root.append(ofxelement2)
+        return root
+
+    def testConvert(self):
+        # Test OFXEXTENSIONS.  OFXELEMENT is tested elsewhere.
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, OFXEXTENSION)
+        self.assertEqual(len(root), 2)
+        self.assertIsInstance(root[0], OFXELEMENT)
+        self.assertIsInstance(root[1], OFXELEMENT)
 
 
 if __name__ == '__main__':

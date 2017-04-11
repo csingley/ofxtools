@@ -22,6 +22,7 @@ from ofxtools.models import (
     BAL,
     PAYEE,
     SECID,
+    OFXELEMENT,
 )
 from ofxtools.lib import LANG_CODES, CURRENCY_CODES
 
@@ -273,6 +274,29 @@ class SecidTestCase(unittest.TestCase, common.TestAggregate):
         self.assertIsInstance(root, SECID)
         self.assertEqual(root.uniqueid, '084670108')
         self.assertEqual(root.uniqueidtype, 'CUSIP')
+
+
+class OfxelementTestCase(unittest.TestCase, common.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element('OFXELEMENT')
+        SubElement(root, 'TAGNAME').text = 'ABC.SOMETHING'
+        SubElement(root, 'NAME').text = 'Some OFX extension'
+        SubElement(root, 'TAGTYPE').text = 'A-32'
+        SubElement(root, 'TAGVALUE').text = 'Foobar'
+        return root
+
+    def testConvert(self):
+        # Make sure Aggregate.from_etree() calls Element.convert() and sets
+        # Aggregate instance attributes with the result
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, OFXELEMENT)
+        self.assertEqual(root.tagname, 'ABC.SOMETHING')
+        self.assertEqual(root.name, 'Some OFX extension')
+        self.assertEqual(root.tagtype, 'A-32')
+        self.assertEqual(root.tagvalue, 'Foobar')
 
 
 if __name__ == '__main__':

@@ -82,3 +82,13 @@ class FIMFASSETCLASS(List):  # pylint: disable=too-many-ancestors
 class INVPOSLIST(List):  # pylint: disable=too-many-ancestors
     """ OFX section 13.9.2.2 """
     pass
+
+
+class INVOOLIST(List):  # pylint: disable=too-many-ancestors
+    """ OFX section 13.9.2.2 """
+    pass
+
+
+class OFXEXTENSION(List):  # pylint: disable=too-many-ancestors
+    """ OFX section 2.7.2 """
+    pass

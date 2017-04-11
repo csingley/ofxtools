@@ -5,7 +5,7 @@ Python object model for transactions,
 # local imports
 from ofxtools.models import (
     Aggregate,
-    ORIGCURRENCY, SECID,
+    CURRENCY, ORIGCURRENCY, SECID,
     INV401KSOURCES, INVSUBACCTS,
 )
 from ofxtools.Types import (
@@ -20,8 +20,11 @@ from ofxtools.Types import (
 
 # Enums used in aggregate validation
 BUYTYPES = ('BUY', 'BUYTOCOVER')
+OPTBUYTYPES = ('BUYTOOPEN', 'BUYTOCLOSE')
 SELLTYPES = ('SELL', 'SELLSHORT')
+OPTSELLTYPES = ('SELLTOCLOSE', 'SELLTOOPEN')
 INCOMETYPES = ('CGLONG', 'CGSHORT', 'DIV', 'INTEREST', 'MISC')
+UNITTYPES = ('SHARES', 'CURRENCY')
 
 
 class TRAN(Aggregate):
@@ -137,7 +140,7 @@ class BUYMF(INVBUY):
 
 class BUYOPT(INVBUY):
     """ OFX section 13.9.2.4.4 """
-    optbuytype = OneOf('BUYTOOPEN', 'BUYTOCLOSE', required=True)
+    optbuytype = OneOf(*OPTBUYTYPES, required=True)
     shperctrct = Integer(required=True)
 
 
@@ -153,7 +156,7 @@ class BUYSTOCK(INVBUY):
 
 class CLOSUREOPT(INVTRAN, SECID):
     """ OFX section 13.9.2.4.4 """
-    optaction = OneOf('EXERCISE', 'ASSIGN', 'EXPIRE')
+    optaction = OneOf('EXERCISE', 'ASSIGN', 'EXPIRE', required=True)
     units = Decimal(required=True)
     shperctrct = Integer(required=True)
     subacctsec = OneOf(*INVSUBACCTS, required=True)
@@ -238,7 +241,7 @@ class SELLMF(INVSELL):
 
 class SELLOPT(INVSELL):
     """ OFX section 13.9.2.4.4 """
-    optselltype = OneOf('SELLTOCLOSE', 'SELLTOOPEN', required=True)
+    optselltype = OneOf(*OPTSELLTYPES, required=True)
     shperctrct = Integer(required=True)
     relfitid = String(255)
     reltype = OneOf('SPREAD', 'STRADDLE', 'NONE', 'OTHER')
@@ -282,3 +285,83 @@ class TRANSFER(INVTRAN, SECID):
     unitprice = Decimal()
     dtpurchase = DateTime()
     inv401ksource = OneOf(*INV401KSOURCES)
+
+
+# Open orders
+class OO(TRAN, SECID, CURRENCY):
+    """ OFX section 13.9.2.5.1 - General open order aggregate """
+    dtplaced = DateTime(required=True)
+    units = Decimal(required=True)
+    subacct = OneOf(*INVSUBACCTS, required=True)
+    duration = OneOf('DAY', 'GOODTILCANCEL', 'IMMEDIATE', required=True)
+    restriction = OneOf('ALLORNONE', 'MINUNITS', 'NONE', required=True)
+    minunits = Decimal()
+    limitprice = Decimal()
+    stopprice = Decimal()
+    memo = String(255)
+    inv401ksource = OneOf(*INV401KSOURCES)
+
+
+class OOBUYDEBT(OO):
+    """ OFX section 13.9.2.5.2 """
+    auction = Bool(required=True)
+    dtauction = DateTime()
+
+
+class OOBUYMF(OO):
+    """ OFX section 13.9.2.5.2 """
+    buytype = OneOf(*BUYTYPES, required=True)
+    unittype = OneOf(*UNITTYPES, required=True)
+
+
+class OOBUYOPT(OO):
+    """ OFX section 13.9.2.5.2 """
+    optbuytype = OneOf(*OPTBUYTYPES, required=True)
+
+
+class OOBUYOTHER(OO):
+    """ OFX section 13.9.2.5.2 """
+    unittype = OneOf(*UNITTYPES, required=True)
+
+
+class OOBUYSTOCK(OO):
+    """ OFX section 13.9.2.5.2 """
+    buytype = OneOf(*BUYTYPES, required=True)
+
+
+class OOSELLDEBT(OO):
+    """ OFX section 13.9.2.5.2 """
+    pass
+
+
+class OOSELLMF(OO):
+    """ OFX section 13.9.2.5.2 """
+    selltype = OneOf(*SELLTYPES, required=True)
+    unittype = OneOf(*UNITTYPES, required=True)
+    sellall = Bool(required=True)
+
+
+class OOSELLOPT(OO):
+    """ OFX section 13.9.2.5.2 """
+    optselltype = OneOf(*OPTSELLTYPES, required=True)
+
+
+class OOSELLOTHER(OO):
+    """ OFX section 13.9.2.5.2 """
+    unittype = OneOf(*UNITTYPES, required=True)
+
+
+class OOSELLSTOCK(OO):
+    """ OFX section 13.9.2.5.2 """
+    selltype = OneOf(*SELLTYPES, required=True)
+
+
+class SWITCHMF(OO):
+    """ OFX section 13.9.2.5.2 """
+    unittype = OneOf(*UNITTYPES, required=True)
+    switchall = Bool(required=True)
+
+    # SWITCHMF contains two SECID aggregates (one under OO, another directly
+    # under SWITCHMF).  The source SECID is _flatten()ed; the destination
+    # SECID is preserved as a subaggregate.
+    _subaggregates = ("SECID",)

@@ -45,3 +45,18 @@ class BAL(CURRENCY):
     baltype = OneOf('DOLLAR', 'PERCENT', 'NUMBER', required=True)
     value = Decimal(required=True)
     dtasof = DateTime()
+
+
+class INV401KBAL(Aggregate):
+    """ OFX section 13.9.2.9 """
+    cashbal = Decimal()
+    pretax = Decimal()
+    aftertax = Decimal()
+    match = Decimal()
+    profitsharing = Decimal()
+    rollover = Decimal()
+    othervest = Decimal()
+    othernonvest = Decimal()
+    total = Decimal(required=True)
+
+    _subaggregates = ('BALLIST',)
