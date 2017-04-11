@@ -12,14 +12,16 @@ from xml.etree.ElementTree import (
 
 # local imports
 from . import common
-from . import test_models_banktransactions
 from . import test_models_base
+from . import test_models_banktransactions
+from . import test_models_accounts
+
 from ofxtools.models import (
     Aggregate,
     BUYDEBT, BUYMF, BUYOPT, BUYOTHER, BUYSTOCK,
     INVBANKTRAN,
     SELLDEBT, SELLMF, SELLOPT, SELLOTHER, SELLSTOCK,
-    INVSUBACCTS, INV401KSOURCES, BUYTYPES, SELLTYPES,
+    INVSUBACCTS, INV401KSOURCES, BUYTYPES, SELLTYPES, INCOMETYPES
 )
 
 
@@ -111,11 +113,11 @@ class InvbuyTestCase(InvtranTestCase):
 
     @property
     def optionalElements(self):
-        req = super(InvbuyTestCase, self).optionalElements
-        req += ('MARKUP', 'COMMISSION', 'TAXES', 'FEES', 'LOAD',
+        opt = super(InvbuyTestCase, self).optionalElements
+        opt += ('MARKUP', 'COMMISSION', 'TAXES', 'FEES', 'LOAD',
                 'CURRENCY', 'LOANID', 'LOANPRINCIPAL', 'LOANINTEREST',
                 'INV401KSOURCE', 'DTPAYROLL', 'PRIORYEARCONTRIB')
-        return req
+        return opt
 
     def testConvert(self):
         root = super(InvbuyTestCase, self).testConvert()
@@ -337,6 +339,11 @@ class BuystockTestCase(InvbuyTestCase):
         root.append(invbuy)
         return root
 
+    @property
+    def requiredElements(self):
+        req = super(BuystockTestCase, self).requiredElements
+        return req
+
     def testConvert(self):
         root = super(BuystockTestCase, self).testConvert()
         self.assertIsInstance(root, BUYSTOCK)
@@ -345,6 +352,352 @@ class BuystockTestCase(InvbuyTestCase):
     def testOneOf(self):
         super(BuystockTestCase, self).testOneOf()
         self.oneOfTest('BUYTYPE', BUYTYPES)
+
+
+class ClosureoptTestCase(InvtranTestCase):
+    """ """
+    @property
+    def root(self):
+        root = Element('CLOSUREOPT')
+        invtran = super(ClosureoptTestCase, self).root
+        root.append(invtran)
+        secid = test_models_base.SecidTestCase().root
+        root.append(secid)
+        SubElement(root, 'OPTACTION').text = 'EXERCISE'
+        SubElement(root, 'UNITS').text = '200'
+        SubElement(root, 'SHPERCTRCT').text = '100'
+        SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
+        SubElement(root, 'RELFITID').text = '1001'
+        SubElement(root, 'GAIN').text = '123.45'
+        return root
+
+    @property
+    def requiredElements(self):
+        req = super(ClosureoptTestCase, self).requiredElements
+        req += ('SECID', 'DTTRADE', 'OPTACTION', 'UNITS', 'SHPERCTRCT',
+                'SUBACCTSEC',)
+        return req
+
+    @property
+    def optionalElements(self):
+        opt = super(ClosureoptTestCase, self).optionalElements
+        opt += ('RELFITID', 'GAIN',)
+        return opt 
+
+    def testConvert(self):
+        root = super(ClosureoptTestCase, self).testConvert()
+        test_models_base.SecidTestCase().root
+        self.assertEqual(root.optaction, 'EXERCISE')
+        self.assertEqual(root.units, Decimal('200'))
+        self.assertEqual(root.shperctrct, 100)
+        self.assertEqual(root.subacctsec, 'MARGIN')
+        self.assertEqual(root.relfitid, '1001')
+        self.assertEqual(root.gain, Decimal('123.45'))
+        return root
+
+    def testOneOf(self):
+        self.oneOfTest('OPTACTION', ('EXERCISE', 'ASSIGN', 'EXPIRE'))
+        self.oneOfTest('SUBACCTSEC', INVSUBACCTS)
+
+
+class IncomeTestCase(InvtranTestCase):
+    """ """
+    @property
+    def root(self):
+        root = Element('INCOME')
+        invtran = super(IncomeTestCase, self).root
+        root.append(invtran)
+        secid = test_models_base.SecidTestCase().root
+        root.append(secid)
+        SubElement(root, 'INCOMETYPE').text = 'CGLONG'
+        SubElement(root, 'TOTAL').text = '1500'
+        SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
+        SubElement(root, 'SUBACCTFUND').text = 'CASH'
+        SubElement(root, 'TAXEXEMPT').text = 'Y'
+        SubElement(root, 'WITHHOLDING').text = '123.45'
+        currency = test_models_base.CurrencyTestCase().root
+        root.append(currency)
+        SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
+        return root
+
+    @property
+    def requiredElements(self):
+        req = super(IncomeTestCase, self).requiredElements
+        req += ('SECID', 'DTTRADE', 'INCOMETYPE', 'TOTAL', 'SUBACCTSEC',
+                'SUBACCTFUND', )
+        return req
+
+    @property
+    def optionalElements(self):
+        opt = super(IncomeTestCase, self).optionalElements
+        opt += ('TAXEXEMPT', 'WITHHOLDING', 'CURRENCY', 'INV401KSOURCE',)
+        return opt
+
+    def testConvert(self):
+        root = super(IncomeTestCase, self).testConvert()
+        test_models_base.SecidTestCase().root
+        self.assertEqual(root.incometype, 'CGLONG')
+        self.assertEqual(root.total, Decimal('1500'))
+        self.assertEqual(root.subacctsec, 'MARGIN')
+        self.assertEqual(root.subacctfund, 'CASH')
+        self.assertEqual(root.taxexempt, True)
+        self.assertEqual(root.withholding, Decimal('123.45'))
+        test_models_base.CurrencyTestCase().root
+        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
+        return root
+
+    def testOneOf(self):
+        self.oneOfTest('INCOMETYPE', INCOMETYPES)
+        self.oneOfTest('SUBACCTSEC', INVSUBACCTS)
+        self.oneOfTest('SUBACCTFUND', INVSUBACCTS)
+        self.oneOfTest('INV401KSOURCE', INV401KSOURCES)
+
+
+class InvexpenseTestCase(InvtranTestCase):
+    """ """
+    @property
+    def root(self):
+        root = Element('INVEXPENSE')
+        invtran = super(InvexpenseTestCase, self).root
+        root.append(invtran)
+        secid = test_models_base.SecidTestCase().root
+        root.append(secid)
+        SubElement(root, 'TOTAL').text = '-161.49'
+        SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
+        SubElement(root, 'SUBACCTFUND').text = 'CASH'
+        currency = test_models_base.CurrencyTestCase().root
+        root.append(currency)
+        SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
+        return root
+
+    @property
+    def requiredElements(self):
+        req = super(InvexpenseTestCase, self).requiredElements
+        req += ('SECID', 'DTTRADE', 'TOTAL', 'SUBACCTSEC', 'SUBACCTFUND')
+        return req
+
+    @property
+    def optionalElements(self):
+        opt = super(InvexpenseTestCase, self).optionalElements
+        opt += ('CURRENCY', 'INV401KSOURCE',)
+        return opt
+
+    def testConvert(self):
+        root = super(InvexpenseTestCase, self).testConvert()
+        test_models_base.SecidTestCase().root
+        self.assertEqual(root.total, Decimal('-161.49'))
+        self.assertEqual(root.subacctsec, 'MARGIN')
+        self.assertEqual(root.subacctfund, 'CASH')
+        test_models_base.CurrencyTestCase().root
+        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
+
+    def testOneOf(self):
+        self.oneOfTest('SUBACCTSEC', INVSUBACCTS)
+        self.oneOfTest('SUBACCTFUND', INVSUBACCTS)
+        self.oneOfTest('INV401KSOURCE', INV401KSOURCES)
+
+
+class JrnlfundTestCase(InvtranTestCase):
+    """ """
+    @property
+    def root(self):
+        root = Element('JRNLFUND')
+        invtran = super(JrnlfundTestCase, self).root
+        root.append(invtran)
+        SubElement(root, 'SUBACCTTO').text = 'MARGIN'
+        SubElement(root, 'SUBACCTFROM').text = 'CASH'
+        SubElement(root, 'TOTAL').text = '161.49'
+        return root
+
+    @property
+    def requiredElements(self):
+        req = super(InvbuyTestCase, self).requiredElements
+        req += ('SECID', 'DTTRADE', 'SUBACCTTO', 'SUBACCTFROM', 'TOTAL',)
+        return req
+
+    def testConvert(self):
+        root = super(InvbuyTestCase, self).testConvert()
+        self.assertEqual(root.subacctto, 'MARGIN')
+        self.assertEqual(root.subacctfrom, 'CASH')
+        self.assertEqual(root.total, Decimal('161.49'))
+
+    def testOneOf(self):
+        self.oneOfTest('SUBACCTTO', INVSUBACCTS)
+        self.oneOfTest('SUBACCTFROM', INVSUBACCTS)
+
+
+class JrnlsecTestCase(InvtranTestCase):
+    """ """
+    @property
+    def root(self):
+        root = Element('JRNLSEC')
+        invtran = super(JrnlfundTestCase, self).root
+        root.append(invtran)
+        secid = test_models_base.SecidTestCase().root
+        root.append(secid)
+        SubElement(root, 'SUBACCTTO').text = 'MARGIN'
+        SubElement(root, 'SUBACCTFROM').text = 'CASH'
+        SubElement(root, 'UNITS').text = '1600'
+        return root
+
+    @property
+    def requiredElements(self):
+        req = super(InvbuyTestCase, self).requiredElements
+        req += ('SECID', 'DTTRADE', 'SUBACCTTO', 'SUBACCTFROM', 'UNITS',)
+        return req
+
+    def testConvert(self):
+        root = super(InvbuyTestCase, self).testConvert()
+        test_models_base.SecidTestCase().root
+        self.assertEqual(root.subacctto, 'MARGIN')
+        self.assertEqual(root.subacctfrom, 'CASH')
+        self.assertEqual(root.units, Decimal('1600'))
+
+    def testOneOf(self):
+        self.oneOfTest('SUBACCTTO', INVSUBACCTS)
+        self.oneOfTest('SUBACCTFROM', INVSUBACCTS)
+
+
+class MargininterestTestCase(InvtranTestCase):
+    """ """
+    @property
+    def root(self):
+        root = Element('MARGININTEREST')
+        invtran = super(MargininterestTestCase, self).root
+        root.append(invtran)
+        SubElement(root, 'TOTAL').text = '161.49'
+        SubElement(root, 'SUBACCTFUND').text = 'CASH'
+        currency = test_models_base.CurrencyTestCase().root
+        root.append(currency)
+        return root
+
+    @property
+    def requiredElements(self):
+        req = super(MargininterestTestCase, self).requiredElements
+        req += ('TOTAL', 'SUBACCTFUND')
+        return req
+
+    @property
+    def optionalElements(self):
+        opt = super(MargininterestTestCase, self).optionalElements
+        opt += ('CURRENCY',)
+        return opt
+
+    def testConvert(self):
+        root = super(MargininterestTestCase, self).testConvert()
+        self.assertEqual(root.total, Decimal('161.49'))
+        self.assertEqual(root.subacctfund, 'CASH')
+        test_models_base.CurrencyTestCase().root
+        return root
+
+    def testOneOf(self):
+        self.oneOfTest('SUBACCTFUND', INVSUBACCTS)
+
+
+class ReinvestTestCase(InvtranTestCase):
+    """ """
+    @property
+    def root(self):
+        root = Element('REINVEST')
+        invtran = super(ReinvestTestCase, self).root
+        root.append(invtran)
+        secid = test_models_base.SecidTestCase().root
+        root.append(secid)
+        SubElement(root, 'TOTAL').text = '-161.49'
+        SubElement(root, 'INCOMETYPE').text = 'CGLONG'
+        SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
+        SubElement(root, 'UNITS').text = '100'
+        SubElement(root, 'UNITPRICE').text = '1.50'
+        SubElement(root, 'COMMISSION').text = '9.99'
+        SubElement(root, 'TAXES').text = '0'
+        SubElement(root, 'FEES').text = '1.50'
+        SubElement(root, 'LOAD').text = '0'
+        SubElement(root, 'TAXEXEMPT').text = 'Y'
+        currency = test_models_base.CurrencyTestCase().root
+        root.append(currency)
+        SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
+        return root
+
+    @property
+    def requiredElements(self):
+        req = super(ReinvestTestCase, self).requiredElements
+        req += ('SECID', 'DTTRADE', 'TOTAL', 'INCOMETYPE', 'SUBACCTSEC',
+                'UNITS', 'UNITPRICE',)
+        return req
+
+    @property
+    def optionalElements(self):
+        opt = super(ReinvestTestCase, self).optionalElements
+        opt += ('COMMISSION', 'TAXES', 'FEES', 'LOAD', 'TAXEXEMPT',
+                'CURRENCY', 'INV401KSOURCE',)
+        return opt
+
+    def testConvert(self):
+        root = super(ReinvestTestCase, self).testConvert()
+        test_models_base.SecidTestCase().root
+        self.assertEqual(root.total, Decimal('-161.49'))
+        self.assertEqual(root.incometype, 'CGLONG')
+        self.assertEqual(root.subacctsec, 'MARGIN')
+        self.assertEqual(root.units, Decimal('100'))
+        self.assertEqual(root.unitprice, Decimal('1.50'))
+        self.assertEqual(root.commission, Decimal('9.99'))
+        self.assertEqual(root.taxes, Decimal('0'))
+        self.assertEqual(root.fees, Decimal('1.50'))
+        self.assertEqual(root.load, Decimal('0'))
+        self.assertEqual(root.taxexempt, True)
+        test_models_base.CurrencyTestCase().root
+        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
+        return root
+
+    def testOneOf(self):
+        self.oneOfTest('INCOMETYPE', INCOMETYPES)
+        self.oneOfTest('SUBACCTSEC', INVSUBACCTS)
+        self.oneOfTest('INV401KSOURCE', INV401KSOURCES)
+
+
+class RetofcapTestCase(InvtranTestCase):
+    """ """
+    @property
+    def root(self):
+        root = Element('RETOFCAP')
+        invtran = super(RetofcapTestCase, self).root
+        root.append(invtran)
+        secid = test_models_base.SecidTestCase().root
+        root.append(secid)
+        SubElement(root, 'TOTAL').text = '-161.49'
+        SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
+        SubElement(root, 'SUBACCTFUND').text = 'CASH'
+        currency = test_models_base.CurrencyTestCase().root
+        root.append(currency)
+        SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
+        return root
+
+    @property
+    def requiredElements(self):
+        req = super(RetofcapTestCase, self).requiredElements
+        req += ('SECID', 'DTTRADE', 'TOTAL', 'SUBACCTSEC', 'SUBACCTFUND')
+        return req
+
+    @property
+    def optionalElements(self):
+        opt = super(RetofcapTestCase, self).optionalElements
+        opt += ('CURRENCY', 'INV401KSOURCE',)
+        return opt
+
+    def testConvert(self):
+        root = super(RetofcapTestCase, self).testConvert()
+        test_models_base.SecidTestCase().root
+        self.assertEqual(root.total, Decimal('-161.49'))
+        self.assertEqual(root.subacctsec, 'MARGIN')
+        self.assertEqual(root.subacctfund, 'CASH')
+        test_models_base.CurrencyTestCase().root
+        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
+        return root
+
+    def testOneOf(self):
+        self.oneOfTest('SUBACCTSEC', INVSUBACCTS)
+        self.oneOfTest('SUBACCTFUND', INVSUBACCTS)
+        self.oneOfTest('INV401KSOURCE', INV401KSOURCES)
 
 
 class SelldebtTestCase(InvsellTestCase):
@@ -500,3 +853,113 @@ class SellstockTestCase(InvsellTestCase):
     def testOneOf(self):
         super(SellstockTestCase, self).testOneOf()
         self.oneOfTest('SELLTYPE', SELLTYPES)
+
+
+class SplitTestCase(InvtranTestCase):
+    """ """
+    @property
+    def root(self):
+        root = Element('SPLIT')
+        invtran = super(SplitTestCase, self).root
+        root.append(invtran)
+        secid = test_models_base.SecidTestCase().root
+        root.append(secid)
+        SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
+        SubElement(root, 'OLDUNITS').text = '200'
+        SubElement(root, 'NEWUNITS').text = '100'
+        SubElement(root, 'NUMERATOR').text = '1'
+        SubElement(root, 'DENOMINATOR').text = '2'
+        currency = test_models_base.CurrencyTestCase().root
+        root.append(currency)
+        SubElement(root, 'FRACCASH').text = '0.50'
+        SubElement(root, 'SUBACCTFUND').text = 'CASH'
+        SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
+        return root
+
+    @property
+    def requiredElements(self):
+        req = super(SplitTestCase, self).requiredElements
+        req += ('SECID', 'DTTRADE', 'SUBACCTSEC', 'OLDUNITS', 'NEWUNITS',
+                'NUMERATOR', 'DENOMINATOR',) 
+        return req
+
+    @property
+    def optionalElements(self):
+        opt = super(SplitTestCase, self).optionalElements
+        opt += ('CURRENCY', 'FRACCASH', 'SUBACCTFUND', 'INV401KSOURCE',)
+        return opt
+
+    def testConvert(self):
+        root = super(SplitTestCase, self).testConvert()
+        test_models_base.SecidTestCase().root
+        self.assertEqual(root.subacctsec, 'MARGIN')
+        self.assertEqual(root.oldunits, Decimal('200'))
+        self.assertEqual(root.newunits, Decimal('100'))
+        self.assertEqual(root.numerator, Decimal('1'))
+        self.assertEqual(root.denominator, Decimal('2'))
+        test_models_base.CurrencyTestCase().root
+        self.assertEqual(root.fraccash, Decimal('0.50'))
+        self.assertEqual(root.subacctfund, 'CASH')
+        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
+        return root
+
+    def testOneOf(self):
+        self.oneOfTest('SUBACCTSEC', INVSUBACCTS)
+        self.oneOfTest('SUBACCTFUND', INVSUBACCTS)
+        self.oneOfTest('INV401KSOURCE', INV401KSOURCES)
+
+
+class TransferTestCase(InvtranTestCase):
+    """ """
+    @property
+    def root(self):
+        root = Element('TRANSFER')
+        invtran = super(TransferTestCase, self).root
+        root.append(invtran)
+        secid = test_models_base.SecidTestCase().root
+        root.append(secid)
+        SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
+        SubElement(root, 'UNITS').text = '100'
+        SubElement(root, 'TFERACTION').text = 'OUT'
+        SubElement(root, 'POSTYPE').text = 'LONG'
+        invacctfrom = test_models_accounts.InvacctfromTestCase().root
+        root.append(invacctfrom)
+        SubElement(root, 'AVGCOSTBASIS').text = '22.22'
+        SubElement(root, 'UNITPRICE').text = '23.01'
+        SubElement(root, 'DTPURCHASE').text = '19991231'
+        SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
+        return root
+
+    @property
+    def requiredElements(self):
+        req = super(TransferTestCase, self).requiredElements
+        req += ('SECID', 'DTTRADE', 'SUBACCTSEC', 'UNITS', 'TFERACTION',
+                'POSTYPE',)
+        return req
+
+    @property
+    def optionalElements(self):
+        opt = super(TransferTestCase, self).optionalElements
+        opt += ('INVACCTFROM', 'AVGCOSTBASIS', 'UNITPRICE', 'DTPURCHASE',
+                'INV401KSOURCE',)
+        return opt
+
+    def testConvert(self):
+        root = super(TransferTestCase, self).testConvert()
+        test_models_base.SecidTestCase().root
+        self.assertEqual(root.subacctsec, 'MARGIN')
+        self.assertEqual(root.units, Decimal('100'))
+        self.assertEqual(root.tferaction, 'OUT')
+        self.assertEqual(root.postype, 'LONG')
+        test_models_accounts.InvacctfromTestCase.testConvert()
+        self.assertEqual(root.avgcostbasis, Decimal('22.22'))
+        self.assertEqual(root.unitprice, Decimal('23.01'))
+        self.assertEqual(root.dtpurchase, datetime(1999, 12, 31))
+        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
+        return root
+
+    def testOneOf(self):
+        self.oneOfTest('SUBACCTSEC', INVSUBACCTS)
+        self.oneOfTest('TFERACTION', ('IN', 'OUT'))
+        self.oneOfTest('POSTYPE', ('LONG', 'SHORT'))
+        self.oneOfTest('INV401KSOURCE', INV401KSOURCES)
