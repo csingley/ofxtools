@@ -4,22 +4,21 @@ Python object model for fundamental data aggregates such as transactions,
 balances, and securities.
 """
 # local imports
-from ofxtools.models import Aggregate
 from ofxtools.Types import (
     String,
     OneOf,
     DateTime,
 )
-from ofxtools.lib import CURRENCY_CODES
+from ofxtools.models import (
+    Aggregate,
+    CURRENCY_CODES,
+)
 
 
 class TRNRS(Aggregate):
     """ Base class for *TRNRS (not in OFX spec) """
     trnuid = String(36, required=True)
     curdef = OneOf(*CURRENCY_CODES, required=True)
-
-    # _subaggregates = ()
-    # _unsupported = ()
 
     _rsTag = None
     _acctTag = None

@@ -6,6 +6,7 @@ from xml.etree.ElementTree import (
     Element,
     SubElement,
 )
+from datetime import datetime
 
 
 # local imports
@@ -17,11 +18,11 @@ from . import test_models_lists
 
 from ofxtools.models import (
     Aggregate,
-    STMTTRNRS, CCSTMTTRNRS,
+    STMTTRNRS, CCSTMTTRNRS, INVSTMTTRNRS,
     STATUS,
-    BANKACCTFROM,
-    BANKTRANLIST, BALLIST,
-    LEDGERBAL, AVAILBAL,
+    BANKACCTFROM, CCACCTFROM, INVACCTFROM,
+    BANKTRANLIST, INVTRANLIST, INVPOSLIST, BALLIST,
+    LEDGERBAL, AVAILBAL, INVBAL,
 )
 from ofxtools.lib import CURRENCY_CODES
 
@@ -29,6 +30,7 @@ from ofxtools.lib import CURRENCY_CODES
 class StmttrnrsTestCase(unittest.TestCase, common.TestAggregate):
     """
     """
+    __test__ = True
     requiredElements = ('TRNUID', 'CODE', 'SEVERITY', 'CURDEF',
                         'BANKACCTFROM', 'LEDGERBAL',)
     optionalElements = ('BANKTRANLIST', 'AVAILBAL', 'CASHADVBALAMT', 'INTRATE',
@@ -109,7 +111,7 @@ class CctmttrnrsTestCase(StmttrnrsTestCase):
         SubElement(root, 'TRNUID').text = '1001'
         status = test_models_base.StatusTestCase().root
         root.append(status)
-        stmtrs = SubElement(root, 'STMTRS')
+        stmtrs = SubElement(root, 'CCSTMTRS')
         SubElement(stmtrs, 'CURDEF').text = 'USD'
         acctfrom = test_models_accounts.CcacctfromTestCase().root
         stmtrs.append(acctfrom)
@@ -144,11 +146,11 @@ class CctmttrnrsTestCase(StmttrnrsTestCase):
         # Test *TRNRS wrapper and **RS Aggregate.
         # Everything below that is tested elsewhere.
         root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, STMTTRNRS)
+        self.assertIsInstance(root, CCSTMTTRNRS)
         self.assertEqual(root.trnuid, '1001')
         self.assertIsInstance(root.status, STATUS)
         self.assertEqual(root.curdef, 'USD')
-        self.assertIsInstance(root.bankacctfrom, BANKACCTFROM)
+        self.assertIsInstance(root.ccacctfrom, CCACCTFROM)
         self.assertIsInstance(root.banktranlist, BANKTRANLIST)
         self.assertIsInstance(root.ledgerbal, LEDGERBAL)
         self.assertIsInstance(root.availbal, AVAILBAL)
@@ -165,8 +167,74 @@ class CctmttrnrsTestCase(StmttrnrsTestCase):
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
         self.assertIs(root.currency, root.curdef)
-        self.assertIs(root.account, root.bankacctfrom)
+        self.assertIs(root.account, root.ccacctfrom)
         self.assertIs(root.transactions, root.banktranlist)
+
+
+class InvstmttrnrsTestCase(unittest.TestCase, common.TestAggregate):
+    """
+    """
+    __test__ = True
+    requiredElements = ('TRNUID', 'CODE', 'SEVERITY', 'DTASOF', 'CURDEF',
+                        'BROKERID', 'INVACCTFROM',)
+    optionalElements = ('INVTRANLIST', 'INVPOSLIST', 'INVBAL',)
+
+    @property
+    def root(self):
+        root = Element('INVSTMTTRNRS')
+        SubElement(root, 'TRNUID').text = '1001'
+        status = test_models_base.StatusTestCase().root
+        root.append(status)
+        # FIXME - CLTCOOKIE
+        # FIXME - OFXEXTENSION
+        stmtrs = SubElement(root, 'INVSTMTRS')
+        SubElement(stmtrs, 'DTASOF').text = '20010530'
+        SubElement(stmtrs, 'CURDEF').text = 'USD'
+        acctfrom = test_models_accounts.InvacctfromTestCase().root
+        stmtrs.append(acctfrom)
+        tranlist = test_models_lists.InvtranlistTestCase().root
+        stmtrs.append(tranlist)
+        poslist = test_models_lists.InvposlistTestCase().root
+        stmtrs.append(poslist)
+        invbal = test_models_balances.InvbalTestCase().root
+        stmtrs.append(invbal)
+        # FIXME - INVOOLIST
+        SubElement(stmtrs, 'MKTGINFO').text = 'Get Free Stuff NOW!!'
+        # FIXME - INV401K
+        # FIXME - INV401KBAL
+
+        return root
+
+    def testConvert(self):
+        # Test *TRNRS wrapper and **RS Aggregate.
+        # Everything below that is tested elsewhere.
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, INVSTMTTRNRS)
+        self.assertEqual(root.trnuid, '1001')
+        self.assertIsInstance(root.status, STATUS)
+        self.assertEqual(root.dtasof, datetime(2001, 5, 30))
+        self.assertEqual(root.curdef, 'USD')
+        self.assertIsInstance(root.invacctfrom, INVACCTFROM)
+        self.assertIsInstance(root.invtranlist, INVTRANLIST)
+        self.assertIsInstance(root.invposlist, INVPOSLIST)
+        self.assertIsInstance(root.invbal, INVBAL)
+
+    def testUnsupported(self):
+        root = self.root
+        for tag in INVSTMTTRNRS._unsupported:
+            self.assertIsNone(getattr(root, tag, None))
+
+    def testOneOf(self):
+        self.oneOfTest('CURDEF', CURRENCY_CODES)
+        self.oneOfTest('CURSYM', CURRENCY_CODES)
+
+    def testPropertyAliases(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIs(root.currency, root.curdef)
+        self.assertIs(root.account, root.invacctfrom)
+        self.assertIs(root.transactions, root.invtranlist)
+        self.assertIs(root.datetime, root.dtasof)
+        self.assertIs(root.positions, root.invposlist)
 
 
 if __name__ == '__main__':
