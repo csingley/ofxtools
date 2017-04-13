@@ -3,27 +3,27 @@ import os.path
 
 # Get the long description from the relevant file
 __here__ = os.path.dirname(os.path.realpath(__file__))
-with open(os.path.join(__here__, 'README.md'), 'r') as f:
+with open(os.path.join(__here__, 'README.rst'), 'r') as f:
     long_description = f.read()
 
 setup(
-    name = 'ofxtools',
-    version = '0.3.14',
+    name='ofxtools',
+    version='0.4.1',
     # Note: change 'master' to the tag name when release a new verion
-    download_url = 'https://github.com/csingley/ofxtools/tarball/master',
+    download_url='https://github.com/csingley/ofxtools/tarball/0.4.1',
 
-    description = ('Library for working with Open Financial Exchange (OFX) '
-                   'formatted data used by financial institutions'),
-    long_description = long_description,
+    description=('Library for working with Open Financial Exchange (OFX) '
+                 'formatted data used by financial institutions'),
+    long_description=long_description,
 
-    url = 'https://github.com/csingley/ofxtools',
+    url='https://github.com/csingley/ofxtools',
 
-    author = 'Christopher Singley',
-    author_email = 'csingley@gmail.com',
+    author='Christopher Singley',
+    author_email='csingley@gmail.com',
 
-    license = 'MIT',
+    license='MIT',
 
-    classifiers = [
+    classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'Intended Audience :: Financial and Insurance Industry',
@@ -45,22 +45,26 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
 
-    keywords = ['ofx', 'Open Financial Exchange'],
+    keywords=['ofx', 'Open Financial Exchange'],
 
-    packages = find_packages(),
+    packages=find_packages(),
 
-    install_requires = ['requests',],
+    install_requires=['requests'],
 
-    package_data = {
+    extras_require={
+        ":python_version < '3.3'": ['mock'],
+    },
+
+    package_data={
         'ofxtools': ['README.md', 'config/*.cfg', 'tests/*'],
     },
 
-    entry_points = {
+    entry_points={
         'console_scripts': [
             'ofxget=ofxtools.Client:main',
         ],
     },
 )
-

@@ -1,13 +1,10 @@
 -r requirements.txt
 
 # test running
+mock; python_version < '2.7'
 nose
 yanc
 ipdb
 ipdbplugin
 coverage
 pylint
-
-# python dependencies
-
-sqlalchemy>=1
