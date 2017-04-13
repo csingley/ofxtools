@@ -222,3 +222,7 @@ class DateTimeTestCase(unittest.TestCase, Base):
         # Don't accept string
         with self.assertRaises(ValueError):
             t.unconvert('20070101')
+
+
+if __name__ == '__main__':
+    unittest.main()
