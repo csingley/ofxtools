@@ -1,4 +1,4 @@
-# vim: set fileencoding=utf-8
+# coding: utf-8
 """ OFX element type converters / validators """
 
 # stdlib imports
@@ -9,11 +9,13 @@ import time
 import re
 import warnings
 
+
 # Python 2 emulate Py3K str
 try:
     str = unicode
 except NameError:
     pass
+
 
 class OFXTypeWarning(UserWarning):
     """ Base class for warnings in this module """
@@ -22,8 +24,8 @@ class OFXTypeWarning(UserWarning):
 
 class Element(object):
     """
-    Python representation of an OFX 'element', i.e. SGML leaf node that contains
-    text data.
+    Python representation of an OFX 'element', i.e. SGML leaf node that 
+    contains text data.
 
     Pass validation parameters (e.g. maximum string length, decimal precision,
     required vs. optional, etc.) as arguments to __init__() when defining

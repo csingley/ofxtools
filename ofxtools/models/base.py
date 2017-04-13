@@ -121,22 +121,6 @@ class Aggregate(object):
         """
         pass
 
-    @staticmethod
-    def _mutex(elem, mutexes):
-        """
-        Throw an error for Elements containing sub-Elements that are
-        mutually exclusive per the OFX spec, and which will cause
-        problems for _flatten().
-
-        Used in subclass _verify() methods.
-        """
-        for mutex in mutexes:
-            if (elem.find(mutex[0]) is not None and
-                    elem.find(mutex[1]) is not None):
-                msg = "{} may not contain both {} and {}".format(
-                    elem.tag, mutex[0], mutex[1])
-                raise ValueError(msg)
-
     @classmethod
     def _preflatten(cls, elem):
         """
@@ -157,12 +141,12 @@ class Aggregate(object):
             subagg = elem.find(tag)
             if subagg is not None:
                 elem.remove(subagg)
-                subaggs[tag] = subagg
+                subaggs[tag.lower()] = subagg
 
         # Unsupported subaggregates
         for tag in cls._unsupported:
-            subagg = elem.find(tag)
-            if subagg is not None:
+            subs = elem.findall(tag)
+            for subagg in subs:
                 elem.remove(subagg)
 
         return subaggs
@@ -217,11 +201,73 @@ class Aggregate(object):
                 )
                 raise ValueError(msg)
 
+    @staticmethod
+    def _mutex(elem, mutexes):
+        """
+        Throw an error for Elements containing sub-Elements that are
+        mutually exclusive per the OFX spec, and which will cause
+        problems for _flatten().
+
+        Used in subclass _verify() methods.
+        """
+        for mutex in mutexes:
+            if (elem.find(mutex[0]) is not None and
+                    elem.find(mutex[1]) is not None):
+                msg = "{} may not contain both {} and {}".format(
+                    elem.tag, mutex[0], mutex[1])
+                raise ValueError(msg)
+
     def __repr__(self):
         attrs = ['%s=%r' % (attr, str(getattr(self, attr)))
                  for attr in self.elements
                  if getattr(self, attr) is not None]
         return '<%s %s>' % (self.__class__.__name__, ' '.join(attrs))
+
+
+class OFX(Aggregate):
+    """ """
+    _subaggregates = ('SIGNONMSGSRSV1', 'BANKMSGSRSV1', 'CREDITCARDMSGSRSV1',
+                      'INVSTMTMSGSRSV1', 'SECLISTMSGSRSV1')
+    _unsupported = ('SIGNUPMSGSRSV1', 'EMAILMSGSRSV1', 'LOANMSGSRSV1',
+                    'PRESDIRMSGSRSV1', 'PRESDLVMSGSRSV1', 'PROFMSGSRSV1',
+                    'TAX1098MSGSRSV1', 'TAX1099MSGSRSV1', 'TAXW2MSGSRSV1',
+                    'TAX1095MSGSRSV1',)
+
+    # Human-friendly attribute aliases
+    @property
+    def sonrs(self):
+        sonrs = None
+        attr = getattr(self, 'sonmsgsrsv1', None)
+        if attr:
+            sonrs = getattr(attr, 'sonrs')
+        return sonrs
+
+    @property
+    def securities(self):
+        seclist = []
+        attr = getattr(self, 'seclistmsgsrsv1', None)
+        if attr:
+            seclist = getattr(attr, 'seclist')
+        return seclist
+
+    @property
+    def statements(self):
+        """ """
+        stmts = []
+        for msgs in ('bankmsgsrsv1', 'creditcardmsgsrsv1', 'invstmtmsgsrsv1'):
+            attr = getattr(self, msgs, None)
+            if attr:
+                stmts.extend(attr)
+        return stmts
+
+    # def __repr__(self):
+        # s = "<%s fid='%s' org='%s' dtserver='%s' len(statements)=%d len(securities)=%d>"
+        # return s % (self.__class__.__name__,
+                    # self.sonrs.fid,
+                    # self.sonrs.org,
+                    # str(self.sonrs.dtserver),
+                    # len(self.statements),
+                    # len(self.securities),)
 
 
 class FI(Aggregate):

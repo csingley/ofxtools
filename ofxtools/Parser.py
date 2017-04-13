@@ -17,65 +17,6 @@ class ParseError(SyntaxError):
     pass
 
 
-class OFXResponse(object):
-    """
-    Top-level object representing an OFX response converted into Python
-    data types, with attributes for convenient access to statements (i.e.
-    OFX *STMT aggregates), security descriptions (i.e. OFX SECLIST aggregate),
-    and SONRS (server response to signon request).
-
-    After conversion, each of these convenience attributes holds instances
-    of various Aggregate subclasses.
-    """
-    @classmethod
-    def from_etree(cls, tree):
-        """
-        Initialize with ofx.ElementTree instance containing parsed OFX.
-        """
-        instance = cls()
-
-        # Keep a copy of the parse tree
-        instance.tree = tree
-
-        # SONRS - server response to signon request
-        sonrs = tree.find('SIGNONMSGSRSV1/SONRS')
-        instance.sonrs = Aggregate.from_etree(sonrs)
-
-        # TRNRS - transaction response, which is the main section
-        # containing account statements
-        instance.statements = []
-
-        # N.B. This iteration method doesn't preserve the original
-        # ordering of the statements within the OFX response
-        for stmtClass in (STMTTRNRS, CCSTMTTRNRS, INVSTMTTRNRS):
-            tagname = stmtClass.__name__
-            for trnrs in tree.findall('*/%s' % tagname):
-                # *STMTTRNRS may have no *STMTRS (in case of error).
-                # Don't blow up; skip silently.
-                stmtrs = trnrs.find(stmtClass._rsTag)
-                if stmtrs is not None:
-                    stmt = Aggregate.from_etree(trnrs)
-                    instance.statements.append(stmt)
-
-        # SECLIST - list of description of securities referenced by
-        # INVSTMT (investment account statement)
-        instance.securities = []
-        seclist = tree.find('SECLISTMSGSRSV1/SECLIST')
-        if seclist is not None:
-            instance.securities = Aggregate.from_etree(seclist)
-
-        return instance
-
-    def __repr__(self):
-        s = "<%s fid='%s' org='%s' dtserver='%s' len(statements)=%d len(securities)=%d>"
-        return s % (self.__class__.__name__,
-                    self.sonrs.fid,
-                    self.sonrs.org,
-                    str(self.sonrs.dtserver),
-                    len(self.statements),
-                    len(self.securities),)
-
-
 class OFXTree(ET.ElementTree):
     """
     Subclass of ElementTree.ElementTree, customized to represent OFX as
@@ -101,6 +42,19 @@ class OFXTree(ET.ElementTree):
         # Follow ElementTree API and stash as self._root (so all normal
         # ElementTree methods e.g. find() work normally on our subclass).
         self._root = parser.close()
+
+    def convert(self):
+        """ """
+        if not isinstance(self._root, ET.Element):
+            raise ValueError('Must first call parse() to have data to convert')
+        # OFXResponse performs validation & type conversion
+        # return OFXResponse.from_etree(self)
+        instance = Aggregate.from_etree(self._root)
+
+        # Keep a copy of the parse tree
+        instance.tree = self
+
+        return instance
 
     @staticmethod
     def _read(source):
@@ -130,13 +84,6 @@ class OFXTree(ET.ElementTree):
     def _stripHeader(source):
         """ Validate and strip the OFX header """
         return OFXHeader.strip(source)
-
-    def convert(self):
-        """ """
-        if not isinstance(self._root, ET.Element):
-            raise ValueError('Must first call parse() to have data to convert')
-        # OFXResponse performs validation & type conversion
-        return OFXResponse.from_etree(self)
 
 
 class TreeBuilder(ET.TreeBuilder):
@@ -232,6 +179,7 @@ def main():
         ofxparser = OFXTree()
         ofxparser.parse(file)
         response = ofxparser.convert()
+        print(response.statements[0].transactions[:])
 
 
 if __name__ == '__main__':
