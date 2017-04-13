@@ -12,16 +12,13 @@ try:
         patch,
     )
 except ImportError:
+    # Python 2 depends on external mock package
     from mock import (
         MagicMock,
         call,
         patch,
     )
 
-# Force python XML parser not faster C accelerators
-# because we can't hook the C implementation
-# import sys
-# sys.modules['_elementtree'] = None
 from xml.etree.ElementTree import (
     Element,
 )
@@ -113,6 +110,14 @@ class TreeBuilderTestCase(TestCase):
     def tearDown(self):
         del self.builder
 
+    def test_groomstring(self):
+        groom = self.builder._groomstring
+        self.assertEqual(None, groom(None))
+        self.assertEqual(None, groom(''))
+        self.assertEqual(None, groom('   \n'))
+        self.assertEqual('text', groom('text   \n'))
+        self.assertEqual('text', groom('   \ntext'))
+
     def test_start_agg(self):
         (tag, text, closetag) = ('TAG', None, None)
         self.builder._start(tag, text, closetag)
@@ -126,21 +131,6 @@ class TreeBuilderTestCase(TestCase):
         self.builder.start.assert_called_once_with('TAG', {})
         self.builder.data.assert_not_called()
         self.builder.end.assert_called_once_with('TAG')
-
-    def test_start_emptytag(self):
-        (tag, text, closetag) = (None, 'value', 'TAG')
-        with self.assertRaises(AssertionError):
-            self.builder._start(tag, text, closetag)
-
-    def test_agg_mismatch(self):
-        (tag, text, closetag) = ('TAG', None, 'GAT')
-        with self.assertRaises(AssertionError):
-            self.builder._start(tag, text, closetag)
-
-    def test_elem_mismatch(self):
-        (tag, text, closetag) = ('TAG', 'value', 'GAT')
-        with self.assertRaises(AssertionError):
-            self.builder._start(tag, text, closetag)
 
     def test_elemV1(self):
         (tag, text, closetag) = ('TAG', 'value', None)
@@ -156,33 +146,34 @@ class TreeBuilderTestCase(TestCase):
         self.builder.data.assert_called_once_with('value')
         self.builder.end.assert_called_once_with('TAG')
 
-    def test_end(self):
-        (tag, text) = ('TAG', None)
-        self.builder._end(tag, text)
-        self.builder.start.assert_not_called()
-        self.builder.data.assert_not_called()
-        self.builder.end.assert_called_once_with('TAG')
+    def test_feedmatch_empty_tag(self):
+        (tag, text, closetag) = (None, 'value', 'TAG')
+        with self.assertRaises(AssertionError):
+            self.builder._feedmatch(tag, text, closetag)
 
-    def test_end_tailtext(self):
-        with self.assertRaises(ParseError):
-            (tag, text) = ('TAG', 'value')
-            self.builder._end(tag, text)
+    def test_feedmatch_tag_mismatch(self):
+        (tag, text, closetag) = ('TAG', 'value', 'GAT')
+        with self.assertRaises(AssertionError):
+            self.builder._feedmatch(tag, text, closetag)
 
     def test_feedmatch_start(self):
         self.builder._start = MagicMock()
-        self.builder._end = MagicMock()
         (tag, text, closetag) = ('TAG', 'value', 'TAG')
         self.builder._feedmatch(tag, text, closetag)
         self.builder._start.assert_called_once_with('TAG', 'value', 'TAG')
-        self.builder._end.assert_not_called()
+        self.builder.end.assert_not_called()
 
     def test_feedmatch_end(self):
         self.builder._start = MagicMock()
-        self.builder._end = MagicMock()
-        (tag, text, closetag) = ('/TAG', 'value', None)
+        (tag, text, closetag) = ('/TAG', None, None)
         self.builder._feedmatch(tag, text, closetag)
         self.builder._start.assert_not_called()
-        self.builder._end.assert_called_once_with('TAG', 'value')
+        self.builder.end.assert_called_once_with('TAG')
+
+    def test_feedmatch_end_tail(self):
+        (tag, text, closetag) = ('/TAG', 'value', None)
+        with self.assertRaises(ParseError):
+            self.builder._feedmatch(tag, text, closetag)
 
     def test_feedmatch_tag_mismatch(self):
         self.builder._start = MagicMock()
