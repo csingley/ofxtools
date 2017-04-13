@@ -160,7 +160,7 @@ class TreeBuilder(ET.TreeBuilder):
         for match in self.regex.finditer(data):
             try:
                 groupdict = match.groupdict()
-                tail = groupdict['tail']
+                tail = (groupdict['tail'] or '').strip() or None
                 if tail:
                     msg = "Tail text '{}' in {}".format(tail, match.string)
                     raise ParseError(msg)
