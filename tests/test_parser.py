@@ -5,11 +5,19 @@ import unittest
 from unittest import (
     TestCase,
 )
-from unittest.mock import (
-    MagicMock,
-    call,
-    patch,
-)
+try:
+    from unittest.mock import (
+        MagicMock,
+        call,
+        patch,
+    )
+except ImportError:
+    from mock import (
+        MagicMock,
+        call,
+        patch,
+    )
+
 # Force python XML parser not faster C accelerators
 # because we can't hook the C implementation
 # import sys
