@@ -14,15 +14,8 @@ from copy import deepcopy
 # local imports
 from . import common
 from ofxtools.models import (
-    Aggregate,
-    FI,
-    STATUS,
-    SONRS,
-    CURRENCY,
-    BAL,
-    PAYEE,
-    SECID,
-    OFXELEMENT,
+    Aggregate, FI, STATUS, SONRS,
+    CURRENCY, BAL, PAYEE, SECID, OFXELEMENT,
 )
 from ofxtools.lib import LANG_CODES, CURRENCY_CODES
 
@@ -38,7 +31,7 @@ class AggregateTestCase(unittest.TestCase, common.TestAggregate):
         subaggs = {'a': object()}
         with self.assertRaises(ValueError):
             Aggregate._postflatten(self, subaggs)
-    
+
 
 class FiTestCase(unittest.TestCase, common.TestAggregate):
     # <FI> aggregates are optional in SONRQ/SONRS; not all firms use them.
