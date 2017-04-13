@@ -247,38 +247,38 @@ class TreeBuilderTestCase(unittest.TestCase):
         dtasof = availbal[1]
         self.element(dtasof, tag='DTASOF', data='200510291120')
 
-    def test_flatten(self):
-        sonrs = Aggregate._flatten(ofx[0][0])
-        self.assertEqual(sonrs, {'code': '0', 'severity': 'INFO',
-                                 'dtserver': '20051029101003',
-                                 'language': 'ENG',
-                                 'dtprofup': '19991029101003',
-                                 'dtacctup': '20031029101003',
-                                 'org': 'NCH', 'fid': '1001'})
+    # def test_flatten(self):
+        # sonrs = Aggregate._flatten(ofx[0][0])
+        # self.assertEqual(sonrs, {'code': '0', 'severity': 'INFO',
+                                 # 'dtserver': '20051029101003',
+                                 # 'language': 'ENG',
+                                 # 'dtprofup': '19991029101003',
+                                 # 'dtacctup': '20031029101003',
+                                 # 'org': 'NCH', 'fid': '1001'})
 
-        stmttrnrs = ofx[1][0]
-        stmttrnrs_status = Aggregate._flatten(stmttrnrs[1])
-        self.assertEqual(stmttrnrs_status, {'code': '0', 'severity': 'INFO'})
+        # stmttrnrs = ofx[1][0]
+        # stmttrnrs_status = Aggregate._flatten(stmttrnrs[1])
+        # self.assertEqual(stmttrnrs_status, {'code': '0', 'severity': 'INFO'})
 
-        stmtrs = stmttrnrs[2]
-        acctfrom = Aggregate._flatten(stmtrs[1])
-        self.assertEqual(acctfrom, {'bankid': '121099999', 'acctid': '999988',
-                                    'accttype': 'CHECKING'})
-        tranlist = stmtrs[2]
-        stmttrn1 = Aggregate._flatten(tranlist[2])
-        self.assertEqual(stmttrn1, {'trntype': 'CHECK', 'dtposted': '20051004',
-                                    'trnamt': '-200.00', 'fitid': '00002',
-                                    'checknum': '1000'})
-        stmttrn2 = Aggregate._flatten(tranlist[3])
-        self.assertEqual(stmttrn2, {'trntype': 'ATM', 'dtposted': '20051020',
-                                    'dtuser': '20051020', 'trnamt': '-300.00',
-                                    'fitid': '00003'})
-        ledgerbal = Aggregate._flatten(stmtrs[3])
-        self.assertEqual(ledgerbal, {'balamt': '200.29',
-                                     'dtasof': '200510291120'})
-        availbal = Aggregate._flatten(stmtrs[4])
-        self.assertEqual(availbal, {'balamt': '200.29',
-                                    'dtasof': '200510291120'})
+        # stmtrs = stmttrnrs[2]
+        # acctfrom = Aggregate._flatten(stmtrs[1])
+        # self.assertEqual(acctfrom, {'bankid': '121099999', 'acctid': '999988',
+                                    # 'accttype': 'CHECKING'})
+        # tranlist = stmtrs[2]
+        # stmttrn1 = Aggregate._flatten(tranlist[2])
+        # self.assertEqual(stmttrn1, {'trntype': 'CHECK', 'dtposted': '20051004',
+                                    # 'trnamt': '-200.00', 'fitid': '00002',
+                                    # 'checknum': '1000'})
+        # stmttrn2 = Aggregate._flatten(tranlist[3])
+        # self.assertEqual(stmttrn2, {'trntype': 'ATM', 'dtposted': '20051020',
+                                    # 'dtuser': '20051020', 'trnamt': '-300.00',
+                                    # 'fitid': '00003'})
+        # ledgerbal = Aggregate._flatten(stmtrs[3])
+        # self.assertEqual(ledgerbal, {'balamt': '200.29',
+                                     # 'dtasof': '200510291120'})
+        # availbal = Aggregate._flatten(stmtrs[4])
+        # self.assertEqual(availbal, {'balamt': '200.29',
+                                    # 'dtasof': '200510291120'})
 
 
 if __name__ == '__main__':

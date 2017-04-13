@@ -272,12 +272,11 @@ class OFXTreeTestCase(TestCase):
         # Fake the result of OFXTree.parse()
         self.tree._root = Element('FAKE')
 
-        # OFXTree.convert() instantiates an OFXResponse from itself, and
-        # returns the OFXResponse instance.
-        with patch('ofxtools.Parser.OFXResponse') as MockResponse:
-            response = self.tree.convert()
-            MockResponse.from_etree.assert_called_once_with(self.tree)
-            self.assertEqual(response, MockResponse.from_etree())
+        # OFXTree.convert() returns an OFX instance constructed from its root
+        with patch('ofxtools.Parser.Aggregate') as MockAggregate:
+            ofx = self.tree.convert()
+            MockAggregate.from_etree.assert_called_once_with(self.tree._root)
+            self.assertEqual(ofx, MockAggregate.from_etree())
             
     def test_convert_unparsed(self):
         # Calling OFXTree.convert() without first calling OFXTree.parse()
