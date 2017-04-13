@@ -84,7 +84,7 @@ class OFXTree(ET.ElementTree):
     def parse(self, source, parser=None):
         """
         Overrides ElementTree.ElementTree.parse() to validate and strip the
-        the OFX header before feeding the body tags to custom 
+        the OFX header before feeding the body tags to custom
         TreeBuilder subclass (below) for parsing into Element instances.
         """
         source = self._read(source)  # Now it's a string
@@ -113,7 +113,7 @@ class OFXTree(ET.ElementTree):
             try:
                 source = open(source, 'rb')
             except OSError:
-                # ... or else a directly parseable string
+                # ... or else a directly parse()able string
                 if isinstance(source, str):
                     return source
                 else:
@@ -162,12 +162,14 @@ class TreeBuilder(ET.TreeBuilder):
         for match in self.regex.finditer(data):
             try:
                 groupdict = match.groupdict()
-                tail = (groupdict['tail'] or '').strip() or None
+
+                tail = self._groomstring(groupdict['tail'])
                 if tail:
                     msg = "Tail text '{}' in {}".format(tail, match.string)
                     raise ParseError(msg)
+
                 tag = groupdict['tag']
-                text = (groupdict['text'] or '').strip() or None
+                text = self._groomstring(groupdict['text'])
                 closetag = groupdict['closetag']
                 self._feedmatch(tag, text, closetag)
             except ParseError as err:
@@ -182,9 +184,13 @@ class TreeBuilder(ET.TreeBuilder):
 
         This is factored out into a separate method to facilitate unit testing.
         """
+        assert tag
         assert closetag is None or closetag == tag
         if tag.startswith('/'):
-            self._end(tag[1:], text)
+            if text:
+                msg = "Tail text '{}' after <{}>".format(text, tag)
+                raise ParseError(msg.format(tag, text))
+            self.end(tag[1:])
         else:
             self._start(tag, text, closetag)
 
@@ -196,28 +202,23 @@ class TreeBuilder(ET.TreeBuilder):
         * If there's no text, it's a branch.
             - If regex captured closetag, it's an empty "aggregate"; pop it.
         """
-        assert tag
         self.start(tag, {})
         if text:
             # OFX "element" (i.e. data-bearing leaf)
             self.data(text)
             # End tags are optional for OFXv1 data elements
             # End all elements, whether or not they're explicitly ended
-            assert closetag is None or closetag == tag
             self.end(tag)
         elif closetag:
             # Empty OFX "aggregate" branch
-            assert closetag == tag
             self.end(tag)
 
-    def _end(self, tag, text):
-        """
-        Pop the top Element from the stack.
-        """
-        if text:
-            msg = "Tail text '{}' after </{}>".format(text, tag)
-            raise ParseError(msg.format(tag, text))
-        self.end(tag)
+    @staticmethod
+    def _groomstring(string):
+        """ Strips whitespace and returns None for empty string """
+        # Can't strip() None
+        string = (string or '').strip()
+        return string or None
 
 
 def main():
