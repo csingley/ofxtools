@@ -2,7 +2,10 @@
 """
 """
 # stdlib imports
-from collections import UserList
+try:
+    from collections import UserList
+except ImportError:
+    from UserList import UserList
 
 # local imports
 from ofxtools.models import Aggregate

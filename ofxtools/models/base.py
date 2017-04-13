@@ -5,7 +5,10 @@ balances, and securities.
 """
 # stdlib imports
 import xml.etree.ElementTree as ET
-from collections import UserList
+try:
+    from collections import UserList
+except ImportError:
+    from UserList import UserList
 
 # local imports
 import ofxtools.models
