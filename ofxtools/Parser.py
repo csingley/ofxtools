@@ -17,37 +17,6 @@ class ParseError(SyntaxError):
     pass
 
 
-class OFXTree(ET.ElementTree):
-    """
-    OFX parse tree.
-
-    Overrides ElementTree.ElementTree.parse() to validate and strip the
-    the OFX header before feeding the body tags to TreeBuilder
-    """
-    def parse(self, source):
-        if not hasattr(source, 'read'):
-            source = open(source)
-        with source as s:
-            source = s.read()
-            if hasattr(source, 'decode'):
-                source = source.decode()
-
-        # Validate and strip the OFX header
-        source = OFXHeader.strip(source)
-
-        # Then parse tag soup into tree of Elements
-        # parser = TreeBuilder(element_factory=self.element_factory)
-        parser = TreeBuilder()
-        parser.feed(source)
-        self._root = parser.close()
-
-    def convert(self):
-        if not hasattr(self, '_root'):
-            raise ValueError('Must first call parse() to have data to convert')
-        # OFXResponse performs validation & type conversion
-        return OFXResponse(self)
-
-
 class OFXResponse(object):
     """
     Top-level object representing an OFX response converted into Python
@@ -58,39 +27,42 @@ class OFXResponse(object):
     After conversion, each of these convenience attributes holds instances
     of various Aggregate subclasses.
     """
-    def __init__(self, tree):
+    @classmethod
+    def from_etree(cls, tree):
         """
         Initialize with ofx.ElementTree instance containing parsed OFX.
         """
+        instance = cls()
+
         # Keep a copy of the parse tree
-        self.tree = tree
+        instance.tree = tree
 
         # SONRS - server response to signon request
-        sonrs = self.tree.find('SIGNONMSGSRSV1/SONRS')
-        self.sonrs = Aggregate.from_etree(sonrs)
+        sonrs = tree.find('SIGNONMSGSRSV1/SONRS')
+        instance.sonrs = Aggregate.from_etree(sonrs)
 
         # TRNRS - transaction response, which is the main section
         # containing account statements
-        self.statements = []
+        instance.statements = []
 
         # N.B. This iteration method doesn't preserve the original
         # ordering of the statements within the OFX response
         for stmtClass in (STMTTRNRS, CCSTMTTRNRS, INVSTMTTRNRS):
             tagname = stmtClass.__name__
-            for trnrs in self.tree.findall('*/%s' % tagname):
+            for trnrs in tree.findall('*/%s' % tagname):
                 # *STMTTRNRS may have no *STMTRS (in case of error).
                 # Don't blow up; skip silently.
                 stmtrs = trnrs.find(stmtClass._rsTag)
                 if stmtrs is not None:
                     stmt = Aggregate.from_etree(trnrs)
-                    self.statements.append(stmt)
+                    instance.statements.append(stmt)
 
         # SECLIST - list of description of securities referenced by
         # INVSTMT (investment account statement)
-        self.securities = []
-        seclist = self.tree.find('SECLISTMSGSRSV1/SECLIST')
+        instance.securities = []
+        seclist = tree.find('SECLISTMSGSRSV1/SECLIST')
         if seclist is not None:
-            self.securities = Aggregate.from_etree(seclist)
+            instance.securities = Aggregate.from_etree(seclist)
 
     def __repr__(self):
         s = "<%s fid='%s' org='%s' dtserver='%s' len(statements)=%d len(securities)=%d>"
@@ -99,8 +71,70 @@ class OFXResponse(object):
                     self.sonrs.org,
                     str(self.sonrs.dtserver),
                     len(self.statements),
-                    len(self.securities),
-                   )
+                    len(self.securities),)
+
+
+class OFXTree(ET.ElementTree):
+    """
+    Subclass of ElementTree.ElementTree, customized to represent OFX as
+    an Element hierarchy.
+    """
+    def parse(self, source, parser=None):
+        """
+        Overrides ElementTree.ElementTree.parse() to validate and strip the
+        the OFX header before feeding the body tags to custom 
+        TreeBuilder subclass (below) for parsing into Element instances.
+        """
+        source = self._read(source)  # Now it's a string
+        source = self._stripHeader(source)  # Now it's OFX payload (SGML/XML)
+
+        # Cut a parser instance
+        parser = parser or TreeBuilder
+        parser = parser()
+
+        # Then parse tag soup into tree of Elements
+        parser.feed(source)
+
+        # ElementTree.TreeBuilder.close() returns the root.
+        # Follow ElementTree API and stash as self._root (so all normal
+        # ElementTree methods e.g. find() work normally on our subclass).
+        self._root = parser.close()
+
+    @staticmethod
+    def _read(source):
+        """
+        Do our best to turn whatever source we're given into a Python string.
+        """
+        # If our source doesn't follow the file API...
+        if not hasattr(source, 'read'):
+            # ...try to interpret it as a file
+            try:
+                source = open(source, 'rb')
+            except OSError:
+                # ... or else a directly parseable string
+                if isinstance(source, str):
+                    return source
+                else:
+                    msg = "Can't read source '{}'".format(source)
+                    raise ParseError(msg)
+        with source as s:
+            source = s.read()
+            # BytesIO.read() will return binary not str
+            if hasattr(source, 'decode'):
+                source = source.decode()
+        return source
+
+    @staticmethod
+    def _stripHeader(source):
+        """ Validate and strip the OFX header """
+        return OFXHeader.strip(source)
+
+    def convert(self):
+        """ """
+        if not isinstance(self._root, ET.Element):
+            raise ValueError('Must first call parse() to have data to convert')
+        # OFXResponse performs validation & type conversion
+        return OFXResponse.from_etree(self)
 
 
 class TreeBuilder(ET.TreeBuilder):
@@ -113,72 +147,75 @@ class TreeBuilder(ET.TreeBuilder):
     # The body of an OFX document consists of a series of tags.
     # Each start tag may be followed by text (if a data-bearing element)
     # and optionally an end tag (not mandatory for OFXv1 syntax).
-    regex = re.compile(r"""<(?P<TAG>[A-Z1-9./]+?)>
-                            (?P<TEXT>[^<]+)?
-                            (</(?P=TAG)>)?
+    regex = re.compile(r"""<(?P<tag>[A-Z1-9./ ]+?)>
+                            (?P<text>[^<]+)?
+                            (</(?P<closetag>(?P=tag))>)?
+                            (?P<tail>[^<]+)?
                             """, re.VERBOSE)
 
     def feed(self, data):
         """
         Iterate through all tags matched by regex.
-        For data-bearing leaf "elements", use TreeBuilder's methods to
-            push a new Element, process the text data, and end the element.
-        For non-data-bearing "aggregate" branches, parse the tag to distinguish
-            start/end tag, and push or pop the Element accordingly.
         """
         for match in self.regex.finditer(data):
-            tag, text, closeTag = match.groups()
-            text = (text or '').strip()  # None has no strip() method
-            if len(text):
-                # OFX "element" (i.e. data-bearing leaf)
-                if tag.startswith('/'):
-                    msg = "<%s> is a closing tag, but has trailing text: '%s'"\
-                            % (tag, text)
+            try:
+                groupdict = match.groupdict()
+                tail = groupdict['tail']
+                if tail:
+                    msg = "Tail text '{}' in {}".format(tail, match.string)
                     raise ParseError(msg)
-                self.start(tag, {})
-                self.data(text)
-                # End tags are optional for OFXv1 data elements
-                # End them all, whether or not they're explicitly ended
-                try:
-                    self.end(tag)
-                except ParseError as err:
-                    err.message += ' </%s>' % tag  # FIXME
-                    raise ParseError(err.message)
-            else:
-                # OFX "aggregate" (tagged branch w/ no data)
-                if tag.startswith('/'):
-                    # aggregate end tag
-                    try:
-                        self.end(tag[1:])
-                    except ParseError as err:
-                        err.message += ' </%s>' % tag  # FIXME
-                        raise ParseError(err.message)
-                else:
-                    # aggregate start tag
-                    self.start(tag, {})
-                    # empty aggregates are legal, so handle them
-                    if closeTag:
-                        # regex captures the entire closing tag
-                        assert closeTag.replace(tag, '') == '</>'
-                        try:
-                            self.end(tag)
-                        except ParseError as err:
-                            err.message += ' </%s>' % tag  # FIXME
-                            raise ParseError(err.message)
+                tag = groupdict['tag']
+                text = (groupdict['text'] or '').strip() or None
+                closetag = groupdict['closetag']
+                self._feedmatch(tag, text, closetag)
+            except ParseError as err:
+                # Report the position of the error
+                msg = err.args[0]
+                msg += ' - position=[{}:{}]'.format(match.start(), match.end())
+                raise ParseError(msg)
 
-    def end(self, tag):
-        try:
-            super(TreeBuilder, self).end(tag)
-        except AssertionError as err:
-            # HACK: ET.TreeBuilder.end() raises an AssertionError for internal
-            # errors generated by ET.TreeBuilder._flush(), but also for ending
-            # tag mismatches, which are problems with the data rather than the
-            # parser.  We want to pass on the former but handle the latter;
-            # however, the only difference is the error message.
-            if 'end tag mismatch' in err.message:
-                raise ParseError(err.message)
-            else:
-                raise
+    def _feedmatch(self, tag, text, closetag):
+        """
+        Route individual regex matches to _start()/_end() according to tag.
+
+        This is factored out into a separate method to facilitate unit testing.
+        """
+        assert closetag is None or closetag == tag
+        if tag.startswith('/'):
+            self._end(tag[1:], text)
+        else:
+            self._start(tag, text, closetag)
+
+    def _start(self, tag, text, closetag):
+        """
+        Push a new Element to the stack.
+
+        * If there's text data, it's a leaf.  Write the data and pop it.
+        * If there's no text, it's a branch.
+            - If regex captured closetag, it's an empty "aggregate"; pop it.
+        """
+        assert tag
+        self.start(tag, {})
+        if text:
+            # OFX "element" (i.e. data-bearing leaf)
+            self.data(text)
+            # End tags are optional for OFXv1 data elements
+            # End all elements, whether or not they're explicitly ended
+            assert closetag is None or closetag == tag
+            self.end(tag)
+        elif closetag:
+            # Empty OFX "aggregate" branch
+            assert closetag == tag
+            self.end(tag)
+
+    def _end(self, tag, text):
+        """
+        Pop the top Element from the stack.
+        """
+        if text:
+            msg = "Tail text '{}' after </{}>".format(text, tag)
+            raise ParseError(msg.format(tag, text))
+        self.end(tag)
 
 
 def main():
