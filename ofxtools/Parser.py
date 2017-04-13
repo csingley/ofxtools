@@ -64,6 +64,8 @@ class OFXResponse(object):
         if seclist is not None:
             instance.securities = Aggregate.from_etree(seclist)
 
+        return instance
+
     def __repr__(self):
         s = "<%s fid='%s' org='%s' dtserver='%s' len(statements)=%d len(securities)=%d>"
         return s % (self.__class__.__name__,
