@@ -9,6 +9,11 @@ import time
 import re
 import warnings
 
+# Python 2 emulate Py3K str
+try:
+    str = unicode
+except NameError:
+    pass
 
 class OFXTypeWarning(UserWarning):
     """ Base class for warnings in this module """
