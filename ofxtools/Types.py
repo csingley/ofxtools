@@ -2,12 +2,12 @@
 """ OFX element type converters / validators """
 
 # stdlib imports
-from weakref import WeakKeyDictionary
 import decimal
 import datetime
 import time
 import re
 import warnings
+from weakref import WeakKeyDictionary
 
 
 # Python 2 emulate Py3K str
@@ -24,7 +24,7 @@ class OFXTypeWarning(UserWarning):
 
 class Element(object):
     """
-    Python representation of an OFX 'element', i.e. SGML leaf node that 
+    Python representation of an OFX 'element', i.e. SGML leaf node that
     contains text data.
 
     Pass validation parameters (e.g. maximum string length, decimal precision,
@@ -48,7 +48,7 @@ class Element(object):
         """ Override in subclass """
         if args or kwargs:
             raise ValueError("Unknown args for '%s'- args: %r; kwargs: %r"
-                            % (self.__class__.__name__, args, kwargs))
+                             % (self.__class__.__name__, args, kwargs))
 
     def convert(self, value):
         """ Override in subclass """
@@ -76,18 +76,16 @@ class Bool(Element):
             return self.mapping[value]
         except KeyError as e:
             raise ValueError("%s is not one of the allowed values %s" % (
-                e.args[0], self.mapping.keys(), )
-            )
+                e.args[0], self.mapping.keys(), ))
 
     def unconvert(self, value):
         if value is None:
             return None
         if not isinstance(value, bool):
             raise ValueError("%s is not one of the allowed values %s" % (
-                value, self.mapping.keys(), )
-            )
+                value, self.mapping.keys(), ))
 
-        return {v:k for k,v in self.mapping.items()}[value]
+        return {v: k for k, v in self.mapping.items()}[value]
 
 
 class String(Element):
@@ -109,7 +107,8 @@ class String(Element):
                 return None
         value = str(value)
         if self.length is not None and len(value) > self.length:
-            raise ValueError("'%s' is too long; max length=%s" % (value, self.length))
+            msg = "'%s' is too long; max length=%s" % (value, self.length)
+            raise ValueError(msg)
         return value
 
 
@@ -117,8 +116,8 @@ class NagString(String):
     """
     String that raises a warning length is exceeded.
 
-    Used to handle OFX data that violates the spec with respect to string length
-    on non-critical fields.
+    Used to handle OFX data that violates the spec with respect to
+    string length on non-critical fields.
     """
     def convert(self, value):
         if value == '':
@@ -131,7 +130,7 @@ class NagString(String):
         value = str(value)
         if self.length is not None and len(value) > self.length:
             msg = "Value '%s' exceeds length=%s" % (value, self.length)
-            warnings.warn(msg, category=OFXTypeWarning) 
+            warnings.warn(msg, category=OFXTypeWarning)
         return value
 
 
@@ -170,7 +169,8 @@ class Integer(Element):
                 return None
         value = int(value)
         if self.length is not None and value >= 10**self.length:
-            raise ValueError('%s has too many digits; max digits=%s' % (value, self.length))
+            msg = '%s has too many digits; max digits=%s'
+            raise ValueError(msg % (value, self.length))
         return int(value)
 
 
@@ -267,10 +267,12 @@ class DateTime(Element):
 
     def unconvert(self, value):
         """
-        Input datetime.date or datetime.datetime in local time; output str in GMT.
+        Input datetime.date or datetime.datetime in local time;
+        output str in GMT.
         """
         if not hasattr(value, 'timetuple'):
-            raise ValueError("'%s' isn't a datetime; can't convert to GMT" % value)
+            msg = "'%s' isn't a datetime; can't convert to GMT" % value
+            raise ValueError(msg)
 
         # Transform to GMT
         gmt_value = time.gmtime(time.mktime(value.timetuple()))

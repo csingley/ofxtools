@@ -39,7 +39,7 @@ import requests
 from ofxtools.header import OFXHeader
 from ofxtools.Types import Bool, OneOf, DateTime
 from ofxtools.utils import fixpath
-from ofxtools.models import ACCTTYPES
+from ofxtools.models.bank import ACCTTYPES
 
 
 class BankAcct(object):

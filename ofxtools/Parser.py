@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 
 # local imports
 from ofxtools.header import OFXHeader
-from ofxtools.models import (Aggregate, STMTTRNRS, CCSTMTTRNRS, INVSTMTTRNRS)
+from ofxtools.models.base import Aggregate
 
 
 class ParseError(SyntaxError):

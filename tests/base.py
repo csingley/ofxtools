@@ -7,7 +7,7 @@ from copy import deepcopy
 
 
 # local imports
-from ofxtools.models import Aggregate
+from ofxtools.models.base import Aggregate
 
 
 class TestAggregate(object):
@@ -25,11 +25,8 @@ class TestAggregate(object):
         if self.requiredElements:
             for tag in self.requiredElements:
                 root = deepcopy(self.root)
-                parent = root.find('.//%s/..' % tag)
-                if parent is None:
-                    raise ValueError("Can't find parent of %s" % tag)
-                required = parent.find('./%s' % tag)
-                parent.remove(required)
+                child = root.find(tag)
+                root.remove(child)
                 with self.assertRaises(ValueError):
                     Aggregate.from_etree(root)
 
@@ -37,18 +34,14 @@ class TestAggregate(object):
         if self.optionalElements:
             for tag in self.optionalElements:
                 root = deepcopy(self.root)
-                parent = root.find('.//%s/..' % tag)
-                if parent is None:
-                    raise ValueError("Can't find parent of %s" % tag)
-                optional = parent.find('./%s' % tag)
-                parent.remove(optional)
+                child = root.find(tag)
+                root.remove(child)
                 Aggregate.from_etree(root)
 
     def testExtraElement(self):
         root = deepcopy(self.root)
         SubElement(root, 'FAKEELEMENT').text = 'garbage'
         with self.assertRaises(ValueError):
-        # with self.assertRaises(AttributeError):
             Aggregate.from_etree(root)
 
     def oneOfTest(self, tag, texts):
