@@ -12,11 +12,11 @@ from ofxtools.models.base import (
     Aggregate,
 )
 from ofxtools.models.ofx import OFX
-from ofxtools.models.signon import SIGNONMSGSRSV1
-from ofxtools.models.bank import BANKMSGSRSV1
-from ofxtools.models.creditcard import CREDITCARDMSGSRSV1
-from ofxtools.models.investment import INVSTMTMSGSRSV1
-from ofxtools.models.seclist import SECLISTMSGSRSV1
+from ofxtools.models.signon import SIGNONMSGSRSV1, SONRS
+from ofxtools.models.bank import BANKMSGSRSV1, STMTRS
+from ofxtools.models.creditcard import CREDITCARDMSGSRSV1, CCSTMTRS
+from ofxtools.models.investment import INVSTMTMSGSRSV1, INVSTMTRS
+from ofxtools.models.seclist import SECLISTMSGSRSV1, SECLIST
 
 from . import base
 from . import test_signon
@@ -50,6 +50,30 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root.creditcardmsgsrsv1, CREDITCARDMSGSRSV1)
         self.assertIsInstance(root.invstmtmsgsrsv1, INVSTMTMSGSRSV1)
         self.assertIsInstance(root.seclistmsgsrsv1, SECLISTMSGSRSV1)
+
+    def testUnsupported(self):
+        root = Aggregate.from_etree(self.root)
+        for unsupp in ('signupmsgsrsv1', 'emailmsgsrsv1', 'loanmsgsrsv1',
+                       'presdirmsgsrsv1', 'presdlvmsgsrsv1', 'profmsgsrsv1',
+                       'tax1098msgsrsv1', 'tax1099msgsrsv1', 'taxw2msgsrsv1',
+                       'tax1095msgsrsv1', ):
+            setattr(root, unsupp, 'FOOBAR')
+            self.assertIsNone(getattr(root, unsupp))
+
+    def testPropertyAliases(self):
+        # Make sure class property aliases have been defined correctly
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root.sonrs, SONRS)
+        self.assertIsInstance(root.securities, SECLIST)
+        self.assertIsInstance(root.statements, list)
+        # *MSGSRSV1 test cases include 2 of each *STMTRS
+        self.assertEqual(len(root.statements), 6)
+        self.assertIsInstance(root.statements[0], STMTRS)
+        self.assertIsInstance(root.statements[1], STMTRS)
+        self.assertIsInstance(root.statements[2], CCSTMTRS)
+        self.assertIsInstance(root.statements[3], CCSTMTRS)
+        self.assertIsInstance(root.statements[4], INVSTMTRS)
+        self.assertIsInstance(root.statements[5], INVSTMTRS)
 
 
 if __name__ == '__main__':
