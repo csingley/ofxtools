@@ -34,14 +34,13 @@ class Aggregate(object):
     """
     mutexes = []
 
-    def __init__(self, elem):
+    def __init__(self, **kwargs):
         """ """
-        attributes = {el.tag.lower(): (el.text or el) for el in elem}
         # Set instance attributes for all SubAggregates and Elements in the
         # spec (i.e. defined on the class), using values from input attributes
         # if available, or None if not in attributes.
         for attr in self.spec:
-            value = attributes.pop(attr, None)
+            value = kwargs.pop(attr, None)
             try:
                 setattr(self, attr, value)
             except ValueError as e:
@@ -51,9 +50,9 @@ class Aggregate(object):
                 raise ValueError(msg)
 
         # Check that no attributes (not part of the spec) are left over
-        if attributes:
+        if kwargs:
             msg = "Aggregate {} does not define {}".format(
-                self.__class__.__name__, str(list(attributes.keys()))
+                self.__class__.__name__, str(list(kwargs.keys()))
             )
             raise ValueError(msg)
 
@@ -73,7 +72,19 @@ class Aggregate(object):
             raise ValueError(msg)
         SubClass.verify(elem)
         SubClass.groom(elem)
-        instance = SubClass(elem)
+        args = [] 
+        kwargs = {}
+        if issubclass(SubClass, List):
+            if issubclass(SubClass, TranList):
+                dtstart, dtend = elem[:2]
+                # kwargs = {'dtstart': dtstart.text, 'dtend': dtend.text}
+                args = [dtstart.text, dtend.text]
+                elem.remove(dtstart)
+                elem.remove(dtend)
+            args.extend([el for el in elem])
+        else:
+            kwargs = {el.tag.lower(): (el.text or el) for el in elem}
+        instance = SubClass(*args, **kwargs)
         return instance
 
     @classmethod
@@ -176,9 +187,9 @@ class List(Aggregate, list):
     """
     memberTags = []
 
-    def __init__(self, elem):
+    def __init__(self, *elems):
         list.__init__(self)
-        for member in elem:
+        for member in elems:
             if member.tag not in self.memberTags:
                 msg = "{} can't contain {}".format(self.__class__.__name__,
                                                    member.tag)
@@ -220,22 +231,24 @@ class TranList(List):
     dtstart = DateTime(required=True)
     dtend = DateTime(required=True)
 
-    def __init__(self, elem):
+    def __init__(self, dtstart, dtend, *args):
+        self.dtstart = dtstart
+        self.dtend = dtend
         # The first two children of *TRANLIST are DTSTART/DTEND.
-        dtstart, dtend = elem[:2]
-        if dtstart.tag != 'DTSTART':
-            msg = "{} 1st member must be DTSTART, not {}".format(
-                self.__class__.__name__, dtstart.tag)
-            raise ValueError(msg)
-        elem.remove(dtstart)
-        self.dtstart = dtstart.text
-        if dtend.tag != 'DTEND':
-            msg = "{} 2nd member must be DTEND, not {}".format(
-                self.__class__.__name__, dtend.tag)
-            raise ValueError(msg)
-        elem.remove(dtend)
-        self.dtend = dtend.text
-        super(TranList, self).__init__(elem)
+        # dtstart, dtend = elem[:2]
+        # if dtstart.tag != 'DTSTART':
+            # msg = "{} 1st member must be DTSTART, not {}".format(
+                # self.__class__.__name__, dtstart.tag)
+            # raise ValueError(msg)
+        # elem.remove(dtstart)
+        # self.dtstart = dtstart.text
+        # if dtend.tag != 'DTEND':
+            # msg = "{} 2nd member must be DTEND, not {}".format(
+                # self.__class__.__name__, dtend.tag)
+            # raise ValueError(msg)
+        # elem.remove(dtend)
+        # self.dtend = dtend.text
+        super(TranList, self).__init__(*args)
 
     def __repr__(self):
         return '<{} dtstart={} dtend={} len={}'.format(
@@ -266,7 +279,7 @@ class SubAggregate(Element):
 
 
 class Unsupported(object):
-    """ 
+    """
     Null Aggregate/Element - not implemented (yet)
     """
     def __get__(self, instance, type_):
