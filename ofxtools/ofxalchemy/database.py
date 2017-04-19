@@ -40,8 +40,9 @@ def sessionmanager():
         Session.remove()
 
 
-def init_db(db_uri, **kwargs):
+def init_db(db_uri, schema=None, **kwargs):
     engine = create_engine(db_uri, **kwargs)
+    Base.metadata.schema = schema
     Base.metadata.create_all(bind=engine)
     Session.configure(bind=engine)
     return engine
@@ -69,8 +70,8 @@ class Base(object):
         Lists all non-NULL instance attributes.
         """
         return '<%s(%s)>' % (self.__class__.__name__, ', '.join(
-            ['%s=%r' % (c.name, str(getattr(self, c.name))) \
-             for c in self.__class__.__table__.c \
+            ['%s=%r' % (c.name, str(getattr(self, c.name)))
+             for c in self.__class__.__table__.c
              if getattr(self, c.name) is not None]
         ))
 

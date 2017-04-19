@@ -15,7 +15,7 @@ from sqlalchemy.orm import (
 
 # local imports
 from ofxtools.ofxalchemy import (
-    init_db, 
+    init_db,
     Base,
     sessionmanager,
     OFXParser,
@@ -25,7 +25,7 @@ from ofxtools.ofxalchemy import (
 ### DB SETUP
 verbose = '-v' in sys.argv
 database = 'sqlite:///test.db'
-engine = init_db(database)
+engine = init_db(database, 'ofx')
 
 
 def ofx_to_database(filename):
@@ -40,6 +40,7 @@ class AlchemyTestCase(unittest.TestCase):
         Base.metadata.create_all(engine)
 
     def tearDown(self):
+        pass
         try:
             os.unlink('test.db')
         except OSError:  # file not created by test -- probably an error
