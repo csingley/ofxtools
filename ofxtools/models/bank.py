@@ -30,6 +30,10 @@ INV401KSOURCES = ('PRETAX', 'AFTERTAX', 'MATCH', 'PROFITSHARING',
                   'ROLLOVER', 'OTHERVEST', 'OTHERNONVEST')
 # OFX section 11.3.1.1
 ACCTTYPES = ('CHECKING', 'SAVINGS', 'MONEYMRKT', 'CREDITLINE', 'CD')
+TRNTYPES = ('CREDIT', 'DEBIT', 'INT', 'DIV', 'FEE', 'SRVCHG',
+            'DEP', 'ATM', 'POS', 'XFER', 'CHECK', 'PAYMENT',
+            'CASH', 'DIRECTDEP', 'DIRECTDEBIT', 'REPEATPMT',
+            'OTHER')
 
 
 class BANKACCTFROM(Aggregate):
@@ -73,10 +77,7 @@ class PAYEE(Aggregate):
 
 class STMTTRN(Aggregate, Origcurrency):
     """ OFX section 11.4.4.1 """
-    trntype = OneOf('CREDIT', 'DEBIT', 'INT', 'DIV', 'FEE', 'SRVCHG',
-                    'DEP', 'ATM', 'POS', 'XFER', 'CHECK', 'PAYMENT',
-                    'CASH', 'DIRECTDEP', 'DIRECTDEBIT', 'REPEATPMT',
-                    'OTHER', required=True)
+    trntype = OneOf(*TRNTYPES, required=True)
     dtposted = DateTime(required=True)
     dtuser = DateTime()
     dtavail = DateTime()

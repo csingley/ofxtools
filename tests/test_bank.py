@@ -22,6 +22,7 @@ from ofxtools.models.bank import (
     BANKACCTFROM, BANKACCTTO, CCACCTTO,
     PAYEE, LEDGERBAL, AVAILBAL, BALLIST,
     STMTTRN, BANKTRANLIST, STMTRS, STMTTRNRS, BANKMSGSRSV1,
+    TRNTYPES,
 )
 from ofxtools.models.i18n import (
     CURRENCY, ORIGCURRENCY,
@@ -210,6 +211,9 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.inv401ksource, 'PROFITSHARING')
         return root
 
+    def testOneOf(self):
+        self.oneOfTest('TRNTYPE', TRNTYPES)
+
     def testUnsupported(self):
         root = Aggregate.from_etree(self.root)
         for unsupp in self.unsupported:
@@ -218,13 +222,12 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
-        tc = test_i18n.CurrencyTestCase()
         self.assertEqual(root.curtype, 'CURRENCY')
-        self.assertEqual(root.cursym,  tc.root.find('CURSYM').text)
-        self.assertEqual(root.currate,  Decimal(tc.root.find('CURRATE').text))
+        self.assertEqual(root.cursym, root.currency.cursym)
+        self.assertEqual(root.currate, root.currency.currate)
 
 
-class StmttrnOrigcurrencyTestCase(StmttrnTestCase):
+class StmttrnOrigcurrencyTestCase(unittest.TestCase, base.TestAggregate):
     """ STMTTRN with ORIGCURRENCY """
     optionalElements = ['DTUSER', 'DTAVAIL', 'CORRECTFITID', 'CORRECTACTION',
                         'SRVRTID', 'CHECKNUM', 'REFNUM', 'SIC', 'PAYEEID',
@@ -233,7 +236,7 @@ class StmttrnOrigcurrencyTestCase(StmttrnTestCase):
 
     @property
     def root(self):
-        root = super(self.__class__, self).root
+        root = StmttrnTestCase().root
         name = root.find('CURRENCY')
         root.remove(name)
         origcurrency = test_i18n.OrigcurrencyTestCase().root
@@ -266,9 +269,11 @@ class StmttrnOrigcurrencyTestCase(StmttrnTestCase):
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
         self.assertEqual(root.curtype, 'ORIGCURRENCY')
+        self.assertEqual(root.cursym, root.origcurrency.cursym)
+        self.assertEqual(root.currate, root.origcurrency.currate)
 
 
-class StmttrnPayeeTestCase(StmttrnTestCase):
+class StmttrnPayeeTestCase(unittest.TestCase, base.TestAggregate):
     """ STMTTRN with PAYEE """
     optionalElements = ['DTUSER', 'DTAVAIL', 'CORRECTFITID', 'CORRECTACTION',
                         'SRVRTID', 'CHECKNUM', 'REFNUM', 'SIC', 'PAYEEID',
@@ -277,7 +282,7 @@ class StmttrnPayeeTestCase(StmttrnTestCase):
 
     @property
     def root(self):
-        root = super(self.__class__, self).root
+        root = StmttrnTestCase().root
         name = root.find('NAME')
         root.remove(name)
         payee = PayeeTestCase().root
@@ -285,7 +290,7 @@ class StmttrnPayeeTestCase(StmttrnTestCase):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
+        root = StmttrnTestCase().root
         self.assertIsInstance(root, STMTTRN)
         self.assertEqual(root.trntype, 'CHECK')
         self.assertEqual(root.dtposted, datetime(2013, 6, 15))
@@ -308,9 +313,8 @@ class StmttrnPayeeTestCase(StmttrnTestCase):
         return root
 
 
-class StmttrnBankaccttoTestCase(StmttrnTestCase):
+class StmttrnBankaccttoTestCase(unittest.TestCase, base.TestAggregate):
     """ STMTTRN with BANKACCTTO """
-    requiredElements = ['TRNTYPE', 'DTPOSTED', 'TRNAMT', 'FITID', ]
     optionalElements = ['DTUSER', 'DTAVAIL', 'CORRECTFITID', 'CORRECTACTION',
                         'SRVRTID', 'CHECKNUM', 'REFNUM', 'SIC', 'PAYEEID',
                         'NAME', 'EXTDNAME', 'BANKACCTTO', 'MEMO', 'CURRENCY',
@@ -318,17 +322,17 @@ class StmttrnBankaccttoTestCase(StmttrnTestCase):
 
     @property
     def root(self):
-        root = super(self.__class__, self).root
+        root = StmttrnTestCase().root
         bankacctto = BankaccttoTestCase().root
         root.append(bankacctto)
         return root
 
     def testConvert(self):
-        root = super(StmttrnBankaccttoTestCase, self).testConvert()
+        root = StmttrnTestCase().root
         self.assertIsInstance(root.bankacctto, BANKACCTTO)
 
 
-class StmttrnCcaccttoTestCase(StmttrnTestCase):
+class StmttrnCcaccttoTestCase(unittest.TestCase, base.TestAggregate):
     """ STMTTRN with CCACCTTO """
     requiredElements = ['TRNTYPE', 'DTPOSTED', 'TRNAMT', 'FITID', ]
     optionalElements = ['DTUSER', 'DTAVAIL', 'CORRECTFITID', 'CORRECTACTION',
@@ -338,7 +342,7 @@ class StmttrnCcaccttoTestCase(StmttrnTestCase):
 
     @property
     def root(self):
-        root = super(self.__class__, self).root
+        root = StmttrnTestCase().root
         ccacctto = CcaccttoTestCase().root
         root.append(ccacctto)
         return root
@@ -348,17 +352,13 @@ class StmttrnCcaccttoTestCase(StmttrnTestCase):
         self.assertIsInstance(root.ccacctto, CCACCTTO)
 
 
-class StmttrnBankaccttoCcaccttoTestCase(StmttrnTestCase):
+class StmttrnBankaccttoCcaccttoTestCase(unittest.TestCase, base.TestAggregate):
     """
     STMTTRN with both BANKACCTTO and CCACCTTO - not allowed per OFX spec
     """
-    # required/optional have already been tested in parent; skip here
-    requiredElements = ()
-    optionalElements = ()
-
     @property
     def root(self):
-        root = super(self.__class__, self).root
+        root = StmttrnTestCase().root
         bankacctto = BankaccttoTestCase().root
         root.append(bankacctto)
         ccacctto = CcaccttoTestCase().root
@@ -369,6 +369,9 @@ class StmttrnBankaccttoCcaccttoTestCase(StmttrnTestCase):
         with self.assertRaises(ValueError):
             Aggregate.from_etree(self.root)
 
+    def testOneOf(self):
+        pass
+
     def testUnsupported(self):
         pass
 
@@ -376,15 +379,11 @@ class StmttrnBankaccttoCcaccttoTestCase(StmttrnTestCase):
         pass
 
 
-class StmttrnNamePayeeTestCase(StmttrnTestCase):
+class StmttrnNamePayeeTestCase(unittest.TestCase, base.TestAggregate):
     """ STMTTRN with both NAME and PAYEE - not allowed per OFX spec """
-    # required/optional have already been tested in parent; skip here
-    requiredElements = ()
-    optionalElements = ()
-
     @property
     def root(self):
-        root = super(self.__class__, self).root
+        root = StmttrnTestCase().root
         payee = PayeeTestCase().root
         root.append(payee)
         return root
@@ -393,24 +392,14 @@ class StmttrnNamePayeeTestCase(StmttrnTestCase):
         with self.assertRaises(ValueError):
             Aggregate.from_etree(self.root)
 
-    def testUnsupported(self):
-        pass
 
-    def testPropertyAliases(self):
-        pass
-
-
-class StmttrnCurrencyOrigCurrencyTestCase(StmttrnTestCase):
+class StmttrnCurrencyOrigCurrencyTestCase(unittest.TestCase, base.TestAggregate):
     """
     STMTTRN with both CURRENCY and ORIGCURRENCY - not allowed per OFX spec
     """
-    # required/optional have already been tested in parent; skip here
-    requiredElements = ()
-    optionalElements = ()
-
     @property
     def root(self):
-        root = super(self.__class__, self).root
+        root = StmttrnTestCase().root
         origcurrency = test_i18n.OrigcurrencyTestCase().root
         root.append(origcurrency)
         return root
@@ -418,12 +407,6 @@ class StmttrnCurrencyOrigCurrencyTestCase(StmttrnTestCase):
     def testConvert(self):
         with self.assertRaises(ValueError):
             Aggregate.from_etree(self.root)
-
-    def testUnsupported(self):
-        pass
-
-    def testPropertyAliases(self):
-        pass
 
 
 class BanktranlistTestCase(unittest.TestCase, base.TestAggregate):
