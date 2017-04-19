@@ -173,7 +173,8 @@ class OFXClient:
     bankid = None
     brokerid = None
 
-    def __init__(self, url, org, fid, version=None, appid=None, appver=None):
+    def __init__(self, url, org, fid, version=None, appid=None, appver=None,
+                clientuid=None):
         self.url = url
         self.org = org
         self.fid = fid
@@ -184,13 +185,15 @@ class OFXClient:
             self.appid = str(appid)
         if appver:
             self.appver = str(appver)
+        if clientuid:
+            self.clientuid = str(clientuid)
 
     @property
     def ofxheader(self):
         """ Prepend to OFX markup. """
         return str(OFXHeader(version=self.version, newfileuid=uuid.uuid4()))
 
-    def signon(self, user, password):
+    def signon(self, user, password, clientuid=None):
         msgsrq = ET.Element('SIGNONMSGSRQV1')
         sonrq = ET.SubElement(msgsrq, 'SONRQ')
         ET.SubElement(sonrq, 'DTCLIENT').text = DateTime().unconvert(datetime.datetime.now())
@@ -204,16 +207,19 @@ class OFXClient:
                 ET.SubElement(fi, 'FID').text = self.fid
         ET.SubElement(sonrq, 'APPID').text = self.appid
         ET.SubElement(sonrq, 'APPVER').text = str(self.appver)
+        if clientuid:
+            ET.SubElement(sonrq, 'CLIENTUID').text = clientuid
         return msgsrq
 
-    def statement_request(self, user, password, accounts, **kwargs):
+    def statement_request(self, user, password, accounts, clientuid=None,
+                          **kwargs):
         """ """
         ofx = ET.Element('OFX')
-        ofx.append(self.signon(user, password))
+        ofx.append(self.signon(user, password, clientuid))
 
         # Create MSGSRQ SubElements for each acct type, indexed by tag
         msgsrq_tags = [getattr(a, 'msgsrq_tag') for a in (BankAcct, CcAcct, InvAcct)]
-        msgsrqs = {tag:ET.SubElement(ofx, tag) for tag in msgsrq_tags}
+        msgsrqs = {tag: ET.SubElement(ofx, tag) for tag in msgsrq_tags}
 
         for account in accounts:
             stmtrq = account.stmtrq(**kwargs)
@@ -273,7 +279,8 @@ class OFXClient:
 ### CLI COMMANDS
 def do_stmt(args):
     client = OFXClient(args.url, args.org, args.fid, version=args.version,
-                       appid=args.appid, appver=args.appver)
+                       appid=args.appid, appver=args.appver,
+                       clientuid=args.clientuid)
 
     # Define accounts
     accts = []
@@ -297,9 +304,9 @@ def do_stmt(args):
     # Statement parameters
     d = vars(args)
     # convert dtstart/dtend/dtasof from str to datetime
-    kwargs = {k:DateTime().convert(v) for k,v in d.items() if k.startswith('dt')}
+    kwargs = {k: DateTime().convert(v) for k, v in d.items() if k.startswith('dt')}
     # inctrans/incpos/incbal
-    kwargs.update({k:v for k,v in d.items() if k.startswith('inc')})
+    kwargs.update({k: v for k, v in d.items() if k.startswith('inc')})
 
     request = client.statement_request(args.user, password, accts, **kwargs)
 
@@ -340,7 +347,7 @@ def main():
     from argparse import ArgumentParser
 
     argparser = ArgumentParser(description='Download OFX financial data',
-                                epilog='FIs configured: %s' % config.fi_index)
+                               epilog='FIs configured: %s' % config.fi_index)
     argparser.add_argument('server', help='OFX server - URL or FI name from config')
     argparser.add_argument('-n', '--dry-run', action='store_true',
                            default=False, help='display OFX request and exit')
@@ -352,6 +359,7 @@ def main():
     signon_group.add_argument('--version', help='OFX version')
     signon_group.add_argument('--appid', help='OFX client app identifier')
     signon_group.add_argument('--appver', help='OFX client app version')
+    signon_group.add_argument('--clientuid', help='OFX client UID')
 
     acct_group = argparser.add_argument_group(title='Account Options')
     acct_group.add_argument('--bankid', help='ABA routing#')
@@ -372,13 +380,13 @@ def main():
                             help='(YYYYmmdd) As-of date for investment positions')
     stmt_group.add_argument('--no-transactions', dest='inctran',
                             action='store_false', default=True,
-                           help='Omit transactions list')
+                            help='Omit transactions list')
     stmt_group.add_argument('--no-positions', dest='incpos',
                             action='store_false', default=True,
-                           help='Omit investment positions')
+                            help='Omit investment positions')
     stmt_group.add_argument('--no-balances', dest='incbal',
                             action='store_false', default=True,
-                           help='Omit balances')
+                            help='Omit balances')
 
     args = argparser.parse_args()
 
@@ -389,9 +397,9 @@ def main():
     else:
         if server not in config.fi_index:
             raise ValueError("Unknown FI '%s' not in %s"
-                            % (server, str(config.fi_index)))
+                             % (server, str(config.fi_index)))
         # List of nonempty argparse args set from command line
-        overrides = [k for k,v in vars(args).items() if v]
+        overrides = [k for k, v in vars(args).items() if v]
         for cfg, value in config.items(server, raw=True):
             # argparse settings override configparser settings
             if cfg in overrides:
