@@ -28,6 +28,10 @@ from . import test_seclist
 
 class OfxTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+    unsupported = ('signupmsgsrsv1', 'emailmsgsrsv1', 'loanmsgsrsv1',
+                   'presdirmsgsrsv1', 'presdlvmsgsrsv1', 'profmsgsrsv1',
+                   'tax1098msgsrsv1', 'tax1099msgsrsv1', 'taxw2msgsrsv1',
+                   'tax1095msgsrsv1', )
 
     @property
     def root(self):
@@ -53,10 +57,7 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
 
     def testUnsupported(self):
         root = Aggregate.from_etree(self.root)
-        for unsupp in ('signupmsgsrsv1', 'emailmsgsrsv1', 'loanmsgsrsv1',
-                       'presdirmsgsrsv1', 'presdlvmsgsrsv1', 'profmsgsrsv1',
-                       'tax1098msgsrsv1', 'tax1099msgsrsv1', 'taxw2msgsrsv1',
-                       'tax1095msgsrsv1', ):
+        for unsupp in self.unsupported:
             setattr(root, unsupp, 'FOOBAR')
             self.assertIsNone(getattr(root, unsupp))
 

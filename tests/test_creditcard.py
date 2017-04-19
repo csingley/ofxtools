@@ -27,6 +27,7 @@ from ofxtools.models.creditcard import (
     REWARDINFO,
     CREDITCARDMSGSRSV1,
 )
+from ofxtools.models.i18n import CURRENCY_CODES
 
 from . import base
 from . import test_models_common
@@ -57,7 +58,7 @@ class CcstmtrsTestCase(unittest.TestCase, base.TestAggregate):
     optionalElements = ['BANKTRANLIST', 'AVAILBAL', 'CASHADVBALAMT',
                         'INTRATEPURCH', 'INTRATECASH', 'REWARDINFO',
                         'BALLIST', 'MKTGINFO', ]
-    unsupported = ['BANKTRANLISTP', ]
+    unsupported = ['banktranlistp', ]
 
     @property
     def root(self):
@@ -102,15 +103,17 @@ class CcstmtrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.mktginfo, 'Get Free Stuff NOW!!')
 
     def testUnsupported(self):
-        root = self.root
+        root = Aggregate.from_etree(self.root)
         for tag in self.unsupported:
+            setattr(root, tag, 'FOOBAR')
             self.assertIsNone(getattr(root, tag, None))
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
-        self.assertIs(root.currency, root.curdef)
-        self.assertIs(root.account, root.ccacctfrom)
-        self.assertIs(root.transactions, root.banktranlist)
+        self.assertIn(root.currency, CURRENCY_CODES)
+        self.assertIsInstance(root.account, CCACCTFROM)
+        self.assertIsInstance(root.transactions, BANKTRANLIST)
+        self.assertIsInstance(root.balance, LEDGERBAL)
 
 
 class CcstmttrnrsTestCase(unittest.TestCase, base.TestAggregate):

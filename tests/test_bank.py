@@ -161,7 +161,7 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
                         'SRVRTID', 'CHECKNUM', 'REFNUM', 'SIC', 'PAYEEID',
                         'NAME', 'EXTDNAME', 'MEMO', 'CURRENCY',
                         'INV401KSOURCE', ]
-    unsupported = ['IMAGEDATA', ]
+    unsupported = ['imagedata', ]
 
     @property
     def root(self):
@@ -210,6 +210,19 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.inv401ksource, 'PROFITSHARING')
         return root
 
+    def testUnsupported(self):
+        root = Aggregate.from_etree(self.root)
+        for unsupp in self.unsupported:
+            setattr(root, unsupp, 'FOOBAR')
+            self.assertEqual(getattr(root, unsupp), None)
+
+    def testPropertyAliases(self):
+        root = Aggregate.from_etree(self.root)
+        tc = test_i18n.CurrencyTestCase()
+        self.assertEqual(root.curtype, 'CURRENCY')
+        self.assertEqual(root.cursym,  tc.root.find('CURSYM').text)
+        self.assertEqual(root.currate,  Decimal(tc.root.find('CURRATE').text))
+
 
 class StmttrnOrigcurrencyTestCase(StmttrnTestCase):
     """ STMTTRN with ORIGCURRENCY """
@@ -249,6 +262,10 @@ class StmttrnOrigcurrencyTestCase(StmttrnTestCase):
         self.assertIsInstance(root.origcurrency, ORIGCURRENCY)
         self.assertEqual(root.inv401ksource, 'PROFITSHARING')
         return root
+
+    def testPropertyAliases(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertEqual(root.curtype, 'ORIGCURRENCY')
 
 
 class StmttrnPayeeTestCase(StmttrnTestCase):
@@ -352,6 +369,12 @@ class StmttrnBankaccttoCcaccttoTestCase(StmttrnTestCase):
         with self.assertRaises(ValueError):
             Aggregate.from_etree(self.root)
 
+    def testUnsupported(self):
+        pass
+
+    def testPropertyAliases(self):
+        pass
+
 
 class StmttrnNamePayeeTestCase(StmttrnTestCase):
     """ STMTTRN with both NAME and PAYEE - not allowed per OFX spec """
@@ -369,6 +392,12 @@ class StmttrnNamePayeeTestCase(StmttrnTestCase):
     def testConvert(self):
         with self.assertRaises(ValueError):
             Aggregate.from_etree(self.root)
+
+    def testUnsupported(self):
+        pass
+
+    def testPropertyAliases(self):
+        pass
 
 
 class StmttrnCurrencyOrigCurrencyTestCase(StmttrnTestCase):
@@ -389,6 +418,12 @@ class StmttrnCurrencyOrigCurrencyTestCase(StmttrnTestCase):
     def testConvert(self):
         with self.assertRaises(ValueError):
             Aggregate.from_etree(self.root)
+
+    def testUnsupported(self):
+        pass
+
+    def testPropertyAliases(self):
+        pass
 
 
 class BanktranlistTestCase(unittest.TestCase, base.TestAggregate):
@@ -465,7 +500,7 @@ class StmtrsTestCase(unittest.TestCase, base.TestAggregate):
     requiredElements = ('CURDEF', 'BANKACCTFROM', 'LEDGERBAL',)
     optionalElements = ('BANKTRANLIST', 'AVAILBAL', 'CASHADVBALAMT', 'INTRATE',
                         'BALLIST', 'MKTGINFO',)
-    unsupported = ['BANKTRANLISTP', ]
+    unsupported = ['banktranlistp', ]
 
     @property
     def root(self):
@@ -499,26 +534,28 @@ class StmtrsTestCase(unittest.TestCase, base.TestAggregate):
         # Everything below that is tested elsewhere.
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, STMTRS)
-        self.assertEqual(root.curdef, 'USD')
+        self.assertIn(root.curdef, CURRENCY_CODES) 
         self.assertIsInstance(root.bankacctfrom, BANKACCTFROM)
         self.assertIsInstance(root.banktranlist, BANKTRANLIST)
         self.assertIsInstance(root.ledgerbal, LEDGERBAL)
         self.assertIsInstance(root.availbal, AVAILBAL)
-        self.assertEqual(root.cashadvbalamt, Decimal('10000')) 
-        self.assertEqual(root.intrate, Decimal('20.99')) 
+        self.assertEqual(root.cashadvbalamt, Decimal('10000'))
+        self.assertEqual(root.intrate, Decimal('20.99'))
         self.assertIsInstance(root.ballist, BALLIST)
         self.assertEqual(root.mktginfo, 'Get Free Stuff NOW!!')
 
     def testUnsupported(self):
-        root = self.root
+        root = Aggregate.from_etree(self.root)
         for tag in self.unsupported:
+            setattr(root, tag, 'FOOBAR')
             self.assertIsNone(getattr(root, tag, None))
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
-        self.assertIs(root.currency, root.curdef)
-        self.assertIs(root.account, root.bankacctfrom)
-        self.assertIs(root.transactions, root.banktranlist)
+        self.assertIn(root.currency, CURRENCY_CODES)
+        self.assertIsInstance(root.account, BANKACCTFROM)
+        self.assertIsInstance(root.transactions, BANKTRANLIST)
+        self.assertIsInstance(root.balance, LEDGERBAL)
 
 
 class StmttrnrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -527,7 +564,6 @@ class StmttrnrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
     requiredElements = ['TRNUID', 'STATUS', ]
     optionalElements = ['STMTRS', ]
-    unsupported = ['BANKTRANLISTP', ]
 
     @property
     def root(self):
@@ -549,10 +585,9 @@ class StmttrnrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root.status, STATUS)
         self.assertIsInstance(root.stmtrs, STMTRS)
 
-    def testUnsupported(self):
-        root = self.root
-        for tag in self.unsupported:
-            self.assertIsNone(getattr(root, tag, None))
+    def testPropertyAliases(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root.statement, STMTRS)
 
 
 class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
@@ -572,6 +607,13 @@ class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(len(root), 2)
         for stmttrnrs in root:
             self.assertIsInstance(stmttrnrs, STMTTRNRS)
+
+    def testPropertyAliases(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root.statements, list)
+        self.assertEqual(len(root.statements), 2)
+        self.assertIsInstance(root.statements[0], STMTRS)
+        self.assertIsInstance(root.statements[1], STMTRS)
 
 
 if __name__ == '__main__':
