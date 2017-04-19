@@ -30,8 +30,7 @@ class SECID(Aggregate):
 
 
 class Secid(object):
-    """ Mixin """
-    secid = SubAggregate(SECID, required=True)
+    """ Mixin providing property aliases """
 
     @property
     def uniqueid(self):
@@ -44,6 +43,7 @@ class Secid(object):
 
 class SECINFO(Aggregate, Secid):
     """ OFX Section 13.8.5.1 """
+    secid = SubAggregate(SECID, required=True)
     # FIs abuse SECNAME/TICKER
     # Relaxing the length constraints from the OFX spec does little harm
     # secname = String(120, required=True)
@@ -59,8 +59,7 @@ class SECINFO(Aggregate, Secid):
 
 
 class Secinfo(object):
-    """ Mixin """
-    secinfo = SubAggregate(SECINFO, required=True)
+    """ Mixin providing property aliases """
 
     @property
     def uniqueid(self):
@@ -73,6 +72,7 @@ class Secinfo(object):
 
 class DEBTINFO(Aggregate, Secinfo):
     """ OFX Section 13.8.5.2 """
+    secinfo = SubAggregate(SECINFO, required=True)
     parvalue = Decimal(required=True)
     debttype = OneOf('COUPON', 'ZERO', required=True)
     debtclass = OneOf('TREASURY', 'MUNICIPAL', 'CORPORATE', 'OTHER')
@@ -114,6 +114,7 @@ class FIMFASSETCLASS(List):  # pylint: disable=too-many-ancestors
 
 class MFINFO(Aggregate, Secinfo):
     """ OFX section 13.8.5.3 """
+    secinfo = SubAggregate(SECINFO, required=True)
     mftype = OneOf('OPENEND', 'CLOSEEND', 'OTHER')
     yld = Decimal(4)
     dtyieldasof = DateTime()
@@ -134,6 +135,7 @@ class MFINFO(Aggregate, Secinfo):
 
 class OPTINFO(Aggregate, Secinfo):
     """ OFX Section 13.8.5.4 """
+    secinfo = SubAggregate(SECINFO, required=True)
     opttype = OneOf('CALL', 'PUT', required=True)
     strikeprice = Decimal(required=True)
     dtexpire = DateTime(required=True)
@@ -145,6 +147,7 @@ class OPTINFO(Aggregate, Secinfo):
 
 class OTHERINFO(Aggregate, Secinfo):
     """ OFX Section 13.8.5.5 """
+    secinfo = SubAggregate(SECINFO, required=True)
     typedesc = String(32)
     assetclass = OneOf(*ASSETCLASSES)
     fiassetclass = String(32)
@@ -152,6 +155,7 @@ class OTHERINFO(Aggregate, Secinfo):
 
 class STOCKINFO(Aggregate, Secinfo):
     """ OFX Section 13.8.5.6 """
+    secinfo = SubAggregate(SECINFO, required=True)
     stocktype = OneOf('COMMON', 'PREFERRED', 'CONVERTIBLE', 'OTHER')
     yld = Decimal(4)
     dtyieldasof = DateTime()

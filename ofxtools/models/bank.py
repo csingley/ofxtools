@@ -20,6 +20,7 @@ from ofxtools.models.base import (
 )
 from ofxtools.models.common import STATUS
 from ofxtools.models.i18n import (
+    CURRENCY, ORIGCURRENCY,
     Origcurrency,
     CURRENCY_CODES, COUNTRY_CODES,
 )
@@ -45,9 +46,13 @@ class BANKACCTFROM(Aggregate):
     acctkey = String(22)
 
 
-class BANKACCTTO(BANKACCTFROM):
+class BANKACCTTO(Aggregate):
     """ OFX section 11.3.1 """
-    pass
+    bankid = String(9, required=True)
+    branchid = String(22)
+    acctid = String(22, required=True)
+    accttype = OneOf(*ACCTTYPES, required=True)
+    acctkey = String(22)
 
 
 class CCACCTFROM(Aggregate):
@@ -56,9 +61,10 @@ class CCACCTFROM(Aggregate):
     acctkey = String(22)
 
 
-class CCACCTTO(CCACCTFROM):
+class CCACCTTO(Aggregate):
     """ OFX section 11.3.2 """
-    pass
+    acctid = String(22, required=True)
+    acctkey = String(22)
 
 
 class PAYEE(Aggregate):
@@ -97,6 +103,8 @@ class STMTTRN(Aggregate, Origcurrency):
     ccacctto = SubAggregate(CCACCTTO)
     memo = String(255)
     imagedata = Unsupported()
+    currency = SubAggregate(CURRENCY)
+    origcurrency = SubAggregate(ORIGCURRENCY)
     inv401ksource = OneOf(*INV401KSOURCES)
 
     mutexes = [("CCACCTTO", "BANKACCTTO"), ("NAME", "PAYEE"),

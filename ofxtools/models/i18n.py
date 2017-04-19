@@ -156,16 +156,14 @@ class CURRENCY(Aggregate):
     cursym = OneOf(*CURRENCY_CODES, required=True)
 
 
-class ORIGCURRENCY(CURRENCY):
+class ORIGCURRENCY(Aggregate):
     """ OFX section 5.2 """
-    pass
+    currate = Decimal(8, required=True)
+    cursym = OneOf(*CURRENCY_CODES, required=True)
 
 
 class Origcurrency(object):
-    """ Mixin """
-    currency = SubAggregate(CURRENCY)
-    origcurrency = SubAggregate(ORIGCURRENCY)
-
+    """ Mixin providing property aliases and CURRENCY/ORIGCURRENCY mutex """
     mutexes = [("CURRENCY", "ORIGCURRENCY"), ]
 
     @property

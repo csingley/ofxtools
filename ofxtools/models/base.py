@@ -5,6 +5,7 @@ balances, and securities.
 """
 # stdlib imports
 import xml.etree.ElementTree as ET
+from collections import OrderedDict
 
 
 # local imports
@@ -129,31 +130,30 @@ class Aggregate(object):
         """
         dict of all Aggregate attributes that are Elements not SubAggregates
         """
-        dct = {}
-        for parent in reversed(cls.__mro__):
-            dct.update({k: v for k, v in parent.__dict__.items()
-                        if isinstance(v, Element)
-                        and not isinstance(v, SubAggregate)})
+        dct = OrderedDict()
+        for k, v in cls.__dict__.items():
+            if isinstance(v, Element) and not isinstance(v, SubAggregate):
+                dct[k] = v
         return dct
 
     @classproperty
     @classmethod
     def subaggregates(cls):
         """ dict of all Aggregate attributes that are SubAggregates """
-        dct = {}
-        for parent in reversed(cls.__mro__):
-            dct.update({k: v for k, v in parent.__dict__.items()
-                        if isinstance(v, SubAggregate)})
+        dct = OrderedDict()
+        for k, v in cls.__dict__.items():
+            if isinstance(v, SubAggregate):
+                dct[k] = v
         return dct
 
     @classproperty
     @classmethod
     def unsupported(cls):
         """ dict of all Aggregate attributes that are Unsupported """
-        dct = {}
-        for parent in reversed(cls.__mro__):
-            dct.update({k: v for k, v in parent.__dict__.items()
-                        if isinstance(v, Unsupported)})
+        dct = OrderedDict()
+        for k, v in cls.__dict__.items():
+            if isinstance(v, Unsupported):
+                dct[k] = v
         return dct
 
     @classproperty
@@ -163,11 +163,10 @@ class Aggregate(object):
         dict of all Aggregate attributes that are
         Elements/SubAggregates/Unsupported
         """
-        dct = {}
-        for parent in reversed(cls.__mro__):
-            dct.update({k: v for k, v in parent.__dict__.items()
-                        if isinstance(v,
-                                      (SubAggregate, Element, Unsupported))})
+        dct = OrderedDict()
+        for k, v in cls.__dict__.items():
+            if isinstance(v, (SubAggregate, Element, Unsupported)):
+                dct[k] = v
         return dct
 
 
