@@ -43,50 +43,6 @@ class SecidTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.uniqueidtype, 'CUSIP')
 
 
-class MfassetclassTestCase(unittest.TestCase, base.TestAggregate):
-    """ """
-    __test__ = True
-    # requiredElements = ('PORTION',)  # FIXME - how to handle multiple PORTIONs?
-
-    @property
-    def root(self):
-        root = Element('MFASSETCLASS')
-        for i in range(4):
-            portion = PortionTestCase().root
-            root.append(portion)
-        return root
-
-    def testConvert(self):
-        # Test *TRANLIST wrapper.  STMTTRN is tested elsewhere.
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, MFASSETCLASS)
-        self.assertEqual(len(root), 4)
-        for i in range(4):
-            self.assertIsInstance(root[i], PORTION)
-
-
-class FimfassetclassTestCase(unittest.TestCase, base.TestAggregate):
-    """ """
-    __test__ = True
-    # requiredElements = ('FIPORTION',)  # FIXME - how to handle multiple FIPORTIONs?
-
-    @property
-    def root(self):
-        root = Element('MFASSETCLASS')
-        for i in range(4):
-            portion = PortionTestCase().root
-            root.append(portion)
-        return root
-
-    def testConvert(self):
-        # Test *TRANLIST wrapper.  STMTTRN is tested elsewhere.
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, MFASSETCLASS)
-        self.assertEqual(len(root), 4)
-        for i in range(4):
-            self.assertIsInstance(root[i], PORTION)
-
-
 class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
     requiredElements = ('SECID', 'SECNAME',)
@@ -108,6 +64,11 @@ class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
         root.append(currency)
         SubElement(root, 'MEMO').text = 'Foobar'
         return root
+
+    def testPropertyAliases(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertEqual(root.uniqueid, root.secid.uniqueid)
+        self.assertEqual(root.uniqueidtype, root.secid.uniqueidtype)
 
 
 class DebtinfoTestCase(unittest.TestCase, base.TestAggregate):
@@ -166,6 +127,11 @@ class DebtinfoTestCase(unittest.TestCase, base.TestAggregate):
                         'OTHER'))
         self.oneOfTest('CALLTYPE', ('CALL', 'PUT', 'PREFUND', 'MATURITY'))
 
+    def testPropertyAliases(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertEqual(root.uniqueid, root.secinfo.secid.uniqueid)
+        self.assertEqual(root.uniqueidtype, root.secinfo.secid.uniqueidtype)
+
 
 class PortionTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
@@ -187,8 +153,10 @@ class PortionTestCase(unittest.TestCase, base.TestAggregate):
         self.oneOfTest('ASSETCLASS', ASSETCLASSES)
 
 
-class MfassetClassTestCase(unittest.TestCase, base.TestAggregate):
+class MfassetclassTestCase(unittest.TestCase, base.TestAggregate):
+    """ """
     __test__ = True
+    # requiredElements = ('PORTION',)  # FIXME - how to handle multiple PORTIONs?
 
     @property
     def root(self):
@@ -199,11 +167,12 @@ class MfassetClassTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
+        # Test *TRANLIST wrapper.  STMTTRN is tested elsewhere.
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, MFASSETCLASS)
         self.assertEqual(len(root), 4)
-        for portion in root:
-            self.assertIsInstance(portion, PORTION)
+        for i in range(4):
+            self.assertIsInstance(root[i], PORTION)
 
 
 class FiportionTestCase(unittest.TestCase, base.TestAggregate):
@@ -223,23 +192,26 @@ class FiportionTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.percent, Decimal('50'))
 
 
-class FimfassetClassTestCase(unittest.TestCase, base.TestAggregate):
+class FimfassetclassTestCase(unittest.TestCase, base.TestAggregate):
+    """ """
     __test__ = True
+    # requiredElements = ('FIPORTION',)  # FIXME - how to handle multiple FIPORTIONs?
 
     @property
     def root(self):
         root = Element('FIMFASSETCLASS')
-        for i in range(2):
+        for i in range(4):
             portion = FiportionTestCase().root
             root.append(portion)
         return root
 
     def testConvert(self):
+        # Test *TRANLIST wrapper.  STMTTRN is tested elsewhere.
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, FIMFASSETCLASS)
-        self.assertEqual(len(root), 2)
-        for portion in root:
-            self.assertIsInstance(portion, FIPORTION)
+        self.assertEqual(len(root), 4)
+        for i in range(4):
+            self.assertIsInstance(root[i], FIPORTION)
 
 
 class MfinfoTestCase(unittest.TestCase, base.TestAggregate):
@@ -256,9 +228,9 @@ class MfinfoTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, 'MFTYPE').text = 'OPENEND'
         SubElement(root, 'YIELD').text = '5.0'
         SubElement(root, 'DTYIELDASOF').text = '20030501'
-        mfassetclass = MfassetClassTestCase().root
+        mfassetclass = MfassetclassTestCase().root
         root.append(mfassetclass)
-        fimfassetclass = FimfassetClassTestCase().root
+        fimfassetclass = FimfassetclassTestCase().root
         root.append(fimfassetclass)
         return root
 
@@ -274,6 +246,11 @@ class MfinfoTestCase(unittest.TestCase, base.TestAggregate):
 
     def testOneOf(self):
         self.oneOfTest('MFTYPE', ('OPENEND', 'CLOSEEND', 'OTHER'))
+
+    def testPropertyAliases(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertEqual(root.uniqueid, root.secinfo.secid.uniqueid)
+        self.assertEqual(root.uniqueidtype, root.secinfo.secid.uniqueidtype)
 
 
 class OptinfoTestCase(unittest.TestCase, base.TestAggregate):
@@ -308,6 +285,11 @@ class OptinfoTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.assetclass, 'SMALLSTOCK')
         self.assertEqual(root.fiassetclass, 'FOO')
 
+    def testPropertyAliases(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertEqual(root.uniqueid, root.secinfo.secid.uniqueid)
+        self.assertEqual(root.uniqueidtype, root.secinfo.secid.uniqueidtype)
+
 
 class OtherinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
@@ -334,6 +316,11 @@ class OtherinfoTestCase(unittest.TestCase, base.TestAggregate):
 
     def testOneOf(self):
         self.oneOfTest('ASSETCLASS', ASSETCLASSES)
+
+    def testPropertyAliases(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertEqual(root.uniqueid, root.secinfo.secid.uniqueid)
+        self.assertEqual(root.uniqueidtype, root.secinfo.secid.uniqueidtype)
 
 
 class StockinfoTestCase(unittest.TestCase, base.TestAggregate):
@@ -366,6 +353,11 @@ class StockinfoTestCase(unittest.TestCase, base.TestAggregate):
 
     def testOneOf(self):
         self.oneOfTest('ASSETCLASS', ASSETCLASSES)
+
+    def testPropertyAliases(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertEqual(root.uniqueid, root.secinfo.secid.uniqueid)
+        self.assertEqual(root.uniqueidtype, root.secinfo.secid.uniqueidtype)
 
 
 class SeclistTestCase(unittest.TestCase, base.TestAggregate):
