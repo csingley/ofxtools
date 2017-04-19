@@ -3,6 +3,10 @@
 Python object model for fundamental data aggregates such as transactions,
 balances, and securities.
 """
+# stdlib imports
+import xml.etree.ElementTree as ET
+
+
 # local imports
 import ofxtools.models
 from ofxtools.Types import (
@@ -103,6 +107,22 @@ class Aggregate(object):
                  if getattr(self, attr) is not None]
         return '<%s %s>' % (self.__class__.__name__, ' '.join(attrs))
 
+    def to_etree(self):
+        """ """
+        root = ET.Element(self.__class__.__name__)
+        for spec in self.spec:
+            value = getattr(self, spec)
+            if value is None:
+                continue
+            elif isinstance(value, Aggregate):
+                child = value.to_etree()
+                root.append(child)
+            else:
+                converter = self.__class__.__dict__[spec]
+                text = converter.unconvert(value)
+                ET.SubElement(root, spec.upper()).text = text
+        return root
+
     @classproperty
     @classmethod
     def elements(cls):
@@ -165,6 +185,23 @@ class List(Aggregate, list):
                                                    member.tag)
                 raise ValueError(msg)
             self.append(Aggregate.from_etree(member))
+
+    def to_etree(self):
+        """ """
+        root = ET.Element(self.__class__.__name__)
+        for spec in self.spec:
+            value = getattr(self, spec)
+            if value is None:
+                continue
+            else:
+                converter = self.__class__.__dict__[spec]
+                text = converter.unconvert(value)
+                ET.SubElement(root, spec.upper()).text = text
+        # Append list items
+        for member in self:
+            print("MEMBER=%s" % member)
+            root.append(member.to_etree())
+        return root
 
     def __hash__(self):
         """

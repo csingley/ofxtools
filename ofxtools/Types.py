@@ -54,6 +54,10 @@ class Element(object):
         """ Override in subclass """
         raise NotImplementedError
 
+    def unconvert(self, value):
+        """ Override in subclass """
+        return str(value)
+
     def __get__(self, instance, type_):
         return self.data[instance]
 

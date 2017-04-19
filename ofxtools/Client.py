@@ -11,7 +11,6 @@ import datetime
 import uuid
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
-import contextlib
 from os import path
 import re
 from getpass import getpass
@@ -19,7 +18,7 @@ from getpass import getpass
 
 PYTHON_VERSION = sys.version_info.major
 
-if  PYTHON_VERSION == 3:
+if PYTHON_VERSION == 3:
     from configparser import SafeConfigParser
     from urllib.request import urlopen, HTTPError
     from urllib.parse import urlparse
@@ -68,7 +67,7 @@ class BankAcct(object):
 
     def __repr__(self):
         values = [v for v in self._acct.values()]
-        repr_string = '%s(' + ', '.join(["'%s'"]*len(values)) +')'
+        repr_string = '%s(' + ', '.join(["'%s'"]*len(values)) + ')'
         values.insert(0, self.__class__.__name__)
         return repr_string % tuple(values)
 
@@ -174,7 +173,7 @@ class OFXClient:
     brokerid = None
 
     def __init__(self, url, org, fid, version=None, appid=None, appver=None,
-                clientuid=None):
+                 clientuid=None):
         self.url = url
         self.org = org
         self.fid = fid
