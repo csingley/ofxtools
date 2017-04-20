@@ -10,7 +10,7 @@ import sys
 import datetime
 import uuid
 import xml.etree.ElementTree as ET
-from collections import namedtuple
+from collections import (namedtuple, defaultdict,)
 from os import path
 from getpass import getpass
 
@@ -19,11 +19,12 @@ PYTHON_VERSION = sys.version_info.major
 
 if PYTHON_VERSION == 3:
     from configparser import SafeConfigParser
+    from urllib.parse import urlparse
     from io import StringIO
 else:
     from ConfigParser import SafeConfigParser
+    from urlparse import urlparse
     from StringIO import StringIO
-
 
 # 3rd party imports
 import requests
@@ -114,7 +115,7 @@ class OFXClient:
         signonmsgs = self.signon(user, password, clientuid=clientuid)
 
         bankmsgs = None
-        if stmtrqs is not None:
+        if stmtrqs:
             # bankid comes from OFXClient instance attribute,
             # not StmtRq namedtuple
             stmttrnrqs = [self.stmttrnrq(
@@ -123,13 +124,13 @@ class OFXClient:
             bankmsgs = BANKMSGSRQV1(*stmttrnrqs)
 
         creditcardmsgs = None
-        if ccstmtrqs is not None:
+        if ccstmtrqs:
             ccstmttrnrqs = [self.ccstmttrnrq(**stmtrq._asdict())
                             for stmtrq in ccstmtrqs]
             creditcardmsgs = CREDITCARDMSGSRQV1(*ccstmttrnrqs)
 
         invstmtmsgs = None
-        if invstmtrqs is not None:
+        if invstmtrqs:
             # brokerid comes from OFXClient instance attribute,
             # not StmtRq namedtuple
             invstmttrnrqs = [self.invstmttrnrq(
@@ -143,7 +144,9 @@ class OFXClient:
                   invstmtmsgsrqv1=invstmtmsgs)
 
         if dryrun:
-            return ofx
+            return StringIO(
+                self.ofxheader + ET.tostring(ofx.to_etree()).decode()
+            )
         return self.download(ofx)
 
     def request_profile(self, user=None, password=None, dryrun=False):
@@ -161,7 +164,9 @@ class OFXClient:
         ofx = OFX(signonmsgsrqv1=signonmsgs, profmsgsrqv1=msgs)
 
         if dryrun:
-            return ofx
+            return StringIO(
+                self.ofxheader + ET.tostring(ofx.to_etree()).decode()
+            )
         return self.download(ofx)
 
     def signon(self, userid, userpass, sesscookie=None, clientuid=None):
@@ -222,47 +227,48 @@ class OFXClient:
 
 ### CLI COMMANDS
 def do_stmt(args):
-    client = OFXClient(args.url, args.org, args.fid, version=args.version,
-                       appid=args.appid, appver=args.appver,
-                       clientuid=args.clientuid)
+    # Initialize OFXClient with connection info from args
+    client = OFXClient(args.url, org=args.org, fid=args.fid,
+                       version=args.version, appid=args.appid,
+                       appver=args.appver, language=args.language,
+                       bankid=args.bankid, brokerid=args.brokerid)
 
-    # Define accounts
-    accts = []
+    # Convert dtstart/dtend/dtasof to Python datetime type
+    D = DateTime().convert
+    dt = {d[2:]: D(getattr(args, d)) for d in ('dtstart', 'dtend', 'dtasof')}
+
+    # Define statement requests
+    stmtrqs = defaultdict(list)
     for accttype in ('checking', 'savings', 'moneymrkt', 'creditline'):
-        for acctid in getattr(args, accttype):
-            a = BankAcct(args.bankid, acctid, accttype)
-            accts.append(a)
+        acctids = getattr(args, accttype, [])
+        stmtrqs['stmtrqs'].extend(
+            [StmtRq(acctid=acctid, accttype=accttype, dstart=dt['start'],
+                    dtend=dt['end'], inctran=args.inctran)
+             for acctid in acctids])
 
     for acctid in args.creditcard:
-        accts.append(CcAcct(acctid))
+        stmtrqs['ccstmtrqs'].append(
+            CcStmtRq(acctid=acctid, dtstart=dt['start'], dtend=dt['end'],
+                     inctran=args.inctran))
 
     for acctid in args.investment:
-        accts.append(InvAcct(args.brokerid, acctid))
+        stmtrqs['invstmtrqs'].append(
+            InvStmtRq(acctid=acctid, dtstart=dt['start'], dtend=dt['end'],
+                      dtasof=dt['asof'], inctran=args.inctran,
+                      incoo=args.incoo, incpos=args.incpos,
+                      incbal=args.incbal))
 
     # Use dummy password for dummy request
-    if args.dry_run:
+    if args.dryrun:
         password = 'T0PS3CR3T'
     else:
         password = getpass()
 
-    # Statement parameters
-    d = vars(args)
-    # convert dtstart/dtend/dtasof from str to datetime
-    kwargs = {k: DateTime().convert(v) for k, v in d.items() if k.startswith('dt')}
-    # inctrans/incpos/incbal
-    kwargs.update({k: v for k, v in d.items() if k.startswith('inc')})
-    # clientuid
-    if 'clientuid' in d:
-        kwargs['clientuid'] = d['clientuid']
+    response = client.request_statements(args.user, password,
+                                         clientuid=args.clientuid,
+                                         dryrun=args.dryrun, **stmtrqs)
 
-    request = client.statement_request(args.user, password, accts, **kwargs)
-
-    # Handle request
-    if args.dry_run:
-        print(client.ofxheader + ET.tostring(request).decode())
-    else:
-        response = client.download(request)
-        print(response.getvalue())
+    print(response.read())
 
 
 class OFXConfigParser(SafeConfigParser):
@@ -295,28 +301,36 @@ def main():
 
     argparser = ArgumentParser(description='Download OFX financial data',
                                epilog='FIs configured: %s' % config.fi_index)
-    argparser.add_argument('server', help='OFX server - URL or FI name from config')
-    argparser.add_argument('-n', '--dry-run', action='store_true',
+    argparser.add_argument('server',
+                           help='OFX server - URL or FI name from config')
+    argparser.add_argument('-n', '--dryrun', action='store_true',
                            default=False, help='display OFX request and exit')
 
     signon_group = argparser.add_argument_group(title='Signon Options')
     signon_group.add_argument('-u', '--user', help='FI login username')
+    signon_group.add_argument('--clientuid', help='OFX client UID')
     signon_group.add_argument('--org', help='FI.ORG')
     signon_group.add_argument('--fid', help='FI.FID')
+    signon_group.add_argument('--bankid', help='ABA routing#')
+    signon_group.add_argument('--brokerid', help='Broker ID string')
     signon_group.add_argument('--version', help='OFX version')
     signon_group.add_argument('--appid', help='OFX client app identifier')
     signon_group.add_argument('--appver', help='OFX client app version')
-    signon_group.add_argument('--clientuid', help='OFX client UID')
+    signon_group.add_argument('--language', default='ENG', help='OFX language')
 
     acct_group = argparser.add_argument_group(title='Account Options')
-    acct_group.add_argument('--bankid', help='ABA routing#')
-    acct_group.add_argument('--brokerid', help='Broker ID string')
-    acct_group.add_argument('-C', '--checking', metavar='acct#', action='append', default=[])
-    acct_group.add_argument('-S', '--savings', metavar='acct#', action='append', default=[])
-    acct_group.add_argument('-M', '--moneymrkt', metavar='acct#', action='append', default=[])
-    acct_group.add_argument('-L', '--creditline', metavar='acct#', action='append', default=[])
-    acct_group.add_argument('-c', '--creditcard', '--cc', metavar='acct#', action='append', default=[])
-    acct_group.add_argument('-i', '--investment', metavar='acct#', action='append', default=[])
+    acct_group.add_argument('-C', '--checking', metavar='acct#',
+                            action='append', default=[])
+    acct_group.add_argument('-S', '--savings', metavar='acct#',
+                            action='append', default=[])
+    acct_group.add_argument('-M', '--moneymrkt', metavar='acct#',
+                            action='append', default=[])
+    acct_group.add_argument('-L', '--creditline', metavar='acct#',
+                            action='append', default=[])
+    acct_group.add_argument('-c', '--creditcard', '--cc', metavar='acct#',
+                            action='append', default=[])
+    acct_group.add_argument('-i', '--investment', metavar='acct#',
+                            action='append', default=[])
 
     stmt_group = argparser.add_argument_group(title='Statement Options')
     stmt_group.add_argument('-s', '--start', dest='dtstart',
@@ -334,6 +348,9 @@ def main():
     stmt_group.add_argument('--no-balances', dest='incbal',
                             action='store_false', default=True,
                             help='Omit balances')
+    stmt_group.add_argument('--open-orders', dest='incoo',
+                            action='store_true', default=False,
+                            help='Include open orders')
 
     args = argparser.parse_args()
 
