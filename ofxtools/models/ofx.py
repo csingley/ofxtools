@@ -9,6 +9,7 @@ from ofxtools.models.base import (
     SubAggregate,
     Unsupported,
 )
+from ofxtools.models.profile import (PROFMSGSRQV1, PROFMSGSRSV1)
 from ofxtools.models.signon import (SIGNONMSGSRQV1, SIGNONMSGSRSV1)
 from ofxtools.models.bank import (BANKMSGSRQV1, BANKMSGSRSV1)
 from ofxtools.models.investment import (INVSTMTMSGSRQV1, INVSTMTMSGSRSV1)
@@ -18,6 +19,8 @@ from ofxtools.models.seclist import SECLISTMSGSRSV1
 
 class OFX(Aggregate):
     """ """
+    profmsgsrqv1 = SubAggregate(PROFMSGSRQV1)
+    profmsgsrsv1 = SubAggregate(PROFMSGSRSV1)
     signonmsgsrqv1 = SubAggregate(SIGNONMSGSRQV1)
     signonmsgsrsv1 = SubAggregate(SIGNONMSGSRSV1)
     bankmsgsrqv1 = SubAggregate(BANKMSGSRQV1)
@@ -33,7 +36,6 @@ class OFX(Aggregate):
     loanmsgsrsv1 = Unsupported()
     presdirmsgsrsv1 = Unsupported()
     presdlvmsgsrsv1 = Unsupported()
-    profmsgsrsv1 = Unsupported()
     tax1098msgsrsv1 = Unsupported()
     tax1099msgsrsv1 = Unsupported()
     taxw2msgsrsv1 = Unsupported()

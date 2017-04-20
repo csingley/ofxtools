@@ -4,22 +4,12 @@ Data structures for bank download - OFX Section 11
 """
 # local imports
 from ofxtools.Types import (
-    String,
-    NagString,
-    Decimal,
-    Integer,
-    OneOf,
-    DateTime,
-    Bool,
+    String, NagString, Decimal, Integer, OneOf, DateTime, Bool,
 )
 from ofxtools.models.base import (
-    Aggregate,
-    List,
-    TranList,
-    SubAggregate,
-    Unsupported,
+    Aggregate, List, TranList, SubAggregate, Unsupported,
 )
-from ofxtools.models.common import STATUS
+from ofxtools.models.common import (STATUS, MSGSETCORE)
 from ofxtools.models.i18n import (
     CURRENCY, ORIGCURRENCY,
     Origcurrency,
@@ -212,3 +202,26 @@ class BANKMSGSRSV1(List):
     @property
     def statements(self):
         return [trnrs.stmtrs for trnrs in self]
+
+
+class EMAILPROF(Aggregate):
+    """ OFX section 11.13.2.4 """
+    canemail = Bool(required=True)
+    cannotify = Bool(required=True)
+
+
+class BANKMSGSETV1(Aggregate):
+    """ OFX section 11.13.2.1 """
+    msgsetcore = SubAggregate(MSGSETCORE, required=True)
+    invalidaccttype = OneOf(*ACCTTYPES)
+    closingavail = Bool(required=True)
+    pendingavail = Bool()
+    xferprof = Unsupported()
+    stopchkprof = Unsupported()
+    emailprof = SubAggregate(EMAILPROF, required=True)
+    imageprof = Unsupported()
+
+
+class BANKMSGSET(Aggregate):
+    """ OFX section 7.3 """
+    bankmsgsetv1 = SubAggregate(BANKMSGSETV1, required=True)

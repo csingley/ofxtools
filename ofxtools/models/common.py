@@ -3,19 +3,13 @@
 """
 # local imports
 from ofxtools.Types import (
-    String,
-    OneOf,
-    Integer,
-    Decimal,
-    DateTime,
+    String, OneOf, Integer, Decimal, DateTime, Bool,
 )
 from ofxtools.models.base import (
-    Aggregate,
-    List,
-    SubAggregate,
+    Aggregate, List, SubAggregate, Unsupported,
 )
 from ofxtools.models.i18n import (
-    CURRENCY,
+    CURRENCY, LANG_CODES,
 )
 
 
@@ -30,6 +24,33 @@ class OFXELEMENT(Aggregate):
 class OFXEXTENSION(List):
     """ OFX section 2.7.2 """
     memberTags = ('OFXELEMENT', )
+
+
+class MSGSETCORE(Aggregate):
+    """ OFX section 7.2.1 """
+    ver = Integer(required=True)
+    url = String(255, required=True)
+    ofxsec = OneOf('NONE', 'TYPE1', required=True)
+    transpsec = Bool(required=True)
+    signonrealm = String(32, required=True)
+    language = OneOf(*LANG_CODES, required=True)
+    syncmode = OneOf('FULL', 'LITE', required=True)
+    refreshsupt = Bool
+    respfileer = Bool(required=True)
+    spname = String(32)
+    ofxtextension = Unsupported()
+
+    @staticmethod
+    def groom(elem):
+        """
+        Remove proprietary tags e.g. INTU.XXX
+        """
+        for child in elem:
+            if '.' in child.tag:
+                elem.remove(child)
+
+        return super(MSGSETCORE, MSGSETCORE).groom(elem)
+
 
 
 class STATUS(Aggregate):

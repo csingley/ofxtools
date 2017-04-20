@@ -4,25 +4,16 @@ Data structures for credit card download - OFX Section 11
 """
 # local imports
 from ofxtools.Types import (
-    String,
-    Decimal,
-    OneOf,
-    Bool,
+    String, Decimal, OneOf, Bool,
 )
 from ofxtools.models.base import (
-    Aggregate,
-    List,
-    SubAggregate,
-    Unsupported,
+    Aggregate, List, SubAggregate, Unsupported,
 )
 from ofxtools.models.common import (
-    STATUS,
+    STATUS, MSGSETCORE,
 )
 from ofxtools.models.bank import (
-    CCACCTFROM,
-    INCTRAN,
-    BANKTRANLIST,
-    LEDGERBAL, AVAILBAL, BALLIST,
+    CCACCTFROM, INCTRAN, BANKTRANLIST, LEDGERBAL, AVAILBAL, BALLIST,
 )
 from ofxtools.models.i18n import (
     CURRENCY_CODES,
@@ -107,3 +98,16 @@ class CREDITCARDMSGSRSV1(List):
     @property
     def statements(self):
         return [trnrs.ccstmtrs for trnrs in self]
+
+
+class CREDITCARDMSGSETV1(Aggregate):
+    """ OFX section 11.13.3 """
+    msgsetcore = SubAggregate(MSGSETCORE, required=True)
+    closingavail = Bool(required=True)
+    pendingavail = Bool()
+    imageprof = Unsupported()
+
+
+class CREDITCARDMSGSET(Aggregate):
+    """ OFX section 11.13.3 """
+    creditcardmsgsetv1 = SubAggregate(CREDITCARDMSGSETV1, required=True)

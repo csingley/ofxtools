@@ -7,7 +7,7 @@ from ofxtools.models.base import (
     Aggregate, List, TranList, SubAggregate, Unsupported,
 )
 from ofxtools.models.common import (
-    STATUS, OFXEXTENSION,
+    STATUS, OFXEXTENSION, MSGSETCORE,
 )
 from ofxtools.models.bank import (
     STMTTRN, INCTRAN, BALLIST, INV401KSOURCES,
@@ -800,3 +800,21 @@ class INVSTMTMSGSRSV1(List):
     @property
     def statements(self):
         return [trnrs.invstmtrs for trnrs in self]
+
+
+class INVSTMTMSGSETV1(Aggregate):
+    """ OFX section 13.7.1.1 """
+    msgsetcore = SubAggregate(MSGSETCORE, required=True)
+    trandnld = Bool(required=True)
+    oodnld = Bool(required=True)
+    posdnld = Bool(required=True)
+    baldnld = Bool(required=True)
+    canemail = Bool(required=True)
+    inv401kdnld = Bool()
+    closingavail = Bool()
+    imageprof = Unsupported()
+
+
+class INVSTMTMSGSET(Aggregate):
+    """ OFX section 13.7.1.1 """
+    invstmtmsgsetv1 = SubAggregate(INVSTMTMSGSETV1, required=True)

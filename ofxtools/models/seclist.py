@@ -4,18 +4,12 @@ Message set response aggregates (i.e. *MSGSRSV1) - OFX section 2.4.5
 """
 # local imports
 from ofxtools.Types import (
-    String,
-    NagString,
-    Integer,
-    Decimal,
-    DateTime,
-    OneOf,
+    String, NagString, Integer, Decimal, DateTime, OneOf, Bool,
 )
 from ofxtools.models.base import (
-    Aggregate,
-    SubAggregate,
-    List,
+    Aggregate, SubAggregate, List, Unsupported,
 )
+from ofxtools.models.common import MSGSETCORE
 from ofxtools.models.i18n import CURRENCY
 
 
@@ -126,11 +120,11 @@ class MFINFO(Aggregate, Secinfo):
         """
         Rename all Elements tagged YIELD (reserved Python keyword) to YLD
         """
-        super(MFINFO, MFINFO).groom(elem)
-
         yld = elem.find('./YIELD')
         if yld is not None:
             yld.tag = 'YLD'
+
+        return super(STOCKINFO, STOCKINFO).groom(elem)
 
 
 class OPTINFO(Aggregate, Secinfo):
@@ -168,11 +162,11 @@ class STOCKINFO(Aggregate, Secinfo):
         """
         Rename all Elements tagged YIELD (reserved Python keyword) to YLD
         """
-        super(STOCKINFO, STOCKINFO).groom(elem)
-
         yld = elem.find('./YIELD')
         if yld is not None:
             yld.tag = 'YLD'
+
+        return super(STOCKINFO, STOCKINFO).groom(elem)
 
 
 class SECLIST(List):
@@ -180,6 +174,43 @@ class SECLIST(List):
     memberTags = ['DEBTINFO', 'MFINFO', 'OPTINFO', 'OTHERINFO', 'STOCKINFO', ]
 
 
+class SECRQ(Aggregate):
+    """ OFX section 13.8.2.2 """
+    secid = SubAggregate(SECID)
+    ticker = String(32)
+    fiid = String(32)
+
+
+class SECLISTRQ(List):
+    """ OFX section 13.8.2.2 """
+    memberTags = ['SECRQ', ]
+
+
+class SECLISTTRNRQ(Aggregate):
+    """ OFX section 13.8.2.1 """
+    trnuid = String(36, required=True)
+    cltcookie = String(32)
+    tan = String(80)
+    ofxextension = Unsupported()
+    seclisttrq = SubAggregate(SECLISTRQ)
+
+
+class SECLISTMSGSRQV1(Aggregate):
+    """ OFX section 13.7.2.2.1 """
+    seclisttrnrq = SubAggregate(SECLISTTRNRQ)
+
+
 class SECLISTMSGSRSV1(Aggregate):
     """ """
     seclist = SubAggregate(SECLIST)
+
+
+class SECLISTMSGSETV1(Aggregate):
+    """ OFX section 13.7.2.1 """
+    msgsetcore = SubAggregate(MSGSETCORE, required=True)
+    seclistrqdnld = Bool(required=True)
+
+
+class SECLISTMSGSET(Aggregate):
+    """ OFX section 13.7.2.1 """
+    seclistmsgsetv1 = SubAggregate(SECLISTMSGSETV1, required=True)
