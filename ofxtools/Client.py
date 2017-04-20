@@ -142,12 +142,7 @@ class OFXClient:
                   bankmsgsrqv1=bankmsgs,
                   creditcardmsgsrqv1=creditcardmsgs,
                   invstmtmsgsrqv1=invstmtmsgs)
-
-        if dryrun:
-            return StringIO(
-                self.ofxheader + ET.tostring(ofx.to_etree()).decode()
-            )
-        return self.download(ofx)
+        return self.download(ofx, dryrun=dryrun)
 
     def request_profile(self, user=None, password=None, dryrun=False):
         """ """
@@ -162,12 +157,7 @@ class OFXClient:
         signonmsgs = self.signon(user, password)
 
         ofx = OFX(signonmsgsrqv1=signonmsgs, profmsgsrqv1=msgs)
-
-        if dryrun:
-            return StringIO(
-                self.ofxheader + ET.tostring(ofx.to_etree()).decode()
-            )
-        return self.download(ofx)
+        return self.download(ofx, dryrun=dryrun)
 
     def signon(self, userid, userpass, sesscookie=None, clientuid=None):
         if self.org:
@@ -208,10 +198,13 @@ class OFXClient:
         trnuid = uuid.uuid4()
         return INVSTMTTRNRQ(trnuid=trnuid, invstmtrq=stmtrq)
 
-    def download(self, ofx):
+    def download(self, ofx, dryrun=False):
         """ """
         # py3k: ElementTree.tostring() returns bytes not str
         data = self.ofxheader + ET.tostring(ofx.to_etree()).decode()
+
+        if dryrun:
+            return StringIO(data)
 
         mimetype = 'application/x-ofx'
         headers = {'Content-type': mimetype, 'Accept': '*/*, %s' % mimetype}
