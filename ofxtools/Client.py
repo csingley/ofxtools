@@ -152,8 +152,8 @@ class OFXClient:
         proftrnrq = PROFTRNRQ(trnuid=trnuid, profrq=profrq)
         msgs = PROFMSGSRQV1(proftrnrq)
 
-        user = user or 'elmerfudd'
-        password = password or 'TOPSECRET'
+        user = '{:0<32}'.format('anonymous')
+        password = '{:0<32}'.format('anonymous')
         signonmsgs = self.signon(user, password)
 
         ofx = OFX(signonmsgsrqv1=signonmsgs, profmsgsrqv1=msgs)
@@ -253,7 +253,7 @@ def do_stmt(args):
 
     # Use dummy password for dummy request
     if args.dryrun:
-        password = 'T0PS3CR3T'
+        password = '{:0<32}'.format('anonymous')
     else:
         password = getpass()
 
