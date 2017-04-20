@@ -19,13 +19,9 @@ PYTHON_VERSION = sys.version_info.major
 
 if PYTHON_VERSION == 3:
     from configparser import SafeConfigParser
-    from urllib.request import urlopen, HTTPError
-    from urllib.parse import urlparse
     from io import StringIO
 else:
     from ConfigParser import SafeConfigParser
-    from urllib2 import urlopen, HTTPError
-    from urlparse import urlparse
     from StringIO import StringIO
 
 
@@ -36,6 +32,9 @@ import requests
 # local imports
 from ofxtools.header import OFXHeader
 from ofxtools.models.ofx import OFX
+from ofxtools.models.profile import (
+    PROFRQ, PROFTRNRQ, PROFMSGSRQV1,
+)
 from ofxtools.models.signon import (
     SIGNONMSGSRQV1, SONRQ, FI,
 )
@@ -48,18 +47,23 @@ from ofxtools.models.creditcard import (
 from ofxtools.models.investment import (
     INVSTMTMSGSRQV1, INVSTMTTRNRQ, INVSTMTRQ, INVACCTFROM, INCPOS,
 )
-from ofxtools.Types import Bool, OneOf, DateTime
+from ofxtools.Types import DateTime
 from ofxtools.utils import fixpath
 
 
+# Statement request data containers
+# Pass sequences of these containers as args to OFXClient.request_statement()
 StmtRq = namedtuple('StmtRq', ['acctid', 'accttype', 'dtstart', 'dtend',
                                'inctran'])
 StmtRq.__new__.__defaults__ = (None, None, None, None, True)
+
 CcStmtRq = namedtuple('CcStmtRq', ['acctid', 'dtstart', 'dtend', 'inctran'])
 CcStmtRq.__new__.__defaults__ = (None, None, None, True)
+
 InvStmtRq = namedtuple('InvStmtRq', ['acctid', 'dtstart', 'dtend', 'dtasof',
                                      'inctran', 'incoo', 'incpos', 'incbal'])
-InvStmtRq.__new__.__defaults__ = (None, None, None, None, True, False, True, True)
+InvStmtRq.__new__.__defaults__ = (None, None, None, None, True, False, True,
+                                  True)
 
 
 class OFXClient:
@@ -68,9 +72,9 @@ class OFXClient:
     clientuid = None
     org = None
     fid = None
-    version = 102
+    version = 203
     appid = 'QWIN'
-    appver = '1800'
+    appver = '2300'
     language = 'ENG'
 
     # Stmt request
@@ -142,25 +146,30 @@ class OFXClient:
             return ofx
         return self.download(ofx)
 
-    # def profile_request(self, user=None, password=None):
-        # """ """
-        # user = user or 'elmerfudd'
-        # password = password or 'TOPSECRET'
-        # ofx = ET.Element('OFX')
-        # ofx.append(self.signon(user, password))
-        # msgsrq = ET.SubElement(ofx, 'PROFMSGSRQV1')
-        # profrq = ET.Element('PROFRQ')
-        # ET.SubElement(profrq, 'CLIENTROUTING').text = 'NONE'
-        # ET.SubElement(profrq, 'DTPROFUP').text = DateTime().unconvert(datetime.date(1990,1,1))
-        # msgsrq.append(self._wraptrn(profrq))
-        # return ofx
+    def request_profile(self, user=None, password=None, dryrun=False):
+        """ """
+        dtprofup = datetime.date(1990, 1, 1)
+        profrq = PROFRQ(clientrouting='NONE', dtprofup=dtprofup)
+        trnuid = uuid.uuid4()
+        proftrnrq = PROFTRNRQ(trnuid=trnuid, profrq=profrq)
+        msgs = PROFMSGSRQV1(proftrnrq)
+
+        user = user or 'elmerfudd'
+        password = password or 'TOPSECRET'
+        signonmsgs = self.signon(user, password)
+
+        ofx = OFX(signonmsgsrqv1=signonmsgs, profmsgsrqv1=msgs)
+
+        if dryrun:
+            return ofx
+        return self.download(ofx)
 
     def signon(self, userid, userpass, sesscookie=None, clientuid=None):
         if self.org:
             fi = FI(org=self.org, fid=self.fid)
         else:
             fi = None
-      
+
         dtclient = datetime.datetime.now()
         sonrq = SONRQ(dtclient=dtclient, userid=userid, userpass=userpass,
                       language=self.language, fi=fi, sesscookie=sesscookie,
@@ -205,7 +214,7 @@ class OFXClient:
         try:
             response = requests.post(self.url, data=data, headers=headers)
             return StringIO(response.text)
-        except HTTPError as err:
+        except requests.HTTPError as err:
             # FIXME
             print(err.info())
             raise
