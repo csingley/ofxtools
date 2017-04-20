@@ -152,8 +152,8 @@ class OFXClient:
         proftrnrq = PROFTRNRQ(trnuid=trnuid, profrq=profrq)
         msgs = PROFMSGSRQV1(proftrnrq)
 
-        user = '{:0<32}'.format('anonymous')
-        password = '{:0<32}'.format('anonymous')
+        user = user or '{:0<32}'.format('anonymous')
+        password = password or '{:0<32}'.format('anonymous')
         signonmsgs = self.signon(user, password)
 
         ofx = OFX(signonmsgsrqv1=signonmsgs, profmsgsrqv1=msgs)
@@ -220,6 +220,12 @@ class OFXClient:
 
 ### CLI COMMANDS
 def do_stmt(args):
+    """
+    Construct OFX statement request from CLI/config args; send to server.
+
+    Returns a file-like object (StringIO) that can be passed to
+    OFXTree.parse()
+    """
     # Initialize OFXClient with connection info from args
     client = OFXClient(args.url, org=args.org, fid=args.fid,
                        version=args.version, appid=args.appid,
@@ -263,6 +269,22 @@ def do_stmt(args):
 
     print(response.read())
 
+def do_profile(args):
+    """
+    Construct OFX profile request from CLI/config args; send to server.
+
+    Returns a file-like object (StringIO) that can be passed to
+    OFXTree.parse()
+    """
+    # Initialize OFXClient with connection info from args
+    client = OFXClient(args.url, org=args.org, fid=args.fid,
+                       version=args.version, appid=args.appid,
+                       appver=args.appver, language=args.language,
+                       bankid=args.bankid, brokerid=args.brokerid)
+
+    response = client.request_profile(dryrun=args.dryrun)
+    print(response.read())
+
 
 class OFXConfigParser(SafeConfigParser):
     """ """
@@ -280,6 +302,7 @@ class OFXConfigParser(SafeConfigParser):
 
     @property
     def fi_index(self):
+        """ List of configured FIs"""
         sections = self.sections()
         sections.remove('global')
         return sections
@@ -298,6 +321,9 @@ def main():
                            help='OFX server - URL or FI name from config')
     argparser.add_argument('-n', '--dryrun', action='store_true',
                            default=False, help='display OFX request and exit')
+    argparser.add_argument('-p', '--profile', action='store_true',
+                           default=False,
+                           help='Download OFX profile instead of statement')
 
     signon_group = argparser.add_argument_group(title='Signon Options')
     signon_group.add_argument('-u', '--user', help='FI login username')
@@ -372,7 +398,10 @@ def main():
                 setattr(args, cfg, value)
 
     # Pass the parsed args to the statement-request function
-    do_stmt(args)
+    if args.profile:
+        do_profile(args)
+    else:
+        do_stmt(args)
 
 
 if __name__ == '__main__':
