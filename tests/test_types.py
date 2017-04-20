@@ -30,23 +30,31 @@ class BoolTestCase(unittest.TestCase, Base):
 
     def test_convert(self):
         t = self.type_()
-        # Per OFX spec, 'Y' converts to True
+        # Per OFX spec, 'Y' converts to True; 'N' converts to False
         self.assertTrue(t.convert('Y'))
-        # Per OFX spec, 'N' converts to False
         self.assertFalse(t.convert('N'))
+
+        # To allow creating Aggregates directly via Aggregate.__init__()
+        # rather than forcing them to be parsed via Aggregate.from_etree(),
+        # we pass Python types True/False/none
+        self.assertEqual(t.convert(True), True)
+        self.assertEqual(t.convert(False), False)
         self.assertEqual(t.convert(None), None)
+
         # All other inputs are illegal
-        for illegal in (True, False, 0, 1):
+        for illegal in (0, 1, 'y', 'n'):
             with self.assertRaises(ValueError):
                 t.convert(illegal)
 
     def test_unconvert(self):
         t = self.type_()
-        # Per OFX spec, 'Y' converts to True
+        # Per OFX spec, 'Y' converts to True; 'N' converts to False
         self.assertEqual(t.unconvert(True), 'Y')
-        # Per OFX spec, 'N' converts to False
         self.assertEqual(t.unconvert(False), 'N')
+
+        # Pass None
         self.assertEqual(t.unconvert(None), None)
+
         # All other inputs are illegal
         for illegal in ('Y', 'N', 0, 1):
             with self.assertRaises(ValueError):
