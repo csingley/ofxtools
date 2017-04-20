@@ -3,6 +3,7 @@ from ofxtools.Types import (
     String,
     OneOf,
     DateTime,
+    Bool,
 )
 from ofxtools.models.base import (
     Aggregate,
@@ -22,6 +23,37 @@ class FI(Aggregate):
     fid = String(32)
 
 
+class SONRQ(Aggregate):
+    """ OFX section 2.5.1.5 """
+    dtclient = DateTime(required=True)
+    userid = String(32)
+    userpass = String(171)
+    # userkey = String(64)
+    userkey = Unsupported()
+    # accesstoken = String(10000)
+    accesstoken = Unsupported()
+    # genuserkey = Bool()
+    genuserkey = Unsupported()
+    language = OneOf(*LANG_CODES, required=True)
+    fi = SubAggregate(FI)
+    sesscookie = String(1000)
+    appid = String(5, required=True)
+    appver = String(4, required=True)
+    # appkey = String(10000)
+    appkey = Unsupported()
+    clientuid = String(36)
+    # usercred1 = String(171)
+    usercred1 = Unsupported()
+    # usercred2 = String(171)
+    usercred2 = Unsupported()
+    # authtoken = String(171)
+    authtoken = Unsupported()
+    # accesskey = String(1000)
+    accesskey = Unsupported()
+    mfachallengeanswer = Unsupported()
+    ofxextension = Unsupported()
+
+
 class SONRS(Aggregate):
     """ OFX section 2.5.1.6 """
     status = SubAggregate(STATUS, required=True)
@@ -35,6 +67,11 @@ class SONRS(Aggregate):
     sesscookie = String(1000)
     accesskey = String(1000)
     ofxextension = Unsupported()
+
+
+class SIGNONMSGSRQV1(Aggregate):
+    """ """
+    sonrq = SubAggregate(SONRQ)
 
 
 class SIGNONMSGSRSV1(Aggregate):

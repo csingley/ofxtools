@@ -7,6 +7,7 @@ from ofxtools.Types import (
     String,
     Decimal,
     OneOf,
+    Bool,
 )
 from ofxtools.models.base import (
     Aggregate,
@@ -19,6 +20,7 @@ from ofxtools.models.common import (
 )
 from ofxtools.models.bank import (
     CCACCTFROM,
+    INCTRAN,
     BANKTRANLIST,
     LEDGERBAL, AVAILBAL, BALLIST,
 )
@@ -32,6 +34,14 @@ class REWARDINFO(Aggregate):
     name = String(32, required=True)
     rewardbal = Decimal(required=True)
     rewardearned = Decimal()
+
+
+class CCSTMTRQ(Aggregate):
+    """ OFX section 11.4.3.1 """
+    ccacctfrom = SubAggregate(CCACCTFROM, required=True)
+    inctran = SubAggregate(INCTRAN)
+    includepending = Bool()
+    inctranimg = Bool()
 
 
 class CCSTMTRS(Aggregate):
@@ -68,6 +78,12 @@ class CCSTMTRS(Aggregate):
         return self.ledgerbal
 
 
+class CCSTMTTRNRQ(Aggregate):
+    """ OFX section 11.4.3.1 """
+    trnuid = String(36, required=True)
+    ccstmtrq = SubAggregate(CCSTMTRQ)
+
+
 class CCSTMTTRNRS(Aggregate):
     """ OFX section 11.4.3.2 """
     trnuid = String(36, required=True)
@@ -77,6 +93,11 @@ class CCSTMTTRNRS(Aggregate):
     @property
     def statement(self):
         return self.ccstmtrs
+
+
+class CREDITCARDMSGSRQV1(List):
+    """ OFX section 11.13.1.1.1 """
+    memberTags = ['CCSTMTTRNRQ', ]
 
 
 class CREDITCARDMSGSRSV1(List):

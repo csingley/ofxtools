@@ -9,18 +9,22 @@ from ofxtools.models.base import (
     SubAggregate,
     Unsupported,
 )
-from ofxtools.models.signon import SIGNONMSGSRSV1
-from ofxtools.models.bank import BANKMSGSRSV1
-from ofxtools.models.investment import INVSTMTMSGSRSV1
-from ofxtools.models.creditcard import CREDITCARDMSGSRSV1
+from ofxtools.models.signon import (SIGNONMSGSRQV1, SIGNONMSGSRSV1)
+from ofxtools.models.bank import (BANKMSGSRQV1, BANKMSGSRSV1)
+from ofxtools.models.investment import (INVSTMTMSGSRQV1, INVSTMTMSGSRSV1)
+from ofxtools.models.creditcard import (CREDITCARDMSGSRQV1, CREDITCARDMSGSRSV1)
 from ofxtools.models.seclist import SECLISTMSGSRSV1
 
 
 class OFX(Aggregate):
     """ """
-    signonmsgsrsv1 = SubAggregate(SIGNONMSGSRSV1, required=True)
+    signonmsgsrqv1 = SubAggregate(SIGNONMSGSRQV1)
+    signonmsgsrsv1 = SubAggregate(SIGNONMSGSRSV1)
+    bankmsgsrqv1 = SubAggregate(BANKMSGSRQV1)
     bankmsgsrsv1 = SubAggregate(BANKMSGSRSV1)
+    creditcardmsgsrqv1 = SubAggregate(CREDITCARDMSGSRQV1)
     creditcardmsgsrsv1 = SubAggregate(CREDITCARDMSGSRSV1)
+    invstmtmsgsrqv1 = SubAggregate(INVSTMTMSGSRQV1)
     invstmtmsgsrsv1 = SubAggregate(INVSTMTMSGSRSV1)
     seclistmsgsrsv1 = SubAggregate(SECLISTMSGSRSV1)
 
