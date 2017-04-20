@@ -218,7 +218,7 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         for unsupp in self.unsupported:
             setattr(root, unsupp, 'FOOBAR')
-            self.assertEqual(getattr(root, unsupp), None)
+            self.assertIsNone(getattr(root, unsupp))
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
