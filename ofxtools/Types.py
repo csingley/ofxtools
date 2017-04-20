@@ -76,6 +76,11 @@ class Bool(Element):
                 raise ValueError("Value is required")
             else:
                 return None
+        # Pass through values already converted to bool
+        # (for instantiating from Aggregate.__init__ rather than parsed
+        # via Aggregate.from_etree)
+        if isinstance(value, bool):
+            return value
         try:
             return self.mapping[value]
         except KeyError as e:

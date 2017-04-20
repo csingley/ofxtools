@@ -72,16 +72,15 @@ class Aggregate(object):
             raise ValueError(msg)
         SubClass.verify(elem)
         SubClass.groom(elem)
-        args = [] 
+        args = []
         kwargs = {}
         if issubclass(SubClass, List):
             if issubclass(SubClass, TranList):
                 dtstart, dtend = elem[:2]
-                # kwargs = {'dtstart': dtstart.text, 'dtend': dtend.text}
                 args = [dtstart.text, dtend.text]
                 elem.remove(dtstart)
                 elem.remove(dtend)
-            args.extend([el for el in elem])
+            args.extend([Aggregate.from_etree(el) for el in elem])
         else:
             kwargs = {el.tag.lower(): (el.text or el) for el in elem}
         instance = SubClass(*args, **kwargs)
@@ -187,14 +186,14 @@ class List(Aggregate, list):
     """
     memberTags = []
 
-    def __init__(self, *elems):
+    def __init__(self, *members):
         list.__init__(self)
-        for member in elems:
-            if member.tag not in self.memberTags:
+        for member in members:
+            if member.__class__.__name__ not in self.memberTags:
                 msg = "{} can't contain {}".format(self.__class__.__name__,
-                                                   member.tag)
+                                                   member.__class__.__name__)
                 raise ValueError(msg)
-            self.append(Aggregate.from_etree(member))
+            self.append(member)
 
     def to_etree(self):
         """ """
@@ -209,7 +208,6 @@ class List(Aggregate, list):
                 ET.SubElement(root, spec.upper()).text = text
         # Append list items
         for member in self:
-            print("MEMBER=%s" % member)
             root.append(member.to_etree())
         return root
 
@@ -231,24 +229,10 @@ class TranList(List):
     dtstart = DateTime(required=True)
     dtend = DateTime(required=True)
 
-    def __init__(self, dtstart, dtend, *args):
+    def __init__(self, dtstart, dtend, *members):
         self.dtstart = dtstart
         self.dtend = dtend
-        # The first two children of *TRANLIST are DTSTART/DTEND.
-        # dtstart, dtend = elem[:2]
-        # if dtstart.tag != 'DTSTART':
-            # msg = "{} 1st member must be DTSTART, not {}".format(
-                # self.__class__.__name__, dtstart.tag)
-            # raise ValueError(msg)
-        # elem.remove(dtstart)
-        # self.dtstart = dtstart.text
-        # if dtend.tag != 'DTEND':
-            # msg = "{} 2nd member must be DTEND, not {}".format(
-                # self.__class__.__name__, dtend.tag)
-            # raise ValueError(msg)
-        # elem.remove(dtend)
-        # self.dtend = dtend.text
-        super(TranList, self).__init__(*args)
+        super(TranList, self).__init__(*members)
 
     def __repr__(self):
         return '<{} dtstart={} dtend={} len={}'.format(

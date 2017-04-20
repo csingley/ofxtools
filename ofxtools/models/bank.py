@@ -10,6 +10,7 @@ from ofxtools.Types import (
     Integer,
     OneOf,
     DateTime,
+    Bool,
 )
 from ofxtools.models.base import (
     Aggregate,
@@ -65,6 +66,21 @@ class CCACCTTO(Aggregate):
     """ OFX section 11.3.2 """
     acctid = String(22, required=True)
     acctkey = String(22)
+
+
+class INCTRAN(Aggregate):
+    """ OFX section 11.4.2.1 """
+    dtstart = DateTime()
+    dtend = DateTime()
+    include = Bool(required=True)
+
+
+class STMTRQ(Aggregate):
+    """ OFX section 11.4.2.1 """
+    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
+    inctran = SubAggregate(INCTRAN)
+    includepending = Bool()
+    inctranimg = Bool()
 
 
 class PAYEE(Aggregate):
@@ -167,6 +183,12 @@ class STMTRS(Aggregate):
         return self.ledgerbal
 
 
+class STMTTRNRQ(Aggregate):
+    """ OFX section 11.4.2.1 """
+    trnuid = String(36, required=True)
+    stmtrq = SubAggregate(STMTRQ)
+
+
 class STMTTRNRS(Aggregate):
     """ OFX section 11.4.2.2 """
     trnuid = String(36, required=True)
@@ -176,6 +198,11 @@ class STMTTRNRS(Aggregate):
     @property
     def statement(self):
         return self.stmtrs
+
+
+class BANKMSGSRQV1(List):
+    """ OFX section 11.13.1.1.1 """
+    memberTags = ['STMTTRNRQ', ]
 
 
 class BANKMSGSRSV1(List):

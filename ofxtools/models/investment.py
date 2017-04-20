@@ -10,7 +10,7 @@ from ofxtools.models.common import (
     STATUS, OFXEXTENSION,
 )
 from ofxtools.models.bank import (
-    STMTTRN, BALLIST, INV401KSOURCES
+    STMTTRN, INCTRAN, BALLIST, INV401KSOURCES,
 )
 from ofxtools.models.seclist import (
     SECID,
@@ -40,6 +40,24 @@ class INVACCTFROM(Aggregate):
     """ OFX section 13.6.1 """
     acctid = String(22, required=True)
     brokerid = String(22, required=True)
+
+
+class INCPOS(Aggregate):
+    """ OFX section 13.9.1.2 """
+    dtasof = DateTime()
+    include = Bool(required=True)
+
+
+class INVSTMTRQ(Aggregate):
+    """ OFX section 13.9.1.2 """
+    invacctfrom = SubAggregate(INVACCTFROM, required=True)
+    inctran = SubAggregate(INCTRAN)
+    incoo = Bool(required=True)
+    incpos = SubAggregate(INCPOS, required=True)
+    incbal = Bool(required=True)
+    inc401k = Bool()
+    inc401bal = Bool()
+    inctranimg = Bool()
 
 
 # Transactions
@@ -748,6 +766,15 @@ class INVSTMTRS(Aggregate):
         return self.invposlist
 
 
+class INVSTMTTRNRQ(Aggregate):
+    """ OFX section 13.9.1.1 """
+    trnuid = String(36, required=True)
+    clientcookie = String(32)
+    tan = String(80)
+    ofxextension = Unsupported()
+    invstmtrq = SubAggregate(INVSTMTRQ)
+
+
 class INVSTMTTRNRS(Aggregate):
     """ OFX section 13.9.2.1 """
     trnuid = String(36, required=True)
@@ -761,8 +788,13 @@ class INVSTMTTRNRS(Aggregate):
         return self.invstmtrs
 
 
+class INVSTMTMSGSRQV1(List):
+    """ OFX section 13.7.1.2.1 """
+    memberTags = ['INVSTMTTRNRQ', ]
+
+
 class INVSTMTMSGSRSV1(List):
-    """ OFX section 11.13.1.1.2 """
+    """ OFX section 13.7.1.2.2 """
     memberTags = ['INVSTMTTRNRS', ]
 
     @property
