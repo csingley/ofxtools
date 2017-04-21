@@ -241,8 +241,8 @@ def do_stmt(args):
     for accttype in ('checking', 'savings', 'moneymrkt', 'creditline'):
         acctids = getattr(args, accttype, [])
         stmtrqs['stmtrqs'].extend(
-            [StmtRq(acctid=acctid, accttype=accttype, dstart=dt['start'],
-                    dtend=dt['end'], inctran=args.inctran)
+            [StmtRq(acctid=acctid, accttype=accttype.upper(),
+                    dtstart=dt['start'], dtend=dt['end'], inctran=args.inctran)
              for acctid in acctids])
 
     for acctid in args.creditcard:
