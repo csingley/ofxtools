@@ -56,6 +56,15 @@ class SONRS(Aggregate):
     accesskey = String(1000)
     ofxextension = Unsupported()
 
+    # Human-friendly attribute aliases
+    @property
+    def org(self):
+        return self.fi.org
+
+    @property
+    def fid(self):
+        return self.fi.fid
+
 
 class SIGNONINFO(Aggregate):
     """ OFX section 7.2.2 """

@@ -66,6 +66,10 @@ class Element(object):
         value = self.convert(value)
         self.data[instance] = value
 
+    def __repr__(self):
+        repr = "<{} required={}>"
+        return repr.format(self.__class__.__name__, self.required)
+
 
 class Bool(Element):
     mapping = {'Y': True, 'N': False}

@@ -42,6 +42,15 @@ class OFX(Aggregate):
     taxw2msgsrsv1 = Unsupported()
     tax1095msgsrsv1 = Unsupported()
 
+    def __repr__(self):
+        s = "<%s fid='%s' org='%s' dtserver='%s' len(statements)=%d len(securities)=%d>"
+        return s % (self.__class__.__name__,
+                    self.sonrs.fi.fid,
+                    self.sonrs.fi.org,
+                    str(self.sonrs.dtserver),
+                    len(self.statements),
+                    len(self.securities),)
+
     # Human-friendly attribute aliases
     @property
     def sonrs(self):
@@ -64,12 +73,3 @@ class OFX(Aggregate):
             if msg:
                 stmts.extend(msg.statements)
         return stmts
-
-    def __repr__(self):
-        s = "<%s fid='%s' org='%s' dtserver='%s' len(statements)=%d len(securities)=%d>"
-        return s % (self.__class__.__name__,
-                    self.sonrs.fid,
-                    self.sonrs.org,
-                    str(self.sonrs.dtserver),
-                    len(self.statements),
-                    len(self.securities),)

@@ -220,7 +220,7 @@ class List(Aggregate, list):
         return object.__hash__(self)
 
     def __repr__(self):
-        return '<{} len={}'.format(self.__class__.__name__, len(self))
+        return '<{} len={}>'.format(self.__class__.__name__, len(self))
 
 
 class TranList(List):
@@ -236,7 +236,7 @@ class TranList(List):
         super(TranList, self).__init__(*members)
 
     def __repr__(self):
-        return '<{} dtstart={} dtend={} len={}'.format(
+        return "<{} dtstart='{}' dtend='{}' len={}>".format(
             self.__class__.__name__, self.dtstart, self.dtend, len(self))
 
 
@@ -261,6 +261,10 @@ class SubAggregate(Element):
         if isinstance(value, self.type):
             return value
         return Aggregate.from_etree(value)
+ 
+    def __repr__(self):
+        repr = "<SubAggregate {}>".format(self.type)
+        return repr
 
 
 class Unsupported(object):
@@ -272,3 +276,6 @@ class Unsupported(object):
 
     def __set__(self, instance, value):
         pass
+
+    def __repr__(self):
+        return "<Unsupported>"
