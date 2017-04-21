@@ -13,6 +13,23 @@ from ofxtools.models.i18n import (
 )
 
 
+class STATUS(Aggregate):
+    """ OFX section 3.1.5 """
+    code = Integer(6, required=True)
+    severity = OneOf('INFO', 'WARN', 'ERROR', required=True)
+    message = String(255)
+
+
+class BAL(Aggregate):
+    """ OFX section 3.1.4 """
+    name = String(32, required=True)
+    desc = String(80, required=True)
+    baltype = OneOf('DOLLAR', 'PERCENT', 'NUMBER', required=True)
+    value = Decimal(required=True)
+    dtasof = DateTime()
+    currency = SubAggregate(CURRENCY)
+
+
 class OFXELEMENT(Aggregate):
     """ OFX section 2.7.2 """
     tagname = String(32, required=True)
@@ -35,10 +52,10 @@ class MSGSETCORE(Aggregate):
     signonrealm = String(32, required=True)
     language = OneOf(*LANG_CODES, required=True)
     syncmode = OneOf('FULL', 'LITE', required=True)
-    refreshsupt = Bool
+    refreshsupt = Bool()
     respfileer = Bool(required=True)
     spname = String(32)
-    ofxtextension = Unsupported()
+    ofxextension = SubAggregate(OFXEXTENSION)
 
     @staticmethod
     def groom(elem):
@@ -50,21 +67,3 @@ class MSGSETCORE(Aggregate):
                 elem.remove(child)
 
         return super(MSGSETCORE, MSGSETCORE).groom(elem)
-
-
-
-class STATUS(Aggregate):
-    """ OFX section 3.1.5 """
-    code = Integer(6, required=True)
-    severity = OneOf('INFO', 'WARN', 'ERROR', required=True)
-    message = String(255)
-
-
-class BAL(Aggregate):
-    """ OFX section 3.1.4 """
-    name = String(32, required=True)
-    desc = String(80, required=True)
-    baltype = OneOf('DOLLAR', 'PERCENT', 'NUMBER', required=True)
-    value = Decimal(required=True)
-    dtasof = DateTime()
-    currency = SubAggregate(CURRENCY)

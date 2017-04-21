@@ -14,12 +14,15 @@ from xml.etree.ElementTree import (
 from . import base
 from . import test_seclist
 from . import test_i18n
+from . import test_models_common
 
 from ofxtools.models.base import Aggregate
+from ofxtools.models.common import MSGSETCORE
+
 from ofxtools.models.seclist import (
     SECID, SECINFO, DEBTINFO, MFINFO, OPTINFO, OTHERINFO, STOCKINFO,
     PORTION, FIPORTION, MFASSETCLASS, FIMFASSETCLASS, ASSETCLASSES,
-    SECLIST, SECLISTMSGSRSV1,
+    SECLIST, SECLISTMSGSRSV1, SECLISTMSGSETV1, SECLISTMSGSET,
 )
 
 
@@ -408,6 +411,40 @@ class Seclistmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, SECLISTMSGSRSV1)
         self.assertIsInstance(root.seclist, SECLIST)
+
+
+class Seclistmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element('SECLISTMSGSETV1')
+        msgsetcore = test_models_common.MsgsetcoreTestCase().root
+        root.append(msgsetcore)
+        SubElement(root, 'SECLISTRQDNLD').text = 'N'
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, SECLISTMSGSETV1)
+        self.assertIsInstance(root.msgsetcore, MSGSETCORE)
+        self.assertEqual(root.seclistrqdnld, False)
+
+
+class SeclistmsgsetTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element('SECLISTMSGSET')
+        seclistmsgsetv1 = Seclistmsgsetv1TestCase().root
+        root.append(seclistmsgsetv1)
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, SECLISTMSGSET)
+        self.assertIsInstance(root.seclistmsgsetv1, SECLISTMSGSETV1)
 
 
 if __name__ == '__main__':

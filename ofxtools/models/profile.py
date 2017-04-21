@@ -6,7 +6,7 @@ from ofxtools.Types import (
 from ofxtools.models.base import (
     Aggregate, SubAggregate, List,
 )
-from ofxtools.models.common import MSGSETCORE
+from ofxtools.models.common import (STATUS, MSGSETCORE)
 from ofxtools.models.i18n import COUNTRY_CODES
 from ofxtools.models.signon import SIGNONINFOLIST
 
@@ -35,12 +35,23 @@ class PROFRS(Aggregate):
     city = String(32, required=True)
     state = String(5, required=True)
     postalcode = String(11, required=True)
-    country = OneOf(*COUNTRY_CODES)
+    country = OneOf(*COUNTRY_CODES, required=True)
     csphone = String(32)
     tsphone = String(32)
     faxphone = String(32)
     url = String(255)
     email = String(80)
+
+    @staticmethod
+    def groom(elem):
+        """
+        Remove proprietary tags e.g. INTU.XXX
+        """
+        for child in elem:
+            if '.' in child.tag:
+                elem.remove(child)
+
+        return super(PROFRS, PROFRS).groom(elem)
 
 
 class PROFTRNRQ(Aggregate):
@@ -50,6 +61,7 @@ class PROFTRNRQ(Aggregate):
 
 class PROFTRNRS(Aggregate):
     trnuid = String(36, required=True)
+    status = SubAggregate(STATUS)
     profrs = SubAggregate(PROFRS)
 
     @property

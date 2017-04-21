@@ -26,7 +26,11 @@ class TestAggregate(object):
             for tag in self.requiredElements:
                 root = deepcopy(self.root)
                 child = root.find(tag)
-                root.remove(child)
+                try:
+                    root.remove(child)
+                except TypeError:
+                    msg = "Can't find {} (from requiredElements) under {}"
+                    raise ValueError(msg.format(tag, root.tag))
                 with self.assertRaises(ValueError):
                     Aggregate.from_etree(root)
 
@@ -35,7 +39,11 @@ class TestAggregate(object):
             for tag in self.optionalElements:
                 root = deepcopy(self.root)
                 child = root.find(tag)
-                root.remove(child)
+                try:
+                    root.remove(child)
+                except TypeError:
+                    msg = "Can't find {} (from optionalElements) under {}"
+                    raise ValueError(msg.format(tag, root.tag))
                 Aggregate.from_etree(root)
 
     def testExtraElement(self):

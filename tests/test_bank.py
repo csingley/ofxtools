@@ -15,20 +15,19 @@ from . import base
 import ofxtools.models
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import (
-    STATUS,
-    BAL,
+    STATUS, BAL, MSGSETCORE,
 )
 from ofxtools.models.bank import (
     BANKACCTFROM, BANKACCTTO, CCACCTTO,
     PAYEE, LEDGERBAL, AVAILBAL, BALLIST,
     STMTTRN, BANKTRANLIST, STMTRS, STMTTRNRS, BANKMSGSRSV1,
-    TRNTYPES,
+    TRNTYPES, BANKMSGSETV1, BANKMSGSET, EMAILPROF,
+    ACCTTYPES,
 )
 from ofxtools.models.i18n import (
     CURRENCY, ORIGCURRENCY,
     CURRENCY_CODES,
 )
-from . import test_signon
 from . import test_models_common
 from . import test_i18n
 
@@ -597,6 +596,68 @@ class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(len(root.statements), 2)
         self.assertIsInstance(root.statements[0], STMTRS)
         self.assertIsInstance(root.statements[1], STMTRS)
+
+
+class EmailprofTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element('EMAILPROF')
+        SubElement(root, 'CANEMAIL').text = 'Y'
+        SubElement(root, 'CANNOTIFY').text = 'N'
+
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, EMAILPROF)
+        self.assertEqual(root.canemail, True)
+        self.assertEqual(root.cannotify, False)
+
+class Bankmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element('BANKMSGSETV1')
+        msgsetcore = test_models_common.MsgsetcoreTestCase().root
+        root.append(msgsetcore)
+        SubElement(root, 'INVALIDACCTTYPE').text = 'CHECKING'
+        SubElement(root, 'CLOSINGAVAIL').text = 'Y'
+        SubElement(root, 'PENDINGAVAIL').text = 'N'
+        emailprof = EmailprofTestCase().root
+        root.append(emailprof)
+
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, BANKMSGSETV1)
+        self.assertIsInstance(root.msgsetcore, MSGSETCORE)
+        self.assertEqual(root.invalidaccttype, 'CHECKING')
+        self.assertEqual(root.closingavail, True)
+        self.assertEqual(root.pendingavail, False)
+        self.assertIsInstance(root.emailprof, EMAILPROF)
+
+    def testOneOf(self):
+        self.oneOfTest('INVALIDACCTTYPE', ACCTTYPES)
+
+
+class BankmsgsetTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element('BANKMSGSET')
+        bankmsgsetv1 = Bankmsgsetv1TestCase().root
+        root.append(bankmsgsetv1)
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, BANKMSGSET)
+        self.assertIsInstance(root.bankmsgsetv1, BANKMSGSETV1)
 
 
 if __name__ == '__main__':

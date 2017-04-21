@@ -14,7 +14,7 @@ from ofxtools.models.base import (
     Aggregate,
 )
 from ofxtools.models.common import (
-    STATUS,
+    STATUS, MSGSETCORE,
 )
 from ofxtools.models.bank import (
     CCACCTFROM,
@@ -22,10 +22,8 @@ from ofxtools.models.bank import (
     BANKTRANLIST, STMTRS,
 )
 from ofxtools.models.creditcard import (
-    CCSTMTRS,
-    CCSTMTTRNRS,
-    REWARDINFO,
-    CREDITCARDMSGSRSV1,
+    CCSTMTRS, CCSTMTTRNRS, REWARDINFO,
+    CREDITCARDMSGSRSV1, CREDITCARDMSGSETV1, CREDITCARDMSGSET,
 )
 from ofxtools.models.i18n import CURRENCY_CODES
 
@@ -119,6 +117,7 @@ class CcstmtrsTestCase(unittest.TestCase, base.TestAggregate):
 class CcstmttrnrsTestCase(unittest.TestCase, base.TestAggregate):
     """
     """
+    __test__ = True
     requiredElements = ('TRNUID', 'STATUS',)
     optionalElements = ('CCSTMTRS', )
 
@@ -138,7 +137,7 @@ class CcstmttrnrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root, CCSTMTTRNRS)
         self.assertEqual(root.trnuid, '1001')
         self.assertIsInstance(root.status, STATUS)
-        self.assertIsInstance(root.stmtrs, STMTRS)
+        self.assertIsInstance(root.ccstmtrs, CCSTMTRS)
 
 
 class Creditcardmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
@@ -158,6 +157,45 @@ class Creditcardmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(len(root), 2)
         for stmttrnrs in root:
             self.assertIsInstance(stmttrnrs, CCSTMTTRNRS)
+
+
+class Creditcardmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+    requiredElements = ['MSGSETCORE', 'CLOSINGAVAIL', ]
+    optionalElements = ['PENDINGAVAIL', ]
+
+    @property
+    def root(self):
+        root = Element('CREDITCARDMSGSETV1')
+        msgsetcore = test_models_common.MsgsetcoreTestCase().root
+        root.append(msgsetcore)
+        SubElement(root, 'CLOSINGAVAIL').text = 'Y'
+        SubElement(root, 'PENDINGAVAIL').text = 'N'
+
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, CREDITCARDMSGSETV1)
+        self.assertIsInstance(root.msgsetcore, MSGSETCORE)
+        self.assertEqual(root.closingavail, True)
+        self.assertEqual(root.pendingavail, False)
+
+
+class CreditcardmsgsetTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element('CREDITCARDMSGSET')
+        bankstmtmsgsetv1 = Creditcardmsgsetv1TestCase().root
+        root.append(bankstmtmsgsetv1)
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, CREDITCARDMSGSET)
+        self.assertIsInstance(root.creditcardmsgsetv1, CREDITCARDMSGSETV1)
 
 
 if __name__ == '__main__':
