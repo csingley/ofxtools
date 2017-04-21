@@ -29,7 +29,7 @@ from . import test_seclist
 class OfxTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
     unsupported = ('signupmsgsrsv1', 'emailmsgsrsv1', 'loanmsgsrsv1',
-                   'presdirmsgsrsv1', 'presdlvmsgsrsv1', 'profmsgsrsv1',
+                   'presdirmsgsrsv1', 'presdlvmsgsrsv1',
                    'tax1098msgsrsv1', 'tax1099msgsrsv1', 'taxw2msgsrsv1',
                    'tax1095msgsrsv1', )
 

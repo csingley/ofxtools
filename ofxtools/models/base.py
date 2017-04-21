@@ -107,6 +107,7 @@ class Aggregate(object):
     def groom(elem):
         """
         Modify incoming XML data to play nice with our Python scheme.
+        Return True to mark this element to be skipped.
 
         Extend in subclass.
         """

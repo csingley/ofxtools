@@ -16,8 +16,7 @@ from ofxtools.models.base import (
     Aggregate,
 )
 from ofxtools.models.common import (
-    STATUS,
-    OFXEXTENSION,
+    STATUS, OFXEXTENSION, MSGSETCORE,
 )
 from ofxtools.models.bank import (
     STMTTRN, BALLIST, INV401KSOURCES,
@@ -34,7 +33,7 @@ from ofxtools.models.investment import (
     INVTRANLIST, INVPOSLIST, INVOOLIST, INVACCTFROM,
     INV401KBAL, INVBAL, INVSTMTRS, INVSTMTTRNRS, INVSTMTMSGSRSV1,
     BUYTYPES, SELLTYPES, OPTBUYTYPES, OPTSELLTYPES, INCOMETYPES, UNITTYPES,
-    INVSUBACCTS,
+    INVSUBACCTS, INVSTMTMSGSETV1, INVSTMTMSGSET,
 )
 from ofxtools.models.i18n import (
     CURRENCY, CURRENCY_CODES,
@@ -2008,3 +2007,53 @@ class Invstmtmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
         self.assertIs(root.statements[0], root[0].invstmtrs)
+
+
+class Invstmtmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+    requiredElements = ['MSGSETCORE', 'TRANDNLD', 'OODNLD', 'POSDNLD',
+                        'BALDNLD', 'CANEMAIL', ]
+    # optionalElements = ['INV401KDNLD', 'CLOSINGAVAIL', ]
+
+    @property
+    def root(self):
+        root = Element('INVSTMTMSGSETV1')
+        msgsetcore = test_models_common.MsgsetcoreTestCase().root
+        root.append(msgsetcore)
+        SubElement(root, 'TRANDNLD').text = 'Y'
+        SubElement(root, 'OODNLD').text = 'Y'
+        SubElement(root, 'POSDNLD').text = 'Y'
+        SubElement(root, 'BALDNLD').text = 'Y'
+        SubElement(root, 'CANEMAIL').text = 'N'
+        # SubElement(root, 'INV401KDNLD').text = 'N'
+        # SubElement(root, 'CLOSINGAVAIL').text = 'Y'
+
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, INVSTMTMSGSETV1)
+        self.assertIsInstance(root.msgsetcore, MSGSETCORE)
+        self.assertEqual(root.trandnld, True)
+        self.assertEqual(root.oodnld, True)
+        self.assertEqual(root.posdnld, True)
+        self.assertEqual(root.baldnld, True)
+        self.assertEqual(root.canemail, False)
+        # self.assertEqual(root.inv401kdnld, False)
+        # self.assertEqual(root.closingavail, True)
+
+
+class InvstmtmsgsetTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element('INVSTMTMSGSET')
+        invstmtmsgsetv1 = Invstmtmsgsetv1TestCase().root
+        root.append(invstmtmsgsetv1)
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, INVSTMTMSGSET)
+        self.assertIsInstance(root.invstmtmsgsetv1, INVSTMTMSGSETV1)

@@ -15,17 +15,9 @@ from . import base
 from . import test_i18n
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import (
-    STATUS, BAL, CURRENCY, OFXELEMENT, OFXEXTENSION,
+    STATUS, BAL, CURRENCY, OFXELEMENT, OFXEXTENSION, MSGSETCORE,
 )
-from ofxtools.models.i18n import CURRENCY_CODES
-
-
-class AggregateTestCase(unittest.TestCase, base.TestAggregate):
-    """ Test miscellaneous code paths in base.Aggregate) """
-    __test__ = True
-
-    def testExtraElement(self):
-        pass
+from ofxtools.models.i18n import (CURRENCY_CODES, LANG_CODES)
 
 
 class StatusTestCase(unittest.TestCase, base.TestAggregate):
@@ -116,7 +108,7 @@ class OfxelementTestCase(unittest.TestCase, base.TestAggregate):
 class OfxextensionTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
-    optionalElements = ()  # FIXME - how to handle multiple OFXELEMENTs?
+    optionalElements = []  # FIXME - how to handle multiple OFXELEMENTs?
 
     @property
     def root(self):
@@ -134,6 +126,51 @@ class OfxextensionTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(len(root), 2)
         self.assertIsInstance(root[0], OFXELEMENT)
         self.assertIsInstance(root[1], OFXELEMENT)
+
+
+class MsgsetcoreTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+    requiredElements = ['VER', 'URL', 'OFXSEC', 'TRANSPSEC', 'SIGNONREALM',
+                        'LANGUAGE', 'SYNCMODE', 'RESPFILEER']
+    # optionalElements = ['REFRESHSUPT', 'SPNAME', 'OFXEXTENSION']
+
+    @property
+    def root(self):
+        root = Element('MSGSETCORE')
+        SubElement(root, 'VER').text = '1'
+        SubElement(root, 'URL').text = 'https://ofxs.ameritrade.com/cgi-bin/apps/OFX'
+        SubElement(root, 'OFXSEC').text = 'NONE'
+        SubElement(root, 'TRANSPSEC').text = 'Y'
+        SubElement(root, 'SIGNONREALM').text = 'AMERITRADE'
+        SubElement(root, 'LANGUAGE').text = 'ENG'
+        SubElement(root, 'SYNCMODE').text = 'FULL'
+        SubElement(root, 'REFRESHSUPT').text = 'N'
+        SubElement(root, 'RESPFILEER').text = 'N'
+        SubElement(root, 'INTU.TIMEOUT').text = '360'
+        SubElement(root, 'SPNAME').text = 'Dewey Cheatham & Howe'
+        ofxextension = OfxextensionTestCase().root
+        root.append(ofxextension)
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, MSGSETCORE)
+        self.assertEqual(root.ver, 1)
+        self.assertEqual(root.url, 'https://ofxs.ameritrade.com/cgi-bin/apps/OFX')
+        self.assertEqual(root.ofxsec, 'NONE')
+        self.assertEqual(root.transpsec, True)
+        self.assertEqual(root.signonrealm, 'AMERITRADE')
+        self.assertEqual(root.language, 'ENG')
+        self.assertEqual(root.syncmode, 'FULL')
+        self.assertEqual(root.refreshsupt, False)
+        self.assertEqual(root.respfileer, False)
+        self.assertEqual(root.spname, 'Dewey Cheatham & Howe')
+        self.assertIsInstance(root.ofxextension, OFXEXTENSION)
+
+    def testOneOf(self):
+        self.oneOfTest('OFXSEC', ('NONE', 'TYPE1'))
+        self.oneOfTest('LANGUAGE', LANG_CODES)
+        self.oneOfTest('SYNCMODE', ('FULL', 'LITE'))
 
 
 if __name__ == '__main__':

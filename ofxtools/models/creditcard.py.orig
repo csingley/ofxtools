@@ -4,7 +4,14 @@ Data structures for credit card download - OFX Section 11
 """
 # local imports
 from ofxtools.Types import (
+<<<<<<< HEAD
+    String,
+    Decimal,
+    OneOf,
+    Bool,
+=======
     String, Decimal, OneOf, Bool,
+>>>>>>> client
 )
 from ofxtools.models.base import (
     Aggregate, List, SubAggregate, Unsupported,
@@ -13,7 +20,14 @@ from ofxtools.models.common import (
     STATUS, MSGSETCORE,
 )
 from ofxtools.models.bank import (
+<<<<<<< HEAD
+    CCACCTFROM,
+    INCTRAN,
+    BANKTRANLIST,
+    LEDGERBAL, AVAILBAL, BALLIST,
+=======
     CCACCTFROM, INCTRAN, BANKTRANLIST, LEDGERBAL, AVAILBAL, BALLIST,
+>>>>>>> client
 )
 from ofxtools.models.i18n import (
     CURRENCY_CODES,

@@ -1,7 +1,14 @@
 # coding: utf-8
 # local imports
 from ofxtools.Types import (
+<<<<<<< HEAD
+    String,
+    OneOf,
+    DateTime,
+    Bool,
+=======
     String, Integer, OneOf, DateTime, Bool,
+>>>>>>> client
 )
 from ofxtools.models.base import (
     Aggregate, SubAggregate, List, Unsupported,
@@ -24,20 +31,43 @@ class SONRQ(Aggregate):
     dtclient = DateTime(required=True)
     userid = String(32)
     userpass = String(171)
+<<<<<<< HEAD
+    # userkey = String(64)
+    userkey = Unsupported()
+    # accesstoken = String(10000)
+    accesstoken = Unsupported()
+    # genuserkey = Bool()
+    genuserkey = Unsupported()
+=======
     userkey = String(64)
-    accesstoken = String(1000)
+    accesstoken = String(10000)
     genuserkey = Bool()
+>>>>>>> client
     language = OneOf(*LANG_CODES, required=True)
     fi = SubAggregate(FI)
     sesscookie = String(1000)
     appid = String(5, required=True)
     appver = String(4, required=True)
+<<<<<<< HEAD
+    # appkey = String(10000)
+    appkey = Unsupported()
+    clientuid = String(36)
+    # usercred1 = String(171)
+    usercred1 = Unsupported()
+    # usercred2 = String(171)
+    usercred2 = Unsupported()
+    # authtoken = String(171)
+    authtoken = Unsupported()
+    # accesskey = String(1000)
+    accesskey = Unsupported()
+=======
     appkey = String(10000)
     clientuid = String(36)
     usercred1 = String(171)
     usercred2 = String(171)
     authtoken = String(171)
     accesskey = String(1000)
+>>>>>>> client
     mfachallengeanswer = Unsupported()
     ofxextension = Unsupported()
 
@@ -57,6 +87,8 @@ class SONRS(Aggregate):
     ofxextension = Unsupported()
 
 
+<<<<<<< HEAD
+=======
 class SIGNONINFO(Aggregate):
     """ OFX section 7.2.2 """
     signonrealm = String(32, required=True)
@@ -85,6 +117,7 @@ class SIGNONINFOLIST(List):
     memberTags = ['SIGNONINFO', ]
 
 
+>>>>>>> client
 class SIGNONMSGSRQV1(Aggregate):
     """ """
     sonrq = SubAggregate(SONRQ)

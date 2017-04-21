@@ -10,9 +10,8 @@ import sys
 import datetime
 import uuid
 import xml.etree.ElementTree as ET
-from collections import OrderedDict
+from collections import (namedtuple, defaultdict,)
 from os import path
-import re
 from getpass import getpass
 
 
@@ -20,15 +19,12 @@ PYTHON_VERSION = sys.version_info.major
 
 if PYTHON_VERSION == 3:
     from configparser import SafeConfigParser
-    from urllib.request import urlopen, HTTPError
     from urllib.parse import urlparse
     from io import StringIO
 else:
     from ConfigParser import SafeConfigParser
-    from urllib2 import urlopen, HTTPError
     from urlparse import urlparse
     from StringIO import StringIO
-
 
 # 3rd party imports
 import requests
@@ -36,222 +32,179 @@ import requests
 
 # local imports
 from ofxtools.header import OFXHeader
-from ofxtools.Types import Bool, OneOf, DateTime
+from ofxtools.models.ofx import OFX
+from ofxtools.models.profile import (
+    PROFRQ, PROFTRNRQ, PROFMSGSRQV1,
+)
+from ofxtools.models.signon import (
+    SIGNONMSGSRQV1, SONRQ, FI,
+)
+from ofxtools.models.bank import (
+    BANKMSGSRQV1, STMTTRNRQ, STMTRQ, BANKACCTFROM, CCACCTFROM, INCTRAN,
+)
+from ofxtools.models.creditcard import (
+    CREDITCARDMSGSRQV1, CCSTMTTRNRQ, CCSTMTRQ,
+)
+from ofxtools.models.investment import (
+    INVSTMTMSGSRQV1, INVSTMTTRNRQ, INVSTMTRQ, INVACCTFROM, INCPOS,
+)
+from ofxtools.Types import DateTime
 from ofxtools.utils import fixpath
-from ofxtools.models.bank import ACCTTYPES
 
 
-class BankAcct(object):
-    """ """
-    acctkeys = ('BANKID', 'ACCTID', 'ACCTTYPE')
-    acctfrom_tag = 'BANKACCTFROM'
-    stmtrq_tag = 'STMTRQ'
-    msgsrq_tag = 'BANKMSGSRQV1'
+# Statement request data containers
+# Pass sequences of these containers as args to OFXClient.request_statement()
+StmtRq = namedtuple('StmtRq', ['acctid', 'accttype', 'dtstart', 'dtend',
+                               'inctran'])
+StmtRq.__new__.__defaults__ = (None, None, None, None, True)
 
-    # 9-digit ABA routing number
-    routingre = re.compile('^\d{9}$')
+CcStmtRq = namedtuple('CcStmtRq', ['acctid', 'dtstart', 'dtend', 'inctran'])
+CcStmtRq.__new__.__defaults__ = (None, None, None, True)
 
-    def __init__(self, bankid, acctid, accttype):
-        self._acct = OrderedDict.fromkeys(self.acctkeys)
-        accttype = accttype.upper()
-        accttype = OneOf(*ACCTTYPES).convert(accttype)
-        self._acct['ACCTTYPE'] = OneOf(*ACCTTYPES).convert(accttype)
-
-        bankid = str(bankid)
-        if not self.routingre.match(bankid):
-            raise ValueError('Invalid bankid %s' % bankid)
-        self._acct['BANKID'] = bankid
-
-        assert acctid
-        self._acct['ACCTID'] = str(acctid)
-
-    def __repr__(self):
-        values = [v for v in self._acct.values()]
-        repr_string = '%s(' + ', '.join(["'%s'"]*len(values)) + ')'
-        values.insert(0, self.__class__.__name__)
-        return repr_string % tuple(values)
-
-    def stmtrq(self, inctran=True, dtstart=None, dtend=None, **kwargs):
-        """ """
-        # **kwargs catches incpos/dtasof
-        # Requesting transactions without dtstart/dtend (which is the default)
-        # asks for all transactions on record.
-        rq = ET.Element(self.stmtrq_tag)
-        rq.append(self.acctfrom)
-        rq.append(self.inctran(inctran, dtstart, dtend))
-        return rq
-
-    @property
-    def acctfrom(self):
-        """ """
-        acctfrom = ET.Element(self.acctfrom_tag)
-        for tag, text in self._acct.items():
-            ET.SubElement(acctfrom, tag).text = text
-        return acctfrom
-
-    def inctran(self, inctran, dtstart, dtend):
-        """ """
-        tran = ET.Element('INCTRAN')
-        if dtstart:
-            ET.SubElement(tran, 'DTSTART').text = DateTime().unconvert(dtstart)
-        if dtend:
-            ET.SubElement(tran, 'DTEND').text = DateTime().unconvert(dtend)
-        ET.SubElement(tran, 'INCLUDE').text = Bool().unconvert(inctran)
-        return tran
-
-
-class CcAcct(BankAcct):
-    """ """
-    acctkeys = ('ACCTID',)
-    acctfrom_tag = 'CCACCTFROM'
-    stmtrq_tag = 'CCSTMTRQ'
-    msgsrq_tag = 'CREDITCARDMSGSRQV1'
-
-    def __init__(self, acctid):
-        self._acct = OrderedDict.fromkeys(self.acctkeys)
-        assert acctid
-        self._acct['ACCTID'] = str(acctid)
-
-    #def __repr__(self):
-        #return '%s(%s)' % (self.__class__.__name__, self.acctid)
-
-
-class InvAcct(BankAcct):
-    """ """
-    acctkeys = ('BROKERID', 'ACCTID')
-    acctfrom_tag = 'INVACCTFROM'
-    stmtrq_tag = 'INVSTMTRQ'
-    msgsrq_tag = 'INVSTMTMSGSRQV1'
-
-    def __init__(self, brokerid, acctid):
-        self._acct = OrderedDict.fromkeys(self.acctkeys)
-        assert brokerid
-        self._acct['BROKERID'] = brokerid
-        assert acctid
-        self._acct['ACCTID'] = str(acctid)
-
-    #def __repr__(self):
-        #return '%s(%s)' % (self.__class__.__name__, self.brokerid, self.acctid)
-
-    def stmtrq(self, inctran=True, dtstart=None, dtend=None,
-               dtasof=None, incpos=True, incbal=True):
-        """ """
-        rq = super(InvAcct, self).stmtrq(inctran, dtstart, dtend)
-        rq.append(self.incoo())
-        rq.append(self.incpos(dtasof, incpos))
-        rq.append(self.incbal(incbal))
-        return rq
-
-    def incoo(self):
-        # Include Open Orders - not implemented
-        oo = ET.Element('INCOO')
-        oo.text = Bool().unconvert(False)
-        return oo
-
-    def incpos(self, dtasof, incpos):
-        pos = ET.Element('INCPOS')
-        if dtasof:
-            ET.SubElement(pos, 'DTASOF').text = DateTime().unconvert(dtasof)
-        ET.SubElement(pos, 'INCLUDE').text = Bool().unconvert(incpos)
-        return pos
-
-    def incbal(self, incbal):
-        bal = ET.Element('INCBAL')
-        bal.text = Bool().unconvert(incbal)
-        return bal
+InvStmtRq = namedtuple('InvStmtRq', ['acctid', 'dtstart', 'dtend', 'dtasof',
+                                     'inctran', 'incoo', 'incpos', 'incbal'])
+InvStmtRq.__new__.__defaults__ = (None, None, None, None, True, False, True,
+                                  True)
 
 
 class OFXClient:
     """ """
     # OFX header/signon defaults
-    version = 102
+    clientuid = None
+    org = None
+    fid = None
+    version = 203
     appid = 'QWIN'
-    appver = '1800'
+    appver = '2300'
+    language = 'ENG'
 
     # Stmt request
     bankid = None
     brokerid = None
 
-    def __init__(self, url, org, fid, version=None, appid=None, appver=None,
-                 clientuid=None):
+    def __init__(self, url,  org=None, fid=None, version=None, appid=None,
+                 appver=None, language=None, bankid=None, brokerid=None):
         self.url = url
-        self.org = org
-        self.fid = fid
-        # Defaults
-        if version:
+        if org is not None:
+            self.org = org
+        if fid is not None:
+            self.fid = fid
+        if version is not None:
             self.version = int(version)
-        if appid:
-            self.appid = str(appid)
-        if appver:
+        if appid is not None:
+            self.appid = appid
+        if appver is not None:
             self.appver = str(appver)
-        if clientuid:
-            self.clientuid = str(clientuid)
+        if language is not None:
+            self.language = language
+        self.bankid = bankid
+        self.brokerid = brokerid
 
     @property
     def ofxheader(self):
         """ Prepend to OFX markup. """
         return str(OFXHeader(version=self.version, newfileuid=uuid.uuid4()))
 
-    def signon(self, user, password, clientuid=None):
-        msgsrq = ET.Element('SIGNONMSGSRQV1')
-        sonrq = ET.SubElement(msgsrq, 'SONRQ')
-        ET.SubElement(sonrq, 'DTCLIENT').text = DateTime().unconvert(datetime.datetime.now())
-        ET.SubElement(sonrq, 'USERID').text = user
-        ET.SubElement(sonrq, 'USERPASS').text = password
-        ET.SubElement(sonrq, 'LANGUAGE').text = 'ENG'
+    def request_statements(self, user, password, clientuid=None,
+                           stmtrqs=None, ccstmtrqs=None, invstmtrqs=None,
+                           dryrun=False):
+        """
+        Input *rqs are sequences of the corresponding namedtuples
+        (StmtRq, CcStmtRq, InvStmtRq)
+        """
+        signonmsgs = self.signon(user, password, clientuid=clientuid)
+
+        bankmsgs = None
+        if stmtrqs:
+            # bankid comes from OFXClient instance attribute,
+            # not StmtRq namedtuple
+            stmttrnrqs = [self.stmttrnrq(
+                **dict(stmtrq._asdict(), bankid=self.bankid))
+                for stmtrq in stmtrqs]
+            bankmsgs = BANKMSGSRQV1(*stmttrnrqs)
+
+        creditcardmsgs = None
+        if ccstmtrqs:
+            ccstmttrnrqs = [self.ccstmttrnrq(**stmtrq._asdict())
+                            for stmtrq in ccstmtrqs]
+            creditcardmsgs = CREDITCARDMSGSRQV1(*ccstmttrnrqs)
+
+        invstmtmsgs = None
+        if invstmtrqs:
+            # brokerid comes from OFXClient instance attribute,
+            # not StmtRq namedtuple
+            invstmttrnrqs = [self.invstmttrnrq(
+                **dict(stmtrq._asdict(), brokerid=self.brokerid))
+                for stmtrq in invstmtrqs]
+            invstmtmsgs = INVSTMTMSGSRQV1(*invstmttrnrqs)
+
+        ofx = OFX(signonmsgsrqv1=signonmsgs,
+                  bankmsgsrqv1=bankmsgs,
+                  creditcardmsgsrqv1=creditcardmsgs,
+                  invstmtmsgsrqv1=invstmtmsgs)
+        return self.download(ofx, dryrun=dryrun)
+
+    def request_profile(self, user=None, password=None, dryrun=False):
+        """ """
+        dtprofup = datetime.date(1990, 1, 1)
+        profrq = PROFRQ(clientrouting='NONE', dtprofup=dtprofup)
+        trnuid = uuid.uuid4()
+        proftrnrq = PROFTRNRQ(trnuid=trnuid, profrq=profrq)
+        msgs = PROFMSGSRQV1(proftrnrq)
+
+        user = user or '{:0<32}'.format('anonymous')
+        password = password or '{:0<32}'.format('anonymous')
+        signonmsgs = self.signon(user, password)
+
+        ofx = OFX(signonmsgsrqv1=signonmsgs, profmsgsrqv1=msgs)
+        return self.download(ofx, dryrun=dryrun)
+
+    def signon(self, userid, userpass, sesscookie=None, clientuid=None):
         if self.org:
-            fi = ET.SubElement(sonrq, 'FI')
-            ET.SubElement(fi, 'ORG').text = self.org
-            if self.fid:
-                ET.SubElement(fi, 'FID').text = self.fid
-        ET.SubElement(sonrq, 'APPID').text = self.appid
-        ET.SubElement(sonrq, 'APPVER').text = str(self.appver)
-        if clientuid:
-            ET.SubElement(sonrq, 'CLIENTUID').text = clientuid
-        return msgsrq
+            fi = FI(org=self.org, fid=self.fid)
+        else:
+            fi = None
 
-    def statement_request(self, user, password, accounts, clientuid=None,
-                          **kwargs):
-        """ """
-        ofx = ET.Element('OFX')
-        ofx.append(self.signon(user, password, clientuid))
+        dtclient = datetime.datetime.now()
+        sonrq = SONRQ(dtclient=dtclient, userid=userid, userpass=userpass,
+                      language=self.language, fi=fi, sesscookie=sesscookie,
+                      appid=self.appid, appver=self.appver,
+                      clientuid=clientuid)
+        return SIGNONMSGSRQV1(sonrq=sonrq)
 
-        # Create MSGSRQ SubElements for each acct type, indexed by tag
-        msgsrq_tags = [getattr(a, 'msgsrq_tag') for a in (BankAcct, CcAcct, InvAcct)]
-        msgsrqs = {tag: ET.SubElement(ofx, tag) for tag in msgsrq_tags}
+    def stmttrnrq(self, bankid, acctid, accttype, dtstart=None, dtend=None,
+                  inctran=True):
+        acct = BANKACCTFROM(bankid=bankid, acctid=acctid, accttype=accttype)
+        inctran = INCTRAN(dtstart=dtstart, dtend=dtend, include=inctran)
+        stmtrq = STMTRQ(bankacctfrom=acct, inctran=inctran)
+        trnuid = uuid.uuid4()
+        return STMTTRNRQ(trnuid=trnuid, stmtrq=stmtrq)
 
-        for account in accounts:
-            stmtrq = account.stmtrq(**kwargs)
-            stmttrnrq = self._wraptrn(stmtrq)
-            msgsrq = msgsrqs[account.msgsrq_tag]
-            msgsrq.append(stmttrnrq)
+    def ccstmttrnrq(self, acctid, dtstart=None, dtend=None, inctran=True):
+        acct = CCACCTFROM(acctid=acctid)
+        inctran = INCTRAN(dtstart=dtstart, dtend=dtend, include=inctran)
+        stmtrq = CCSTMTRQ(ccacctfrom=acct, inctran=inctran)
+        trnuid = uuid.uuid4()
+        return CCSTMTTRNRQ(trnuid=trnuid, ccstmtrq=stmtrq)
 
-        # Destroy unused MSGSRQ SubElements, because OFXv1 doesn't like
-        # self-closed tags, e.g. <BANKMSGSRQV1 />
-        for tag in msgsrqs:
-            acct = ofx.find(tag)
-            if len(acct) == 0:
-                ofx.remove(acct)
+    def invstmttrnrq(self, acctid, brokerid,
+                     dtstart=None, dtend=None, inctran=True, incoo=False,
+                     dtasof=None, incpos=True, incbal=True):
+        acct = INVACCTFROM(acctid=acctid, brokerid=brokerid)
+        inctran = INCTRAN(dtstart=dtstart, dtend=dtend, include=inctran)
+        incpos = INCPOS(dtasof=dtasof, include=incpos)
+        stmtrq = INVSTMTRQ(invacctfrom=acct, inctran=inctran, incoo=incoo,
+                           incpos=incpos, incbal=incbal)
+        trnuid = uuid.uuid4()
+        return INVSTMTTRNRQ(trnuid=trnuid, invstmtrq=stmtrq)
 
-        return ofx
-
-    def profile_request(self, user=None, password=None):
-        """ """
-        user = user or 'elmerfudd'
-        password = password or 'TOPSECRET'
-        ofx = ET.Element('OFX')
-        ofx.append(self.signon(user, password))
-        msgsrq = ET.SubElement(ofx, 'PROFMSGSRQV1')
-        profrq = ET.Element('PROFRQ')
-        ET.SubElement(profrq, 'CLIENTROUTING').text = 'NONE'
-        ET.SubElement(profrq, 'DTPROFUP').text = DateTime().unconvert(datetime.date(1990,1,1))
-        msgsrq.append(self._wraptrn(profrq))
-        return ofx
-
-    def download(self, request):
+    def download(self, ofx, dryrun=False):
         """ """
         # py3k: ElementTree.tostring() returns bytes not str
-        data = self.ofxheader + ET.tostring(request).decode()
+        data = self.ofxheader + ET.tostring(ofx.to_etree()).decode()
+
+        if dryrun:
+            return StringIO(data)
 
         mimetype = 'application/x-ofx'
         headers = {'Content-type': mimetype, 'Accept': '*/*, %s' % mimetype}
@@ -259,62 +212,78 @@ class OFXClient:
         try:
             response = requests.post(self.url, data=data, headers=headers)
             return StringIO(response.text)
-        except HTTPError as err:
+        except requests.HTTPError as err:
             # FIXME
             print(err.info())
             raise
 
-    def _wraptrn(self, rq):
-        """ """
-        tag = rq.tag
-        assert 'TRNRQ' not in tag
-        assert tag[-2:] == 'RQ'
-        trnrq = ET.Element(tag.replace('RQ', 'TRNRQ'))
-        ET.SubElement(trnrq, 'TRNUID').text = str(uuid.uuid4())
-        trnrq.append(rq)
-        return trnrq
-
 
 ### CLI COMMANDS
 def do_stmt(args):
-    client = OFXClient(args.url, args.org, args.fid, version=args.version,
-                       appid=args.appid, appver=args.appver,
-                       clientuid=args.clientuid)
+    """
+    Construct OFX statement request from CLI/config args; send to server.
 
-    # Define accounts
-    accts = []
+    Returns a file-like object (StringIO) that can be passed to
+    OFXTree.parse()
+    """
+    # Initialize OFXClient with connection info from args
+    client = OFXClient(args.url, org=args.org, fid=args.fid,
+                       version=args.version, appid=args.appid,
+                       appver=args.appver, language=args.language,
+                       bankid=args.bankid, brokerid=args.brokerid)
+
+    # Convert dtstart/dtend/dtasof to Python datetime type
+    D = DateTime().convert
+    dt = {d[2:]: D(getattr(args, d)) for d in ('dtstart', 'dtend', 'dtasof')}
+
+    # Define statement requests
+    stmtrqs = defaultdict(list)
     for accttype in ('checking', 'savings', 'moneymrkt', 'creditline'):
-        for acctid in getattr(args, accttype):
-            a = BankAcct(args.bankid, acctid, accttype)
-            accts.append(a)
+        acctids = getattr(args, accttype, [])
+        stmtrqs['stmtrqs'].extend(
+            [StmtRq(acctid=acctid, accttype=accttype, dstart=dt['start'],
+                    dtend=dt['end'], inctran=args.inctran)
+             for acctid in acctids])
 
     for acctid in args.creditcard:
-        accts.append(CcAcct(acctid))
+        stmtrqs['ccstmtrqs'].append(
+            CcStmtRq(acctid=acctid, dtstart=dt['start'], dtend=dt['end'],
+                     inctran=args.inctran))
 
     for acctid in args.investment:
-        accts.append(InvAcct(args.brokerid, acctid))
+        stmtrqs['invstmtrqs'].append(
+            InvStmtRq(acctid=acctid, dtstart=dt['start'], dtend=dt['end'],
+                      dtasof=dt['asof'], inctran=args.inctran,
+                      incoo=args.incoo, incpos=args.incpos,
+                      incbal=args.incbal))
 
     # Use dummy password for dummy request
-    if args.dry_run:
-        password = 'T0PS3CR3T'
+    if args.dryrun:
+        password = '{:0<32}'.format('anonymous')
     else:
         password = getpass()
 
-    # Statement parameters
-    d = vars(args)
-    # convert dtstart/dtend/dtasof from str to datetime
-    kwargs = {k: DateTime().convert(v) for k, v in d.items() if k.startswith('dt')}
-    # inctrans/incpos/incbal
-    kwargs.update({k: v for k, v in d.items() if k.startswith('inc')})
+    response = client.request_statements(args.user, password,
+                                         clientuid=args.clientuid,
+                                         dryrun=args.dryrun, **stmtrqs)
 
-    request = client.statement_request(args.user, password, accts, **kwargs)
+    print(response.read())
 
-    # Handle request
-    if args.dry_run:
-        print(client.ofxheader + ET.tostring(request).decode())
-    else:
-        response = client.download(request)
-        print(response.getvalue())
+def do_profile(args):
+    """
+    Construct OFX profile request from CLI/config args; send to server.
+
+    Returns a file-like object (StringIO) that can be passed to
+    OFXTree.parse()
+    """
+    # Initialize OFXClient with connection info from args
+    client = OFXClient(args.url, org=args.org, fid=args.fid,
+                       version=args.version, appid=args.appid,
+                       appver=args.appver, language=args.language,
+                       bankid=args.bankid, brokerid=args.brokerid)
+
+    response = client.request_profile(dryrun=args.dryrun)
+    print(response.read())
 
 
 class OFXConfigParser(SafeConfigParser):
@@ -333,6 +302,7 @@ class OFXConfigParser(SafeConfigParser):
 
     @property
     def fi_index(self):
+        """ List of configured FIs"""
         sections = self.sections()
         sections.remove('global')
         return sections
@@ -347,28 +317,39 @@ def main():
 
     argparser = ArgumentParser(description='Download OFX financial data',
                                epilog='FIs configured: %s' % config.fi_index)
-    argparser.add_argument('server', help='OFX server - URL or FI name from config')
-    argparser.add_argument('-n', '--dry-run', action='store_true',
+    argparser.add_argument('server',
+                           help='OFX server - URL or FI name from config')
+    argparser.add_argument('-n', '--dryrun', action='store_true',
                            default=False, help='display OFX request and exit')
+    argparser.add_argument('-p', '--profile', action='store_true',
+                           default=False,
+                           help='Download OFX profile instead of statement')
 
     signon_group = argparser.add_argument_group(title='Signon Options')
     signon_group.add_argument('-u', '--user', help='FI login username')
+    signon_group.add_argument('--clientuid', help='OFX client UID')
     signon_group.add_argument('--org', help='FI.ORG')
     signon_group.add_argument('--fid', help='FI.FID')
+    signon_group.add_argument('--bankid', help='ABA routing#')
+    signon_group.add_argument('--brokerid', help='Broker ID string')
     signon_group.add_argument('--version', help='OFX version')
     signon_group.add_argument('--appid', help='OFX client app identifier')
     signon_group.add_argument('--appver', help='OFX client app version')
-    signon_group.add_argument('--clientuid', help='OFX client UID')
+    signon_group.add_argument('--language', default='ENG', help='OFX language')
 
     acct_group = argparser.add_argument_group(title='Account Options')
-    acct_group.add_argument('--bankid', help='ABA routing#')
-    acct_group.add_argument('--brokerid', help='Broker ID string')
-    acct_group.add_argument('-C', '--checking', metavar='acct#', action='append', default=[])
-    acct_group.add_argument('-S', '--savings', metavar='acct#', action='append', default=[])
-    acct_group.add_argument('-M', '--moneymrkt', metavar='acct#', action='append', default=[])
-    acct_group.add_argument('-L', '--creditline', metavar='acct#', action='append', default=[])
-    acct_group.add_argument('-c', '--creditcard', '--cc', metavar='acct#', action='append', default=[])
-    acct_group.add_argument('-i', '--investment', metavar='acct#', action='append', default=[])
+    acct_group.add_argument('-C', '--checking', metavar='acct#',
+                            action='append', default=[])
+    acct_group.add_argument('-S', '--savings', metavar='acct#',
+                            action='append', default=[])
+    acct_group.add_argument('-M', '--moneymrkt', metavar='acct#',
+                            action='append', default=[])
+    acct_group.add_argument('-L', '--creditline', metavar='acct#',
+                            action='append', default=[])
+    acct_group.add_argument('-c', '--creditcard', '--cc', metavar='acct#',
+                            action='append', default=[])
+    acct_group.add_argument('-i', '--investment', metavar='acct#',
+                            action='append', default=[])
 
     stmt_group = argparser.add_argument_group(title='Statement Options')
     stmt_group.add_argument('-s', '--start', dest='dtstart',
@@ -386,6 +367,9 @@ def main():
     stmt_group.add_argument('--no-balances', dest='incbal',
                             action='store_false', default=True,
                             help='Omit balances')
+    stmt_group.add_argument('--open-orders', dest='incoo',
+                            action='store_true', default=False,
+                            help='Include open orders')
 
     args = argparser.parse_args()
 
@@ -414,7 +398,10 @@ def main():
                 setattr(args, cfg, value)
 
     # Pass the parsed args to the statement-request function
-    do_stmt(args)
+    if args.profile:
+        do_profile(args)
+    else:
+        do_stmt(args)
 
 
 if __name__ == '__main__':

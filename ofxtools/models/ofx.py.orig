@@ -9,6 +9,10 @@ from ofxtools.models.base import (
     SubAggregate,
     Unsupported,
 )
+<<<<<<< HEAD
+=======
+from ofxtools.models.profile import (PROFMSGSRQV1, PROFMSGSRSV1)
+>>>>>>> client
 from ofxtools.models.signon import (SIGNONMSGSRQV1, SIGNONMSGSRSV1)
 from ofxtools.models.bank import (BANKMSGSRQV1, BANKMSGSRSV1)
 from ofxtools.models.investment import (INVSTMTMSGSRQV1, INVSTMTMSGSRSV1)
@@ -18,6 +22,11 @@ from ofxtools.models.seclist import SECLISTMSGSRSV1
 
 class OFX(Aggregate):
     """ """
+<<<<<<< HEAD
+=======
+    profmsgsrqv1 = SubAggregate(PROFMSGSRQV1)
+    profmsgsrsv1 = SubAggregate(PROFMSGSRSV1)
+>>>>>>> client
     signonmsgsrqv1 = SubAggregate(SIGNONMSGSRQV1)
     signonmsgsrsv1 = SubAggregate(SIGNONMSGSRSV1)
     bankmsgsrqv1 = SubAggregate(BANKMSGSRQV1)

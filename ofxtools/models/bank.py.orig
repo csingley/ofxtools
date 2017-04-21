@@ -4,7 +4,17 @@ Data structures for bank download - OFX Section 11
 """
 # local imports
 from ofxtools.Types import (
+<<<<<<< HEAD
+    String,
+    NagString,
+    Decimal,
+    Integer,
+    OneOf,
+    DateTime,
+    Bool,
+=======
     String, NagString, Decimal, Integer, OneOf, DateTime, Bool,
+>>>>>>> client
 )
 from ofxtools.models.base import (
     Aggregate, List, TranList, SubAggregate, Unsupported,
