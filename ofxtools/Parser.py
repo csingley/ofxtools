@@ -96,7 +96,7 @@ class TreeBuilder(ET.TreeBuilder):
     # The body of an OFX document consists of a series of tags.
     # Each start tag may be followed by text (if a data-bearing element)
     # and optionally an end tag (not mandatory for OFXv1 syntax).
-    regex = re.compile(r"""<(?P<tag>[A-Z1-9./ ]+?)>
+    regex = re.compile(r"""<(?P<tag>[A-Z0-9./ ]+?)>
                             (?P<text>[^<]+)?
                             (</(?P<closetag>(?P=tag))>)?
                             (?P<tail>[^<]+)?
