@@ -13,7 +13,8 @@ from ofxtools.models.signon import (SIGNONMSGSRQV1, SIGNONMSGSRSV1)
 from ofxtools.models.bank import (BANKMSGSRQV1, BANKMSGSRSV1)
 from ofxtools.models.investment import (INVSTMTMSGSRQV1, INVSTMTMSGSRSV1)
 from ofxtools.models.creditcard import (CREDITCARDMSGSRQV1, CREDITCARDMSGSRSV1)
-from ofxtools.models.seclist import SECLISTMSGSRSV1
+from ofxtools.models.seclist import (SECLISTMSGSRQV1, SECLISTMSGSRSV1)
+from ofxtools.models.profile import (PROFMSGSRQV1, PROFMSGSRSV1)
 
 
 class OFX(Aggregate):
@@ -26,7 +27,10 @@ class OFX(Aggregate):
     creditcardmsgsrsv1 = SubAggregate(CREDITCARDMSGSRSV1)
     invstmtmsgsrqv1 = SubAggregate(INVSTMTMSGSRQV1)
     invstmtmsgsrsv1 = SubAggregate(INVSTMTMSGSRSV1)
+    seclistmsg1rqv1 = SubAggregate(SECLISTMSGSRQV1)
     seclistmsgsrsv1 = SubAggregate(SECLISTMSGSRSV1)
+    profmsgsrqv1 = SubAggregate(PROFMSGSRQV1)
+    profmsgsrsv1 = SubAggregate(PROFMSGSRSV1)
 
     signupmsgsrsv1 = Unsupported()
     emailmsgsrsv1 = Unsupported()
@@ -61,12 +65,11 @@ class OFX(Aggregate):
                 stmts.extend(msg.statements)
         return stmts
 
-    # def __repr__(self):
-        # s = "<%s fid='%s' org='%s' dtserver='%s' len(statements)=%d len(securities)=%d>"
-        # return s % (self.__class__.__name__,
-                    # self.sonrs.fid,
-                    # self.sonrs.org,
-                    # str(self.sonrs.dtserver),
-                    # len(self.statements),
-                    # len(self.securities),)
-
+    def __repr__(self):
+        s = "<%s fid='%s' org='%s' dtserver='%s' len(statements)=%d len(securities)=%d>"
+        return s % (self.__class__.__name__,
+                    self.sonrs.fid,
+                    self.sonrs.org,
+                    str(self.sonrs.dtserver),
+                    len(self.statements),
+                    len(self.securities),)
