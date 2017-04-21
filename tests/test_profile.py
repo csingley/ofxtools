@@ -77,10 +77,10 @@ class MsgsetlistTestCase(unittest.TestCase, base.TestAggregate):
         root.append(signon)
         signup = test_signup.SignupmsgsetTestCase().root
         root.append(signup)
-        # bankmsgset = test_bank.BankmsgsetTestCase().root
-        # root.append(bankmsgset)
-        # creditcardmsgset = test_creditcard.CreditcardmsgsetTestCase().root
-        # root.append(creditcardmsgset)
+        bankmsgset = test_bank.BankmsgsetTestCase().root
+        root.append(bankmsgset)
+        creditcardmsgset = test_creditcard.CreditcardmsgsetTestCase().root
+        root.append(creditcardmsgset)
         invstmtmsgset = test_investment.InvstmtmsgsetTestCase().root
         root.append(invstmtmsgset)
         seclistmsgset = test_seclist.SeclistmsgsetTestCase().root

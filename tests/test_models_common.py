@@ -144,12 +144,12 @@ class MsgsetcoreTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, 'SIGNONREALM').text = 'AMERITRADE'
         SubElement(root, 'LANGUAGE').text = 'ENG'
         SubElement(root, 'SYNCMODE').text = 'FULL'
-        # SubElement(root, 'REFRESHSUPT').text = 'N'
+        SubElement(root, 'REFRESHSUPT').text = 'N'
         SubElement(root, 'RESPFILEER').text = 'N'
         SubElement(root, 'INTU.TIMEOUT').text = '360'
-        # SubElement(root, 'SPNAME').text = 'Dewey Cheatham & Howe'
-        # ofxextension = OfxextensionTestCase().root
-        # root.append(ofxextension)
+        SubElement(root, 'SPNAME').text = 'Dewey Cheatham & Howe'
+        ofxextension = OfxextensionTestCase().root
+        root.append(ofxextension)
         return root
 
     def testConvert(self):
@@ -162,10 +162,10 @@ class MsgsetcoreTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.signonrealm, 'AMERITRADE')
         self.assertEqual(root.language, 'ENG')
         self.assertEqual(root.syncmode, 'FULL')
-        # self.assertEqual(root.refreshsupt, False)
+        self.assertEqual(root.refreshsupt, False)
         self.assertEqual(root.respfileer, False)
-        # self.assertEqual(root.spname, 'Dewey Cheatham & Howe')
-        # self.assertIsInstance(root.ofxextension, OFXEXTENSION)
+        self.assertEqual(root.spname, 'Dewey Cheatham & Howe')
+        self.assertIsInstance(root.ofxextension, OFXEXTENSION)
 
     def testOneOf(self):
         self.oneOfTest('OFXSEC', ('NONE', 'TYPE1'))
