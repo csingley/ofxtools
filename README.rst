@@ -1,29 +1,24 @@
-``ofxtools``
-============
+====================
+OFX tools for Python
+====================
 
-Description
------------
+``ofxtools`` is a Python library for working with Open Financial Exchange
+(OFX) data - both OFXv1 (SGML) and OFXv2 (pure XML) - which is the standard
+format for downloading financial information from banks and stockbrokers.
 
-| ``ofxtools`` is a Python library for working with Open Financial
-  Exchange (OFX)
-| data - both OFXv1 (SGML) and OFXv2 (pure XML) - which is the standard
-  format
-| for downloading financial information from banks and stockbrokers.
-
-| ``ofxtools`` is compatible with Python version 2.7+ and 3.1+.
-| It depends on `Requests`_
+``ofxtools`` is compatible with Python version 2.7+ and 3.1+.
+It depends on `Requests`_ .
 
 The primary facilities provided include:
 
 -  The ``OFXClient`` class; which dowloads OFX statements from the
-   Internet
--  The ``OFXTree`` class; which parses OFX data into a standard
-   ElementTree
-   structure for further processing in Python.
--  The ``OFXResponse`` class; which validates and converts OFX data
-   parsed by
-   OFXParser into Python types and exposes them through more Pythonic
-   attribute access (e.g. ``OFXResponse.statements[0].ledgerbal``).
+   Internet;
+-  The ``OFXTree`` class; which parses OFX data into a standard Python
+   ElementTree structure, then converts the parsed data into normal Python
+   types (e.g. datetime.datetime, list) and exposes them through more Pythonic
+   attribute access (e.g. ``OFX.statements[0].ledgerbal``); and
+-  An (optional) ``ofxalchemy`` object model that persists OFX data in an
+   SQL database where they can be queried.
 
 Installation
 ============
@@ -34,10 +29,9 @@ Use the Python user installation scheme:
 
     python setup.py install --user
 
-| In addition to the Python package, this will also install a script
-  ``ofxget``
-| in ``~/.local/bin``, and its sample configuration file in
-  ``~/.config/ofxtools``.
+In addition to the Python package, this will also install a script ``ofxget``
+in ``~/.local/bin``, and its sample configuration file in
+``~/.config/ofxtools``.
 
 Basic Usage to Download OFX
 ===========================
@@ -45,8 +39,7 @@ Basic Usage to Download OFX
 -  Copy ``~/.config/ofxtools/ofxget_example.cfg`` to
    ``~/.config/ofxtools/ofxget.cfg`` and edit:
 -  Add a section for your financial institution, including URL, account
-   information, login, etc.
--  See comments within.
+   information, login, etc.  See comments within.
 -  Execute ``ofxget`` with appropriate arguments, for example:
 
 ``ofxget amex stmt -s 20140101 -e 20140630 > foobar.ofx``
@@ -54,28 +47,81 @@ Basic Usage to Download OFX
 See the ``--help`` for explanation of the script options.
 
 Parser Usage Example
---------------------
+====================
 
 .. code:: python
 
-    >>> from ofxtools import OFXTree
-    >>> tree = OFXTree()
-    >>> tree.parse('stmtrs.ofx')
-    >>> response = tree.convert()
-    >>> response
-    <OFXResponse fid='1001' org='NCH' dtserver='2005-10-29 10:10:03' len(statements)=1 len(securities)=0>
-    >>> stmt = response.statements[0]
-    >>> stmt
-    <BankStatement account=<BANKACCTFROM acctid='999988' accttype='CHECKING' bankid='121099999'> currency=USD ledgerbal=<LEDGERBAL balamt='200.29' dtasof='2005-10-29 11:20:00'> availbal=<AVAILBAL balamt='200.29' dtasof='2005-10-29 11:20:00'> len(other_balances)=0 len(transactions)=2>
-    >>> stmt.transactions[-1]
-    <STMTTRN dtposted='2005-10-20 00:00:00' trntype='ATM' trnamt='-300.00' fitid='00003' dtuser='2005-10-20 00:00:00'>
+    In [1]: from ofxtools.Client import OFXClient, InvStmtRq
+
+    In [2]: client = OFXClient('https://ofxs.ameritrade.com/cgi-bin/apps/OFX',
+       ...:      org='Ameritrade Technology Group', fid='AIS', brokerid='ameritrade.com')
+
+    In [3]: stmtrq = InvStmtRq(acctid='999999999')
+
+    In [4]: response = client.request_statements(user='elmerfudd', password='T0PS3CR3T',
+       ...:      invstmtrqs=[stmtrq])
+
+    In [5]: response.read()[:512]  # It's a StringIO
+    Out[5]: '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\r\n<?OFX OFXHEADER="200" VERSION="200" SECURITY="NONE" OLDFILEUID="NONE" NEWFILEUID="NONE"?>\r\n<OFX>\r\n<SIGNONMSGSRSV1>\r\n<SONRS>\r\n<STATUS>\r\n<CODE>0</CODE>\r\n<SEVERITY>INFO</SEVERITY>\r\n<MESSAGE>Success</MESSAGE>\r\n</STATUS>\r\n<DTSERVER>20170421120513</DTSERVER>\r\n<LANGUAGE>ENG</LANGUAGE>\r\n<FI>\r\n<ORG>Ameritrade Technology Group</ORG>\r\n<FID>AIS</FID>\r\n</FI>\r\n</SONRS>\r\n</SIGNONMSGSRSV1>\r\n<INVSTMTMSGSRSV1>\r\n<INVSTMTTRNRS>\r\n<TRNUID>2a656f1c-5f86-4265-84f1-6c7f0dc8c37'
+
+    In [6]: response.seek(0)  # Rewind so parser read()s from beginning of file
+    Out[6]: 0
+
+    In [7]: from ofxtools.Parser import OFXTree
+
+    In [8]: parser = OFXTree()
+
+    In [9]: parser.parse(response)
+
+    In [10]: parser.find('.//STATUS')[:]  # It's an ElementTree subclass
+    Out[10]: 
+    [<Element 'CODE' at 0x7f27dd4a2048>,
+     <Element 'SEVERITY' at 0x7f27dd4a2ea8>,
+     <Element 'MESSAGE' at 0x7f27dd4a2318>]
+
+    In [11]: ofx = parser.convert()  # It's a tree of ofxtools.models.Aggregate
+
+    In [12]: ofx.statements
+    Out[12]: [<INVSTMTRS dtasof='2017-03-31 22:06:09' curdef='USD'>]
+
+    In [13]: ofx.statements[0].transactions
+    Out[13]: <INVTRANLIST dtstart=2015-04-21 12:05:13 dtend=2017-04-20 00:00:00 len=47>
+
+    In [14]: t = ofx.statements[0].transactions[9]
+
+    In [15]: t
+    Out[15]: <BUYSTOCK buytype='BUY'>
+
+    In [16]: t.dttrade
+    Out[16]: datetime.datetime(2016, 9, 7, 13, 10, 4)
+
+    In [17]: t.uniqueid
+    Out[17]: '233242106'
+
+    In [18]: t.units
+    Out[18]: Decimal('18000.00')
+
+    In [19]: t.total
+    Out[19]: Decimal('-4509.99')
+
+    In [20]: tree = ofx.to_etree()
+
+    In [21]: tree.find('.//STATUS')[:]  # Back to ElementTree
+    Out[21]: 
+    [<Element 'CODE' at 0x7f27dc9870e8>,
+     <Element 'SEVERITY' at 0x7f27dc987a98>,
+     <Element 'MESSAGE' at 0x7f27dc987098>]
+
+    In [22]: import xml.etree.ElementTree as ET
+
+    In [23]: ET.tostring(tree)[:512]  # It's a str again
+    Out[23]: b'<OFX><SIGNONMSGSRSV1><SONRS><STATUS><CODE>0</CODE><SEVERITY>INFO</SEVERITY><MESSAGE>Success</MESSAGE></STATUS><DTSERVER>20170421170513</DTSERVER><LANGUAGE>ENG</LANGUAGE><FI><ORG>Ameritrade Technology Group</ORG><FID>AIS</FID></FI></SONRS></SIGNONMSGSRSV1><INVSTMTMSGSRSV1><INVSTMTTRNRS><TRNUID>2a656f1c-5f86-4265-84f1-6c7f0dc8c370</TRNUID><STATUS><CODE>0</CODE><SEVERITY>INFO</SEVERITY><MESSAGE>pr-ctlvofx-pp03-clientsys Success</MESSAGE></STATUS><INVSTMTRS><DTASOF>20170401030609</DTASOF><CURDEF>USD</CURDEF><IN'
 
 Contributing
-------------
+============
 
-| If you want to contribute with this project, create a virtualenv and
-  install
-| all development requirements:
+If you want to contribute to this project, create a virtualenv and install
+all development requirements:
 
 ::
 
