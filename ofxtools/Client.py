@@ -26,6 +26,7 @@ else:
     from urlparse import urlparse
     from StringIO import StringIO
 
+
 # 3rd party imports
 import requests
 
@@ -67,8 +68,10 @@ InvStmtRq.__new__.__defaults__ = (None, None, None, None, True, False, True,
                                   True)
 
 
-class OFXClient:
-    """ """
+class OFXClient(object):
+    """
+    Basic OFX client to download statement and profile requests.
+    """
     # OFX header/signon defaults
     clientuid = None
     org = None
@@ -109,6 +112,8 @@ class OFXClient:
                            stmtrqs=None, ccstmtrqs=None, invstmtrqs=None,
                            dryrun=False):
         """
+        Package and send OFX statement requests (STMTRQ/CCSTMTRQ/INVSTMTRQ).
+
         Input *rqs are sequences of the corresponding namedtuples
         (StmtRq, CcStmtRq, InvStmtRq)
         """
@@ -145,7 +150,9 @@ class OFXClient:
         return self.download(ofx, dryrun=dryrun)
 
     def request_profile(self, user=None, password=None, dryrun=False):
-        """ """
+        """
+        Package and send OFX profile requests (PROFRQ).
+        """
         dtprofup = datetime.date(1990, 1, 1)
         profrq = PROFRQ(clientrouting='NONE', dtprofup=dtprofup)
         trnuid = uuid.uuid4()
@@ -160,6 +167,7 @@ class OFXClient:
         return self.download(ofx, dryrun=dryrun)
 
     def signon(self, userid, userpass, sesscookie=None, clientuid=None):
+        """ Construct SONRQ; package in SIGNONMSGSRQV1 """
         if self.org:
             fi = FI(org=self.org, fid=self.fid)
         else:
@@ -174,6 +182,7 @@ class OFXClient:
 
     def stmttrnrq(self, bankid, acctid, accttype, dtstart=None, dtend=None,
                   inctran=True):
+        """ Construct STMTRQ; package in STMTTRNRQ """
         acct = BANKACCTFROM(bankid=bankid, acctid=acctid, accttype=accttype)
         inctran = INCTRAN(dtstart=dtstart, dtend=dtend, include=inctran)
         stmtrq = STMTRQ(bankacctfrom=acct, inctran=inctran)
@@ -181,6 +190,7 @@ class OFXClient:
         return STMTTRNRQ(trnuid=trnuid, stmtrq=stmtrq)
 
     def ccstmttrnrq(self, acctid, dtstart=None, dtend=None, inctran=True):
+        """ Construct CCSTMTRQ; package in CCSTMTTRNRQ """
         acct = CCACCTFROM(acctid=acctid)
         inctran = INCTRAN(dtstart=dtstart, dtend=dtend, include=inctran)
         stmtrq = CCSTMTRQ(ccacctfrom=acct, inctran=inctran)
@@ -190,6 +200,7 @@ class OFXClient:
     def invstmttrnrq(self, acctid, brokerid,
                      dtstart=None, dtend=None, inctran=True, incoo=False,
                      dtasof=None, incpos=True, incbal=True):
+        """ Construct INVSTMTRQ; package in INVSTMTTRNRQ """
         acct = INVACCTFROM(acctid=acctid, brokerid=brokerid)
         inctran = INCTRAN(dtstart=dtstart, dtend=dtend, include=inctran)
         incpos = INCPOS(dtasof=dtasof, include=incpos)
@@ -199,7 +210,7 @@ class OFXClient:
         return INVSTMTTRNRQ(trnuid=trnuid, invstmtrq=stmtrq)
 
     def download(self, ofx, dryrun=False):
-        """ """
+        """ Package complete OFX tree and POST to server """
         # py3k: ElementTree.tostring() returns bytes not str
         data = self.ofxheader + ET.tostring(ofx.to_etree()).decode()
 
@@ -219,6 +230,17 @@ class OFXClient:
 
 
 ### CLI COMMANDS
+def init_client(args):
+    """
+    Initialize OFXClient with connection info from args
+    """
+    client = OFXClient(args.url, org=args.org, fid=args.fid,
+                       version=args.version, appid=args.appid,
+                       appver=args.appver, language=args.language,
+                       bankid=args.bankid, brokerid=args.brokerid)
+    return client
+
+
 def do_stmt(args):
     """
     Construct OFX statement request from CLI/config args; send to server.
@@ -226,11 +248,7 @@ def do_stmt(args):
     Returns a file-like object (StringIO) that can be passed to
     OFXTree.parse()
     """
-    # Initialize OFXClient with connection info from args
-    client = OFXClient(args.url, org=args.org, fid=args.fid,
-                       version=args.version, appid=args.appid,
-                       appver=args.appver, language=args.language,
-                       bankid=args.bankid, brokerid=args.brokerid)
+    client = init_client(args)
 
     # Convert dtstart/dtend/dtasof to Python datetime type
     D = DateTime().convert
@@ -269,6 +287,7 @@ def do_stmt(args):
 
     print(response.read())
 
+
 def do_profile(args):
     """
     Construct OFX profile request from CLI/config args; send to server.
@@ -276,18 +295,19 @@ def do_profile(args):
     Returns a file-like object (StringIO) that can be passed to
     OFXTree.parse()
     """
-    # Initialize OFXClient with connection info from args
-    client = OFXClient(args.url, org=args.org, fid=args.fid,
-                       version=args.version, appid=args.appid,
-                       appver=args.appver, language=args.language,
-                       bankid=args.bankid, brokerid=args.brokerid)
-
+    client = init_client(args)
     response = client.request_profile(dryrun=args.dryrun)
     print(response.read())
 
 
 class OFXConfigParser(SafeConfigParser):
-    """ """
+    """
+    INI parser that loads default FI configs from oftools/config/fi.cfg and
+    updates them from the user config file specified in its [global] section.
+
+    It also provides a list of configured FIs (i.e. config sections except
+    for [global]) for use by the CLI --help.
+    """
     fi_config = path.join(path.dirname(__file__), 'config', 'fi.cfg')
 
     def __init__(self):
@@ -302,13 +322,17 @@ class OFXConfigParser(SafeConfigParser):
 
     @property
     def fi_index(self):
-        """ List of configured FIs"""
+        """ List of configured FIs """
         sections = self.sections()
         sections.remove('global')
         return sections
 
 
 def main():
+    """
+    Merge default FI configs with user configs from oftools.cfg and
+    CLI args, then pass to do_stmt() or do_profile()
+    """
     # Read config first, so fi_index can be used in help
     config = OFXConfigParser()
     config.read()
