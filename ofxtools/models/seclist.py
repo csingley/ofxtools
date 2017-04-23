@@ -25,7 +25,6 @@ class SECID(Aggregate):
 
 class Secid(object):
     """ Mixin providing property aliases """
-
     @property
     def uniqueid(self):
         return self.secid.uniqueid

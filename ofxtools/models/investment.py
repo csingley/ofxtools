@@ -66,41 +66,6 @@ class INVBANKTRAN(Aggregate):
     stmttrn = SubAggregate(STMTTRN, required=True)
     subacctfund = OneOf(*INVSUBACCTS, required=True)
 
-    @property
-    def trntype(self):
-        return self.stmttrn.trntype
-
-    @property
-    def dtposted(self):
-        return self.stmttrn.dtposted
-
-    @property
-    def trnamt(self):
-        return self.stmttrn.trnamt
-
-    @property
-    def fitid(self):
-        return self.stmttrn.fitid
-
-    @property
-    def memo(self):
-        return self.stmttrn.memo
-
-    @property
-    def curtype(self):
-        return (self.stmttrn.currency
-                or self.stmttrn.origcurrency).__class__.__name__
-
-    @property
-    def cursym(self):
-        ctype = getattr(self.stmttrn, self.curtype.lower())
-        return ctype.cursym
-
-    @property
-    def currate(self):
-        ctype = getattr(self.stmttrn, self.curtype.lower())
-        return ctype.currate
-
 
 class INVTRAN(Aggregate):
     """ OFX section 13.9.2.4.2 """
@@ -114,14 +79,25 @@ class INVTRAN(Aggregate):
 
 class Invtran(object):
     """ Mixin providing property aliases """
-
     @property
     def fitid(self):
         return self.invtran.fitid
 
     @property
+    def srvrtid(self):
+        return self.invtran.fitid
+
+    @property
     def dttrade(self):
         return self.invtran.dttrade
+
+    @property
+    def dtsettle(self):
+        return self.invtran.dtsettle
+
+    @property
+    def reversalfitid(self):
+        return self.invtran.reversalfitid
 
     @property
     def memo(self):
@@ -154,6 +130,33 @@ class INVBUY(Aggregate, Invtran, Origcurrency, Secid):
 
 class Invbuy(object):
     """ Mixin providing property aliases """
+    @property
+    def fitid(self):
+        return self.invbuy.invtran.fitid
+
+    @property
+    def srvrtid(self):
+        return self.invbuy.invtran.fitid
+
+    @property
+    def dttrade(self):
+        return self.invbuy.invtran.dttrade
+
+    @property
+    def dtsettle(self):
+        return self.invbuy.invtran.dtsettle
+
+    @property
+    def reversalfitid(self):
+        return self.invbuy.invtran.reversalfitid
+
+    @property
+    def memo(self):
+        return self.invbuy.invtran.memo
+
+    @property
+    def secid(self):
+        return self.invbuy.secid
 
     @property
     def uniqueid(self):
@@ -172,8 +175,36 @@ class Invbuy(object):
         return self.invbuy.unitprice
 
     @property
+    def markup(self):
+        return self.invbuy.markup
+
+    @property
+    def commission(self):
+        return self.invbuy.commission
+
+    @property
+    def taxes(self):
+        return self.invbuy.taxes
+
+    @property
+    def fees(self):
+        return self.invbuy.fees
+
+    @property
+    def load(self):
+        return self.invbuy.load
+
+    @property
     def total(self):
         return self.invbuy.total
+
+    @property
+    def currency(self):
+        return self.invbuy.currency
+
+    @property
+    def origcurrency(self):
+        return self.invbuy.origcurrency
 
     @property
     def curtype(self):
@@ -194,18 +225,6 @@ class Invbuy(object):
     @property
     def subacctfund(self):
         return self.invbuy.subacctfund
-
-    @property
-    def fitid(self):
-        return self.invbuy.invtran.fitid
-
-    @property
-    def dttrade(self):
-        return self.invbuy.invtran.dttrade
-
-    @property
-    def memo(self):
-        return self.invbuy.invtran.memo
 
 
 class INVSELL(Aggregate, Invtran, Origcurrency, Secid):
@@ -235,6 +254,33 @@ class INVSELL(Aggregate, Invtran, Origcurrency, Secid):
 
 class Invsell(object):
     """ Mixin providing property aliases """
+    @property
+    def fitid(self):
+        return self.invsell.invtran.fitid
+
+    @property
+    def srvrtid(self):
+        return self.invsell.invtran.fitid
+
+    @property
+    def dttrade(self):
+        return self.invsell.invtran.dttrade
+
+    @property
+    def dtsettle(self):
+        return self.invsell.invtran.dtsettle
+
+    @property
+    def reversalfitid(self):
+        return self.invsell.invtran.reversalfitid
+
+    @property
+    def memo(self):
+        return self.invsell.invtran.memo
+
+    @property
+    def secid(self):
+        return self.invsell.secid
 
     @property
     def uniqueid(self):
@@ -253,8 +299,36 @@ class Invsell(object):
         return self.invsell.unitprice
 
     @property
+    def markdown(self):
+        return self.invsell.markdown
+
+    @property
+    def commission(self):
+        return self.invsell.commission
+
+    @property
+    def taxes(self):
+        return self.invsell.taxes
+
+    @property
+    def fees(self):
+        return self.invsell.fees
+
+    @property
+    def load(self):
+        return self.invsell.load
+
+    @property
     def total(self):
         return self.invsell.total
+
+    @property
+    def currency(self):
+        return self.invsell.currency
+
+    @property
+    def origcurrency(self):
+        return self.invsell.origcurrency
 
     @property
     def curtype(self):
@@ -276,46 +350,34 @@ class Invsell(object):
     def subacctfund(self):
         return self.invsell.subacctfund
 
-    @property
-    def fitid(self):
-        return self.invsell.invtran.fitid
 
-    @property
-    def dttrade(self):
-        return self.invsell.invtran.dttrade
-
-    @property
-    def memo(self):
-        return self.invsell.invtran.memo
-
-
-class BUYDEBT(Aggregate, Invbuy):
+class BUYDEBT(Invbuy, Aggregate):
     """ OFX section 13.9.2.4.4 """
     invbuy = SubAggregate(INVBUY, required=True)
     accrdint = Decimal()
 
 
-class BUYMF(Aggregate, Invbuy):
+class BUYMF(Invbuy, Aggregate):
     """ OFX section 13.9.2.4.4 """
     invbuy = SubAggregate(INVBUY, required=True)
     buytype = OneOf(*BUYTYPES, required=True)
     relfitid = String(255)
 
 
-class BUYOPT(Aggregate, Invbuy):
+class BUYOPT(Invbuy, Aggregate):
     """ OFX section 13.9.2.4.4 """
     invbuy = SubAggregate(INVBUY, required=True)
     optbuytype = OneOf(*OPTBUYTYPES, required=True)
     shperctrct = Integer(required=True)
 
 
-class BUYOTHER(Aggregate, Invbuy):
+class BUYOTHER(Invbuy, Aggregate):
     """ OFX section 13.9.2.4.4 """
     invbuy = SubAggregate(INVBUY, required=True)
     pass
 
 
-class BUYSTOCK(Aggregate, Invbuy):
+class BUYSTOCK(Invbuy, Aggregate):
     """ OFX section 13.9.2.4.4 """
     invbuy = SubAggregate(INVBUY, required=True)
     buytype = OneOf(*BUYTYPES, required=True)
@@ -515,6 +577,10 @@ class INVPOS(Aggregate, Secid):
 class Invpos(object):
     """ Mixin providing property aliases """
     @property
+    def secid(self):
+        return self.invpos.secid
+
+    @property
     def uniqueid(self):
         return self.invpos.secid.uniqueid
 
@@ -543,8 +609,16 @@ class Invpos(object):
         return self.invpos.mktval
 
     @property
+    def avgcostbasis(self):
+        return self.invpos.avgcostbasis
+
+    @property
     def dtpriceasof(self):
         return self.invpos.dtpriceasof
+
+    @property
+    def currency(self):
+        return self.invpos.currency
 
     @property
     def cursym(self):
@@ -739,31 +813,6 @@ class INVSTMTRS(Aggregate):
     mktginfo = String(360)
     inv401k = Unsupported()
     inv401kbal = SubAggregate(INV401KBAL)
-
-    # Human-friendly attribute aliases
-    @property
-    def currency(self):
-        return self.curdef
-
-    @property
-    def account(self):
-        return self.invacctfrom
-
-    @property
-    def datetime(self):
-        return self.dtasof
-
-    @property
-    def balances(self):
-        return self.invbal
-
-    @property
-    def transactions(self):
-        return self.invtranlist
-
-    @property
-    def positions(self):
-        return self.invposlist
 
 
 class INVSTMTTRNRQ(Aggregate):

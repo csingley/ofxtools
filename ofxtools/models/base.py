@@ -113,11 +113,16 @@ class Aggregate(object):
         """
         pass
 
-    def __repr__(self):
-        attrs = ['%s=%r' % (attr, str(getattr(self, attr)))
-                 for attr in self.elements
+    def _repr(self):
+        """ """
+        attrs = [(attr, repr(getattr(self, attr)))
+                 for attr in self.spec
                  if getattr(self, attr) is not None]
-        return '<%s %s>' % (self.__class__.__name__, ' '.join(attrs))
+        return attrs
+
+    def __repr__(self):
+        attrs = ['{}={}'.format(*attr) for attr in self._repr()]
+        return '<{}({})>'.format(self.__class__.__name__, ', '.join(attrs))
 
     def to_etree(self):
         """ """

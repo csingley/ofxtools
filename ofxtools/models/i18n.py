@@ -9,7 +9,6 @@ from ofxtools.Types import (
 )
 from ofxtools.models.base import (
     Aggregate,
-    SubAggregate,
 )
 
 
@@ -168,14 +167,22 @@ class Origcurrency(object):
 
     @property
     def curtype(self):
-        return (self.currency or self.origcurrency).__class__.__name__
+        cur = self.currency or self.origcurrency
+        if cur:
+            return (cur).__class__.__name__
 
     @property
     def cursym(self):
-        ctype = getattr(self, self.curtype.lower())
-        return ctype.cursym
+        cur = self.currency or self.origcurrency
+        if cur:
+            return cur.cursym
 
     @property
     def currate(self):
-        ctype = getattr(self, self.curtype.lower())
-        return ctype.currate
+        cur = self.currency or self.origcurrency
+        if cur:
+            return cur.currate
+
+    @property
+    def currency(self):
+        return self.cursym
