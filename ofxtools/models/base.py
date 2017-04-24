@@ -113,6 +113,15 @@ class Aggregate(object):
         """
         pass
 
+    @staticmethod
+    def ungroom(elem):
+        """
+        Reverse groom() when converting back to ElementTree.
+
+        Extend in subclass.
+        """
+        pass
+
     def _repr(self):
         """ """
         attrs = [(attr, repr(getattr(self, attr)))
@@ -133,6 +142,7 @@ class Aggregate(object):
                 continue
             elif isinstance(value, Aggregate):
                 child = value.to_etree()
+                value.ungroom(child)
                 root.append(child)
             else:
                 converter = self.__class__.__dict__[spec]

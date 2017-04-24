@@ -110,6 +110,17 @@ class MFINFO(Aggregate):
 
         return super(STOCKINFO, STOCKINFO).groom(elem)
 
+    @staticmethod
+    def ungroom(elem):
+        """
+        Rename YLD back to YLD
+        """
+        yld = elem.find('./YLD')
+        if yld is not None:
+            yld.tag = 'YIELD'
+
+        return super(MFINFO, MFINFO).ungroom(elem)
+
 
 class OPTINFO(Aggregate):
     """ OFX Section 13.8.5.4 """
@@ -151,6 +162,17 @@ class STOCKINFO(Aggregate):
             yld.tag = 'YLD'
 
         return super(STOCKINFO, STOCKINFO).groom(elem)
+
+    @staticmethod
+    def ungroom(elem):
+        """
+        Rename YLD back to YLD
+        """
+        yld = elem.find('./YLD')
+        if yld is not None:
+            yld.tag = 'YIELD'
+
+        return super(STOCKINFO, STOCKINFO).ungroom(elem)
 
 
 class SECLIST(List):
