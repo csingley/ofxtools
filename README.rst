@@ -33,21 +33,66 @@ In addition to the Python package, this will also install a script ``ofxget``
 in ``~/.local/bin``, and its sample configuration file in
 ``~/.config/ofxtools``.
 
-Basic Usage to Download OFX
-===========================
+OFX Client
+==========
+
+Basic usage of the CLI script:
 
 -  Copy ``~/.config/ofxtools/ofxget_example.cfg`` to
    ``~/.config/ofxtools/ofxget.cfg`` and edit:
 -  Add a section for your financial institution, including URL, account
-   information, login, etc.  See comments within.
+   information, login, etc.  See comments within the example file.
 -  Execute ``ofxget`` with appropriate arguments, for example:
 
 ``ofxget amex stmt -s 20140101 -e 20140630 > foobar.ofx``
 
 See the ``--help`` for explanation of the script options.
 
-Parser Usage Example
-====================
+To use within another program, initialize an `OFXClient` instance with the
+relevant connection parameters, then pass `*StmtRq` namedtuples along with
+a username and password to its `request_statements` method.  See below for
+an example.
+
+OFX Parser
+==========
+The `OFXTree` parser subclasses `xml.etree.ElementTree`, and is used similarly -
+get an `OFXTree` instance, and pass a file-like object (or a reference to one)
+to its `parse` method.  Thereafter, calling its `convert` method returns
+a tree of nested `ofxtools.models.Aggregate` containers that preserve the
+original OFX structure.  Following the `OFX spec`_ , you can get a node in the
+parse tree with Python dotted attribute access, using standard slice notation
+for lists.  E.g.:
+
+.. code:: python
+
+    ``ofx.invstmtmsgsrsv1[0].invstmttrnrs.invstmtrs.invtranlist[-1].invsell.invtran.dttrade``
+
+Data-bearing leaf nodes (such as `DTTRADE` above) are subclasses of
+`ofxtools.Types.Element`, which validate the OFX character data and convert
+it to standard Python types (datetime.datetime in this case, decimal.Decimal,
+bool, etc.)
+
+For quick access, `Aggregate`s also provide shortcuts via read-only properties.
+`ofx.statements` yields all `STMTRS/CCSTMTRS/INVSTMTRS` found in the response.
+`ofx.statements[0].transactions` goes to the relevant `*TRANLIST`
+Use `ofx.statements[0].balance` for bank statement `LEDGERBAL`, or
+`ofx.statements[0].balances` for investment statement `INVBAL`.
+
+Investment transactions provide lookthrough access to attributes of their
+`SubAggregate`s, so you can use `STOCKBUY.uniqueid` or `INCOME.dttrade`.
+
+For handling multicurrency transactions per OFX section 5.2, `Aggregate`s that
+can contain `ORIGCURRENCY` have an additional `curtype` attribute which
+yields `'CURRENCY`'` if the money amounts have not been converted to the
+home currency, or yields `'ORIGCURRENCY`" if they have been converted.
+
+`YIELD` elements are renamed to `yld` to avoid name collision with the Python
+built-in.
+
+Proprietary OFX tags (e.g. `<INTU.BROKERID>` are stripped and dropped.
+
+Usage Example
+=============
 
 .. code:: python
 
@@ -71,7 +116,7 @@ Parser Usage Example
 
     In [8]: parser = OFXTree()
 
-    In [9]: parser.parse(response)
+    In [9]: parser.parse(response)  # parser.parse('/path/to/file.ofx') works too
 
     In [10]: parser.find('.//STATUS')[:]  # It's an ElementTree subclass
     Out[10]: 
@@ -79,9 +124,9 @@ Parser Usage Example
      <Element 'SEVERITY' at 0x7f27dd4a2ea8>,
      <Element 'MESSAGE' at 0x7f27dd4a2318>]
 
-    In [11]: ofx = parser.convert()  # It's a tree of ofxtools.models.Aggregate
+    In [11]: ofx = parser.convert()
 
-    In [12]: ofx.statements
+    In [12]: ofx.statements  # It's a tree of ofxtools.models.Aggregate
     Out[12]: [<INVSTMTRS dtasof='2017-03-31 22:06:09' curdef='USD'>]
 
     In [13]: ofx.statements[0].transactions
@@ -104,7 +149,7 @@ Parser Usage Example
     In [19]: t.total
     Out[19]: Decimal('-4509.99')
 
-    In [20]: tree = ofx.to_etree()
+    In [20]: tree = ofx.to_etree()  # ElementTree(ofx.to_etree()) is a little nicer
 
     In [21]: tree.find('.//STATUS')[:]  # Back to ElementTree
     Out[21]: 
@@ -114,7 +159,7 @@ Parser Usage Example
 
     In [22]: import xml.etree.ElementTree as ET
 
-    In [23]: ET.tostring(tree)[:512]  # It's a str again
+    In [23]: ET.tostring(tree)[:512]  # Back to str
     Out[23]: b'<OFX><SIGNONMSGSRSV1><SONRS><STATUS><CODE>0</CODE><SEVERITY>INFO</SEVERITY><MESSAGE>Success</MESSAGE></STATUS><DTSERVER>20170421170513</DTSERVER><LANGUAGE>ENG</LANGUAGE><FI><ORG>Ameritrade Technology Group</ORG><FID>AIS</FID></FI></SONRS></SIGNONMSGSRSV1><INVSTMTMSGSRSV1><INVSTMTTRNRS><TRNUID>2a656f1c-5f86-4265-84f1-6c7f0dc8c370</TRNUID><STATUS><CODE>0</CODE><SEVERITY>INFO</SEVERITY><MESSAGE>pr-ctlvofx-pp03-clientsys Success</MESSAGE></STATUS><INVSTMTRS><DTASOF>20170401030609</DTASOF><CURDEF>USD</CURDEF><IN'
 
 Contributing
@@ -144,5 +189,6 @@ Or directly with ``nosetests``:
 Feel free to `create pull requests`_ on `ofxtools repository on GitHub`_.
 
 .. _Requests: http://docs.python-requests.org/en/master/
+.. _OFX spec: http://www.ofx.net/downloads.html
 .. _create pull requests: https://help.github.com/articles/using-pull-requests/
 .. _ofxtools repository on GitHub: https://github.com/csingley/ofxtools
