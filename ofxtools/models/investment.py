@@ -538,6 +538,22 @@ class INVSTMTRS(Aggregate):
     inv401k = Unsupported()
     inv401kbal = SubAggregate(INV401KBAL)
 
+    @property
+    def account(self):
+        return self.invacctfrom
+
+    @property
+    def transactions(self):
+        return self.invtranlist
+
+    @property
+    def positions(self):
+        return self.invposlist
+
+    @property
+    def balances(self):
+        return self.invbal
+
 
 class INVSTMTTRNRQ(Aggregate):
     """ OFX section 13.9.1.1 """
