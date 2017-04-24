@@ -17,6 +17,9 @@ from ofxtools.models.seclist import (SECLISTMSGSRQV1, SECLISTMSGSRSV1)
 from ofxtools.models.profile import (PROFMSGSRQV1, PROFMSGSRSV1)
 
 
+__all__ = ['OFX']
+
+
 class OFX(Aggregate):
     """ """
     signonmsgsrqv1 = SubAggregate(SIGNONMSGSRQV1)

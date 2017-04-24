@@ -20,6 +20,11 @@ from ofxtools.models.i18n import (
 )
 
 
+__all__ = ['REWARDINFO', 'CCSTMTRS', 'CCSTMTRQ', 'CCSTMTTRNRS',
+           'CREDITCARDMSGSRQV1', 'CREDITCARDMSGSRSV1', 'CREDITCARDMSGSETV1',
+           'CREDITCARDMSGSET', ]
+
+
 class REWARDINFO(Aggregate):
     """ OFX section 11.4.3.2 """
     name = String(32, required=True)

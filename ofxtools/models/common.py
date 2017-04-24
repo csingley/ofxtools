@@ -13,6 +13,9 @@ from ofxtools.models.i18n import (
 )
 
 
+__all__ = ['STATUS', 'BAL', 'OFXELEMENT', 'OFXEXTENSION', 'MSGSETCORE', ]
+
+
 class STATUS(Aggregate):
     """ OFX section 3.1.5 """
     code = Integer(6, required=True)

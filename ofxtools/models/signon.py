@@ -10,7 +10,8 @@ from ofxtools.models.common import (STATUS, MSGSETCORE,)
 from ofxtools.models.i18n import LANG_CODES
 
 
-__all__ = ['SIGNONMSGSRQV1', 'SIGNONMSGSRSV1', 'SONRQ', 'SONRS', 'FI', ]
+__all__ = ['SIGNONMSGSRQV1', 'SIGNONMSGSRSV1', 'SONRQ', 'SONRS', 'FI',
+           'SIGNONINFOLIST', 'SIGNONINFO', 'SIGNONMSGSETV1', 'SIGNONMSGSET', ]
 
 
 class FI(Aggregate):

@@ -185,6 +185,17 @@ class Aggregate(object):
                 dct[k] = v
         return dct
 
+    def __getattr__(self, attr):
+        """ Proxy access to attributes of SubAggregates """
+        for subaggregate in self.subaggregates:
+            subagg = getattr(self, subaggregate)
+            try:
+                return getattr(subagg, attr)
+            except AttributeError:
+                continue
+        raise AttributeError("'{}' object has no attribute '{}'".format(
+            self.__class__.__name__, attr))
+
 
 class List(Aggregate, list):
     """

@@ -12,6 +12,9 @@ from ofxtools.models.base import (
 )
 
 
+__all__ = ['CURRENCY', 'ORIGCURRENCY', ]
+
+
 # 3-letter language codes
 ISO639_2 = ('AAR', 'ABK', 'ACE', 'ACH', 'ADA', 'ADY', 'AFA', 'AFH', 'AFR',
             'AIN', 'AKA', 'AKK', 'SQI', 'ALE', 'ALG', 'ALT', 'AMH', 'ANG',

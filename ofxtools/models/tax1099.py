@@ -9,6 +9,9 @@ from ofxtools.models.base import (
 from ofxtools.models.common import MSGSETCORE
 
 
+__all__ = ['TAX1099MSGSETV1', 'TAX1099MSGSET', ]
+
+
 class TAX1099MSGSETV1(Aggregate):
     """ OFX tax extensions section 2.1 """
     msgsetcore = SubAggregate(MSGSETCORE, required=True)

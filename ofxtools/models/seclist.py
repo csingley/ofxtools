@@ -13,6 +13,14 @@ from ofxtools.models.common import MSGSETCORE
 from ofxtools.models.i18n import CURRENCY
 
 
+__all__ = ['SECLISTMSGSETV1', 'SECLISTMSGSET', 'SECLISTMSGSRSV1', 'SECLIST',
+           'MFASSETCLASS', 'PORTION', 'FIMFASSETCLASS', 'FIPORTION', 'SECID',
+           'SECINFO', 'DEBTINFO', 'MFINFO', 'OPTINFO', 'OTHERINFO',
+           'STOCKINFO', 'SECRQ', 'SECLISTRQ', 'SECLISTTRNRQ', 
+           'SECLISTMSGSRQV1', 'SECLISTMSGSRSV1', 'SECLISTMSGSETV1',
+           'SECLISTMSGSET', ]
+
+
 ASSETCLASSES = ('DOMESTICBOND', 'INTLBOND', 'LARGESTOCK', 'SMALLSTOCK',
                 'INTLSTOCK', 'MONEYMRKT', 'OTHER')
 
@@ -23,18 +31,7 @@ class SECID(Aggregate):
     uniqueidtype = String(10, required=True)
 
 
-class Secid(object):
-    """ Mixin providing property aliases """
-    @property
-    def uniqueid(self):
-        return self.secid.uniqueid
-
-    @property
-    def uniqueidtype(self):
-        return self.secid.uniqueidtype
-
-
-class SECINFO(Aggregate, Secid):
+class SECINFO(Aggregate):
     """ OFX Section 13.8.5.1 """
     secid = SubAggregate(SECID, required=True)
     # FIs abuse SECNAME/TICKER
@@ -51,19 +48,7 @@ class SECINFO(Aggregate, Secid):
     memo = String(255)
 
 
-class Secinfo(object):
-    """ Mixin providing property aliases """
-
-    @property
-    def uniqueid(self):
-        return self.secinfo.secid.uniqueid
-
-    @property
-    def uniqueidtype(self):
-        return self.secinfo.secid.uniqueidtype
-
-
-class DEBTINFO(Aggregate, Secinfo):
+class DEBTINFO(Aggregate):
     """ OFX Section 13.8.5.2 """
     secinfo = SubAggregate(SECINFO, required=True)
     parvalue = Decimal(required=True)
@@ -105,7 +90,7 @@ class FIMFASSETCLASS(List):  # pylint: disable=too-many-ancestors
     memberTags = ['FIPORTION', ]
 
 
-class MFINFO(Aggregate, Secinfo):
+class MFINFO(Aggregate):
     """ OFX section 13.8.5.3 """
     secinfo = SubAggregate(SECINFO, required=True)
     mftype = OneOf('OPENEND', 'CLOSEEND', 'OTHER')
@@ -126,7 +111,7 @@ class MFINFO(Aggregate, Secinfo):
         return super(STOCKINFO, STOCKINFO).groom(elem)
 
 
-class OPTINFO(Aggregate, Secinfo):
+class OPTINFO(Aggregate):
     """ OFX Section 13.8.5.4 """
     secinfo = SubAggregate(SECINFO, required=True)
     opttype = OneOf('CALL', 'PUT', required=True)
@@ -138,7 +123,7 @@ class OPTINFO(Aggregate, Secinfo):
     fiassetclass = String(32)
 
 
-class OTHERINFO(Aggregate, Secinfo):
+class OTHERINFO(Aggregate):
     """ OFX Section 13.8.5.5 """
     secinfo = SubAggregate(SECINFO, required=True)
     typedesc = String(32)
@@ -146,7 +131,7 @@ class OTHERINFO(Aggregate, Secinfo):
     fiassetclass = String(32)
 
 
-class STOCKINFO(Aggregate, Secinfo):
+class STOCKINFO(Aggregate):
     """ OFX Section 13.8.5.6 """
     secinfo = SubAggregate(SECINFO, required=True)
     stocktype = OneOf('COMMON', 'PREFERRED', 'CONVERTIBLE', 'OTHER')

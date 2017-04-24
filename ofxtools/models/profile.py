@@ -11,6 +11,10 @@ from ofxtools.models.i18n import COUNTRY_CODES
 from ofxtools.models.signon import SIGNONINFOLIST
 
 
+__all__ = ['PROFMSGSRQV1', 'PROFMSGSRSV1', 'PROFTRNRQ', 'PROFTRNRS', 'PROFRQ',
+           'PROFRS', 'MSGSETLIST', 'PROFMSGSETV1', 'PROFMSGSET', ]
+
+
 class PROFRQ(Aggregate):
     """ OFX section 7.1.5 """
     clientrouting = OneOf('NONE', 'SERVICE', 'MSGSET', required=True)

@@ -9,6 +9,10 @@ from ofxtools.models.base import (
 from ofxtools.models.common import MSGSETCORE
 
 
+__all__ = ['SIGNUPMSGSET', 'SIGNUPMSGSETV1', 'CLIENTENROLL', 'WEBENROLL',
+           'OTHERENROLL', ]
+
+
 class CLIENTENROLL(Aggregate):
     """ OFX section 8.8 """
     acctrequired = Bool(required=True)
