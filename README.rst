@@ -48,48 +48,48 @@ Basic usage of the CLI script:
 
 See the ``--help`` for explanation of the script options.
 
-To use within another program, initialize an `OFXClient` instance with the
-relevant connection parameters, then pass `*StmtRq` namedtuples along with
-a username and password to its `request_statements` method.  See below for
+To use within another program, initialize an ``OFXClient`` instance with the
+relevant connection parameters, then pass ``*StmtRq`` namedtuples along with
+a username and password to its ``request_statements`` method.  See below for
 an example.
 
 OFX Parser
 ==========
-The `OFXTree` parser subclasses `xml.etree.ElementTree`, and is used similarly -
-get an `OFXTree` instance, and pass a file-like object (or a reference to one)
-to its `parse` method.  Thereafter, calling its `convert` method returns
-a tree of nested `ofxtools.models.Aggregate` containers that preserve the
+The ``OFXTree`` parser subclasses ``xml.etree.ElementTree``, and is used similarly --
+get an ``OFXTree`` instance, and pass a file-like object (or a reference to one)
+to its ``parse`` method.  Thereafter, calling its ``convert`` method returns
+a tree of nested ``ofxtools.models.Aggregate`` containers that preserve the
 original OFX structure.  Following the `OFX spec`_ , you can get a node in the
 parse tree with Python dotted attribute access, using standard slice notation
 for lists.  E.g.:
 
 .. code:: python
 
-    ``ofx.invstmtmsgsrsv1[0].invstmttrnrs.invstmtrs.invtranlist[-1].invsell.invtran.dttrade``
+    ofx.invstmtmsgsrsv1[0].invstmttrnrs.invstmtrs.invtranlist[-1].invsell.invtran.dttrade
 
-Data-bearing leaf nodes (such as `DTTRADE` above) are subclasses of
-`ofxtools.Types.Element`, which validate the OFX character data and convert
-it to standard Python types (datetime.datetime in this case, decimal.Decimal,
-bool, etc.)
+Data-bearing leaf nodes (such as ``DTTRADE`` above) are subclasses of
+``ofxtools.Types.Element``, which validate the OFX character data and convert
+it to standard Python types (``datetime.datetime`` in this case,
+``decimal.Decimal``, ``bool``, etc.)
 
-For quick access, `Aggregate`s also provide shortcuts via read-only properties.
-`ofx.statements` yields all `STMTRS/CCSTMTRS/INVSTMTRS` found in the response.
-`ofx.statements[0].transactions` goes to the relevant `*TRANLIST`
-Use `ofx.statements[0].balance` for bank statement `LEDGERBAL`, or
-`ofx.statements[0].balances` for investment statement `INVBAL`.
+For quick access, ``Aggregates`` also provide shortcuts via read-only properties.
+``ofx.statements`` yields all {``STMTRS``, ``CCSTMTRS``, ``INVSTMTRS``} found in the response.
+``ofx.statements[0].transactions`` goes to the relevant ``*TRANLIST``
+Use ``ofx.statements[0].balance`` for bank statement ``LEDGERBAL``, or
+``ofx.statements[0].balances`` for investment statement ``INVBAL``.
 
 Investment transactions provide lookthrough access to attributes of their
-`SubAggregate`s, so you can use `STOCKBUY.uniqueid` or `INCOME.dttrade`.
+``SubAggregates``, so you can use ``STOCKBUY.uniqueid`` or ``INCOME.dttrade``.
 
-For handling multicurrency transactions per OFX section 5.2, `Aggregate`s that
-can contain `ORIGCURRENCY` have an additional `curtype` attribute which
-yields `'CURRENCY`'` if the money amounts have not been converted to the
-home currency, or yields `'ORIGCURRENCY`" if they have been converted.
+For handling multicurrency transactions per OFX section 5.2, ``Aggregates`` that
+can contain ``ORIGCURRENCY`` have an additional ``curtype`` attribute which
+yields ``'CURRENCY'`` if the money amounts have not been converted to the
+home currency, or yields ``'ORIGCURRENCY'`` if they have been converted.
 
-`YIELD` elements are renamed to `yld` to avoid name collision with the Python
+``YIELD`` elements are renamed ``yld`` to avoid name collision with the Python
 built-in.
 
-Proprietary OFX tags (e.g. `<INTU.BROKERID>` are stripped and dropped.
+Proprietary OFX tags (e.g. ``<INTU.BROKERID>``) are stripped and dropped.
 
 Usage Example
 =============
