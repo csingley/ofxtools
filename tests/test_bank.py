@@ -534,7 +534,6 @@ class StmtrsTestCase(unittest.TestCase, base.TestAggregate):
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
-        self.assertIn(root.currency, CURRENCY_CODES)
         self.assertIsInstance(root.account, BANKACCTFROM)
         self.assertIsInstance(root.transactions, BANKTRANLIST)
         self.assertIsInstance(root.balance, LEDGERBAL)

@@ -216,9 +216,6 @@ class InvbanktranTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.trnamt,  stmttrn.trnamt)
         self.assertEqual(root.fitid,  stmttrn.fitid)
         self.assertEqual(root.memo,  stmttrn.memo)
-        self.assertEqual(root.curtype, stmttrn.curtype)
-        self.assertEqual(root.cursym,  stmttrn.cursym)
-        self.assertEqual(root.currate,  stmttrn.currate)
 
 
 class InvtranTestCase(unittest.TestCase, base.TestAggregate):
@@ -1936,9 +1933,7 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
-        self.assertIs(root.currency, root.curdef)
         self.assertIs(root.account, root.invacctfrom)
-        self.assertIs(root.datetime, root.dtasof)
         self.assertIs(root.balances, root.invbal)
         self.assertIs(root.transactions, root.invtranlist)
         self.assertIs(root.positions, root.invposlist)
