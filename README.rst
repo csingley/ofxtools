@@ -75,6 +75,7 @@ it to standard Python types (``datetime.datetime`` in this case,
 For quick access, ``Aggregates`` also provide shortcuts via read-only properties.
 ``ofx.statements`` yields all {``STMTRS``, ``CCSTMTRS``, ``INVSTMTRS``} found in the response.
 ``ofx.statements[0].transactions`` goes to the relevant ``*TRANLIST``
+``ofx.statements[0].account`` goes to the relevant ``*ACCTFROM``
 Use ``ofx.statements[0].balance`` for bank statement ``LEDGERBAL``, or
 ``ofx.statements[0].balances`` for investment statement ``INVBAL``.
 
