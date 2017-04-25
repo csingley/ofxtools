@@ -89,6 +89,10 @@ class InvposlistTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root[3], POSOTHER)
         self.assertIsInstance(root[4], POSSTOCK)
 
+    def testToEtree(self):
+        root = Aggregate.from_etree(self.root)
+        elem = root.to_etree()
+
 
 class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
     """ """
@@ -98,6 +102,8 @@ class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
     @property
     def root(self):
         root = Element('INVOOLIST')
+        SubElement(root, 'DTSTART').text = '20130601'
+        SubElement(root, 'DTEND').text = '20130630'
         for oo in ('Oobuydebt', 'Oobuymf', 'Oobuyopt', 'Oobuyother',
                    'Oobuystock', 'Ooselldebt', 'Oosellmf', 'Oosellopt',
                    'Oosellother', 'Oosellstock', 'Switchmf',):
@@ -122,6 +128,10 @@ class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root[8], OOSELLOTHER)
         self.assertIsInstance(root[9], OOSELLSTOCK)
         self.assertIsInstance(root[10], SWITCHMF)
+
+    def testToEtree(self):
+        root = Aggregate.from_etree(self.root)
+        elem = root.to_etree()
 
 
 class InvbalTestCase(unittest.TestCase, base.TestAggregate):
@@ -184,6 +194,10 @@ class InvtranlistTestCase(unittest.TestCase, base.TestAggregate):
                                 RETOFCAP, SELLDEBT, SELLMF, SELLOPT, SELLOTHER,
                                 SELLSTOCK, SPLIT, TRANSFER,)):
             self.assertIsInstance(root[i], it)
+
+    def testToEtree(self):
+        root = Aggregate.from_etree(self.root)
+        elem = root.to_etree()
 
 
 class InvbanktranTestCase(unittest.TestCase, base.TestAggregate):
@@ -1884,8 +1898,8 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
     requiredElements = ('DTASOF', 'CURDEF', 'INVACCTFROM',)
     optionalElements = ('INVTRANLIST', 'INVPOSLIST', 'INVBAL',
                         # FIXME - INVOOLIST
-                        # 'INVOOLIST', 'MKTGINFO', 'INV401KBAL',)
-                        'MKTGINFO', 'INV401KBAL',)
+                        'INVOOLIST', 'MKTGINFO', 'INV401KBAL',)
+                        # 'MKTGINFO', 'INV401KBAL',)
     unsupported = ('INV401K', )
 
     @property
@@ -1902,8 +1916,8 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
         invbal = InvbalTestCase().root
         root.append(invbal)
         # FIXME - INVOOLIST
-        # invoolist = InvoolistTestCase().root
-        # root.append(invoolist)
+        invoolist = InvoolistTestCase().root
+        root.append(invoolist)
         SubElement(root, 'MKTGINFO').text = 'Get Free Stuff NOW!!'
         # FIXME - INV401K
         inv401kbal = Inv401kbalTestCase().root
@@ -1922,7 +1936,7 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root.invtranlist, INVTRANLIST)
         self.assertIsInstance(root.invposlist, INVPOSLIST)
         self.assertIsInstance(root.invbal, INVBAL)
-        # self.assertIsInstance(root.invoolist, INVOOLIST)
+        self.assertIsInstance(root.invoolist, INVOOLIST)
         self.assertEqual(root.mktginfo, 'Get Free Stuff NOW!!')
         self.assertIsInstance(root.inv401kbal, INV401KBAL)
 
