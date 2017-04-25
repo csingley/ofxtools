@@ -77,6 +77,12 @@ class Aggregate(object):
         if issubclass(SubClass, List):
             if issubclass(SubClass, TranList):
                 dtstart, dtend = elem[:2]
+                try:
+                    assert dtstart.tag == 'DTSTART'
+                    assert dtend.tag == 'DTEND'
+                except AssertionError:
+                    msg = "<{}> lacks <DTSTART> / <DTEND>".format(elem.tag)
+                    raise ValueError(msg)
                 args = [dtstart.text, dtend.text]
                 elem.remove(dtstart)
                 elem.remove(dtend)
