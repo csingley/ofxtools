@@ -216,6 +216,7 @@ want to clutter your system libraries just for this work, you can create a
 .. _PyPI: https://pypi.python.org/pypi/ofxtools
 .. _current master: https://github.com/csingley/ofxtools/archive/master.zip
 .. _OFX spec: http://www.ofx.net/downloads.html
+.. _Git: https://git-scm.com/
 .. _create pull requests: https://help.github.com/articles/using-pull-requests/
 .. _ofxtools repository on GitHub: https://github.com/csingley/ofxtools
 .. _virtual environment: http://docs.python-guide.org/en/latest/dev/virtualenvs/
