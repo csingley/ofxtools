@@ -178,6 +178,7 @@ If you want to contribute to this project, it's recommended to use `Git`_ to
 clone the repository:
 
 ::
+
     git clone https://github.com/csingley/ofxtools.git
 
 Feel free to `create pull requests`_ on `ofxtools repository on GitHub`_.
@@ -186,6 +187,7 @@ Again, the minimal dependencies make it simple to install with the Python user
 installation scheme:
 
 ::
+
     python setup.py develop --user
 
 However, you'll want to run the tests, either with ``make``:
