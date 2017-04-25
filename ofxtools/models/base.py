@@ -119,26 +119,6 @@ class Aggregate(object):
         """
         pass
 
-    @staticmethod
-    def ungroom(elem):
-        """
-        Reverse groom() when converting back to ElementTree.
-
-        Extend in subclass.
-        """
-        pass
-
-    def _repr(self):
-        """ """
-        attrs = [(attr, repr(getattr(self, attr)))
-                 for attr in self.spec
-                 if getattr(self, attr) is not None]
-        return attrs
-
-    def __repr__(self):
-        attrs = ['{}={}'.format(*attr) for attr in self._repr()]
-        return '<{}({})>'.format(self.__class__.__name__, ', '.join(attrs))
-
     def to_etree(self):
         """ """
         root = ET.Element(self.__class__.__name__)
@@ -155,6 +135,15 @@ class Aggregate(object):
                 text = converter.unconvert(value)
                 ET.SubElement(root, spec.upper()).text = text
         return root
+
+    @staticmethod
+    def ungroom(elem):
+        """
+        Reverse groom() when converting back to ElementTree.
+
+        Extend in subclass.
+        """
+        pass
 
     @classproperty
     @classmethod
@@ -200,6 +189,23 @@ class Aggregate(object):
             if isinstance(v, (SubAggregate, Element, Unsupported)):
                 dct[k] = v
         return dct
+
+    @property
+    def _spec_repr(self):
+        """
+        Sequence of (name, repr()) for each item in the subclass spec
+        (see property above) that has a value for this instance.
+
+        Used by __repr__().
+        """
+        attrs = [(attr, repr(getattr(self, attr)))
+                 for attr in self.spec
+                 if getattr(self, attr) is not None]
+        return attrs
+
+    def __repr__(self):
+        attrs = ['{}={}'.format(*attr) for attr in self._spec_repr]
+        return '<{}({})>'.format(self.__class__.__name__, ', '.join(attrs))
 
     def __getattr__(self, attr):
         """ Proxy access to attributes of SubAggregates """
@@ -293,7 +299,7 @@ class SubAggregate(Element):
         if isinstance(value, self.type):
             return value
         return Aggregate.from_etree(value)
- 
+
     def __repr__(self):
         repr = "<SubAggregate {}>".format(self.type)
         return repr
