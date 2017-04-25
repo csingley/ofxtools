@@ -185,7 +185,3 @@ class Origcurrency(object):
         cur = self.currency or self.origcurrency
         if cur:
             return cur.currate
-
-    @property
-    def currency(self):
-        return self.cursym
