@@ -335,9 +335,6 @@ class TRANSFER(Aggregate):
 
 class INVTRANLIST(TranList):
     """ OFX section 13.9.2.2 """
-    dtstart = DateTime(required=True)
-    dtend = DateTime(required=True)
-
     memberTags = ('INVBANKTRAN', 'BUYDEBT', 'BUYMF', 'BUYOPT', 'BUYOTHER',
                   'BUYSTOCK', 'CLOSUREOPT', 'INCOME', 'INVEXPENSE', 'JRNLFUND',
                   'JRNLSEC', 'MARGININTEREST', 'REINVEST', 'RETOFCAP',
@@ -513,11 +510,8 @@ class SWITCHMF(Aggregate):
     switchall = Bool(required=True)
 
 
-class INVOOLIST(List):
+class INVOOLIST(TranList):
     """ OFX section 13.9.2.2 """
-    dtstart = DateTime(required=True)
-    dtend = DateTime(required=True)
-
     memberTags = ['OOBUYDEBT', 'OOBUYMF', 'OOBUYOPT', 'OOBUYOTHER',
                   'OOBUYSTOCK', 'OOSELLDEBT', 'OOSELLMF', 'OOSELLOPT',
                   'OOSELLOTHER', 'OOSELLSTOCK', 'SWITCHMF', ]
@@ -532,8 +526,8 @@ class INVSTMTRS(Aggregate):
     invposlist = SubAggregate(INVPOSLIST)
     invbal = SubAggregate(INVBAL)
     # FIXME - definiing INVOOLIST blows up Aggregate.to_etree()
-    # invoolist = SubAggregate(INVOOLIST)
-    invoolist = Unsupported()
+    invoolist = SubAggregate(INVOOLIST)
+    # invoolist = Unsupported()
     mktginfo = String(360)
     inv401k = Unsupported()
     inv401kbal = SubAggregate(INV401KBAL)
