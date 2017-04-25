@@ -22,8 +22,16 @@ The primary facilities provided include:
 
 Installation
 ============
+``ofxtools`` is released on `PyPI`_, so it can be installed simply via:
 
-Use the Python user installation scheme:
+::
+
+    pip install ofxtools
+
+To install the most recent prerelease (which is where the magic happens, and
+also the bugs), you can download the `current master`_ and unzip it.  Since
+dependencies are minimal, it's recommended to use the Python user installation
+scheme:
 
 ::
 
@@ -166,8 +174,36 @@ Usage Example
 Contributing
 ============
 
-If you want to contribute to this project, create a virtualenv and install
-all development requirements:
+If you want to contribute to this project, it's recommended to use `Git`_ to
+clone the repository:
+
+::
+    git clone https://github.com/csingley/ofxtools.git
+
+Feel free to `create pull requests`_ on `ofxtools repository on GitHub`_.
+
+Again, the minimal dependencies make it simple to install with the Python user
+installation scheme:
+
+::
+    python setup.py develop --user
+
+However, you'll want to run the tests, either with ``make``:
+
+::
+
+    make test
+
+or directly with ``nosetests``:
+
+::
+
+    nosetests -dsv --with-yanc --with-coverage --cover-package ofxtools
+
+
+if you don't already have `nose`, `coverage`, etc. installed, and you don't
+want to clutter your system libraries just for this work, you can create a
+`virtual environment`_ and install all development requirements:
 
 ::
 
@@ -175,21 +211,11 @@ all development requirements:
     source .venv/bin/activate
     pip install -r requirements-development.txt
 
-Then, run the tests with ``make``:
-
-::
-
-    make test
-
-Or directly with ``nosetests``:
-
-::
-
-    nosetests -dsv --with-yanc --with-coverage --cover-package ofxtools
-
-Feel free to `create pull requests`_ on `ofxtools repository on GitHub`_.
 
 .. _Requests: http://docs.python-requests.org/en/master/
+.. _PyPI: https://pypi.python.org/pypi/ofxtools
+.. _current master: https://github.com/csingley/ofxtools/archive/master.zip
 .. _OFX spec: http://www.ofx.net/downloads.html
 .. _create pull requests: https://help.github.com/articles/using-pull-requests/
 .. _ofxtools repository on GitHub: https://github.com/csingley/ofxtools
+.. _virtual environment: http://docs.python-guide.org/en/latest/dev/virtualenvs/
