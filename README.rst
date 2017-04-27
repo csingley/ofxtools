@@ -213,6 +213,15 @@ want to clutter your system libraries just for this work, you can create a
     source .venv/bin/activate
     pip install -r requirements-development.txt
 
+Resources
+=========
+
+* The `OFX spec`_ is canonical...
+* ... but since Quicken dominates the industry, also see the
+  `Quicken data mapping guide`_
+* `OFX Home` is a great free resource to look up OFX connection information
+  for various financial institutions
+
 
 .. _Requests: http://docs.python-requests.org/en/master/
 .. _PyPI: https://pypi.python.org/pypi/ofxtools
@@ -222,3 +231,5 @@ want to clutter your system libraries just for this work, you can create a
 .. _create pull requests: https://help.github.com/articles/using-pull-requests/
 .. _ofxtools repository on GitHub: https://github.com/csingley/ofxtools
 .. _virtual environment: http://docs.python-guide.org/en/latest/dev/virtualenvs/
+.. _Quicken data mapping guide: https://fi.intuit.com/downloads/QW_DataMappingGuide.pdf
+.. _OFX Home: http://www.ofxhome.com/
