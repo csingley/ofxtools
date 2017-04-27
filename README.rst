@@ -219,7 +219,7 @@ Resources
 * The `OFX spec`_ is canonical...
 * ... but since Quicken dominates the industry, also see the
   `Quicken data mapping guide`_
-* `OFX Home` is a great free resource to look up OFX connection information
+* `OFX Home`_ is a great free resource to look up OFX connection information
   for various financial institutions
 
 
