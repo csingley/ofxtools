@@ -32,8 +32,6 @@ def cusip_checksum(base):
         return str(num * 2) if index % 2 else str(num)
 
     assert len(base) == 8
-    for badLetter in 'IO':
-        assert badLetter not in base
     check = ''.join([encode(index, char) for index, char in enumerate(base)])
     check = sum([int(digit) for digit in check])
     return str((10 - (check % 10)) % 10)
@@ -43,7 +41,7 @@ def validate_cusip(cusip):
     """
     Validate a CUSIP
     """
-    if len(cusip) == 9 and cusip_checksum(cusip[:8]) == cusip[9]:
+    if len(cusip) == 9 and cusip_checksum(cusip[:8]) == cusip[8]:
         return True
     else:
         return False
@@ -72,9 +70,9 @@ def isin_checksum(base):
     """
     assert len(base) == 11
     assert base[:2] in NUMBERING_AGENCIES.keys()
-    check = ''.join([int(char, 36) for char in base])
-    check = check[::-1] # string reversal
-    check = ''.join([d if n%2 else str(int(d)*2) for n, d in enumerate(check)])
+    check = ''.join([str(int(char, 36)) for char in base])
+    check = check[::-1]  # string reversal
+    check = ''.join([d if n % 2 else str(int(d)*2) for n, d in enumerate(check)])
     return str((10 - sum([int(d) for d in check]) % 10) % 10)
 
 
@@ -84,7 +82,7 @@ def validate_isin(isin):
     """
     if len(isin) == 12 \
        and isin[:2] in NUMBERING_AGENCIES.keys() \
-       and isin_checksum(isin[:11]) == isin[12]:
+       and isin_checksum(isin[:11]) == isin[11]:
         return True
     else:
         return False
@@ -101,7 +99,7 @@ def cusip2isin(cusip, nation=None):
 
     # Construct ISIN
     base = nation + cusip
-    return base + ISINchecksum(base)
+    return base + isin_checksum(base)
 
 
 def sedol2isin(sedol, nation=None):
