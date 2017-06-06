@@ -57,6 +57,18 @@ class SONRS(Aggregate):
     accesskey = String(1000)
     ofxextension = Unsupported()
 
+    @staticmethod
+    def groom(elem):
+        
+        """
+        Remove proprietary tags e.g. INTU.XXX
+        """
+        for child in set(elem):
+            if '.' in child.tag:
+                elem.remove(child)
+
+        return super(SONRS, SONRS).groom(elem)
+
     # Human-friendly attribute aliases
     @property
     def org(self):

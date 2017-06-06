@@ -51,7 +51,7 @@ class PROFRS(Aggregate):
         """
         Remove proprietary tags e.g. INTU.XXX
         """
-        for child in elem:
+        for child in set(elem):
             if '.' in child.tag:
                 elem.remove(child)
 
