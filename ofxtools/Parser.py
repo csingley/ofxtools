@@ -22,13 +22,13 @@ class OFXTree(ET.ElementTree):
     Subclass of ElementTree.ElementTree, customized to represent OFX as
     an Element hierarchy.
     """
-    def parse(self, source, parser=None):
+    def parse(self, source, parser=None, codec=None):
         """
         Overrides ElementTree.ElementTree.parse() to validate and strip the
         the OFX header before feeding the body tags to custom
         TreeBuilder subclass (below) for parsing into Element instances.
         """
-        source = self._read(source)  # Now it's a string
+        source = self._read(source, codec)  # Now it's a string
         source = self._stripHeader(source)  # Now it's OFX payload (SGML/XML)
 
         # Cut a parser instance
@@ -57,7 +57,7 @@ class OFXTree(ET.ElementTree):
         return instance
 
     @staticmethod
-    def _read(source):
+    def _read(source, codec=None):
         """
         Do our best to turn whatever source we're given into a Python string.
         """
@@ -76,8 +76,9 @@ class OFXTree(ET.ElementTree):
         with source as s:
             source = s.read()
             # BytesIO.read() will return binary not str
+            codec = codec or 'ascii'
             if hasattr(source, 'decode'):
-                source = source.decode()
+                source = source.decode(codec)
         return source
 
     @staticmethod
