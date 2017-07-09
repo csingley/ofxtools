@@ -10,11 +10,11 @@ import warnings
 from weakref import WeakKeyDictionary
 
 
-# Python 2 emulate Py3K str
+# Python 2 emulate Py3K str; Py3K emulate Python 2 basestring
 try:
     str = unicode
 except NameError:
-    pass
+    basestring = str
 
 
 class OFXTypeWarning(UserWarning):
@@ -207,7 +207,7 @@ class Decimal(Element):
         try:
             value = decimal.Decimal(value)
         except decimal.InvalidOperation:
-            if isinstance(value, str):
+            if isinstance(value, basestring):
                 value = decimal.Decimal(value.replace(',', '.'))
 
         return value.quantize(self.precision)
@@ -236,7 +236,7 @@ class DateTime(Element):
             return datetime.datetime.combine(value, datetime.time())
 
         # By this point, if it's not a string something's wrong
-        if not isinstance(value, str):
+        if not isinstance(value, basestring):
             raise ValueError("'%s' is type '%s'; can't convert to datetime" %
                              (value, type(value)))
 
