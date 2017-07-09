@@ -377,10 +377,13 @@ def main():
 
     stmt_group = argparser.add_argument_group(title='Statement Options')
     stmt_group.add_argument('-s', '--start', dest='dtstart',
+                            type=lambda d: datetime.datetime.strptime(d, '%Y%m%d'),
                             help='(YYYYmmdd) Transactions list start date')
     stmt_group.add_argument('-e', '--end', dest='dtend',
+                            type=lambda d: datetime.datetime.strptime(d, '%Y%m%d'),
                             help='(YYYYmmdd) Transactions list end date')
     stmt_group.add_argument('-d', '--date', dest='dtasof',
+                            type=lambda d: datetime.datetime.strptime(d, '%Y%m%d'),
                             help='(YYYYmmdd) As-of date for investment positions')
     stmt_group.add_argument('--no-transactions', dest='inctran',
                             action='store_false', default=True,
