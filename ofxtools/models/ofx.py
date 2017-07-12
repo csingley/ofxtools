@@ -48,7 +48,7 @@ class OFX(Aggregate):
     def __repr__(self):
         s = "<%s fid='%s' org='%s' dtserver='%s' len(statements)=%d len(securities)=%d>"
         return s % (self.__class__.__name__,
-                    self.sonrs.fi.fid,
+                    self.sonrs.fi.fid or '',
                     self.sonrs.fi.org,
                     str(self.sonrs.dtserver),
                     len(self.statements),
