@@ -46,13 +46,20 @@ class OFX(Aggregate):
     tax1095msgsrsv1 = Unsupported()
 
     def __repr__(self):
-        s = "<%s fid='%s' org='%s' dtserver='%s' len(statements)=%d len(securities)=%d>"
-        return s % (self.__class__.__name__,
-                    self.sonrs.fi.fid or '',
-                    self.sonrs.fi.org,
-                    str(self.sonrs.dtserver),
-                    len(self.statements),
-                    len(self.securities),)
+        # s = "<%s fid='%s' org='%s' dtserver='%s' len(statements)=%d len(securities)=%d>"
+        # return s % (self.__class__.__name__,
+                    # self.sonrs.fi.fid or '',
+                    # self.sonrs.fi.org,
+                    # str(self.sonrs.dtserver),
+                    # len(self.statements),
+                    # len(self.securities),)
+        s = "<{} ".format(self.__class__.__name__)
+        if self.sonrs.fi is not None:
+            s += "fid='{}' org='{}' ".format(self.sonrs.fi.fid or '',
+                                             self.sonrs.fi.org or '')
+        s += "dtserver='{}' len(statements)={} len(securities)={}>".format(
+            str(self.sonrs.dtserver), len(self.statements), len(self.securities))
+        return s
 
     # Human-friendly attribute aliases
     @property
