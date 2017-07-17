@@ -16,10 +16,11 @@ class OFXHeader(object):
     class v1(object):
         ofxheader = Types.OneOf(100,)
         data = Types.OneOf('OFXSGML',)
-        version = Types.OneOf(102, 103, 151, 160)
+        version = Types.OneOf(102, 151, 160)
         security = Types.OneOf('NONE', 'TYPE1')
-        encoding = Types.OneOf('USASCII','UNICODE', 'UTF-8')
-        charset = Types.OneOf('ISO-8859-1', '1252', 'NONE')
+        encoding = Types.OneOf('USASCII', 'UNICODE', 'UTF-8')
+        codecs = {'ISO-8859-1': 'latin1', '1252': 'cp1252', 'NONE': 'utf8'}
+        charset = Types.OneOf(*codecs.keys())
         compression = Types.OneOf('NONE',)
         oldfileuid = Types.String(36)
         newfileuid = Types.String(36)
@@ -52,9 +53,13 @@ class OFXHeader(object):
             except ValueError as e:
                 raise OFXHeaderError('Invalid OFX header - %s' % e.args[0])
 
+        @property
+        def codec(self):
+            return self.codecs[self.charset]
+
         def __str__(self):
             # Flat text header
-            fields = (  ('OFXHEADER', str(self.ofxheader)),
+            fields = (('OFXHEADER', str(self.ofxheader)),
                       ('DATA', self.data),
                       ('VERSION', str(self.version)),
                       ('SECURITY', self.security),
@@ -62,44 +67,34 @@ class OFXHeader(object):
                       ('CHARSET', self.charset),
                       ('COMPRESSION', self.compression),
                       ('OLDFILEUID', self.oldfileuid),
-                      ('NEWFILEUID', self.newfileuid),
-                     )
+                      ('NEWFILEUID', self.newfileuid),)
             lines = [':'.join(field) for field in fields]
             lines = '\r\n'.join(lines)
             lines += '\r\n'*2
             return lines
 
     class v2(object):
-        xmlversion = Types.OneOf('1.0',)
-        encoding = Types.OneOf('UTF-8',)
-        standalone = Types.OneOf('no',)
         ofxheader = Types.OneOf(200,)
         version = Types.OneOf(200, 201, 202, 203, 210, 211, 220)
         security = Types.OneOf('NONE', 'TYPE1')
         oldfileuid = Types.String(36)
         newfileuid = Types.String(36)
 
-        regex = re.compile(r"""(<\?xml\s+
-                           (version=\"(?P<XMLVERSION>[\d.]+)\")?\s*
-                           (encoding=\"(?P<ENCODING>[\w-]+)\")?\s*
-                           (standalone=\"(?P<STANDALONE>[\w]+)\")?\s*
-                           \?>)\s*
-                           <\?OFX\s+
-                           OFXHEADER=\"(?P<OFXHEADER>\d+)\"\s+
-                           VERSION=\"(?P<VERSION>\d+)\"\s+
-                           SECURITY=\"(?P<SECURITY>[\w]+)\"\s+
-                           OLDFILEUID=\"(?P<OLDFILEUID>[\w-]+)\"\s+
-                           NEWFILEUID=\"(?P<NEWFILEUID>[\w-]+)\"\s*
+        regex = re.compile(r"""<\?OFX\s+
+                           OFXHEADER=\"(?P<ofxheader>\d+)\"\s+
+                           VERSION=\"(?P<version>\d+)\"\s+
+                           SECURITY=\"(?P<security>[\w]+)\"\s+
+                           OLDFILEUID=\"(?P<oldfileuid>[\w-]+)\"\s+
+                           NEWFILEUID=\"(?P<newfileuid>[\w-]+)\"\s*
                            \?>\s*""", re.VERBOSE)
+
+        codec = 'utf8'
 
         def __init__(self, version, xmlversion=None, encoding=None,
                      standalone=None, ofxheader=None, security=None,
                      oldfileuid=None, newfileuid=None):
             try:
                 self.version = int(version)
-                self.xmlversion = xmlversion or '1.0'
-                self.encoding = encoding or 'UTF-8'
-                self.standalone = standalone or 'no'
                 self.ofxheader = int(ofxheader or 200)
                 self.security = security or 'NONE'
                 self.oldfileuid = oldfileuid or 'NONE'
@@ -109,25 +104,19 @@ class OFXHeader(object):
 
         def __str__(self):
             # XML header
-            xmlfields = (('version', self.xmlversion),
-                         ('encoding', self.encoding),
-                         ('standalone', self.standalone),
-                        )
-            xmlattrs = ['='.join((attr, '"%s"' %val)) for attr,val in xmlfields]
-            xml_decl = '<?xml %s?>' % ' '.join(xmlattrs)
+            xml_decl = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>'
             fields = (('OFXHEADER', str(self.ofxheader)),
                       ('VERSION', str(self.version)),
                       ('SECURITY', self.security),
                       ('OLDFILEUID', self.oldfileuid),
-                      ('NEWFILEUID', self.newfileuid),
-                     )
-            attrs = ['='.join((attr, '"%s"' %val)) for attr,val in fields]
+                      ('NEWFILEUID', self.newfileuid),)
+            attrs = ['='.join((attr, '"%s"' % val)) for attr, val in fields]
             ofx_decl = '<?OFX %s?>' % ' '.join(attrs)
             return '\r\n'.join((xml_decl, ofx_decl))
 
     headerSpecs = {1: v1, 2: v2}
 
-    def __init__(self, version, security=None, oldfileuid=None, 
+    def __init__(self, version, security=None, oldfileuid=None,
                  newfileuid=None):
         try:
             majorVersion = int(version)//100
@@ -136,31 +125,53 @@ class OFXHeader(object):
         headerClass = self.headerSpecs[majorVersion]
         self._instance = headerClass(version=version, security=security,
                                      oldfileuid=oldfileuid,
-                                     newfileuid=newfileuid
-                                    )
+                                     newfileuid=newfileuid)
 
     def __str__(self):
         return str(self._instance)
 
+    xmldeclregex = re.compile(r"""(<\?xml\s+
+                              (version=\"(?P<xmlversion>[\d.]+)\")?\s*
+                              (encoding=\"(?P<encoding>[\w-]+)\")?\s*
+                              (standalone=\"(?P<standalone>[\w]+)\")?\s*
+                              \?>)\s*""", re.VERBOSE)
+
     @classmethod
-    def strip(cls, source):
-        # First validate OFX header
-        for headerspec in cls.headerSpecs.values():
-            headermatch = headerspec.regex.match(source)
-            if headermatch is not None:
-                headerattrs = headermatch.groupdict()
-                headerattrs = {k.lower():v for k,v in headerattrs.items()}
-                try:
-                    header = headerspec(**headerattrs)
-                except ValueError as e:
-                    raise OFXHeaderError(
-                        'Invalid OFX header - %s (header fields: %s)' \
-                        % (e.args[0], headerattrs)
-                    )
+    def parse(cls, source):
+        # Skip any blank lines at the beginning
+        while True:
+            ln = cls.readline(source)
+            if ln:
                 break
 
-        if headermatch is None:
-            raise OFXHeaderError("Can't recognize OFX Header")
+        xmldeclmatch = cls.xmldeclregex.match(ln)
+        if xmldeclmatch:
+            # OFX v2
+            headerclass = cls.v2
+            # First line is XML declaration; OFX header is next line
+            rawheader = cls.readline(source)
+        else:
+            # OFX v1
+            headerclass = cls.v1
+            if 'OFXHEADER' not in ln:
+                msg = 'OFX header not declared: {}'.format(ln)
+                raise OFXHeaderError(msg)
+            rawheader = ln + '\n'
+            for n in range(8):
+                rawheader += cls.readline(source, strip=False)
 
-        # Strip OFX header and return body
-        return source[headermatch.end():]
+        headermatch = headerclass.regex.match(rawheader)
+        if not headermatch:
+            msg = 'OFX header is malformed: {}'.format(rawheader)
+            raise OFXHeaderError(msg)
+        headerattrs = headermatch.groupdict()
+        headerattrs = {k.lower(): v for k, v in headerattrs.items()}
+        header = headerclass(**headerattrs)
+        return header
+
+    @staticmethod
+    def readline(source, strip=True):
+        ln = source.readline().decode('ascii')
+        if strip:
+            ln = ln.strip()
+        return ln
