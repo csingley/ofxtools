@@ -1,6 +1,6 @@
 # coding: utf-8
 """
-Regex-based parser for OFXv1/v2 based on subclasses of ElemenTree from stdlib.
+Regex-based parser for OFXv1/v2 subclassing ElemenTree from stdlib.
 """
 # stdlib imports
 import re
@@ -28,9 +28,9 @@ class OFXTree(ET.ElementTree):
         the OFX header before feeding the body tags to custom
         TreeBuilder subclass (below) for parsing into Element instances.
         """
-        # If our source doesn't follow the file API...
+        # If our source doesn't follow the file API, try to interpret it
+        # as a file path
         if not hasattr(source, 'read'):
-            # ...try to interpret it as a file
             try:
                 source = open(source, 'rb')
             except OSError:
@@ -39,6 +39,7 @@ class OFXTree(ET.ElementTree):
 
         header = OFXHeader.parse(source)
         source = source.read()
+        # Decode source stream according to the CHARSET declared by OFX header
         source = source.decode(header.codec)
 
         # Cut a parser instance
