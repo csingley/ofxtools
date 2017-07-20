@@ -56,6 +56,17 @@ class CCSTMTRS(Aggregate):
     ballist = SubAggregate(BALLIST)
     mktginfo = String(360)
 
+    @property
+    def account(self):
+        return self.ccacctfrom
+
+    @property
+    def transactions(self):
+        return self.banktranlist
+
+    @property
+    def balance(self):
+        return self.ledgerbal
 
 
 class CCSTMTTRNRQ(Aggregate):
