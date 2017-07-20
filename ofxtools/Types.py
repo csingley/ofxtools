@@ -2,6 +2,7 @@
 """ OFX element type converters / validators """
 
 # stdlib imports
+import sys
 import decimal
 import datetime
 import time
@@ -10,11 +11,15 @@ import warnings
 from weakref import WeakKeyDictionary
 
 
-# Python 2 emulate Py3K str; Py3K emulate Python 2 basestring
-try:
-    str = unicode
-except NameError:
-    basestring = str
+PYVERSION = sys.version_info[0]
+if PYVERSION == 2:
+    unicode_compat = unicode
+    basestring_compat = basestring
+elif PYVERSION == 3:
+    unicode_compat = str
+    basestring_compat = str
+else:
+    raise ValueError('Python version must be 2 or 3')
 
 
 class OFXTypeWarning(UserWarning):
@@ -56,7 +61,7 @@ class Element(object):
 
     def unconvert(self, value):
         """ Override in subclass """
-        return str(value)
+        return unicode_compat(value)
 
     def __get__(self, instance, type_):
         return self.data[instance]
@@ -118,7 +123,7 @@ class String(Element):
                 raise ValueError("Value is required")
             else:
                 return None
-        value = str(value)
+        value = unicode_compat(value)
         if self.length is not None and len(value) > self.length:
             msg = "'%s' is too long; max length=%s" % (value, self.length)
             raise ValueError(msg)
@@ -140,7 +145,7 @@ class NagString(String):
                 raise ValueError("Value is required")
             else:
                 return None
-        value = str(value)
+        value = unicode_compat(value)
         if self.length is not None and len(value) > self.length:
             msg = "Value '%s' exceeds length=%s" % (value, self.length)
             warnings.warn(msg, category=OFXTypeWarning)
@@ -207,7 +212,7 @@ class Decimal(Element):
         try:
             value = decimal.Decimal(value)
         except decimal.InvalidOperation:
-            if isinstance(value, basestring):
+            if isinstance(value, basestring_compat):
                 value = decimal.Decimal(value.replace(',', '.'))
 
         return value.quantize(self.precision)
@@ -236,7 +241,7 @@ class DateTime(Element):
             return datetime.datetime.combine(value, datetime.time())
 
         # By this point, if it's not a string something's wrong
-        if not isinstance(value, basestring):
+        if not isinstance(value, basestring_compat):
             raise ValueError("'%s' is type '%s'; can't convert to datetime" %
                              (value, type(value)))
 
