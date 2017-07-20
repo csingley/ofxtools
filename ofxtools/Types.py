@@ -9,17 +9,17 @@ import time
 import re
 import warnings
 from weakref import WeakKeyDictionary
+from xml.sax import saxutils
 
 
 PYVERSION = sys.version_info[0]
-if PYVERSION == 2:
-    unicode_compat = unicode
-    basestring_compat = basestring
-elif PYVERSION == 3:
-    unicode_compat = str
-    basestring_compat = str
-else:
-    raise ValueError('Python version must be 2 or 3')
+
+
+# We want Py3K string behavior (everything is unicode) but to remain portable
+# we'll retain Py2K semantics
+if PYVERSION > 2:
+    unicode = str
+    basestring = str
 
 
 class OFXTypeWarning(UserWarning):
@@ -61,7 +61,7 @@ class Element(object):
 
     def unconvert(self, value):
         """ Override in subclass """
-        return unicode_compat(value)
+        return unicode(value)
 
     def __get__(self, instance, type_):
         return self.data[instance]
@@ -107,6 +107,8 @@ class Bool(Element):
 
 
 class String(Element):
+    strict = True
+
     def _init(self, *args, **kwargs):
         length = None
         if args:
@@ -123,10 +125,18 @@ class String(Element):
                 raise ValueError("Value is required")
             else:
                 return None
-        value = unicode_compat(value)
+        value = unicode(value)
+
+        # Unescape '&amp;' '&lt;' '&gt;' '&nbsp;' per OFX section 2.3
+        value = saxutils.unescape(value, {'&nbsp;': ' '})
+
         if self.length is not None and len(value) > self.length:
-            msg = "'%s' is too long; max length=%s" % (value, self.length)
-            raise ValueError(msg)
+            if self.strict:
+                msg = "'%s' is too long; max length=%s" % (value, self.length)
+                raise ValueError(msg)
+            else:
+                msg = "Value '%s' exceeds length=%s" % (value, self.length)
+                warnings.warn(msg, category=OFXTypeWarning)
         return value
 
 
@@ -137,19 +147,7 @@ class NagString(String):
     Used to handle OFX data that violates the spec with respect to
     string length on non-critical fields.
     """
-    def convert(self, value):
-        if value == '':
-            value = None
-        if value is None:
-            if self.required:
-                raise ValueError("Value is required")
-            else:
-                return None
-        value = unicode_compat(value)
-        if self.length is not None and len(value) > self.length:
-            msg = "Value '%s' exceeds length=%s" % (value, self.length)
-            warnings.warn(msg, category=OFXTypeWarning)
-        return value
+    strict = False
 
 
 class OneOf(Element):
@@ -212,7 +210,7 @@ class Decimal(Element):
         try:
             value = decimal.Decimal(value)
         except decimal.InvalidOperation:
-            if isinstance(value, basestring_compat):
+            if isinstance(value, basestring):
                 value = decimal.Decimal(value.replace(',', '.'))
 
         return value.quantize(self.precision)
@@ -241,7 +239,7 @@ class DateTime(Element):
             return datetime.datetime.combine(value, datetime.time())
 
         # By this point, if it's not a string something's wrong
-        if not isinstance(value, basestring_compat):
+        if not isinstance(value, basestring):
             raise ValueError("'%s' is type '%s'; can't convert to datetime" %
                              (value, type(value)))
 
