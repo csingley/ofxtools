@@ -2,6 +2,7 @@
 """ OFX element type converters / validators """
 
 # stdlib imports
+import itertools
 import sys
 import decimal
 import datetime
@@ -27,7 +28,26 @@ class OFXTypeWarning(UserWarning):
     pass
 
 
-class Element(object):
+class InstanceCounterMixin(object):
+    """
+    Objects that derive from this mixin get a globally unique
+    monotonically increasing integer member named '_counter'. This can
+    be used for ordering class members.
+    """
+
+    _element_counter = itertools.count()
+
+    @classmethod
+    def _next_counter(cls):
+        if PYVERSION > 2:
+            return next(cls._element_counter)
+        else:
+            return cls._element_counter.next()
+
+    def __init__(self):
+        self._counter = self._next_counter()
+
+class Element(InstanceCounterMixin):
     """
     Python representation of an OFX 'element', i.e. SGML leaf node that
     contains text data.
@@ -45,6 +65,7 @@ class Element(object):
         # instance, so we have to have to handle the instance accounting
         # here in the self.data dictionary.
         # We use WeakKeyDictionary to facilitate memory garbage collection.
+        InstanceCounterMixin.__init__(self)
         self.data = WeakKeyDictionary()
         self.required = kwargs.pop('required', False)
         self._init(*args, **kwargs)
