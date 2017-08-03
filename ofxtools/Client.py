@@ -20,12 +20,11 @@ PYTHON_VERSION = sys.version_info.major
 if PYTHON_VERSION == 3:
     from configparser import SafeConfigParser
     from urllib.parse import urlparse
-    from io import StringIO
 else:
     from ConfigParser import SafeConfigParser
     from urlparse import urlparse
-    from StringIO import StringIO
 
+from io import BytesIO
 
 # 3rd party imports
 import requests
@@ -215,14 +214,14 @@ class OFXClient(object):
         data = self.ofxheader + ET.tostring(ofx.to_etree()).decode()
 
         if dryrun:
-            return StringIO(data)
+            return BytesIO(data.encode("ascii"))
 
         mimetype = 'application/x-ofx'
         headers = {'Content-type': mimetype, 'Accept': '*/*, %s' % mimetype}
 
         try:
             response = requests.post(self.url, data=data, headers=headers)
-            return StringIO(response.text)
+            return BytesIO(response.content)
         except requests.HTTPError as err:
             # FIXME
             print(err.info())
@@ -245,7 +244,7 @@ def do_stmt(args):
     """
     Construct OFX statement request from CLI/config args; send to server.
 
-    Returns a file-like object (StringIO) that can be passed to
+    Returns a file-like object (BytesIO) that can be passed to
     OFXTree.parse()
     """
     client = init_client(args)
@@ -292,7 +291,7 @@ def do_profile(args):
     """
     Construct OFX profile request from CLI/config args; send to server.
 
-    Returns a file-like object (StringIO) that can be passed to
+    Returns a file-like object (BytesIO) that can be passed to
     OFXTree.parse()
     """
     client = init_client(args)
