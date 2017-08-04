@@ -121,6 +121,9 @@ class OFXHeaderV1(object):
     def __init__(self, version, ofxheader=None, data=None, security=None,
                  encoding=None, charset=None, compression=None,
                  oldfileuid=None, newfileuid=None):
+        # Container for validated data - see docstring for Types.Element
+        self._data = {}
+
         try:
             self.ofxheader = int(ofxheader or 100)
             self.data = data or 'OFXSGML'
@@ -173,6 +176,9 @@ class OFXHeaderV2(object):
     def __init__(self, version, xmlversion=None, encoding=None,
                  standalone=None, ofxheader=None, security=None,
                  oldfileuid=None, newfileuid=None):
+        # Container for validated data - see docstring for Types.Element
+        self._data = {}
+
         try:
             self.version = int(version)
             self.ofxheader = int(ofxheader or 200)

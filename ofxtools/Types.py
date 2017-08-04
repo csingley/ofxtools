@@ -30,11 +30,11 @@ class OFXTypeWarning(UserWarning):
 
 class InstanceCounterMixin(object):
     """
-    Objects that derive from this mixin get a globally unique
-    monotonically increasing integer member named '_counter'. This can
-    be used for ordering class members.
+    Objects that derive from this mixin get a globally unique monotonically
+    increasing integer member named '_counter'. This is used for ordering class
+    members - needed e.g. for Aggregate.spec to sequence Elements/SubAggregates
+    in the order they're declared in the class definition.
     """
-
     _element_counter = itertools.count()
 
     @classmethod
@@ -47,6 +47,7 @@ class InstanceCounterMixin(object):
     def __init__(self):
         self._counter = self._next_counter()
 
+
 class Element(InstanceCounterMixin):
     """
     Python representation of an OFX 'element', i.e. SGML leaf node that
@@ -56,17 +57,22 @@ class Element(InstanceCounterMixin):
     required vs. optional, etc.) as arguments to __init__() when defining
     an Aggregate subclass.
 
-    Element instances are data descriptors that perform validation (using the
-    arguments passed to __init__()) and type conversion (using the logic
-    implemented in convert()) prior to setting the instance data value.
+    Element instances are bound to model classes (sundry Aggregate and List
+    subclasses found in the models subpackage, as well as OFXHeaderV1/V2
+    classes found in the header module).  Since these validators are class
+    attributes, they are shared by all instances of a model class, so they
+    can't store instance data.  Instead, Elements are implemented as data
+    descriptors that store data *ON THE FUNCTION CALLER*, which needs to have
+    an attribute named '_data' (a dict keyed by Element instance, where values
+    are the data passed to that Element).
+    
+    Prior to setting the data value, each Element Performs validation
+    (using the arguments passed to __init__()) and type conversion (using the
+    logic implemented in convert()).  Element.__get__() fetches the stored
+    value from the '_data' dict on the Aggregate subclass instance.
     """
     def __init__(self, *args, **kwargs):
-        # All instances of an Aggregate subclass share the same Element
-        # instance, so we have to have to handle the instance accounting
-        # here in the self.data dictionary.
-        # We use WeakKeyDictionary to facilitate memory garbage collection.
         InstanceCounterMixin.__init__(self)
-        self.data = WeakKeyDictionary()
         self.required = kwargs.pop('required', False)
         self._init(*args, **kwargs)
 
@@ -85,12 +91,12 @@ class Element(InstanceCounterMixin):
         return unicode(value)
 
     def __get__(self, instance, type_):
-        return self.data[instance]
+        return instance._data[self]
 
     def __set__(self, instance, value):
         """ Perform validation and type conversion before setting value """
         value = self.convert(value)
-        self.data[instance] = value
+        instance._data[self] = value
 
     def __repr__(self):
         repr = "<{} required={}>"

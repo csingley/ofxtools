@@ -37,6 +37,9 @@ class Aggregate(object):
 
     def __init__(self, **kwargs):
         """ """
+        # Container for validated data - see docstring for Types.Element
+        self._data = {}
+
         # Set instance attributes for all SubAggregates and Elements in the
         # spec (i.e. defined on the class), using values from input attributes
         # if available, or None if not in attributes.
@@ -146,54 +149,58 @@ class Aggregate(object):
         """
         pass
 
-    @classproperty
     @classmethod
-    def elements(cls):
+    def _ordered_attrs(cls, predicate):
         """
-        dict of all Aggregate attributes that are Elements not SubAggregates
+        Filter cls.__dict__ for items matching the given predicate and return
+        them as an OrderedDict in the same order they're declared in the class
+        definition.
         """
-        dct = OrderedDict()
-        for k, v in cls.__dict__.items():
-            if isinstance(v, Element) and not isinstance(v, SubAggregate):
-                dct[k] = v
-        return dct
-
-    @classproperty
-    @classmethod
-    def subaggregates(cls):
-        """ dict of all Aggregate attributes that are SubAggregates """
-        dct = OrderedDict()
-        for k, v in cls.__dict__.items():
-            if isinstance(v, SubAggregate):
-                dct[k] = v
-        return dct
-
-    @classproperty
-    @classmethod
-    def unsupported(cls):
-        """ dict of all Aggregate attributes that are Unsupported """
-        dct = OrderedDict()
-        for k, v in cls.__dict__.items():
-            if isinstance(v, Unsupported):
-                dct[k] = v
-        return dct
+        match_items = [(k, v) for k, v in cls.__dict__.items() if predicate(v)]
+        match_items.sort(key=lambda it: it[1]._counter)
+        return OrderedDict(match_items)
 
     @classproperty
     @classmethod
     def spec(cls):
         """
-        dict of all Aggregate attributes that are
-        Elements/SubAggregates/Unsupported
+        OrderedDict of all Aggregate attributes that are
+        Elements/SubAggregates/Unsupported.
+
+        N.B. SubAggregate is a subclass of Element.
         """
-        sorted_items = []
-        for k, v in cls.__dict__.items():
-            if isinstance(v, (Element, Unsupported)):
-                assert isinstance(v, InstanceCounterMixin)
-                sorted_items.append((k, v))
+        return cls._ordered_attrs(lambda v:
+                                  isinstance(v, (Element, Unsupported)))
 
-        sorted_items.sort(key=lambda it: it[1]._counter)
+    @classproperty
+    @classmethod
+    def elements(cls):
+        """
+        OrderedDict of all Aggregate attributes that are Elements but not
+        SubAggregates.
+        """
+        return cls._ordered_attrs(lambda v:
+                                  isinstance(v, Element)
+                                  and not isinstance(v, SubAggregate))
 
-        return OrderedDict(sorted_items)
+    @classproperty
+    @classmethod
+    def subaggregates(cls):
+        """
+        OrderedDict of all Aggregate attributes that are SubAggregates.
+        """
+        return cls._ordered_attrs(lambda v:
+                                  isinstance(v, SubAggregate))
+
+    @classproperty
+    @classmethod
+    def unsupported(cls):
+        """ dict of all Aggregate attributes that are Unsupported """
+        """
+        OrderedDict of all Aggregate attributes that are Unsupported.
+        """
+        return cls._ordered_attrs(lambda v:
+                                  isinstance(v, Unsupported))
 
     @property
     def _spec_repr(self):
@@ -223,6 +230,7 @@ class Aggregate(object):
         raise AttributeError("'{}' object has no attribute '{}'".format(
             self.__class__.__name__, attr))
 
+
 class List(Aggregate, list):
     """
     Base class for OFX *LIST
@@ -231,6 +239,10 @@ class List(Aggregate, list):
 
     def __init__(self, *members):
         list.__init__(self)
+
+        # Container for validated data - see docstring for Types.Element
+        self._data = {}
+
         for member in members:
             if member.__class__.__name__ not in self.memberTags:
                 msg = "{} can't contain {}".format(self.__class__.__name__,
@@ -254,13 +266,6 @@ class List(Aggregate, list):
             root.append(member.to_etree())
         return root
 
-    def __hash__(self):
-        """
-        HACK - as a subclass of list, List is unhashable, but we need to
-        use it as a dict key in Type.Element.{__get__, __set__}
-        """
-        return object.__hash__(self)
-
     def __repr__(self):
         return '<{} len={}>'.format(self.__class__.__name__, len(self))
 
@@ -273,6 +278,9 @@ class TranList(List):
     dtend = DateTime(required=True)
 
     def __init__(self, dtstart, dtend, *members):
+        # Container for validated data - see docstring for Types.Element
+        self._data = {}
+
         self.dtstart = dtstart
         self.dtend = dtend
         super(TranList, self).__init__(*members)
