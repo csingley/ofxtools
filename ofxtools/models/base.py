@@ -187,7 +187,7 @@ class Aggregate(object):
         """
         sorted_items = []
         for k, v in cls.__dict__.items():
-            if isinstance(v, (SubAggregate, Element, Unsupported)):
+            if isinstance(v, (Element, Unsupported)):
                 assert isinstance(v, InstanceCounterMixin)
                 sorted_items.append((k, v))
 
