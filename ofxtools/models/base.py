@@ -13,6 +13,7 @@ import ofxtools.models
 from ofxtools.Types import (
     Element,
     DateTime,
+    InstanceCounterMixin,
 )
 
 
@@ -184,11 +185,15 @@ class Aggregate(object):
         dict of all Aggregate attributes that are
         Elements/SubAggregates/Unsupported
         """
-        dct = OrderedDict()
+        sorted_items = []
         for k, v in cls.__dict__.items():
-            if isinstance(v, (SubAggregate, Element, Unsupported)):
-                dct[k] = v
-        return dct
+            if isinstance(v, (Element, Unsupported)):
+                assert isinstance(v, InstanceCounterMixin)
+                sorted_items.append((k, v))
+
+        sorted_items.sort(key=lambda it: it[1]._counter)
+
+        return OrderedDict(sorted_items)
 
     @property
     def _spec_repr(self):
@@ -217,7 +222,6 @@ class Aggregate(object):
                 continue
         raise AttributeError("'{}' object has no attribute '{}'".format(
             self.__class__.__name__, attr))
-
 
 class List(Aggregate, list):
     """
@@ -305,7 +309,7 @@ class SubAggregate(Element):
         return repr
 
 
-class Unsupported(object):
+class Unsupported(InstanceCounterMixin):
     """
     Null Aggregate/Element - not implemented (yet)
     """
