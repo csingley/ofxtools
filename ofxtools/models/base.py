@@ -37,9 +37,6 @@ class Aggregate(object):
 
     def __init__(self, **kwargs):
         """ """
-        # Container for validated data - see docstring for Types.Element
-        self._data = {}
-
         # Set instance attributes for all SubAggregates and Elements in the
         # spec (i.e. defined on the class), using values from input attributes
         # if available, or None if not in attributes.
@@ -240,9 +237,6 @@ class List(Aggregate, list):
     def __init__(self, *members):
         list.__init__(self)
 
-        # Container for validated data - see docstring for Types.Element
-        self._data = {}
-
         for member in members:
             if member.__class__.__name__ not in self.memberTags:
                 msg = "{} can't contain {}".format(self.__class__.__name__,
@@ -266,6 +260,13 @@ class List(Aggregate, list):
             root.append(member.to_etree())
         return root
 
+    def __hash__(self):
+        """
+        HACK - as a subclass of list, List is unhashable, but we need to
+        use it as a dict key in Type.Element.{__get__, __set__}
+        """
+        return object.__hash__(self)
+
     def __repr__(self):
         return '<{} len={}>'.format(self.__class__.__name__, len(self))
 
@@ -278,9 +279,6 @@ class TranList(List):
     dtend = DateTime(required=True)
 
     def __init__(self, dtstart, dtend, *members):
-        # Container for validated data - see docstring for Types.Element
-        self._data = {}
-
         self.dtstart = dtstart
         self.dtend = dtend
         super(TranList, self).__init__(*members)

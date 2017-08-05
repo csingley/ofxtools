@@ -9,7 +9,7 @@ import datetime
 import time
 import re
 import warnings
-from weakref import WeakKeyDictionary
+from collections import defaultdict
 from xml.sax import saxutils
 
 
@@ -60,19 +60,18 @@ class Element(InstanceCounterMixin):
     Element instances are bound to model classes (sundry Aggregate and List
     subclasses found in the models subpackage, as well as OFXHeaderV1/V2
     classes found in the header module).  Since these validators are class
-    attributes, they are shared by all instances of a model class, so they
-    can't store instance data.  Instead, Elements are implemented as data
-    descriptors that store data *ON THE FUNCTION CALLER*, which needs to have
-    an attribute named '_data' (a dict keyed by Element instance, where values
-    are the data passed to that Element).
-    
+    attributes, they are shared by all instances of a model class.  Therefore
+    Elements are implemented as data descriptors; they intercept calls to
+    __get__ and __set__ and redirect them to a defaultdict keyed by the calling
+    parent, where values are the data passed to that Element).
+
     Prior to setting the data value, each Element Performs validation
     (using the arguments passed to __init__()) and type conversion (using the
-    logic implemented in convert()).  Element.__get__() fetches the stored
-    value from the '_data' dict on the Aggregate subclass instance.
+    logic implemented in convert()).
     """
     def __init__(self, *args, **kwargs):
         InstanceCounterMixin.__init__(self)
+        self.data = defaultdict(None)
         self.required = kwargs.pop('required', False)
         self._init(*args, **kwargs)
 
@@ -82,6 +81,14 @@ class Element(InstanceCounterMixin):
             raise ValueError("Unknown args for '%s'- args: %r; kwargs: %r"
                              % (self.__class__.__name__, args, kwargs))
 
+    def __get__(self, parent, parent_type):
+        return self.data[parent]
+
+    def __set__(self, parent, value):
+        """ Perform validation and type conversion before setting value """
+        value = self.convert(value)
+        self.data[parent] = value
+
     def convert(self, value):
         """ Override in subclass """
         raise NotImplementedError
@@ -89,14 +96,6 @@ class Element(InstanceCounterMixin):
     def unconvert(self, value):
         """ Override in subclass """
         return unicode(value)
-
-    def __get__(self, instance, type_):
-        return instance._data[self]
-
-    def __set__(self, instance, value):
-        """ Perform validation and type conversion before setting value """
-        value = self.convert(value)
-        instance._data[self] = value
 
     def __repr__(self):
         repr = "<{} required={}>"
