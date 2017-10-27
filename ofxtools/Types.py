@@ -154,7 +154,11 @@ class String(Element):
         value = unicode(value)
 
         # Unescape '&amp;' '&lt;' '&gt;' '&nbsp;' per OFX section 2.3
-        value = saxutils.unescape(value, {'&nbsp;': ' '})
+        # Also go ahead and unescape other XML control characters,
+        # because FIs tend to mix &amp; match...
+        value = saxutils.unescape(value,
+                                  {'&nbsp;': ' ', '&apos;': "'", '%quot;': '"'}
+                                 )
 
         if self.length is not None and len(value) > self.length:
             if self.strict:
