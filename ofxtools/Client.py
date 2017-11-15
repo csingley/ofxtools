@@ -282,9 +282,11 @@ def do_stmt(args):
 
     response = client.request_statements(args.user, password,
                                          clientuid=args.clientuid,
-                                         dryrun=args.dryrun, **stmtrqs)
+                                         dryrun=args.dryrun, **stmtrqs).read()
 
-    print(response.read())
+    if hasattr(response, 'decode'):
+        response = response.decode()
+    print(response)
 
 
 def do_profile(args):
