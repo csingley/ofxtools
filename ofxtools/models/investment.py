@@ -51,8 +51,8 @@ UNITTYPES = ('SHARES', 'CURRENCY')
 
 class INVACCTFROM(Aggregate):
     """ OFX section 13.6.1 """
-    acctid = String(22, required=True)
     brokerid = String(22, required=True)
+    acctid = String(22, required=True)
 
 
 class INCPOS(Aggregate):
