@@ -59,7 +59,7 @@ setup(
     },
 
     package_data={
-        'ofxtools': ['README.md', 'config/*.cfg', 'tests/*'],
+        'ofxtools': ['README.rst', 'config/*.cfg', 'tests/*'],
     },
 
     entry_points={
