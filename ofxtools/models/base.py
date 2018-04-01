@@ -23,7 +23,7 @@ class classproperty(property):
         return self.fget.__get__(None, owner)()
 
 
-class Aggregate(object):
+class Aggregate(InstanceCounterMixin):
     """
     Base class for Python representation of OFX 'aggregate', i.e. SGML parent
     node that contains no data.
