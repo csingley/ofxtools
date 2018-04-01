@@ -92,7 +92,7 @@ class OFXHeaderV1(object):
     """ Header for OFX version 1 """
     ofxheader = Types.OneOf(100,)
     data = Types.OneOf('OFXSGML',)
-    version = Types.OneOf(102, 151, 160)
+    version = Types.OneOf(102, 103, 151, 160)
     security = Types.OneOf('NONE', 'TYPE1')
     encoding = Types.OneOf('USASCII', 'UNICODE', 'UTF-8')
     # DRY - mapping of CHARSET: codec used below in codec()
