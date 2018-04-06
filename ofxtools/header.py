@@ -170,8 +170,7 @@ class OFXHeaderV2(object):
     # conform to v1 class interface above.
     codec = 'utf8'
 
-    def __init__(self, version, xmlversion=None, encoding=None,
-                 standalone=None, ofxheader=None, security=None,
+    def __init__(self, version, ofxheader=None, security=None,
                  oldfileuid=None, newfileuid=None):
         try:
             self.version = int(version)
