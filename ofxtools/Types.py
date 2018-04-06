@@ -222,11 +222,12 @@ class Integer(Element):
 
 class Decimal(Element):
     def _init(self, *args, **kwargs):
-        precision = 2
         if args:
             precision = args[0]
             args = args[1:]
-        self.precision = decimal.Decimal('0.' + '0'*(precision-1) + '1')
+            self.precision = decimal.Decimal('0.' + '0'*(precision-1) + '1')
+        else:
+            self.precision = None
         super(Decimal, self)._init(*args, **kwargs)
 
     def convert(self, value):
@@ -243,7 +244,9 @@ class Decimal(Element):
             if isinstance(value, basestring):
                 value = decimal.Decimal(value.replace(',', '.'))
 
-        return value.quantize(self.precision)
+        if self.precision is not None:
+            value = value.quantize(self.precision)
+        return value
 
 
 class DateTime(Element):

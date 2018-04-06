@@ -216,6 +216,9 @@ class OFXClient(object):
         if dryrun:
             return BytesIO(data.encode("ascii"))
 
+        # Deal with buggy Vanguard OFX gateway
+        data = data.replace("</SONRQ>", "\n</SONRQ>")
+
         mimetype = 'application/x-ofx'
         headers = {'Content-type': mimetype, 'Accept': '*/*, %s' % mimetype}
 
