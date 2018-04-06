@@ -6,41 +6,17 @@ Version of ofxtools.Parser that uses SQLAlchemy for conversion
 from decimal import Decimal
 
 # 3rd party imports
-import sqlalchemy
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.exc import SAWarning
-
-import xml.etree.ElementTree as ET
 
 
 # local imports
 import ofxtools
-from ofxtools.header import OFXHeader
-from ofxtools.Parser import TreeBuilder
-from ofxtools.ofxalchemy.database import Base, Session
+from ofxtools.ofxalchemy.database import Session
 from ofxtools.ofxalchemy import models
 
 
 class OFXTree(ofxtools.Parser.OFXTree):
     """ """
-    element_factory = ET.Element
-
-    def parse(self, source):
-        if not hasattr(source, 'read'):
-            source = open(source)
-        with source as s:
-            source = s.read()
-            if hasattr(source, 'decode'):
-                source = source.decode()
-
-        # Validate and strip the OFX header
-        source = OFXHeader.strip(source)
-
-        # Then parse tag soup into tree of Elements
-        parser = TreeBuilder(element_factory=self.element_factory)
-        parser.feed(source)
-        self._root = parser.close()
-
     def convert(self):
         raise NotImplementedError
 
@@ -441,9 +417,9 @@ class InvestmentStatement(Statement):
                     positions[seckey] = (position[0],
                                          position[1] + Decimal(units.text)
                                         )
-            self.positions = [OFXTree._instantiate(pos,
-                units=units, acctfrom=self.account,
-                dtasof=self.datetime) \
+            self.positions = [OFXTree._instantiate(
+                pos, units=units, acctfrom=self.account,
+                dtasof=self.datetime)
                 for pos, units in positions.values()]
         else:
             self.positions = []
@@ -456,13 +432,13 @@ class InvestmentStatement(Statement):
             if ballist is not None:
                 invbal.remove(ballist)
                 self.other_balances = [
-                    OFXTree._instantiate(bal,
-                        acctfrom=self.account, dtasof=self.datetime,
+                    OFXTree._instantiate(
+                        bal, acctfrom=self.account, dtasof=self.datetime,
                     ) for bal in ballist
                 ]
             # Now we can flatten the rest of INVBAL
-            self.balances = OFXTree._instantiate(invbal,
-                acctfrom=self.account, dtasof=self.datetime,
+            self.balances = OFXTree._instantiate(
+                invbal, acctfrom=self.account, dtasof=self.datetime,
             )
         else:
             self.balances = []
