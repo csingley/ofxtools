@@ -28,6 +28,23 @@ class OFXTree(ET.ElementTree):
         the OFX header before feeding the body tags to custom
         TreeBuilder subclass (below) for parsing into Element instances.
         """
+        header, ofx = self._read(source)
+
+        # Cut a parser instance
+        parser = parser or TreeBuilder
+        parser = parser()
+
+        # Then parse tag soup into tree of Elements
+        parser.feed(ofx)
+
+        # ElementTree.TreeBuilder.close() returns the root.
+        # Follow ElementTree API and stash as self._root (so all normal
+        # ElementTree methods e.g. find() work normally on our subclass).
+        self._root = parser.close()
+
+    def _read(self, source):
+        """
+        """
         # If our source doesn't follow the file API, try to interpret it
         # as a file path
         if not hasattr(source, 'read'):
@@ -42,17 +59,7 @@ class OFXTree(ET.ElementTree):
         # Decode source stream according to the CHARSET declared by OFX header
         source = source.decode(header.codec)
 
-        # Cut a parser instance
-        parser = parser or TreeBuilder
-        parser = parser()
-
-        # Then parse tag soup into tree of Elements
-        parser.feed(source)
-
-        # ElementTree.TreeBuilder.close() returns the root.
-        # Follow ElementTree API and stash as self._root (so all normal
-        # ElementTree methods e.g. find() work normally on our subclass).
-        self._root = parser.close()
+        return header, source
 
     def convert(self):
         """ """

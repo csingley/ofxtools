@@ -208,10 +208,7 @@ class OFXTreeTestCase(TestCase):
         # the OFX data to TreeBuilder, and stores the return value from
         # TreeBuilder.close() as its _root
         self.tree._read = MagicMock()
-        self.tree._read.return_value = 'source contents'
-
-        self.tree._stripHeader = MagicMock()
-        self.tree._stripHeader.return_value = 'OFX data'
+        self.tree._read.return_value = ('header', 'OFX payload')
 
         mockTreeBuilderClass = MagicMock()
         mockTreeBuilderInstance = mockTreeBuilderClass.return_value
@@ -220,51 +217,52 @@ class OFXTreeTestCase(TestCase):
         source = '/path/to/file.ofx'
         self.tree.parse(source, parser=mockTreeBuilderClass)
         self.tree._read.assert_called_once_with(source)
-        self.tree._stripHeader.assert_called_once_with('source contents')
-        mockTreeBuilderInstance.feed.assert_called_once_with('OFX data')
+        mockTreeBuilderInstance.feed.assert_called_once_with('OFX payload')
+        mockTreeBuilderInstance.close.assert_called_once()
         self.assertEqual(self.tree._root, 'ElementTree.Element')
 
-    def test_stripHeader(self):
-        # FIXME - can't make unittest.mock.patch work for OFXHeader
-        strip = OFXHeader.strip
-        OFXHeader.strip = MagicMock()
-        OFXHeader.strip.return_value = 'OFX data'
-        stripped = self.tree._stripHeader('source contents')
-        OFXHeader.strip.assert_called_once_with('source contents')
-        self.assertEqual(stripped, 'OFX data')
-        OFXHeader.strip = strip
-        with self.assertRaises(AttributeError):
-            OFXHeader.strip.return_value
-
     def test_read_filename(self):
+        OFXHeader.parse = MagicMock()
+        fake_header = MagicMock()
+        fake_header.codec = 'utf8'
+        OFXHeader.parse.return_value = fake_header
+
         source = NamedTemporaryFile()
         source.write(b'a bunch of text')
         source.seek(0)
+
         output = self.tree._read(source.name)
         source.close()
-        self.assertEqual(output, 'a bunch of text')
+        self.assertEqual(output, (fake_header, 'a bunch of text'))
 
     def test_read_file(self):
-        source = TemporaryFile()
+        OFXHeader.parse = MagicMock()
+        fake_header = MagicMock()
+        fake_header.codec = 'utf8'
+        OFXHeader.parse.return_value = fake_header
+
+        source = NamedTemporaryFile()
         source.write(b'a bunch of text')
         source.seek(0)
+
         output = self.tree._read(source)
         source.close()
-        self.assertEqual(output, 'a bunch of text')
+        self.assertEqual(output, (fake_header, 'a bunch of text'))
 
     def test_read_file_binary(self):
+        OFXHeader.parse = MagicMock()
+        fake_header = MagicMock()
+        fake_header.codec = 'utf8'
+        OFXHeader.parse.return_value = fake_header
+
         source = BytesIO('a bunch of text'.encode())
+
         output = self.tree._read(source)
         source.close()
-        self.assertEqual(output, 'a bunch of text')
-
-    def test_read_string(self):
-        source = 'a bunch of text'
-        output = self.tree._read(source)
-        self.assertEqual(output, 'a bunch of text')
+        self.assertEqual(output, (fake_header, 'a bunch of text'))
 
     def test_read_illegal(self):
-        source = 23
+        source = 'a bunch of text'
         with self.assertRaises(ParseError):
             self.tree._read(source)
 

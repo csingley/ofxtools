@@ -54,7 +54,6 @@ class OFXHeaderTestMixin(object):
                 if attr != 'version':
                     kw['version'] = self.defaultVersion
                 with self.assertRaises(ofxtools.header.OFXHeaderError):
-                    print(kw)
                     self.headerClass(**kw)
 
 
