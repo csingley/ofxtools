@@ -143,10 +143,10 @@ class DecimalTestCase(unittest.TestCase, Base):
         self.assertEqual(1, t.convert(decimal.Decimal('1.00')))
 
     def test_precision(self):
-        # Default precision is 2
+        # By default (no precision specified), convert() doesn't quantize
         t = self.type_()
         cmp = decimal.Decimal('100.00').compare_total(t.convert('100'))
-        self.assertEqual(cmp, 0)
+        self.assertNotEqual(cmp, 0)
         # Test nondefault precision
         t = self.type_(4)
         cmp = decimal.Decimal('100.0000').compare_total(t.convert('100'))

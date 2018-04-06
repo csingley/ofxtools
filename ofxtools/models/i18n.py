@@ -154,13 +154,13 @@ COUNTRY_CODES = ISO3166_1a3
 
 class CURRENCY(Aggregate):
     """ OFX section 5.2 """
-    currate = Decimal(8, required=True)
+    currate = Decimal(required=True)
     cursym = OneOf(*CURRENCY_CODES, required=True)
 
 
 class ORIGCURRENCY(Aggregate):
     """ OFX section 5.2 """
-    currate = Decimal(8, required=True)
+    currate = Decimal(required=True)
     cursym = OneOf(*CURRENCY_CODES, required=True)
 
 
