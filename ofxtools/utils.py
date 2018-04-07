@@ -105,9 +105,9 @@ def cusip2isin(cusip, nation=None):
 def sedol2isin(sedol, nation=None):
     nation = nation or 'GB'
     assert len(sedol) == 7
-    assert SEDOLchecksum(sedol[:6]) == sedol[6]
+    assert sedol_checksum(sedol[:6]) == sedol[6]
     base = nation + sedol.zfill(9)
-    return base + ISINchecksum(base)
+    return base + isin_checksum(base)
 
 
 def settleDate(dt):
