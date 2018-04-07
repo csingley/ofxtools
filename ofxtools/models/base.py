@@ -23,7 +23,7 @@ class classproperty(property):
         return self.fget.__get__(None, owner)()
 
 
-class Aggregate(InstanceCounterMixin):
+class Aggregate(object):
     """
     Base class for Python representation of OFX 'aggregate', i.e. SGML parent
     node that contains no data.
@@ -290,7 +290,14 @@ class TranList(List):
 
 class SubAggregate(Element):
     """
-    Aggregate that is a child of this parent Aggregate
+    Aggregate that is a child of this parent Aggregate.
+    
+    SubAggregate instances appear only in the model class definitions
+    (Aggregate subclasses).  Their main utility is to define the `spec`
+    class attribute for a model class, via Aggregate._ordered_attrs().
+
+    Actual model instances replace these SubAggregate instances with Aggregate
+    instances; cf. Aggregate.__init__().
     """
     def _init(self, *args, **kwargs):
         args = list(args)
