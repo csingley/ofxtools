@@ -109,7 +109,7 @@ class OFXClient(object):
 
     def request_statements(self, user, password, clientuid=None,
                            stmtrqs=None, ccstmtrqs=None, invstmtrqs=None,
-                           dryrun=False):
+                           dryrun=False, prettyprint=False):
         """
         Package and send OFX statement requests (STMTRQ/CCSTMTRQ/INVSTMTRQ).
 
@@ -146,7 +146,7 @@ class OFXClient(object):
                   bankmsgsrqv1=bankmsgs,
                   creditcardmsgsrqv1=creditcardmsgs,
                   invstmtmsgsrqv1=invstmtmsgs)
-        return self.download(ofx, dryrun=dryrun)
+        return self.download(ofx, dryrun=dryrun, prettyprint=prettyprint)
 
     def request_profile(self, user=None, password=None, dryrun=False,
                         prettyprint=False):
