@@ -148,7 +148,8 @@ class OFXClient(object):
                   invstmtmsgsrqv1=invstmtmsgs)
         return self.download(ofx, dryrun=dryrun)
 
-    def request_profile(self, user=None, password=None, dryrun=False):
+    def request_profile(self, user=None, password=None, dryrun=False,
+                        prettyprint=False):
         """
         Package and send OFX profile requests (PROFRQ).
         """
@@ -163,7 +164,7 @@ class OFXClient(object):
         signonmsgs = self.signon(user, password)
 
         ofx = OFX(signonmsgsrqv1=signonmsgs, profmsgsrqv1=msgs)
-        return self.download(ofx, dryrun=dryrun)
+        return self.download(ofx, dryrun=dryrun, prettyprint=prettyprint)
 
     def signon(self, userid, userpass, sesscookie=None, clientuid=None):
         """ Construct SONRQ; package in SIGNONMSGSRQV1 """
@@ -208,10 +209,15 @@ class OFXClient(object):
         trnuid = uuid.uuid4()
         return INVSTMTTRNRQ(trnuid=trnuid, invstmtrq=stmtrq)
 
-    def download(self, ofx, dryrun=False):
+    def download(self, ofx, dryrun=False, prettyprint=False):
         """ Package complete OFX tree and POST to server """
+        tree = ofx.to_etree()
+
+        if prettyprint:
+            indent(tree)
+
         # py3k: ElementTree.tostring() returns bytes not str
-        data = self.ofxheader + ET.tostring(ofx.to_etree()).decode()
+        data = self.ofxheader + ET.tostring(tree).decode()
 
         if dryrun:
             return BytesIO(data.encode("ascii"))
@@ -226,6 +232,28 @@ class OFXClient(object):
             # FIXME
             print(err.info())
             raise
+
+
+### UTILITIES
+def indent(elem, level=0):
+    """
+    Indent Element.text by nesting level.
+
+    http://effbot.org/zone/element-lib.htm#prettyprint
+    """
+    i = "\n" + level*"  "
+    if len(elem):
+        if not elem.text or not elem.text.strip():
+            elem.text = i + "  "
+        if not elem.tail or not elem.tail.strip():
+            elem.tail = i
+        for elem in elem:
+            indent(elem, level+1)
+        if not elem.tail or not elem.tail.strip():
+            elem.tail = i
+    else:
+        if level and (not elem.tail or not elem.tail.strip()):
+            elem.tail = i
 
 
 ### CLI COMMANDS
