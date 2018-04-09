@@ -109,7 +109,7 @@ class OFXClient(object):
 
     def request_statements(self, user, password, clientuid=None,
                            stmtrqs=None, ccstmtrqs=None, invstmtrqs=None,
-                           dryrun=False, prettyprint=False):
+                           dryrun=False, prettyprint=None):
         """
         Package and send OFX statement requests (STMTRQ/CCSTMTRQ/INVSTMTRQ).
 
@@ -149,7 +149,7 @@ class OFXClient(object):
         return self.download(ofx, dryrun=dryrun, prettyprint=prettyprint)
 
     def request_profile(self, user=None, password=None, dryrun=False,
-                        prettyprint=False):
+                        prettyprint=None):
         """
         Package and send OFX profile requests (PROFRQ).
         """
@@ -209,9 +209,12 @@ class OFXClient(object):
         trnuid = uuid.uuid4()
         return INVSTMTTRNRQ(trnuid=trnuid, invstmtrq=stmtrq)
 
-    def download(self, ofx, dryrun=False, prettyprint=False):
+    def download(self, ofx, dryrun=False, prettyprint=None):
         """ Package complete OFX tree and POST to server """
         tree = ofx.to_etree()
+
+        if prettyprint is None:
+            prettyprint = True
 
         if prettyprint:
             indent(tree)
