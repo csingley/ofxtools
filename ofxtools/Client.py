@@ -14,6 +14,7 @@ from collections import (namedtuple, defaultdict,)
 from os import path
 from getpass import getpass
 
+from ofxtools.models import ACCTINFORQ, ACCTINFOTRNRQ, SIGNUPMSGSRQV1
 
 PYTHON_VERSION = sys.version_info.major
 
@@ -164,6 +165,21 @@ class OFXClient(object):
         signonmsgs = self.signon(user, password)
 
         ofx = OFX(signonmsgsrqv1=signonmsgs, profmsgsrqv1=msgs)
+        return self.download(ofx, dryrun=dryrun, prettyprint=prettyprint)
+
+    def requests_accounts(self, user, password, dtacctup, clientuid=None,
+                          dryrun=False, prettyprint=None):
+        """
+        Package and send OFX account info requests (ACCTINFORQ)
+        """
+        signonmsgs = self.signon(user, password, clientuid=clientuid)
+        acctinforq = ACCTINFORQ(dtacctup=dtacctup)
+        acctinfotrnrq = ACCTINFOTRNRQ(trnuid=uuid.uuid4(),
+                                      acctinforq=acctinforq)
+        signupmsgs = SIGNUPMSGSRQV1(acctinfotrnrq)
+
+        ofx = OFX(signonmsgsrqv1=signonmsgs,
+                  signupmsgsrqv1=signupmsgs)
         return self.download(ofx, dryrun=dryrun, prettyprint=prettyprint)
 
     def signon(self, userid, userpass, sesscookie=None, clientuid=None):
