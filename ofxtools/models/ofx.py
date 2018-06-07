@@ -10,6 +10,7 @@ from ofxtools.models.base import (
     Unsupported,
 )
 from ofxtools.models.signon import (SIGNONMSGSRQV1, SIGNONMSGSRSV1)
+from ofxtools.models.signup import (SIGNUPMSGSRQV1, SIGNUPMSGSRSV1)
 from ofxtools.models.bank import (BANKMSGSRQV1, BANKMSGSRSV1)
 from ofxtools.models.investment import (INVSTMTMSGSRQV1, INVSTMTMSGSRSV1)
 from ofxtools.models.creditcard import (CREDITCARDMSGSRQV1, CREDITCARDMSGSRSV1)
@@ -34,8 +35,9 @@ class OFX(Aggregate):
     seclistmsgsrsv1 = SubAggregate(SECLISTMSGSRSV1)
     profmsgsrqv1 = SubAggregate(PROFMSGSRQV1)
     profmsgsrsv1 = SubAggregate(PROFMSGSRSV1)
+    signupmsgsrqv1 = SubAggregate(SIGNUPMSGSRQV1)
+    signupmsgsrsv1 = SubAggregate(SIGNUPMSGSRSV1)
 
-    signupmsgsrsv1 = Unsupported()
     emailmsgsrsv1 = Unsupported()
     loanmsgsrsv1 = Unsupported()
     presdirmsgsrsv1 = Unsupported()
