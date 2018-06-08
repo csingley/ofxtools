@@ -167,8 +167,8 @@ class OFXClient(object):
         ofx = OFX(signonmsgsrqv1=signonmsgs, profmsgsrqv1=msgs)
         return self.download(ofx, dryrun=dryrun, prettyprint=prettyprint)
 
-    def requests_accounts(self, user, password, dtacctup, clientuid=None,
-                          dryrun=False, prettyprint=None):
+    def request_accounts(self, user, password, dtacctup, clientuid=None,
+                         dryrun=False, prettyprint=None):
         """
         Package and send OFX account info requests (ACCTINFORQ)
         """
