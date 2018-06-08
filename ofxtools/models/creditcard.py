@@ -5,7 +5,7 @@ Data structures for credit card download - OFX Section 11
 # local imports
 from ofxtools.Types import (
     String, Decimal, OneOf, Bool,
-)
+    DateTime)
 from ofxtools.models.base import (
     Aggregate, List, SubAggregate, Unsupported,
 )
@@ -16,13 +16,14 @@ from ofxtools.models.bank import (
     CCACCTFROM, INCTRAN, BANKTRANLIST, LEDGERBAL, AVAILBAL, BALLIST,
 )
 from ofxtools.models.i18n import (
-    CURRENCY_CODES,
+    CURRENCY, ORIGCURRENCY, CURRENCY_CODES,
 )
 
 
 __all__ = ['REWARDINFO', 'CCSTMTRS', 'CCSTMTRQ', 'CCSTMTTRNRS',
            'CREDITCARDMSGSRQV1', 'CREDITCARDMSGSRSV1', 'CREDITCARDMSGSETV1',
-           'CREDITCARDMSGSET', ]
+           'CREDITCARDMSGSET', 'CCSTMTENDTRNRS', 'CCSTMTENDTRNRQ', 'CCSTMTENDRS',
+           'CCCLOSING']
 
 
 class REWARDINFO(Aggregate):
@@ -86,18 +87,72 @@ class CCSTMTTRNRS(Aggregate):
         return self.ccstmtrs
 
 
+class CCCLOSING(Aggregate):
+    fitid = String(255, required=True)
+    dtopen = DateTime()
+    dtclose = DateTime(required=True)
+    dtnext = DateTime()
+    balopen = Decimal()
+    balclose = Decimal(required=True)
+    dtmptdue = DateTime()
+    minpmtdue = Decimal()
+    finchg = Decimal()
+    payandcredit = Decimal()
+    purandadv = Decimal()
+    debadj = Decimal()
+    creditlimit = Decimal()
+    dtpoststart = DateTime(required=True)
+    dtpostend = DateTime(required=True)
+    mktginfo = String(360)
+    imagedata = Unsupported()
+    currency = SubAggregate(CURRENCY)
+    origcurrency = SubAggregate(ORIGCURRENCY)
+
+
+class CCSTMTENDRQ(Aggregate):
+    """ OFX section 11.5.3 """
+    ccacctfrom = SubAggregate(CCACCTFROM, required=True)
+    dtstart = DateTime()
+    dtend = DateTime()
+    incstmtimg = Bool()
+
+
+class CCSTMTENDRS(Aggregate):
+    """ OFX section 11.5.4 """
+    curdef = OneOf(*CURRENCY_CODES, required=True)
+    ccacctfrom = SubAggregate(CCACCTFROM, required=True)
+    ccclosing = SubAggregate(CCCLOSING)
+
+
+class CCSTMTENDTRNRQ(Aggregate):
+    """ OFX section 11.4.3.1 """
+    trnuid = String(36, required=True)
+    ccstmtendrq = SubAggregate(CCSTMTENDRQ)
+
+
+class CCSTMTENDTRNRS(Aggregate):
+    """ OFX section 11.4.3.2 """
+    trnuid = String(36, required=True)
+    status = SubAggregate(STATUS, required=True)
+    ccstmtendrs = SubAggregate(CCSTMTENDRS)
+
+    @property
+    def statement(self):
+        return self.ccstmtendrs
+
+
 class CREDITCARDMSGSRQV1(List):
     """ OFX section 11.13.1.1.1 """
-    memberTags = ['CCSTMTTRNRQ', ]
+    memberTags = ['CCSTMTTRNRQ', 'CCSTMTENDTRNRQ', ]
 
 
 class CREDITCARDMSGSRSV1(List):
     """ OFX section 11.13.1.1.2 """
-    memberTags = ['CCSTMTTRNRS', ]
+    memberTags = ['CCSTMTTRNRS', 'CCSTMTENDTRNRS', ]
 
     @property
     def statements(self):
-        return [trnrs.ccstmtrs for trnrs in self]
+        return [trnrs.statement for trnrs in self]
 
 
 class CREDITCARDMSGSETV1(Aggregate):
