@@ -11,6 +11,7 @@ from xml.etree.ElementTree import (
 
 
 # local imports
+from ofxtools.utils import UTC
 from . import base
 from . import test_seclist
 from . import test_i18n
@@ -110,14 +111,14 @@ class DebtinfoTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.debttype, 'COUPON')
         self.assertEqual(root.debtclass, 'CORPORATE')
         self.assertEqual(root.couponrt, Decimal('5.125'))
-        self.assertEqual(root.dtcoupon, datetime(2003, 12, 1))
+        self.assertEqual(root.dtcoupon, datetime(2003, 12, 1, tzinfo=UTC))
         self.assertEqual(root.couponfreq, 'QUARTERLY')
         self.assertEqual(root.callprice, Decimal('1000'))
         self.assertEqual(root.yieldtocall, Decimal('6.5'))
-        self.assertEqual(root.dtcall, datetime(2005, 12, 15))
+        self.assertEqual(root.dtcall, datetime(2005, 12, 15, tzinfo=UTC))
         self.assertEqual(root.calltype, 'CALL')
         self.assertEqual(root.yieldtomat, Decimal('6.0'))
-        self.assertEqual(root.dtmat, datetime(2006, 12, 15))
+        self.assertEqual(root.dtmat, datetime(2006, 12, 15, tzinfo=UTC))
         self.assertEqual(root.assetclass, 'INTLBOND')
         self.assertEqual(root.fiassetclass, 'Fixed to floating bond')
 
@@ -243,7 +244,7 @@ class MfinfoTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root.secinfo, SECINFO)
         self.assertEqual(root.mftype, 'OPENEND')
         self.assertEqual(root.yld, Decimal('5.0'))
-        self.assertEqual(root.dtyieldasof, datetime(2003, 5, 1))
+        self.assertEqual(root.dtyieldasof, datetime(2003, 5, 1, tzinfo=UTC))
         self.assertIsInstance(root.mfassetclass, MFASSETCLASS)
         self.assertIsInstance(root.fimfassetclass, FIMFASSETCLASS)
 
@@ -283,7 +284,7 @@ class OptinfoTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root.secinfo, SECINFO)
         self.assertEqual(root.opttype, 'CALL')
         self.assertEqual(root.strikeprice, Decimal('25.5'))
-        self.assertEqual(root.dtexpire, datetime(2003, 12, 15))
+        self.assertEqual(root.dtexpire, datetime(2003, 12, 15, tzinfo=UTC))
         self.assertEqual(root.shperctrct, 100)
         self.assertEqual(root.assetclass, 'SMALLSTOCK')
         self.assertEqual(root.fiassetclass, 'FOO')
@@ -350,7 +351,7 @@ class StockinfoTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root.secinfo, SECINFO)
         self.assertEqual(root.stocktype, 'CONVERTIBLE')
         self.assertEqual(root.yld, Decimal('5.0'))
-        self.assertEqual(root.dtyieldasof, datetime(2003, 5, 1))
+        self.assertEqual(root.dtyieldasof, datetime(2003, 5, 1, tzinfo=UTC))
         self.assertEqual(root.assetclass, 'SMALLSTOCK')
         self.assertEqual(root.fiassetclass, 'FOO')
 

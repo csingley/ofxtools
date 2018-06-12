@@ -10,6 +10,7 @@ import warnings
 # local imports
 import ofxtools
 from ofxtools.Types import OFXTypeWarning
+from ofxtools.utils import UTC
 
 
 class Base:
@@ -175,35 +176,35 @@ class DateTimeTestCase(unittest.TestCase, Base):
     def test_convert(self):
         t = self.type_()
         # Accept datetime
-        dt = datetime.datetime(2011, 11, 17, 3, 30, 45, 150)
+        dt = datetime.datetime(2011, 11, 17, 3, 30, 45, 150, tzinfo=UTC)
         self.assertEqual(dt, t.convert(dt))
         # Accept date
         d = datetime.date(2011, 11, 17)
         check = datetime.datetime(2011, 11, 17, 0, 0, 0, 0)
         self.assertEqual(check, t.convert(d))
         # Accept YYYYMMDD
-        check = datetime.datetime(2011, 11, 17, 0, 0, 0, 0)
+        check = datetime.datetime(2011, 11, 17, 0, 0, 0, 0, tzinfo=UTC)
         self.assertEqual(check, t.convert('20111117'))
         # Accept YYYYMMDDHHMM
-        check = datetime.datetime(2011, 11, 17, 3, 30, 0, 0)
+        check = datetime.datetime(2011, 11, 17, 3, 30, 0, 0, tzinfo=UTC)
         self.assertEqual(check, t.convert('201111170330'))
         # Accept YYYYMMDDHHMMSS
-        check = datetime.datetime(2011, 11, 17, 3, 30, 45, 0)
+        check = datetime.datetime(2011, 11, 17, 3, 30, 45, 0, tzinfo=UTC)
         self.assertEqual(check, t.convert('20111117033045'))
         # Accept YYYYMMDDHHMMSS.XXX
-        check = datetime.datetime(2011, 11, 17, 3, 30, 45, 150)
+        check = datetime.datetime(2011, 11, 17, 3, 30, 45, 150, tzinfo=UTC)
         self.assertEqual(check, t.convert('20111117033045.150'))
 
         # FIXME - these TZ offset tests only work in CST
 
         # Accept YYYYMMDDHHMMSS.XXX[offset]
-        check = datetime.datetime(2011, 11, 17, 9, 30, 45, 150)
+        check = datetime.datetime(2011, 11, 17, 9, 30, 45, 150, tzinfo=UTC)
         self.assertEqual(check, t.convert('20111117033045.150[-6]'))
         # Accept YYYYMMDDHHMMSS.XXX[offset:TZ]
-        check = datetime.datetime(2011, 11, 17, 9, 30, 45, 150)
+        check = datetime.datetime(2011, 11, 17, 9, 30, 45, 150, tzinfo=UTC)
         self.assertEqual(check, t.convert('20111117033045.150[-6:CST]'))
         # Accept YYYYMMDDHHMMSS.XXX[offset:--]
-        check = datetime.datetime(2011, 11, 17, 3, 30, 45, 150)
+        check = datetime.datetime(2011, 11, 17, 3, 30, 45, 150, tzinfo=UTC)
         self.assertEqual(check, t.convert('20111117033045.150[-:CST]'))
 
     def test_convert_illegal(self):

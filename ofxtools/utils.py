@@ -241,3 +241,30 @@ def findEaster(year):
     d = 1+(p+27+(p+6)/40)%31
     m = 3+(p+26)/30
     return datetime.date(y,m,d)
+
+
+try:
+    # If pytz is installed then use that.
+    import pytz
+    UTC = pytz.UTC
+except ImportError:
+    # Otherwise create our own UTC tzinfo.
+    class _UTC(datetime.tzinfo):
+
+        def tzname(self, dt):
+            """datetime -> string name of time zone."""
+            return "UTC"
+
+        def utcoffset(self, dt):
+            """datetime -> minutes east of UTC (negative for west of UTC)"""
+            return datetime.timedelta(0)
+
+        def dst(self, dt):
+            """datetime -> DST offset in minutes east of UTC.
+
+            Return 0 if DST not in effect.  utcoffset() must include the DST
+            offset.
+            """
+            return datetime.timedelta(0)
+
+    UTC = _UTC()

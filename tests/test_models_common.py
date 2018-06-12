@@ -18,6 +18,7 @@ from ofxtools.models.common import (
     STATUS, BAL, CURRENCY, OFXELEMENT, OFXEXTENSION, MSGSETCORE,
 )
 from ofxtools.models.i18n import (CURRENCY_CODES, LANG_CODES)
+from ofxtools.utils import UTC
 
 
 class StatusTestCase(unittest.TestCase, base.TestAggregate):
@@ -74,7 +75,7 @@ class BalTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.desc, 'Balance')
         self.assertEqual(root.baltype, 'DOLLAR')
         self.assertEqual(root.value, Decimal('111.22'))
-        self.assertEqual(root.dtasof, datetime(2001, 6, 30))
+        self.assertEqual(root.dtasof, datetime(2001, 6, 30, tzinfo=UTC))
         self.assertIsInstance(root.currency, CURRENCY)
 
     def testOneOf(self):

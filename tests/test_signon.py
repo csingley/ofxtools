@@ -17,6 +17,7 @@ from ofxtools.models.signon import (
     SIGNONINFO, SIGNONINFOLIST,
 )
 from ofxtools.models.i18n import LANG_CODES
+from ofxtools.utils import UTC
 
 from . import base
 from . import test_models_common
@@ -72,7 +73,7 @@ class SonrqTestCase(unittest.TestCase, base.TestAggregate):
         # Aggregate instance attributes with the result
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, SONRQ)
-        self.assertEqual(root.dtclient, datetime(2005, 10, 29, 10, 10, 3))
+        self.assertEqual(root.dtclient, datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC))
         self.assertEqual(root.userkey, 'DEADBEEF')
         self.assertEqual(root.genuserkey, False)
         self.assertEqual(root.language, 'ENG')
@@ -119,12 +120,12 @@ class SonrsTestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, SONRS)
         self.assertIsInstance(root.status, STATUS)
-        self.assertEqual(root.dtserver, datetime(2005, 10, 29, 10, 10, 3))
+        self.assertEqual(root.dtserver, datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC))
         self.assertEqual(root.userkey, 'DEADBEEF')
-        self.assertEqual(root.tskeyexpire, datetime(2005, 12, 31))
+        self.assertEqual(root.tskeyexpire, datetime(2005, 12, 31, tzinfo=UTC))
         self.assertEqual(root.language, 'ENG')
-        self.assertEqual(root.dtprofup, datetime(2005, 1, 1))
-        self.assertEqual(root.dtacctup, datetime(2005, 1, 2))
+        self.assertEqual(root.dtprofup, datetime(2005, 1, 1, tzinfo=UTC))
+        self.assertEqual(root.dtacctup, datetime(2005, 1, 2, tzinfo=UTC))
         self.assertIsInstance(root.fi, FI)
         self.assertEqual(root.sesscookie, 'BADA55')
         self.assertEqual(root.accesskey, 'CAFEBABE')
