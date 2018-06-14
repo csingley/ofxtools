@@ -265,17 +265,19 @@ class DateTime(Element):
                 raise ValueError("Value is required")
             else:
                 return None
-        # If it's a datetime, don't touch it.
+        # If it's already a datetime, it needs to be timezone-aware
         if isinstance(value, datetime.datetime):
+            if value.utcoffset() is None:
+                msg = "{} is not timezone-aware".format(value)
+                raise ValueError(msg)
             return value
-        # If it's a date, convert it to datetime (using midnight as the time)
-        elif isinstance(value, datetime.date):
-            return datetime.datetime.combine(value, datetime.time())
 
-        # By this point, if it's not a string something's wrong
+        # Otherwise it needs to be a string
         if not isinstance(value, basestring):
-            raise ValueError("'%s' is type '%s'; can't convert to datetime" %
-                             (value, type(value)))
+            msg = "'{}' is type '{}'; can't convert to datetime".format(
+                value, type(value))
+
+            raise ValueError(msg)
 
         # Pristine copy of input for error reporting purposes
         orig_value = value
@@ -286,28 +288,34 @@ class DateTime(Element):
         if chunks:
             gmt_offset, tz_name = chunks[:2]
             # Some FIs *cough* IBKR *cough* write crap for the TZ offset
-            # FIXME - don't set gmt_offset to 0; instead parse tz_name and use
+            # FIXME
             if gmt_offset == '-':
-                gmt_offset = '0'
+                tz_kludge = {'EST': '-5', 'EDT': '-4',
+                             'CST': '-6', 'CDT': '-5',
+                             'MST': '-7', 'MDT': '-6',
+                             'PST': '-8', 'PDT': '-7',
+                            }
+                try:
+                    gmt_offset = tz_kludge[tz_name]
+                except KeyError:
+                    msg = "Can't parse timezone '{}' into a valid GMT offset"
+                    raise ValueError(msg.format(tz_name))
             # hours -> seconds
             gmt_offset = int(decimal.Decimal(gmt_offset)*3600)
         else:
             gmt_offset = 0
+            #  tz_name = 'GMT'
 
         try:
             format = self.formats[len(value)]
-        except KeyError:
-            raise ValueError("Datetime '%s' does not match OFX formats %s" %
-                             (orig_value, self.formats.values()))
 
-        # OFX spec gives fractional seconds as milliseconds; convert to
-        # microseconds as required by strptime()
-        if len(value) == 18:
-            value = value.replace('.', '.000')
+            # OFX spec gives fractional seconds as milliseconds; convert to
+            # microseconds as required by strptime()
+            if len(value) == 18:
+                value = value.replace('.', '.000')
 
-        try:
             value = datetime.datetime.strptime(value, format)
-        except ValueError:
+        except (KeyError, ValueError):
             raise ValueError("Datetime '%s' does not match OFX formats %s" %
                              (orig_value, self.formats.values()))
 
@@ -317,18 +325,15 @@ class DateTime(Element):
 
     def unconvert(self, value):
         """
-        Input datetime.date or datetimet.datetime in local time;
-        output str in GMT.
+        Input timezone-aware datetime.datetime instance; output str in GMT.
         """
-        if not hasattr(value, 'timetuple'):
-            msg = "'%s' isn't a datetime; can't convert to GMT" % value
+        if not hasattr(value, 'utcoffset') or value.utcoffset() is None:
+            msg = ("'{}' isn't a timezone-aware datetime.datetime instance; "
+                   "can't convert to GMT").format(value)
             raise ValueError(msg)
 
         # Transform to GMT
-        if value.tzinfo:
-            gmt_value = value.utctimetuple()
-        else:
-            # If it's a naive time then we'll assume it's local time.
-            gmt_value = time.gmtime(time.mktime(value.timetuple()))
+        gmt_value = value.utctimetuple()
+
         # timetuples don't have usec precision
         return time.strftime(self.formats[14], gmt_value)

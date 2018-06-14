@@ -50,7 +50,7 @@ from ofxtools.models.investment import (
     INVSTMTMSGSRQV1, INVSTMTTRNRQ, INVSTMTRQ, INVACCTFROM, INCPOS,
 )
 from ofxtools.Types import DateTime
-from ofxtools.utils import fixpath
+from ofxtools.utils import (fixpath, UTC)
 
 
 # Statement request data containers
@@ -189,7 +189,7 @@ class OFXClient(object):
         else:
             fi = None
 
-        dtclient = datetime.datetime.now()
+        dtclient = datetime.datetime.now(UTC)
         sonrq = SONRQ(dtclient=dtclient, userid=userid, userpass=userpass,
                       language=self.language, fi=fi, sesscookie=sesscookie,
                       appid=self.appid, appver=self.appver,

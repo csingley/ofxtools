@@ -175,13 +175,9 @@ class DateTimeTestCase(unittest.TestCase, Base):
 
     def test_convert(self):
         t = self.type_()
-        # Accept datetime
+        # Accept timezone-aware datetime
         dt = datetime.datetime(2011, 11, 17, 3, 30, 45, 150, tzinfo=UTC)
         self.assertEqual(dt, t.convert(dt))
-        # Accept date
-        d = datetime.date(2011, 11, 17)
-        check = datetime.datetime(2011, 11, 17, 0, 0, 0, 0)
-        self.assertEqual(check, t.convert(d))
         # Accept YYYYMMDD
         check = datetime.datetime(2011, 11, 17, 0, 0, 0, 0, tzinfo=UTC)
         self.assertEqual(check, t.convert('20111117'))
@@ -195,20 +191,24 @@ class DateTimeTestCase(unittest.TestCase, Base):
         check = datetime.datetime(2011, 11, 17, 3, 30, 45, 150, tzinfo=UTC)
         self.assertEqual(check, t.convert('20111117033045.150'))
 
-        # FIXME - these TZ offset tests only work in CST
-
         # Accept YYYYMMDDHHMMSS.XXX[offset]
         check = datetime.datetime(2011, 11, 17, 9, 30, 45, 150, tzinfo=UTC)
         self.assertEqual(check, t.convert('20111117033045.150[-6]'))
         # Accept YYYYMMDDHHMMSS.XXX[offset:TZ]
         check = datetime.datetime(2011, 11, 17, 9, 30, 45, 150, tzinfo=UTC)
         self.assertEqual(check, t.convert('20111117033045.150[-6:CST]'))
-        # Accept YYYYMMDDHHMMSS.XXX[offset:--]
-        check = datetime.datetime(2011, 11, 17, 3, 30, 45, 150, tzinfo=UTC)
+        # Accept YYYYMMDDHHMMSS.XXX[-:TZ] for TZs defined in the kludge
+        check = datetime.datetime(2011, 11, 17, 9, 30, 45, 150, tzinfo=UTC)
         self.assertEqual(check, t.convert('20111117033045.150[-:CST]'))
 
     def test_convert_illegal(self):
         t = self.type_()
+        # Don't accept timezone-naive datetime
+        with self.assertRaises(ValueError):
+            t.convert(datetime.datetime(2011, 11, 17, 3, 30, 45, 150))
+        # Don't accept date
+        with self.assertRaises(ValueError):
+            t.convert(datetime.date(2011, 11, 17))
         # Don't accept strings of the wrong length
         with self.assertRaises(ValueError):
             t.convert('2015129')
@@ -218,19 +218,38 @@ class DateTimeTestCase(unittest.TestCase, Base):
         # Don't accept integer
         with self.assertRaises(ValueError):
             t.convert(123)
+        # Don't accept YYYYMMDDHHMMSS.XXX[-:TZ] for TZs not defined in kludge
+        with self.assertRaises(ValueError):
+            t.convert('20111117033045.150[-:GMT]')
 
     def test_unconvert(self):
         t = self.type_()
-        check = datetime.datetime(2007, 1, 1)
-        self.assertEqual(t.unconvert(check), '20070101060000')
-        check = datetime.date(2007, 1, 1)
-        self.assertEqual(t.unconvert(check), '20070101060000')
+        check = datetime.datetime(2007, 1, 1, tzinfo=UTC)
+        self.assertEqual(t.unconvert(check), '20070101000000')
 
     def test_unconvert_illegal(self):
         t = self.type_()
+        # Don't accept timezone-naive datetime
+        with self.assertRaises(ValueError):
+            t.convert(datetime.datetime(2011, 11, 17, 3, 30, 45, 150))
+        # Don't accept date
+        with self.assertRaises(ValueError):
+            t.convert(datetime.date(2011, 11, 17))
         # Don't accept string
         with self.assertRaises(ValueError):
             t.unconvert('20070101')
+
+    def test_convert_roundtrip(self):
+        t = self.type_()
+        original = '20070101'
+        result = '20070101000000'
+        self.assertEqual(t.unconvert(t.convert(original)), result)
+
+    def test_unconvert_roundtrip(self):
+        t = self.type_()
+        original = datetime.datetime(2007, 1, 1, tzinfo=UTC)
+        result = original
+        self.assertEqual(t.convert(t.unconvert(original)), result)
 
 
 if __name__ == '__main__':
