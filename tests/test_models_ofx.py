@@ -59,7 +59,6 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
     def testUnsupported(self):
         root = Aggregate.from_etree(self.root)
         unsupported = sorted(list(root.unsupported.keys()))
-        print(unsupported)
         self.assertEqual(unsupported, self.unsupported)
         for unsupp in unsupported:
             setattr(root, unsupp, 'FOOBAR')
