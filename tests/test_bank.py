@@ -2,6 +2,7 @@
 
 # stdlib imports
 import unittest
+import datetime
 from xml.etree.ElementTree import (
     Element,
     SubElement,
@@ -11,6 +12,7 @@ from decimal import Decimal
 
 
 # local imports
+from ofxtools.utils import UTC
 from . import base
 import ofxtools.models
 from ofxtools.models.base import Aggregate
@@ -191,9 +193,9 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, STMTTRN)
         self.assertEqual(root.trntype, 'CHECK')
-        self.assertEqual(root.dtposted, datetime(2013, 6, 15))
-        self.assertEqual(root.dtuser, datetime(2013, 6, 14))
-        self.assertEqual(root.dtavail, datetime(2013, 6, 16))
+        self.assertEqual(root.dtposted, datetime(2013, 6, 15, tzinfo=UTC))
+        self.assertEqual(root.dtuser, datetime(2013, 6, 14, tzinfo=UTC))
+        self.assertEqual(root.dtavail, datetime(2013, 6, 16, tzinfo=UTC))
         self.assertEqual(root.trnamt, Decimal('-433.25'))
         self.assertEqual(root.fitid, 'DEADBEEF')
         self.assertEqual(root.correctfitid, 'B00B5')
@@ -428,8 +430,8 @@ class BanktranlistTestCase(unittest.TestCase, base.TestAggregate):
         # Test *TRANLIST wrapper.  STMTTRN is tested elsewhere.
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, BANKTRANLIST)
-        self.assertEqual(root.dtstart, datetime(2013, 6, 1))
-        self.assertEqual(root.dtend, datetime(2013, 6, 30))
+        self.assertEqual(root.dtstart, datetime(2013, 6, 1, tzinfo=UTC))
+        self.assertEqual(root.dtend, datetime(2013, 6, 30, tzinfo=UTC))
         self.assertEqual(len(root), 2)
         for i in range(2):
             self.assertIsInstance(root[i], STMTTRN)
@@ -452,7 +454,7 @@ class LedgerbalTestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, LEDGERBAL)
         self.assertEqual(root.balamt, Decimal('12345.67'))
-        self.assertEqual(root.dtasof, datetime(2005, 10, 29, 10, 10, 3))
+        self.assertEqual(root.dtasof, datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC))
 
 
 class AvailbalTestCase(unittest.TestCase, base.TestAggregate):
@@ -472,7 +474,7 @@ class AvailbalTestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, AVAILBAL)
         self.assertEqual(root.balamt, Decimal('12345.67'))
-        self.assertEqual(root.dtasof, datetime(2005, 10, 29, 10, 10, 3))
+        self.assertEqual(root.dtasof, datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC))
 
 
 class StmtrsTestCase(unittest.TestCase, base.TestAggregate):

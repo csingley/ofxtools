@@ -11,6 +11,7 @@ import re
 import warnings
 from collections import defaultdict
 from xml.sax import saxutils
+from .utils import UTC
 
 
 PYVERSION = sys.version_info[0]
@@ -310,13 +311,13 @@ class DateTime(Element):
             raise ValueError("Datetime '%s' does not match OFX formats %s" %
                              (orig_value, self.formats.values()))
 
-        # Adjust timezone to GMT
+        # Adjust timezone to GMT/UTC
         value -= datetime.timedelta(seconds=gmt_offset)
-        return value
+        return value.replace(tzinfo=UTC)
 
     def unconvert(self, value):
         """
-        Input datetime.date or datetime.datetime in local time;
+        Input datetime.date or datetimet.datetime in local time;
         output str in GMT.
         """
         if not hasattr(value, 'timetuple'):
@@ -324,6 +325,10 @@ class DateTime(Element):
             raise ValueError(msg)
 
         # Transform to GMT
-        gmt_value = time.gmtime(time.mktime(value.timetuple()))
+        if value.tzinfo:
+            gmt_value = value.utctimetuple()
+        else:
+            # If it's a naive time then we'll assume it's local time.
+            gmt_value = time.gmtime(time.mktime(value.timetuple()))
         # timetuples don't have usec precision
         return time.strftime(self.formats[14], gmt_value)

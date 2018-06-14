@@ -18,6 +18,7 @@ from ofxtools.models.profile import (
     PROFRQ, PROFRS, PROFTRNRQ, PROFTRNRS, MSGSETLIST, PROFMSGSETV1, PROFMSGSET,
 )
 from ofxtools.models.signon import (SIGNONINFOLIST, )
+from ofxtools.utils import UTC
 
 from . import base
 from . import test_models_common
@@ -45,7 +46,7 @@ class ProfrqTestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, PROFRQ)
         self.assertEqual(root.clientrouting, 'SERVICE')
-        self.assertEqual(root.dtprofup, datetime(2001, 4, 1))
+        self.assertEqual(root.dtprofup, datetime(2001, 4, 1, tzinfo=UTC))
 
     def testOneOf(self):
         self.oneOfTest('CLIENTROUTING', ('NONE', 'SERVICE', 'MSGSET'))
@@ -129,7 +130,7 @@ class ProfrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root, PROFRS)
         self.assertIsInstance(root.msgsetlist, MSGSETLIST)
         self.assertIsInstance(root.signoninfolist, SIGNONINFOLIST)
-        self.assertEqual(root.dtprofup, datetime(2001, 4, 1))
+        self.assertEqual(root.dtprofup, datetime(2001, 4, 1, tzinfo=UTC))
         self.assertEqual(root.finame, 'Dewey Cheatham & Howe')
         self.assertEqual(root.addr1, '3717 N Clark St')
         self.assertEqual(root.addr2, 'Dugout Box, Aisle 19')

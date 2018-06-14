@@ -38,6 +38,7 @@ from ofxtools.models.investment import (
 from ofxtools.models.i18n import (
     CURRENCY, CURRENCY_CODES,
 )
+from ofxtools.utils import UTC
 from . import base
 from . import test_models_common
 from . import test_bank
@@ -185,8 +186,8 @@ class InvtranlistTestCase(unittest.TestCase, base.TestAggregate):
         # Test *TRANLIST wrapper.  STMTTRN is tested elsewhere.
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, INVTRANLIST)
-        self.assertEqual(root.dtstart, datetime(2013, 6, 1))
-        self.assertEqual(root.dtend, datetime(2013, 6, 30))
+        self.assertEqual(root.dtstart, datetime(2013, 6, 1, tzinfo=UTC))
+        self.assertEqual(root.dtend, datetime(2013, 6, 30, tzinfo=UTC))
         self.assertEqual(len(root), 21)
         for i, it in enumerate((INVBANKTRAN, BUYDEBT, BUYMF, BUYOPT, BUYOTHER,
                                 BUYSTOCK, CLOSUREOPT, INCOME, INVEXPENSE,
@@ -253,8 +254,8 @@ class InvtranTestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         self.assertEqual(root.fitid, '1001')
         self.assertEqual(root.srvrtid, '2002')
-        self.assertEqual(root.dttrade, datetime(2004, 7, 1))
-        self.assertEqual(root.dtsettle, datetime(2004, 7, 4))
+        self.assertEqual(root.dttrade, datetime(2004, 7, 1, tzinfo=UTC))
+        self.assertEqual(root.dtsettle, datetime(2004, 7, 4, tzinfo=UTC))
         self.assertEqual(root.reversalfitid, '3003')
         self.assertEqual(root.memo, 'Investment Transaction')
         return root
@@ -315,7 +316,7 @@ class InvbuyTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.loanprincipal, Decimal('1.50'))
         self.assertEqual(root.loaninterest, Decimal('3.50'))
         self.assertEqual(root.inv401ksource, 'PROFITSHARING')
-        self.assertEqual(root.dtpayroll, datetime(2004, 6, 15))
+        self.assertEqual(root.dtpayroll, datetime(2004, 6, 15, tzinfo=UTC))
         self.assertEqual(root.prioryearcontrib, True)
         return root
 
@@ -1282,7 +1283,7 @@ class TransferTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root.invacctfrom, INVACCTFROM)
         self.assertEqual(root.avgcostbasis, Decimal('22.22'))
         self.assertEqual(root.unitprice, Decimal('23.01'))
-        self.assertEqual(root.dtpurchase, datetime(1999, 12, 31))
+        self.assertEqual(root.dtpurchase, datetime(1999, 12, 31, tzinfo=UTC))
         self.assertEqual(root.inv401ksource, 'PROFITSHARING')
         return root
 
@@ -1654,7 +1655,7 @@ class OobuydebtTestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root.oo, OO)
         self.assertEqual(root.auction, False)
-        self.assertEqual(root.dtauction, datetime(2012, 1, 9))
+        self.assertEqual(root.dtauction, datetime(2012, 1, 9, tzinfo=UTC))
 
 
 class OobuymfTestCase(unittest.TestCase, base.TestAggregate):
@@ -1930,7 +1931,7 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
         # Everything below that is tested elsewhere.
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, INVSTMTRS)
-        self.assertEqual(root.dtasof, datetime(2001, 5, 30))
+        self.assertEqual(root.dtasof, datetime(2001, 5, 30, tzinfo=UTC))
         self.assertEqual(root.curdef, 'USD')
         self.assertIsInstance(root.invacctfrom, INVACCTFROM)
         self.assertIsInstance(root.invtranlist, INVTRANLIST)
