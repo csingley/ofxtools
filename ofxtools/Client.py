@@ -110,7 +110,8 @@ class OFXClient(object):
 
     def request_statements(self, user, password, clientuid=None,
                            stmtrqs=None, ccstmtrqs=None, invstmtrqs=None,
-                           dryrun=False, prettyprint=None):
+                           dryrun=False, prettyprint=None,
+                           close_elements=True):
         """
         Package and send OFX statement requests (STMTRQ/CCSTMTRQ/INVSTMTRQ).
 
@@ -147,10 +148,11 @@ class OFXClient(object):
                   bankmsgsrqv1=bankmsgs,
                   creditcardmsgsrqv1=creditcardmsgs,
                   invstmtmsgsrqv1=invstmtmsgs)
-        return self.download(ofx, dryrun=dryrun, prettyprint=prettyprint)
+        return self.download(ofx, dryrun=dryrun, prettyprint=prettyprint,
+                             close_elements=close_elements)
 
     def request_profile(self, user=None, password=None, dryrun=False,
-                        prettyprint=None):
+                        prettyprint=None, close_elements=True):
         """
         Package and send OFX profile requests (PROFRQ).
         """
@@ -165,10 +167,11 @@ class OFXClient(object):
         signonmsgs = self.signon(user, password)
 
         ofx = OFX(signonmsgsrqv1=signonmsgs, profmsgsrqv1=msgs)
-        return self.download(ofx, dryrun=dryrun, prettyprint=prettyprint)
+        return self.download(ofx, dryrun=dryrun, prettyprint=prettyprint,
+                             close_elements=close_elements)
 
     def request_accounts(self, user, password, dtacctup, clientuid=None,
-                         dryrun=False, prettyprint=None):
+                         dryrun=False, prettyprint=None, close_elements=True):
         """
         Package and send OFX account info requests (ACCTINFORQ)
         """
@@ -180,7 +183,8 @@ class OFXClient(object):
 
         ofx = OFX(signonmsgsrqv1=signonmsgs,
                   signupmsgsrqv1=signupmsgs)
-        return self.download(ofx, dryrun=dryrun, prettyprint=prettyprint)
+        return self.download(ofx, dryrun=dryrun, prettyprint=prettyprint,
+                             close_elements=close_elements)
 
     def signon(self, userid, userpass, sesscookie=None, clientuid=None):
         """ Construct SONRQ; package in SIGNONMSGSRQV1 """
@@ -225,7 +229,8 @@ class OFXClient(object):
         trnuid = uuid.uuid4()
         return INVSTMTTRNRQ(trnuid=trnuid, invstmtrq=stmtrq)
 
-    def download(self, ofx, dryrun=False, prettyprint=None):
+    def download(self, ofx, dryrun=False, prettyprint=None,
+                 close_elements=True):
         """ Package complete OFX tree and POST to server """
         tree = ofx.to_etree()
 
@@ -235,8 +240,18 @@ class OFXClient(object):
         if prettyprint:
             indent(tree)
 
-        # py3k: ElementTree.tostring() returns bytes not str
-        data = self.ofxheader + ET.tostring(tree).decode()
+        # All requests need OFX header prepended to ML
+        data = self.ofxheader
+
+        # Some servers choke on OFXv1 requests including ending tags for
+        # elements (which are optional per the spec).
+        if close_elements is False:
+            if self.version >= 200:
+                msg = 'OFX version {} requires ending tags for elements'
+                raise ValueError(msg)
+            data += tostring_unclosed_elements(tree)
+        else:
+            data += ET.tostring(tree, encoding='unicode')
 
         if dryrun:
             return BytesIO(data.encode("ascii"))
@@ -273,6 +288,17 @@ def indent(elem, level=0):
     else:
         if level and (not elem.tail or not elem.tail.strip()):
             elem.tail = i
+
+
+def tostring_unclosed_elements(node):
+    if len(node) == 0:
+        output = '<{}>{}\n'.format(node.tag, node.text)
+    else:
+        output = '<{}>\n'.format(node.tag)
+        for child in node:
+            output += tostring_unclosed_elements(child)
+        output += '</{}>\n'.format(node.tag)
+    return output
 
 
 ### CLI COMMANDS
@@ -327,9 +353,9 @@ def do_stmt(args):
     else:
         password = getpass()
 
-    response = client.request_statements(args.user, password,
-                                         clientuid=args.clientuid,
-                                         dryrun=args.dryrun, **stmtrqs).read()
+    response = client.request_statements(
+        args.user, password, clientuid=args.clientuid, dryrun=args.dryrun,
+        close_elements=not args.unclosedelements, **stmtrqs).read()
 
     if hasattr(response, 'decode'):
         response = response.decode()
@@ -344,7 +370,8 @@ def do_profile(args):
     OFXTree.parse()
     """
     client = init_client(args)
-    response = client.request_profile(dryrun=args.dryrun)
+    response = client.request_profile(dryrun=args.dryrun,
+                                      close_elements=not args.unclosedelements)
     print(response.read())
 
 
@@ -396,6 +423,9 @@ def main():
     argparser.add_argument('-p', '--profile', action='store_true',
                            default=False,
                            help='Download OFX profile instead of statement')
+    argparser.add_argument('--unclosedelements', action='store_true',
+                           default=False,
+                           help='Omit end tags for elements (OFXv1 only)')
 
     signon_group = argparser.add_argument_group(title='Signon Options')
     signon_group.add_argument('-u', '--user', help='FI login username')
