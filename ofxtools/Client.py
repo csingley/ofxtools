@@ -252,7 +252,7 @@ class OFXClient(object):
                 raise ValueError(msg)
             data += tostring_unclosed_elements(tree)
         else:
-            data += ET.tostring(tree, encoding='unicode')
+            data += ET.tostring(tree, encoding='utf-8')
 
         if dryrun:
             return BytesIO(data.encode("ascii"))
