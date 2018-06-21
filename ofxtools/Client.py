@@ -241,18 +241,17 @@ class OFXClient(object):
         if prettyprint:
             indent(tree)
 
-        # All requests need OFX header prepended to ML
-        data = self.ofxheader
-
         # Some servers choke on OFXv1 requests including ending tags for
         # elements (which are optional per the spec).
         if close_elements is False:
             if self.version >= 200:
                 msg = 'OFX version {} requires ending tags for elements'
                 raise ValueError(msg)
-            data += tostring_unclosed_elements(tree)
+            body = tostring_unclosed_elements(tree)
         else:
-            data += ET.tostring(tree, encoding='utf-8')
+            body = ET.tostring(tree).decode()
+
+        data = self.ofxheader + body
 
         if dryrun:
             return BytesIO(data.encode("ascii"))
