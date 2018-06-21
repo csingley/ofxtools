@@ -22,8 +22,14 @@ from ofxtools.models.i18n import (
 
 __all__ = ['REWARDINFO', 'CCSTMTRS', 'CCSTMTRQ', 'CCSTMTTRNRS',
            'CREDITCARDMSGSRQV1', 'CREDITCARDMSGSRSV1', 'CREDITCARDMSGSETV1',
-           'CREDITCARDMSGSET', 'CCSTMTENDTRNRS', 'CCSTMTENDTRNRQ', 'CCSTMTENDRS',
-           'CCCLOSING']
+           'CREDITCARDMSGSET', 'CCSTMTENDTRNRS', 'CCSTMTENDTRNRQ',
+           'CCSTMTENDRS', 'CCCLOSING']
+
+
+class LASTPMTINFO(Aggregate):
+    """ OFX section 11.3.10 """
+    lastpmtdate = DateTime(required=True)  # FIXME - Date not DateTime
+    lastpmtamt = Decimal(required=True)
 
 
 class REWARDINFO(Aggregate):
@@ -94,15 +100,25 @@ class CCCLOSING(Aggregate):
     dtnext = DateTime()
     balopen = Decimal()
     balclose = Decimal(required=True)
+    intytd = Decimal()
     dtmptdue = DateTime()
     minpmtdue = Decimal()
+    pastdueamt = Decimal()
+    latefeeamt = Decimal()
     finchg = Decimal()
+    intratepurch = Decimal()
+    intratecash = Decimal()
+    intratexfer = Decimal()
     payandcredit = Decimal()
     purandadv = Decimal()
     debadj = Decimal()
     creditlimit = Decimal()
+    cashadvcreditlimit = Decimal()
     dtpoststart = DateTime(required=True)
     dtpostend = DateTime(required=True)
+    autopay = Bool()
+    lastpmtinfo = Unsupported()
+    rewardinfo = SubAggregate(REWARDINFO)
     mktginfo = String(360)
     imagedata = Unsupported()
     currency = SubAggregate(CURRENCY)
