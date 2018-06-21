@@ -45,7 +45,7 @@ from ofxtools.models.bank import (
 )
 from ofxtools.models.creditcard import (
     CREDITCARDMSGSRQV1, CCSTMTTRNRQ, CCSTMTRQ,
-)
+    CCSTMTENDTRNRQ, CCSTMTENDRQ)
 from ofxtools.models.investment import (
     INVSTMTMSGSRQV1, INVSTMTTRNRQ, INVSTMTRQ, INVACCTFROM, INCPOS,
 )
@@ -61,6 +61,9 @@ StmtRq.__new__.__defaults__ = (None, None, None, None, True)
 
 CcStmtRq = namedtuple('CcStmtRq', ['acctid', 'dtstart', 'dtend', 'inctran'])
 CcStmtRq.__new__.__defaults__ = (None, None, None, True)
+
+CcStmtEndRq = namedtuple('CcStmtRq', ['acctid', 'dtstart', 'dtend', 'incstmtimg'])
+CcStmtEndRq.__new__.__defaults__ = (None, None, None, False)
 
 InvStmtRq = namedtuple('InvStmtRq', ['acctid', 'dtstart', 'dtend', 'dtasof',
                                      'inctran', 'incoo', 'incpos', 'incbal'])
@@ -151,6 +154,27 @@ class OFXClient(object):
         return self.download(ofx, dryrun=dryrun, prettyprint=prettyprint,
                              close_elements=close_elements)
 
+    def request_end_statements(self, user, password, clientuid=None,
+                               ccstmendtrqs=None,
+                               dryrun=False, prettyprint=None):
+        """
+        Package and send OFX end statement requests (CCSTMTENDRQ).
+
+        Input *rqs are sequences of the corresponding namedtuples CcStmtEndRq
+        """
+        signonmsgs = self.signon(user, password, clientuid=clientuid)
+
+        # TODO: Support Bank and Investments.
+        creditcardmsgs = None
+        if ccstmendtrqs:
+            ccstmtendtrnrqs = [self.ccstmtendtrnrq(**stmtendrq._asdict())
+                               for stmtendrq in ccstmendtrqs]
+            creditcardmsgs = CREDITCARDMSGSRQV1(*ccstmtendtrnrqs)
+
+        ofx = OFX(signonmsgsrqv1=signonmsgs,
+                  creditcardmsgsrqv1=creditcardmsgs)
+        return self.download(ofx, dryrun=dryrun, prettyprint=prettyprint)
+
     def request_profile(self, user=None, password=None, dryrun=False,
                         prettyprint=None, close_elements=True):
         """
@@ -217,6 +241,14 @@ class OFXClient(object):
         stmtrq = CCSTMTRQ(ccacctfrom=acct, inctran=inctran)
         trnuid = uuid.uuid4()
         return CCSTMTTRNRQ(trnuid=trnuid, ccstmtrq=stmtrq)
+
+    def ccstmtendtrnrq(self, acctid, dtstart=None, dtend=None, incstmtimg=False):
+        """ Construct CCSTMTENDRQ; package in CCSTMTENDTRNRQ """
+        acct = CCACCTFROM(acctid=acctid)
+        stmtrq = CCSTMTENDRQ(ccacctfrom=acct, dtstart=dtstart, dtend=dtend,
+                             incstmtimg=incstmtimg)
+        trnuid = uuid.uuid4()
+        return CCSTMTENDTRNRQ(trnuid=trnuid, ccstmtendrq=stmtrq)
 
     def invstmttrnrq(self, acctid, brokerid,
                      dtstart=None, dtend=None, inctran=True, incoo=False,
