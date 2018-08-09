@@ -289,7 +289,11 @@ class OFXClient(object):
             return BytesIO(data.encode("ascii"))
 
         mimetype = 'application/x-ofx'
-        headers = {'Content-type': mimetype, 'Accept': '*/*, %s' % mimetype}
+        # requests.utils.default_headers() sets
+        # {'User-Agent': 'python-requests/{}'.format(requests.__version)
+        # which apparently displeases some FIs
+        headers = {'User-Agent': None, 'Content-type': mimetype,
+                   'Accept': '*/*, %s' % mimetype}
 
         try:
             response = requests.post(self.url, data=data, headers=headers)
