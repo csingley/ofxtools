@@ -54,12 +54,8 @@ class OFXTree(ET.ElementTree):
                 msg = "Can't read source '{}'".format(source)
                 raise ParseError(msg)
 
-        header = OFXHeader.parse(source)
-        source = source.read()
-        # Decode source stream according to the CHARSET declared by OFX header
-        source = source.decode(header.codec)
-
-        return header, source
+        header, ofx = OFXHeader.parse(source)
+        return header, ofx
 
     def convert(self):
         """ """

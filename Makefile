@@ -1,6 +1,6 @@
 test:
 	coverage erase
-	nosetests -dsv --with-yanc --with-coverage --cover-package ofxtools tests/*.py
+	nosetests -dsv --with-coverage --cover-package ofxtools tests/*.py
 
 clean:
 	find -regex '.*\.pyc' -exec rm {} \;

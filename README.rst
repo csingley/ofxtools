@@ -17,7 +17,7 @@ The primary facilities provided include:
    ElementTree structure, then converts the parsed data into normal Python
    types (e.g. datetime.datetime, list) and exposes them through more Pythonic
    attribute access (e.g. ``OFX.statements[0].ledgerbal``); and
--  An (optional) ``ofxalchemy`` object model that persists OFX data in an
+-  A (deprecated) ``ofxalchemy`` object model that persists OFX data in an
    SQL database where they can be queried.
 
 Installation

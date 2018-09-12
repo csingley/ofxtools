@@ -10,14 +10,18 @@ try:
         MagicMock,
         call,
         patch,
+        sentinel,
     )
+    import builtins
 except ImportError:
     # Python 2 depends on external mock package
     from mock import (
         MagicMock,
         call,
         patch,
+        sentinel,
     )
+    import __builtin__ as builtins
 
 from xml.etree.ElementTree import (
     Element,
@@ -208,58 +212,56 @@ class OFXTreeTestCase(TestCase):
         # the OFX data to TreeBuilder, and stores the return value from
         # TreeBuilder.close() as its _root
         self.tree._read = MagicMock()
-        self.tree._read.return_value = ('header', 'OFX payload')
+        self.tree._read.return_value = (sentinel.header, sentinel.ofx)
 
         mockTreeBuilderClass = MagicMock()
         mockTreeBuilderInstance = mockTreeBuilderClass.return_value
-        mockTreeBuilderInstance.close.return_value = 'ElementTree.Element'
+        mockTreeBuilderInstance.close.return_value = sentinel.root
 
         source = '/path/to/file.ofx'
         self.tree.parse(source, parser=mockTreeBuilderClass)
         self.tree._read.assert_called_once_with(source)
-        mockTreeBuilderInstance.feed.assert_called_once_with('OFX payload')
+        mockTreeBuilderInstance.feed.assert_called_once_with(sentinel.ofx)
         mockTreeBuilderInstance.close.assert_called_once()
-        self.assertEqual(self.tree._root, 'ElementTree.Element')
+        self.assertEqual(self.tree._root, sentinel.root)
 
     def test_read_filename(self):
         OFXHeader.parse = MagicMock()
-        fake_header = MagicMock()
-        fake_header.codec = 'utf8'
-        OFXHeader.parse.return_value = fake_header
+        fake_header = sentinel.header
+        fake_body = sentinel.ofx
+        OFXHeader.parse.return_value = (fake_header, fake_body)
 
-        source = NamedTemporaryFile()
-        source.write(b'a bunch of text')
-        source.seek(0)
+        with patch('builtins.open') as fake_open:
+            fake_open.return_value = sentinel.file
 
-        output = self.tree._read(source.name)
-        source.close()
-        self.assertEqual(output, (fake_header, 'a bunch of text'))
+            source = NamedTemporaryFile()
+            source.write(b'a bunch of text')
+            source.seek(0)
+
+            output = self.tree._read(source.name)
+            source.close()
+            fake_open.assert_called_once_with(source.name, 'rb')
+            OFXHeader.parse.assert_called_once_with(sentinel.file)
+            self.assertEqual(output, (fake_header, fake_body))
 
     def test_read_file(self):
         OFXHeader.parse = MagicMock()
-        fake_header = MagicMock()
-        fake_header.codec = 'utf8'
-        OFXHeader.parse.return_value = fake_header
+        fake_header = sentinel.header
+        fake_body = sentinel.ofx
+        OFXHeader.parse.return_value = (fake_header, fake_body)
 
-        source = NamedTemporaryFile()
-        source.write(b'a bunch of text')
-        source.seek(0)
+        with patch('builtins.open') as fake_open:
+            fake_open.return_value = sentinel.file
 
-        output = self.tree._read(source)
-        source.close()
-        self.assertEqual(output, (fake_header, 'a bunch of text'))
+            source = NamedTemporaryFile()
+            source.write(b'a bunch of text')
+            source.seek(0)
 
-    def test_read_file_binary(self):
-        OFXHeader.parse = MagicMock()
-        fake_header = MagicMock()
-        fake_header.codec = 'utf8'
-        OFXHeader.parse.return_value = fake_header
-
-        source = BytesIO('a bunch of text'.encode())
-
-        output = self.tree._read(source)
-        source.close()
-        self.assertEqual(output, (fake_header, 'a bunch of text'))
+            output = self.tree._read(source)
+            source.close()
+            fake_open.assert_not_called()
+            OFXHeader.parse.assert_called_once_with(source)
+            self.assertEqual(output, (fake_header, fake_body))
 
     def test_read_illegal(self):
         source = 'a bunch of text'

@@ -85,8 +85,8 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
         header = str(self.headerClass(self.defaultVersion))
         ofx = header + self.body
         ofx = BytesIO(ofx.encode('ascii'))
-        ofxheader = ofxtools.header.OFXHeader.parse(ofx)
-        
+        ofxheader, body = ofxtools.header.OFXHeader.parse(ofx)
+
         self.assertEqual(ofxheader.ofxheader, 100)
         self.assertEqual(ofxheader.data, 'OFXSGML')
         self.assertEqual(ofxheader.version, self.defaultVersion)
@@ -97,8 +97,6 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
         self.assertEqual(ofxheader.oldfileuid, 'NONE')
         self.assertEqual(ofxheader.newfileuid, 'NONE')
 
-        # read pointer has advanced past OFX header to OFX body
-        body = ofx.read().decode().strip()
         self.assertEqual(body, self.body)
 
     def testStr(self):
@@ -150,6 +148,34 @@ class OFXHeaderV2TestCase(unittest.TestCase, OFXHeaderTestMixin):
                                   oldfileuid='p0rkyp1g',
                                   newfileuid='d0n41dduck')
         self.assertEqual(str(header).strip(), headerStr.strip())
+
+    def testParse(self):
+        header = str(self.headerClass(self.defaultVersion))
+        ofx = header + self.body
+        ofx = BytesIO(ofx.encode('utf8'))
+        ofxheader, body = ofxtools.header.OFXHeader.parse(ofx)
+
+        self.assertEqual(ofxheader.ofxheader, 200)
+        self.assertEqual(ofxheader.version, self.defaultVersion)
+        self.assertEqual(ofxheader.security, 'NONE')
+        self.assertEqual(ofxheader.oldfileuid, 'NONE')
+        self.assertEqual(ofxheader.newfileuid, 'NONE')
+
+        self.assertEqual(body, self.body)
+
+    def testParseOneLiner(self):
+        header = str(self.headerClass(self.defaultVersion)).replace('\r\n', '')
+        ofx = header + self.body
+        ofx = BytesIO(ofx.encode('utf8'))
+        ofxheader, body = ofxtools.header.OFXHeader.parse(ofx)
+
+        self.assertEqual(ofxheader.ofxheader, 200)
+        self.assertEqual(ofxheader.version, self.defaultVersion)
+        self.assertEqual(ofxheader.security, 'NONE')
+        self.assertEqual(ofxheader.oldfileuid, 'NONE')
+        self.assertEqual(ofxheader.newfileuid, 'NONE')
+
+        self.assertEqual(body, self.body)
 
 
 if __name__ == '__main__':

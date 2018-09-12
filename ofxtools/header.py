@@ -30,14 +30,14 @@ class OFXHeader(object):
     @classmethod
     def parse(cls, source):
         """
-        Consume source thru end of OFX header; feed to appropriate class
-        constructor which performs validation/type conversion on OFX header.
+        Consume source; feed to appropriate class constructor which performs
+        validation/type conversion on OFX header.
 
-        Returns instance of OFXHeaderV1/OFXHeaderV2 containing parsed data.
+        Using header, locate/read/decode (but do not parse) OFX data body.
 
-        As a side effect, input source stream position is advanced to the
-        beginning of the OFX body tag soup, which is where subsequent calls
-        to read()/readlines() will pick up.
+        Returns a tuple of:
+            * instance of OFXHeaderV1/OFXHeaderV2 containing parsed data, and
+            * decoded text of OFX data body
         """
         # Skip any empty lines at the beginning
         while True:
@@ -45,29 +45,38 @@ class OFXHeader(object):
             if line.strip():
                 break
 
-        # If the first non-empty line is an XML declaration, it's OFX v2
+        # If the first non-empty line has an XML declaration, it's OFX v2
         xmldeclmatch = cls.xmldeclregex.match(line)
         if xmldeclmatch:
-            headerclass = OFXHeaderV2
-            # First line is XML declaration; OFX header is next line
-            rawheader = source.readline().decode('ascii')
+            # OFXv2 spec doesn't require newlines between XML declaration,
+            # OFX declaration, and data elements; `line` may or may not
+            # contain the latter two.
+            #
+            # Just rewind, read the whole file (it must be UTF-8 encoded per
+            # the spec) and slice the OFX data body from the end of the
+            # OFX declaration
+            source.seek(0)
+            whole_thing = source.read().decode(OFXHeaderV2.codec)
+            header, end = OFXHeaderV2.parse(whole_thing)
+            ofx = whole_thing[end:]
         else:
             # OFX v1
-            headerclass = OFXHeaderV1
             rawheader = line + '\n'
             # First line is OFXHEADER; need to read next 8 lines for a fixed
             # total of 9 fields required by OFX v1 spec.
             for n in range(8):
                 rawheader += source.readline().decode('ascii')
+            header, end = OFXHeaderV1.parse(rawheader)
 
-        headermatch = headerclass.regex.match(rawheader)
-        if not headermatch:
-            msg = 'OFX header is malformed: {}'.format(rawheader)
-            raise OFXHeaderError(msg)
-        headerattrs = headermatch.groupdict()
-        headerattrs = {k.lower(): v for k, v in headerattrs.items()}
-        header = headerclass(**headerattrs)
-        return header
+            #  Input source stream position has advanced to the beginning of
+            #  the OFX body tag soup, which is where subsequent calls
+            #  to read()/readlines() will pick up.
+            #
+            #  Decode the OFX data body according to the encoding declared
+            #  in the OFX header
+            ofx = source.read().decode(header.codec)
+
+        return header, ofx.strip()
 
     def __init__(self, version, security=None, oldfileuid=None,
                  newfileuid=None):
@@ -88,7 +97,20 @@ class OFXHeader(object):
         return str(self._instance)
 
 
-class OFXHeaderV1(object):
+class OFXHeaderBase:
+    @classmethod
+    def parse(cls, rawheader):
+        headermatch = cls.regex.search(rawheader)
+        if not headermatch:
+            msg = 'OFX header is malformed: {}'.format(rawheader)
+            raise OFXHeaderError(msg)
+        headerattrs = headermatch.groupdict()
+        headerattrs = {k.lower(): v for k, v in headerattrs.items()}
+        header = cls(**headerattrs)
+        return header, headermatch.end()
+
+
+class OFXHeaderV1(OFXHeaderBase):
     """ Header for OFX version 1 """
     ofxheader = Types.OneOf(100,)
     data = Types.OneOf('OFXSGML',)
@@ -151,7 +173,7 @@ class OFXHeaderV1(object):
         return lines
 
 
-class OFXHeaderV2(object):
+class OFXHeaderV2(OFXHeaderBase):
     """ Header for OFX version 2 """
     ofxheader = Types.OneOf(200,)
     version = Types.OneOf(200, 201, 202, 203, 210, 211, 220)
