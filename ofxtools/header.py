@@ -98,11 +98,14 @@ class OFXHeader(object):
 
 
 class OFXHeaderBase:
+    """
+    Superclass for OFXHeader{V1,V2}
+    """
     @classmethod
     def parse(cls, rawheader):
         headermatch = cls.regex.search(rawheader)
         if not headermatch:
-            msg = 'OFX header is malformed: {}'.format(rawheader)
+            msg = 'OFX header is malformed:\n{}'.format(rawheader)
             raise OFXHeaderError(msg)
         headerattrs = headermatch.groupdict()
         headerattrs = {k.lower(): v for k, v in headerattrs.items()}
@@ -130,7 +133,7 @@ class OFXHeaderV1(OFXHeaderBase):
                             VERSION:(?P<VERSION>\d+)\s+
                             SECURITY:(?P<SECURITY>[\w]+)\s+
                             ENCODING:(?P<ENCODING>[A-Z0-9-]+)\s+
-                            CHARSET:(?P<CHARSET>\w+)\s+
+                            CHARSET:(?P<CHARSET>[\w-]+)\s+
                             COMPRESSION:(?P<COMPRESSION>[A-Z]+)\s+
                             OLDFILEUID:(?P<OLDFILEUID>[\w-]+)\s+
                             NEWFILEUID:(?P<NEWFILEUID>[\w-]+)\s+

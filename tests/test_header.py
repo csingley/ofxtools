@@ -41,15 +41,26 @@ class OFXHeaderTestMixin(object):
     def testValid(self):
         for attr, values in self.valid.items():
             for value in values:
+                # Test class constructor with valid overrides
                 kw = {attr: value}
                 if attr != 'version':
                     kw['version'] = self.defaultVersion
                 header = self.headerClass(**kw)
                 self.assertEqual(getattr(header, attr), value)
 
+                # Test OFXHeaderBase.parse() with valid fields
+                rawheader = str(header)
+                (header_dupe, rest) = self.headerClass.parse(rawheader)
+                for attrName, attr_ in self.headerClass.__dict__.items():
+                    if hasattr(attr_, 'convert'):
+                        attr1 = getattr(header, attrName)
+                        attr2 = getattr(header_dupe, attrName)
+                        self.assertEqual(attr1, attr2)
+
     def testInvalid(self):
         for attr, values in self.invalid.items():
             for value in values:
+                # Test class constructor with invalid overrides
                 kw = {attr: value}
                 if attr != 'version':
                     kw['version'] = self.defaultVersion
@@ -82,6 +93,7 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
               }
 
     def testParse(self):
+        # Test OFXHeader.parse() for version 1
         header = str(self.headerClass(self.defaultVersion))
         ofx = header + self.body
         ofx = BytesIO(ofx.encode('ascii'))
@@ -150,6 +162,7 @@ class OFXHeaderV2TestCase(unittest.TestCase, OFXHeaderTestMixin):
         self.assertEqual(str(header).strip(), headerStr.strip())
 
     def testParse(self):
+        # Test OFXHeader.parse() for version 2
         header = str(self.headerClass(self.defaultVersion))
         ofx = header + self.body
         ofx = BytesIO(ofx.encode('utf8'))
