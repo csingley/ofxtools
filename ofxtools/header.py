@@ -129,7 +129,7 @@ class OFXHeaderV1(OFXHeaderBase):
                             DATA:(?P<DATA>[A-Z]+)\s+
                             VERSION:(?P<VERSION>\d+)\s+
                             SECURITY:(?P<SECURITY>[\w]+)\s+
-                            ENCODING:(?P<ENCODING>[A-Z]+)\s+
+                            ENCODING:(?P<ENCODING>[A-Z0-9-]+)\s+
                             CHARSET:(?P<CHARSET>\w+)\s+
                             COMPRESSION:(?P<COMPRESSION>[A-Z]+)\s+
                             OLDFILEUID:(?P<OLDFILEUID>[\w-]+)\s+
