@@ -29,17 +29,19 @@ Installation
     pip install ofxtools
 
 To install the most recent prerelease (which is where the magic happens, and
-also the bugs), you can download the `current master`_ and unzip it.  Since
-dependencies are minimal, it's recommended to use the Python user installation
-scheme:
+also the bugs), you can download the `current master`_, unzip it, and install
+via the included setup file:
 
 ::
 
-    python setup.py install --user
+    python setup.py install
 
 In addition to the Python package, this will also install a script ``ofxget``
 in ``~/.local/bin``, and its sample configuration file in
 ``~/.config/ofxtools``.
+
+For any installation method, it's recommended to install ``ofxtools`` in a
+`virtual environment`_.
 
 OFX Client
 ==========
@@ -181,16 +183,20 @@ clone the repository:
 
     git clone https://github.com/csingley/ofxtools.git
 
-Feel free to `create pull requests`_ on `ofxtools repository on GitHub`_.
-
-Again, the minimal dependencies make it simple to install with the Python user
-installation scheme:
+Set up a `virtual environment`_, and install the package in development mode
+so you're working on live code:
 
 ::
 
-    python setup.py develop --user
+    python setup.py develop
 
-However, you'll want to run the tests, either with ``make``:
+Install all development requirements:
+
+::
+
+    pip install -r requirements-development.txt
+
+Run the tests, either with ``make``:
 
 ::
 
@@ -200,18 +206,10 @@ or directly with ``nosetests``:
 
 ::
 
-    nosetests -dsv --with-yanc --with-coverage --cover-package ofxtools
+    nosetests -dsv  --with-coverage --cover-package ofxtools
 
+Feel free to `create pull requests`_ on `ofxtools repository on GitHub`_.
 
-if you don't already have `nose`, `coverage`, etc. installed, and you don't
-want to clutter your system libraries just for this work, you can create a
-`virtual environment`_ and install all development requirements:
-
-::
-
-    virtualenv .venv
-    source .venv/bin/activate
-    pip install -r requirements-development.txt
 
 Resources
 =========
@@ -226,6 +224,7 @@ Resources
 .. _Requests: http://docs.python-requests.org/en/master/
 .. _PyPI: https://pypi.python.org/pypi/ofxtools
 .. _current master: https://github.com/csingley/ofxtools/archive/master.zip
+.. _virtual environment: https://packaging.python.org/tutorials/installing-packages/#creating-virtual-environments
 .. _OFX spec: http://www.ofx.net/downloads.html
 .. _Git: https://git-scm.com/
 .. _create pull requests: https://help.github.com/articles/using-pull-requests/
@@ -233,3 +232,4 @@ Resources
 .. _virtual environment: http://docs.python-guide.org/en/latest/dev/virtualenvs/
 .. _Quicken data mapping guide: https://fi.intuit.com/downloads/QW_DataMappingGuide.pdf
 .. _OFX Home: http://www.ofxhome.com/
+
