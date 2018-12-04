@@ -229,7 +229,6 @@ Resources
 .. _Git: https://git-scm.com/
 .. _create pull requests: https://help.github.com/articles/using-pull-requests/
 .. _ofxtools repository on GitHub: https://github.com/csingley/ofxtools
-.. _virtual environment: http://docs.python-guide.org/en/latest/dev/virtualenvs/
 .. _Quicken data mapping guide: https://fi.intuit.com/downloads/QW_DataMappingGuide.pdf
 .. _OFX Home: http://www.ofxhome.com/
 
