@@ -1,8 +1,37 @@
 #!/usr/bin/env python
 # vim: set fileencoding=utf-8
 """
-Classes and functions implementing composing and transmitting OFX request,
-and receiving OFX responses in reply
+Network client that composes/transmits Open Financial Exchange (OFX) requests,
+and receives OFX responses in reply.  A basic CLI utility is included.
+
+To use, create an OFXClient instance configured with OFX connection parameters:
+server URL, OFX protocol version, financial institution identifiers, client
+identifiers, etc.
+
+If you don't have these, try http://ofxhome.com/ .
+
+Using the configured OFXClient instance, make a request by calling the
+relevant method, e.g. `OFXClient.request_statements()`.  OFX supports
+multi-part statement requests, so `request_statements` accepts sequences as
+arguments.  Simple data containers for each statement
+(`StmtRq`, `CcStmtRq`, etc.) are provided.
+
+The method call therefore looks like this:
+
+>>> client = OFXClient('https://onlinebanking.capitalone.com/ofx/process.ofx',
+...                    org='Hibernia', fid='1001', bankid='056073502',
+...                    appver=202)
+>>> s0 = StmtRq(acctid='1', accttype='CHECKING',
+...             dtstart=datetime.date(2015, 1, 1),
+...             dtend=datetime.date(2015, 1, 31))
+>>> s1 = StmtRq(acctid='2', accttype='SAVINGS',
+...             dtstart=datetime.date(2015, 1, 1),
+...             dtend=datetime.date(2015, 1, 31))
+>>> c0 = CcStmtRq(acctid='3',
+...               dtstart=datetime.date(2015, 1, 1),
+...               dtend=datetime.date(2015, 1, 31))
+>>> response = client.request_statements(user='jpmorgan', password='t0ps3kr1t',
+...                                      stmtrqs=[s0, s1], ccstmtrqs=[c0])
 """
 
 # stdlib imports
@@ -32,7 +61,7 @@ import requests
 
 
 # local imports
-from ofxtools.header import OFXHeader
+from ofxtools.header import make_header
 from ofxtools.models.ofx import OFX
 from ofxtools.models.profile import (
     PROFRQ, PROFTRNRQ, PROFMSGSRQV1,
@@ -109,7 +138,7 @@ class OFXClient(object):
     @property
     def ofxheader(self):
         """ Prepend to OFX markup. """
-        return str(OFXHeader(version=self.version, newfileuid=uuid.uuid4()))
+        return str(make_header(version=self.version, newfileuid=uuid.uuid4()))
 
     def request_statements(self, user, password, clientuid=None,
                            stmtrqs=None, ccstmtrqs=None, invstmtrqs=None,

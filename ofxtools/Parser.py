@@ -1,6 +1,26 @@
 # coding: utf-8
 """
-Regex-based parser for OFXv1/v2 subclassing ElemenTree from stdlib.
+A parser for Open Financial Exchange (OFX) messages,
+both version 1 (SGML) and version 2 (XML) formats,
+into standard Python `xml.etree.ElementTree.ElementTree` structures,
+which interface it implements.
+
+This module only parses the OFX message body, after the OFX header has been
+processed and stripped by the `ofxtools.header` module, which is where the
+call to `read()` occurs.
+
+Notwithstanding the fact that `ofxtools.TreeBuilder` subclasses the excellent
+`xml.etree.ElementTree.Treebuilder` by overriding a fairly minimal set of
+methods, the logic is completely different - less efficient and far slower.
+
+If we didn't need to parse OFXv1 (SGML), we'd do better to skip it and
+just feed plain XML to `ElementTree`.
+
+The implementation employs re.finditer() and Perl extended regular expressions:
+https://docs.python.org/3/howto/regex.html#non-capturing-and-named-groups
+
+No ponies were harmed during the production of this parser:
+https://stackoverflow.com/questions/1732348/regex-match-open-tags-except-xhtml-self-contained-tags/1732454#1732454
 """
 # stdlib imports
 import re
@@ -8,7 +28,7 @@ import xml.etree.ElementTree as ET
 
 
 # local imports
-from ofxtools.header import OFXHeader
+from ofxtools.header import parse_header
 from ofxtools.models.base import Aggregate
 
 
@@ -19,55 +39,67 @@ class ParseError(SyntaxError):
 
 class OFXTree(ET.ElementTree):
     """
-    Subclass of ElementTree.ElementTree, customized to represent OFX as
-    an Element hierarchy.
+    OFX data represented as a hierarchy of `ElementTree.Element` instances.
+
+    This class is an intermediate representation of OFX, focused on
+    serialization/deserialization to/from XML/SGML.  By conforming to the
+    ElementTree API, pretty much the full range of ElementTree operations are
+    made available, including tag modification, branch pruning/grafting,
+    XPath search, etc.
+
+    Additionally provides a convert() method to transform this container of
+    `ElementTree.Element` instances into a hierarchy of
+    `ofxtools.models.base.Aggregate` and `ofxtools.Types.Element` instances,
+    which are special-purpose data structures implementing validation, type
+    conversion, and general conformance with the OFX specification.
+
+    The inverse operation (i.e. `ofxtools.models` -> `ElementTree.Element`)
+    is performed by calling `ofxtools.models.base.Aggregate.to_etree()` on
+    the root node of the hierarchy.
     """
     def parse(self, source, parser=None):
         """
-        Overrides ElementTree.ElementTree.parse() to validate and strip the
-        the OFX header before feeding the body tags to custom
-        TreeBuilder subclass (below) for parsing into Element instances.
+        Deserialize OFX document into tree of `ElementTree.Element` instances.
+
+        *source* is a file name or file object, *parser* is an optional parser
+        instance that defaults to `ofxtools.Parser.TreeBuilder`.
+
+        Overrides ElementTree.ElementTree.parse().
         """
-        header, ofx = self._read(source)
+        # Stash the converted OFX header
+        self.header, message = self._read(source)
 
-        # Cut a parser instance
-        parser = parser or TreeBuilder
-        parser = parser()
-
-        # Then parse tag soup into tree of Elements
-        parser.feed(ofx)
+        # If no parser specified, create default `ofxtools.Parser.TreeBuilder`
+        parser = parser or TreeBuilder()
+        parser.feed(message)
 
         # ElementTree.TreeBuilder.close() returns the root.
         # Follow ElementTree API and stash as self._root (so all normal
         # ElementTree methods e.g. find() work normally on our subclass).
         self._root = parser.close()
 
-    def _read(self, source):
+    @staticmethod
+    def _read(source):
         """
-        """
-        # If our source doesn't follow the file API, try to interpret it
-        # as a file path
-        if not hasattr(source, 'read'):
-            try:
-                source = open(source, 'rb')
-            except OSError:
-                msg = "Can't read source '{}'".format(source)
-                raise ParseError(msg)
+        Validate/convert OFX header and return it as an instance of
+        `ofxtools.header.OFXHeader{V1, V2}`, along with message body as `str`.
 
-        header, ofx = OFXHeader.parse(source)
-        return header, ofx
+        Factored out from `parse()` to facilitate unit testing.
+        """
+        if not hasattr(source, 'read'):
+            source = open(source, 'rb')
+
+        header, message = parse_header(source)
+        return header, message
 
     def convert(self):
-        """ """
+        """
+        Transform tree of `ElementTree.Element` instances into hierarchy of
+        `ofxtools.models.base.Aggregate` & `ofxtools.Types.Element` instances.
+        """
         if not isinstance(self._root, ET.Element):
             raise ValueError('Must first call parse() to have data to convert')
-        # OFXResponse performs validation & type conversion
-        # return OFXResponse.from_etree(self)
         instance = Aggregate.from_etree(self._root)
-
-        # Keep a copy of the parse tree
-        instance.tree = self
-
         return instance
 
 
@@ -154,9 +186,12 @@ class TreeBuilder(ET.TreeBuilder):
 
 
 def main():
+    """
+    Simple functional test for impatient developers.
+    """
     from argparse import ArgumentParser
 
-    argparser = ArgumentParser(description='Parse OFX data')
+    argparser = ArgumentParser(description='Parse OFX data; dump transactions')
     argparser.add_argument('file', nargs='+', help='OFX file(s)')
     args = argparser.parse_args()
 

@@ -92,12 +92,12 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
                'newfileuid': ('abc'*36,),
               }
 
-    def testParse(self):
-        # Test OFXHeader.parse() for version 1
+    def testParseHeader(self):
+        # Test parse_header() for version 1
         header = str(self.headerClass(self.defaultVersion))
         ofx = header + self.body
         ofx = BytesIO(ofx.encode('ascii'))
-        ofxheader, body = ofxtools.header.OFXHeader.parse(ofx)
+        ofxheader, body = ofxtools.header.parse_header(ofx)
 
         self.assertEqual(ofxheader.ofxheader, 100)
         self.assertEqual(ofxheader.data, 'OFXSGML')
@@ -161,12 +161,12 @@ class OFXHeaderV2TestCase(unittest.TestCase, OFXHeaderTestMixin):
                                   newfileuid='d0n41dduck')
         self.assertEqual(str(header).strip(), headerStr.strip())
 
-    def testParse(self):
-        # Test OFXHeader.parse() for version 2
+    def testParseHeader(self):
+        # Test parse_header() for version 2
         header = str(self.headerClass(self.defaultVersion))
         ofx = header + self.body
         ofx = BytesIO(ofx.encode('utf8'))
-        ofxheader, body = ofxtools.header.OFXHeader.parse(ofx)
+        ofxheader, body = ofxtools.header.parse_header(ofx)
 
         self.assertEqual(ofxheader.ofxheader, 200)
         self.assertEqual(ofxheader.version, self.defaultVersion)
@@ -180,7 +180,7 @@ class OFXHeaderV2TestCase(unittest.TestCase, OFXHeaderTestMixin):
         header = str(self.headerClass(self.defaultVersion)).replace('\r\n', '')
         ofx = header + self.body
         ofx = BytesIO(ofx.encode('utf8'))
-        ofxheader, body = ofxtools.header.OFXHeader.parse(ofx)
+        ofxheader, body = ofxtools.header.parse_header(ofx)
 
         self.assertEqual(ofxheader.ofxheader, 200)
         self.assertEqual(ofxheader.version, self.defaultVersion)

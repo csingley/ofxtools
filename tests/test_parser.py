@@ -1,4 +1,7 @@
 # coding: utf-8
+"""
+Unit tests for ofxtools.Parser
+"""
 
 # stdlib imports
 import unittest
@@ -39,7 +42,6 @@ from ofxtools.Parser import (
     TreeBuilder,
     ParseError,
 )
-from ofxtools.header import OFXHeader
 
 
 class TreeBuilderRegexTestCase(TestCase):
@@ -219,39 +221,36 @@ class OFXTreeTestCase(TestCase):
         mockTreeBuilderInstance.close.return_value = sentinel.root
 
         source = '/path/to/file.ofx'
-        self.tree.parse(source, parser=mockTreeBuilderClass)
+        self.tree.parse(source, parser=mockTreeBuilderInstance)
         self.tree._read.assert_called_once_with(source)
         mockTreeBuilderInstance.feed.assert_called_once_with(sentinel.ofx)
         mockTreeBuilderInstance.close.assert_called_once()
         self.assertEqual(self.tree._root, sentinel.root)
 
     def test_read_filename(self):
-        OFXHeader.parse = MagicMock()
-        fake_header = sentinel.header
-        fake_body = sentinel.ofx
-        OFXHeader.parse.return_value = (fake_header, fake_body)
-
         with patch('builtins.open') as fake_open:
-            fake_open.return_value = sentinel.file
+            with patch('ofxtools.Parser.parse_header') as fake_parse_header:
+                fake_open.return_value = sentinel.file
 
-            source = NamedTemporaryFile()
-            source.write(b'a bunch of text')
-            source.seek(0)
+                fake_header = sentinel.header
+                fake_body = sentinel.ofx
+                fake_parse_header.return_value = (fake_header, fake_body)
 
-            output = self.tree._read(source.name)
-            source.close()
-            fake_open.assert_called_once_with(source.name, 'rb')
-            OFXHeader.parse.assert_called_once_with(sentinel.file)
-            self.assertEqual(output, (fake_header, fake_body))
+                source = NamedTemporaryFile()
+                source.write(b'a bunch of text')
+                source.seek(0)
+
+                output = self.tree._read(source.name)
+                source.close()
+                fake_open.assert_called_once_with(source.name, 'rb')
+                fake_parse_header.assert_called_once_with(sentinel.file)
+                self.assertEqual(output, (fake_header, fake_body))
 
     def test_read_file(self):
-        OFXHeader.parse = MagicMock()
-        fake_header = sentinel.header
-        fake_body = sentinel.ofx
-        OFXHeader.parse.return_value = (fake_header, fake_body)
-
-        with patch('builtins.open') as fake_open:
-            fake_open.return_value = sentinel.file
+        with patch('ofxtools.Parser.parse_header') as fake_parse_header:
+            fake_header = sentinel.header
+            fake_body = sentinel.ofx
+            fake_parse_header.return_value = (fake_header, fake_body)
 
             source = NamedTemporaryFile()
             source.write(b'a bunch of text')
@@ -259,13 +258,12 @@ class OFXTreeTestCase(TestCase):
 
             output = self.tree._read(source)
             source.close()
-            fake_open.assert_not_called()
-            OFXHeader.parse.assert_called_once_with(source)
+            fake_parse_header.assert_called_once_with(source)
             self.assertEqual(output, (fake_header, fake_body))
 
     def test_read_illegal(self):
         source = 'a bunch of text'
-        with self.assertRaises(ParseError):
+        with self.assertRaises(FileNotFoundError):
             self.tree._read(source)
 
     def test_convert(self):
@@ -277,7 +275,7 @@ class OFXTreeTestCase(TestCase):
             ofx = self.tree.convert()
             MockAggregate.from_etree.assert_called_once_with(self.tree._root)
             self.assertEqual(ofx, MockAggregate.from_etree())
-            
+
     def test_convert_unparsed(self):
         # Calling OFXTree.convert() without first calling OFXTree.parse()
         # raises ValueError

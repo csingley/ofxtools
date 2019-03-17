@@ -1,4 +1,22 @@
 # vim: set fileencoding=utf-8
+"""
+Open Financial Exchange (OFX) message header, both version 1 & version 2 (XML),
+which precedes the OFX message body.
+
+See section 2.2 of the OFX spec.
+
+The main data classes - `OFXHeaderV1` and `OFXHeaderV2` - perform validation
+and type conversion; see `ofxtools.Types` for details.  Their `parse()` method
+constructs class instances from strings, which is used in deserialization.
+
+This module provides the `parse_header()` function, which demarcates message
+header from message body in serialized OFX data, and processes the header
+portion.  See `ofxtools.Parser` for the rest of it.
+
+Also provided is the `make_header()` utility function, which routes to the
+appropriate header class based on OFX version #.  It's used by
+`ofxtools.Client`.
+"""
 
 # stdlib imports
 import re
@@ -13,96 +31,22 @@ class OFXHeaderError(SyntaxError):
     pass
 
 
-class OFXHeader(object):
-    """
-    OFX header wrapper.
-
-    Class constructors [i.e. __init__() and convert()] route to
-    OFXHeaderV1 / OFXHeaderV2 according to the input OFX version number,
-    and return an instance of the appropriate class.
-    """
-    xmldeclregex = re.compile(r"""(<\?xml\s+
-                              (version=\"(?P<xmlversion>[\d.]+)\")?\s*
-                              (encoding=\"(?P<encoding>[\w-]+)\")?\s*
-                              (standalone=\"(?P<standalone>[\w]+)\")?\s*
-                              \?>)\s*""", re.VERBOSE)
-
-    @classmethod
-    def parse(cls, source):
-        """
-        Consume source; feed to appropriate class constructor which performs
-        validation/type conversion on OFX header.
-
-        Using header, locate/read/decode (but do not parse) OFX data body.
-
-        Returns a tuple of:
-            * instance of OFXHeaderV1/OFXHeaderV2 containing parsed data, and
-            * decoded text of OFX data body
-        """
-        # Skip any empty lines at the beginning
-        while True:
-            line = source.readline().decode('ascii')
-            if line.strip():
-                break
-
-        # If the first non-empty line has an XML declaration, it's OFX v2
-        xmldeclmatch = cls.xmldeclregex.match(line)
-        if xmldeclmatch:
-            # OFXv2 spec doesn't require newlines between XML declaration,
-            # OFX declaration, and data elements; `line` may or may not
-            # contain the latter two.
-            #
-            # Just rewind, read the whole file (it must be UTF-8 encoded per
-            # the spec) and slice the OFX data body from the end of the
-            # OFX declaration
-            source.seek(0)
-            whole_thing = source.read().decode(OFXHeaderV2.codec)
-            header, end = OFXHeaderV2.parse(whole_thing)
-            ofx = whole_thing[end:]
-        else:
-            # OFX v1
-            rawheader = line + '\n'
-            # First line is OFXHEADER; need to read next 8 lines for a fixed
-            # total of 9 fields required by OFX v1 spec.
-            for n in range(8):
-                rawheader += source.readline().decode('ascii')
-            header, end = OFXHeaderV1.parse(rawheader)
-
-            #  Input source stream position has advanced to the beginning of
-            #  the OFX body tag soup, which is where subsequent calls
-            #  to read()/readlines() will pick up.
-            #
-            #  Decode the OFX data body according to the encoding declared
-            #  in the OFX header
-            ofx = source.read().decode(header.codec)
-
-        return header, ofx.strip()
-
-    def __init__(self, version, security=None, oldfileuid=None,
-                 newfileuid=None):
-        """
-        Pass input args to OFXHeaderV1/OFXHeaderV2; store returned instance
-        as self._instance
-        """
-        try:
-            major_version = int(version)//100
-        except ValueError:
-            raise OFXHeaderError('Invalid OFX version %s' % version)
-        HeaderClass = {1: OFXHeaderV1, 2: OFXHeaderV2}[major_version]
-        self._instance = HeaderClass(version=version, security=security,
-                                     oldfileuid=oldfileuid,
-                                     newfileuid=newfileuid)
-
-    def __str__(self):
-        return str(self._instance)
-
-
 class OFXHeaderBase:
     """
-    Superclass for OFXHeader{V1,V2}
+    Superclass for OFXHeader{V1,V2} factoring out common logic.
     """
+    regex = NotImplemented  # Define in subclass
+    codec = NotImplemented  # Define in subclass
+
     @classmethod
     def parse(cls, rawheader):
+        """
+        Instantiate from string.
+
+        Returns a tuple of:
+            * class instance containing parsed header data, and
+            * index of header regex match end position (type int).
+        """
         headermatch = cls.regex.search(rawheader)
         if not headermatch:
             msg = 'OFX header is malformed:\n{}'.format(rawheader)
@@ -121,7 +65,8 @@ class OFXHeaderV1(OFXHeaderBase):
     security = Types.OneOf('NONE', 'TYPE1')
     encoding = Types.OneOf('USASCII', 'UNICODE', 'UTF-8')
     # DRY - mapping of CHARSET: codec used below in codec()
-    codecs = {'ISO-8859-1': 'latin1', '1252': 'cp1252', 'NONE': 'utf8'}
+    #  https://docs.python.org/3/library/codecs.html#standard-encodings
+    codecs = {'ISO-8859-1': 'latin_1', '1252': 'cp1252', 'NONE': 'utf_8'}
     charset = Types.OneOf(*codecs.keys())
     compression = Types.OneOf('NONE',)
     oldfileuid = Types.String(36)
@@ -141,6 +86,11 @@ class OFXHeaderV1(OFXHeaderBase):
 
     @property
     def codec(self):
+        """
+        String codec used to decode OFX message body.
+
+        Maps from OFX character set name to Python codec name.
+        """
         return self.codecs[self.charset]
 
     def __init__(self, version, ofxheader=None, data=None, security=None,
@@ -172,7 +122,9 @@ class OFXHeaderV1(OFXHeaderBase):
                   ('NEWFILEUID', self.newfileuid),)
         lines = [':'.join(field) for field in fields]
         lines = '\r\n'.join(lines)
-        lines += '\r\n'*2
+        # More recent versions of the OFXv1 spec require newlines to demarcate
+        # the message header from the message body
+        lines += '\r\n' * 2
         return lines
 
 
@@ -193,7 +145,7 @@ class OFXHeaderV2(OFXHeaderBase):
                        \?>\s*""", re.VERBOSE)
     # UTF-8 encoding required by OFXv2 spec; explicitly listed here to
     # conform to v1 class interface above.
-    codec = 'utf8'
+    codec = 'utf_8'
 
     def __init__(self, version, ofxheader=None, security=None,
                  oldfileuid=None, newfileuid=None):
@@ -217,3 +169,79 @@ class OFXHeaderV2(OFXHeaderBase):
         attrs = ['='.join((attr, '"%s"' % val)) for attr, val in fields]
         ofx_decl = '<?OFX %s?>' % ' '.join(attrs)
         return '\r\n'.join((xml_decl, ofx_decl))
+
+
+XML_REGEX = re.compile(r"""(<\?xml\s+
+                       (version=\"(?P<xmlversion>[\d.]+)\")?\s*
+                       (encoding=\"(?P<encoding>[\w-]+)\")?\s*
+                       (standalone=\"(?P<standalone>[\w]+)\")?\s*
+                       \?>)\s*""", re.VERBOSE)
+
+
+def parse_header(source):
+    """
+    Consume source; feed to appropriate class constructor which performs
+    validation/type conversion on OFX header.
+
+    Using header, locate/read/decode (but do not parse) OFX data body.
+
+    Returns a 2-tuple of:
+        * instance of OFXHeaderV1/OFXHeaderV2 containing parsed data, and
+        * decoded text of OFX data body
+    """
+    # Skip any empty lines at the beginning
+    while True:
+        # OFX header is read by nice clean machines, not meatbags -
+        # should not contain emoji, 漢字, or what have you.
+        line = source.readline().decode('ascii')
+        if line.strip():
+            break
+
+    # If the first non-empty line contains an XML declaration, it's OFX v2
+    xml_match = XML_REGEX.match(line)
+    if xml_match:
+        # OFXv2 spec doesn't require newlines between XML declaration,
+        # OFX declaration, and data elements; `line` may or may not
+        # contain the latter two.
+        #
+        # Just rewind, read the whole file (it must be UTF-8 encoded per
+        # the spec) and slice the OFX data body from the end of the
+        # OFX declaration
+        source.seek(0)
+        decoded_source = source.read().decode(OFXHeaderV2.codec)
+        header, header_end_index = OFXHeaderV2.parse(decoded_source)
+        message = decoded_source[header_end_index:]
+    else:
+        # OFX v1
+        rawheader = line + '\n'
+        # First line is OFXHEADER; need to read next 8 lines for a fixed
+        # total of 9 fields required by OFX v1 spec.
+        for n in range(8):
+            rawheader += source.readline().decode('ascii')
+        header, header_end_index = OFXHeaderV1.parse(rawheader)
+
+        #  Input source stream position has advanced to the beginning of
+        #  the OFX body tag soup, which is where subsequent calls
+        #  to read()/readlines() will pick up.
+        #
+        #  Decode the OFX data body according to the encoding declared
+        #  in the OFX header
+        message = source.read().decode(header.codec)
+
+    return header, message.strip()
+
+
+def make_header(version, security=None, oldfileuid=None, newfileuid=None):
+    """
+    Route to OFXHeaderV1 / OFXHeaderV2 according to the input OFX version #,
+    and return an instance of the appropriate class.
+
+    Polymorphic convenience utility.
+    """
+    try:
+        major_version = int(version)//100
+    except ValueError:
+        raise OFXHeaderError('Invalid OFX version %s' % version)
+    HeaderClass = {1: OFXHeaderV1, 2: OFXHeaderV2}[major_version]
+    return HeaderClass(version=version, security=security,
+                       oldfileuid=oldfileuid, newfileuid=newfileuid)
