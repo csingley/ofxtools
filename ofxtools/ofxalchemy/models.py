@@ -97,7 +97,8 @@ def Inheritor(parent_table):
         # so INVTRAN subclasses are free to clobber __table_args__ by inheriting
         # it from INV{BUY,SELL}...
         # ...but be careful.
-        @declared_attr.cascading
+        #  @declared_attr.cascading
+        @declared_attr
         def __table_args__(cls):
             if has_inherited_table(cls):
                 return None
@@ -131,7 +132,7 @@ class AcctMixin(object):
     # This version of __table_args__ overrides that provided by
     # Inheritor.InheritanceMixin to move definition of UniqueConstraint from
     # the base table to the child table, as required for *ACCT{FROM,TO}
-    @declared_attr.cascading
+    @declared_attr
     def __table_args__(cls):
         if has_inherited_table(cls):
             return (UniqueConstraint(*cls.pks),)
