@@ -37,6 +37,7 @@ For ease of installation, ``ofxtools`` is released on `PyPI`_.
    installation
    client
    parser
+   generating
    ofxalchemy
    contributing
    resources

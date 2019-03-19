@@ -89,6 +89,9 @@ class OFXTree(ET.ElementTree):
         if not hasattr(source, 'read'):
             source = open(source, 'rb')
 
+        if hasattr(source, 'mode') and source.mode != 'rb':
+            raise ValueError("Source must be opened in binary read-only mode")
+
         header, message = parse_header(source)
         return header, message
 
