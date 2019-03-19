@@ -19,8 +19,8 @@ from ofxtools.models.signon import (
 from ofxtools.models.i18n import LANG_CODES
 from ofxtools.utils import UTC
 
-from . import base
-from . import test_models_common
+import base
+import test_models_common
 
 
 class FiTestCase(unittest.TestCase, base.TestAggregate):

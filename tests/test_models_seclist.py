@@ -13,14 +13,13 @@ from copy import deepcopy
 
 
 # local imports
-from ofxtools.utils import UTC
-from . import base
-from . import test_models_i18n
-from . import test_models_common
+import base
+import test_models_i18n
+import test_models_common
 
+from ofxtools.utils import UTC
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import MSGSETCORE
-
 from ofxtools.models.seclist import (
     SECID, SECINFO, DEBTINFO, MFINFO, OPTINFO, OTHERINFO, STOCKINFO,
     PORTION, FIPORTION, MFASSETCLASS, FIMFASSETCLASS, ASSETCLASSES,

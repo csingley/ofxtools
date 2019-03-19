@@ -11,8 +11,9 @@ from xml.etree.ElementTree import (
 
 
 # local imports
-from . import base
-from . import test_models_i18n
+import base
+import test_models_i18n
+
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import (
     STATUS, BAL, CURRENCY, OFXELEMENT, OFXEXTENSION, MSGSETCORE,

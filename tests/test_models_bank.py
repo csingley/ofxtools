@@ -12,8 +12,11 @@ from copy import deepcopy
 
 
 # local imports
+import base
+import test_models_common
+import test_models_i18n
+
 from ofxtools.utils import UTC
-from . import base
 import ofxtools.models
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import (
@@ -30,8 +33,6 @@ from ofxtools.models.i18n import (
     CURRENCY, ORIGCURRENCY,
     CURRENCY_CODES,
 )
-from . import test_models_common
-from . import test_models_i18n
 
 
 class BankacctfromTestCase(unittest.TestCase, base.TestAggregate):

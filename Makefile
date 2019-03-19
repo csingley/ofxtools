@@ -1,6 +1,6 @@
 test:
 	coverage erase
-	nosetests -dsv --with-coverage --cover-package ofxtools tests/*.py
+	python `which nosetests` -dsv --with-coverage --cover-package ofxtools tests/*.py
 
 clean:
 	find -regex '.*\.pyc' -exec rm {} \;
@@ -22,5 +22,8 @@ lint:
 
 lint-tests:
 	pylint tests/*.py
+
+html:
+	sphinx-build -b html docs docs/_build
 
 .PHONY:	test clean lint lint-tests install uninstall

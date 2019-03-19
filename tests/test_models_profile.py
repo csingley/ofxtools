@@ -10,6 +10,16 @@ from datetime import datetime
 
 
 # local imports
+import base
+import test_models_common
+import test_models_signon
+import test_models_signup
+import test_models_bank
+import test_models_creditcard
+import test_models_investment
+import test_models_seclist
+import test_models_tax1099
+
 from ofxtools.models.base import (
     Aggregate,
 )
@@ -19,16 +29,6 @@ from ofxtools.models.profile import (
 )
 from ofxtools.models.signon import (SIGNONINFOLIST, )
 from ofxtools.utils import UTC
-
-from . import base
-from . import test_models_common
-from . import test_models_signon
-from . import test_models_signup
-from . import test_models_bank
-from . import test_models_creditcard
-from . import test_models_investment
-from . import test_models_seclist
-from . import test_models_tax1099
 
 
 class ProfrqTestCase(unittest.TestCase, base.TestAggregate):

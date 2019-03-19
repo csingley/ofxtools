@@ -10,7 +10,8 @@ from xml.etree.ElementTree import (
 
 
 # local imports
-from . import base
+import base
+
 from ofxtools.models.base import Aggregate
 from ofxtools.models.i18n import (
     CURRENCY, ORIGCURRENCY,

@@ -12,6 +12,12 @@ from datetime import datetime
 
 
 # local imports
+import base
+import test_models_common
+import test_models_bank
+import test_models_seclist
+import test_models_i18n
+
 from ofxtools.models.base import (
     Aggregate,
 )
@@ -39,11 +45,6 @@ from ofxtools.models.i18n import (
     CURRENCY, CURRENCY_CODES,
 )
 from ofxtools.utils import UTC
-from . import base
-from . import test_models_common
-from . import test_models_bank
-from . import test_models_seclist
-from . import test_models_i18n
 
 
 class InvacctfromTestCase(unittest.TestCase, base.TestAggregate):

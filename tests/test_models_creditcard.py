@@ -11,6 +11,11 @@ from datetime import datetime
 
 
 # local imports
+import base
+import test_models_common
+import test_models_bank
+import test_models_i18n
+
 from ofxtools.models.base import (
     Aggregate,
 )
@@ -28,11 +33,6 @@ from ofxtools.models.creditcard import (
 )
 from ofxtools.models.i18n import (CURRENCY, CURRENCY_CODES)
 from ofxtools.utils import UTC
-
-from . import base
-from . import test_models_common
-from . import test_models_bank
-from . import test_models_i18n
 
 
 class LastpmtinfoTestCase(unittest.TestCase, base.TestAggregate):

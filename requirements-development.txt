@@ -1,10 +1,11 @@
 -r requirements.txt
 
 # test running
-mock; python_version < '2.7'
+mock; python_version < '3.3'
 nose
 yanc
 ipdb
 ipdbplugin
 coverage
 pylint
+sqlalchemy > '1.0'

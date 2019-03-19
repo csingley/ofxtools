@@ -18,8 +18,8 @@ from ofxtools.models.signup import (
     SIGNUPMSGSETV1, SIGNUPMSGSET,
 )
 
-from . import base
-from . import test_models_common
+import base
+import test_models_common
 
 
 class ClientenrollTestCase(unittest.TestCase, base.TestAggregate):

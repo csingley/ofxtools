@@ -19,14 +19,13 @@ from ofxtools.models.tax1099 import (
     TAX1099MSGSET, TAX1099MSGSETV1,
 )
 
-from . import base
-from . import test_models_common
+import base
+import test_models_common
 
 
 class Tax1099msgsetv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
-    """
-    """
+    """ """
     requiredElements = ['MSGSETCORE', 'TAX1099DNLD', 'EXTD1099B',
                         'TAXYEARSUPPORTED', ]
 

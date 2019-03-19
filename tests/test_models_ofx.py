@@ -8,6 +8,13 @@ from xml.etree.ElementTree import (
 
 
 # local imports
+import base
+import test_models_signon
+import test_models_bank
+import test_models_creditcard
+import test_models_investment
+import test_models_seclist
+
 from ofxtools.models.base import (
     Aggregate,
 )
@@ -17,13 +24,6 @@ from ofxtools.models.bank import BANKMSGSRSV1, STMTRS
 from ofxtools.models.creditcard import CREDITCARDMSGSRSV1, CCSTMTRS
 from ofxtools.models.investment import INVSTMTMSGSRSV1, INVSTMTRS
 from ofxtools.models.seclist import SECLISTMSGSRSV1, SECLIST
-
-from . import base
-from . import test_models_signon
-from . import test_models_bank
-from . import test_models_creditcard
-from . import test_models_investment
-from . import test_models_seclist
 
 
 class OfxTestCase(unittest.TestCase, base.TestAggregate):
