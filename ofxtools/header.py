@@ -242,6 +242,10 @@ def make_header(version, security=None, oldfileuid=None, newfileuid=None):
         major_version = int(version)//100
     except ValueError:
         raise OFXHeaderError('Invalid OFX version %s' % version)
-    HeaderClass = {1: OFXHeaderV1, 2: OFXHeaderV2}[major_version]
-    return HeaderClass(version=version, security=security,
+    try:
+        HeaderClass = {1: OFXHeaderV1, 2: OFXHeaderV2}[major_version]
+    except KeyError:
+        raise OFXHeaderError('OFX version %s not version 1 or version 2'
+                             % version)
+    return HeaderClass(version, security=security,
                        oldfileuid=oldfileuid, newfileuid=newfileuid)

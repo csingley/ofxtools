@@ -6,6 +6,15 @@ import unittest
 import uuid
 from io import BytesIO
 from xml.etree.ElementTree import Element
+try:
+    from unittest.mock import (
+        patch,
+    )
+except ImportError:
+    # Python 2 depends on external mock package
+    from mock import (
+        patch,
+    )
 
 # local imports
 import ofxtools
@@ -245,6 +254,11 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
         self.assertIsNone(root.text)
         self.assertEqual(len(root), 1)
 
+    def testParseInvalid(self):
+        header = str(self.headerClass(self.defaultVersion))
+        with self.assertRaises(ofxtools.header.OFXHeaderError):
+            self.headerClass.parse(header[1:])
+
     def testStr(self):
         # Test string representation of header for version 1
         headerStr = '\r\n'.join((
@@ -263,6 +277,25 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
                                   oldfileuid='p0rkyp1g',
                                   newfileuid='d0n41dduck')
         self.assertEqual(str(header), headerStr)
+
+    def testParseHeader(self):
+        # Test parse_header() for version 1
+        header = str(self.headerClass(self.defaultVersion))
+        ofx = header + self.body
+        ofx = BytesIO(ofx.encode('utf8'))
+        ofxheader, body = ofxtools.header.parse_header(ofx)
+
+        self.assertEqual(ofxheader.ofxheader, 100)
+        self.assertEqual(ofxheader.data, 'OFXSGML')
+        self.assertEqual(ofxheader.version, self.defaultVersion)
+        self.assertEqual(ofxheader.security, 'NONE')
+        self.assertEqual(ofxheader.encoding, 'USASCII')
+        self.assertEqual(ofxheader.charset, 'NONE')
+        self.assertEqual(ofxheader.compression, 'NONE')
+        self.assertEqual(ofxheader.oldfileuid, 'NONE')
+        self.assertEqual(ofxheader.newfileuid, 'NONE')
+
+        self.assertEqual(body, self.body)
 
 
 class OFXHeaderV2TestCase(unittest.TestCase, OFXHeaderTestMixin):
@@ -305,6 +338,11 @@ class OFXHeaderV2TestCase(unittest.TestCase, OFXHeaderTestMixin):
         self.assertIsNone(root.text)
         self.assertEqual(len(root), 1)
 
+    def testParseInvalid(self):
+        header = str(self.headerClass(self.defaultVersion))
+        with self.assertRaises(ofxtools.header.OFXHeaderError):
+            self.headerClass.parse(header.replace('?', '!'))
+
     def testStr(self):
         headerStr = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>' \
                 + '\r\n' \
@@ -334,6 +372,52 @@ class OFXHeaderV2TestCase(unittest.TestCase, OFXHeaderTestMixin):
         self.assertEqual(ofxheader.newfileuid, 'NONE')
 
         self.assertEqual(body, self.body)
+
+
+class MakeHeaderTestCase(unittest.TestCase):
+    def testOfxV1(self):
+        """
+        For 100 <= version < 200, make_header() calls OFXHeaderV1 and
+        passes through args.
+        """
+        valid_versions = (102, 103, 151, 160)
+        oldfileuid = 'p0rkyp1g'
+        newfileuid = 'd0n41dduck'
+        with patch('ofxtools.header.OFXHeaderV1') as fake_OFXHeaderV1:
+            for version in valid_versions:
+                for security in ('NONE', 'TYPE1'):
+                    ofxtools.header.make_header(version, security=security,
+                                                oldfileuid=oldfileuid,
+                                                newfileuid=newfileuid)
+                    fake_OFXHeaderV1.assert_called_with(
+                        version, security=security, oldfileuid=oldfileuid,
+                        newfileuid=newfileuid)
+
+    def testOfxV2(self):
+        """
+        For 200 <= version < 300, make_header() calls OFXHeaderV2 and
+        passes through args.
+        """
+        valid_versions = (200, 201, 202, 203, 210, 211, 220)
+        oldfileuid = 'p0rkyp1g'
+        newfileuid = 'd0n41dduck'
+        with patch('ofxtools.header.OFXHeaderV2') as fake_OFXHeaderV2:
+            for version in valid_versions:
+                for security in ('NONE', 'TYPE1'):
+                    ofxtools.header.make_header(version, security=security,
+                                                oldfileuid=oldfileuid,
+                                                newfileuid=newfileuid)
+                    fake_OFXHeaderV2.assert_called_with(
+                        version, security=security, oldfileuid=oldfileuid,
+                        newfileuid=newfileuid)
+
+    def testInvalidVersion(self):
+        with self.assertRaises(ofxtools.header.OFXHeaderError):
+            ofxtools.header.make_header(0)
+        with self.assertRaises(ofxtools.header.OFXHeaderError):
+            ofxtools.header.make_header(301)
+        with self.assertRaises(ofxtools.header.OFXHeaderError):
+            ofxtools.header.make_header('horses')
 
 
 if __name__ == '__main__':
