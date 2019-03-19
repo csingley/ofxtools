@@ -1,3 +1,8 @@
+.. You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+.. _index:
+
 Open Financial Exchange (OFX) Tools for Python
 ==============================================
 ``ofxtools`` is a Python library for working with Open Financial Exchange (OFX)
@@ -24,6 +29,26 @@ Development of ``ofxtools`` is centralized at `GitHub`_, where you will find
 a `bug tracker`_.
 
 For ease of installation, ``ofxtools`` is released on `PyPI`_.
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   installation
+   client
+   parser
+   ofxalchemy
+   contributing
+   resources
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+
 
 .. _OFX specification: http://www.ofx.net/downloads.html
 .. _Requests: http://docs.python-requests.org/en/master/

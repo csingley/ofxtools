@@ -14,3 +14,6 @@ MANIFEST
 build
 dist
 reg_settings.py
+docs/_build/
+docs/_static/
+docs/_templates/

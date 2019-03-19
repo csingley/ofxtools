@@ -1,11 +1,13 @@
--r requirements.txt
+--index-url https://pypi.python.org/simple/
+
+# `setup.py develop`
+-e .
 
 # test running
 mock; python_version < '3.3'
 nose
-yanc
-ipdb
-ipdbplugin
 coverage
 pylint
+ipdb
+ipdbplugin
 sqlalchemy > '1.0'

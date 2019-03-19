@@ -1,2 +1,2 @@
--e .
-requests
+--index-url https://pypi.python.org/simple/
+.
