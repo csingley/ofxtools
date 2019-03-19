@@ -1,7 +1,5 @@
 # coding: utf-8
-"""
-Unit tests for ofxtools.Parser
-"""
+""" Unit tests for ofxtools.Parser """
 
 # stdlib imports
 import unittest
@@ -103,8 +101,8 @@ class TreeBuilderRegexTestCase(TestCase):
         self.assertEqual(self.builder._feedmatch.mock_calls, expected)
 
 
-class TreeBuilderTestCase(TestCase):
-    """ """
+class TreeBuilderUnitTestCase(TestCase):
+    """ Unit tests for ofxtools.Parser.Treebuilder """
     def setUp(self):
         builder = TreeBuilder()
         builder.start = MagicMock()
@@ -181,24 +179,165 @@ class TreeBuilderTestCase(TestCase):
         with self.assertRaises(ParseError):
             self.builder._feedmatch(tag, text, closetag)
 
-    def test_feedmatch_tag_mismatch(self):
-        self.builder._start = MagicMock()
-        self.builder._end = MagicMock()
-        (tag, text, closetag) = ('TAG', 'value', 'GAT')
-        with self.assertRaises(AssertionError):
-            self.builder._feedmatch(tag, text, closetag)
-
     def test_close_tail(self):
         data = "</FOO>illegal"
-        # self.builder.feed(data)
         with self.assertRaises(ParseError):
             self.builder.feed(data)
 
     def test_open_tail(self):
         data = "<FOO>bar</FOO>illegal"
-        # self.builder.feed(data)
         with self.assertRaises(ParseError):
             self.builder.feed(data)
+
+
+class TreeBuilderUnitFunctionalTestCase(TestCase):
+    """ Functional tests for ofxtools.Parser.Treebuilder """
+    def _testElement(self, element, tag, text, length):
+        self.assertIsInstance(element, Element)
+        self.assertEqual(element.tag, tag)
+        self.assertEqual(element.text, text)
+        self.assertEqual(len(element), length)
+
+    def _testFeedSonrs(self, body):
+        """
+        str -> Element tests reused to test responses with identical content
+        but different formatting.
+        """
+        builder = TreeBuilder()
+        builder.feed(body)
+        root = builder.close()
+
+        self._testElement(root, tag='OFX', text=None, length=1)
+
+        msgsrs = root[0]
+        self._testElement(msgsrs, tag='SIGNONMSGSRSV1', text=None, length=1)
+
+        sonrs = msgsrs[0]
+        self._testElement(sonrs, tag='SONRS', text=None, length=6)
+
+        status, dtserver, language, dtprofup, dtacctup, fi = sonrs
+
+        self._testElement(status, tag='STATUS', text=None, length=2)
+
+        code, severity = status
+
+        self._testElement(code, tag='CODE', text='0', length=0)
+        self._testElement(severity, tag='SEVERITY', text='INFO', length=0)
+
+        self._testElement(dtserver, tag='DTSERVER', text='20051029101003', length=0)
+        self._testElement(language, tag='LANGUAGE', text='ENG', length=0)
+        self._testElement(dtprofup, tag='DTPROFUP', text='19991029101003', length=0)
+        self._testElement(dtacctup, tag='DTACCTUP', text='20031029101003', length=0)
+        self._testElement(fi, tag='FI', text=None, length=2)
+
+        org, fid = fi
+
+        self._testElement(org, tag='ORG', text='NCH', length=0)
+        self._testElement(fid, tag='FID', text='1001', length=0)
+
+    def testFeedClosedTagsWhitespace(self):
+        """
+        TreeBuilder.feed() correctly parses soup with closing tags,
+        interspersed whitepace.
+        """
+        body = """
+        <OFX>
+            <SIGNONMSGSRSV1>
+                <SONRS>
+                    <STATUS>
+                        <CODE>0</CODE>
+                        <SEVERITY>INFO</SEVERITY>
+                    </STATUS>
+                    <DTSERVER>20051029101003</DTSERVER>
+                    <LANGUAGE>ENG</LANGUAGE>
+                    <DTPROFUP>19991029101003</DTPROFUP>
+                    <DTACCTUP>20031029101003</DTACCTUP>
+                    <FI>
+                        <ORG>NCH</ORG>
+                        <FID>1001</FID>
+                    </FI>
+                </SONRS>
+            </SIGNONMSGSRSV1>
+        </OFX>
+        """
+        self._testFeedSonrs(body)
+
+    def testFeedUnclosedTagsWhitespace(self):
+        """
+        TreeBuilder.feed() correctly parses soup with no closing element tags,
+        interspersed whitepace.
+        """
+        body = """
+        <OFX>
+            <SIGNONMSGSRSV1>
+                <SONRS>
+                    <STATUS>
+                        <CODE>0
+                        <SEVERITY>INFO
+                    </STATUS>
+                    <DTSERVER>20051029101003
+                    <LANGUAGE>ENG
+                    <DTPROFUP>19991029101003
+                    <DTACCTUP>20031029101003
+                    <FI>
+                        <ORG>NCH
+                        <FID>1001
+                    </FI>
+                </SONRS>
+            </SIGNONMSGSRSV1>
+        </OFX>
+        """
+        self._testFeedSonrs(body)
+
+    def testFeedClosedTagsNoWhitespace(self):
+        """
+        TreeBuilder.feed() correctly parses soup with closing tags,
+        no interspersed whitepace.
+        """
+        body = ("<OFX>"
+                "<SIGNONMSGSRSV1>"
+                "<SONRS>"
+                "<STATUS>"
+                "<CODE>0</CODE>"
+                "<SEVERITY>INFO</SEVERITY>"
+                "</STATUS>"
+                "<DTSERVER>20051029101003</DTSERVER>"
+                "<LANGUAGE>ENG</LANGUAGE>"
+                "<DTPROFUP>19991029101003</DTPROFUP>"
+                "<DTACCTUP>20031029101003</DTACCTUP>"
+                "<FI>"
+                "<ORG>NCH</ORG>"
+                "<FID>1001</FID>"
+                "</FI>"
+                "</SONRS>"
+                "</SIGNONMSGSRSV1>"
+                "</OFX>")
+        self._testFeedSonrs(body)
+
+    def testFeedUnclosedTagsNoWhitespace(self):
+        """
+        TreeBuilder.feed() correctly parses soup with no closing element tags,
+        no interspersed whitepace.
+        """
+        body = ("<OFX>"
+                "<SIGNONMSGSRSV1>"
+                "<SONRS>"
+                "<STATUS>"
+                "<CODE>0"
+                "<SEVERITY>INFO"
+                "</STATUS>"
+                "<DTSERVER>20051029101003"
+                "<LANGUAGE>ENG"
+                "<DTPROFUP>19991029101003"
+                "<DTACCTUP>20031029101003"
+                "<FI>"
+                "<ORG>NCH"
+                "<FID>1001"
+                "</FI>"
+                "</SONRS>"
+                "</SIGNONMSGSRSV1>"
+                "</OFX>")
+        self._testFeedSonrs(body)
 
 
 class OFXTreeTestCase(TestCase):
@@ -254,6 +393,21 @@ class OFXTreeTestCase(TestCase):
 
             source = NamedTemporaryFile()
             source.write(b'a bunch of text')
+            source.seek(0)
+
+            output = self.tree._read(source)
+            source.close()
+            fake_parse_header.assert_called_once_with(source)
+            self.assertEqual(output, (fake_header, fake_body))
+
+    def test_read_byteslike(self):
+        # PR #15
+        with patch('ofxtools.Parser.parse_header') as fake_parse_header:
+            fake_header = sentinel.header
+            fake_body = sentinel.ofx
+            fake_parse_header.return_value = (fake_header, fake_body)
+
+            source = BytesIO(b'a bunch of text')
             source.seek(0)
 
             output = self.tree._read(source)

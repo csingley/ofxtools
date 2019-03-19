@@ -16,7 +16,7 @@ from ofxtools.models.i18n import CURRENCY
 __all__ = ['SECLISTMSGSETV1', 'SECLISTMSGSET', 'SECLISTMSGSRSV1', 'SECLIST',
            'MFASSETCLASS', 'PORTION', 'FIMFASSETCLASS', 'FIPORTION', 'SECID',
            'SECINFO', 'DEBTINFO', 'MFINFO', 'OPTINFO', 'OTHERINFO',
-           'STOCKINFO', 'SECRQ', 'SECLISTRQ', 'SECLISTTRNRQ', 
+           'STOCKINFO', 'SECRQ', 'SECLISTRQ', 'SECLISTTRNRQ',
            'SECLISTMSGSRQV1', 'SECLISTMSGSRSV1', 'SECLISTMSGSETV1',
            'SECLISTMSGSET', ]
 
@@ -36,9 +36,7 @@ class SECINFO(Aggregate):
     secid = SubAggregate(SECID, required=True)
     # FIs abuse SECNAME/TICKER
     # Relaxing the length constraints from the OFX spec does little harm
-    # secname = String(120, required=True)
     secname = NagString(120, required=True)
-    # ticker = String(32)
     ticker = NagString(32)
     fiid = String(32)
     rating = String(10)

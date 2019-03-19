@@ -19,11 +19,11 @@ from ofxtools.models.investment import INVSTMTMSGSRSV1, INVSTMTRS
 from ofxtools.models.seclist import SECLISTMSGSRSV1, SECLIST
 
 from . import base
-from . import test_signon
-from . import test_bank
-from . import test_creditcard
-from . import test_investment
-from . import test_seclist
+from . import test_models_signon
+from . import test_models_bank
+from . import test_models_creditcard
+from . import test_models_investment
+from . import test_models_seclist
 
 
 class OfxTestCase(unittest.TestCase, base.TestAggregate):
@@ -37,11 +37,11 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
     @property
     def root(self):
         root = Element('OFX')
-        for msg in (test_signon.Signonmsgsrsv1TestCase,
-                    test_bank.Bankmsgsrsv1TestCase,
-                    test_creditcard.Creditcardmsgsrsv1TestCase,
-                    test_investment.Invstmtmsgsrsv1TestCase,
-                    test_seclist.Seclistmsgsrsv1TestCase,):
+        for msg in (test_models_signon.Signonmsgsrsv1TestCase,
+                    test_models_bank.Bankmsgsrsv1TestCase,
+                    test_models_creditcard.Creditcardmsgsrsv1TestCase,
+                    test_models_investment.Invstmtmsgsrsv1TestCase,
+                    test_models_seclist.Seclistmsgsrsv1TestCase,):
             root.append(msg().root)
         return root
 

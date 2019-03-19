@@ -22,13 +22,13 @@ from ofxtools.utils import UTC
 
 from . import base
 from . import test_models_common
-from . import test_signon
-from . import test_signup
-from . import test_bank
-from . import test_creditcard
-from . import test_investment
-from . import test_seclist
-from . import test_tax1099
+from . import test_models_signon
+from . import test_models_signup
+from . import test_models_bank
+from . import test_models_creditcard
+from . import test_models_investment
+from . import test_models_seclist
+from . import test_models_tax1099
 
 
 class ProfrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -76,21 +76,21 @@ class MsgsetlistTestCase(unittest.TestCase, base.TestAggregate):
     @property
     def root(self):
         root = Element('MSGSETLIST')
-        signon = test_signon.SignonmsgsetTestCase().root
+        signon = test_models_signon.SignonmsgsetTestCase().root
         root.append(signon)
-        signup = test_signup.SignupmsgsetTestCase().root
+        signup = test_models_signup.SignupmsgsetTestCase().root
         root.append(signup)
-        bankmsgset = test_bank.BankmsgsetTestCase().root
+        bankmsgset = test_models_bank.BankmsgsetTestCase().root
         root.append(bankmsgset)
-        creditcardmsgset = test_creditcard.CreditcardmsgsetTestCase().root
+        creditcardmsgset = test_models_creditcard.CreditcardmsgsetTestCase().root
         root.append(creditcardmsgset)
-        invstmtmsgset = test_investment.InvstmtmsgsetTestCase().root
+        invstmtmsgset = test_models_investment.InvstmtmsgsetTestCase().root
         root.append(invstmtmsgset)
-        seclistmsgset = test_seclist.SeclistmsgsetTestCase().root
+        seclistmsgset = test_models_seclist.SeclistmsgsetTestCase().root
         root.append(seclistmsgset)
         profmsgset = ProfmsgsetTestCase().root
         root.append(profmsgset)
-        tax1099msgset = test_tax1099.Tax1099msgsetTestCase().root
+        tax1099msgset = test_models_tax1099.Tax1099msgsetTestCase().root
         root.append(tax1099msgset)
         return root
 
@@ -107,7 +107,7 @@ class ProfrsTestCase(unittest.TestCase, base.TestAggregate):
         root = Element('PROFRS')
         msgsetlist = MsgsetlistTestCase().root
         root.append(msgsetlist)
-        signoninfolist = test_signon.SignoninfolistTestCase().root
+        signoninfolist = test_models_signon.SignoninfolistTestCase().root
         root.append(signoninfolist)
         SubElement(root, 'DTPROFUP').text = '20010401'
         SubElement(root, 'FINAME').text = 'Dewey Cheatham & Howe'

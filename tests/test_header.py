@@ -1,9 +1,11 @@
-# vim: set fileencoding=utf-8
+# coding: utf-8
+""" Unit tests for ofxtools.header """
 
 # stdlib imports
 import unittest
 import uuid
 from io import BytesIO
+from xml.etree.ElementTree import Element
 
 # local imports
 import ofxtools
@@ -91,9 +93,49 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
                'oldfileuid': ('abc'*36,),
                'newfileuid': ('abc'*36,),
               }
+    body_utf8 = """
+    <OFX>
+        <SIGNONMSGSRSV1>
+            <SONRS>
+                <STATUS>
+                    <CODE>0</CODE>
+                    <SEVERITY>INFO</SEVERITY>
+                </STATUS>
+                <DTSERVER>20051029101003</DTSERVER>
+                <LANGUAGE>ENG</LANGUAGE>
+                <DTPROFUP>19991029101003</DTPROFUP>
+                <DTACCTUP>20031029101003</DTACCTUP>
+                <FI>
+                    <ORG>漢字</ORG>
+                    <FID>1001</FID>
+                </FI>
+            </SONRS>
+        </SIGNONMSGSRSV1>
+    </OFX>
+    """.strip()
+    body_cp1252 = """
+    <OFX>
+        <SIGNONMSGSRSV1>
+            <SONRS>
+                <STATUS>
+                    <CODE>0</CODE>
+                    <SEVERITY>INFO</SEVERITY>
+                </STATUS>
+                <DTSERVER>20051029101003</DTSERVER>
+                <LANGUAGE>ENG</LANGUAGE>
+                <DTPROFUP>19991029101003</DTPROFUP>
+                <DTACCTUP>20031029101003</DTACCTUP>
+                <FI>
+                    <ORG>Motörhead</ORG>
+                    <FID>1001</FID>
+                </FI>
+            </SONRS>
+        </SIGNONMSGSRSV1>
+    </OFX>
+    """.strip()
 
-    def testParseHeader(self):
-        # Test parse_header() for version 1
+    def testParseHeaderDefaults(self):
+        """ Test parse_header() with default values for OFXv1 """
         header = str(self.headerClass(self.defaultVersion))
         ofx = header + self.body
         ofx = BytesIO(ofx.encode('ascii'))
@@ -111,7 +153,100 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
 
         self.assertEqual(body, self.body)
 
+    def testParseHeaderLatin1(self):
+        """ Test parse_header() with ISO-8859-1 charset """
+        header = str(self.headerClass(self.defaultVersion, encoding='UTF-8',
+                                      charset='ISO-8859-1'))
+        ofx = header + self.body
+        ofx = BytesIO(ofx.encode('latin_1'))
+        ofxheader, body = ofxtools.header.parse_header(ofx)
+
+        self.assertEqual(ofxheader.ofxheader, 100)
+        self.assertEqual(ofxheader.data, 'OFXSGML')
+        self.assertEqual(ofxheader.version, self.defaultVersion)
+        self.assertEqual(ofxheader.security, 'NONE')
+        self.assertEqual(ofxheader.encoding, 'UTF-8')
+        self.assertEqual(ofxheader.charset, 'ISO-8859-1')
+        self.assertEqual(ofxheader.compression, 'NONE')
+        self.assertEqual(ofxheader.oldfileuid, 'NONE')
+        self.assertEqual(ofxheader.newfileuid, 'NONE')
+
+        self.assertEqual(body, self.body)
+
+    def testParseHeader1252(self):
+        """ Test parse_header() with 1252 charset """
+        # Issue #25
+        header = str(self.headerClass(self.defaultVersion, encoding='UTF-8',
+                                      charset='1252'))
+        ofx = header + self.body_cp1252
+        ofx = BytesIO(ofx.encode('cp1252'))
+        ofxheader, body = ofxtools.header.parse_header(ofx)
+
+        self.assertEqual(ofxheader.ofxheader, 100)
+        self.assertEqual(ofxheader.data, 'OFXSGML')
+        self.assertEqual(ofxheader.version, self.defaultVersion)
+        self.assertEqual(ofxheader.security, 'NONE')
+        self.assertEqual(ofxheader.encoding, 'UTF-8')
+        self.assertEqual(ofxheader.charset, '1252')
+        self.assertEqual(ofxheader.compression, 'NONE')
+        self.assertEqual(ofxheader.oldfileuid, 'NONE')
+        self.assertEqual(ofxheader.newfileuid, 'NONE')
+
+        self.assertEqual(body, self.body_cp1252)
+
+    def testParseHeaderUnicode(self):
+        """ Test parse_header() with UTF-8 charset """
+        # Issue #49
+        header = str(self.headerClass(self.defaultVersion, encoding='UTF-8',
+                                      charset='NONE'))
+        ofx = header + self.body_utf8
+        ofx = BytesIO(ofx.encode('utf_8'))
+        ofxheader, body = ofxtools.header.parse_header(ofx)
+
+        self.assertEqual(ofxheader.ofxheader, 100)
+        self.assertEqual(ofxheader.data, 'OFXSGML')
+        self.assertEqual(ofxheader.version, self.defaultVersion)
+        self.assertEqual(ofxheader.security, 'NONE')
+        self.assertEqual(ofxheader.encoding, 'UTF-8')
+        self.assertEqual(ofxheader.charset, 'NONE')
+        self.assertEqual(ofxheader.compression, 'NONE')
+        self.assertEqual(ofxheader.oldfileuid, 'NONE')
+        self.assertEqual(ofxheader.newfileuid, 'NONE')
+
+        self.assertEqual(body, self.body_utf8)
+
+    def testParseHeaderV1NoNewlineBetweenHeaderAndBody(self):
+        """
+        Although it breaks the OFX v1 spec, we don't require empty lines
+        between header and message body
+        """
+        header = str(self.headerClass(self.defaultVersion))
+        ofx = header.strip() + '\r\n' + self.body
+        ofx = BytesIO(ofx.encode('ascii'))
+        ofxheader, body = ofxtools.header.parse_header(ofx)
+
+        self.assertEqual(ofxheader.ofxheader, 100)
+        self.assertEqual(ofxheader.data, 'OFXSGML')
+        self.assertEqual(ofxheader.version, self.defaultVersion)
+        self.assertEqual(ofxheader.security, 'NONE')
+        self.assertEqual(ofxheader.encoding, 'USASCII')
+        self.assertEqual(ofxheader.charset, 'NONE')
+        self.assertEqual(ofxheader.compression, 'NONE')
+        self.assertEqual(ofxheader.oldfileuid, 'NONE')
+        self.assertEqual(ofxheader.newfileuid, 'NONE')
+
+        self.assertEqual(body, self.body)
+        # Make sure body can actually be parsed
+        builder = ofxtools.Parser.TreeBuilder()
+        builder.feed(body)
+        root = builder.close()
+        self.assertIsInstance(root, Element)
+        self.assertEqual(root.tag, 'OFX')
+        self.assertIsNone(root.text)
+        self.assertEqual(len(root), 1)
+
     def testStr(self):
+        # Test string representation of header for version 1
         headerStr = '\r\n'.join((
             'OFXHEADER:100',
             'DATA:OFXSGML',
@@ -146,6 +281,30 @@ class OFXHeaderV2TestCase(unittest.TestCase, OFXHeaderTestMixin):
                'newfileuid': ('abc'*36,),
               }
 
+    def testParseHeaderV2NoNewlineBetweenHeaderAndBody(self):
+        """ OFXv2 doesn't need newline between header and message body """
+        # Issue #47
+        header = str(self.headerClass(self.defaultVersion))
+        ofx = header.strip() + self.body
+        ofx = BytesIO(ofx.encode('ascii'))
+        ofxheader, body = ofxtools.header.parse_header(ofx)
+
+        self.assertEqual(ofxheader.ofxheader, 200)
+        self.assertEqual(ofxheader.version, self.defaultVersion)
+        self.assertEqual(ofxheader.security, 'NONE')
+        self.assertEqual(ofxheader.oldfileuid, 'NONE')
+        self.assertEqual(ofxheader.newfileuid, 'NONE')
+
+        self.assertEqual(body, self.body)
+        # Make sure body can actually be parsed
+        builder = ofxtools.Parser.TreeBuilder()
+        builder.feed(body)
+        root = builder.close()
+        self.assertIsInstance(root, Element)
+        self.assertEqual(root.tag, 'OFX')
+        self.assertIsNone(root.text)
+        self.assertEqual(len(root), 1)
+
     def testStr(self):
         headerStr = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>' \
                 + '\r\n' \
@@ -164,20 +323,6 @@ class OFXHeaderV2TestCase(unittest.TestCase, OFXHeaderTestMixin):
     def testParseHeader(self):
         # Test parse_header() for version 2
         header = str(self.headerClass(self.defaultVersion))
-        ofx = header + self.body
-        ofx = BytesIO(ofx.encode('utf8'))
-        ofxheader, body = ofxtools.header.parse_header(ofx)
-
-        self.assertEqual(ofxheader.ofxheader, 200)
-        self.assertEqual(ofxheader.version, self.defaultVersion)
-        self.assertEqual(ofxheader.security, 'NONE')
-        self.assertEqual(ofxheader.oldfileuid, 'NONE')
-        self.assertEqual(ofxheader.newfileuid, 'NONE')
-
-        self.assertEqual(body, self.body)
-
-    def testParseOneLiner(self):
-        header = str(self.headerClass(self.defaultVersion)).replace('\r\n', '')
         ofx = header + self.body
         ofx = BytesIO(ofx.encode('utf8'))
         ofxheader, body = ofxtools.header.parse_header(ofx)

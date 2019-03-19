@@ -2,13 +2,13 @@
 
 # stdlib imports
 import unittest
-import datetime
 from xml.etree.ElementTree import (
     Element,
     SubElement,
 )
 from datetime import datetime
 from decimal import Decimal
+from copy import deepcopy
 
 
 # local imports
@@ -31,7 +31,7 @@ from ofxtools.models.i18n import (
     CURRENCY_CODES,
 )
 from . import test_models_common
-from . import test_i18n
+from . import test_models_i18n
 
 
 class BankacctfromTestCase(unittest.TestCase, base.TestAggregate):
@@ -130,6 +130,33 @@ class PayeeTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.country, 'USA')
         self.assertEqual(root.phone, '(773) 309-1027')
 
+    def testConvertNameTooLong(self):
+        """ Don't enforce length restriction on NAME; raise Warning """
+        # Issue #12
+        copy_root = deepcopy(self.root)
+        copy_element = Element('NAME')
+        copy_element.text = """
+        The true war is a celebration of markets. Organic markets, carefully
+        styled "black" by the professionals, spring up everywhere.  Scrip,
+        Sterling, Reichsmarks, continue to move, severe as classical ballet,
+        inside their antiseptic marble chambers. But out here, down here among
+        the people, the truer currencies come into being.  So, Jews are
+        negotiable.  Every bit as negotiable as cigarettes, cunt, or Hershey
+        bars.
+        """
+        copy_root[0] = copy_element
+        with self.assertWarns(Warning):
+            root = Aggregate.from_etree(copy_root)
+        self.assertEqual(root.name, """
+        The true war is a celebration of markets. Organic markets, carefully
+        styled "black" by the professionals, spring up everywhere.  Scrip,
+        Sterling, Reichsmarks, continue to move, severe as classical ballet,
+        inside their antiseptic marble chambers. But out here, down here among
+        the people, the truer currencies come into being.  So, Jews are
+        negotiable.  Every bit as negotiable as cigarettes, cunt, or Hershey
+        bars.
+        """)
+
 
 class BallistTestCase(unittest.TestCase, base.TestAggregate):
     """ """
@@ -184,7 +211,7 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, 'NAME').text = 'Tweet E. Bird'
         SubElement(root, 'EXTDNAME').text = 'Singing yellow canary'
         SubElement(root, 'MEMO').text = 'Protection money'
-        currency = test_i18n.CurrencyTestCase().root
+        currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
         SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
         return root
@@ -240,7 +267,7 @@ class StmttrnOrigcurrencyTestCase(unittest.TestCase, base.TestAggregate):
         root = StmttrnTestCase().root
         name = root.find('CURRENCY')
         root.remove(name)
-        origcurrency = test_i18n.OrigcurrencyTestCase().root
+        origcurrency = test_models_i18n.OrigcurrencyTestCase().root
         root.append(origcurrency)
         return root
 
@@ -401,7 +428,7 @@ class StmttrnCurrencyOrigCurrencyTestCase(unittest.TestCase, base.TestAggregate)
     @property
     def root(self):
         root = StmttrnTestCase().root
-        origcurrency = test_i18n.OrigcurrencyTestCase().root
+        origcurrency = test_models_i18n.OrigcurrencyTestCase().root
         root.append(origcurrency)
         return root
 

@@ -41,9 +41,9 @@ from ofxtools.models.i18n import (
 from ofxtools.utils import UTC
 from . import base
 from . import test_models_common
-from . import test_bank
-from . import test_seclist
-from . import test_i18n
+from . import test_models_bank
+from . import test_models_seclist
+from . import test_models_i18n
 
 
 class InvacctfromTestCase(unittest.TestCase, base.TestAggregate):
@@ -209,7 +209,7 @@ class InvbanktranTestCase(unittest.TestCase, base.TestAggregate):
     @property
     def root(self):
         root = Element('INVBANKTRAN')
-        stmttrn = test_bank.StmttrnTestCase().root
+        stmttrn = test_models_bank.StmttrnTestCase().root
         root.append(stmttrn)
         SubElement(root, 'SUBACCTFUND').text = 'MARGIN'
         return root
@@ -225,7 +225,7 @@ class InvbanktranTestCase(unittest.TestCase, base.TestAggregate):
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
-        stmttrn = Aggregate.from_etree(test_bank.StmttrnTestCase().root)
+        stmttrn = Aggregate.from_etree(test_models_bank.StmttrnTestCase().root)
         self.assertEqual(root.trntype,  stmttrn.trntype)
         self.assertEqual(root.dtposted,  stmttrn.dtposted)
         self.assertEqual(root.trnamt,  stmttrn.trnamt)
@@ -275,7 +275,7 @@ class InvbuyTestCase(unittest.TestCase, base.TestAggregate):
         root = Element('INVBUY')
         invtran = InvtranTestCase().root
         root.append(invtran)
-        secid = test_seclist.SecidTestCase().root
+        secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
         SubElement(root, 'UNITS').text = '100'
         SubElement(root, 'UNITPRICE').text = '1.50'
@@ -285,7 +285,7 @@ class InvbuyTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, 'FEES').text = '1.50'
         SubElement(root, 'LOAD').text = '0'
         SubElement(root, 'TOTAL').text = '-161.49'
-        currency = test_i18n.CurrencyTestCase().root
+        currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
         SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
         SubElement(root, 'SUBACCTFUND').text = 'CASH'
@@ -347,7 +347,7 @@ class InvsellTestCase(unittest.TestCase, base.TestAggregate):
         root = Element('INVSELL')
         invtran = InvtranTestCase().root
         root.append(invtran)
-        secid = test_seclist.SecidTestCase().root
+        secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
         SubElement(root, 'UNITS').text = '-100'
         SubElement(root, 'UNITPRICE').text = '1.50'
@@ -360,7 +360,7 @@ class InvsellTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, 'TAXEXEMPT').text = 'N'
         SubElement(root, 'TOTAL').text = '131.00'
         SubElement(root, 'GAIN').text = '3.47'
-        currency = test_i18n.CurrencyTestCase().root
+        currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
         SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
         SubElement(root, 'SUBACCTFUND').text = 'CASH'
@@ -606,7 +606,7 @@ class ClosureoptTestCase(unittest.TestCase, base.TestAggregate):
         root = Element('CLOSUREOPT')
         invtran = InvtranTestCase().root
         root.append(invtran)
-        secid = test_seclist.SecidTestCase().root
+        secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
         SubElement(root, 'OPTACTION').text = 'EXERCISE'
         SubElement(root, 'UNITS').text = '200'
@@ -655,7 +655,7 @@ class IncomeTestCase(unittest.TestCase, base.TestAggregate):
         root = Element('INCOME')
         invtran = InvtranTestCase().root
         root.append(invtran)
-        secid = test_seclist.SecidTestCase().root
+        secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
         SubElement(root, 'INCOMETYPE').text = 'CGLONG'
         SubElement(root, 'TOTAL').text = '1500'
@@ -663,7 +663,7 @@ class IncomeTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, 'SUBACCTFUND').text = 'CASH'
         SubElement(root, 'TAXEXEMPT').text = 'Y'
         SubElement(root, 'WITHHOLDING').text = '123.45'
-        currency = test_i18n.CurrencyTestCase().root
+        currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
         SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
         return root
@@ -713,12 +713,12 @@ class InvexpenseTestCase(unittest.TestCase, base.TestAggregate):
         root = Element('INVEXPENSE')
         invtran = InvtranTestCase().root
         root.append(invtran)
-        secid = test_seclist.SecidTestCase().root
+        secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
         SubElement(root, 'TOTAL').text = '-161.49'
         SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
         SubElement(root, 'SUBACCTFUND').text = 'CASH'
-        currency = test_i18n.CurrencyTestCase().root
+        currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
         SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
         return root
@@ -796,7 +796,7 @@ class JrnlsecTestCase(unittest.TestCase, base.TestAggregate):
         root = Element('JRNLSEC')
         invtran = InvtranTestCase().root
         root.append(invtran)
-        secid = test_seclist.SecidTestCase().root
+        secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
         SubElement(root, 'SUBACCTTO').text = 'MARGIN'
         SubElement(root, 'SUBACCTFROM').text = 'CASH'
@@ -838,7 +838,7 @@ class MargininterestTestCase(unittest.TestCase, base.TestAggregate):
         root.append(invtran)
         SubElement(root, 'TOTAL').text = '161.49'
         SubElement(root, 'SUBACCTFUND').text = 'CASH'
-        currency = test_i18n.CurrencyTestCase().root
+        currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
         return root
 
@@ -877,7 +877,7 @@ class ReinvestTestCase(unittest.TestCase, base.TestAggregate):
         root = Element('REINVEST')
         invtran = InvtranTestCase().root
         root.append(invtran)
-        secid = test_seclist.SecidTestCase().root
+        secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
         SubElement(root, 'TOTAL').text = '-161.49'
         SubElement(root, 'INCOMETYPE').text = 'CGLONG'
@@ -889,7 +889,7 @@ class ReinvestTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, 'FEES').text = '1.50'
         SubElement(root, 'LOAD').text = '0'
         SubElement(root, 'TAXEXEMPT').text = 'Y'
-        currency = test_i18n.CurrencyTestCase().root
+        currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
         SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
         return root
@@ -942,12 +942,12 @@ class RetofcapTestCase(unittest.TestCase, base.TestAggregate):
         root = Element('RETOFCAP')
         invtran = InvtranTestCase().root
         root.append(invtran)
-        secid = test_seclist.SecidTestCase().root
+        secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
         SubElement(root, 'TOTAL').text = '-161.49'
         SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
         SubElement(root, 'SUBACCTFUND').text = 'CASH'
-        currency = test_i18n.CurrencyTestCase().root
+        currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
         SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
         return root
@@ -1197,14 +1197,14 @@ class SplitTestCase(unittest.TestCase, base.TestAggregate):
         root = Element('SPLIT')
         invtran = InvtranTestCase().root
         root.append(invtran)
-        secid = test_seclist.SecidTestCase().root
+        secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
         SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
         SubElement(root, 'OLDUNITS').text = '200'
         SubElement(root, 'NEWUNITS').text = '100'
         SubElement(root, 'NUMERATOR').text = '1'
         SubElement(root, 'DENOMINATOR').text = '2'
-        currency = test_i18n.CurrencyTestCase().root
+        currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
         SubElement(root, 'FRACCASH').text = '0.50'
         SubElement(root, 'SUBACCTFUND').text = 'CASH'
@@ -1257,7 +1257,7 @@ class TransferTestCase(unittest.TestCase, base.TestAggregate):
         root = Element('TRANSFER')
         invtran = InvtranTestCase().root
         root.append(invtran)
-        secid = test_seclist.SecidTestCase().root
+        secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
         SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
         SubElement(root, 'UNITS').text = '100'
@@ -1321,7 +1321,7 @@ class Inv401kbalTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, 'OTHERVEST').text = '7'
         SubElement(root, 'OTHERNONVEST').text = '8'
         SubElement(root, 'TOTAL').text = '36'
-        ballist = test_bank.BallistTestCase().root
+        ballist = test_models_bank.BallistTestCase().root
         root.append(ballist)
         return root
 
@@ -1352,7 +1352,7 @@ class InvposTestCase(unittest.TestCase, base.TestAggregate):
     @property
     def root(self):
         root = Element('INVPOS')
-        secid = test_seclist.SecidTestCase().root
+        secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
         SubElement(root, 'HELDINACCT').text = 'MARGIN'
         SubElement(root, 'POSTYPE').text = 'LONG'
@@ -1361,7 +1361,7 @@ class InvposTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, 'MKTVAL').text = '9000'
         SubElement(root, 'AVGCOSTBASIS').text = '85'
         SubElement(root, 'DTPRICEASOF').text = '20130630'
-        currency = test_i18n.CurrencyTestCase().root
+        currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
         SubElement(root, 'MEMO').text = 'Marked to myth'
         SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
@@ -1581,7 +1581,7 @@ class OoTestCase(unittest.TestCase, base.TestAggregate):
         root = Element('OO')
         SubElement(root, 'FITID').text = '1001'
         SubElement(root, 'SRVRTID').text = '2002'
-        secid = test_seclist.SecidTestCase().root
+        secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
         SubElement(root, 'DTPLACED').text = '20040701'
         SubElement(root, 'UNITS').text = '150'
@@ -1592,7 +1592,7 @@ class OoTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, 'LIMITPRICE').text = '10.50'
         SubElement(root, 'STOPPRICE').text = '10.00'
         SubElement(root, 'MEMO').text = 'Open Order'
-        currency = test_i18n.CurrencyTestCase().root
+        currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
         SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
         return root
@@ -1875,7 +1875,7 @@ class SwitchmfTestCase(unittest.TestCase, base.TestAggregate):
         root = Element('SWITCHMF')
         oo = OoTestCase().root
         root.append(oo)
-        secid = test_seclist.SecidTestCase().root
+        secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
         SubElement(root, 'UNITTYPE').text = 'SHARES'
         SubElement(root, 'SWITCHALL').text = 'Y'

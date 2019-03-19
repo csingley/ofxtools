@@ -64,19 +64,25 @@ class Aggregate(object):
         feed it the Element to instantiate an Aggregate corresponding to the
         Element.tag.
 
-        Main entry point for type conversion from ElementTree to Aggregate.
+        Main entry point for type conversion from `ET.ElementTree` to `Aggregate`.
         """
         try:
             SubClass = getattr(ofxtools.models, elem.tag)
         except AttributeError:
             msg = "ofxtools.models doesn't define {}".format(elem.tag)
             raise ValueError(msg)
+
+        # Hook to define extra validation constraints
         SubClass.verify(elem)
+        # Hook to modify incoming `ET.ElementTree` before conversion
         SubClass.groom(elem)
+
         args = []
         kwargs = {}
         if issubclass(SubClass, List):
             if issubclass(SubClass, TranList):
+                # Transaction lists first have two data elements giving the
+                # date range spanned, then a series of transaction aggregates.
                 dtstart, dtend = elem[:2]
                 try:
                     assert dtstart.tag == 'DTSTART'
@@ -87,6 +93,8 @@ class Aggregate(object):
                 args = [dtstart.text, dtend.text]
                 elem.remove(dtstart)
                 elem.remove(dtend)
+            # List constructors take variable # of args,
+            # so we pass `args` not `kwargs`.
             args.extend([Aggregate.from_etree(el) for el in elem])
         else:
             kwargs = {el.tag.lower(): (el.text or el) for el in elem}
@@ -121,18 +129,22 @@ class Aggregate(object):
         pass
 
     def to_etree(self):
-        """ """
-        root = ET.Element(self.__class__.__name__)
+        """
+        Convert self and children to `ElementTree.Element` hierarchy
+        """
+        cls = self.__class__
+        root = ET.Element(cls.__name__)
         for spec in self.spec:
             value = getattr(self, spec)
             if value is None:
                 continue
             elif isinstance(value, Aggregate):
                 child = value.to_etree()
+                # Hook to modify `ET.ElementTree` after conversion
                 value.ungroom(child)
                 root.append(child)
             else:
-                converter = self.__class__.__dict__[spec]
+                converter = cls.__dict__[spec]
                 text = converter.unconvert(value)
                 ET.SubElement(root, spec.upper()).text = text
         return root
@@ -238,23 +250,27 @@ class List(Aggregate, list):
         list.__init__(self)
 
         for member in members:
-            if member.__class__.__name__ not in self.memberTags:
-                msg = "{} can't contain {}".format(self.__class__.__name__,
-                                                   member.__class__.__name__)
-                raise ValueError(msg)
+            cls_name = member.__class__.__name__
+            if cls_name not in self.memberTags:
+                msg = "{} can't contain {}"
+                raise ValueError(msg.format(self.__class__.__name__, cls_name))
             self.append(member)
 
     def to_etree(self):
-        """ """
-        root = ET.Element(self.__class__.__name__)
+        """
+        Convert self and children to `ElementTree.Element` hierarchy
+        """
+        cls = self.__class__
+        root = ET.Element(cls.__name__)
+        # Append items enumerated in the class definition
+        # (i.e. direct child Elements of the *LIST defined in the OFX spec)
         for spec in self.spec:
             value = getattr(self, spec)
-            if value is None:
-                continue
-            else:
-                converter = self.__class__.__dict__[spec]
+            if value is not None:
+                converter = cls.__dict__[spec]
                 text = converter.unconvert(value)
                 ET.SubElement(root, spec.upper()).text = text
+
         # Append list items
         for member in self:
             root.append(member.to_etree())

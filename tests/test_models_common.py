@@ -12,7 +12,7 @@ from xml.etree.ElementTree import (
 
 # local imports
 from . import base
-from . import test_i18n
+from . import test_models_i18n
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import (
     STATUS, BAL, CURRENCY, OFXELEMENT, OFXEXTENSION, MSGSETCORE,
@@ -62,7 +62,7 @@ class BalTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, 'BALTYPE').text = 'DOLLAR'
         SubElement(root, 'VALUE').text = '111.22'
         SubElement(root, 'DTASOF').text = '20010630'
-        currency = test_i18n.CurrencyTestCase().root
+        currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
         return root
 

@@ -97,7 +97,6 @@ def Inheritor(parent_table):
         # so INVTRAN subclasses are free to clobber __table_args__ by inheriting
         # it from INV{BUY,SELL}...
         # ...but be careful.
-        #  @declared_attr.cascading
         @declared_attr
         def __table_args__(cls):
             if has_inherited_table(cls):

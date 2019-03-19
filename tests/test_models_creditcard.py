@@ -31,8 +31,8 @@ from ofxtools.utils import UTC
 
 from . import base
 from . import test_models_common
-from . import test_bank
-from . import test_i18n
+from . import test_models_bank
+from . import test_models_i18n
 
 
 class LastpmtinfoTestCase(unittest.TestCase, base.TestAggregate):
@@ -85,13 +85,13 @@ class CcstmtrsTestCase(unittest.TestCase, base.TestAggregate):
     def root(self):
         root = Element('CCSTMTRS')
         SubElement(root, 'CURDEF').text = 'USD'
-        acctfrom = test_bank.CcacctfromTestCase().root
+        acctfrom = test_models_bank.CcacctfromTestCase().root
         root.append(acctfrom)
-        tranlist = test_bank.BanktranlistTestCase().root
+        tranlist = test_models_bank.BanktranlistTestCase().root
         root.append(tranlist)
-        ledgerbal = test_bank.LedgerbalTestCase().root
+        ledgerbal = test_models_bank.LedgerbalTestCase().root
         root.append(ledgerbal)
-        availbal = test_bank.AvailbalTestCase().root
+        availbal = test_models_bank.AvailbalTestCase().root
         root.append(availbal)
         SubElement(root, 'CASHADVBALAMT').text = '10000.00'
         SubElement(root, 'INTRATEPURCH').text = '20.99'
@@ -99,7 +99,7 @@ class CcstmtrsTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, 'INTRATEXFER').text = '21.99'
         rewardinfo = RewardinfoTestCase().root
         root.append(rewardinfo)
-        ballist = test_bank.BallistTestCase().root
+        ballist = test_models_bank.BallistTestCase().root
         root.append(ballist)
         SubElement(root, 'MKTGINFO').text = 'Get Free Stuff NOW!!'
 
@@ -208,7 +208,7 @@ class CcclosingTestCase(unittest.TestCase, base.TestAggregate):
         rewardinfo = RewardinfoTestCase().root
         root.append(rewardinfo)
         SubElement(root, 'MKTGINFO').text = "It's a floor wax! And a dessert topping!!"
-        currency = test_i18n.CurrencyTestCase().root
+        currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
 
         return root
@@ -254,7 +254,7 @@ class CcstmtendrsTestCase(unittest.TestCase, base.TestAggregate):
     def root(self):
         root = Element('CCSTMTENDRS')
         SubElement(root, 'CURDEF').text = 'USD'
-        acctfrom = test_bank.CcacctfromTestCase().root
+        acctfrom = test_models_bank.CcacctfromTestCase().root
         root.append(acctfrom)
         ccclosing = CcclosingTestCase().root
         root.append(ccclosing)

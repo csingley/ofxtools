@@ -81,7 +81,6 @@ class STMTRQ(Aggregate):
 
 class PAYEE(Aggregate):
     """ OFX section 12.5.2.1 """
-    # name = String(32, required=True)
     name = NagString(32, required=True)
     addr1 = String(32, required=True)
     addr2 = String(32)

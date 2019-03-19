@@ -70,6 +70,22 @@ class StringTestCase(unittest.TestCase, Base):
         self.assertEqual('foo', t.convert('foo'))
         self.assertEqual('123', t.convert(123))
 
+    def test_unescape(self):
+        # Issue # 28
+
+        # Unescape '&amp;' '&lt;' '&gt;' '&nbsp;' per OFX section 2.3
+        t = self.type_()
+        self.assertEqual("rock&roll", t.convert("rock&amp;roll"))
+        self.assertEqual("<3", t.convert("&lt;3"))
+        self.assertEqual("->", t.convert("-&gt;"))
+        self.assertEqual("splish splash", t.convert("splish&nbsp;splash"))
+
+        # Also unescape the other XML control characters, ie. '&apos;' '&quot;'
+        # because FIs don't read the spec
+        self.assertEqual("We didn't read the OFX spec",
+                         t.convert("We didn&apos;t read the OFX spec"))
+        self.assertEqual('"No soup for you!"', t.convert('&quot;No soup for you!&quot;'))
+
     def test_max_length(self):
         t = self.type_(5)
         self.assertEqual('foo', t.convert('foo'))
@@ -154,6 +170,7 @@ class DecimalTestCase(unittest.TestCase, Base):
         self.assertEqual(cmp, 0)
 
     def test_euro_decimal_separator(self):
+        # Issue #4
         t = self.type_()
         self.assertEqual(decimal.Decimal('1.23'), t.convert('1,23'))
         # Separators other than . and , are illegal

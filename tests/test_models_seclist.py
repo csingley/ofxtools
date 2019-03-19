@@ -1,4 +1,5 @@
 # coding: utf-8
+""" Unit tests for ofxtools.models.seclist """
 
 # stdlib imports
 import unittest
@@ -8,13 +9,13 @@ from xml.etree.ElementTree import (
     Element,
     SubElement,
 )
+from copy import deepcopy
 
 
 # local imports
 from ofxtools.utils import UTC
 from . import base
-from . import test_seclist
-from . import test_i18n
+from . import test_models_i18n
 from . import test_models_common
 
 from ofxtools.models.base import Aggregate
@@ -56,7 +57,7 @@ class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
     @property
     def root(self):
         root = Element('SECINFO')
-        secid = test_seclist.SecidTestCase().root
+        secid = SecidTestCase().root
         root.append(secid)
         SubElement(root, 'SECNAME').text = 'Acme Development, Inc.'
         SubElement(root, 'TICKER').text = 'ACME'
@@ -64,10 +65,86 @@ class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, 'RATING').text = 'Aa'
         SubElement(root, 'UNITPRICE').text = '94.5'
         SubElement(root, 'DTASOF').text = '20130615'
-        currency = test_i18n.CurrencyTestCase().root
+        currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
         SubElement(root, 'MEMO').text = 'Foobar'
         return root
+
+    def testConvertSecnameTooLong(self):
+        """ Don't enforce length restriction on SECNAME; raise Warning """
+        # Issue #12
+        copy_root = deepcopy(self.root)
+        copy_element = Element('SECNAME')
+        copy_element.text = """
+        There is a theory going around that the U.S.A. was and still is a
+        gigantic Masonic plot under the ultimate control of the group known as
+        the Illuminati. It is difficult to look for long at the strange single
+        eye crowning the pyramid which is found on every dollar bill and not
+        begin to believe the story, a little. Too many anarchists in
+        19th-century Europe — Bakunin, Proudhon, Salverio Friscia — were Masons
+        for it to be pure chance. Lovers of global conspiracy, not all of them
+        Catholic, can count on the Masons for a few good shivers and voids when
+        all else fails.
+        """
+        copy_root[1] = copy_element
+        with self.assertWarns(Warning):
+            root = Aggregate.from_etree(copy_root)
+        self.assertEqual(root.secname, """
+        There is a theory going around that the U.S.A. was and still is a
+        gigantic Masonic plot under the ultimate control of the group known as
+        the Illuminati. It is difficult to look for long at the strange single
+        eye crowning the pyramid which is found on every dollar bill and not
+        begin to believe the story, a little. Too many anarchists in
+        19th-century Europe — Bakunin, Proudhon, Salverio Friscia — were Masons
+        for it to be pure chance. Lovers of global conspiracy, not all of them
+        Catholic, can count on the Masons for a few good shivers and voids when
+        all else fails.
+        """)
+
+    def testConvertTickerTooLong(self):
+        """ Don't enforce length restriction on TICKER; raise Warning """
+        # Issue #12
+        copy_root = deepcopy(self.root)
+        copy_element = Element('TICKER')
+        copy_element.text = """
+        Kekulé dreams the Great Serpent holding its own tail in its mouth, the
+        dreaming Serpent which surrounds the World.  But the meanness, the
+        cynicism with which this dream is to be used. The Serpent that
+        announces, "The World is a closed thing, cyclical, resonant,
+        eternally-returning," is to be delivered into a system whose only aim
+        is to violate the Cycle. Taking and not giving back, demanding that
+        "productivity" and "earnings" keep on increasing with time, the System
+        removing from the rest of the World these vast quantities of energy to
+        keep its own tiny desperate fraction showing a profit: and not only
+        most of humanity — most of the World, animal, vegetable, and mineral,
+        is laid waste in the process. The System may or may not understand that
+        it's only buying time. And that time is an artificial resource to begin
+        with, of no value to anyone or anything but the System, which must
+        sooner or later crash to its death, when its addiction to energy has
+        become more than the rest of the World can supply, dragging with it
+        innocent souls all along the chain of life.
+        """
+        copy_root[2] = copy_element
+        with self.assertWarns(Warning):
+            root = Aggregate.from_etree(copy_root)
+        self.assertEqual(root.ticker, """
+        Kekulé dreams the Great Serpent holding its own tail in its mouth, the
+        dreaming Serpent which surrounds the World.  But the meanness, the
+        cynicism with which this dream is to be used. The Serpent that
+        announces, "The World is a closed thing, cyclical, resonant,
+        eternally-returning," is to be delivered into a system whose only aim
+        is to violate the Cycle. Taking and not giving back, demanding that
+        "productivity" and "earnings" keep on increasing with time, the System
+        removing from the rest of the World these vast quantities of energy to
+        keep its own tiny desperate fraction showing a profit: and not only
+        most of humanity — most of the World, animal, vegetable, and mineral,
+        is laid waste in the process. The System may or may not understand that
+        it's only buying time. And that time is an artificial resource to begin
+        with, of no value to anyone or anything but the System, which must
+        sooner or later crash to its death, when its addiction to energy has
+        become more than the rest of the World can supply, dragging with it
+        innocent souls all along the chain of life.
+        """)
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -272,7 +349,7 @@ class OptinfoTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, 'STRIKEPRICE').text = '25.5'
         SubElement(root, 'DTEXPIRE').text = '20031215'
         SubElement(root, 'SHPERCTRCT').text = '100'
-        secid = test_seclist.SecidTestCase().root
+        secid = SecidTestCase().root
         root.append(secid)
         SubElement(root, 'ASSETCLASS').text = 'SMALLSTOCK'
         SubElement(root, 'FIASSETCLASS').text = 'FOO'
