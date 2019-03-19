@@ -269,22 +269,22 @@ class TreeBuilderUnitFunctionalTestCase(TestCase):
         """
         body = """
         <OFX>
-            <SIGNONMSGSRSV1>
-                <SONRS>
-                    <STATUS>
-                        <CODE>0
-                        <SEVERITY>INFO
-                    </STATUS>
-                    <DTSERVER>20051029101003
-                    <LANGUAGE>ENG
-                    <DTPROFUP>19991029101003
-                    <DTACCTUP>20031029101003
-                    <FI>
-                        <ORG>NCH
-                        <FID>1001
-                    </FI>
-                </SONRS>
-            </SIGNONMSGSRSV1>
+        \t<SIGNONMSGSRSV1>
+        \t\t<SONRS>
+        \t\t\t<STATUS>
+        \t\t\t\t<CODE>0
+        \t\t\t\t<SEVERITY>INFO
+        \t\t\t</STATUS>
+        \t\t\t<DTSERVER>20051029101003
+        \t\t\t<LANGUAGE>ENG
+        \t\t\t<DTPROFUP>19991029101003
+        \t\t\t<DTACCTUP>20031029101003
+        \t\t\t<FI>
+        \t\t\t\t<ORG>NCH
+        \t\t\t\t<FID>1001
+        \t\t\t</FI>
+        \t\t</SONRS>
+        \t</SIGNONMSGSRSV1>
         </OFX>
         """
         self._testFeedSonrs(body)

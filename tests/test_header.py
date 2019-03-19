@@ -215,9 +215,9 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
 
         self.assertEqual(body, self.body_utf8)
 
-    def testParseHeaderV1NoNewlineBetweenHeaderAndBody(self):
+    def testParseHeaderV1NoBlankLineBetweenHeaderAndBody(self):
         """
-        Although it breaks the OFX v1 spec, we don't require empty lines
+        Although it breaks the OFX v1 spec, we don't require an empty line
         between header and message body
         """
         header = str(self.headerClass(self.defaultVersion))
