@@ -7,6 +7,7 @@ from xml.etree.ElementTree import (
     SubElement,
 )
 from datetime import datetime
+from copy import deepcopy
 
 
 # local imports
@@ -25,9 +26,16 @@ from ofxtools.models.base import (
 )
 from ofxtools.models.common import (STATUS, MSGSETCORE, )
 from ofxtools.models.profile import (
-    PROFRQ, PROFRS, PROFTRNRQ, PROFTRNRS, MSGSETLIST, PROFMSGSETV1, PROFMSGSET,
+    PROFRQ, PROFRS, PROFTRNRQ, PROFTRNRS, MSGSETLIST,
+    PROFMSGSRQV1, PROFMSGSRSV1, PROFMSGSETV1, PROFMSGSET,
 )
-from ofxtools.models.signon import (SIGNONINFOLIST, )
+from ofxtools.models.signon import (SIGNONMSGSET, SIGNONINFOLIST, )
+from ofxtools.models.signup import (SIGNUPMSGSET, )
+from ofxtools.models.bank import (BANKMSGSET, )
+from ofxtools.models.creditcard import (CREDITCARDMSGSET, )
+from ofxtools.models.investment import (INVSTMTMSGSET, )
+from ofxtools.models.seclist import (SECLISTMSGSET, )
+from ofxtools.models.tax1099 import (TAX1099MSGSET, )
 from ofxtools.utils import UTC
 
 
@@ -81,6 +89,8 @@ class MsgsetlistTestCase(unittest.TestCase, base.TestAggregate):
         root.append(signon)
         signup = test_models_signup.SignupmsgsetTestCase().root
         root.append(signup)
+        bankmsgset = ProfmsgsetTestCase().root
+        root.append(bankmsgset)
         bankmsgset = test_models_bank.BankmsgsetTestCase().root
         root.append(bankmsgset)
         creditcardmsgset = test_models_creditcard.CreditcardmsgsetTestCase().root
@@ -89,11 +99,36 @@ class MsgsetlistTestCase(unittest.TestCase, base.TestAggregate):
         root.append(invstmtmsgset)
         seclistmsgset = test_models_seclist.SeclistmsgsetTestCase().root
         root.append(seclistmsgset)
-        profmsgset = ProfmsgsetTestCase().root
-        root.append(profmsgset)
         tax1099msgset = test_models_tax1099.Tax1099msgsetTestCase().root
         root.append(tax1099msgset)
         return root
+
+    def testMemberTags(self):
+        # MSGSETLIST may only contain
+        # ['SIGNONMSGSET', 'SIGNUPMSGSET', 'PROFMSGSET',
+        # 'BANKMSGSET', 'CREDITCARDMSGSET', 'INVSTMTMSGSET',
+        # 'SECLISTMSGSET', 'TAX1099MSGSET', ]
+        allowedTags = MSGSETLIST.memberTags
+        self.assertEqual(len(allowedTags), 8)
+        root = deepcopy(self.root)
+        root.append(test_models_bank.StmttrnrsTestCase().root)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+    def testConvert(self):
+        # Test MSGSETLIST wrapper.  *MSGSET members are tested elsewhere.
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, MSGSETLIST)
+        self.assertEqual(len(root), 8)
+        self.assertIsInstance(root[0], SIGNONMSGSET)
+        self.assertIsInstance(root[1], SIGNUPMSGSET)
+        self.assertIsInstance(root[2], PROFMSGSET)
+        self.assertIsInstance(root[3], BANKMSGSET)
+        self.assertIsInstance(root[4], CREDITCARDMSGSET)
+        self.assertIsInstance(root[5], INVSTMTMSGSET)
+        self.assertIsInstance(root[6], SECLISTMSGSET)
+        self.assertIsInstance(root[7], TAX1099MSGSET)
 
 
 class ProfrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -167,6 +202,64 @@ class ProftrnrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.trnuid, 'efe1790a-2f45-47fa-b439-9ae7682dc2a4')
         self.assertIsInstance(root.status, STATUS)
         self.assertIsInstance(root.profrs, PROFRS)
+
+
+class Profmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element('PROFMSGSRQV1')
+        for i in range(2):
+            proftrnrq = ProftrnrqTestCase().root
+            root.append(proftrnrq)
+        return root
+
+    def testMemberTags(self):
+        # PROFMSGSRQV1 may only contain PROFTRNRQ
+        allowedTags = PROFMSGSRQV1.memberTags
+        self.assertEqual(len(allowedTags), 1)
+        root = deepcopy(self.root)
+        root.append(ProftrnrsTestCase().root)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, PROFMSGSRQV1)
+        self.assertEqual(len(root), 2)
+        for stmttrnrs in root:
+            self.assertIsInstance(stmttrnrs, PROFTRNRQ)
+
+
+class Profmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element('PROFMSGSRSV1')
+        for i in range(2):
+            proftrnrs = ProftrnrsTestCase().root
+            root.append(proftrnrs)
+        return root
+
+    def testMemberTags(self):
+        # PROFMSGSRSV1 may only contain PROFTRNRS
+        allowedTags = PROFMSGSRSV1.memberTags
+        self.assertEqual(len(allowedTags), 1)
+        root = deepcopy(self.root)
+        root.append(ProftrnrqTestCase().root)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, PROFMSGSRSV1)
+        self.assertEqual(len(root), 2)
+        for stmttrnrs in root:
+            self.assertIsInstance(stmttrnrs, PROFTRNRS)
 
 
 class Profmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):

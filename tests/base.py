@@ -11,8 +11,10 @@ from ofxtools.models.base import Aggregate
 
 
 class TestAggregate(object):
-    """ """
     __test__ = False
+
+    # Here "Element" refers to ``xml.etree.ElementTree.Element``,
+    # not ``ofxtools.Types.Element`` (i.e. includes both Aggregates & Elements)
     requiredElements = ()
     optionalElements = ()
 

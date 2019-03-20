@@ -400,6 +400,14 @@ class OFXTreeTestCase(TestCase):
             fake_parse_header.assert_called_once_with(source)
             self.assertEqual(output, (fake_header, fake_body))
 
+    def test_read_not_bytes(self):
+        source = NamedTemporaryFile(mode='w+')
+        source.write('a bunch of text')
+        source.seek(0)
+
+        with self.assertRaises(ValueError):
+            self.tree._read(source)
+
     def test_read_byteslike(self):
         # PR #15
         with patch('ofxtools.Parser.parse_header') as fake_parse_header:

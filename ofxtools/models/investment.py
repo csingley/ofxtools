@@ -36,7 +36,8 @@ __all__ = ['INVACCTFROM', 'INVBAL', 'INV401KBAL', 'INVTRAN', 'INVBUY',
            'OOSELLOTHER', 'OOSELLSTOCK', 'SWITCHMF', 'INVTRANLIST',
            'INVPOSLIST', 'INVOOLIST', 'INVSTMTRQ', 'INVSTMTRS',
            'INVSTMTTRNRQ', 'INVSTMTTRNRS', 'INVSTMTMSGSRQV1',
-           'INVSTMTMSGSRSV1', 'INVSTMTMSGSETV1', 'INVSTMTMSGSET', ]
+           'INVSTMTMSGSRSV1', 'INVSTMTMSGSETV1', 'INVSTMTMSGSET',
+           'INCPOS', ]
 
 
 # Enums used in aggregate validation
@@ -69,7 +70,7 @@ class INVSTMTRQ(Aggregate):
     incpos = SubAggregate(INCPOS, required=True)
     incbal = Bool(required=True)
     inc401k = Bool()
-    inc401bal = Bool()
+    inc401kbal = Bool()
     inctranimg = Bool()
 
 
@@ -554,7 +555,7 @@ class INVSTMTTRNRQ(Aggregate):
     trnuid = String(36, required=True)
     clientcookie = String(32)
     tan = String(80)
-    ofxextension = Unsupported()
+    ofxextension = SubAggregate(OFXEXTENSION)
     invstmtrq = SubAggregate(INVSTMTRQ)
 
 

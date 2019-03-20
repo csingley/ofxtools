@@ -24,8 +24,9 @@ from ofxtools.models.common import (
 )
 from ofxtools.models.bank import (
     BANKACCTFROM, BANKACCTTO, CCACCTTO,
-    PAYEE, LEDGERBAL, AVAILBAL, BALLIST,
+    INCTRAN, PAYEE, LEDGERBAL, AVAILBAL, BALLIST,
     STMTTRN, BANKTRANLIST, STMTRS, STMTTRNRS, BANKMSGSRSV1,
+    STMTRQ, STMTTRNRQ, BANKMSGSRQV1,
     TRNTYPES, BANKMSGSETV1, BANKMSGSET, EMAILPROF,
     ACCTTYPES,
 )
@@ -99,8 +100,56 @@ class CcaccttoTestCase(CcacctfromTestCase):
     tag = 'CCACCTTO'
 
 
+class InctranTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ('INCLUDE', )
+    optionalElements = ('DTSTART', 'DTEND')
+
+    @property
+    def root(self):
+        root = Element('INCTRAN')
+        SubElement(root, 'DTSTART').text = '20110401'
+        SubElement(root, 'DTEND').text = '20110430'
+        SubElement(root, 'INCLUDE').text = 'Y'
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, INCTRAN)
+        self.assertEqual(root.dtstart, datetime(2011, 4, 1, tzinfo=UTC))
+        self.assertEqual(root.dtend, datetime(2011, 4, 30, tzinfo=UTC))
+        self.assertEqual(root.include, True)
+
+
+class StmtrqTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ('BANKACCTFROM', )
+    optionalElements = ('INCTRAN', 'INCLUDEPENDING', 'INCTRANIMG', )
+
+    @property
+    def root(self):
+        root = Element('STMTRQ')
+        acctfrom = BankacctfromTestCase().root
+        root.append(acctfrom)
+        inctran = InctranTestCase().root
+        root.append(inctran)
+        SubElement(root, 'INCLUDEPENDING').text = 'Y'
+        SubElement(root, 'INCTRANIMG').text = 'N'
+
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, STMTRQ)
+        self.assertIsInstance(root.bankacctfrom, BANKACCTFROM)
+        self.assertIsInstance(root.inctran, INCTRAN)
+        self.assertEqual(root.includepending, True)
+        self.assertEqual(root.inctranimg, False)
+
+
 class PayeeTestCase(unittest.TestCase, base.TestAggregate):
-    """ """
     __test__ = True
 
     requiredElements = ('NAME', 'ADDR1', 'CITY', 'STATE', 'POSTALCODE',
@@ -160,31 +209,6 @@ class PayeeTestCase(unittest.TestCase, base.TestAggregate):
         negotiable.  Every bit as negotiable as cigarettes, cunt, or Hershey
         bars.
         """)
-
-
-class BallistTestCase(unittest.TestCase, base.TestAggregate):
-    """ """
-    __test__ = True
-
-    optionalElements = ()  # FIXME - how to handle multiple BALs?
-
-    @property
-    def root(self):
-        root = Element('BALLIST')
-        bal1 = test_models_common.BalTestCase().root
-        bal2 = test_models_common.BalTestCase().root
-        root.append(bal1)
-        root.append(bal2)
-
-        return root
-
-    def testConvert(self):
-        # Test *TRANLIST wrapper.  STMTTRN is tested elsewhere.
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, BALLIST)
-        self.assertEqual(len(root), 2)
-        self.assertIsInstance(root[0], BAL)
-        self.assertIsInstance(root[1], BAL)
 
 
 class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
@@ -474,6 +498,16 @@ class BanktranlistTestCase(unittest.TestCase, base.TestAggregate):
             root.append(stmttrn)
         return root
 
+    def testMemberTags(self):
+        # BANKTRANLIST may only contain STMTTRN
+        allowedTags = BANKTRANLIST.memberTags
+        self.assertEqual(len(allowedTags), 1)
+        root = deepcopy(self.root)
+        root.append(test_models_common.BalTestCase().root)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
     def testConvert(self):
         # Test *TRANLIST wrapper.  STMTTRN is tested elsewhere.
         root = Aggregate.from_etree(self.root)
@@ -527,9 +561,42 @@ class AvailbalTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.dtasof, datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC))
 
 
+class BallistTestCase(unittest.TestCase, base.TestAggregate):
+    """ """
+    __test__ = True
+
+    optionalElements = ()  # FIXME - how to handle multiple BALs?
+
+    @property
+    def root(self):
+        root = Element('BALLIST')
+        bal1 = test_models_common.BalTestCase().root
+        bal2 = test_models_common.BalTestCase().root
+        root.append(bal1)
+        root.append(bal2)
+
+        return root
+
+    def testMemberTags(self):
+        # BALLLIST may only contain BAL
+        allowedTags = BALLIST.memberTags
+        self.assertEqual(len(allowedTags), 1)
+        root = deepcopy(self.root)
+        root.append(StmttrnTestCase().root)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+    def testConvert(self):
+        # Test *TRANLIST wrapper.  STMTTRN is tested elsewhere.
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, BALLIST)
+        self.assertEqual(len(root), 2)
+        self.assertIsInstance(root[0], BAL)
+        self.assertIsInstance(root[1], BAL)
+
+
 class StmtrsTestCase(unittest.TestCase, base.TestAggregate):
-    """
-    """
     __test__ = True
 
     requiredElements = ('CURDEF', 'BANKACCTFROM', 'LEDGERBAL',)
@@ -569,7 +636,7 @@ class StmtrsTestCase(unittest.TestCase, base.TestAggregate):
         # Everything below that is tested elsewhere.
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, STMTRS)
-        self.assertIn(root.curdef, CURRENCY_CODES) 
+        self.assertIn(root.curdef, CURRENCY_CODES)
         self.assertIsInstance(root.bankacctfrom, BANKACCTFROM)
         self.assertIsInstance(root.banktranlist, BANKTRANLIST)
         self.assertIsInstance(root.ledgerbal, LEDGERBAL)
@@ -590,6 +657,32 @@ class StmtrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root.account, BANKACCTFROM)
         self.assertIsInstance(root.transactions, BANKTRANLIST)
         self.assertIsInstance(root.balance, LEDGERBAL)
+
+
+class StmttrnrqTestCase(unittest.TestCase, base.TestAggregate):
+    """
+    """
+    __test__ = True
+
+    requiredElements = ['TRNUID', ]
+    optionalElements = ['STMTRQ', ]
+
+    @property
+    def root(self):
+        root = Element('STMTTRNRQ')
+        SubElement(root, 'TRNUID').text = '1001'
+        stmtrq = StmtrqTestCase().root
+        root.append(stmtrq)
+
+        return root
+
+    def testConvert(self):
+        # Test *TRNRS wrapper and **RS Aggregate.
+        # Everything below that is tested elsewhere.
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, STMTTRNRQ)
+        self.assertEqual(root.trnuid, '1001')
+        self.assertIsInstance(root.stmtrq, STMTRQ)
 
 
 class StmttrnrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -625,6 +718,35 @@ class StmttrnrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root.statement, STMTRS)
 
 
+class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element('BANKMSGSRQV1')
+        for i in range(2):
+            stmttrnrq = StmttrnrqTestCase().root
+            root.append(stmttrnrq)
+        return root
+
+    def testMemberTags(self):
+        # BANKMSGSRQV! may only contain STMTTRNRQ
+        allowedTags = BANKMSGSRQV1.memberTags
+        self.assertEqual(len(allowedTags), 1)
+        root = deepcopy(self.root)
+        root.append(StmttrnrsTestCase().root)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, BANKMSGSRQV1)
+        self.assertEqual(len(root), 2)
+        for stmttrnrs in root:
+            self.assertIsInstance(stmttrnrs, STMTTRNRQ)
+
+
 class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
@@ -635,6 +757,16 @@ class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
             stmttrnrs = StmttrnrsTestCase().root
             root.append(stmttrnrs)
         return root
+
+    def testMemberTags(self):
+        # BANKMSGSRSV! may only contain STMTTRNRS
+        allowedTags = BANKMSGSRSV1.memberTags
+        self.assertEqual(len(allowedTags), 1)
+        root = deepcopy(self.root)
+        root.append(StmttrnrqTestCase().root)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)

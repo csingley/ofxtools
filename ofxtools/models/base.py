@@ -79,7 +79,7 @@ class Aggregate(object):
     @staticmethod
     def from_etree(elem):
         """
-        Look up the Aggregate subclass for a given ofx.Parser.Element and
+        Look up the ``Aggregate`` subclass for a given ``xml.etree.ElementTree.Element`` and
         feed it the Element to instantiate an Aggregate corresponding to the
         Element.tag.
 

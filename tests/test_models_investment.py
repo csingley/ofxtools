@@ -9,6 +9,7 @@ from xml.etree.ElementTree import (
 )
 from decimal import Decimal
 from datetime import datetime
+from copy import deepcopy
 
 
 # local imports
@@ -26,7 +27,7 @@ from ofxtools.models.common import (
 )
 from ofxtools.models.bank import (
     STMTTRN, BALLIST, INV401KSOURCES,
-    TRNTYPES,
+    TRNTYPES, INCTRAN,
 )
 from ofxtools.models.investment import (
     INVTRAN, INVBUY, INVSELL, SECID,
@@ -36,8 +37,9 @@ from ofxtools.models.investment import (
     INVPOS, POSDEBT, POSMF, POSOPT, POSOTHER, POSSTOCK,
     OO, OOBUYDEBT, OOBUYMF, OOBUYOPT, OOBUYOTHER, OOBUYSTOCK,
     OOSELLDEBT, OOSELLMF, OOSELLOPT, OOSELLOTHER, OOSELLSTOCK, SWITCHMF,
-    INVTRANLIST, INVPOSLIST, INVOOLIST, INVACCTFROM,
-    INV401KBAL, INVBAL, INVSTMTRS, INVSTMTTRNRS, INVSTMTMSGSRSV1,
+    INVTRANLIST, INVPOSLIST, INVOOLIST, INCPOS, INVACCTFROM,
+    INV401KBAL, INVBAL, INVSTMTRQ, INVSTMTRS, INVSTMTTRNRQ, INVSTMTTRNRS,
+    INVSTMTMSGSRQV1, INVSTMTMSGSRSV1,
     BUYTYPES, SELLTYPES, OPTBUYTYPES, OPTSELLTYPES, INCOMETYPES, UNITTYPES,
     INVSUBACCTS, INVSTMTMSGSETV1, INVSTMTMSGSET,
 )
@@ -63,13 +65,32 @@ class InvacctfromTestCase(unittest.TestCase, base.TestAggregate):
         # Make sure Aggregate.from_etree() calls Element.convert() and sets
         # Aggregate instance attributes with the result
         root = Aggregate.from_etree(self.root)
-        # self.assertIsInstance(root, INVACCTFROM)
+        self.assertIsInstance(root, INVACCTFROM)
         self.assertEqual(root.brokerid, '111000614')
         self.assertEqual(root.acctid, '123456789123456789')
 
 
+class IncposTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ('INCLUDE', )
+    optionalElements = ('DTASOF', )
+
+    @property
+    def root(self):
+        root = Element('INCPOS')
+        SubElement(root, 'DTASOF').text = '20091122'
+        SubElement(root, 'INCLUDE').text = 'Y'
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, INCPOS)
+        self.assertEqual(root.dtasof, datetime(2009, 11, 22, tzinfo=UTC))
+        self.assertEqual(root.include, True)
+
+
 class InvposlistTestCase(unittest.TestCase, base.TestAggregate):
-    """ """
     __test__ = True
 
     @property
@@ -80,6 +101,17 @@ class InvposlistTestCase(unittest.TestCase, base.TestAggregate):
             elem = globals()[testCase]().root
             root.append(elem)
         return root
+
+    def testMemberTags(self):
+        # INVPOSLIST may only contain
+        # ['POSDEBT', 'POSMF', 'POSOPT', 'POSOTHER', 'POSSTOCK', ]
+        allowedTags = INVPOSLIST.memberTags
+        self.assertEqual(len(allowedTags), 5)
+        root = deepcopy(self.root)
+        root.append(test_models_bank.StmttrnTestCase().root)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
 
     def testConvert(self):
         # Test INVPOSLIST wrapper.  INVPOS members are tested elsewhere.
@@ -95,10 +127,10 @@ class InvposlistTestCase(unittest.TestCase, base.TestAggregate):
     def testToEtree(self):
         root = Aggregate.from_etree(self.root)
         elem = root.to_etree()
+        # FIXME
 
 
 class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
-    """ """
     __test__ = True
 
     optionalElements = ()  # FIXME - how to handle OO subclasses?
@@ -115,6 +147,19 @@ class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
             elem = globals()[testCase]().root
             root.append(elem)
         return root
+
+    def testMemberTags(self):
+        # INVOOLIST may only contain
+        # ['OOBUYDEBT', 'OOBUYMF', 'OOBUYOPT', 'OOBUYOTHER',
+        # 'OOBUYSTOCK', 'OOSELLDEBT', 'OOSELLMF', 'OOSELLOPT',
+        # 'OOSELLOTHER', 'OOSELLSTOCK', 'SWITCHMF', ]
+        allowedTags = INVOOLIST.memberTags
+        self.assertEqual(len(allowedTags), 11)
+        root = deepcopy(self.root)
+        root.append(test_models_bank.StmttrnTestCase().root)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
 
     def testConvert(self):
         # Test OOLIST wrapper.  OO members are tested elsewhere.
@@ -187,6 +232,21 @@ class InvtranlistTestCase(unittest.TestCase, base.TestAggregate):
             root.append(invtran().root)
         return root
 
+    def testMemberTags(self):
+        # INVTRANLIST may only contain
+        # ('INVBANKTRAN', 'BUYDEBT', 'BUYMF', 'BUYOPT', 'BUYOTHER',
+        # 'BUYSTOCK', 'CLOSUREOPT', 'INCOME', 'INVEXPENSE', 'JRNLFUND',
+        # 'JRNLSEC', 'MARGININTEREST', 'REINVEST', 'RETOFCAP',
+        # 'SELLDEBT', 'SELLMF', 'SELLOPT', 'SELLOTHER', 'SELLSTOCK',
+        # 'SPLIT', 'TRANSFER', )
+        allowedTags = INVTRANLIST.memberTags
+        self.assertEqual(len(allowedTags), 21)
+        root = deepcopy(self.root)
+        root.append(test_models_bank.StmttrnTestCase().root)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
     def testConvert(self):
         # Test *TRANLIST wrapper.  STMTTRN is tested elsewhere.
         root = Aggregate.from_etree(self.root)
@@ -204,6 +264,7 @@ class InvtranlistTestCase(unittest.TestCase, base.TestAggregate):
     def testToEtree(self):
         root = Aggregate.from_etree(self.root)
         elem = root.to_etree()
+        # FIXME
 
 
 class InvbanktranTestCase(unittest.TestCase, base.TestAggregate):
@@ -1941,9 +2002,45 @@ class SwitchmfTestCase(unittest.TestCase, base.TestAggregate):
         self.oneOfTest('UNITTYPE', UNITTYPES)
 
 
+class InvstmtrqTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ('INVACCTFROM', 'INCOO', 'INCPOS', 'INCBAL', )
+    optionalElements = ('INCTRAN', 'INC401K', 'INC401KBAL', 'INCTRANIMG', )
+
+    @property
+    def root(self):
+        root = Element('INVSTMTRQ')
+        acctfrom = InvacctfromTestCase().root
+        root.append(acctfrom)
+        inctran = test_models_bank.InctranTestCase().root
+        root.append(inctran)
+        SubElement(root, 'INCOO').text = 'N'
+        incpos = IncposTestCase().root
+        root.append(incpos)
+        SubElement(root, 'INCBAL').text = 'N'
+        SubElement(root, 'INC401K').text = 'Y'
+        SubElement(root, 'INC401KBAL').text = 'N'
+        SubElement(root, 'INCTRANIMG').text = 'Y'
+
+        return root
+
+    def testConvert(self):
+        # Test *TRNRQ Aggregate and direct child Elements.
+        # Everything below that is tested elsewhere.
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, INVSTMTRQ)
+        self.assertIsInstance(root.invacctfrom, INVACCTFROM)
+        self.assertIsInstance(root.inctran, INCTRAN)
+        self.assertEqual(root.incoo, False)
+        self.assertIsInstance(root.incpos, INCPOS)
+        self.assertEqual(root.incbal, False)
+        self.assertEqual(root.inc401k, True)
+        self.assertEqual(root.inc401kbal, False)
+        self.assertEqual(root.inctranimg, True)
+
+
 class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
-    """
-    """
     __test__ = True
 
     requiredElements = ('DTASOF', 'CURDEF', 'INVACCTFROM',)
@@ -1977,7 +2074,7 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        # Test *TRNRS wrapper and **RS Aggregate.
+        # Test **RS Aggregate and direct child Elements.
         # Everything below that is tested elsewhere.
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, INVSTMTRS)
@@ -2004,10 +2101,40 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIs(root.positions, root.invposlist)
 
 
-class InvstmttrnrsTestCase(unittest.TestCase, base.TestAggregate):
-    """
-    """
+class InvstmttrnrqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
+    requiredElements = ('TRNUID', )
+    optionalElements = ('CLIENTCOOKIE', 'TAN', 'OFXEXTENSION', 'INVSTMTRQ', )
+
+    @property
+    def root(self):
+        root = Element('INVSTMTTRNRQ')
+        SubElement(root, 'TRNUID').text = '1001'
+        SubElement(root, 'CLIENTCOOKIE').text = 'DEADBEEF'
+        SubElement(root, 'TAN').text = 'B00B135'
+        ofxextension = test_models_common.OfxextensionTestCase().root
+        root.append(ofxextension)
+        stmtrq = InvstmtrqTestCase().root
+        root.append(stmtrq)
+
+        return root
+
+    def testConvert(self):
+        # Test *TRNRQ wrapper and direct child Elements.
+        # Everything below that is tested elsewhere.
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, INVSTMTTRNRQ)
+        self.assertEqual(root.trnuid, '1001')
+        self.assertEqual(root.clientcookie, 'DEADBEEF')
+        self.assertEqual(root.tan, 'B00B135')
+        self.assertIsInstance(root.ofxextension, OFXEXTENSION)
+        self.assertIsInstance(root.invstmtrq, INVSTMTRQ)
+
+
+class InvstmttrnrsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
     requiredElements = ('TRNUID', 'STATUS', )
     optionalElements = ('CLIENTCOOKIE', 'OFXEXTENSION', 'INVSTMTRS', )
 
@@ -2026,7 +2153,7 @@ class InvstmttrnrsTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        # Test *TRNRS wrapper and **RS Aggregate.
+        # Test *TRNRS wrapper and direct child Elements.
         # Everything below that is tested elsewhere.
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, INVSTMTTRNRS)
@@ -2046,6 +2173,35 @@ class InvstmttrnrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIs(root.statement, root.invstmtrs)
 
 
+class Invstmtmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element('INVSTMTMSGSRQV1')
+        for i in range(2):
+            stmttrnrq = InvstmttrnrqTestCase().root
+            root.append(stmttrnrq)
+        return root
+
+    def testMemberTags(self):
+        # INVSTMTMSGSRQV1 may only contain INVSTMTTRNRQ
+        allowedTags = INVSTMTMSGSRQV1.memberTags
+        self.assertEqual(len(allowedTags), 1)
+        root = deepcopy(self.root)
+        root.append(InvstmttrnrsTestCase().root)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, INVSTMTMSGSRQV1)
+        self.assertEqual(len(root), 2)
+        for stmttrnrs in root:
+            self.assertIsInstance(stmttrnrs, INVSTMTTRNRQ)
+
+
 class Invstmtmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
@@ -2056,6 +2212,16 @@ class Invstmtmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
             stmttrnrs = InvstmttrnrsTestCase().root
             root.append(stmttrnrs)
         return root
+
+    def testMemberTags(self):
+        # INVSTMTMSGSRSV1 may only contain INVSTMTTRNRS
+        allowedTags = INVSTMTMSGSRSV1.memberTags
+        self.assertEqual(len(allowedTags), 1)
+        root = deepcopy(self.root)
+        root.append(InvstmttrnrqTestCase().root)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
