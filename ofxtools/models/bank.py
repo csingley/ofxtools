@@ -118,8 +118,8 @@ class STMTTRN(Aggregate, Origcurrency):
     origcurrency = SubAggregate(ORIGCURRENCY)
     inv401ksource = OneOf(*INV401KSOURCES)
 
-    mutexes = [("CCACCTTO", "BANKACCTTO"), ("NAME", "PAYEE"),
-               ("CURRENCY", "ORIGCURRENCY")]
+    mutexes = [("ccacctto", "bankacctto"), ("name", "payee"),
+               ("currency", "origcurrency")]
 
 
 class BANKTRANLIST(TranList):

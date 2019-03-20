@@ -37,6 +37,10 @@ class Aggregate(object):
 
     def __init__(self, **kwargs):
         """ """
+        # Extra validation constraints not captured by class spec or
+        # type validators
+        self.verify(kwargs)
+
         # Set instance attributes for all SubAggregates and Elements in the
         # spec (i.e. defined on the class), using values from input attributes
         # if available, or None if not in attributes.
@@ -57,6 +61,21 @@ class Aggregate(object):
             )
             raise ValueError(msg)
 
+    def verify(self, kwargs):
+        """
+        Enforce Aggregate-level structural constraints of the OFX spec.
+
+        Throw an error for Aggregates containing children that are
+        mutually exclusive per the OFX spec,
+        """
+        for (attr0, attr1) in self.mutexes:
+            val0 = kwargs.get(attr0, None)
+            val1 = kwargs.get(attr1, None)
+            if val0 and val1:
+                msg = "{} may not set both {} and {}".format(
+                    self.__class__.__name__, attr0, attr1)
+                raise ValueError(msg)
+
     @staticmethod
     def from_etree(elem):
         """
@@ -72,8 +91,6 @@ class Aggregate(object):
             msg = "ofxtools.models doesn't define {}".format(elem.tag)
             raise ValueError(msg)
 
-        # Hook to define extra validation constraints
-        SubClass.verify(elem)
         # Hook to modify incoming `ET.ElementTree` before conversion
         SubClass.groom(elem)
 
@@ -100,23 +117,6 @@ class Aggregate(object):
             kwargs = {el.tag.lower(): (el.text or el) for el in elem}
         instance = SubClass(*args, **kwargs)
         return instance
-
-    @classmethod
-    def verify(cls, elem):
-        """
-        Enforce Aggregate-level structural constraints of the OFX spec.
-
-        Throw an error for Elements containing sub-Elements that are
-        mutually exclusive per the OFX spec,
-
-        Extend in subclass.
-        """
-        for mutex in cls.mutexes:
-            if (elem.find(mutex[0]) is not None and
-                    elem.find(mutex[1]) is not None):
-                msg = "{} may not contain both {} and {}".format(
-                    elem.tag, mutex[0], mutex[1])
-                raise ValueError(msg)
 
     @staticmethod
     def groom(elem):
