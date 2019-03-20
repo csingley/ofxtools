@@ -345,7 +345,7 @@ class INVTRANLIST(TranList):
 # Positions
 class INVPOS(Aggregate):
     """ OFX section 13.9.2.6.1 """
-    secid = SubAggregate(SECID)
+    secid = SubAggregate(SECID, required=True)
     heldinacct = OneOf(*INVSUBACCTS, required=True)
     postype = OneOf('SHORT', 'LONG', required=True)
     units = Decimal(required=True)
