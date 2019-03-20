@@ -28,7 +28,7 @@ from ofxtools.models.bank import (
     BANKTRANLIST, STMTRS,
 )
 from ofxtools.models.creditcard import (
-    CCSTMTRS, CCSTMTTRNRS, LASTPMTINFO, REWARDINFO, CCCLOSING,
+    CCSTMTRS, CCSTMTTRNRS, CCSTMTENDRS, LASTPMTINFO, REWARDINFO, CCCLOSING,
     CREDITCARDMSGSRSV1, CREDITCARDMSGSETV1, CREDITCARDMSGSET,
 )
 from ofxtools.models.i18n import (CURRENCY, CURRENCY_CODES)
@@ -75,6 +75,8 @@ class RewardinfoTestCase(unittest.TestCase, base.TestAggregate):
 
 class CcstmtrsTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+    __test__ = True
+
     requiredElements = ['CURDEF', 'CCACCTFROM', 'LEDGERBAL', ]
     optionalElements = ['BANKTRANLIST', 'AVAILBAL', 'CASHADVBALAMT',
                         'INTRATEPURCH', 'INTRATECASH', 'REWARDINFO',
@@ -131,7 +133,6 @@ class CcstmtrsTestCase(unittest.TestCase, base.TestAggregate):
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
-        self.assertIn(root.currency, CURRENCY_CODES)
         self.assertIsInstance(root.account, CCACCTFROM)
         self.assertIsInstance(root.transactions, BANKTRANLIST)
         self.assertIsInstance(root.balance, LEDGERBAL)
@@ -141,6 +142,7 @@ class CcstmttrnrsTestCase(unittest.TestCase, base.TestAggregate):
     """
     """
     __test__ = True
+
     requiredElements = ('TRNUID', 'STATUS',)
     optionalElements = ('CCSTMTRS', )
 
@@ -167,6 +169,7 @@ class CcclosingTestCase(unittest.TestCase, base.TestAggregate):
     """
     """
     __test__ = True
+
     requiredElements = ('FITID', 'DTCLOSE', 'BALCLOSE', 'DTPOSTSTART',
                         'DTPOSTEND', )
     optionalElements = ('DTOPEN', 'DTNEXT', 'BALOPEN', 'INTYTD', 'DTPMTDUE',
@@ -247,6 +250,8 @@ class CcclosingTestCase(unittest.TestCase, base.TestAggregate):
 
 class CcstmtendrsTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+    __test__ = True
+
     requiredElements = ['CURDEF', 'CCACCTFROM', ]
     optionalElements = ['CCCLOSING', ]
 
@@ -292,6 +297,7 @@ class Creditcardmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
 
 class Creditcardmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ['MSGSETCORE', 'CLOSINGAVAIL', ]
     optionalElements = ['PENDINGAVAIL', ]
 

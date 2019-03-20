@@ -24,6 +24,7 @@ import test_models_common
 
 class ClientenrollTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ['ACCTREQUIRED', ]
 
     @property
@@ -40,6 +41,7 @@ class ClientenrollTestCase(unittest.TestCase, base.TestAggregate):
 
 class WebenrollTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ['URL', ]
 
     @property
@@ -56,6 +58,7 @@ class WebenrollTestCase(unittest.TestCase, base.TestAggregate):
 
 class OtherenrollTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ['MESSAGE', ]
 
     @property
@@ -72,6 +75,7 @@ class OtherenrollTestCase(unittest.TestCase, base.TestAggregate):
 
 class Signupmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ['MSGSETCORE', 'CHGUSERINFO', 'AVAILACCTS',
                         'CLIENTACTREQ', ]
 
@@ -99,6 +103,7 @@ class Signupmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
 
 class SignupmsgsetTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ['SIGNUPMSGSETV1', ]
 
     @property

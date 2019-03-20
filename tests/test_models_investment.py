@@ -49,6 +49,7 @@ from ofxtools.utils import UTC
 
 class InvacctfromTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ('BROKERID', 'ACCTID',)
 
     @property
@@ -99,6 +100,7 @@ class InvposlistTestCase(unittest.TestCase, base.TestAggregate):
 class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     optionalElements = ()  # FIXME - how to handle OO subclasses?
 
     @property
@@ -138,6 +140,7 @@ class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
 
 class InvbalTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ('AVAILCASH', 'MARGINBALANCE', 'SHORTBALANCE',)
     optionalElements = ('BUYPOWER',)
     # BALLIST blows up _flatten(); don't test it here
@@ -165,6 +168,7 @@ class InvbalTestCase(unittest.TestCase, base.TestAggregate):
 class InvtranlistTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('DTSTART', 'DTEND',)
     optionalElements = ()  # FIXME - how to handle INVTRAN subclasses?
 
@@ -205,6 +209,7 @@ class InvtranlistTestCase(unittest.TestCase, base.TestAggregate):
 class InvbanktranTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ['STMTTRN', 'SUBACCTFUND', ]
 
     @property
@@ -237,6 +242,7 @@ class InvbanktranTestCase(unittest.TestCase, base.TestAggregate):
 class InvtranTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('FITID', 'DTTRADE',)
     optionalElements = ('SRVRTID', 'DTSETTLE', 'REVERSALFITID', 'MEMO',)
 
@@ -265,6 +271,7 @@ class InvtranTestCase(unittest.TestCase, base.TestAggregate):
 class InvbuyTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVTRAN', 'SECID', 'UNITS', 'UNITPRICE', 'TOTAL',
                         'SUBACCTSEC', 'SUBACCTFUND')
     optionalElements = ('MARKUP', 'COMMISSION', 'TAXES', 'FEES', 'LOAD',
@@ -336,6 +343,7 @@ class InvbuyTestCase(unittest.TestCase, base.TestAggregate):
 class InvsellTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVTRAN', 'SECID', 'UNITS', 'UNITPRICE', 'TOTAL',
                         'SUBACCTSEC', 'SUBACCTFUND')
     optionalElements = ('MARKDOWN', 'COMMISSION', 'TAXES', 'FEES', 'LOAD',
@@ -410,6 +418,7 @@ class InvsellTestCase(unittest.TestCase, base.TestAggregate):
 class BuydebtTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVBUY', )
     optionalElements = ('ACCRDINT', )
 
@@ -446,6 +455,7 @@ class BuydebtTestCase(unittest.TestCase, base.TestAggregate):
 class BuymfTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVBUY', 'BUYTYPE', )
     optionalElements = ('RELFITID', )
 
@@ -487,6 +497,7 @@ class BuymfTestCase(unittest.TestCase, base.TestAggregate):
 class BuyoptTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVBUY', 'OPTBUYTYPE', 'SHPERCTRCT', )
 
     @property
@@ -527,6 +538,7 @@ class BuyoptTestCase(unittest.TestCase, base.TestAggregate):
 class BuyotherTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVBUY', )
 
     @property
@@ -560,6 +572,7 @@ class BuyotherTestCase(unittest.TestCase, base.TestAggregate):
 class BuystockTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVBUY', 'BUYTYPE', )
 
     @property
@@ -598,6 +611,7 @@ class BuystockTestCase(unittest.TestCase, base.TestAggregate):
 class ClosureoptTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVTRAN', 'SECID', 'OPTACTION', 'UNITS', 'SHPERCTRCT',
                         'SUBACCTSEC', )
     optionalElements = ('RELFITID', 'GAIN', )
@@ -646,6 +660,7 @@ class ClosureoptTestCase(unittest.TestCase, base.TestAggregate):
 class IncomeTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVTRAN', 'SECID', 'INCOMETYPE', 'TOTAL',
                         'SUBACCTSEC', 'SUBACCTFUND', )
     optionalElements = ('TAXEXEMPT', 'WITHHOLDING', 'CURRENCY',
@@ -705,6 +720,7 @@ class IncomeTestCase(unittest.TestCase, base.TestAggregate):
 class InvexpenseTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVTRAN', 'SECID', 'TOTAL', 'SUBACCTSEC',
                         'SUBACCTFUND', )
     optionalElements = ('CURRENCY', 'INV401KSOURCE', )
@@ -755,6 +771,7 @@ class InvexpenseTestCase(unittest.TestCase, base.TestAggregate):
 class JrnlfundTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVTRAN', 'SUBACCTTO', 'SUBACCTFROM', 'TOTAL', )
 
     @property
@@ -789,6 +806,7 @@ class JrnlfundTestCase(unittest.TestCase, base.TestAggregate):
 class JrnlsecTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVTRAN', 'SECID', 'SUBACCTTO', 'SUBACCTFROM',
                         'UNITS', )
 
@@ -829,6 +847,7 @@ class JrnlsecTestCase(unittest.TestCase, base.TestAggregate):
 class MargininterestTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVTRAN', 'TOTAL', 'SUBACCTFUND', )
     optionalElements = ('CURRENCY', )
 
@@ -868,6 +887,7 @@ class MargininterestTestCase(unittest.TestCase, base.TestAggregate):
 class ReinvestTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVTRAN', 'SECID', 'INCOMETYPE', 'TOTAL',
                         'SUBACCTSEC', 'UNITS', 'UNITPRICE', )
     optionalElements = ('COMMISSION',  'TAXES', 'FEES', 'LOAD', 'TAXEXEMPT',
@@ -934,6 +954,7 @@ class ReinvestTestCase(unittest.TestCase, base.TestAggregate):
 class RetofcapTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVTRAN', 'SECID', 'TOTAL', 'SUBACCTSEC',
                         'SUBACCTFUND', )
     optionalElements = ('CURRENCY', 'INV401KSOURCE', )
@@ -985,6 +1006,7 @@ class RetofcapTestCase(unittest.TestCase, base.TestAggregate):
 class SelldebtTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVSELL', 'SELLREASON', )
     optionalElements = ('ACCRDINT', )
 
@@ -1026,6 +1048,7 @@ class SelldebtTestCase(unittest.TestCase, base.TestAggregate):
 class SellmfTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVSELL', 'SELLTYPE', )
     optionalElements = ('AVGCOSTBASIS', 'RELFITID',)
 
@@ -1068,6 +1091,7 @@ class SellmfTestCase(unittest.TestCase, base.TestAggregate):
 class SelloptTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVSELL', 'OPTSELLTYPE', 'SHPERCTRCT',)
     optionalElements = ('RELFITID', 'RELTYPE', 'SECURED', )
 
@@ -1117,6 +1141,7 @@ class SelloptTestCase(unittest.TestCase, base.TestAggregate):
 class SellotherTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVSELL', )
 
     @property
@@ -1150,6 +1175,7 @@ class SellotherTestCase(unittest.TestCase, base.TestAggregate):
 class SellstockTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVSELL',  'SELLTYPE', )
 
     @property
@@ -1188,6 +1214,7 @@ class SellstockTestCase(unittest.TestCase, base.TestAggregate):
 class SplitTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVTRAN',  'SECID',  'SUBACCTSEC', 'OLDUNITS',
                         'NEWUNITS', 'NUMERATOR', 'DENOMINATOR', )
     optionalElements = ('CURRENCY', 'FRACCASH', 'SUBACCTFUND',
@@ -1248,6 +1275,7 @@ class SplitTestCase(unittest.TestCase, base.TestAggregate):
 class TransferTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVTRAN',  'SECID',  'SUBACCTSEC', 'UNITS',
                         'TFERACTION', 'POSTYPE', )
     optionalElements = ('INVACCTFROM', 'AVGCOSTBASIS', 'UNITPRICE',
@@ -1305,6 +1333,7 @@ class TransferTestCase(unittest.TestCase, base.TestAggregate):
 
 class Inv401kbalTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ('TOTAL',)
     optionalElements = ('CASHBAL', 'PRETAX', 'AFTERTAX', 'MATCH',
                         'PROFITSHARING', 'ROLLOVER', 'OTHERVEST',
@@ -1345,7 +1374,8 @@ class Inv401kbalTestCase(unittest.TestCase, base.TestAggregate):
 
 class InvposTestCase(unittest.TestCase, base.TestAggregate):
     """ """
-    __test__ = False
+    __test__ = True
+
     requiredElements = ('SECID', 'HELDINACCT', 'POSTYPE', 'UNITS', 'UNITPRICE',
                         'MKTVAL', 'DTPRICEASOF')
     optionalElements = ('AVGCOSTBASIS', 'CURRENCY', 'MEMO', 'INV401KSOURCE')
@@ -1376,7 +1406,7 @@ class InvposTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.unitprice, Decimal('90'))
         self.assertEqual(root.mktval, Decimal('9000'))
         self.assertEqual(root.avgcostbasis, Decimal('85'))
-        self.assertEqual(root.dtpriceasof, datetime(2013, 6, 30))
+        self.assertEqual(root.dtpriceasof, datetime(2013, 6, 30, tzinfo=UTC))
         self.assertEqual(root.memo, 'Marked to myth')
         self.assertEqual(root.inv401ksource, 'PROFITSHARING')
         return root
@@ -1390,6 +1420,7 @@ class InvposTestCase(unittest.TestCase, base.TestAggregate):
 class PosdebtTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVPOS', )
 
     @property
@@ -1421,6 +1452,7 @@ class PosdebtTestCase(unittest.TestCase, base.TestAggregate):
 class PosmfTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVPOS', )
     optionalElements = ('UNITSSTREET', 'UNITSUSER', 'REINVDIV', 'REINVCG', )
 
@@ -1464,6 +1496,7 @@ class PosmfTestCase(unittest.TestCase, base.TestAggregate):
 class PosoptTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVPOS', )
     optionalElements = ('SECURED', )
 
@@ -1501,6 +1534,7 @@ class PosoptTestCase(unittest.TestCase, base.TestAggregate):
 class PosotherTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVPOS', )
 
     @property
@@ -1532,6 +1566,7 @@ class PosotherTestCase(unittest.TestCase, base.TestAggregate):
 class PosstockTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('INVPOS', )
     optionalElements = ('UNITSSTREET', 'UNITSUSER', 'REINVDIV', )
 
@@ -1572,6 +1607,8 @@ class PosstockTestCase(unittest.TestCase, base.TestAggregate):
 
 class OoTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+    __test__ = True
+
     requiredElements = ('FITID', 'SECID', 'DTPLACED', 'UNITS', 'SUBACCT',
                         'DURATION', 'RESTRICTION',)
     optionalElements = ('SRVRTID', 'MINUNITS', 'LIMITPRICE', 'STOPPRICE',
@@ -1603,7 +1640,7 @@ class OoTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.fitid, '1001')
         self.assertEqual(root.srvrtid, '2002')
         self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.dtplaced, datetime(2004, 7, 1))
+        self.assertEqual(root.dtplaced, datetime(2004, 7, 1, tzinfo=UTC))
         self.assertEqual(root.units, Decimal('150'))
         self.assertEqual(root.subacct, 'CASH')
         self.assertEqual(root.duration, 'GOODTILCANCEL')
@@ -1625,21 +1662,22 @@ class OoTestCase(unittest.TestCase, base.TestAggregate):
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.uniqueid, root.invpos.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.invpos.secid.uniqueidtype)
-        self.assertEqual(root.heldinacct, root.invpos.heldinacct)
-        self.assertEqual(root.postype, root.invpos.postype)
-        self.assertEqual(root.units, root.invpos.units)
-        self.assertEqual(root.unitprice, root.invpos.unitprice)
-        self.assertEqual(root.mktval, root.invpos.mktval)
-        self.assertEqual(root.dtpriceasof, root.invpos.dtpriceasof)
-        self.assertEqual(root.cursym, root.invpos.currency.cursym)
-        self.assertEqual(root.currate, root.invpos.currency.currate)
+        self.assertEqual(root.uniqueid, root.secid.uniqueid)
+        self.assertEqual(root.uniqueidtype, root.secid.uniqueidtype)
+        #  self.assertEqual(root.heldinacct, root.invpos.heldinacct)
+        #  self.assertEqual(root.postype, root.invpos.postype)
+        #  self.assertEqual(root.units, root.invpos.units)
+        #  self.assertEqual(root.unitprice, root.invpos.unitprice)
+        #  self.assertEqual(root.mktval, root.invpos.mktval)
+        #  self.assertEqual(root.dtpriceasof, root.invpos.dtpriceasof)
+        self.assertEqual(root.cursym, root.currency.cursym)
+        self.assertEqual(root.currate, root.currency.currate)
 
 
 class OobuydebtTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('OO', 'AUCTION', )
     optionalElements = ('DTAUCTION', )
 
@@ -1662,6 +1700,7 @@ class OobuydebtTestCase(unittest.TestCase, base.TestAggregate):
 class OobuymfTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('OO', 'BUYTYPE', 'UNITTYPE', )
 
     @property
@@ -1687,6 +1726,7 @@ class OobuymfTestCase(unittest.TestCase, base.TestAggregate):
 class OobuyoptTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('OO', 'OPTBUYTYPE', )
 
     @property
@@ -1709,6 +1749,7 @@ class OobuyoptTestCase(unittest.TestCase, base.TestAggregate):
 class OobuyotherTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('OO', 'UNITTYPE', )
 
     @property
@@ -1731,6 +1772,7 @@ class OobuyotherTestCase(unittest.TestCase, base.TestAggregate):
 class OobuystockTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('OO', 'BUYTYPE', )
 
     @property
@@ -1753,6 +1795,7 @@ class OobuystockTestCase(unittest.TestCase, base.TestAggregate):
 class OoselldebtTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('OO', )
     optionalElements = ()
 
@@ -1771,6 +1814,7 @@ class OoselldebtTestCase(unittest.TestCase, base.TestAggregate):
 class OosellmfTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('OO', 'SELLTYPE', 'UNITTYPE', 'SELLALL', )
     optionalElements = ()
 
@@ -1799,6 +1843,7 @@ class OosellmfTestCase(unittest.TestCase, base.TestAggregate):
 class OoselloptTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('OO', 'OPTSELLTYPE', )
     optionalElements = ()
 
@@ -1822,6 +1867,7 @@ class OoselloptTestCase(unittest.TestCase, base.TestAggregate):
 class OosellotherTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('OO', 'UNITTYPE', )
     optionalElements = ()
 
@@ -1845,6 +1891,7 @@ class OosellotherTestCase(unittest.TestCase, base.TestAggregate):
 class OosellstockTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('OO', 'SELLTYPE', )
     optionalElements = ()
 
@@ -1868,6 +1915,7 @@ class OosellstockTestCase(unittest.TestCase, base.TestAggregate):
 class SwitchmfTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('OO', 'SECID', 'UNITTYPE', 'SWITCHALL', )
     optionalElements = ()
 
@@ -1897,6 +1945,7 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
     """
     """
     __test__ = True
+
     requiredElements = ('DTASOF', 'CURDEF', 'INVACCTFROM',)
     optionalElements = ('INVTRANLIST', 'INVPOSLIST', 'INVBAL',
                         # FIXME - INVOOLIST
@@ -2022,6 +2071,7 @@ class Invstmtmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
 
 class Invstmtmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ['MSGSETCORE', 'TRANDNLD', 'OODNLD', 'POSDNLD',
                         'BALDNLD', 'CANEMAIL', ]
     # optionalElements = ['INV401KDNLD', 'CLOSINGAVAIL', ]

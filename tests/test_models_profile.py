@@ -33,6 +33,7 @@ from ofxtools.utils import UTC
 
 class ProfrqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ['CLIENTROUTING', 'DTPROFUP', ]
 
     @property
@@ -97,6 +98,7 @@ class MsgsetlistTestCase(unittest.TestCase, base.TestAggregate):
 
 class ProfrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ['MSGSETLIST', 'SIGNONINFOLIST', 'DTPROFUP', 'FINAME',
                         'ADDR1', 'CITY', 'STATE', 'POSTALCODE', 'COUNTRY', ]
     optionalElements = ['ADDR2', 'ADDR3', 'CSPHONE', 'TSPHONE', 'FAXPHONE',
@@ -169,6 +171,7 @@ class ProftrnrsTestCase(unittest.TestCase, base.TestAggregate):
 
 class Profmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ['MSGSETCORE', ]
 
     @property

@@ -28,6 +28,7 @@ from ofxtools.models.seclist import SECLISTMSGSRSV1, SECLIST
 
 class OfxTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     unsupported = ['emailmsgsrsv1', 'loanmsgsrsv1',
                    'presdirmsgsrsv1', 'presdlvmsgsrsv1',
                    'tax1095msgsrsv1', 'tax1098msgsrsv1', 'tax1099msgsrsv1',

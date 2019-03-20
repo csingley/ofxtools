@@ -25,6 +25,7 @@ import test_models_common
 
 class FiTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     optionalElements = ('FID',)
 
     @property
@@ -43,6 +44,7 @@ class FiTestCase(unittest.TestCase, base.TestAggregate):
 
 class SonrqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ['DTCLIENT', 'LANGUAGE', 'APPID', 'APPVER', ]
     optionalElements = ['FI', 'USERKEY', 'GENUSERKEY', 'SESSCOOKIE', 'APPKEY',
                         'CLIENTUID', 'USERCRED1', 'USERCRED2', 'AUTHTOKEN',
@@ -93,6 +95,7 @@ class SonrqTestCase(unittest.TestCase, base.TestAggregate):
 
 class SonrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ('STATUS', 'DTSERVER',)
     optionalElements = ('USERKEY', 'TSKEYEXPIRE', 'DTPROFUP', 'DTACCTUP', 'FI',
                         'SESSCOOKIE', 'ACCESSKEY')
@@ -154,6 +157,7 @@ class Signonmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
 
 class SignoninfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ['SIGNONREALM', 'MIN', 'MAX', 'CHARTYPE', 'CASESEN',
                         'SPECIAL', 'SPACES', 'PINCH', ]
     # optionalElements = ['CHGPINFIRST', 'USERCRED1LABEL', 'USERCRED2LABEL',

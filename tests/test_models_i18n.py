@@ -21,6 +21,7 @@ from ofxtools.models.i18n import (
 
 class CurrencyTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ('CURRATE', 'CURSYM', )
 
     @property

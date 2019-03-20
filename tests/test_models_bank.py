@@ -37,6 +37,7 @@ from ofxtools.models.i18n import (
 
 class BankacctfromTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ('BANKID', 'ACCTID', 'ACCTTYPE',)
     optionalElements = ('BRANCHID', 'ACCTKEY',)
     tag = 'BANKACCTFROM'
@@ -74,6 +75,7 @@ class BankaccttoTestCase(BankacctfromTestCase):
 
 class CcacctfromTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ('ACCTID',)
     optionalElements = ('ACCTKEY',)
     tag = 'CCACCTFROM'
@@ -100,6 +102,7 @@ class CcaccttoTestCase(CcacctfromTestCase):
 class PayeeTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('NAME', 'ADDR1', 'CITY', 'STATE', 'POSTALCODE',
                         'PHONE')
     optionalElements = ('ADDR2', 'ADDR3', 'COUNTRY')
@@ -162,6 +165,7 @@ class PayeeTestCase(unittest.TestCase, base.TestAggregate):
 class BallistTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     optionalElements = ()  # FIXME - how to handle multiple BALs?
 
     @property
@@ -186,6 +190,7 @@ class BallistTestCase(unittest.TestCase, base.TestAggregate):
 class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
     """ STMTTRN with CURRENCY """
     __test__ = True
+
     requiredElements = ['TRNTYPE', 'DTPOSTED', 'TRNAMT', 'FITID', ]
     optionalElements = ['DTUSER', 'DTAVAIL', 'CORRECTFITID', 'CORRECTACTION',
                         'SRVRTID', 'CHECKNUM', 'REFNUM', 'SIC', 'PAYEEID',
@@ -258,6 +263,8 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
 
 class StmttrnOrigcurrencyTestCase(unittest.TestCase, base.TestAggregate):
     """ STMTTRN with ORIGCURRENCY """
+    __test__ = True
+
     optionalElements = ['DTUSER', 'DTAVAIL', 'CORRECTFITID', 'CORRECTACTION',
                         'SRVRTID', 'CHECKNUM', 'REFNUM', 'SIC', 'PAYEEID',
                         'NAME', 'EXTDNAME', 'MEMO', 'ORIGCURRENCY',
@@ -276,9 +283,9 @@ class StmttrnOrigcurrencyTestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, STMTTRN)
         self.assertEqual(root.trntype, 'CHECK')
-        self.assertEqual(root.dtposted, datetime(2013, 6, 15))
-        self.assertEqual(root.dtuser, datetime(2013, 6, 14))
-        self.assertEqual(root.dtavail, datetime(2013, 6, 16))
+        self.assertEqual(root.dtposted, datetime(2013, 6, 15, tzinfo=UTC))
+        self.assertEqual(root.dtuser, datetime(2013, 6, 14, tzinfo=UTC))
+        self.assertEqual(root.dtavail, datetime(2013, 6, 16, tzinfo=UTC))
         self.assertEqual(root.trnamt, Decimal('-433.25'))
         self.assertEqual(root.fitid, 'DEADBEEF')
         self.assertEqual(root.correctfitid, 'B00B5')
@@ -304,6 +311,8 @@ class StmttrnOrigcurrencyTestCase(unittest.TestCase, base.TestAggregate):
 
 class StmttrnPayeeTestCase(unittest.TestCase, base.TestAggregate):
     """ STMTTRN with PAYEE """
+    __test__ = True
+
     optionalElements = ['DTUSER', 'DTAVAIL', 'CORRECTFITID', 'CORRECTACTION',
                         'SRVRTID', 'CHECKNUM', 'REFNUM', 'SIC', 'PAYEEID',
                         'PAYEE', 'EXTDNAME', 'MEMO', 'CURRENCY',
@@ -319,12 +328,12 @@ class StmttrnPayeeTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = StmttrnTestCase().root
+        root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, STMTTRN)
         self.assertEqual(root.trntype, 'CHECK')
-        self.assertEqual(root.dtposted, datetime(2013, 6, 15))
-        self.assertEqual(root.dtuser, datetime(2013, 6, 14))
-        self.assertEqual(root.dtavail, datetime(2013, 6, 16))
+        self.assertEqual(root.dtposted, datetime(2013, 6, 15, tzinfo=UTC))
+        self.assertEqual(root.dtuser, datetime(2013, 6, 14, tzinfo=UTC))
+        self.assertEqual(root.dtavail, datetime(2013, 6, 16, tzinfo=UTC))
         self.assertEqual(root.trnamt, Decimal('-433.25'))
         self.assertEqual(root.fitid, 'DEADBEEF')
         self.assertEqual(root.correctfitid, 'B00B5')
@@ -344,6 +353,8 @@ class StmttrnPayeeTestCase(unittest.TestCase, base.TestAggregate):
 
 class StmttrnBankaccttoTestCase(unittest.TestCase, base.TestAggregate):
     """ STMTTRN with BANKACCTTO """
+    __test__ = True
+
     optionalElements = ['DTUSER', 'DTAVAIL', 'CORRECTFITID', 'CORRECTACTION',
                         'SRVRTID', 'CHECKNUM', 'REFNUM', 'SIC', 'PAYEEID',
                         'NAME', 'EXTDNAME', 'BANKACCTTO', 'MEMO', 'CURRENCY',
@@ -357,12 +368,14 @@ class StmttrnBankaccttoTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = StmttrnTestCase().root
+        root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root.bankacctto, BANKACCTTO)
 
 
 class StmttrnCcaccttoTestCase(unittest.TestCase, base.TestAggregate):
     """ STMTTRN with CCACCTTO """
+    __test__ = True
+
     requiredElements = ['TRNTYPE', 'DTPOSTED', 'TRNAMT', 'FITID', ]
     optionalElements = ['DTUSER', 'DTAVAIL', 'CORRECTFITID', 'CORRECTACTION',
                         'SRVRTID', 'CHECKNUM', 'REFNUM', 'SIC', 'PAYEEID',
@@ -377,7 +390,7 @@ class StmttrnCcaccttoTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = super(StmttrnCcaccttoTestCase, self).testConvert()
+        root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root.ccacctto, CCACCTTO)
 
 
@@ -385,6 +398,8 @@ class StmttrnBankaccttoCcaccttoTestCase(unittest.TestCase, base.TestAggregate):
     """
     STMTTRN with both BANKACCTTO and CCACCTTO - not allowed per OFX spec
     """
+    __test__ = True
+
     @property
     def root(self):
         root = StmttrnTestCase().root
@@ -410,6 +425,8 @@ class StmttrnBankaccttoCcaccttoTestCase(unittest.TestCase, base.TestAggregate):
 
 class StmttrnNamePayeeTestCase(unittest.TestCase, base.TestAggregate):
     """ STMTTRN with both NAME and PAYEE - not allowed per OFX spec """
+    __test__ = True
+
     @property
     def root(self):
         root = StmttrnTestCase().root
@@ -426,6 +443,8 @@ class StmttrnCurrencyOrigCurrencyTestCase(unittest.TestCase, base.TestAggregate)
     """
     STMTTRN with both CURRENCY and ORIGCURRENCY - not allowed per OFX spec
     """
+    __test__ = True
+
     @property
     def root(self):
         root = StmttrnTestCase().root
@@ -441,6 +460,7 @@ class StmttrnCurrencyOrigCurrencyTestCase(unittest.TestCase, base.TestAggregate)
 class BanktranlistTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     requiredElements = ('DTSTART', 'DTEND',)
     optionalElements = ('STMTTRN',)  # FIXME - *ALL* STMTTRN optional!
 
@@ -467,6 +487,7 @@ class BanktranlistTestCase(unittest.TestCase, base.TestAggregate):
 
 class LedgerbalTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ('BALAMT', 'DTASOF',)
 
     @property
@@ -487,6 +508,7 @@ class LedgerbalTestCase(unittest.TestCase, base.TestAggregate):
 
 class AvailbalTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ('BALAMT', 'DTASOF',)
 
     @property
@@ -509,6 +531,7 @@ class StmtrsTestCase(unittest.TestCase, base.TestAggregate):
     """
     """
     __test__ = True
+
     requiredElements = ('CURDEF', 'BANKACCTFROM', 'LEDGERBAL',)
     optionalElements = ('BANKTRANLIST', 'AVAILBAL', 'CASHADVBALAMT', 'INTRATE',
                         'BALLIST', 'MKTGINFO',)
@@ -573,6 +596,7 @@ class StmttrnrsTestCase(unittest.TestCase, base.TestAggregate):
     """
     """
     __test__ = True
+
     requiredElements = ['TRNUID', 'STATUS', ]
     optionalElements = ['STMTRS', ]
 

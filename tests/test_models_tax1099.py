@@ -24,8 +24,9 @@ import test_models_common
 
 
 class Tax1099msgsetv1TestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
     """ """
+    __test__ = True
+
     requiredElements = ['MSGSETCORE', 'TAX1099DNLD', 'EXTD1099B',
                         'TAXYEARSUPPORTED', ]
 

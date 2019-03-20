@@ -24,6 +24,7 @@ from ofxtools.utils import UTC
 
 class StatusTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ('CODE', 'SEVERITY')
     optionalElements = ('MESSAGE',)
 
@@ -52,6 +53,7 @@ class BalTestCase(unittest.TestCase, base.TestAggregate):
     # <BAL> aggregates are mostly optional, so its elements
     # (which are mandatory per the OFX spec) aren't marked as required.
     __test__ = True
+
     requiredElements = ['NAME', 'DESC', 'BALTYPE', 'VALUE', ]
     optionalElements = ['DTASOF', 'CURRENCY', ]
 
@@ -110,6 +112,7 @@ class OfxelementTestCase(unittest.TestCase, base.TestAggregate):
 class OfxextensionTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     optionalElements = []  # FIXME - how to handle multiple OFXELEMENTs?
 
     @property
@@ -132,6 +135,7 @@ class OfxextensionTestCase(unittest.TestCase, base.TestAggregate):
 
 class MsgsetcoreTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ['VER', 'URL', 'OFXSEC', 'TRANSPSEC', 'SIGNONREALM',
                         'LANGUAGE', 'SYNCMODE', 'RESPFILEER']
     # optionalElements = ['REFRESHSUPT', 'SPNAME', 'OFXEXTENSION']

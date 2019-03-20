@@ -29,6 +29,7 @@ from ofxtools.models.seclist import (
 
 class SecidTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ('UNIQUEID', 'UNIQUEIDTYPE')
 
     @property
@@ -49,6 +50,7 @@ class SecidTestCase(unittest.TestCase, base.TestAggregate):
 
 class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ('SECID', 'SECNAME',)
     optionalElements = ('TICKER', 'FIID', 'RATING', 'UNITPRICE', 'DTASOF',
                         'CURRENCY',)
@@ -153,6 +155,7 @@ class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
 
 class DebtinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ('SECINFO', 'PARVALUE', 'DEBTTYPE',)
     optionalElements = ('DEBTCLASS', 'COUPONRT', 'DTCOUPON', 'COUPONFREQ',
                         'CALLPRICE', 'YIELDTOCALL', 'DTCALL', 'CALLTYPE',
@@ -236,6 +239,7 @@ class PortionTestCase(unittest.TestCase, base.TestAggregate):
 class MfassetclassTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     # requiredElements = ('PORTION',)  # FIXME - how to handle multiple PORTIONs?
 
     @property
@@ -275,6 +279,7 @@ class FiportionTestCase(unittest.TestCase, base.TestAggregate):
 class FimfassetclassTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     # requiredElements = ('FIPORTION',)  # FIXME - how to handle multiple FIPORTIONs?
 
     @property
@@ -296,6 +301,7 @@ class FimfassetclassTestCase(unittest.TestCase, base.TestAggregate):
 
 class MfinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ('SECINFO',)
     optionalElements = ('MFTYPE', 'YIELD', 'DTYIELDASOF', 'MFASSETCLASS',
                         'FIMFASSETCLASS',)
@@ -335,6 +341,7 @@ class MfinfoTestCase(unittest.TestCase, base.TestAggregate):
 
 class OptinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ('SECINFO', 'OPTTYPE', 'STRIKEPRICE', 'DTEXPIRE',
                         'SHPERCTRCT',)
     optionalElements = ('SECID', 'ASSETCLASS', 'FIASSETCLASS',)
@@ -373,6 +380,7 @@ class OptinfoTestCase(unittest.TestCase, base.TestAggregate):
 
 class OtherinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ('SECINFO',)
     optionalElements = ('TYPEDESC', 'ASSETCLASS', 'FIASSETCLASS',)
 
@@ -405,6 +413,7 @@ class OtherinfoTestCase(unittest.TestCase, base.TestAggregate):
 
 class StockinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     requiredElements = ('SECINFO',)
     optionalElements = ('STOCKTYPE', 'YIELD', 'DTYIELDASOF', 'ASSETCLASS',
                         'FIASSETCLASS',)
@@ -443,6 +452,7 @@ class StockinfoTestCase(unittest.TestCase, base.TestAggregate):
 class SeclistTestCase(unittest.TestCase, base.TestAggregate):
     """ """
     __test__ = True
+
     optionalElements = ()  # FIXME - how to handle SECINFO subclasses?
 
     @property
@@ -474,6 +484,7 @@ class SeclistTestCase(unittest.TestCase, base.TestAggregate):
 
 class Seclistmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
     # FIXME
     # requiredElements = ('SECLIST',)
 
