@@ -182,6 +182,33 @@ class ProfrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.url, 'http://www.ameritrade.com')
         self.assertEqual(root.email, 'support@ameritrade.com')
 
+    def testConvertRemoveProprietaryTag(self):
+        # Make sure SONRS.from_etree() removes proprietary tags
+        root = deepcopy(self.root)
+        SubElement(root, 'INTU.BANKID').text = '12345678'
+
+        profrs = Aggregate.from_etree(root)
+        self.assertIsInstance(profrs, PROFRS)
+        # Converted Aggregate should still have 16 values, not 17
+        self.assertEqual(len(profrs._spec_repr), 16 )
+
+        self.assertIsInstance(profrs.msgsetlist, MSGSETLIST)
+        self.assertIsInstance(profrs.signoninfolist, SIGNONINFOLIST)
+        self.assertEqual(profrs.dtprofup, datetime(2001, 4, 1, tzinfo=UTC))
+        self.assertEqual(profrs.finame, 'Dewey Cheatham & Howe')
+        self.assertEqual(profrs.addr1, '3717 N Clark St')
+        self.assertEqual(profrs.addr2, 'Dugout Box, Aisle 19')
+        self.assertEqual(profrs.addr3, 'Seat A1')
+        self.assertEqual(profrs.city, 'Chicago')
+        self.assertEqual(profrs.state, 'IL')
+        self.assertEqual(profrs.postalcode, '60613')
+        self.assertEqual(profrs.country, 'USA')
+        self.assertEqual(profrs.csphone, '(773) 309-1027')
+        self.assertEqual(profrs.tsphone, '(773) 309-1028')
+        self.assertEqual(profrs.faxphone, '(773) 309-1029')
+        self.assertEqual(profrs.url, 'http://www.ameritrade.com')
+        self.assertEqual(profrs.email, 'support@ameritrade.com')
+
 
 class ProftrnrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
@@ -202,6 +229,11 @@ class ProftrnrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.trnuid, 'efe1790a-2f45-47fa-b439-9ae7682dc2a4')
         self.assertIsInstance(root.status, STATUS)
         self.assertIsInstance(root.profrs, PROFRS)
+
+    def testPropertyAliases(self):
+        root = Aggregate.from_etree(self.root)
+        profrs = root.profile
+        self.assertIsInstance(profrs, PROFRS)
 
 
 class Profmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):

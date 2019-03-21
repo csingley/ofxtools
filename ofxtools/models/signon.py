@@ -59,10 +59,7 @@ class SONRS(Aggregate):
 
     @staticmethod
     def groom(elem):
-        
-        """
-        Remove proprietary tags e.g. INTU.XXX
-        """
+        """ Remove proprietary tags e.g. INTU.XXX """
         for child in set(elem):
             if '.' in child.tag:
                 elem.remove(child)

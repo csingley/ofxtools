@@ -5,6 +5,7 @@ import unittest
 from xml.etree.ElementTree import (
     Element,
 )
+from datetime import datetime
 
 
 # local imports
@@ -15,15 +16,15 @@ import test_models_creditcard
 import test_models_investment
 import test_models_seclist
 
-from ofxtools.models.base import (
-    Aggregate,
-)
+from ofxtools.models.base import Aggregate
 from ofxtools.models.ofx import OFX
 from ofxtools.models.signon import SIGNONMSGSRSV1, SONRS
 from ofxtools.models.bank import BANKMSGSRSV1, STMTRS
-from ofxtools.models.creditcard import CREDITCARDMSGSRSV1, CCSTMTRS
+from ofxtools.models.creditcard import CREDITCARDMSGSRSV1, CCSTMTRS, CCSTMTENDRS
 from ofxtools.models.investment import INVSTMTMSGSRSV1, INVSTMTRS
 from ofxtools.models.seclist import SECLISTMSGSRSV1, SECLIST
+
+from ofxtools.utils import UTC
 
 
 class OfxTestCase(unittest.TestCase, base.TestAggregate):
@@ -65,6 +66,21 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
             setattr(root, unsupp, 'FOOBAR')
             self.assertIsNone(getattr(root, unsupp))
 
+    def testRepr(self):
+        agg = Aggregate.from_etree(self.root)
+        rep = repr(agg)
+        rep_template = ("<OFX fid='{fid}' org='{org}' dtserver='{dtserver}' "
+                        "len(statements)={stmtlen} len(securities)={seclen}>")
+        # SIGNON values from test_models_signon.FiTestCase
+        # DTSERVER from test_models_signon.SonrsTestCase
+        # 2 *STMTs each from bank/cc/invstmt (6 total)
+        # 5 securitites from test_models_seclist.SeclistTestCase
+        rep_values = {
+            'fid': '4705', 'org': 'IBLLC-US',
+            'dtserver': datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC),
+            'stmtlen': 6, 'seclen': 5}
+        self.assertEqual(rep, rep_template.format(**rep_values))
+
     def testPropertyAliases(self):
         # Make sure class property aliases have been defined correctly
         root = Aggregate.from_etree(self.root)
@@ -76,7 +92,7 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root.statements[0], STMTRS)
         self.assertIsInstance(root.statements[1], STMTRS)
         self.assertIsInstance(root.statements[2], CCSTMTRS)
-        self.assertIsInstance(root.statements[3], CCSTMTRS)
+        self.assertIsInstance(root.statements[3], CCSTMTENDRS)
         self.assertIsInstance(root.statements[4], INVSTMTRS)
         self.assertIsInstance(root.statements[5], INVSTMTRS)
 

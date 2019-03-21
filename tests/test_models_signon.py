@@ -7,6 +7,7 @@ from xml.etree.ElementTree import (
     SubElement,
 )
 from datetime import datetime
+from copy import deepcopy
 
 
 # local imports
@@ -133,8 +134,34 @@ class SonrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.sesscookie, 'BADA55')
         self.assertEqual(root.accesskey, 'CAFEBABE')
 
+    def testConvertRemoveProprietaryTag(self):
+        # Make sure SONRS.from_etree() removes proprietary tags
+        root = deepcopy(self.root)
+        SubElement(root, 'INTU.BANKID').text = '12345678'
+
+        sonrs = Aggregate.from_etree(root)
+        self.assertIsInstance(sonrs, SONRS)
+        # Converted Aggregate should still have 10 values, not 11
+        self.assertEqual(len(sonrs._spec_repr), 10 )
+
+        self.assertIsInstance(sonrs.status, STATUS)
+        self.assertEqual(sonrs.dtserver, datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC))
+        self.assertEqual(sonrs.userkey, 'DEADBEEF')
+        self.assertEqual(sonrs.tskeyexpire, datetime(2005, 12, 31, tzinfo=UTC))
+        self.assertEqual(sonrs.language, 'ENG')
+        self.assertEqual(sonrs.dtprofup, datetime(2005, 1, 1, tzinfo=UTC))
+        self.assertEqual(sonrs.dtacctup, datetime(2005, 1, 2, tzinfo=UTC))
+        self.assertIsInstance(sonrs.fi, FI)
+        self.assertEqual(sonrs.sesscookie, 'BADA55')
+        self.assertEqual(sonrs.accesskey, 'CAFEBABE')
+
     def testOneOf(self):
         self.oneOfTest('LANGUAGE', LANG_CODES)
+
+    def testPropertyAliases(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertEqual(root.org, 'IBLLC-US')
+        self.assertEqual(root.fid, '4705')
 
 
 class Signonmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):

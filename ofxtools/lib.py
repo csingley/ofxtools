@@ -1,26 +1,5 @@
 # coding: utf-8
 
-OFXv1 = ('102', '103')
-OFXv2 = ('200', '203', '211')
-
-APPIDS = ('QWIN', # Quicken for Windows
-            'QMOFX', # Quicken for Mac
-            'QBW', # QuickBooks for Windows
-            'QBM', # QuickBooks for Mac
-            'Money', # MSFT Money
-            'Money Plus', # MSFT Money Plus
-            'PyOFX', # Custom
-)
-
-APPVERS = ('1500', # Quicken 2006/ Money 2006
-            '1600', # Quicken 2007/ Money 2007/ QuickBooks 2006
-            '1700', # Quicken 2008/ Money Plus/ QuickBooks 2007
-            '1800', # Quicken 2009/ QuickBooks 2008
-            '1900', # Quicken 2010/ QuickBooks 2009
-            '2000', # QuickBooks 2010
-            '9999', # Custom
-)
-
 
 # 2-letter country codes for numbering agencies (used to construct ISINs)
 # Swiped from

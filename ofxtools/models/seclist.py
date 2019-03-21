@@ -106,7 +106,7 @@ class MFINFO(Aggregate):
         if yld is not None:
             yld.tag = 'YLD'
 
-        return super(STOCKINFO, STOCKINFO).groom(elem)
+        return super(MFINFO, MFINFO).groom(elem)
 
     @staticmethod
     def ungroom(elem):

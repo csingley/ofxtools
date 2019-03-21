@@ -83,7 +83,11 @@ class Element(InstanceCounterMixin):
                              % (self.__class__.__name__, args, kwargs))
 
     def __get__(self, parent, parent_type):
-        return self.data[parent]
+        # HACK - `parent is not None` is needed for tests/test_models_base.py,
+        # else it crashes.
+        # Research!
+        if parent is not None:
+            return self.data[parent]
 
     def __set__(self, parent, value):
         """ Perform validation and type conversion before setting value """

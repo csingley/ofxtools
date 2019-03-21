@@ -29,9 +29,10 @@ class Aggregate(object):
     node that contains no data.
 
     Performs validation & type conversion for class attributes of type
-    Element, SubAggregate, Unsupported.
+    ``Element``, ``SubAggregate``, ``Unsupported``.
 
-    The constructor takes an instance of ofx.Parser.Element.
+    The alternate ``from_etree()`` instance constructor takes an instance of
+    ``xml.etree.ElementTree.Element``.
     """
     mutexes = []
 
@@ -85,6 +86,9 @@ class Aggregate(object):
 
         Main entry point for type conversion from `ET.ElementTree` to `Aggregate`.
         """
+        if not isinstance(elem, ET.Element):
+            msg = "from_etree(): type({})={} (should be xml.etree.ElementTree.Element)"
+            raise ValueError(msg.format(elem, type(elem)))
         try:
             SubClass = getattr(ofxtools.models, elem.tag)
         except AttributeError:
@@ -164,6 +168,9 @@ class Aggregate(object):
         Filter cls.__dict__ for items matching the given predicate and return
         them as an OrderedDict in the same order they're declared in the class
         definition.
+
+        N.B. predicate tests *values* of cls.__dict__
+             (not keys i.e. attribute names)
         """
         match_items = [(k, v) for k, v in cls.__dict__.items() if predicate(v)]
         match_items.sort(key=lambda it: it[1]._counter)
@@ -204,7 +211,6 @@ class Aggregate(object):
     @classproperty
     @classmethod
     def unsupported(cls):
-        """ dict of all Aggregate attributes that are Unsupported """
         """
         OrderedDict of all Aggregate attributes that are Unsupported.
         """
@@ -264,6 +270,7 @@ class List(Aggregate, list):
         root = ET.Element(cls.__name__)
         # Append items enumerated in the class definition
         # (i.e. direct child Elements of the *LIST defined in the OFX spec)
+        # - this is used by Tranlist, not directly by List
         for spec in self.spec:
             value = getattr(self, spec)
             if value is not None:
@@ -307,7 +314,7 @@ class TranList(List):
 class SubAggregate(Element):
     """
     Aggregate that is a child of this parent Aggregate.
-    
+
     SubAggregate instances appear only in the model class definitions
     (Aggregate subclasses).  Their main utility is to define the `spec`
     class attribute for a model class, via Aggregate._ordered_attrs().
@@ -333,9 +340,10 @@ class SubAggregate(Element):
             return value
         return Aggregate.from_etree(value)
 
-    def __repr__(self):
-        repr = "<SubAggregate {}>".format(self.type)
-        return repr
+    # This doesn't get used ?
+    #  def __repr__(self):
+        #  repr = "<SubAggregate {}>".format(self.type)
+        #  return repr
 
 
 class Unsupported(InstanceCounterMixin):

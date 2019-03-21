@@ -320,6 +320,29 @@ class MfinfoTestCase(unittest.TestCase, base.TestAggregate):
         root.append(fimfassetclass)
         return root
 
+    def testOneOf(self):
+        self.oneOfTest('MFTYPE', ('OPENEND', 'CLOSEEND', 'OTHER'))
+
+    def testGroom(self):
+        root = deepcopy(self.root)
+        MFINFO.groom(root)
+        self.assertIsInstance(root, Element)
+        self.assertEqual(len(root), len(self.root))
+        secinfo, mftype, yld, dtyieldasof, mfassetclass, fimfassetclass = root [:]
+
+        # FIXME - test the other children too
+        self.assertIsInstance(yld, Element)
+        self.assertEqual(len(yld), 0)
+        self.assertEqual(yld.tag, 'YLD')
+        self.assertEqual(yld.text, '5.0')
+
+    def testUngroom(self):
+        root = self.root
+        yld = root[2]
+        yld.tag = 'YLD'
+        MFINFO.ungroom(root)
+        self.assertEqual(yld.tag, 'YIELD')
+
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, MFINFO)
@@ -329,9 +352,6 @@ class MfinfoTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.dtyieldasof, datetime(2003, 5, 1, tzinfo=UTC))
         self.assertIsInstance(root.mfassetclass, MFASSETCLASS)
         self.assertIsInstance(root.fimfassetclass, FIMFASSETCLASS)
-
-    def testOneOf(self):
-        self.oneOfTest('MFTYPE', ('OPENEND', 'CLOSEEND', 'OTHER'))
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -439,6 +459,26 @@ class StockinfoTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.dtyieldasof, datetime(2003, 5, 1, tzinfo=UTC))
         self.assertEqual(root.assetclass, 'SMALLSTOCK')
         self.assertEqual(root.fiassetclass, 'FOO')
+
+    def testGroom(self):
+        root = deepcopy(self.root)
+        STOCKINFO.groom(root)
+        self.assertIsInstance(root, Element)
+        self.assertEqual(len(root), len(self.root))
+        secinfo, stocktype, yld, dtyieldasof, assetclass, fiassetclass = root [:]
+
+        # FIXME - test the other children too
+        self.assertIsInstance(yld, Element)
+        self.assertEqual(len(yld), 0)
+        self.assertEqual(yld.tag, 'YLD')
+        self.assertEqual(yld.text, '5.0')
+
+    def testUngroom(self):
+        root = self.root
+        yld = root[2]
+        yld.tag = 'YLD'
+        STOCKINFO.ungroom(root)
+        self.assertEqual(yld.tag, 'YIELD')
 
     def testOneOf(self):
         self.oneOfTest('ASSETCLASS', ASSETCLASSES)

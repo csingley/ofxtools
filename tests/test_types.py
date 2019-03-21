@@ -13,7 +13,34 @@ from ofxtools.Types import OFXTypeWarning
 from ofxtools.utils import UTC
 
 
+class ElementTestCase(unittest.TestCase):
+    def testInit(self):
+        """
+        Element base class __init__() accepts only single ``required`` kwarg
+        """
+        ofxtools.Types.Element(required=False)  # Succeeds
+
+        with self.assertRaises(ValueError):
+            ofxtools.Types.Element(1, required=False)
+
+        with self.assertRaises(ValueError):
+            ofxtools.Types.Element(required=False, otherarg=5)
+
+    def testConvert(self):
+        """ Element base class doesn't implement convert() """
+        with self.assertRaises(NotImplementedError):
+            instance = ofxtools.Types.Element(required=False)
+            instance.convert(None)
+
+    def testRepr(self):
+        instance = ofxtools.Types.Element(required=True)
+        rep = repr(instance)
+        self.assertEqual(rep, "<Element required=True>")
+
+
+
 class Base:
+    """ Common tests for Element subclasses """
     def test_required(self):
         t = self.type_(required=True)
         # If required, missing value (i.e. None) is illegal
