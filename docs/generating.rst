@@ -20,9 +20,12 @@ along in section 11.4.2.2 of the OFX spec.
     In [2]: from ofxtools.utils import UTC
     In [3]: from decimal import Decimal
     In [4]: from datetime import datetime
-    In [5]: ledgerbal = LEDGERBAL(balamt=Decimal('150.65'), dtasof=datetime(2015, 1, 1, tzinfo=UTC))
-    In [6]: acctfrom = BANKACCTFROM(bankid='123456789', acctid='23456', accttype='CHECKING')  # Section 11.3.1
-    In [7]: stmtrs = STMTRS(curdef='USD', bankacctfrom=acctfrom, ledgerbal=ledgerbal) 
+    In [5]: ledgerbal = LEDGERBAL(balamt=Decimal('150.65'),
+       ...:                       dtasof=datetime(2015, 1, 1, tzinfo=UTC))
+    In [6]: acctfrom = BANKACCTFROM(bankid='123456789',
+       ...: acctid='23456', accttype='CHECKING')  # OFX Section 11.3.1
+    In [7]: stmtrs = STMTRS(curdef='USD', bankacctfrom=acctfrom,
+       ...:                 ledgerbal=ledgerbal) 
 
 So far so good.  Now to slather it in wrapper cruft and garnish with metadata.
 
@@ -32,7 +35,9 @@ So far so good.  Now to slather it in wrapper cruft and garnish with metadata.
     In [9]: stmttrnrs = STMTTRNRS(trnuid='5678', status=status, stmtrs=stmtrs)
     In [10]: bankmsgsrs = BANKMSGSRSV1(stmttrnrs)
     In [11]: fi = FI(org='Illuminati', fid='666')
-    In [12]: sonrs = SONRS(status=status, dtserver=datetime(2015, 1, 2, 17, 0, 0, tzinfo=UTC), language='ENG')
+    In [12]: sonrs = SONRS(status=status,
+        ...:               dtserver=datetime(2015, 1, 2, 17, tzinfo=UTC),
+        ...:               language='ENG')
     In [13]: signonmsgs = SIGNONMSGSRSV1(sonrs=sonrs)
     In [14]: ofx = OFX(signonmsgsrsv1=signonmsgs, bankmsgsrsv1=bankmsgsrs)
 
