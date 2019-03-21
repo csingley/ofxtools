@@ -138,8 +138,6 @@ class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
     @property
     def root(self):
         root = Element('INVOOLIST')
-        SubElement(root, 'DTSTART').text = '20130601'
-        SubElement(root, 'DTEND').text = '20130630'
         for oo in ('Oobuydebt', 'Oobuymf', 'Oobuyopt', 'Oobuyother',
                    'Oobuystock', 'Ooselldebt', 'Oosellmf', 'Oosellopt',
                    'Oosellother', 'Oosellstock', 'Switchmf',):
@@ -2240,7 +2238,7 @@ class Invstmtmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ['MSGSETCORE', 'TRANDNLD', 'OODNLD', 'POSDNLD',
                         'BALDNLD', 'CANEMAIL', ]
-    # optionalElements = ['INV401KDNLD', 'CLOSINGAVAIL', ]
+    optionalElements = ['INV401KDNLD', 'CLOSINGAVAIL', ]
 
     @property
     def root(self):
@@ -2252,8 +2250,8 @@ class Invstmtmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, 'POSDNLD').text = 'Y'
         SubElement(root, 'BALDNLD').text = 'Y'
         SubElement(root, 'CANEMAIL').text = 'N'
-        # SubElement(root, 'INV401KDNLD').text = 'N'
-        # SubElement(root, 'CLOSINGAVAIL').text = 'Y'
+        SubElement(root, 'INV401KDNLD').text = 'N'
+        SubElement(root, 'CLOSINGAVAIL').text = 'Y'
 
         return root
 
@@ -2266,8 +2264,8 @@ class Invstmtmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.posdnld, True)
         self.assertEqual(root.baldnld, True)
         self.assertEqual(root.canemail, False)
-        # self.assertEqual(root.inv401kdnld, False)
-        # self.assertEqual(root.closingavail, True)
+        self.assertEqual(root.inv401kdnld, False)
+        self.assertEqual(root.closingavail, True)
 
 
 class InvstmtmsgsetTestCase(unittest.TestCase, base.TestAggregate):

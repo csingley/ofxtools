@@ -511,7 +511,7 @@ class SWITCHMF(Aggregate):
     switchall = Bool(required=True)
 
 
-class INVOOLIST(TranList):
+class INVOOLIST(List):
     """ OFX section 13.9.2.2 """
     memberTags = ['OOBUYDEBT', 'OOBUYMF', 'OOBUYOPT', 'OOBUYOTHER',
                   'OOBUYSTOCK', 'OOSELLDEBT', 'OOSELLMF', 'OOSELLOPT',

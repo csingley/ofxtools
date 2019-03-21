@@ -27,7 +27,7 @@ except ImportError:
 from xml.etree.ElementTree import (
     Element,
 )
-from io import BytesIO
+from io import (BytesIO, StringIO)
 from tempfile import (
     TemporaryFile,
     NamedTemporaryFile,
@@ -35,11 +35,7 @@ from tempfile import (
 
 
 # local imports
-from ofxtools.Parser import (
-    OFXTree,
-    TreeBuilder,
-    ParseError,
-)
+from ofxtools.Parser import (OFXTree, TreeBuilder, ParseError, main,)
 
 
 class TreeBuilderRegexTestCase(TestCase):
@@ -341,7 +337,6 @@ class TreeBuilderUnitFunctionalTestCase(TestCase):
 
 
 class OFXTreeTestCase(TestCase):
-    """ """
     def setUp(self):
         self.tree = OFXTree()
 
@@ -443,6 +438,28 @@ class OFXTreeTestCase(TestCase):
         # raises ValueError
         with self.assertRaises(ValueError):
             self.tree.convert()
+
+
+class MainTestCase(TestCase):
+    """ Test main() """
+
+    def testMain(self):
+        import os
+        this_dir = os.path.dirname(os.path.abspath(__file__))
+        source = os.path.join(this_dir, 'data', 'invstmtrs.ofx')
+
+        with patch('sys.stdout', new_callable=StringIO) as stdout:
+            main(source)
+            output = stdout.getvalue()
+            self.assertEqual(
+                output,
+                ("["
+                 "<BUYSTOCK(invbuy=<INVBUY(invtran=<INVTRAN(fitid='23321', dttrade=datetime.datetime(2005, 8, 25, 0, 0, tzinfo=<UTC>), dtsettle=datetime.datetime(2005, 8, 28, 0, 0, tzinfo=<UTC>))>, secid=<SECID(uniqueid='123456789', uniqueidtype='CUSIP')>, units=Decimal('100'), unitprice=Decimal('50.00'), commission=Decimal('25.00'), total=Decimal('-5025.00'), subacctsec='CASH', subacctfund='CASH')>, buytype='BUY')>"
+                 ", "
+                 "<INVBANKTRAN(stmttrn=<STMTTRN(trntype='CREDIT', dtposted=datetime.datetime(2005, 8, 25, 0, 0, tzinfo=<UTC>), dtuser=datetime.datetime(2005, 8, 25, 0, 0, tzinfo=<UTC>), trnamt=Decimal('1000.00'), fitid='12345', name='Customer deposit', memo='Your check #1034')>, subacctfund='CASH')>"
+                 "]\n"
+                )
+            )
 
 
 if __name__ == '__main__':

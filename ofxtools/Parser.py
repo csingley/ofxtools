@@ -188,17 +188,11 @@ class TreeBuilder(ET.TreeBuilder):
         return string or None
 
 
-def main():
+def main(*files):
     """
     Simple functional test for impatient developers.
     """
-    from argparse import ArgumentParser
-
-    argparser = ArgumentParser(description='Parse OFX data; dump transactions')
-    argparser.add_argument('file', nargs='+', help='OFX file(s)')
-    args = argparser.parse_args()
-
-    for file in args.file:
+    for file in files:
         ofxparser = OFXTree()
         ofxparser.parse(file)
         response = ofxparser.convert()
@@ -206,4 +200,9 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    from argparse import ArgumentParser
+
+    argparser = ArgumentParser(description='Parse OFX data; dump transactions')
+    argparser.add_argument('file', nargs='+', help='OFX file(s)')
+    args = argparser.parse_args()
+    main(*args.file)
