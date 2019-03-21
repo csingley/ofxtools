@@ -168,7 +168,7 @@ class OFXHeaderV2(OFXHeaderBase):
                   ('NEWFILEUID', self.newfileuid),)
         attrs = ['='.join((attr, '"%s"' % val)) for attr, val in fields]
         ofx_decl = '<?OFX %s?>' % ' '.join(attrs)
-        return '\r\n'.join((xml_decl, ofx_decl))
+        return '\r\n'.join((xml_decl, ofx_decl, ''))
 
 
 XML_REGEX = re.compile(r"""(<\?xml\s+
