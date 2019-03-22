@@ -35,7 +35,6 @@ The method call therefore looks like this:
 """
 
 # stdlib imports
-import sys
 import datetime
 import uuid
 import xml.etree.ElementTree as ET
@@ -45,15 +44,8 @@ from getpass import getpass
 
 from ofxtools.models import ACCTINFORQ, ACCTINFOTRNRQ, SIGNUPMSGSRQV1
 
-PYTHON_VERSION = sys.version_info.major
-
-if PYTHON_VERSION == 3:
-    from configparser import SafeConfigParser
-    from urllib.parse import urlparse
-else:
-    from ConfigParser import SafeConfigParser
-    from urlparse import urlparse
-
+from configparser import SafeConfigParser
+from urllib.parse import urlparse
 from io import BytesIO
 
 # 3rd party imports

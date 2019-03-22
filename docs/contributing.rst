@@ -18,6 +18,13 @@ Or even better, use ``make``:
 
     make test
 
+After running one of the above commands, you can view a report of which parts
+of the code aren't covered by tests:
+
+.. code:: bash
+
+    coverage report -m
+
 Poke around in the Makefile; there's a few developer-friendly commands there.
 
 If you commit working tests for your code, you'll be my favorite person.

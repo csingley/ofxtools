@@ -2,7 +2,6 @@
 
 ``ofxtools`` and SQL
 ====================
-
 ``ofxtools`` does include the ``ofxalchemy`` subpackage, but you probably don't
 want to use it.  The implementation is pretty nasty, and the SQL tables it
 generates are cumbersome and inefficient.

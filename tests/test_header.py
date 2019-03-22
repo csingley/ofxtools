@@ -7,21 +7,16 @@ import uuid
 from io import BytesIO
 from xml.etree.ElementTree import Element
 try:
-    from unittest.mock import (
-        patch,
-    )
+    from unittest.mock import patch
 except ImportError:
-    # Python 2 depends on external mock package
-    from mock import (
-        patch,
-    )
+    # Python < 3.3 depends on external mock package
+    from mock import patch
 
 # local imports
 import ofxtools
 
 
 class OFXHeaderTestMixin(object):
-    """ """
     # Override in subclass
     headerClass = None
     defaultVersion = None

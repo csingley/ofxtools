@@ -14,16 +14,6 @@ from xml.sax import saxutils
 from .utils import UTC
 
 
-PYVERSION = sys.version_info[0]
-
-
-# We want Py3K string behavior (everything is unicode) but to remain portable
-# we'll retain Py2K semantics
-if PYVERSION > 2:
-    unicode = str
-    basestring = str
-
-
 class OFXTypeWarning(UserWarning):
     """ Base class for warnings in this module """
     pass
@@ -40,10 +30,7 @@ class InstanceCounterMixin(object):
 
     @classmethod
     def _next_counter(cls):
-        if PYVERSION > 2:
-            return next(cls._element_counter)
-        else:
-            return cls._element_counter.next()
+        return next(cls._element_counter)
 
     def __init__(self):
         self._counter = self._next_counter()
@@ -100,7 +87,7 @@ class Element(InstanceCounterMixin):
 
     def unconvert(self, value):
         """ Override in subclass """
-        return unicode(value)
+        return value
 
     def __repr__(self):
         repr = "<{} required={}>"
@@ -156,7 +143,8 @@ class String(Element):
                 raise ValueError("Value is required")
             else:
                 return None
-        value = unicode(value)
+
+        value = str(value)
 
         # Unescape '&amp;' '&lt;' '&gt;' '&nbsp;' per OFX section 2.3
         # Also go ahead and unescape other XML control characters,
@@ -245,7 +233,7 @@ class Decimal(Element):
         try:
             value = decimal.Decimal(value)
         except decimal.InvalidOperation:
-            if isinstance(value, basestring):
+            if isinstance(value, str):
                 value = decimal.Decimal(value.replace(',', '.'))
 
         if self.precision is not None:
@@ -277,7 +265,7 @@ class DateTime(Element):
             return value
 
         # Otherwise it needs to be a string
-        if not isinstance(value, basestring):
+        if not isinstance(value, str):
             msg = "'{}' is type '{}'; can't convert to datetime".format(
                 value, type(value))
 
