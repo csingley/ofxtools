@@ -13,10 +13,11 @@ if you need to generate your own OFX-formatted data... ``ofxtools`` is for you!
 What is it?
 -----------
 ``ofxtools`` requests, consumes and
-produces both OFXv1 (SGML) and OFXv2 (XML) formats.  It
-also handles Quicken's QFX format, although it ignores Intuit's proprietary
-extension tags.  It converts serialized markup to/from native Python objects of
+produces both OFXv1 (SGML) and OFXv2 (XML) formats.
+It converts serialized markup to/from native Python objects of
 the appropriate data type, while preserving structure.
+It also handles Quicken's QFX format, although it ignores Intuit's proprietary
+extension tags.
 
 In a nutshell, ``ofxtools`` makes it simple to get OFX data and extract it,
 or export your data in OFX format.
@@ -63,8 +64,8 @@ Dependencies
 ``ofxtools`` is compatible with Python version 3.1+.  Its only external
 dependency is `Requests`_.
 
-** NOTE: As of version 0.6, ``ofxtools`` no longer supports Python version 2,
-which goes EOL 2019-01-01. **
+**NOTE: As of version 0.6, ``ofxtools`` no longer supports Python version 2,
+which goes EOL 2019-01-01.**
 
 .. _OFX specification: http://www.ofx.net/downloads.html
 .. _Requests: http://docs.python-requests.org/en/master/
