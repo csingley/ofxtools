@@ -11,7 +11,7 @@ setup(
     version='0.5.4',
     # Note: change 'master' to the tag name when release a new verion
     download_url='https://github.com/csingley/ofxtools/tarball/master',
-    #  download_url='https://github.com/csingley/ofxtools/tarball/0.5.4',
+    #  download_url='https://github.com/csingley/ofxtools/tarball/0.6.0',
 
     description=('Library for working with Open Financial Exchange (OFX) '
                  'formatted data used by financial institutions'),
@@ -38,8 +38,6 @@ setup(
         'Operating System :: OS Independent',
         'Natural Language :: English',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.1',
         'Programming Language :: Python :: 3.2',
