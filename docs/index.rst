@@ -5,6 +5,17 @@
 
 Open Financial Exchange (OFX) Tools for Python
 ==============================================
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   installation
+   client parser generating
+   ofxalchemy
+   contributing
+   resources
+
 ``ofxtools`` is a Python library for working with Open Financial Exchange (OFX)
 data - the standard format for downloading financial information from banks
 and stockbrokers.  OFX data is widely provided by financial institutions so
@@ -71,24 +82,6 @@ dependency is `Requests`_.
 
 **NOTE: As of version 0.6, ``ofxtools`` no longer supports Python version 2,
 which goes EOL 2019-01-01.**
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
-   installation
-   client parser generating
-   ofxalchemy
-   contributing
-   resources
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
 
 
 .. _OFX specification: http://www.ofx.net/downloads.html
