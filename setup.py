@@ -8,7 +8,7 @@ with open(os.path.join(__here__, 'README.rst'), 'r') as f:
 
 setup(
     name='ofxtools',
-    version='0.5.4',
+    version='0.6.1',
     # Note: change 'master' to the tag name when release a new verion
     #  download_url='https://github.com/csingley/ofxtools/tarball/master',
     download_url='https://github.com/csingley/ofxtools/tarball/0.6.0',
