@@ -1,4 +1,4 @@
-.. client:
+.. _client:
 
 Downloading OFX Data
 ====================
