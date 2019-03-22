@@ -6,16 +6,6 @@
 Open Financial Exchange (OFX) Tools for Python
 ==============================================
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
-   installation
-   client parser generating
-   ofxalchemy
-   contributing
-   resources
-
 ``ofxtools`` is a Python library for working with Open Financial Exchange (OFX)
 data - the standard format for downloading financial information from banks
 and stockbrokers.  OFX data is widely provided by financial institutions so
@@ -25,6 +15,16 @@ software such as Quicken, Microsoft Money, or GnuCash.
 If you want to download your transaction data outside of one of these
 programs - if you wish to develop a Python application to use this data -
 if you need to generate your own OFX-formatted data... ``ofxtools`` is for you!
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   installation
+   client parser generating
+   ofxalchemy
+   contributing
+   resources
 
 What is it?
 -----------
