@@ -62,27 +62,28 @@ class Aggregate(object):
             )
             raise ValueError(msg)
 
-    def verify(self, kwargs):
+    @classmethod
+    def verify(cls, kwargs):
         """
         Enforce Aggregate-level structural constraints of the OFX spec.
 
         Throw an error for Aggregates containing children that are
         mutually exclusive per the OFX spec,
         """
-        for (attr0, attr1) in self.mutexes:
+        for (attr0, attr1) in cls.mutexes:
             val0 = kwargs.get(attr0, None)
             val1 = kwargs.get(attr1, None)
             if val0 and val1:
                 msg = "{} may not set both {} and {}".format(
-                    self.__class__.__name__, attr0, attr1)
+                    cls.__name__, attr0, attr1)
                 raise ValueError(msg)
 
-    @staticmethod
-    def from_etree(elem):
+    @classmethod
+    def from_etree(cls, elem):
         """
-        Look up the ``Aggregate`` subclass for a given ``xml.etree.ElementTree.Element`` and
-        feed it the Element to instantiate an Aggregate corresponding to the
-        Element.tag.
+        Look up the ``Aggregate`` subclass for a given
+        ``xml.etree.ElementTree.Element`` and instantiate an Aggregate
+        corresponding to the Element.tag.
 
         Main entry point for type conversion from `ET.ElementTree` to `Aggregate`.
         """
@@ -95,32 +96,27 @@ class Aggregate(object):
             msg = "ofxtools.models doesn't define {}".format(elem.tag)
             raise ValueError(msg)
 
-        # Hook to modify incoming `ET.ElementTree` before conversion
+        # Hook to modify incoming ``ET.ElementTree`` before conversion
         SubClass.groom(elem)
 
-        args = []
-        kwargs = {}
-        if issubclass(SubClass, List):
-            if issubclass(SubClass, TranList):
-                # Transaction lists first have two data elements giving the
-                # date range spanned, then a series of transaction aggregates.
-                dtstart, dtend = elem[:2]
-                try:
-                    assert dtstart.tag == 'DTSTART'
-                    assert dtend.tag == 'DTEND'
-                except AssertionError:
-                    msg = "<{}> lacks <DTSTART> / <DTEND>".format(elem.tag)
-                    raise ValueError(msg)
-                args = [dtstart.text, dtend.text]
-                elem.remove(dtstart)
-                elem.remove(dtend)
-            # List constructors take variable # of args,
-            # so we pass `args` not `kwargs`.
-            args.extend([Aggregate.from_etree(el) for el in elem])
-        else:
-            kwargs = {el.tag.lower(): (el.text or el) for el in elem}
+        # Extract args to pass to __init__() from ``ET.ElementTree``
+        args, kwargs = SubClass._make_args(elem)
+
         instance = SubClass(*args, **kwargs)
         return instance
+
+    @classmethod
+    def _make_args(cls, elem):
+        """
+        Extract args to pass to __init__() from ``ET.ElementTree``
+
+        Override/extend in subclass
+        """
+        # A Generic ``Aggregate`` subclass __init__() needs keyword
+        # args for each ``SubAggregate`` / ``Element`` in its spec()
+        args = []
+        kwargs = {el.tag.lower(): (el.text or el) for el in elem}
+        return args, kwargs
 
     @staticmethod
     def groom(elem):
@@ -262,6 +258,30 @@ class List(Aggregate, list):
                 raise ValueError(msg.format(self.__class__.__name__, cls_name))
             self.append(member)
 
+    @classmethod
+    def _make_args(cls, elem):
+        # Hook for subclasses to do custom extraction logic
+        # before generic arg extension from list contents
+        args, kwargs = cls._pre_make_args(elem)
+
+        # List constructors take variable # of args,
+        # so we pass `args` not `kwargs`.
+        args.extend([Aggregate.from_etree(el) for el in elem])
+
+        return args, kwargs
+
+    @classmethod
+    def _pre_make_args(cls, elem):
+        """
+        Hook for subclasses to do custom extraction logic
+        before generic arg extension from list contents
+
+        Extend in subclass
+        """
+        args = []
+        kwargs = {}
+        return args, kwargs
+
     def to_etree(self):
         """
         Convert self and children to `ElementTree.Element` hierarchy
@@ -270,7 +290,7 @@ class List(Aggregate, list):
         root = ET.Element(cls.__name__)
         # Append items enumerated in the class definition
         # (i.e. direct child Elements of the *LIST defined in the OFX spec)
-        # - this is used by Tranlist, not directly by List
+        # - this is used by subclasses (e.g. Tranlist), not directly by List
         for spec in self.spec:
             value = getattr(self, spec)
             if value is not None:
@@ -295,20 +315,71 @@ class List(Aggregate, list):
 
 
 class TranList(List):
-    """
-    Base class for OFX *TRANLIST
-    """
+    """ Base class for OFX *TRANLIST """
     dtstart = DateTime(required=True)
     dtend = DateTime(required=True)
 
     def __init__(self, dtstart, dtend, *members):
         self.dtstart = dtstart
         self.dtend = dtend
-        super(TranList, self).__init__(*members)
+        super().__init__(*members)
+
+    @classmethod
+    def _pre_make_args(cls, elem):
+        args, kwargs = super()._pre_make_args(elem)
+
+        # Transaction lists first have two data elements giving the
+        # date range spanned, then a series of transaction aggregates.
+        dtstart, dtend = elem[:2]
+        try:
+            assert dtstart.tag == 'DTSTART'
+            assert dtend.tag == 'DTEND'
+        except AssertionError:
+            msg = "<{}> lacks <DTSTART> / <DTEND>".format(elem.tag)
+            raise ValueError(msg)
+        args = [dtstart.text, dtend.text]
+        elem.remove(dtstart)
+        elem.remove(dtend)
+
+        return args, kwargs
 
     def __repr__(self):
         return "<{} dtstart='{}' dtend='{}' len={}>".format(
             self.__class__.__name__, self.dtstart, self.dtend, len(self))
+
+
+class AcctInfoList(List):
+    """
+    List subclass specialized for models.signup.ACCTINFORS
+
+    This needs to be defined in this module to avoid recursive imports.
+    """
+    dtacctup = DateTime(required=True)
+
+    def __init__(self, dtacctup, *members):
+        self.dtacctup = dtacctup
+        super().__init__(*members)
+
+    @classmethod
+    def _pre_make_args(cls, elem):
+        args, kwargs = super()._pre_make_args(elem)
+
+        # ACCTINFORS first have a data element giving the date of
+        # last update, then a series of ACCTINFO aggregates.
+        dtacctup = elem[0]
+        try:
+            assert dtacctup.tag == 'DTACCTUP'
+        except AssertionError:
+            msg = "<{}> lacks <DTACCTUP>".format(elem.tag)
+            raise ValueError(msg)
+        args = [dtacctup.text, ]
+        elem.remove(dtacctup)
+
+        return args, kwargs
+
+    def __repr__(self):
+        return "<{} dtacctup ='{}' len={}>".format(
+            self.__class__.__name__, self.dtacctup, len(self))
 
 
 class SubAggregate(Element):
@@ -327,7 +398,7 @@ class SubAggregate(Element):
         agg = args.pop(0)
         assert issubclass(agg, Aggregate)
         self.type = agg
-        super(SubAggregate, self)._init(*args, **kwargs)
+        super()._init(*args, **kwargs)
 
     def convert(self, value):
         """ """

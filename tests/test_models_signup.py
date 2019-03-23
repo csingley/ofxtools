@@ -255,7 +255,8 @@ class AcctinforsTestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, ACCTINFORS)
         self.assertEqual(root.dtacctup, datetime(2012, 3, 14, tzinfo=UTC))
-        self.assertIsInstance(root.acctinfo, ACCTINFO)
+        self.assertEqual(len(root), 1)
+        self.assertIsInstance(root[0], ACCTINFO)
 
 
 class AcctinfotrnrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -475,3 +476,7 @@ class Signupmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(len(root), 2)
         for stmttrnrs in root:
             self.assertIsInstance(stmttrnrs, ENROLLTRNRS)
+
+
+if __name__ == '__main__':
+    unittest.main()

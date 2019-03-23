@@ -25,6 +25,9 @@ class InstanceCounterMixin(object):
     increasing integer member named '_counter'. This is used for ordering class
     members - needed e.g. for Aggregate.spec to sequence Elements/SubAggregates
     in the order they're declared in the class definition.
+
+    This is not needed for Python v3.6+
+    https://docs.python.org/3/whatsnew/3.6.html#whatsnew36-pep520
     """
     _element_counter = itertools.count()
 
@@ -133,7 +136,7 @@ class String(Element):
             length = args[0]
             args = args[1:]
         self.length = length
-        super(String, self)._init(*args, **kwargs)
+        super()._init(*args, **kwargs)
 
     def convert(self, value):
         if value == '':
@@ -176,7 +179,7 @@ class NagString(String):
 class OneOf(Element):
     def _init(self, *args, **kwargs):
         self.valid = set(args)
-        super(OneOf, self)._init(**kwargs)
+        super()._init(**kwargs)
 
     def convert(self, value):
         if value == '':
@@ -198,7 +201,7 @@ class Integer(Element):
             length = args[0]
             args = args[1:]
         self.length = length
-        super(Integer, self)._init(*args, **kwargs)
+        super()._init(*args, **kwargs)
 
     def convert(self, value):
         if value is None:
@@ -220,7 +223,7 @@ class Decimal(Element):
             precision = args[0]
             args = args[1:]
             self.precision = decimal.Decimal('0.' + '0'*(precision-1) + '1')
-        super(Decimal, self)._init(*args, **kwargs)
+        super()._init(*args, **kwargs)
 
     def convert(self, value):
         if value is None:

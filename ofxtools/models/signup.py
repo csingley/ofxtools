@@ -8,7 +8,7 @@ from ofxtools.models.bank import (
     BANKACCTFROM, CCACCTFROM,
 )
 from ofxtools.models.base import (
-    Aggregate, SubAggregate, List, Unsupported
+    Aggregate, SubAggregate, List, AcctInfoList, Unsupported
 )
 from ofxtools.models.common import (
     MSGSETCORE, STATUS,
@@ -104,14 +104,17 @@ class ACCTINFO(Aggregate):
     invacctinfo = SubAggregate(INVACCTINFO)
 
 
-class ACCTINFORS(Aggregate):
-    """ OFX section 8.5.1 """
-    dtacctup = DateTime(required=True)
-    acctinfo = SubAggregate(ACCTINFO)
+class ACCTINFORS(AcctInfoList):
+    """ OFX section 8.5.2 """
+    memberTags = ['ACCTINFO', ]
+
+    @classmethod
+    def verify(cls, kwargs):
+        super().verify(kwargs)
 
 
 class ACCTINFOTRNRS(Aggregate):
-    """ OFX section 8.5.1 """
+    """ OFX section 8.5.2 """
     trnuid = String(36, required=True)
     status = SubAggregate(STATUS, required=True)
     acctinfors = SubAggregate(ACCTINFORS)
