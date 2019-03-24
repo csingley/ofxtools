@@ -22,9 +22,9 @@ class PROFRQ(Aggregate):
 
 
 class MSGSETLIST(List):
-    mmberTags = ['SIGNONMSGSET', 'SIGNUPMSGSET', 'PROFMSGSET',
-                 'BANKMSGSET', 'CREDITCARDMSGSET', 'INVSTMTMSGSET',
-                 'SECLISTMSGSET', 'TAX1099MSGSET']
+    dataTags = ['SIGNONMSGSET', 'SIGNUPMSGSET', 'PROFMSGSET',
+                'BANKMSGSET', 'CREDITCARDMSGSET', 'INVSTMTMSGSET',
+                'SECLISTMSGSET', 'TAX1099MSGSET']
 
 
 class PROFRS(Aggregate):
@@ -74,11 +74,11 @@ class PROFTRNRS(Aggregate):
 
 
 class PROFMSGSRQV1(List):
-    memberTags = ['PROFTRNRQ']
+    dataTags = ['PROFTRNRQ']
 
 
 class PROFMSGSRSV1(List):
-    memberTags = ['PROFTRNRS']
+    dataTags = ['PROFTRNRS']
 
 
 class PROFMSGSETV1(Aggregate):

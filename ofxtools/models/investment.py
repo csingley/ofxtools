@@ -353,11 +353,11 @@ class TRANSFER(Aggregate):
 
 class INVTRANLIST(TranList):
     """ OFX section 13.9.2.2 """
-    mmberTags = ['INVBANKTRAN', 'BUYDEBT', 'BUYMF', 'BUYOPT', 'BUYOTHER',
-                 'BUYSTOCK', 'CLOSUREOPT', 'INCOME', 'INVEXPENSE', 'JRNLFUND',
-                 'JRNLSEC', 'MARGININTEREST', 'REINVEST', 'RETOFCAP',
-                 'SELLDEBT', 'SELLMF', 'SELLOPT', 'SELLOTHER', 'SELLSTOCK',
-                 'SPLIT', 'TRANSFER']
+    dataTags = ['INVBANKTRAN', 'BUYDEBT', 'BUYMF', 'BUYOPT', 'BUYOTHER',
+                'BUYSTOCK', 'CLOSUREOPT', 'INCOME', 'INVEXPENSE', 'JRNLFUND',
+                'JRNLSEC', 'MARGININTEREST', 'REINVEST', 'RETOFCAP',
+                'SELLDEBT', 'SELLMF', 'SELLOPT', 'SELLOTHER', 'SELLSTOCK',
+                'SPLIT', 'TRANSFER']
 
 
 # Positions
@@ -411,7 +411,7 @@ class POSSTOCK(Aggregate):
 
 class INVPOSLIST(List):
     """ OFX section 13.9.2.2 """
-    memberTags = ['POSDEBT', 'POSMF', 'POSOPT', 'POSOTHER', 'POSSTOCK']
+    dataTags = ['POSDEBT', 'POSMF', 'POSOPT', 'POSOTHER', 'POSSTOCK']
 
 
 # Balances
@@ -530,9 +530,9 @@ class SWITCHMF(Aggregate):
 
 class INVOOLIST(List):
     """ OFX section 13.9.2.2 """
-    mmberTags = ['OOBUYDEBT', 'OOBUYMF', 'OOBUYOPT', 'OOBUYOTHER',
-                 'OOBUYSTOCK', 'OOSELLDEBT', 'OOSELLMF', 'OOSELLOPT',
-                 'OOSELLOTHER', 'OOSELLSTOCK', 'SWITCHMF']
+    dataTags = ['OOBUYDEBT', 'OOBUYMF', 'OOBUYOPT', 'OOBUYOTHER',
+                'OOBUYSTOCK', 'OOSELLDEBT', 'OOSELLMF', 'OOSELLOPT',
+                'OOSELLOTHER', 'OOSELLSTOCK', 'SWITCHMF']
 
 
 class INVSTMTRS(Aggregate):
@@ -591,12 +591,12 @@ class INVSTMTTRNRS(Aggregate):
 
 class INVSTMTMSGSRQV1(List):
     """ OFX section 13.7.1.2.1 """
-    memberTags = ['INVSTMTTRNRQ']
+    dataTags = ['INVSTMTTRNRQ']
 
 
 class INVSTMTMSGSRSV1(List):
     """ OFX section 13.7.1.2.2 """
-    memberTags = ['INVSTMTTRNRS']
+    dataTags = ['INVSTMTTRNRS']
 
     @property
     def statements(self):

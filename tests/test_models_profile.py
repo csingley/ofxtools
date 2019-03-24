@@ -103,12 +103,12 @@ class MsgsetlistTestCase(unittest.TestCase, base.TestAggregate):
         root.append(tax1099msgset)
         return root
 
-    def testMemberTags(self):
+    def testdataTags(self):
         # MSGSETLIST may only contain
         # ['SIGNONMSGSET', 'SIGNUPMSGSET', 'PROFMSGSET',
         # 'BANKMSGSET', 'CREDITCARDMSGSET', 'INVSTMTMSGSET',
         # 'SECLISTMSGSET', 'TAX1099MSGSET', ]
-        allowedTags = MSGSETLIST.memberTags
+        allowedTags = MSGSETLIST.dataTags
         self.assertEqual(len(allowedTags), 8)
         root = deepcopy(self.root)
         root.append(test_models_bank.StmttrnrsTestCase().root)
@@ -247,9 +247,9 @@ class Profmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
             root.append(proftrnrq)
         return root
 
-    def testMemberTags(self):
+    def testdataTags(self):
         # PROFMSGSRQV1 may only contain PROFTRNRQ
-        allowedTags = PROFMSGSRQV1.memberTags
+        allowedTags = PROFMSGSRQV1.dataTags
         self.assertEqual(len(allowedTags), 1)
         root = deepcopy(self.root)
         root.append(ProftrnrsTestCase().root)
@@ -276,9 +276,9 @@ class Profmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
             root.append(proftrnrs)
         return root
 
-    def testMemberTags(self):
+    def testdataTags(self):
         # PROFMSGSRSV1 may only contain PROFTRNRS
-        allowedTags = PROFMSGSRSV1.memberTags
+        allowedTags = PROFMSGSRSV1.dataTags
         self.assertEqual(len(allowedTags), 1)
         root = deepcopy(self.root)
         root.append(ProftrnrqTestCase().root)

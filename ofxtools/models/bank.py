@@ -146,7 +146,7 @@ class STMTTRN(Aggregate, Origcurrency):
 
 class BANKTRANLIST(TranList):
     """ OFX section 11.4.2.2 """
-    memberTags = ['STMTTRN']
+    dataTags = ['STMTTRN']
 
 
 class LEDGERBAL(Aggregate):
@@ -163,7 +163,7 @@ class AVAILBAL(Aggregate):
 
 class BALLIST(List):
     """ OFX section 11.4.2.2 & 13.9.2.7 """
-    memberTags = ['BAL']
+    dataTags = ['BAL']
 
 
 class STMTRS(Aggregate):
@@ -211,12 +211,12 @@ class STMTTRNRS(Aggregate):
 
 class BANKMSGSRQV1(List):
     """ OFX section 11.13.1.1.1 """
-    memberTags = ['STMTTRNRQ']
+    dataTags = ['STMTTRNRQ']
 
 
 class BANKMSGSRSV1(List):
     """ OFX section 11.13.1.1.2 """
-    memberTags = ['STMTTRNRS']
+    dataTags = ['STMTTRNRS']
 
     @property
     def statements(self):

@@ -556,9 +556,9 @@ class BanktranlistTestCase(unittest.TestCase, base.TestAggregate):
             root.append(stmttrn)
         return root
 
-    def testMemberTags(self):
+    def testdataTags(self):
         # BANKTRANLIST may only contain STMTTRN
-        allowedTags = BANKTRANLIST.memberTags
+        allowedTags = BANKTRANLIST.dataTags
         self.assertEqual(len(allowedTags), 1)
         root = deepcopy(self.root)
         root.append(test_models_common.BalTestCase().root)
@@ -635,9 +635,9 @@ class BallistTestCase(unittest.TestCase, base.TestAggregate):
 
         return root
 
-    def testMemberTags(self):
+    def testdataTags(self):
         # BALLLIST may only contain BAL
-        allowedTags = BALLIST.memberTags
+        allowedTags = BALLIST.dataTags
         self.assertEqual(len(allowedTags), 1)
         root = deepcopy(self.root)
         root.append(StmttrnTestCase().root)
@@ -787,9 +787,9 @@ class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
             root.append(stmttrnrq)
         return root
 
-    def testMemberTags(self):
+    def testdataTags(self):
         # BANKMSGSRQV! may only contain STMTTRNRQ
-        allowedTags = BANKMSGSRQV1.memberTags
+        allowedTags = BANKMSGSRQV1.dataTags
         self.assertEqual(len(allowedTags), 1)
         root = deepcopy(self.root)
         root.append(StmttrnrsTestCase().root)
@@ -816,9 +816,9 @@ class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
             root.append(stmttrnrs)
         return root
 
-    def testMemberTags(self):
+    def testdataTags(self):
         # BANKMSGSRSV! may only contain STMTTRNRS
-        allowedTags = BANKMSGSRSV1.memberTags
+        allowedTags = BANKMSGSRSV1.dataTags
         self.assertEqual(len(allowedTags), 1)
         root = deepcopy(self.root)
         root.append(StmttrnrqTestCase().root)

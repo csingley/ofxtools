@@ -101,7 +101,7 @@ class SIGNONINFO(Aggregate):
 
 class SIGNONINFOLIST(List):
     """ OFX section 7.2 """
-    memberTags = ['SIGNONINFO']
+    dataTags = ['SIGNONINFO']
 
 
 class SIGNONMSGSRQV1(Aggregate):

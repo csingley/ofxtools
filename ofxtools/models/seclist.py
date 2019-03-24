@@ -74,7 +74,7 @@ class PORTION(Aggregate):
 
 class MFASSETCLASS(List):  # pylint: disable=too-many-ancestors
     """ OFX section 13.8.5.3 """
-    memberTags = ['PORTION']
+    dataTags = ['PORTION']
 
 
 class FIPORTION(Aggregate):
@@ -85,7 +85,7 @@ class FIPORTION(Aggregate):
 
 class FIMFASSETCLASS(List):  # pylint: disable=too-many-ancestors
     """ OFX section 13.8.5.3 """
-    memberTags = ['FIPORTION']
+    dataTags = ['FIPORTION']
 
 
 class MFINFO(Aggregate):
@@ -175,7 +175,7 @@ class STOCKINFO(Aggregate):
 
 class SECLIST(List):
     """ OFX section 13.8.4.4 """
-    memberTags = ['DEBTINFO', 'MFINFO', 'OPTINFO', 'OTHERINFO', 'STOCKINFO']
+    dataTags = ['DEBTINFO', 'MFINFO', 'OPTINFO', 'OTHERINFO', 'STOCKINFO']
 
 
 class SECRQ(Aggregate):
@@ -187,7 +187,7 @@ class SECRQ(Aggregate):
 
 class SECLISTRQ(List):
     """ OFX section 13.8.2.2 """
-    memberTags = ['SECRQ']
+    dataTags = ['SECRQ']
 
 
 class SECLISTTRNRQ(Aggregate):

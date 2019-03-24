@@ -157,10 +157,10 @@ class InvposlistTestCase(unittest.TestCase, base.TestAggregate):
             root.append(elem)
         return root
 
-    def testMemberTags(self):
+    def testdataTags(self):
         # INVPOSLIST may only contain
         # ['POSDEBT', 'POSMF', 'POSOPT', 'POSOTHER', 'POSSTOCK', ]
-        allowedTags = INVPOSLIST.memberTags
+        allowedTags = INVPOSLIST.dataTags
         self.assertEqual(len(allowedTags), 5)
         root = deepcopy(self.root)
         root.append(test_models_bank.StmttrnTestCase().root)
@@ -201,12 +201,12 @@ class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
             root.append(elem)
         return root
 
-    def testMemberTags(self):
+    def testdataTags(self):
         # INVOOLIST may only contain
         # ['OOBUYDEBT', 'OOBUYMF', 'OOBUYOPT', 'OOBUYOTHER',
         # 'OOBUYSTOCK', 'OOSELLDEBT', 'OOSELLMF', 'OOSELLOPT',
         # 'OOSELLOTHER', 'OOSELLSTOCK', 'SWITCHMF', ]
-        allowedTags = INVOOLIST.memberTags
+        allowedTags = INVOOLIST.dataTags
         self.assertEqual(len(allowedTags), 11)
         root = deepcopy(self.root)
         root.append(test_models_bank.StmttrnTestCase().root)
@@ -285,14 +285,14 @@ class InvtranlistTestCase(unittest.TestCase, base.TestAggregate):
             root.append(invtran().root)
         return root
 
-    def testMemberTags(self):
+    def testdataTags(self):
         # INVTRANLIST may only contain
         # ('INVBANKTRAN', 'BUYDEBT', 'BUYMF', 'BUYOPT', 'BUYOTHER',
         # 'BUYSTOCK', 'CLOSUREOPT', 'INCOME', 'INVEXPENSE', 'JRNLFUND',
         # 'JRNLSEC', 'MARGININTEREST', 'REINVEST', 'RETOFCAP',
         # 'SELLDEBT', 'SELLMF', 'SELLOPT', 'SELLOTHER', 'SELLSTOCK',
         # 'SPLIT', 'TRANSFER', )
-        allowedTags = INVTRANLIST.memberTags
+        allowedTags = INVTRANLIST.dataTags
         self.assertEqual(len(allowedTags), 21)
         root = deepcopy(self.root)
         root.append(test_models_bank.StmttrnTestCase().root)
@@ -2237,9 +2237,9 @@ class Invstmtmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
             root.append(stmttrnrq)
         return root
 
-    def testMemberTags(self):
+    def testdataTags(self):
         # INVSTMTMSGSRQV1 may only contain INVSTMTTRNRQ
-        allowedTags = INVSTMTMSGSRQV1.memberTags
+        allowedTags = INVSTMTMSGSRQV1.dataTags
         self.assertEqual(len(allowedTags), 1)
         root = deepcopy(self.root)
         root.append(InvstmttrnrsTestCase().root)
@@ -2266,9 +2266,9 @@ class Invstmtmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
             root.append(stmttrnrs)
         return root
 
-    def testMemberTags(self):
+    def testdataTags(self):
         # INVSTMTMSGSRSV1 may only contain INVSTMTTRNRS
-        allowedTags = INVSTMTMSGSRSV1.memberTags
+        allowedTags = INVSTMTMSGSRSV1.dataTags
         self.assertEqual(len(allowedTags), 1)
         root = deepcopy(self.root)
         root.append(InvstmttrnrqTestCase().root)
