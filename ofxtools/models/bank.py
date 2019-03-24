@@ -138,13 +138,15 @@ class STMTTRN(Aggregate, Origcurrency):
     origcurrency = SubAggregate(ORIGCURRENCY)
     inv401ksource = OneOf(*INV401KSOURCES)
 
-    mutexes = [("ccacctto", "bankacctto"), ("name", "payee"),
-               ("currency", "origcurrency")]
+    optionalMutexes = [
+        ("ccacctto", "bankacctto"),
+        ("name", "payee"),
+        ("currency", "origcurrency")]
 
 
 class BANKTRANLIST(TranList):
     """ OFX section 11.4.2.2 """
-    memberTags = ('STMTTRN', )
+    memberTags = ['STMTTRN']
 
 
 class LEDGERBAL(Aggregate):
@@ -161,7 +163,7 @@ class AVAILBAL(Aggregate):
 
 class BALLIST(List):
     """ OFX section 11.4.2.2 & 13.9.2.7 """
-    memberTags = ('BAL', )
+    memberTags = ['BAL']
 
 
 class STMTRS(Aggregate):
@@ -209,12 +211,12 @@ class STMTTRNRS(Aggregate):
 
 class BANKMSGSRQV1(List):
     """ OFX section 11.13.1.1.1 """
-    memberTags = ('STMTTRNRQ', )
+    memberTags = ['STMTTRNRQ']
 
 
 class BANKMSGSRSV1(List):
     """ OFX section 11.13.1.1.2 """
-    memberTags = ('STMTTRNRS', )
+    memberTags = ['STMTTRNRS']
 
     @property
     def statements(self):

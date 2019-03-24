@@ -58,8 +58,10 @@ class SIGNUPMSGSETV1(Aggregate):
     availaccts = Bool(required=True)
     clientactreq = Bool(required=True)
 
-    mutexes = [('clientenroll', 'webenroll'), ('clientenroll', 'otherenroll'),
-               ('webenroll', 'otherenroll')]
+    optionalMutexes = [
+        ('clientenroll', 'webenroll'),
+        ('clientenroll', 'otherenroll'),
+        ('webenroll', 'otherenroll')]
 
 
 class SIGNUPMSGSET(Aggregate):
@@ -80,7 +82,7 @@ class ACCTINFOTRNRQ(Aggregate):
 
 class SIGNUPMSGSRQV1(List):
     """ OFX section 8.1 """
-    memberTags = ('ENROLLTRNRQ', )
+    dataTags = ['ENROLLTRNRQ']
 
 
 class ACCTINFO(List):
@@ -105,13 +107,11 @@ class ACCTINFO(List):
     desc = String(80)
     phone = String(32)
 
-    metadata = ('DESC', 'PHONE')
-    memberTags = ('BANKACCTINFO', 'CCACCTINFO', 'BPACCTINFO', 'INVACCTINFO',
-                  'PRESACCTINFO', )
+    metadataTags = ['DESC', 'PHONE']
+    dataTags = ['BANKACCTINFO', 'CCACCTINFO', 'BPACCTINFO', 'INVACCTINFO',
+                'PRESACCTINFO']
 
     def __init__(self, desc=None, phone=None, *members):
-        # verify() only accepts kwargs, so verify args here
-
         self.desc = desc
         self.phone = phone
 
@@ -119,7 +119,7 @@ class ACCTINFO(List):
         if not members:
             msg = "{} must contain at least one of {}"
             raise ValueError(msg.format(self.__class__.__name__,
-                                        self.memberTags))
+                                        self.dataTags))
 
         #  For a given service xxx, there can be at most one <xxxACCTINFO>
         #  returned. For example, you cannot return two <BANKACCTINFO>
@@ -142,9 +142,9 @@ class ACCTINFORS(List):
     """ OFX section 8.5.2 """
     dtacctup = DateTime(required=True)
 
-    metadata = ('DTACCTUP', )
+    metadataTags = ['DTACCTUP']
 
-    memberTags = ('ACCTINFO', )
+    dataTags = ['ACCTINFO']
 
     def __init__(self, dtacctup, *members):
         self.dtacctup = dtacctup
@@ -164,7 +164,7 @@ class ACCTINFOTRNRS(Aggregate):
 
 class SIGNUPMSGSRSV1(List):
     """ OFX section 8.1 """
-    memberTags = ('ENROLLTRNRS', )
+    dataTags = ['ENROLLTRNRS']
 
 
 class ENROLLRQ(Aggregate):
@@ -190,8 +190,10 @@ class ENROLLRQ(Aggregate):
     ccacctfrom = SubAggregate(CCACCTFROM)
     invacctfrom = SubAggregate(INVACCTFROM)
 
-    mutexes = [('bankacctfrom', 'ccacctfrom'), ('bankacctfrom', 'invacctfrom'),
-               ('ccacctfrom', 'invacctfrom')]
+    optionalMutexes = [
+        ('bankacctfrom', 'ccacctfrom'),
+        ('bankacctfrom', 'invacctfrom'),
+        ('ccacctfrom', 'invacctfrom')]
 
 
 class ENROLLTRNRQ(Aggregate):
@@ -220,7 +222,7 @@ class SVCADD(Aggregate):
     ccacctto = SubAggregate(CCACCTTO)
     invacctto = SubAggregate(INVACCTTO)
 
-    exactlyOneOf = [('bankacctto', 'ccacctto', 'invacctto'), ]
+    requiredMutexes = [('bankacctto', 'ccacctto', 'invacctto'), ]
 
 
 class SVCCHG(Aggregate):
@@ -232,7 +234,7 @@ class SVCCHG(Aggregate):
     ccacctto = SubAggregate(CCACCTTO)
     invacctto = SubAggregate(INVACCTTO)
 
-    exactlyOneOf = [
+    requiredMutexes = [
         ('bankacctfrom', 'ccacctfrom', 'invacctfrom'),
         ('bankacctto', 'ccacctto', 'invacctto'),
     ]
@@ -244,7 +246,7 @@ class SVCDEL(Aggregate):
     ccacctfrom = SubAggregate(CCACCTFROM)
     invacctfrom = SubAggregate(INVACCTFROM)
 
-    exactlyOneOf = [('bankacctfrom', 'ccacctfrom', 'invacctfrom'), ]
+    requiredMutexes = [('bankacctfrom', 'ccacctfrom', 'invacctfrom'), ]
 
 
 class ACCTRQ(Aggregate):
@@ -254,7 +256,7 @@ class ACCTRQ(Aggregate):
     svcdel = SubAggregate(SVCDEL)
     svc = OneOf(*SVCS, required=True)
 
-    exactlyOneOf = [('svcadd', 'svcchg', 'svcdel'), ]
+    requiredMutexes = [('svcadd', 'svcchg', 'svcdel'), ]
 
 
 class ACCTRS(Aggregate):
@@ -265,7 +267,7 @@ class ACCTRS(Aggregate):
     svc = OneOf(*SVCS, required=True)
     svcstatus = OneOf(*SVCSTATUSES, required=True)
 
-    exactlyOneOf = [('svcadd', 'svcchg', 'svcdel'), ]
+    requiredMutexes = [('svcadd', 'svcchg', 'svcdel'), ]
 
 
 class ACCTTRNRQ(Aggregate):
@@ -282,12 +284,12 @@ class ACCTTRNRS(Aggregate):
 
 class ACCTSYNCRQ(SyncRqList):
     """ OFX section 8.6.4.1 """
-    memberTags = ('ACCTTRNRQ', )
+    dataTags = ['ACCTTRNRQ']
 
 
 class ACCTSYNCRS(SyncRsList):
     """ OFX section 8.6.4.2 """
-    memberTags = ('ACCTTRNRS', )
+    dataTags = ['ACCTTRNRS']
 
 
 class CHGUSERINFORQ(Aggregate):
@@ -339,9 +341,9 @@ class CHGUSERINFOTRNRS(Aggregate):
 
 class CHGUSERINFOSYNCRQ(SyncRqList):
     """ OFX section 8.7.4.1 """
-    memberTags = ('CHGUSERINFOTRNRQ', )
+    dataTags = ['CHGUSERINFOTRNRQ']
 
 
 class CHGUSERINFOSYNCRS(SyncRsList):
     """ OFX section 8.7.4.2 """
-    memberTags = ('CHGUSERINFOTRNRS', )
+    dataTags = ['CHGUSERINFOTRNRS']

@@ -166,7 +166,7 @@ class ORIGCURRENCY(Aggregate):
 
 class Origcurrency(object):
     """ Mixin providing property aliases and CURRENCY/ORIGCURRENCY mutex """
-    mutexes = [("currency", "origcurrency"), ]
+    optionalMutexes = [("currency", "origcurrency"), ]
 
     @property
     def curtype(self):

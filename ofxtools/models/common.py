@@ -47,7 +47,7 @@ class OFXELEMENT(Aggregate):
 
 class OFXEXTENSION(List):
     """ OFX section 2.7.2 """
-    memberTags = ('OFXELEMENT', )
+    memberTags = ['OFXELEMENT']
 
 
 class MSGSETCORE(Aggregate):
