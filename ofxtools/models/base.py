@@ -121,7 +121,20 @@ class Aggregate(object):
         # A Generic ``Aggregate`` subclass __init__() needs keyword
         # args for each ``SubAggregate`` / ``Element`` in its spec()
         args = []
-        kwargs = {el.tag.lower(): (el.text or el) for el in elem}
+
+        # Simple dict comprehension fails to detect duplicates, instead
+        # silently updating... structural validation fail
+        def nonupdate_dict(iterator):
+            d = {}
+            for k, v in iterator:
+                if k in d:
+                    msg = "{} contains multiple {}"
+                    raise ValueError(msg.format(cls.__name__, k))
+                d[k] = v
+            return d
+
+        kwargs = nonupdate_dict((el.tag.lower(), el.text or el) for el in elem)
+
         return args, kwargs
 
     @staticmethod

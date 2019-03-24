@@ -186,9 +186,9 @@ class ENROLLRQ(Aggregate):
     taxid = String(32)
     securityname = String(32)
     datebirth = DateTime()
-    bankacctFrom = SubAggregate(BANKACCTFROM)
-    ccacctFrom = SubAggregate(CCACCTFROM)
-    invacctFrom = SubAggregate(INVACCTFROM)
+    bankacctfrom = SubAggregate(BANKACCTFROM)
+    ccacctfrom = SubAggregate(CCACCTFROM)
+    invacctfrom = SubAggregate(INVACCTFROM)
 
     mutexes = [('bankacctfrom', 'ccacctfrom'), ('bankacctfrom', 'invacctfrom'),
                ('ccacctfrom', 'invacctfrom')]

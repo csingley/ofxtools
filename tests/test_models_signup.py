@@ -344,8 +344,92 @@ class EnrollrqTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(instance.securityname, 'Petunia')
         self.assertEqual(instance.datebirth, datetime(2016, 7, 5, tzinfo=UTC))
 
+        return instance
+
     def testOneOf(self):
         self.oneOfTest('COUNTRY', COUNTRY_CODES)
+
+
+class EnrollrqBankacctfromTestCase(EnrollrqTestCase):
+    @property
+    def root(self):
+        r = super().root
+        acctfrom = test_models_bank.BankacctfromTestCase().root
+        r.append(acctfrom)
+        return r
+
+    def testConvert(self):
+        instance = super().testConvert()
+        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
+
+
+class EnrollrqCcacctfromTestCase(EnrollrqTestCase):
+    @property
+    def root(self):
+        r = super().root
+        acctfrom = test_models_bank.CcacctfromTestCase().root
+        r.append(acctfrom)
+        return r
+
+    def testConvert(self):
+        instance = super().testConvert()
+        self.assertIsInstance(instance.ccacctfrom, CCACCTFROM)
+
+
+class EnrollrqInvacctfromTestCase(EnrollrqTestCase):
+    @property
+    def root(self):
+        r = super().root
+        acctfrom = test_models_investment.InvacctfromTestCase().root
+        r.append(acctfrom)
+        return r
+
+    def testConvert(self):
+        instance = super().testConvert()
+        self.assertIsInstance(instance.invacctfrom, INVACCTFROM)
+
+
+class EnrollrqMalformedTestCase(EnrollrqTestCase):
+    def testMultipleAcctfrom(self):
+        bankacctfrom = test_models_bank.BankacctfromTestCase().root
+        ccacctfrom = test_models_bank.CcacctfromTestCase().root
+        invacctfrom = test_models_investment.InvacctfromTestCase().root
+
+        root = super().root
+        root.append(bankacctfrom)
+        root.append(ccacctfrom)
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+        root = super().root
+        root.append(bankacctfrom)
+        root.append(invacctfrom)
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+        root = super().root
+        root.append(ccacctfrom)
+        root.append(invacctfrom)
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+        root = super().root
+        root.append(bankacctfrom)
+        root.append(bankacctfrom)
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+        root = super().root
+        root.append(ccacctfrom)
+        root.append(ccacctfrom)
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+        root = super().root
+        root.append(invacctfrom)
+        root.append(invacctfrom)
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
 
 
 class EnrollrsTestCase(unittest.TestCase, base.TestAggregate):
