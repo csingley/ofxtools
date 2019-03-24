@@ -22,23 +22,22 @@ extension tags.
 In a nutshell, ``ofxtools`` makes it simple to get OFX data and extract it,
 or export your data in OFX format.
 
-Over the years a variety of open-source Python packages have been developed
-to let users extract key information from OFX downloads in an ad-hoc manner.
-``ofxtools`` takes a more comprehensive, standards-based approach.  It targets
-compliance with the `OFX specification`_, specifically OFX versions 1.6 and
-2.03.
+``ofxtools`` takes a comprehensive, standards-based approach to processing OFX.
+It targets compliance with the `OFX specification`_, specifically OFX versions
+1.6 and 2.03.
 
 So far, ``ofxtools`` complies with nearly all of:
-    * Section 3 (data types)
-    * Section 5 (internationalization)
     * Section 7 (financial institution profile)
+    * Section 8 (service activation; account information)
     * Section 11 (banking)
     * Section 13 (investments)
 
 This should cover the great majority of real-world OFX use cases.  A particular
-focus of ``ofxtools`` is fully supporting the OFX investment message set,
-which has been rather neglected by the Python community, presumably due to its
-complexity.
+focus of ``ofxtools`` is full support of the OFX investment message set,
+which has been somewhat neglected by the Python community.
+
+The major item remaining on the ``ofxtools`` "to do" list is implementing
+OFX Section 12 (payments).
 
 Some care has been taken with the data model to make it easily maintainable
 and extensible.  The ``ofxtools.models`` subpackage contains simple, direct

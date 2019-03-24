@@ -108,7 +108,7 @@ money amounts have not been converted to the home currency, or yields
 ``YIELD`` elements are renamed ``yld`` to avoid name collision with the Python
 built-in.
 
-Proprietary OFX tags (e.g. ``<INTU.BROKERID>``) are stripped and dropped.
+Proprietary OFX tags (e.g. ``<INTU.BANKID>``) are stripped and dropped.
 
 
 .. _OFX spec: http://www.ofx.net/downloads.html

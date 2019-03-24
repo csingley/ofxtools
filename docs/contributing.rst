@@ -2,7 +2,6 @@
 
 Contributing to ``ofxtools``
 ============================
-
 To start hacking on the source, see the section entitled "Developer's
 installation" under :ref:`installation`.
 
