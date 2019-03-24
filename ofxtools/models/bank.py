@@ -9,7 +9,7 @@ from ofxtools.Types import (
 from ofxtools.models.base import (
     Aggregate, List, TranList, SubAggregate, Unsupported,
 )
-from ofxtools.models.common import (STATUS, MSGSETCORE)
+from ofxtools.models.common import (STATUS, MSGSETCORE, SVCSTATUSES)
 from ofxtools.models.i18n import (
     CURRENCY, ORIGCURRENCY,
     Origcurrency,
@@ -17,7 +17,8 @@ from ofxtools.models.i18n import (
 )
 
 
-__all__ = ['BANKACCTFROM', 'CCACCTFROM', 'BANKACCTTO', 'CCACCTTO', 'INCTRAN',
+__all__ = ['BANKACCTFROM', 'CCACCTFROM', 'BANKACCTTO', 'CCACCTTO',
+           'BANKACCTINFO', 'CCACCTINFO', 'INCTRAN',
            'PAYEE', 'EMAILPROF',
            'LEDGERBAL', 'AVAILBAL', 'BALLIST', 'STMTTRN', 'BANKTRANLIST',
            'STMTRQ', 'STMTRS', 'STMTTRNRQ', 'STMTTRNRS', 'BANKMSGSRQV1',
@@ -63,6 +64,24 @@ class CCACCTTO(Aggregate):
     """ OFX section 11.3.2 """
     acctid = String(22, required=True)
     acctkey = String(22)
+
+
+class BANKACCTINFO(Aggregate):
+    """ OFX section 11.3.3 """
+    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
+    suptxdl = Bool(required=True)
+    xfersrc = Bool(required=True)
+    xferdest = Bool(required=True)
+    svcstatus = OneOf(*SVCSTATUSES, required=True)
+
+
+class CCACCTINFO(Aggregate):
+    """ OFX section 11.3.4 """
+    ccacctfrom = SubAggregate(CCACCTFROM, required=True)
+    suptxdl = Bool(required=True)
+    xfersrc = Bool(required=True)
+    xferdest = Bool(required=True)
+    svcstatus = OneOf(*SVCSTATUSES, required=True)
 
 
 class INCTRAN(Aggregate):
@@ -125,10 +144,7 @@ class STMTTRN(Aggregate, Origcurrency):
 
 class BANKTRANLIST(TranList):
     """ OFX section 11.4.2.2 """
-    dtstart = DateTime(required=True)
-    dtend = DateTime(required=True)
-
-    memberTags = ['STMTTRN', ]
+    memberTags = ('STMTTRN', )
 
 
 class LEDGERBAL(Aggregate):
@@ -145,7 +161,7 @@ class AVAILBAL(Aggregate):
 
 class BALLIST(List):
     """ OFX section 11.4.2.2 & 13.9.2.7 """
-    memberTags = ['BAL', ]
+    memberTags = ('BAL', )
 
 
 class STMTRS(Aggregate):
@@ -193,12 +209,12 @@ class STMTTRNRS(Aggregate):
 
 class BANKMSGSRQV1(List):
     """ OFX section 11.13.1.1.1 """
-    memberTags = ['STMTTRNRQ', ]
+    memberTags = ('STMTTRNRQ', )
 
 
 class BANKMSGSRSV1(List):
     """ OFX section 11.13.1.1.2 """
-    memberTags = ['STMTTRNRS', ]
+    memberTags = ('STMTTRNRS', )
 
     @property
     def statements(self):

@@ -23,7 +23,7 @@ from ofxtools.models.base import (
     Aggregate,
 )
 from ofxtools.models.common import (
-    STATUS, OFXEXTENSION, MSGSETCORE,
+    STATUS, OFXEXTENSION, MSGSETCORE, SVCSTATUSES,
 )
 from ofxtools.models.bank import (
     STMTTRN, BALLIST, INV401KSOURCES,
@@ -37,11 +37,12 @@ from ofxtools.models.investment import (
     INVPOS, POSDEBT, POSMF, POSOPT, POSOTHER, POSSTOCK,
     OO, OOBUYDEBT, OOBUYMF, OOBUYOPT, OOBUYOTHER, OOBUYSTOCK,
     OOSELLDEBT, OOSELLMF, OOSELLOPT, OOSELLOTHER, OOSELLSTOCK, SWITCHMF,
-    INVTRANLIST, INVPOSLIST, INVOOLIST, INCPOS, INVACCTFROM,
+    INVTRANLIST, INVPOSLIST, INVOOLIST, INCPOS,
+    INVACCTFROM, INVACCTTO, INVACCTINFO,
     INV401KBAL, INVBAL, INVSTMTRQ, INVSTMTRS, INVSTMTTRNRQ, INVSTMTTRNRS,
     INVSTMTMSGSRQV1, INVSTMTMSGSRSV1,
     BUYTYPES, SELLTYPES, OPTBUYTYPES, OPTSELLTYPES, INCOMETYPES, UNITTYPES,
-    INVSUBACCTS, INVSTMTMSGSETV1, INVSTMTMSGSET,
+    USPRODUCTTYPES, INVACCTTYPES, INVSUBACCTS, INVSTMTMSGSETV1, INVSTMTMSGSET,
 )
 from ofxtools.models.i18n import (
     CURRENCY, CURRENCY_CODES,
@@ -68,6 +69,60 @@ class InvacctfromTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root, INVACCTFROM)
         self.assertEqual(root.brokerid, '111000614')
         self.assertEqual(root.acctid, '123456789123456789')
+
+
+class InvaccttoTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ('BROKERID', 'ACCTID',)
+
+    @property
+    def root(self):
+        root = Element('INVACCTTO')
+        SubElement(root, 'BROKERID').text = '111000614'
+        SubElement(root, 'ACCTID').text = '123456789123456789'
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, INVACCTTO)
+        self.assertEqual(root.brokerid, '111000614')
+        self.assertEqual(root.acctid, '123456789123456789')
+
+
+class InvacctinfoTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ('INVACCTFROM', 'USPRODUCTTYPE', 'CHECKING',
+                        'SVCSTATUS')
+    optionalElements = ('INVACCTTYPE', 'OPTIONLEVEL', )
+
+    @property
+    def root(self):
+        root = Element('INVACCTINFO')
+        acctfrom = InvacctfromTestCase().root
+        root.append(acctfrom)
+        SubElement(root, 'USPRODUCTTYPE').text = '401K'
+        SubElement(root, 'CHECKING').text = 'Y'
+        SubElement(root, 'SVCSTATUS').text = 'ACTIVE'
+        SubElement(root, 'INVACCTTYPE').text = 'INDIVIDUAL'
+        SubElement(root, 'OPTIONLEVEL').text = 'No way Jose'
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, INVACCTINFO)
+        self.assertIsInstance(root.invacctfrom, INVACCTFROM)
+        self.assertEqual(root.usproducttype, '401K')
+        self.assertEqual(root.checking, True)
+        self.assertEqual(root.svcstatus, 'ACTIVE')
+        self.assertEqual(root.invaccttype, 'INDIVIDUAL')
+        self.assertEqual(root.optionlevel, 'No way Jose')
+
+    def testOneOf(self):
+        self.oneOfTest('USPRODUCTTYPE', USPRODUCTTYPES)
+        self.oneOfTest('SVCSTATUS', SVCSTATUSES)
+        self.oneOfTest('INVACCTTYPE', INVACCTTYPES)
 
 
 class IncposTestCase(unittest.TestCase, base.TestAggregate):
@@ -2282,3 +2337,7 @@ class InvstmtmsgsetTestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, INVSTMTMSGSET)
         self.assertIsInstance(root.invstmtmsgsetv1, INVSTMTMSGSETV1)
+
+
+if __name__ == '__main__':
+    unittest.main()

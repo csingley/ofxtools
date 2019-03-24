@@ -7,14 +7,12 @@ from ofxtools.models.base import (
     Aggregate, List, TranList, SubAggregate, Unsupported,
 )
 from ofxtools.models.common import (
-    STATUS, OFXEXTENSION, MSGSETCORE,
+    STATUS, OFXEXTENSION, MSGSETCORE, SVCSTATUSES
 )
 from ofxtools.models.bank import (
     STMTTRN, INCTRAN, BALLIST, INV401KSOURCES,
 )
-from ofxtools.models.seclist import (
-    SECID,
-)
+from ofxtools.models.seclist import SECID
 from ofxtools.models.i18n import (
     CURRENCY, ORIGCURRENCY,
     Origcurrency,
@@ -25,9 +23,9 @@ from ofxtools.Types import (
 )
 
 
-__all__ = ['INVACCTFROM', 'INVBAL', 'INV401KBAL', 'INVTRAN', 'INVBUY',
-           'INVSELL', 'OO', 'INVBANKTRAN', 'REINVEST', 'RETOFCAP', 'SPLIT',
-           'TRANSFER', 'CLOSUREOPT', 'INCOME', 'INVEXPENSE', 'JRNLFUND',
+__all__ = ['INVACCTFROM', 'INVACCTTO', 'INVACCTINFO', 'INVBAL', 'INV401KBAL', 'INVTRAN',
+           'INVBUY', 'INVSELL', 'OO', 'INVBANKTRAN', 'REINVEST', 'RETOFCAP',
+           'SPLIT', 'TRANSFER', 'CLOSUREOPT', 'INCOME', 'INVEXPENSE', 'JRNLFUND',
            'JRNLSEC', 'MARGININTEREST', 'BUYDEBT', 'BUYMF', 'BUYOPT',
            'BUYOTHER', 'BUYSTOCK', 'SELLDEBT', 'SELLMF', 'SELLOPT',
            'SELLOTHER', 'SELLSTOCK', 'INVPOS', 'POSDEBT', 'POSMF', 'POSOPT',
@@ -48,12 +46,31 @@ SELLTYPES = ('SELL', 'SELLSHORT')
 OPTSELLTYPES = ('SELLTOCLOSE', 'SELLTOOPEN')
 INCOMETYPES = ('CGLONG', 'CGSHORT', 'DIV', 'INTEREST', 'MISC')
 UNITTYPES = ('SHARES', 'CURRENCY')
+USPRODUCTTYPES = ('401K', '403B', 'IRA', 'KEOGH', 'OTHER', 'SARSEP', 'SIMPLE',
+                  'NORMAL', 'TDA', 'TRUST', 'UGMA')
+INVACCTTYPES = ('INDIVIDUAL', 'JOINT', 'TRUST', 'CORPORATE')
 
 
 class INVACCTFROM(Aggregate):
     """ OFX section 13.6.1 """
     brokerid = String(22, required=True)
     acctid = String(22, required=True)
+
+
+class INVACCTTO(Aggregate):
+    """ OFX section 13.6.1 """
+    brokerid = String(22, required=True)
+    acctid = String(22, required=True)
+
+
+class INVACCTINFO(Aggregate):
+    """ OFX section 13.6.2 """
+    invacctfrom = SubAggregate(INVACCTFROM, required=True)
+    usproducttype = OneOf(*USPRODUCTTYPES, required=True)
+    checking = Bool(required=True)
+    svcstatus = OneOf(*SVCSTATUSES, required=True)
+    invaccttype = OneOf(*INVACCTTYPES)
+    optionlevel = String(40)
 
 
 class INCPOS(Aggregate):
@@ -394,7 +411,7 @@ class POSSTOCK(Aggregate):
 
 class INVPOSLIST(List):
     """ OFX section 13.9.2.2 """
-    memberTags = ['POSDEBT', 'POSMF', 'POSOPT', 'POSOTHER', 'POSSTOCK', ]
+    memberTags = ('POSDEBT', 'POSMF', 'POSOPT', 'POSOTHER', 'POSSTOCK', )
 
 
 # Balances
@@ -513,9 +530,9 @@ class SWITCHMF(Aggregate):
 
 class INVOOLIST(List):
     """ OFX section 13.9.2.2 """
-    memberTags = ['OOBUYDEBT', 'OOBUYMF', 'OOBUYOPT', 'OOBUYOTHER',
+    memberTags = ('OOBUYDEBT', 'OOBUYMF', 'OOBUYOPT', 'OOBUYOTHER',
                   'OOBUYSTOCK', 'OOSELLDEBT', 'OOSELLMF', 'OOSELLOPT',
-                  'OOSELLOTHER', 'OOSELLSTOCK', 'SWITCHMF', ]
+                  'OOSELLOTHER', 'OOSELLSTOCK', 'SWITCHMF', )
 
 
 class INVSTMTRS(Aggregate):
@@ -574,12 +591,12 @@ class INVSTMTTRNRS(Aggregate):
 
 class INVSTMTMSGSRQV1(List):
     """ OFX section 13.7.1.2.1 """
-    memberTags = ['INVSTMTTRNRQ', ]
+    memberTags = ('INVSTMTTRNRQ', )
 
 
 class INVSTMTMSGSRSV1(List):
     """ OFX section 13.7.1.2.2 """
-    memberTags = ['INVSTMTTRNRS', ]
+    memberTags = ('INVSTMTTRNRS', )
 
     @property
     def statements(self):

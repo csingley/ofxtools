@@ -13,7 +13,11 @@ from ofxtools.models.i18n import (
 )
 
 
-__all__ = ['STATUS', 'BAL', 'OFXELEMENT', 'OFXEXTENSION', 'MSGSETCORE', ]
+__all__ = ['SVCSTATUSES', 'STATUS', 'BAL', 'OFXELEMENT', 'OFXEXTENSION',
+           'MSGSETCORE', ]
+
+
+SVCSTATUSES = ['AVAIL', 'PEND', 'ACTIVE']
 
 
 class STATUS(Aggregate):

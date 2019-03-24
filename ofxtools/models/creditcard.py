@@ -160,12 +160,12 @@ class CCSTMTENDTRNRS(Aggregate):
 
 class CREDITCARDMSGSRQV1(List):
     """ OFX section 11.13.1.1.1 """
-    memberTags = ['CCSTMTTRNRQ', 'CCSTMTENDTRNRQ', ]
+    memberTags = ('CCSTMTTRNRQ', 'CCSTMTENDTRNRQ', )
 
 
 class CREDITCARDMSGSRSV1(List):
     """ OFX section 11.13.1.1.2 """
-    memberTags = ['CCSTMTTRNRS', 'CCSTMTENDTRNRS', ]
+    memberTags = ('CCSTMTTRNRS', 'CCSTMTENDTRNRS', )
 
     @property
     def statements(self):

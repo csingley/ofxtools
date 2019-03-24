@@ -11,10 +11,7 @@ from collections import OrderedDict
 # local imports
 import ofxtools.models
 from ofxtools.Types import (
-    Element,
-    DateTime,
-    InstanceCounterMixin,
-)
+    Element, DateTime, String, Bool, InstanceCounterMixin)
 
 
 class classproperty(property):
@@ -35,6 +32,7 @@ class Aggregate(object):
     ``xml.etree.ElementTree.Element``.
     """
     mutexes = []
+    exactlyOneOf = []
 
     def __init__(self, **kwargs):
         """ """
@@ -66,17 +64,25 @@ class Aggregate(object):
     def verify(cls, kwargs):
         """
         Enforce Aggregate-level structural constraints of the OFX spec.
-
-        Throw an error for Aggregates containing children that are
-        mutually exclusive per the OFX spec,
         """
+        #  Throw an error for Aggregates containing children that are
+        #  mutually exclusive per the OFX spec,
         for (attr0, attr1) in cls.mutexes:
             val0 = kwargs.get(attr0, None)
             val1 = kwargs.get(attr1, None)
             if val0 and val1:
-                msg = "{} may not set both {} and {}".format(
-                    cls.__name__, attr0, attr1)
-                raise ValueError(msg)
+                msg = "{} may not set both {} and {}"
+                raise ValueError(msg.format(cls.__name__, attr0, attr1))
+
+        # Enforce constraint that Aggregate must contain exactly one child of
+        # of a list of choices
+        for choices in cls.exactlyOneOf:
+            count = sum([kwargs.get(ch, None) is not None for ch in choices])
+            if count != 1:
+                args = ', '.join(['{}={}'.format(ch, kwargs.get(ch, None))
+                                  for ch in choices])
+                msg = "{}({}): must contain exactly 1 of [{}]"
+                raise ValueError(msg.format(cls.__name__, args, choices))
 
     @classmethod
     def from_etree(cls, elem):
@@ -246,7 +252,8 @@ class List(Aggregate, list):
     """
     Base class for OFX *LIST
     """
-    memberTags = []
+    metadata = ()  # attr name - defined in order of __init__() positional args
+    memberTags = ()  # OFX tag text
 
     def __init__(self, *members):
         list.__init__(self)
@@ -260,25 +267,20 @@ class List(Aggregate, list):
 
     @classmethod
     def _make_args(cls, elem):
-        # Hook for subclasses to do custom extraction logic
-        # before generic arg extension from list contents
-        args, kwargs = cls._pre_make_args(elem)
+        # List.__init__() takes args not kwargs
 
-        # List constructors take variable # of args,
-        # so we pass `args` not `kwargs`.
+        # Remove List metadata and pass as positional args before list members
+        def find(tag):
+            child = elem.find(tag)
+            if child is not None:
+                elem.remove(child)
+                child = child.text
+            return child
+
+        args = [find(tag) for tag in cls.metadata]
+        # Add list members as variable-length positional args
         args.extend([Aggregate.from_etree(el) for el in elem])
 
-        return args, kwargs
-
-    @classmethod
-    def _pre_make_args(cls, elem):
-        """
-        Hook for subclasses to do custom extraction logic
-        before generic arg extension from list contents
-
-        Extend in subclass
-        """
-        args = []
         kwargs = {}
         return args, kwargs
 
@@ -319,67 +321,53 @@ class TranList(List):
     dtstart = DateTime(required=True)
     dtend = DateTime(required=True)
 
+    metadata = ('DTSTART', 'DTEND')
+
     def __init__(self, dtstart, dtend, *members):
         self.dtstart = dtstart
         self.dtend = dtend
         super().__init__(*members)
-
-    @classmethod
-    def _pre_make_args(cls, elem):
-        args, kwargs = super()._pre_make_args(elem)
-
-        # Transaction lists first have two data elements giving the
-        # date range spanned, then a series of transaction aggregates.
-        dtstart, dtend = elem[:2]
-        try:
-            assert dtstart.tag == 'DTSTART'
-            assert dtend.tag == 'DTEND'
-        except AssertionError:
-            msg = "<{}> lacks <DTSTART> / <DTEND>".format(elem.tag)
-            raise ValueError(msg)
-        args = [dtstart.text, dtend.text]
-        elem.remove(dtstart)
-        elem.remove(dtend)
-
-        return args, kwargs
 
     def __repr__(self):
         return "<{} dtstart='{}' dtend='{}' len={}>".format(
             self.__class__.__name__, self.dtstart, self.dtend, len(self))
 
 
-class AcctInfoList(List):
-    """
-    List subclass specialized for models.signup.ACCTINFORS
+class SyncRqList(List):
+    """ Base cass for *SYNCRQ """
+    token = String(10)
+    tokenonly = Bool()
+    refresh = Bool()
+    rejectifmissing = Bool(required=True)
 
-    This needs to be defined in this module to avoid recursive imports.
-    """
-    dtacctup = DateTime(required=True)
+    metadata = ('TOKEN', 'TOKENONLY', 'REFRESH', 'REJECTIFMISSING')
+    exactlyOneOf = [('token', 'tokenonly', 'refresh'), ]  # Used by verify()
 
-    def __init__(self, dtacctup, *members):
-        self.dtacctup = dtacctup
+    def __init__(self, token, tokenonly, refresh, rejectifmissing, *members):
+        # Reuse verify() (which only accepts kwargs) to validate "choice" args
+        self.verify({'token': token, 'tokenonly': tokenonly,
+                     'refresh': refresh})
+
+        self.token = token
+        self.tokenonly = tokenonly
+        self.refresh = refresh
+        self.rejectifmissing = rejectifmissing
+
         super().__init__(*members)
 
-    @classmethod
-    def _pre_make_args(cls, elem):
-        args, kwargs = super()._pre_make_args(elem)
 
-        # ACCTINFORS first have a data element giving the date of
-        # last update, then a series of ACCTINFO aggregates.
-        dtacctup = elem[0]
-        try:
-            assert dtacctup.tag == 'DTACCTUP'
-        except AssertionError:
-            msg = "<{}> lacks <DTACCTUP>".format(elem.tag)
-            raise ValueError(msg)
-        args = [dtacctup.text, ]
-        elem.remove(dtacctup)
+class SyncRsList(List):
+    """ Base cass for *SYNCRS """
+    token = String(10, required=True)
+    lostsync = Bool()
 
-        return args, kwargs
+    metadata = ('TOKEN', 'LOSTSYNC')
 
-    def __repr__(self):
-        return "<{} dtacctup ='{}' len={}>".format(
-            self.__class__.__name__, self.dtacctup, len(self))
+    def __init__(self, token, lostsync, *members):
+        self.token = token
+        self.lostsync = lostsync
+
+        super().__init__(*members)
 
 
 class SubAggregate(Element):

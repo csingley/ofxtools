@@ -25,14 +25,14 @@ class TESTAGGREGATE(Aggregate):
 
 
 class TESTLIST(List):
-    memberTags = ['TESTAGGREGATE']
+    memberTags = ('TESTAGGREGATE', )
 
 
 class TESTTRANLIST(TranList):
     dtstart = DateTime(required=True)
     dtend = DateTime(required=True)
 
-    memberTags = ['TESTAGGREGATE']
+    memberTags = ('TESTAGGREGATE', )
 
 
 class AggregateTestCase(unittest.TestCase):

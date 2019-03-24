@@ -1,27 +1,36 @@
 # coding: utf-8
+# stdlib imports
+import operator
+import itertools
+
 # local imports
 from ofxtools.Types import (
     Bool, DateTime, String, OneOf
 )
 from ofxtools.models.i18n import COUNTRY_CODES
 from ofxtools.models.bank import (
-    BANKACCTFROM, CCACCTFROM,
+    BANKACCTFROM, CCACCTFROM, BANKACCTTO, CCACCTTO, BANKACCTINFO, CCACCTINFO
 )
 from ofxtools.models.base import (
-    Aggregate, SubAggregate, List, AcctInfoList, Unsupported
+    Aggregate, SubAggregate, Unsupported,
+    List, SyncRqList, SyncRsList,
 )
-from ofxtools.models.common import (
-    MSGSETCORE, STATUS,
-)
-from ofxtools.models.investment import INVACCTFROM
+from ofxtools.models.common import (MSGSETCORE, STATUS, SVCSTATUSES)
+from ofxtools.models.investment import (INVACCTFROM, INVACCTTO, INVACCTINFO)
 
 
-__all__ = ['SIGNUPMSGSET', 'SIGNUPMSGSETV1', 'CLIENTENROLL', 'WEBENROLL',
-           'OTHERENROLL', 'ACCTINFORQ', 'ACCTINFOTRNRQ', 'SIGNUPMSGSRQV1',
-           'SVCSTATUSES', 'BANKACCTINFO', 'CCACCTINFO', 'INVACCTINFO',
-           'ACCTINFO', 'ACCTINFORS', 'ACCTINFOTRNRS', 'SIGNUPMSGSRSV1',
-           'ENROLLRQ', 'ENROLLRS', 'ENROLLTRNRQ', 'ENROLLTRNRS',
+__all__ = ['SIGNUPMSGSET', 'SIGNUPMSGSETV1', 'SIGNUPMSGSRQV1', 'SIGNUPMSGSRSV1',
+           'ENROLLTRNRQ', 'ENROLLTRNRS', 'ENROLLRQ', 'ENROLLRS',
+           'CLIENTENROLL', 'WEBENROLL', 'OTHERENROLL',
+           'ACCTINFOTRNRQ', 'ACCTINFOTRNRS', 'ACCTINFORQ', 'ACCTINFORS',
+           'ACCTINFO', 'ACCTTRNRQ', 'ACCTTRNRS', 'ACCTRQ', 'ACCTRS',
+           'SVCADD', 'SVCCHG', 'SVCDEL', 'ACCTSYNCRQ', 'ACCTSYNCRS',
+           'CHGUSERINFOTRNRQ', 'CHGUSERINFOTRNRS', 'CHGUSERINFORQ',
+           'CHGUSERINFORS', 'CHGUSERINFOSYNCRQ', 'CHGUSERINFOSYNCRS',
            ]
+
+# Enums used in aggregate validation
+SVCS = ('BANKSVC', 'BPSVC', 'INVSVC', 'PRESSVC')
 
 
 class CLIENTENROLL(Aggregate):
@@ -49,6 +58,9 @@ class SIGNUPMSGSETV1(Aggregate):
     availaccts = Bool(required=True)
     clientactreq = Bool(required=True)
 
+    mutexes = [('clientenroll', 'webenroll'), ('clientenroll', 'otherenroll'),
+               ('webenroll', 'otherenroll')]
+
 
 class SIGNUPMSGSET(Aggregate):
     """ OFX section 8.8 """
@@ -68,49 +80,79 @@ class ACCTINFOTRNRQ(Aggregate):
 
 class SIGNUPMSGSRQV1(List):
     """ OFX section 8.1 """
-    memberTags = ['ENROLLTRNRQ', ]
+    memberTags = ('ENROLLTRNRQ', )
 
 
-SVCSTATUSES = ['AVAIL', 'PEND', 'ACTIVE']
+class ACCTINFO(List):
+    """
+    OFX section 8.5.3
 
-
-class BANKACCTINFO(Aggregate):
-    """ OFX section 8.5.3 """
-    bankacctfrom = SubAggregate(BANKACCTFROM)
-    svcstatus = OneOf(*SVCSTATUSES)
-    suptxdl = Unsupported()
-    xfersrc = Unsupported()
-    xferdest = Unsupported()
-
-
-class CCACCTINFO(Aggregate):
-    """ OFX section 8.5.3 """
-    ccacctfrom = SubAggregate(CCACCTFROM)
-    svcstatus = OneOf(*SVCSTATUSES)
-
-
-class INVACCTINFO(Aggregate):
-    """ OFX section 8.5.3 """
-    invacctfrom = SubAggregate(INVACCTFROM)
-    svcstatus = OneOf(*SVCSTATUSES)
-
-
-class ACCTINFO(Aggregate):
-    """ OFX section 8.5.3 """
+    The text description is a little ambiguous.  Here's what the DTD says:
+    <xsd:sequence>
+        <xsd:element name="DESC" type="ofx:ShortMessageType" minOccurs="0"/>
+        <xsd:element name="PHONE" type="ofx:PhoneType" minOccurs="0"/>
+        <xsd:sequence maxOccurs="unbounded">
+            <xsd:choice>
+                <xsd:element name="BANKACCTINFO" type="ofx:BankAccountInfo"/>
+                <xsd:element name="CCACCTINFO" type="ofx:CreditCardAccountInfo"/>
+                <xsd:element name="BPACCTINFO" type="ofx:BillPaymentAccountInfo"/>
+                <xsd:element name="INVACCTINFO" type="ofx:InvestmentAccountInfo"/>
+                <xsd:element name="PRESACCTINFO" type="ofx:PresentmentAccountInfo"/>
+            </xsd:choice>
+        </xsd:sequence>
+    </xsd:sequence>
+    """
     desc = String(80)
     phone = String(32)
-    bankacctinfo = SubAggregate(BANKACCTINFO)
-    ccacctinfo = SubAggregate(CCACCTINFO)
-    invacctinfo = SubAggregate(INVACCTINFO)
+
+    metadata = ('DESC', 'PHONE')
+    memberTags = ('BANKACCTINFO', 'CCACCTINFO', 'BPACCTINFO', 'INVACCTINFO',
+                  'PRESACCTINFO', )
+
+    def __init__(self, desc=None, phone=None, *members):
+        # verify() only accepts kwargs, so verify args here
+
+        self.desc = desc
+        self.phone = phone
+
+        # Must contain at least one <xxxACCTINFO>
+        if not members:
+            msg = "{} must contain at least one of {}"
+            raise ValueError(msg.format(self.__class__.__name__,
+                                        self.memberTags))
+
+        #  For a given service xxx, there can be at most one <xxxACCTINFO>
+        #  returned. For example, you cannot return two <BANKACCTINFO>
+        #  aggregates.
+        sortKey = operator.attrgetter('__class__.__name__')
+        members_copy = sorted(members, key=sortKey)
+        for tag, group in itertools.groupby(members_copy, key=sortKey):
+            if len(list(group)) > 1:
+                msg = "{} contains multiple {} aggregates"
+                raise ValueError(msg.format(self.__class__, tag))
+
+        super().__init__(*members)
+
+    def __repr__(self):
+        return "<{} desc='{}' phone='{}' len={}>".format(
+            self.__class__.__name__, self.desc, self.phone, len(self))
 
 
-class ACCTINFORS(AcctInfoList):
+class ACCTINFORS(List):
     """ OFX section 8.5.2 """
-    memberTags = ['ACCTINFO', ]
+    dtacctup = DateTime(required=True)
 
-    @classmethod
-    def verify(cls, kwargs):
-        super().verify(kwargs)
+    metadata = ('DTACCTUP', )
+
+    memberTags = ('ACCTINFO', )
+
+    def __init__(self, dtacctup, *members):
+        self.dtacctup = dtacctup
+        super().__init__(*members)
+
+    def __repr__(self):
+        return "<{} dtacctup='{}' len={}>".format(
+            self.__class__.__name__, self.dtacctup, len(self))
 
 
 class ACCTINFOTRNRS(Aggregate):
@@ -122,7 +164,7 @@ class ACCTINFOTRNRS(Aggregate):
 
 class SIGNUPMSGSRSV1(List):
     """ OFX section 8.1 """
-    memberTags = ['ENROLLTRNRS', ]
+    memberTags = ('ENROLLTRNRS', )
 
 
 class ENROLLRQ(Aggregate):
@@ -148,8 +190,8 @@ class ENROLLRQ(Aggregate):
     ccacctFrom = SubAggregate(CCACCTFROM)
     invacctFrom = SubAggregate(INVACCTFROM)
 
-    mutexes = [('BANKACCTFROM', 'CCACCTFROM'), ('BANKACCTFROM', 'INVACCTFROM'),
-               ('CCACCTFROM', 'INVACCTFROM')]
+    mutexes = [('bankacctfrom', 'ccacctfrom'), ('bankacctfrom', 'invacctfrom'),
+               ('ccacctfrom', 'invacctfrom')]
 
 
 class ENROLLTRNRQ(Aggregate):
@@ -170,3 +212,136 @@ class ENROLLTRNRS(Aggregate):
     trnuid = String(36, required=True)
     status = SubAggregate(STATUS, required=True)
     enrollrs = SubAggregate(ENROLLRS, required=True)
+
+
+class SVCADD(Aggregate):
+    """ OFX section 8.6.1.1 """
+    bankacctto = SubAggregate(BANKACCTTO)
+    ccacctto = SubAggregate(CCACCTTO)
+    invacctto = SubAggregate(INVACCTTO)
+
+    exactlyOneOf = [('bankacctto', 'ccacctto', 'invacctto'), ]
+
+
+class SVCCHG(Aggregate):
+    """ OFX section 8.6.1.2 """
+    bankacctfrom = SubAggregate(BANKACCTFROM)
+    ccacctfrom = SubAggregate(CCACCTFROM)
+    invacctfrom = SubAggregate(INVACCTFROM)
+    bankacctto = SubAggregate(BANKACCTTO)
+    ccacctto = SubAggregate(CCACCTTO)
+    invacctto = SubAggregate(INVACCTTO)
+
+    exactlyOneOf = [
+        ('bankacctfrom', 'ccacctfrom', 'invacctfrom'),
+        ('bankacctto', 'ccacctto', 'invacctto'),
+    ]
+
+
+class SVCDEL(Aggregate):
+    """ OFX section 8.6.1.1 """
+    bankacctfrom = SubAggregate(BANKACCTFROM)
+    ccacctfrom = SubAggregate(CCACCTFROM)
+    invacctfrom = SubAggregate(INVACCTFROM)
+
+    exactlyOneOf = [('bankacctfrom', 'ccacctfrom', 'invacctfrom'), ]
+
+
+class ACCTRQ(Aggregate):
+    """ OFX section 8.6.1 """
+    svcadd = SubAggregate(SVCADD)
+    svcchg = SubAggregate(SVCCHG)
+    svcdel = SubAggregate(SVCDEL)
+    svc = OneOf(*SVCS, required=True)
+
+    exactlyOneOf = [('svcadd', 'svcchg', 'svcdel'), ]
+
+
+class ACCTRS(Aggregate):
+    """ OFX section 8.6.2 """
+    svcadd = SubAggregate(SVCADD)
+    svcchg = SubAggregate(SVCCHG)
+    svcdel = SubAggregate(SVCDEL)
+    svc = OneOf(*SVCS, required=True)
+    svcstatus = OneOf(*SVCSTATUSES, required=True)
+
+    exactlyOneOf = [('svcadd', 'svcchg', 'svcdel'), ]
+
+
+class ACCTTRNRQ(Aggregate):
+    """ OFX section 8.6.1 """
+    trnuid = String(36, required=True)
+    acctrq = SubAggregate(ACCTRQ, required=True)
+
+
+class ACCTTRNRS(Aggregate):
+    """ OFX section 8.6.2 """
+    trnuid = String(36, required=True)
+    acctrs = SubAggregate(ACCTRS, required=True)
+
+
+class ACCTSYNCRQ(SyncRqList):
+    """ OFX section 8.6.4.1 """
+    memberTags = ('ACCTTRNRQ', )
+
+
+class ACCTSYNCRS(SyncRsList):
+    """ OFX section 8.6.4.2 """
+    memberTags = ('ACCTTRNRS', )
+
+
+class CHGUSERINFORQ(Aggregate):
+    """ OFX section 8.7.1 """
+    firstname = String(32)
+    middlename = String(32)
+    lastname = String(32)
+    addr1 = String(32)
+    addr2 = String(32)
+    addr3 = String(32)
+    city = String(32)
+    state = String(5)
+    postalcode = String(11)
+    country = OneOf(*COUNTRY_CODES)
+    dayphone = String(32)
+    evephone = String(32)
+    email = String(80)
+
+
+class CHGUSERINFORS(Aggregate):
+    """ OFX section 8.7.2 """
+    firstname = String(32)
+    middlename = String(32)
+    lastname = String(32)
+    addr1 = String(32)
+    addr2 = String(32)
+    addr3 = String(32)
+    city = String(32)
+    state = String(5)
+    postalcode = String(11)
+    country = OneOf(*COUNTRY_CODES)
+    dayphone = String(32)
+    evephone = String(32)
+    email = String(80)
+    dtinfochg = DateTime(required=True)
+
+
+class CHGUSERINFOTRNRQ(Aggregate):
+    """ OFX section 8.7 """
+    trnuid = String(36, required=True)
+    chguserinforq = SubAggregate(CHGUSERINFORQ, required=True)
+
+
+class CHGUSERINFOTRNRS(Aggregate):
+    """ OFX section 8.7 """
+    trnuid = String(36, required=True)
+    chguserinfors = SubAggregate(CHGUSERINFORS, required=True)
+
+
+class CHGUSERINFOSYNCRQ(SyncRqList):
+    """ OFX section 8.7.4.1 """
+    memberTags = ('CHGUSERINFOTRNRQ', )
+
+
+class CHGUSERINFOSYNCRS(SyncRsList):
+    """ OFX section 8.7.4.2 """
+    memberTags = ('CHGUSERINFOTRNRS', )

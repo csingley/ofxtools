@@ -20,10 +20,10 @@ from ofxtools.utils import UTC
 import ofxtools.models
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import (
-    STATUS, BAL, MSGSETCORE,
+    STATUS, BAL, MSGSETCORE, SVCSTATUSES,
 )
 from ofxtools.models.bank import (
-    BANKACCTFROM, BANKACCTTO, CCACCTTO,
+    BANKACCTFROM, BANKACCTTO, BANKACCTINFO, CCACCTTO, CCACCTFROM, CCACCTINFO,
     INCTRAN, PAYEE, LEDGERBAL, AVAILBAL, BALLIST,
     STMTTRN, BANKTRANLIST, STMTRS, STMTTRNRS, BANKMSGSRSV1,
     STMTRQ, STMTTRNRQ, BANKMSGSRQV1,
@@ -74,6 +74,35 @@ class BankaccttoTestCase(BankacctfromTestCase):
     tag = 'BANKACCTTO'
 
 
+class BankacctinfoTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ('BANKACCTFROM', 'SUPTXDL', 'XFERSRC', 'XFERDEST', 'SVCSTATUS', )
+
+    @property
+    def root(self):
+        root = Element('BANKACCTINFO')
+        acctfrom = BankacctfromTestCase().root
+        root.append(acctfrom)
+        SubElement(root, 'SUPTXDL').text = 'Y'
+        SubElement(root, 'XFERSRC').text = 'N'
+        SubElement(root, 'XFERDEST').text = 'Y'
+        SubElement(root, 'SVCSTATUS').text = 'AVAIL'
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, BANKACCTINFO)
+        self.assertIsInstance(root.bankacctfrom, BANKACCTFROM)
+        self.assertEqual(root.suptxdl, True)
+        self.assertEqual(root.xfersrc, False)
+        self.assertEqual(root.xferdest, True)
+        self.assertEqual(root.svcstatus, 'AVAIL')
+
+    def testOneOf(self):
+        self.oneOfTest('SVCSTATUS', SVCSTATUSES)
+
+
 class CcacctfromTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
@@ -98,6 +127,35 @@ class CcacctfromTestCase(unittest.TestCase, base.TestAggregate):
 
 class CcaccttoTestCase(CcacctfromTestCase):
     tag = 'CCACCTTO'
+
+
+class CcacctinfoTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ('CCACCTFROM', 'SUPTXDL', 'XFERSRC', 'XFERDEST', 'SVCSTATUS', )
+
+    @property
+    def root(self):
+        root = Element('CCACCTINFO')
+        acctfrom = CcacctfromTestCase().root
+        root.append(acctfrom)
+        SubElement(root, 'SUPTXDL').text = 'Y'
+        SubElement(root, 'XFERSRC').text = 'N'
+        SubElement(root, 'XFERDEST').text = 'Y'
+        SubElement(root, 'SVCSTATUS').text = 'PEND'
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, CCACCTINFO)
+        self.assertIsInstance(root.ccacctfrom, CCACCTFROM)
+        self.assertEqual(root.suptxdl, True)
+        self.assertEqual(root.xfersrc, False)
+        self.assertEqual(root.xferdest, True)
+        self.assertEqual(root.svcstatus, 'PEND')
+
+    def testOneOf(self):
+        self.oneOfTest('SVCSTATUS', SVCSTATUSES)
 
 
 class InctranTestCase(unittest.TestCase, base.TestAggregate):
@@ -799,6 +857,7 @@ class EmailprofTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root, EMAILPROF)
         self.assertEqual(root.canemail, True)
         self.assertEqual(root.cannotify, False)
+
 
 class Bankmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
