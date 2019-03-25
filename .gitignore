@@ -6,6 +6,7 @@
 *~
 .*.sw?
 .coverage
+coverage.xml
 .directory
 .env
 .idea/*
