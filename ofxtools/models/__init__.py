@@ -1,4 +1,4 @@
-from .common import  *
+from .common import *
 from .i18n import *
 from .ofx import OFX
 from .profile import *

@@ -5,10 +5,7 @@
 import unittest
 from datetime import datetime
 from decimal import Decimal
-from xml.etree.ElementTree import (
-    Element,
-    SubElement,
-)
+from xml.etree.ElementTree import Element, SubElement
 from copy import deepcopy
 
 
@@ -21,22 +18,35 @@ from ofxtools.utils import UTC
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import MSGSETCORE
 from ofxtools.models.seclist import (
-    SECID, SECINFO, DEBTINFO, MFINFO, OPTINFO, OTHERINFO, STOCKINFO,
-    PORTION, FIPORTION, MFASSETCLASS, FIMFASSETCLASS, ASSETCLASSES,
-    SECLIST, SECLISTMSGSRSV1, SECLISTMSGSETV1, SECLISTMSGSET,
+    SECID,
+    SECINFO,
+    DEBTINFO,
+    MFINFO,
+    OPTINFO,
+    OTHERINFO,
+    STOCKINFO,
+    PORTION,
+    FIPORTION,
+    MFASSETCLASS,
+    FIMFASSETCLASS,
+    ASSETCLASSES,
+    SECLIST,
+    SECLISTMSGSRSV1,
+    SECLISTMSGSETV1,
+    SECLISTMSGSET,
 )
 
 
 class SecidTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ('UNIQUEID', 'UNIQUEIDTYPE')
+    requiredElements = ("UNIQUEID", "UNIQUEIDTYPE")
 
     @property
     def root(self):
-        root = Element('SECID')
-        SubElement(root, 'UNIQUEID').text = '084670108'
-        SubElement(root, 'UNIQUEIDTYPE').text = 'CUSIP'
+        root = Element("SECID")
+        SubElement(root, "UNIQUEID").text = "084670108"
+        SubElement(root, "UNIQUEIDTYPE").text = "CUSIP"
         return root
 
     def testConvert(self):
@@ -44,38 +54,37 @@ class SecidTestCase(unittest.TestCase, base.TestAggregate):
         # Aggregate instance attributes with the result
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, SECID)
-        self.assertEqual(root.uniqueid, '084670108')
-        self.assertEqual(root.uniqueidtype, 'CUSIP')
+        self.assertEqual(root.uniqueid, "084670108")
+        self.assertEqual(root.uniqueidtype, "CUSIP")
 
 
 class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ('SECID', 'SECNAME',)
-    optionalElements = ('TICKER', 'FIID', 'RATING', 'UNITPRICE', 'DTASOF',
-                        'CURRENCY',)
+    requiredElements = ("SECID", "SECNAME")
+    optionalElements = ("TICKER", "FIID", "RATING", "UNITPRICE", "DTASOF", "CURRENCY")
 
     @property
     def root(self):
-        root = Element('SECINFO')
+        root = Element("SECINFO")
         secid = SecidTestCase().root
         root.append(secid)
-        SubElement(root, 'SECNAME').text = 'Acme Development, Inc.'
-        SubElement(root, 'TICKER').text = 'ACME'
-        SubElement(root, 'FIID').text = 'AC.ME'
-        SubElement(root, 'RATING').text = 'Aa'
-        SubElement(root, 'UNITPRICE').text = '94.5'
-        SubElement(root, 'DTASOF').text = '20130615'
+        SubElement(root, "SECNAME").text = "Acme Development, Inc."
+        SubElement(root, "TICKER").text = "ACME"
+        SubElement(root, "FIID").text = "AC.ME"
+        SubElement(root, "RATING").text = "Aa"
+        SubElement(root, "UNITPRICE").text = "94.5"
+        SubElement(root, "DTASOF").text = "20130615"
         currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
-        SubElement(root, 'MEMO').text = 'Foobar'
+        SubElement(root, "MEMO").text = "Foobar"
         return root
 
     def testConvertSecnameTooLong(self):
         """ Don't enforce length restriction on SECNAME; raise Warning """
         # Issue #12
         copy_root = deepcopy(self.root)
-        copy_element = Element('SECNAME')
+        copy_element = Element("SECNAME")
         copy_element.text = """
         There is a theory going around that the U.S.A. was and still is a
         gigantic Masonic plot under the ultimate control of the group known as
@@ -90,7 +99,9 @@ class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
         copy_root[1] = copy_element
         with self.assertWarns(Warning):
             root = Aggregate.from_etree(copy_root)
-        self.assertEqual(root.secname, """
+        self.assertEqual(
+            root.secname,
+            """
         There is a theory going around that the U.S.A. was and still is a
         gigantic Masonic plot under the ultimate control of the group known as
         the Illuminati. It is difficult to look for long at the strange single
@@ -100,13 +111,14 @@ class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
         for it to be pure chance. Lovers of global conspiracy, not all of them
         Catholic, can count on the Masons for a few good shivers and voids when
         all else fails.
-        """)
+        """,
+        )
 
     def testConvertTickerTooLong(self):
         """ Don't enforce length restriction on TICKER; raise Warning """
         # Issue #12
         copy_root = deepcopy(self.root)
-        copy_element = Element('TICKER')
+        copy_element = Element("TICKER")
         copy_element.text = """
         Kekulé dreams the Great Serpent holding its own tail in its mouth, the
         dreaming Serpent which surrounds the World.  But the meanness, the
@@ -128,7 +140,9 @@ class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
         copy_root[2] = copy_element
         with self.assertWarns(Warning):
             root = Aggregate.from_etree(copy_root)
-        self.assertEqual(root.ticker, """
+        self.assertEqual(
+            root.ticker,
+            """
         Kekulé dreams the Great Serpent holding its own tail in its mouth, the
         dreaming Serpent which surrounds the World.  But the meanness, the
         cynicism with which this dream is to be used. The Serpent that
@@ -145,7 +159,8 @@ class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
         sooner or later crash to its death, when its addiction to energy has
         become more than the rest of the World can supply, dragging with it
         innocent souls all along the chain of life.
-        """)
+        """,
+        )
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -156,59 +171,69 @@ class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
 class DebtinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ('SECINFO', 'PARVALUE', 'DEBTTYPE',)
-    optionalElements = ('DEBTCLASS', 'COUPONRT', 'DTCOUPON', 'COUPONFREQ',
-                        'CALLPRICE', 'YIELDTOCALL', 'DTCALL', 'CALLTYPE',
-                        'YIELDTOMAT', 'DTMAT', 'ASSETCLASS', 'FIASSETCLASS',)
+    requiredElements = ("SECINFO", "PARVALUE", "DEBTTYPE")
+    optionalElements = (
+        "DEBTCLASS",
+        "COUPONRT",
+        "DTCOUPON",
+        "COUPONFREQ",
+        "CALLPRICE",
+        "YIELDTOCALL",
+        "DTCALL",
+        "CALLTYPE",
+        "YIELDTOMAT",
+        "DTMAT",
+        "ASSETCLASS",
+        "FIASSETCLASS",
+    )
 
     @property
     def root(self):
-        root = Element('DEBTINFO')
+        root = Element("DEBTINFO")
         secinfo = SecinfoTestCase().root
         root.append(secinfo)
-        SubElement(root, 'PARVALUE').text = '1000'
-        SubElement(root, 'DEBTTYPE').text = 'COUPON'
-        SubElement(root, 'DEBTCLASS').text = 'CORPORATE'
-        SubElement(root, 'COUPONRT').text = '5.125'
-        SubElement(root, 'DTCOUPON').text = '20031201'
-        SubElement(root, 'COUPONFREQ').text = 'QUARTERLY'
-        SubElement(root, 'CALLPRICE').text = '1000'
-        SubElement(root, 'YIELDTOCALL').text = '6.5'
-        SubElement(root, 'DTCALL').text = '20051215'
-        SubElement(root, 'CALLTYPE').text = 'CALL'
-        SubElement(root, 'YIELDTOMAT').text = '6.0'
-        SubElement(root, 'DTMAT').text = '20061215'
-        SubElement(root, 'ASSETCLASS').text = 'INTLBOND'
-        SubElement(root, 'FIASSETCLASS').text = 'Fixed to floating bond'
+        SubElement(root, "PARVALUE").text = "1000"
+        SubElement(root, "DEBTTYPE").text = "COUPON"
+        SubElement(root, "DEBTCLASS").text = "CORPORATE"
+        SubElement(root, "COUPONRT").text = "5.125"
+        SubElement(root, "DTCOUPON").text = "20031201"
+        SubElement(root, "COUPONFREQ").text = "QUARTERLY"
+        SubElement(root, "CALLPRICE").text = "1000"
+        SubElement(root, "YIELDTOCALL").text = "6.5"
+        SubElement(root, "DTCALL").text = "20051215"
+        SubElement(root, "CALLTYPE").text = "CALL"
+        SubElement(root, "YIELDTOMAT").text = "6.0"
+        SubElement(root, "DTMAT").text = "20061215"
+        SubElement(root, "ASSETCLASS").text = "INTLBOND"
+        SubElement(root, "FIASSETCLASS").text = "Fixed to floating bond"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, DEBTINFO)
         self.assertIsInstance(root.secinfo, SECINFO)
-        self.assertEqual(root.parvalue, Decimal('1000'))
-        self.assertEqual(root.debttype, 'COUPON')
-        self.assertEqual(root.debtclass, 'CORPORATE')
-        self.assertEqual(root.couponrt, Decimal('5.125'))
+        self.assertEqual(root.parvalue, Decimal("1000"))
+        self.assertEqual(root.debttype, "COUPON")
+        self.assertEqual(root.debtclass, "CORPORATE")
+        self.assertEqual(root.couponrt, Decimal("5.125"))
         self.assertEqual(root.dtcoupon, datetime(2003, 12, 1, tzinfo=UTC))
-        self.assertEqual(root.couponfreq, 'QUARTERLY')
-        self.assertEqual(root.callprice, Decimal('1000'))
-        self.assertEqual(root.yieldtocall, Decimal('6.5'))
+        self.assertEqual(root.couponfreq, "QUARTERLY")
+        self.assertEqual(root.callprice, Decimal("1000"))
+        self.assertEqual(root.yieldtocall, Decimal("6.5"))
         self.assertEqual(root.dtcall, datetime(2005, 12, 15, tzinfo=UTC))
-        self.assertEqual(root.calltype, 'CALL')
-        self.assertEqual(root.yieldtomat, Decimal('6.0'))
+        self.assertEqual(root.calltype, "CALL")
+        self.assertEqual(root.yieldtomat, Decimal("6.0"))
         self.assertEqual(root.dtmat, datetime(2006, 12, 15, tzinfo=UTC))
-        self.assertEqual(root.assetclass, 'INTLBOND')
-        self.assertEqual(root.fiassetclass, 'Fixed to floating bond')
+        self.assertEqual(root.assetclass, "INTLBOND")
+        self.assertEqual(root.fiassetclass, "Fixed to floating bond")
 
     def testOneOf(self):
-        self.oneOfTest('DEBTTYPE', ('COUPON', 'ZERO'))
-        self.oneOfTest('DEBTCLASS',
-                       ('TREASURY', 'MUNICIPAL', 'CORPORATE', 'OTHER'))
-        self.oneOfTest('COUPONFREQ',
-                       ('MONTHLY', 'QUARTERLY', 'SEMIANNUAL', 'ANNUAL',
-                        'OTHER'))
-        self.oneOfTest('CALLTYPE', ('CALL', 'PUT', 'PREFUND', 'MATURITY'))
+        self.oneOfTest("DEBTTYPE", ("COUPON", "ZERO"))
+        self.oneOfTest("DEBTCLASS", ("TREASURY", "MUNICIPAL", "CORPORATE", "OTHER"))
+        self.oneOfTest(
+            "COUPONFREQ", ("MONTHLY", "QUARTERLY", "SEMIANNUAL", "ANNUAL", "OTHER")
+        )
+        self.oneOfTest("CALLTYPE", ("CALL", "PUT", "PREFUND", "MATURITY"))
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -221,30 +246,31 @@ class PortionTestCase(unittest.TestCase, base.TestAggregate):
 
     @property
     def root(self):
-        root = Element('PORTION')
-        SubElement(root, 'ASSETCLASS').text = 'DOMESTICBOND'
-        SubElement(root, 'PERCENT').text = '15'
+        root = Element("PORTION")
+        SubElement(root, "ASSETCLASS").text = "DOMESTICBOND"
+        SubElement(root, "PERCENT").text = "15"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, PORTION)
-        self.assertEqual(root.assetclass, 'DOMESTICBOND')
-        self.assertEqual(root.percent, Decimal('15'))
+        self.assertEqual(root.assetclass, "DOMESTICBOND")
+        self.assertEqual(root.percent, Decimal("15"))
 
     def testOneOf(self):
-        self.oneOfTest('ASSETCLASS', ASSETCLASSES)
+        self.oneOfTest("ASSETCLASS", ASSETCLASSES)
 
 
 class MfassetclassTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
     # requiredElements = ('PORTION',)  # FIXME - how to handle multiple PORTIONs?
 
     @property
     def root(self):
-        root = Element('MFASSETCLASS')
+        root = Element("MFASSETCLASS")
         for i in range(4):
             portion = PortionTestCase().root
             root.append(portion)
@@ -264,27 +290,28 @@ class FiportionTestCase(unittest.TestCase, base.TestAggregate):
 
     @property
     def root(self):
-        root = Element('FIPORTION')
-        SubElement(root, 'FIASSETCLASS').text = 'Foobar'
-        SubElement(root, 'PERCENT').text = '50'
+        root = Element("FIPORTION")
+        SubElement(root, "FIASSETCLASS").text = "Foobar"
+        SubElement(root, "PERCENT").text = "50"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, FIPORTION)
-        self.assertEqual(root.fiassetclass, 'Foobar')
-        self.assertEqual(root.percent, Decimal('50'))
+        self.assertEqual(root.fiassetclass, "Foobar")
+        self.assertEqual(root.percent, Decimal("50"))
 
 
 class FimfassetclassTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
     # requiredElements = ('FIPORTION',)  # FIXME - how to handle multiple FIPORTIONs?
 
     @property
     def root(self):
-        root = Element('FIMFASSETCLASS')
+        root = Element("FIMFASSETCLASS")
         for i in range(4):
             portion = FiportionTestCase().root
             root.append(portion)
@@ -302,18 +329,23 @@ class FimfassetclassTestCase(unittest.TestCase, base.TestAggregate):
 class MfinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ('SECINFO',)
-    optionalElements = ('MFTYPE', 'YIELD', 'DTYIELDASOF', 'MFASSETCLASS',
-                        'FIMFASSETCLASS',)
+    requiredElements = ("SECINFO",)
+    optionalElements = (
+        "MFTYPE",
+        "YIELD",
+        "DTYIELDASOF",
+        "MFASSETCLASS",
+        "FIMFASSETCLASS",
+    )
 
     @property
     def root(self):
-        root = Element('MFINFO')
+        root = Element("MFINFO")
         secinfo = SecinfoTestCase().root
         root.append(secinfo)
-        SubElement(root, 'MFTYPE').text = 'OPENEND'
-        SubElement(root, 'YIELD').text = '5.0'
-        SubElement(root, 'DTYIELDASOF').text = '20030501'
+        SubElement(root, "MFTYPE").text = "OPENEND"
+        SubElement(root, "YIELD").text = "5.0"
+        SubElement(root, "DTYIELDASOF").text = "20030501"
         mfassetclass = MfassetclassTestCase().root
         root.append(mfassetclass)
         fimfassetclass = FimfassetclassTestCase().root
@@ -321,34 +353,34 @@ class MfinfoTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testOneOf(self):
-        self.oneOfTest('MFTYPE', ('OPENEND', 'CLOSEEND', 'OTHER'))
+        self.oneOfTest("MFTYPE", ("OPENEND", "CLOSEEND", "OTHER"))
 
     def testGroom(self):
         root = deepcopy(self.root)
         MFINFO.groom(root)
         self.assertIsInstance(root, Element)
         self.assertEqual(len(root), len(self.root))
-        secinfo, mftype, yld, dtyieldasof, mfassetclass, fimfassetclass = root [:]
+        secinfo, mftype, yld, dtyieldasof, mfassetclass, fimfassetclass = root[:]
 
         # FIXME - test the other children too
         self.assertIsInstance(yld, Element)
         self.assertEqual(len(yld), 0)
-        self.assertEqual(yld.tag, 'YLD')
-        self.assertEqual(yld.text, '5.0')
+        self.assertEqual(yld.tag, "YLD")
+        self.assertEqual(yld.text, "5.0")
 
     def testUngroom(self):
         root = self.root
         yld = root[2]
-        yld.tag = 'YLD'
+        yld.tag = "YLD"
         MFINFO.ungroom(root)
-        self.assertEqual(yld.tag, 'YIELD')
+        self.assertEqual(yld.tag, "YIELD")
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, MFINFO)
         self.assertIsInstance(root.secinfo, SECINFO)
-        self.assertEqual(root.mftype, 'OPENEND')
-        self.assertEqual(root.yld, Decimal('5.0'))
+        self.assertEqual(root.mftype, "OPENEND")
+        self.assertEqual(root.yld, Decimal("5.0"))
         self.assertEqual(root.dtyieldasof, datetime(2003, 5, 1, tzinfo=UTC))
         self.assertIsInstance(root.mfassetclass, MFASSETCLASS)
         self.assertIsInstance(root.fimfassetclass, FIMFASSETCLASS)
@@ -362,35 +394,34 @@ class MfinfoTestCase(unittest.TestCase, base.TestAggregate):
 class OptinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ('SECINFO', 'OPTTYPE', 'STRIKEPRICE', 'DTEXPIRE',
-                        'SHPERCTRCT',)
-    optionalElements = ('SECID', 'ASSETCLASS', 'FIASSETCLASS',)
+    requiredElements = ("SECINFO", "OPTTYPE", "STRIKEPRICE", "DTEXPIRE", "SHPERCTRCT")
+    optionalElements = ("SECID", "ASSETCLASS", "FIASSETCLASS")
 
     @property
     def root(self):
-        root = Element('OPTINFO')
+        root = Element("OPTINFO")
         secinfo = SecinfoTestCase().root
         root.append(secinfo)
-        SubElement(root, 'OPTTYPE').text = 'CALL'
-        SubElement(root, 'STRIKEPRICE').text = '25.5'
-        SubElement(root, 'DTEXPIRE').text = '20031215'
-        SubElement(root, 'SHPERCTRCT').text = '100'
+        SubElement(root, "OPTTYPE").text = "CALL"
+        SubElement(root, "STRIKEPRICE").text = "25.5"
+        SubElement(root, "DTEXPIRE").text = "20031215"
+        SubElement(root, "SHPERCTRCT").text = "100"
         secid = SecidTestCase().root
         root.append(secid)
-        SubElement(root, 'ASSETCLASS').text = 'SMALLSTOCK'
-        SubElement(root, 'FIASSETCLASS').text = 'FOO'
+        SubElement(root, "ASSETCLASS").text = "SMALLSTOCK"
+        SubElement(root, "FIASSETCLASS").text = "FOO"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, OPTINFO)
         self.assertIsInstance(root.secinfo, SECINFO)
-        self.assertEqual(root.opttype, 'CALL')
-        self.assertEqual(root.strikeprice, Decimal('25.5'))
+        self.assertEqual(root.opttype, "CALL")
+        self.assertEqual(root.strikeprice, Decimal("25.5"))
         self.assertEqual(root.dtexpire, datetime(2003, 12, 15, tzinfo=UTC))
         self.assertEqual(root.shperctrct, 100)
-        self.assertEqual(root.assetclass, 'SMALLSTOCK')
-        self.assertEqual(root.fiassetclass, 'FOO')
+        self.assertEqual(root.assetclass, "SMALLSTOCK")
+        self.assertEqual(root.fiassetclass, "FOO")
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -401,29 +432,29 @@ class OptinfoTestCase(unittest.TestCase, base.TestAggregate):
 class OtherinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ('SECINFO',)
-    optionalElements = ('TYPEDESC', 'ASSETCLASS', 'FIASSETCLASS',)
+    requiredElements = ("SECINFO",)
+    optionalElements = ("TYPEDESC", "ASSETCLASS", "FIASSETCLASS")
 
     @property
     def root(self):
-        root = Element('OTHERINFO')
+        root = Element("OTHERINFO")
         secinfo = SecinfoTestCase().root
         root.append(secinfo)
-        SubElement(root, 'TYPEDESC').text = 'Securitized baseball card pool'
-        SubElement(root, 'ASSETCLASS').text = 'SMALLSTOCK'
-        SubElement(root, 'FIASSETCLASS').text = 'FOO'
+        SubElement(root, "TYPEDESC").text = "Securitized baseball card pool"
+        SubElement(root, "ASSETCLASS").text = "SMALLSTOCK"
+        SubElement(root, "FIASSETCLASS").text = "FOO"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, OTHERINFO)
         self.assertIsInstance(root.secinfo, SECINFO)
-        self.assertEqual(root.typedesc, 'Securitized baseball card pool')
-        self.assertEqual(root.assetclass, 'SMALLSTOCK')
-        self.assertEqual(root.fiassetclass, 'FOO')
+        self.assertEqual(root.typedesc, "Securitized baseball card pool")
+        self.assertEqual(root.assetclass, "SMALLSTOCK")
+        self.assertEqual(root.fiassetclass, "FOO")
 
     def testOneOf(self):
-        self.oneOfTest('ASSETCLASS', ASSETCLASSES)
+        self.oneOfTest("ASSETCLASS", ASSETCLASSES)
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -434,54 +465,59 @@ class OtherinfoTestCase(unittest.TestCase, base.TestAggregate):
 class StockinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ('SECINFO',)
-    optionalElements = ('STOCKTYPE', 'YIELD', 'DTYIELDASOF', 'ASSETCLASS',
-                        'FIASSETCLASS',)
+    requiredElements = ("SECINFO",)
+    optionalElements = (
+        "STOCKTYPE",
+        "YIELD",
+        "DTYIELDASOF",
+        "ASSETCLASS",
+        "FIASSETCLASS",
+    )
 
     @property
     def root(self):
-        root = Element('STOCKINFO')
+        root = Element("STOCKINFO")
         secinfo = SecinfoTestCase().root
         root.append(secinfo)
-        SubElement(root, 'STOCKTYPE').text = 'CONVERTIBLE'
-        SubElement(root, 'YIELD').text = '5.0'
-        SubElement(root, 'DTYIELDASOF').text = '20030501'
-        SubElement(root, 'ASSETCLASS').text = 'SMALLSTOCK'
-        SubElement(root, 'FIASSETCLASS').text = 'FOO'
+        SubElement(root, "STOCKTYPE").text = "CONVERTIBLE"
+        SubElement(root, "YIELD").text = "5.0"
+        SubElement(root, "DTYIELDASOF").text = "20030501"
+        SubElement(root, "ASSETCLASS").text = "SMALLSTOCK"
+        SubElement(root, "FIASSETCLASS").text = "FOO"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, STOCKINFO)
         self.assertIsInstance(root.secinfo, SECINFO)
-        self.assertEqual(root.stocktype, 'CONVERTIBLE')
-        self.assertEqual(root.yld, Decimal('5.0'))
+        self.assertEqual(root.stocktype, "CONVERTIBLE")
+        self.assertEqual(root.yld, Decimal("5.0"))
         self.assertEqual(root.dtyieldasof, datetime(2003, 5, 1, tzinfo=UTC))
-        self.assertEqual(root.assetclass, 'SMALLSTOCK')
-        self.assertEqual(root.fiassetclass, 'FOO')
+        self.assertEqual(root.assetclass, "SMALLSTOCK")
+        self.assertEqual(root.fiassetclass, "FOO")
 
     def testGroom(self):
         root = deepcopy(self.root)
         STOCKINFO.groom(root)
         self.assertIsInstance(root, Element)
         self.assertEqual(len(root), len(self.root))
-        secinfo, stocktype, yld, dtyieldasof, assetclass, fiassetclass = root [:]
+        secinfo, stocktype, yld, dtyieldasof, assetclass, fiassetclass = root[:]
 
         # FIXME - test the other children too
         self.assertIsInstance(yld, Element)
         self.assertEqual(len(yld), 0)
-        self.assertEqual(yld.tag, 'YLD')
-        self.assertEqual(yld.text, '5.0')
+        self.assertEqual(yld.tag, "YLD")
+        self.assertEqual(yld.text, "5.0")
 
     def testUngroom(self):
         root = self.root
         yld = root[2]
-        yld.tag = 'YLD'
+        yld.tag = "YLD"
         STOCKINFO.ungroom(root)
-        self.assertEqual(yld.tag, 'YIELD')
+        self.assertEqual(yld.tag, "YIELD")
 
     def testOneOf(self):
-        self.oneOfTest('ASSETCLASS', ASSETCLASSES)
+        self.oneOfTest("ASSETCLASS", ASSETCLASSES)
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -491,13 +527,14 @@ class StockinfoTestCase(unittest.TestCase, base.TestAggregate):
 
 class SeclistTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
     optionalElements = ()  # FIXME - how to handle SECINFO subclasses?
 
     @property
     def root(self):
-        root = Element('SECLIST')
+        root = Element("SECLIST")
         secinfo = DebtinfoTestCase().root
         root.append(secinfo)
         secinfo = MfinfoTestCase().root
@@ -530,7 +567,7 @@ class Seclistmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
 
     @property
     def root(self):
-        root = Element('SECLISTMSGSRSV1')
+        root = Element("SECLISTMSGSRSV1")
         seclist = SeclistTestCase().root
         root.append(seclist)
         return root
@@ -546,10 +583,10 @@ class Seclistmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
 
     @property
     def root(self):
-        root = Element('SECLISTMSGSETV1')
+        root = Element("SECLISTMSGSETV1")
         msgsetcore = test_models_common.MsgsetcoreTestCase().root
         root.append(msgsetcore)
-        SubElement(root, 'SECLISTRQDNLD').text = 'N'
+        SubElement(root, "SECLISTRQDNLD").text = "N"
         return root
 
     def testConvert(self):
@@ -564,7 +601,7 @@ class SeclistmsgsetTestCase(unittest.TestCase, base.TestAggregate):
 
     @property
     def root(self):
-        root = Element('SECLISTMSGSET')
+        root = Element("SECLISTMSGSET")
         seclistmsgsetv1 = Seclistmsgsetv1TestCase().root
         root.append(seclistmsgsetv1)
         return root
@@ -575,5 +612,5 @@ class SeclistmsgsetTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root.seclistmsgsetv1, SECLISTMSGSETV1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

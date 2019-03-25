@@ -3,38 +3,49 @@
 Data structures for credit card download - OFX Section 11
 """
 # local imports
-from ofxtools.Types import (
-    String, Decimal, OneOf, Bool,
-    DateTime)
-from ofxtools.models.base import (
-    Aggregate, List, SubAggregate, Unsupported,
-)
-from ofxtools.models.common import (
-    STATUS, MSGSETCORE,
-)
+from ofxtools.Types import String, Decimal, OneOf, Bool, DateTime
+from ofxtools.models.base import Aggregate, List, SubAggregate, Unsupported
+from ofxtools.models.common import STATUS, MSGSETCORE
 from ofxtools.models.bank import (
-    CCACCTFROM, INCTRAN, BANKTRANLIST, LEDGERBAL, AVAILBAL, BALLIST,
+    CCACCTFROM,
+    INCTRAN,
+    BANKTRANLIST,
+    LEDGERBAL,
+    AVAILBAL,
+    BALLIST,
 )
-from ofxtools.models.i18n import (
-    CURRENCY, ORIGCURRENCY, CURRENCY_CODES,
-)
+from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, CURRENCY_CODES
 
 
-__all__ = ['LASTPMTINFO', 'REWARDINFO',
-           'CCSTMTRQ', 'CCSTMTRS', 'CCSTMTTRNRQ', 'CCSTMTTRNRS',
-           'CREDITCARDMSGSRQV1', 'CREDITCARDMSGSRSV1', 'CREDITCARDMSGSETV1',
-           'CREDITCARDMSGSET', 'CCSTMTENDTRNRQ', 'CCSTMTENDTRNRS',
-           'CCSTMTENDRQ', 'CCSTMTENDRS', 'CCCLOSING']
+__all__ = [
+    "LASTPMTINFO",
+    "REWARDINFO",
+    "CCSTMTRQ",
+    "CCSTMTRS",
+    "CCSTMTTRNRQ",
+    "CCSTMTTRNRS",
+    "CREDITCARDMSGSRQV1",
+    "CREDITCARDMSGSRSV1",
+    "CREDITCARDMSGSETV1",
+    "CREDITCARDMSGSET",
+    "CCSTMTENDTRNRQ",
+    "CCSTMTENDTRNRS",
+    "CCSTMTENDRQ",
+    "CCSTMTENDRS",
+    "CCCLOSING",
+]
 
 
 class LASTPMTINFO(Aggregate):
     """ OFX section 11.3.10 """
+
     lastpmtdate = DateTime(required=True)
     lastpmtamt = Decimal(required=True)
 
 
 class REWARDINFO(Aggregate):
     """ OFX section 11.4.3.2 """
+
     name = String(32, required=True)
     rewardbal = Decimal(required=True)
     rewardearned = Decimal()
@@ -42,6 +53,7 @@ class REWARDINFO(Aggregate):
 
 class CCSTMTRQ(Aggregate):
     """ OFX section 11.4.3.1 """
+
     ccacctfrom = SubAggregate(CCACCTFROM, required=True)
     inctran = SubAggregate(INCTRAN)
     includepending = Bool()
@@ -50,6 +62,7 @@ class CCSTMTRQ(Aggregate):
 
 class CCSTMTRS(Aggregate):
     """ OFX section 11.4.3.2 """
+
     curdef = OneOf(*CURRENCY_CODES, required=True)
     ccacctfrom = SubAggregate(CCACCTFROM, required=True)
     banktranlist = SubAggregate(BANKTRANLIST)
@@ -79,12 +92,14 @@ class CCSTMTRS(Aggregate):
 
 class CCSTMTTRNRQ(Aggregate):
     """ OFX section 11.4.3.1 """
+
     trnuid = String(36, required=True)
     ccstmtrq = SubAggregate(CCSTMTRQ)
 
 
 class CCSTMTTRNRS(Aggregate):
     """ OFX section 11.4.3.2 """
+
     trnuid = String(36, required=True)
     status = SubAggregate(STATUS, required=True)
     ccstmtrs = SubAggregate(CCSTMTRS)
@@ -128,6 +143,7 @@ class CCCLOSING(Aggregate):
 
 class CCSTMTENDRQ(Aggregate):
     """ OFX section 11.5.3 """
+
     ccacctfrom = SubAggregate(CCACCTFROM, required=True)
     dtstart = DateTime()
     dtend = DateTime()
@@ -136,6 +152,7 @@ class CCSTMTENDRQ(Aggregate):
 
 class CCSTMTENDRS(Aggregate):
     """ OFX section 11.5.4 """
+
     curdef = OneOf(*CURRENCY_CODES, required=True)
     ccacctfrom = SubAggregate(CCACCTFROM, required=True)
     ccclosing = SubAggregate(CCCLOSING)
@@ -143,12 +160,14 @@ class CCSTMTENDRS(Aggregate):
 
 class CCSTMTENDTRNRQ(Aggregate):
     """ OFX section 11.4.3.1 """
+
     trnuid = String(36, required=True)
     ccstmtendrq = SubAggregate(CCSTMTENDRQ)
 
 
 class CCSTMTENDTRNRS(Aggregate):
     """ OFX section 11.4.3.2 """
+
     trnuid = String(36, required=True)
     status = SubAggregate(STATUS, required=True)
     ccstmtendrs = SubAggregate(CCSTMTENDRS)
@@ -160,12 +179,14 @@ class CCSTMTENDTRNRS(Aggregate):
 
 class CREDITCARDMSGSRQV1(List):
     """ OFX section 11.13.1.1.1 """
-    dataTags = ['CCSTMTTRNRQ', 'CCSTMTENDTRNRQ']
+
+    dataTags = ["CCSTMTTRNRQ", "CCSTMTENDTRNRQ"]
 
 
 class CREDITCARDMSGSRSV1(List):
     """ OFX section 11.13.1.1.2 """
-    dataTags = ['CCSTMTTRNRS', 'CCSTMTENDTRNRS']
+
+    dataTags = ["CCSTMTTRNRS", "CCSTMTENDTRNRS"]
 
     @property
     def statements(self):
@@ -174,6 +195,7 @@ class CREDITCARDMSGSRSV1(List):
 
 class CREDITCARDMSGSETV1(Aggregate):
     """ OFX section 11.13.3 """
+
     msgsetcore = SubAggregate(MSGSETCORE, required=True)
     closingavail = Bool(required=True)
     pendingavail = Bool()
@@ -182,4 +204,5 @@ class CREDITCARDMSGSETV1(Aggregate):
 
 class CREDITCARDMSGSET(Aggregate):
     """ OFX section 11.13.3 """
+
     creditcardmsgsetv1 = SubAggregate(CREDITCARDMSGSETV1, required=True)

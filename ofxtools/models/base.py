@@ -10,12 +10,12 @@ from collections import OrderedDict
 
 # local imports
 import ofxtools.models
-from ofxtools.Types import (
-    Element, DateTime, String, Bool, InstanceCounterMixin)
+from ofxtools.Types import Element, DateTime, String, Bool, InstanceCounterMixin
 
 
 class classproperty(property):
     """ Decorator that turns a classmethod into a property """
+
     def __get__(self, cls, owner):
         return self.fget.__get__(None, owner)()
 
@@ -31,6 +31,7 @@ class Aggregate:
     The alternate ``from_etree()`` instance constructor takes an instance of
     ``xml.etree.ElementTree.Element``.
     """
+
     # Validation constraints used by ``validate_kwargs()``.
     # Sequences of tuples (type str) defining mutually exclusive child tags.
     # Aggregate MAY have a child from  `optionalMutexes``;
@@ -97,8 +98,9 @@ class Aggregate:
         for choices in cls.requiredMutexes:
             count = sum([kwargs.get(ch, None) is not None for ch in choices])
             if count != 1:
-                args = ', '.join(['{}={}'.format(ch, kwargs.get(ch, None))
-                                  for ch in choices])
+                args = ", ".join(
+                    ["{}={}".format(ch, kwargs.get(ch, None)) for ch in choices]
+                )
                 msg = "{}({}): must contain exactly 1 of [{}]"
                 raise ValueError(msg.format(cls.__name__, args, choices))
 
@@ -154,15 +156,13 @@ class Aggregate:
             try:
                 return spec.index(tag)
             except ValueError:
-                msg = "Aggregate {} does not define {}".format(
-                    cls.__name__, tag)
+                msg = "Aggregate {} does not define {}".format(cls.__name__, tag)
                 raise ValueError(msg)
 
         indices = [indexOrRaise(*child) for child in children]
         if indices != sorted(indices):
             msg = "{} SubElements out of order: {}"
-            raise ValueError(msg.format(cls.__name__,
-                                        [c[0] for c in children]))
+            raise ValueError(msg.format(cls.__name__, [c[0] for c in children]))
 
         args = []
 
@@ -230,8 +230,7 @@ class Aggregate:
 
         N.B. SubAggregate is a subclass of Element.
         """
-        return cls._ordered_attrs(lambda v:
-                                  isinstance(v, (Element, Unsupported)))
+        return cls._ordered_attrs(lambda v: isinstance(v, (Element, Unsupported)))
 
     @classproperty
     @classmethod
@@ -240,9 +239,9 @@ class Aggregate:
         OrderedDict of all Aggregate attributes that are Elements but not
         SubAggregates.
         """
-        return cls._ordered_attrs(lambda v:
-                                  isinstance(v, Element)
-                                  and not isinstance(v, SubAggregate))
+        return cls._ordered_attrs(
+            lambda v: isinstance(v, Element) and not isinstance(v, SubAggregate)
+        )
 
     @classproperty
     @classmethod
@@ -250,8 +249,7 @@ class Aggregate:
         """
         OrderedDict of all Aggregate attributes that are SubAggregates.
         """
-        return cls._ordered_attrs(lambda v:
-                                  isinstance(v, SubAggregate))
+        return cls._ordered_attrs(lambda v: isinstance(v, SubAggregate))
 
     @classproperty
     @classmethod
@@ -259,8 +257,7 @@ class Aggregate:
         """
         OrderedDict of all Aggregate attributes that are Unsupported.
         """
-        return cls._ordered_attrs(lambda v:
-                                  isinstance(v, Unsupported))
+        return cls._ordered_attrs(lambda v: isinstance(v, Unsupported))
 
     @property
     def _spec_repr(self):
@@ -270,14 +267,16 @@ class Aggregate:
 
         Used by __repr__().
         """
-        attrs = [(attr, repr(getattr(self, attr)))
-                 for attr in self.spec
-                 if getattr(self, attr) is not None]
+        attrs = [
+            (attr, repr(getattr(self, attr)))
+            for attr in self.spec
+            if getattr(self, attr) is not None
+        ]
         return attrs
 
     def __repr__(self):
-        attrs = ['{}={}'.format(*attr) for attr in self._spec_repr]
-        return '<{}({})>'.format(self.__class__.__name__, ', '.join(attrs))
+        attrs = ["{}={}".format(*attr) for attr in self._spec_repr]
+        return "<{}({})>".format(self.__class__.__name__, ", ".join(attrs))
 
     def __getattr__(self, attr):
         """ Proxy access to attributes of SubAggregates """
@@ -287,8 +286,9 @@ class Aggregate:
                 return getattr(subagg, attr)
             except AttributeError:
                 continue
-        raise AttributeError("'{}' object has no attribute '{}'".format(
-            self.__class__.__name__, attr))
+        raise AttributeError(
+            "'{}' object has no attribute '{}'".format(self.__class__.__name__, attr)
+        )
 
 
 class SubAggregate(Element):
@@ -302,6 +302,7 @@ class SubAggregate(Element):
     Actual model instances replace these SubAggregate instances with Aggregate
     instances; cf. ``Aggregate.__init__()`` call to ``setattr()``.
     """
+
     def _init(self, *args, **kwargs):
         args = list(args)
         agg = args.pop(0)
@@ -321,14 +322,15 @@ class SubAggregate(Element):
 
     # This doesn't get used
     #  def __repr__(self):
-        #  repr = "<SubAggregate {}>".format(self.type)
-        #  return repr
+    #  repr = "<SubAggregate {}>".format(self.type)
+    #  return repr
 
 
 class Unsupported(InstanceCounterMixin):
     """
     Null Aggregate/Element - not implemented (yet)
     """
+
     def __get__(self, instance, type_):
         pass
 
@@ -343,6 +345,7 @@ class List(Aggregate, list):
     """
     Base class for OFX *LIST
     """
+
     # ``List.metadataTags`` means fixed child ``Elements``  (in the OFX spec)
     # preceding the variable-length sequence of contained ``Aggregates``.
     # Define as sequence of OFX tags (type str) corresponding to __init__()
@@ -417,15 +420,16 @@ class List(Aggregate, list):
         return object.__hash__(self)
 
     def __repr__(self):
-        return '<{} len={}>'.format(self.__class__.__name__, len(self))
+        return "<{} len={}>".format(self.__class__.__name__, len(self))
 
 
 class TranList(List):
     """ Base class for OFX *TRANLIST """
+
     dtstart = DateTime(required=True)
     dtend = DateTime(required=True)
 
-    metadataTags = ['DTSTART', 'DTEND']
+    metadataTags = ["DTSTART", "DTEND"]
 
     def __init__(self, dtstart, dtend, *members):
         self.dtstart = dtstart
@@ -434,25 +438,28 @@ class TranList(List):
 
     def __repr__(self):
         return "<{} dtstart='{}' dtend='{}' len={}>".format(
-            self.__class__.__name__, self.dtstart, self.dtend, len(self))
+            self.__class__.__name__, self.dtstart, self.dtend, len(self)
+        )
 
 
 class SyncRqList(List):
     """ Base cass for *SYNCRQ """
+
     token = String(10)
     tokenonly = Bool()
     refresh = Bool()
     rejectifmissing = Bool(required=True)
 
-    metadataTags = ['TOKEN', 'TOKENONLY', 'REFRESH', 'REJECTIFMISSING']
-    requiredMutexes = [('token', 'tokenonly', 'refresh'), ]
+    metadataTags = ["TOKEN", "TOKENONLY", "REFRESH", "REJECTIFMISSING"]
+    requiredMutexes = [("token", "tokenonly", "refresh")]
 
     def __init__(self, token, tokenonly, refresh, rejectifmissing, *members):
         # To validate "choice" args (token/tokenonly/refresh) we stick them
         # into ``requiredMutexes`` and reuse the logic in
         # ``Agregate.validate_kwargs()``
-        self.validate_kwargs({'token': token, 'tokenonly': tokenonly,
-                              'refresh': refresh})
+        self.validate_kwargs(
+            {"token": token, "tokenonly": tokenonly, "refresh": refresh}
+        )
         self.token = token
         self.tokenonly = tokenonly
         self.refresh = refresh
@@ -463,10 +470,11 @@ class SyncRqList(List):
 
 class SyncRsList(List):
     """ Base cass for *SYNCRS """
+
     token = String(10, required=True)
     lostsync = Bool()
 
-    metadataTags = ['TOKEN', 'LOSTSYNC']
+    metadataTags = ["TOKEN", "LOSTSYNC"]
 
     def __init__(self, token, lostsync, *members):
         self.token = token

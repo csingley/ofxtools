@@ -27,12 +27,13 @@ def cusip_checksum(base):
 
     http://goo.gl/4TeWl
     """
+
     def encode(index, char):
-        num = {'*': 36, '@': 37, '#': 38}.get(char, int(char, 36))
+        num = {"*": 36, "@": 37, "#": 38}.get(char, int(char, 36))
         return str(num * 2) if index % 2 else str(num)
 
     assert len(base) == 8
-    check = ''.join([encode(index, char) for index, char in enumerate(base)])
+    check = "".join([encode(index, char) for index, char in enumerate(base)])
     check = sum([int(digit) for digit in check])
     return str((10 - (check % 10)) % 10)
 
@@ -55,7 +56,7 @@ def sedol_checksum(base):
     weights = (1, 3, 1, 7, 3, 9)
 
     assert len(base) == 6
-    for badLetter in 'AEIO':
+    for badLetter in "AEIO":
         assert badLetter not in base
     check = sum([int(char, 36) * weights[n] for n, char in enumerate(base)])
     return str((10 - (check % 10)) % 10)
@@ -70,9 +71,9 @@ def isin_checksum(base):
     """
     assert len(base) == 11
     assert base[:2] in NUMBERING_AGENCIES.keys()
-    check = ''.join([str(int(char, 36)) for char in base])
+    check = "".join([str(int(char, 36)) for char in base])
     check = check[::-1]  # string reversal
-    check = ''.join([d if n % 2 else str(int(d)*2) for n, d in enumerate(check)])
+    check = "".join([d if n % 2 else str(int(d) * 2) for n, d in enumerate(check)])
     return str((10 - sum([int(d) for d in check]) % 10) % 10)
 
 
@@ -80,9 +81,11 @@ def validate_isin(isin):
     """
     Validate an ISIN
     """
-    if len(isin) == 12 \
-       and isin[:2] in NUMBERING_AGENCIES.keys() \
-       and isin_checksum(isin[:11]) == isin[11]:
+    if (
+        len(isin) == 12
+        and isin[:2] in NUMBERING_AGENCIES.keys()
+        and isin_checksum(isin[:11]) == isin[11]
+    ):
         return True
     else:
         return False
@@ -93,7 +96,7 @@ def cusip2isin(cusip, nation=None):
     if not validate_cusip(cusip):
         raise ValueError("'%s' is not a valid CUSIP" % cusip)
 
-    nation = nation or 'US'
+    nation = nation or "US"
     if nation not in NUMBERING_AGENCIES.keys():
         raise ValueError("'%s' is not a valid country code" % nation)
 
@@ -103,7 +106,7 @@ def cusip2isin(cusip, nation=None):
 
 
 def sedol2isin(sedol, nation=None):
-    nation = nation or 'GB'
+    nation = nation or "GB"
     assert len(sedol) == 7
     assert sedol_checksum(sedol[:6]) == sedol[6]
     base = nation + sedol.zfill(9)
@@ -114,6 +117,7 @@ def settleDate(dt):
     """
     Given a trade date (or datetime), return the trade settlement date(time)
     """
+
     def nextBizDay(dt):
         stop = False
         while not stop:
@@ -152,6 +156,7 @@ class NYSEcalendar:
     the succeeding Monday, unless unusual business conditions exist,
     such as the ending of a monthly or the yearly accounting period.
     """
+
     _cal = calendar.Calendar()
 
     @classmethod
@@ -159,11 +164,16 @@ class NYSEcalendar:
         """
         Filter datetime.dates in (year, month) for a given weekday.
         """
+
         def weekdayTest(days):
             return (days[0] > 0) and (days[1] == weekday)
-        return [datetime.date(year, month, day) \
-                for (day, wkday) in itertools.ifilter(weekdayTest,
-                                        cls._cal.itermonthdays2(year, month))]
+
+        return [
+            datetime.date(year, month, day)
+            for (day, wkday) in itertools.ifilter(
+                weekdayTest, cls._cal.itermonthdays2(year, month)
+            )
+        ]
 
     @classmethod
     def mondays(cls, year, month):
@@ -175,14 +185,15 @@ class NYSEcalendar:
 
     @classmethod
     def holidays(cls, year):
-        hols = [datetime.date(year, 7, 4), # Independence Day
-                datetime.date(year, 12, 25), # Christmas
-                cls.mondays(year, 1)[2], # MLK Day
-                findEaster(year) - datetime.timedelta(days=2), # Good Friday
-                cls.mondays(year, 2)[2], # Washington's Birthday
-                cls.mondays(year, 5)[-1], # Memorial Day
-                cls.mondays(year, 9)[0], # Labor Day
-                cls.thursdays(year, 11)[-1], # Thanksgiving
+        hols = [
+            datetime.date(year, 7, 4),  # Independence Day
+            datetime.date(year, 12, 25),  # Christmas
+            cls.mondays(year, 1)[2],  # MLK Day
+            findEaster(year) - datetime.timedelta(days=2),  # Good Friday
+            cls.mondays(year, 2)[2],  # Washington's Birthday
+            cls.mondays(year, 5)[-1],  # Memorial Day
+            cls.mondays(year, 9)[0],  # Labor Day
+            cls.thursdays(year, 11)[-1],  # Thanksgiving
         ]
         newYearsDay = datetime.date(year, 1, 1)
         if newYearsDay.weekday() != 5:
@@ -230,22 +241,23 @@ def findEaster(year):
     e = 0
 
     # New method (i.e. EASTER_WESTERN)
-    c = y/100
-    h = (c-c/4-(8*c+13)/25+19*g+15)%30
-    i = h-(h/28)*(1-(h/28)*(29/(h+1))*((21-g)/11))
-    j = (y+y/4+i+2-c+c/4)%7
+    c = y / 100
+    h = (c - c / 4 - (8 * c + 13) / 25 + 19 * g + 15) % 30
+    i = h - (h / 28) * (1 - (h / 28) * (29 / (h + 1)) * ((21 - g) / 11))
+    j = (y + y / 4 + i + 2 - c + c / 4) % 7
 
     # p can be from -6 to 56 corresponding to dates 22 March to 23 May
     # (later dates apply to method 2, although 23 May never actually occurs)
-    p = i-j+e
-    d = 1+(p+27+(p+6)/40)%31
-    m = 3+(p+26)/30
-    return datetime.date(y,m,d)
+    p = i - j + e
+    d = 1 + (p + 27 + (p + 6) / 40) % 31
+    m = 3 + (p + 26) / 30
+    return datetime.date(y, m, d)
 
 
 try:
     # If pytz is installed then use that.
     import pytz
+
     UTC = pytz.UTC
 except ImportError:
     # Otherwise create our own UTC tzinfo.

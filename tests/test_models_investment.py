@@ -3,10 +3,7 @@
 """
 # stdlib imports
 import unittest
-from xml.etree.ElementTree import (
-    Element,
-    SubElement,
-)
+from xml.etree.ElementTree import Element, SubElement
 from decimal import Decimal
 from datetime import datetime
 from copy import deepcopy
@@ -19,47 +16,94 @@ import test_models_bank
 import test_models_seclist
 import test_models_i18n
 
-from ofxtools.models.base import (
-    Aggregate,
-)
-from ofxtools.models.common import (
-    STATUS, OFXEXTENSION, MSGSETCORE, SVCSTATUSES,
-)
-from ofxtools.models.bank import (
-    STMTTRN, BALLIST, INV401KSOURCES,
-    TRNTYPES, INCTRAN,
-)
+from ofxtools.models.base import Aggregate
+from ofxtools.models.common import STATUS, OFXEXTENSION, MSGSETCORE, SVCSTATUSES
+from ofxtools.models.bank import STMTTRN, BALLIST, INV401KSOURCES, TRNTYPES, INCTRAN
 from ofxtools.models.investment import (
-    INVTRAN, INVBUY, INVSELL, SECID,
-    INVBANKTRAN, BUYDEBT, BUYMF, BUYOPT, BUYOTHER, BUYSTOCK, CLOSUREOPT,
-    INCOME, INVEXPENSE, JRNLFUND, JRNLSEC, MARGININTEREST, REINVEST, RETOFCAP,
-    SELLDEBT, SELLMF, SELLOPT, SELLOTHER, SELLSTOCK, SPLIT, TRANSFER,
-    INVPOS, POSDEBT, POSMF, POSOPT, POSOTHER, POSSTOCK,
-    OO, OOBUYDEBT, OOBUYMF, OOBUYOPT, OOBUYOTHER, OOBUYSTOCK,
-    OOSELLDEBT, OOSELLMF, OOSELLOPT, OOSELLOTHER, OOSELLSTOCK, SWITCHMF,
-    INVTRANLIST, INVPOSLIST, INVOOLIST, INCPOS,
-    INVACCTFROM, INVACCTTO, INVACCTINFO,
-    INV401KBAL, INVBAL, INVSTMTRQ, INVSTMTRS, INVSTMTTRNRQ, INVSTMTTRNRS,
-    INVSTMTMSGSRQV1, INVSTMTMSGSRSV1,
-    BUYTYPES, SELLTYPES, OPTBUYTYPES, OPTSELLTYPES, INCOMETYPES, UNITTYPES,
-    USPRODUCTTYPES, INVACCTTYPES, INVSUBACCTS, INVSTMTMSGSETV1, INVSTMTMSGSET,
+    INVTRAN,
+    INVBUY,
+    INVSELL,
+    SECID,
+    INVBANKTRAN,
+    BUYDEBT,
+    BUYMF,
+    BUYOPT,
+    BUYOTHER,
+    BUYSTOCK,
+    CLOSUREOPT,
+    INCOME,
+    INVEXPENSE,
+    JRNLFUND,
+    JRNLSEC,
+    MARGININTEREST,
+    REINVEST,
+    RETOFCAP,
+    SELLDEBT,
+    SELLMF,
+    SELLOPT,
+    SELLOTHER,
+    SELLSTOCK,
+    SPLIT,
+    TRANSFER,
+    INVPOS,
+    POSDEBT,
+    POSMF,
+    POSOPT,
+    POSOTHER,
+    POSSTOCK,
+    OO,
+    OOBUYDEBT,
+    OOBUYMF,
+    OOBUYOPT,
+    OOBUYOTHER,
+    OOBUYSTOCK,
+    OOSELLDEBT,
+    OOSELLMF,
+    OOSELLOPT,
+    OOSELLOTHER,
+    OOSELLSTOCK,
+    SWITCHMF,
+    INVTRANLIST,
+    INVPOSLIST,
+    INVOOLIST,
+    INCPOS,
+    INVACCTFROM,
+    INVACCTTO,
+    INVACCTINFO,
+    INV401KBAL,
+    INVBAL,
+    INVSTMTRQ,
+    INVSTMTRS,
+    INVSTMTTRNRQ,
+    INVSTMTTRNRS,
+    INVSTMTMSGSRQV1,
+    INVSTMTMSGSRSV1,
+    BUYTYPES,
+    SELLTYPES,
+    OPTBUYTYPES,
+    OPTSELLTYPES,
+    INCOMETYPES,
+    UNITTYPES,
+    USPRODUCTTYPES,
+    INVACCTTYPES,
+    INVSUBACCTS,
+    INVSTMTMSGSETV1,
+    INVSTMTMSGSET,
 )
-from ofxtools.models.i18n import (
-    CURRENCY, CURRENCY_CODES,
-)
+from ofxtools.models.i18n import CURRENCY, CURRENCY_CODES
 from ofxtools.utils import UTC
 
 
 class InvacctfromTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ('BROKERID', 'ACCTID',)
+    requiredElements = ("BROKERID", "ACCTID")
 
     @property
     def root(self):
-        root = Element('INVACCTFROM')
-        SubElement(root, 'BROKERID').text = '111000614'
-        SubElement(root, 'ACCTID').text = '123456789123456789'
+        root = Element("INVACCTFROM")
+        SubElement(root, "BROKERID").text = "111000614"
+        SubElement(root, "ACCTID").text = "123456789123456789"
         return root
 
     def testConvert(self):
@@ -67,75 +111,74 @@ class InvacctfromTestCase(unittest.TestCase, base.TestAggregate):
         # Aggregate instance attributes with the result
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, INVACCTFROM)
-        self.assertEqual(root.brokerid, '111000614')
-        self.assertEqual(root.acctid, '123456789123456789')
+        self.assertEqual(root.brokerid, "111000614")
+        self.assertEqual(root.acctid, "123456789123456789")
 
 
 class InvaccttoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ('BROKERID', 'ACCTID',)
+    requiredElements = ("BROKERID", "ACCTID")
 
     @property
     def root(self):
-        root = Element('INVACCTTO')
-        SubElement(root, 'BROKERID').text = '111000614'
-        SubElement(root, 'ACCTID').text = '123456789123456789'
+        root = Element("INVACCTTO")
+        SubElement(root, "BROKERID").text = "111000614"
+        SubElement(root, "ACCTID").text = "123456789123456789"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, INVACCTTO)
-        self.assertEqual(root.brokerid, '111000614')
-        self.assertEqual(root.acctid, '123456789123456789')
+        self.assertEqual(root.brokerid, "111000614")
+        self.assertEqual(root.acctid, "123456789123456789")
 
 
 class InvacctinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ('INVACCTFROM', 'USPRODUCTTYPE', 'CHECKING',
-                        'SVCSTATUS')
-    optionalElements = ('INVACCTTYPE', 'OPTIONLEVEL', )
+    requiredElements = ("INVACCTFROM", "USPRODUCTTYPE", "CHECKING", "SVCSTATUS")
+    optionalElements = ("INVACCTTYPE", "OPTIONLEVEL")
 
     @property
     def root(self):
-        root = Element('INVACCTINFO')
+        root = Element("INVACCTINFO")
         acctfrom = InvacctfromTestCase().root
         root.append(acctfrom)
-        SubElement(root, 'USPRODUCTTYPE').text = '401K'
-        SubElement(root, 'CHECKING').text = 'Y'
-        SubElement(root, 'SVCSTATUS').text = 'ACTIVE'
-        SubElement(root, 'INVACCTTYPE').text = 'INDIVIDUAL'
-        SubElement(root, 'OPTIONLEVEL').text = 'No way Jose'
+        SubElement(root, "USPRODUCTTYPE").text = "401K"
+        SubElement(root, "CHECKING").text = "Y"
+        SubElement(root, "SVCSTATUS").text = "ACTIVE"
+        SubElement(root, "INVACCTTYPE").text = "INDIVIDUAL"
+        SubElement(root, "OPTIONLEVEL").text = "No way Jose"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, INVACCTINFO)
         self.assertIsInstance(root.invacctfrom, INVACCTFROM)
-        self.assertEqual(root.usproducttype, '401K')
+        self.assertEqual(root.usproducttype, "401K")
         self.assertEqual(root.checking, True)
-        self.assertEqual(root.svcstatus, 'ACTIVE')
-        self.assertEqual(root.invaccttype, 'INDIVIDUAL')
-        self.assertEqual(root.optionlevel, 'No way Jose')
+        self.assertEqual(root.svcstatus, "ACTIVE")
+        self.assertEqual(root.invaccttype, "INDIVIDUAL")
+        self.assertEqual(root.optionlevel, "No way Jose")
 
     def testOneOf(self):
-        self.oneOfTest('USPRODUCTTYPE', USPRODUCTTYPES)
-        self.oneOfTest('SVCSTATUS', SVCSTATUSES)
-        self.oneOfTest('INVACCTTYPE', INVACCTTYPES)
+        self.oneOfTest("USPRODUCTTYPE", USPRODUCTTYPES)
+        self.oneOfTest("SVCSTATUS", SVCSTATUSES)
+        self.oneOfTest("INVACCTTYPE", INVACCTTYPES)
 
 
 class IncposTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ('INCLUDE', )
-    optionalElements = ('DTASOF', )
+    requiredElements = ("INCLUDE",)
+    optionalElements = ("DTASOF",)
 
     @property
     def root(self):
-        root = Element('INCPOS')
-        SubElement(root, 'DTASOF').text = '20091122'
-        SubElement(root, 'INCLUDE').text = 'Y'
+        root = Element("INCPOS")
+        SubElement(root, "DTASOF").text = "20091122"
+        SubElement(root, "INCLUDE").text = "Y"
         return root
 
     def testConvert(self):
@@ -150,9 +193,9 @@ class InvposlistTestCase(unittest.TestCase, base.TestAggregate):
 
     @property
     def root(self):
-        root = Element('INVPOSLIST')
-        for invpos in ('Posdebt', 'Posmf', 'Posopt', 'Posother', 'Posstock'):
-            testCase = '{}TestCase'.format(invpos)
+        root = Element("INVPOSLIST")
+        for invpos in ("Posdebt", "Posmf", "Posopt", "Posother", "Posstock"):
+            testCase = "{}TestCase".format(invpos)
             elem = globals()[testCase]().root
             root.append(elem)
         return root
@@ -192,11 +235,21 @@ class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
 
     @property
     def root(self):
-        root = Element('INVOOLIST')
-        for oo in ('Oobuydebt', 'Oobuymf', 'Oobuyopt', 'Oobuyother',
-                   'Oobuystock', 'Ooselldebt', 'Oosellmf', 'Oosellopt',
-                   'Oosellother', 'Oosellstock', 'Switchmf',):
-            testCase = '{}TestCase'.format(oo)
+        root = Element("INVOOLIST")
+        for oo in (
+            "Oobuydebt",
+            "Oobuymf",
+            "Oobuyopt",
+            "Oobuyother",
+            "Oobuystock",
+            "Ooselldebt",
+            "Oosellmf",
+            "Oosellopt",
+            "Oosellother",
+            "Oosellstock",
+            "Switchmf",
+        ):
+            testCase = "{}TestCase".format(oo)
             elem = globals()[testCase]().root
             root.append(elem)
         return root
@@ -239,17 +292,17 @@ class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
 class InvbalTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ('AVAILCASH', 'MARGINBALANCE', 'SHORTBALANCE',)
-    optionalElements = ('BUYPOWER',)
+    requiredElements = ("AVAILCASH", "MARGINBALANCE", "SHORTBALANCE")
+    optionalElements = ("BUYPOWER",)
     # BALLIST blows up _flatten(); don't test it here
 
     @property
     def root(self):
-        root = Element('INVBAL')
-        SubElement(root, 'AVAILCASH').text = '12345.67'
-        SubElement(root, 'MARGINBALANCE').text = '23456.78'
-        SubElement(root, 'SHORTBALANCE').text = '34567.89'
-        SubElement(root, 'BUYPOWER').text = '45678.90'
+        root = Element("INVBAL")
+        SubElement(root, "AVAILCASH").text = "12345.67"
+        SubElement(root, "MARGINBALANCE").text = "23456.78"
+        SubElement(root, "SHORTBALANCE").text = "34567.89"
+        SubElement(root, "BUYPOWER").text = "45678.90"
         return root
 
     def testConvert(self):
@@ -257,30 +310,49 @@ class InvbalTestCase(unittest.TestCase, base.TestAggregate):
         # Aggregate instance attributes with the result
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, INVBAL)
-        self.assertEqual(root.availcash, Decimal('12345.67'))
-        self.assertEqual(root.marginbalance, Decimal('23456.78'))
-        self.assertEqual(root.shortbalance, Decimal('34567.89'))
-        self.assertEqual(root.buypower, Decimal('45678.90'))
+        self.assertEqual(root.availcash, Decimal("12345.67"))
+        self.assertEqual(root.marginbalance, Decimal("23456.78"))
+        self.assertEqual(root.shortbalance, Decimal("34567.89"))
+        self.assertEqual(root.buypower, Decimal("45678.90"))
 
 
 class InvtranlistTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('DTSTART', 'DTEND',)
+    requiredElements = ("DTSTART", "DTEND")
     optionalElements = ()  # FIXME - how to handle INVTRAN subclasses?
 
     @property
     def root(self):
-        root = Element('INVTRANLIST')
-        SubElement(root, 'DTSTART').text = '20130601'
-        SubElement(root, 'DTEND').text = '20130630'
-        for it in ('Invbanktran', 'Buydebt', 'Buymf', 'Buyopt', 'Buyother',
-                   'Buystock', 'Closureopt', 'Income', 'Invexpense',
-                   'Jrnlfund', 'Jrnlsec', 'Margininterest', 'Reinvest',
-                   'Retofcap', 'Selldebt', 'Sellmf', 'Sellopt', 'Sellother',
-                   'Sellstock', 'Split', 'Transfer',):
-            testcase = '{}TestCase'.format(it)
+        root = Element("INVTRANLIST")
+        SubElement(root, "DTSTART").text = "20130601"
+        SubElement(root, "DTEND").text = "20130630"
+        for it in (
+            "Invbanktran",
+            "Buydebt",
+            "Buymf",
+            "Buyopt",
+            "Buyother",
+            "Buystock",
+            "Closureopt",
+            "Income",
+            "Invexpense",
+            "Jrnlfund",
+            "Jrnlsec",
+            "Margininterest",
+            "Reinvest",
+            "Retofcap",
+            "Selldebt",
+            "Sellmf",
+            "Sellopt",
+            "Sellother",
+            "Sellstock",
+            "Split",
+            "Transfer",
+        ):
+            testcase = "{}TestCase".format(it)
             invtran = globals()[testcase]
             root.append(invtran().root)
         return root
@@ -307,11 +379,31 @@ class InvtranlistTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.dtstart, datetime(2013, 6, 1, tzinfo=UTC))
         self.assertEqual(root.dtend, datetime(2013, 6, 30, tzinfo=UTC))
         self.assertEqual(len(root), 21)
-        for i, it in enumerate((INVBANKTRAN, BUYDEBT, BUYMF, BUYOPT, BUYOTHER,
-                                BUYSTOCK, CLOSUREOPT, INCOME, INVEXPENSE,
-                                JRNLFUND, JRNLSEC, MARGININTEREST, REINVEST,
-                                RETOFCAP, SELLDEBT, SELLMF, SELLOPT, SELLOTHER,
-                                SELLSTOCK, SPLIT, TRANSFER,)):
+        for i, it in enumerate(
+            (
+                INVBANKTRAN,
+                BUYDEBT,
+                BUYMF,
+                BUYOPT,
+                BUYOTHER,
+                BUYSTOCK,
+                CLOSUREOPT,
+                INCOME,
+                INVEXPENSE,
+                JRNLFUND,
+                JRNLSEC,
+                MARGININTEREST,
+                REINVEST,
+                RETOFCAP,
+                SELLDEBT,
+                SELLMF,
+                SELLOPT,
+                SELLOTHER,
+                SELLSTOCK,
+                SPLIT,
+                TRANSFER,
+            )
+        ):
             self.assertIsInstance(root[i], it)
 
     def testToEtree(self):
@@ -322,130 +414,151 @@ class InvtranlistTestCase(unittest.TestCase, base.TestAggregate):
 
 class InvbanktranTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ['STMTTRN', 'SUBACCTFUND', ]
+    requiredElements = ["STMTTRN", "SUBACCTFUND"]
 
     @property
     def root(self):
-        root = Element('INVBANKTRAN')
+        root = Element("INVBANKTRAN")
         stmttrn = test_models_bank.StmttrnTestCase().root
         root.append(stmttrn)
-        SubElement(root, 'SUBACCTFUND').text = 'MARGIN'
+        SubElement(root, "SUBACCTFUND").text = "MARGIN"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, INVBANKTRAN)
         self.assertIsInstance(root.stmttrn, STMTTRN)
-        self.assertEqual(root.subacctfund, 'MARGIN')
+        self.assertEqual(root.subacctfund, "MARGIN")
 
     def testOneOf(self):
-        self.oneOfTest('SUBACCTFUND', INVSUBACCTS)
+        self.oneOfTest("SUBACCTFUND", INVSUBACCTS)
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
         stmttrn = Aggregate.from_etree(test_models_bank.StmttrnTestCase().root)
-        self.assertEqual(root.trntype,  stmttrn.trntype)
-        self.assertEqual(root.dtposted,  stmttrn.dtposted)
-        self.assertEqual(root.trnamt,  stmttrn.trnamt)
-        self.assertEqual(root.fitid,  stmttrn.fitid)
-        self.assertEqual(root.memo,  stmttrn.memo)
+        self.assertEqual(root.trntype, stmttrn.trntype)
+        self.assertEqual(root.dtposted, stmttrn.dtposted)
+        self.assertEqual(root.trnamt, stmttrn.trnamt)
+        self.assertEqual(root.fitid, stmttrn.fitid)
+        self.assertEqual(root.memo, stmttrn.memo)
 
 
 class InvtranTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('FITID', 'DTTRADE',)
-    optionalElements = ('SRVRTID', 'DTSETTLE', 'REVERSALFITID', 'MEMO',)
+    requiredElements = ("FITID", "DTTRADE")
+    optionalElements = ("SRVRTID", "DTSETTLE", "REVERSALFITID", "MEMO")
 
     @property
     def root(self):
-        root = Element('INVTRAN')
-        SubElement(root, 'FITID').text = '1001'
-        SubElement(root, 'SRVRTID').text = '2002'
-        SubElement(root, 'DTTRADE').text = '20040701'
-        SubElement(root, 'DTSETTLE').text = '20040704'
-        SubElement(root, 'REVERSALFITID').text = '3003'
-        SubElement(root, 'MEMO').text = 'Investment Transaction'
+        root = Element("INVTRAN")
+        SubElement(root, "FITID").text = "1001"
+        SubElement(root, "SRVRTID").text = "2002"
+        SubElement(root, "DTTRADE").text = "20040701"
+        SubElement(root, "DTSETTLE").text = "20040704"
+        SubElement(root, "REVERSALFITID").text = "3003"
+        SubElement(root, "MEMO").text = "Investment Transaction"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.fitid, '1001')
-        self.assertEqual(root.srvrtid, '2002')
+        self.assertEqual(root.fitid, "1001")
+        self.assertEqual(root.srvrtid, "2002")
         self.assertEqual(root.dttrade, datetime(2004, 7, 1, tzinfo=UTC))
         self.assertEqual(root.dtsettle, datetime(2004, 7, 4, tzinfo=UTC))
-        self.assertEqual(root.reversalfitid, '3003')
-        self.assertEqual(root.memo, 'Investment Transaction')
+        self.assertEqual(root.reversalfitid, "3003")
+        self.assertEqual(root.memo, "Investment Transaction")
         return root
 
 
 class InvbuyTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVTRAN', 'SECID', 'UNITS', 'UNITPRICE', 'TOTAL',
-                        'SUBACCTSEC', 'SUBACCTFUND')
-    optionalElements = ('MARKUP', 'COMMISSION', 'TAXES', 'FEES', 'LOAD',
-                        'CURRENCY', 'LOANID', 'LOANPRINCIPAL', 'LOANINTEREST',
-                        'INV401KSOURCE', 'DTPAYROLL', 'PRIORYEARCONTRIB')
+    requiredElements = (
+        "INVTRAN",
+        "SECID",
+        "UNITS",
+        "UNITPRICE",
+        "TOTAL",
+        "SUBACCTSEC",
+        "SUBACCTFUND",
+    )
+    optionalElements = (
+        "MARKUP",
+        "COMMISSION",
+        "TAXES",
+        "FEES",
+        "LOAD",
+        "CURRENCY",
+        "LOANID",
+        "LOANPRINCIPAL",
+        "LOANINTEREST",
+        "INV401KSOURCE",
+        "DTPAYROLL",
+        "PRIORYEARCONTRIB",
+    )
 
     @property
     def root(self):
-        root = Element('INVBUY')
+        root = Element("INVBUY")
         invtran = InvtranTestCase().root
         root.append(invtran)
         secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
-        SubElement(root, 'UNITS').text = '100'
-        SubElement(root, 'UNITPRICE').text = '1.50'
-        SubElement(root, 'MARKUP').text = '0'
-        SubElement(root, 'COMMISSION').text = '9.99'
-        SubElement(root, 'TAXES').text = '0'
-        SubElement(root, 'FEES').text = '1.50'
-        SubElement(root, 'LOAD').text = '0'
-        SubElement(root, 'TOTAL').text = '-161.49'
+        SubElement(root, "UNITS").text = "100"
+        SubElement(root, "UNITPRICE").text = "1.50"
+        SubElement(root, "MARKUP").text = "0"
+        SubElement(root, "COMMISSION").text = "9.99"
+        SubElement(root, "TAXES").text = "0"
+        SubElement(root, "FEES").text = "1.50"
+        SubElement(root, "LOAD").text = "0"
+        SubElement(root, "TOTAL").text = "-161.49"
         currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
-        SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
-        SubElement(root, 'SUBACCTFUND').text = 'CASH'
-        SubElement(root, 'LOANID').text = '1'
-        SubElement(root, 'LOANPRINCIPAL').text = '1.50'
-        SubElement(root, 'LOANINTEREST').text = '3.50'
-        SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
-        SubElement(root, 'DTPAYROLL').text = '20040615'
-        SubElement(root, 'PRIORYEARCONTRIB').text = 'Y'
+        SubElement(root, "SUBACCTSEC").text = "MARGIN"
+        SubElement(root, "SUBACCTFUND").text = "CASH"
+        SubElement(root, "LOANID").text = "1"
+        SubElement(root, "LOANPRINCIPAL").text = "1.50"
+        SubElement(root, "LOANINTEREST").text = "3.50"
+        SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
+        SubElement(root, "DTPAYROLL").text = "20040615"
+        SubElement(root, "PRIORYEARCONTRIB").text = "Y"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root.invtran, INVTRAN)
         self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.units, Decimal('100'))
-        self.assertEqual(root.unitprice, Decimal('1.50'))
-        self.assertEqual(root.markup, Decimal('0'))
-        self.assertEqual(root.commission, Decimal('9.99'))
-        self.assertEqual(root.taxes, Decimal('0'))
-        self.assertEqual(root.fees, Decimal('1.50'))
-        self.assertEqual(root.load, Decimal('0'))
-        self.assertEqual(root.total, Decimal('-161.49'))
+        self.assertEqual(root.units, Decimal("100"))
+        self.assertEqual(root.unitprice, Decimal("1.50"))
+        self.assertEqual(root.markup, Decimal("0"))
+        self.assertEqual(root.commission, Decimal("9.99"))
+        self.assertEqual(root.taxes, Decimal("0"))
+        self.assertEqual(root.fees, Decimal("1.50"))
+        self.assertEqual(root.load, Decimal("0"))
+        self.assertEqual(root.total, Decimal("-161.49"))
         self.assertIsInstance(root.currency, CURRENCY)
-        self.assertEqual(root.subacctsec, 'MARGIN')
-        self.assertEqual(root.subacctfund, 'CASH')
-        self.assertEqual(root.loanid, '1')
-        self.assertEqual(root.loanprincipal, Decimal('1.50'))
-        self.assertEqual(root.loaninterest, Decimal('3.50'))
-        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
+        self.assertEqual(root.subacctsec, "MARGIN")
+        self.assertEqual(root.subacctfund, "CASH")
+        self.assertEqual(root.loanid, "1")
+        self.assertEqual(root.loanprincipal, Decimal("1.50"))
+        self.assertEqual(root.loaninterest, Decimal("3.50"))
+        self.assertEqual(root.inv401ksource, "PROFITSHARING")
         self.assertEqual(root.dtpayroll, datetime(2004, 6, 15, tzinfo=UTC))
         self.assertEqual(root.prioryearcontrib, True)
         return root
 
     def testOneOf(self):
-        self.oneOfTest('SUBACCTSEC', INVSUBACCTS)
-        self.oneOfTest('SUBACCTFUND', INVSUBACCTS)
-        self.oneOfTest('INV401KSOURCE', INV401KSOURCES)
+        self.oneOfTest("SUBACCTSEC", INVSUBACCTS)
+        self.oneOfTest("SUBACCTFUND", INVSUBACCTS)
+        self.oneOfTest("INV401KSOURCE", INV401KSOURCES)
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -456,71 +569,90 @@ class InvbuyTestCase(unittest.TestCase, base.TestAggregate):
 
 class InvsellTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVTRAN', 'SECID', 'UNITS', 'UNITPRICE', 'TOTAL',
-                        'SUBACCTSEC', 'SUBACCTFUND')
-    optionalElements = ('MARKDOWN', 'COMMISSION', 'TAXES', 'FEES', 'LOAD',
-                        'WITHHOLDING', 'TAXEXEMPT', 'GAIN', 'CURRENCY',
-                        'LOANID', 'STATEWITHHOLDING', 'PENALTY',
-                        'INV401KSOURCE',)
+    requiredElements = (
+        "INVTRAN",
+        "SECID",
+        "UNITS",
+        "UNITPRICE",
+        "TOTAL",
+        "SUBACCTSEC",
+        "SUBACCTFUND",
+    )
+    optionalElements = (
+        "MARKDOWN",
+        "COMMISSION",
+        "TAXES",
+        "FEES",
+        "LOAD",
+        "WITHHOLDING",
+        "TAXEXEMPT",
+        "GAIN",
+        "CURRENCY",
+        "LOANID",
+        "STATEWITHHOLDING",
+        "PENALTY",
+        "INV401KSOURCE",
+    )
 
     @property
     def root(self):
-        root = Element('INVSELL')
+        root = Element("INVSELL")
         invtran = InvtranTestCase().root
         root.append(invtran)
         secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
-        SubElement(root, 'UNITS').text = '-100'
-        SubElement(root, 'UNITPRICE').text = '1.50'
-        SubElement(root, 'MARKDOWN').text = '0'
-        SubElement(root, 'COMMISSION').text = '9.99'
-        SubElement(root, 'TAXES').text = '2'
-        SubElement(root, 'FEES').text = '1.50'
-        SubElement(root, 'LOAD').text = '0'
-        SubElement(root, 'WITHHOLDING').text = '3'
-        SubElement(root, 'TAXEXEMPT').text = 'N'
-        SubElement(root, 'TOTAL').text = '131.00'
-        SubElement(root, 'GAIN').text = '3.47'
+        SubElement(root, "UNITS").text = "-100"
+        SubElement(root, "UNITPRICE").text = "1.50"
+        SubElement(root, "MARKDOWN").text = "0"
+        SubElement(root, "COMMISSION").text = "9.99"
+        SubElement(root, "TAXES").text = "2"
+        SubElement(root, "FEES").text = "1.50"
+        SubElement(root, "LOAD").text = "0"
+        SubElement(root, "WITHHOLDING").text = "3"
+        SubElement(root, "TAXEXEMPT").text = "N"
+        SubElement(root, "TOTAL").text = "131.00"
+        SubElement(root, "GAIN").text = "3.47"
         currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
-        SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
-        SubElement(root, 'SUBACCTFUND').text = 'CASH'
-        SubElement(root, 'LOANID').text = '1'
-        SubElement(root, 'STATEWITHHOLDING').text = '2.50'
-        SubElement(root, 'PENALTY').text = '0.01'
-        SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
+        SubElement(root, "SUBACCTSEC").text = "MARGIN"
+        SubElement(root, "SUBACCTFUND").text = "CASH"
+        SubElement(root, "LOANID").text = "1"
+        SubElement(root, "STATEWITHHOLDING").text = "2.50"
+        SubElement(root, "PENALTY").text = "0.01"
+        SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root.invtran, INVTRAN)
         self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.units, Decimal('-100'))
-        self.assertEqual(root.unitprice, Decimal('1.50'))
-        self.assertEqual(root.markdown, Decimal('0'))
-        self.assertEqual(root.commission, Decimal('9.99'))
-        self.assertEqual(root.taxes, Decimal('2'))
-        self.assertEqual(root.fees, Decimal('1.50'))
-        self.assertEqual(root.load, Decimal('0'))
-        self.assertEqual(root.withholding, Decimal('3'))
+        self.assertEqual(root.units, Decimal("-100"))
+        self.assertEqual(root.unitprice, Decimal("1.50"))
+        self.assertEqual(root.markdown, Decimal("0"))
+        self.assertEqual(root.commission, Decimal("9.99"))
+        self.assertEqual(root.taxes, Decimal("2"))
+        self.assertEqual(root.fees, Decimal("1.50"))
+        self.assertEqual(root.load, Decimal("0"))
+        self.assertEqual(root.withholding, Decimal("3"))
         self.assertEqual(root.taxexempt, False)
-        self.assertEqual(root.total, Decimal('131'))
-        self.assertEqual(root.gain, Decimal('3.47'))
+        self.assertEqual(root.total, Decimal("131"))
+        self.assertEqual(root.gain, Decimal("3.47"))
         self.assertIsInstance(root.currency, CURRENCY)
-        self.assertEqual(root.subacctsec, 'MARGIN')
-        self.assertEqual(root.subacctfund, 'CASH')
-        self.assertEqual(root.loanid, '1')
-        self.assertEqual(root.statewithholding, Decimal('2.50'))
-        self.assertEqual(root.penalty, Decimal('0.01'))
-        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
+        self.assertEqual(root.subacctsec, "MARGIN")
+        self.assertEqual(root.subacctfund, "CASH")
+        self.assertEqual(root.loanid, "1")
+        self.assertEqual(root.statewithholding, Decimal("2.50"))
+        self.assertEqual(root.penalty, Decimal("0.01"))
+        self.assertEqual(root.inv401ksource, "PROFITSHARING")
         return root
 
     def testOneOf(self):
-        self.oneOfTest('SUBACCTSEC', INVSUBACCTS)
-        self.oneOfTest('SUBACCTFUND', INVSUBACCTS)
-        self.oneOfTest('INV401KSOURCE', INV401KSOURCES)
+        self.oneOfTest("SUBACCTSEC", INVSUBACCTS)
+        self.oneOfTest("SUBACCTFUND", INVSUBACCTS)
+        self.oneOfTest("INV401KSOURCE", INV401KSOURCES)
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -531,24 +663,25 @@ class InvsellTestCase(unittest.TestCase, base.TestAggregate):
 
 class BuydebtTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVBUY', )
-    optionalElements = ('ACCRDINT', )
+    requiredElements = ("INVBUY",)
+    optionalElements = ("ACCRDINT",)
 
     @property
     def root(self):
-        root = Element('BUYDEBT')
+        root = Element("BUYDEBT")
         invbuy = InvbuyTestCase().root
         root.append(invbuy)
-        SubElement(root, 'ACCRDINT').text = '25.50'
+        SubElement(root, "ACCRDINT").text = "25.50"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, BUYDEBT)
         self.assertIsInstance(root.invbuy, INVBUY)
-        self.assertEqual(root.accrdint, Decimal('25.50'))
+        self.assertEqual(root.accrdint, Decimal("25.50"))
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -568,29 +701,30 @@ class BuydebtTestCase(unittest.TestCase, base.TestAggregate):
 
 class BuymfTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVBUY', 'BUYTYPE', )
-    optionalElements = ('RELFITID', )
+    requiredElements = ("INVBUY", "BUYTYPE")
+    optionalElements = ("RELFITID",)
 
     @property
     def root(self):
-        root = Element('BUYMF')
+        root = Element("BUYMF")
         invbuy = InvbuyTestCase().root
         root.append(invbuy)
-        SubElement(root, 'BUYTYPE').text = 'BUYTOCOVER'
-        SubElement(root, 'RELFITID').text = '1015'
+        SubElement(root, "BUYTYPE").text = "BUYTOCOVER"
+        SubElement(root, "RELFITID").text = "1015"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, BUYMF)
         self.assertIsInstance(root.invbuy, INVBUY)
-        self.assertEqual(root.buytype, 'BUYTOCOVER')
-        self.assertEqual(root.relfitid, '1015')
+        self.assertEqual(root.buytype, "BUYTOCOVER")
+        self.assertEqual(root.relfitid, "1015")
 
     def testOneOf(self):
-        self.oneOfTest('BUYTYPE', BUYTYPES)
+        self.oneOfTest("BUYTYPE", BUYTYPES)
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -610,28 +744,29 @@ class BuymfTestCase(unittest.TestCase, base.TestAggregate):
 
 class BuyoptTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVBUY', 'OPTBUYTYPE', 'SHPERCTRCT', )
+    requiredElements = ("INVBUY", "OPTBUYTYPE", "SHPERCTRCT")
 
     @property
     def root(self):
-        root = Element('BUYOPT')
+        root = Element("BUYOPT")
         invbuy = InvbuyTestCase().root
         root.append(invbuy)
-        SubElement(root, 'OPTBUYTYPE').text = 'BUYTOCLOSE'
-        SubElement(root, 'SHPERCTRCT').text = '100'
+        SubElement(root, "OPTBUYTYPE").text = "BUYTOCLOSE"
+        SubElement(root, "SHPERCTRCT").text = "100"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, BUYOPT)
         self.assertIsInstance(root.invbuy, INVBUY)
-        self.assertEqual(root.optbuytype, 'BUYTOCLOSE')
+        self.assertEqual(root.optbuytype, "BUYTOCLOSE")
         self.assertEqual(root.shperctrct, 100)
 
     def testOneOf(self):
-        self.oneOfTest('OPTBUYTYPE', ('BUYTOOPEN', 'BUYTOCLOSE',))
+        self.oneOfTest("OPTBUYTYPE", ("BUYTOOPEN", "BUYTOCLOSE"))
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -651,13 +786,14 @@ class BuyoptTestCase(unittest.TestCase, base.TestAggregate):
 
 class BuyotherTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVBUY', )
+    requiredElements = ("INVBUY",)
 
     @property
     def root(self):
-        root = Element('BUYOTHER')
+        root = Element("BUYOTHER")
         invbuy = InvbuyTestCase().root
         root.append(invbuy)
         return root
@@ -685,26 +821,27 @@ class BuyotherTestCase(unittest.TestCase, base.TestAggregate):
 
 class BuystockTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVBUY', 'BUYTYPE', )
+    requiredElements = ("INVBUY", "BUYTYPE")
 
     @property
     def root(self):
-        root = Element('BUYSTOCK')
+        root = Element("BUYSTOCK")
         invbuy = InvbuyTestCase().root
         root.append(invbuy)
-        SubElement(root, 'BUYTYPE').text = 'BUYTOCOVER'
+        SubElement(root, "BUYTYPE").text = "BUYTOCOVER"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, BUYSTOCK)
         self.assertIsInstance(root.invbuy, INVBUY)
-        self.assertEqual(root.buytype, 'BUYTOCOVER')
+        self.assertEqual(root.buytype, "BUYTOCOVER")
 
     def testOneOf(self):
-        self.oneOfTest('BUYTYPE', BUYTYPES)
+        self.oneOfTest("BUYTYPE", BUYTYPES)
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -724,25 +861,32 @@ class BuystockTestCase(unittest.TestCase, base.TestAggregate):
 
 class ClosureoptTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVTRAN', 'SECID', 'OPTACTION', 'UNITS', 'SHPERCTRCT',
-                        'SUBACCTSEC', )
-    optionalElements = ('RELFITID', 'GAIN', )
+    requiredElements = (
+        "INVTRAN",
+        "SECID",
+        "OPTACTION",
+        "UNITS",
+        "SHPERCTRCT",
+        "SUBACCTSEC",
+    )
+    optionalElements = ("RELFITID", "GAIN")
 
     @property
     def root(self):
-        root = Element('CLOSUREOPT')
+        root = Element("CLOSUREOPT")
         invtran = InvtranTestCase().root
         root.append(invtran)
         secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
-        SubElement(root, 'OPTACTION').text = 'EXERCISE'
-        SubElement(root, 'UNITS').text = '200'
-        SubElement(root, 'SHPERCTRCT').text = '100'
-        SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
-        SubElement(root, 'RELFITID').text = '1001'
-        SubElement(root, 'GAIN').text = '123.45'
+        SubElement(root, "OPTACTION").text = "EXERCISE"
+        SubElement(root, "UNITS").text = "200"
+        SubElement(root, "SHPERCTRCT").text = "100"
+        SubElement(root, "SUBACCTSEC").text = "MARGIN"
+        SubElement(root, "RELFITID").text = "1001"
+        SubElement(root, "GAIN").text = "123.45"
         return root
 
     def testConvert(self):
@@ -750,17 +894,17 @@ class ClosureoptTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root, CLOSUREOPT)
         self.assertIsInstance(root.invtran, INVTRAN)
         self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.optaction, 'EXERCISE')
-        self.assertEqual(root.units, Decimal('200'))
+        self.assertEqual(root.optaction, "EXERCISE")
+        self.assertEqual(root.units, Decimal("200"))
         self.assertEqual(root.shperctrct, 100)
-        self.assertEqual(root.subacctsec, 'MARGIN')
-        self.assertEqual(root.relfitid, '1001')
-        self.assertEqual(root.gain, Decimal('123.45'))
+        self.assertEqual(root.subacctsec, "MARGIN")
+        self.assertEqual(root.relfitid, "1001")
+        self.assertEqual(root.gain, Decimal("123.45"))
         return root
 
     def testOneOf(self):
-        self.oneOfTest('OPTACTION', ('EXERCISE', 'ASSIGN', 'EXPIRE'))
-        self.oneOfTest('SUBACCTSEC', INVSUBACCTS)
+        self.oneOfTest("OPTACTION", ("EXERCISE", "ASSIGN", "EXPIRE"))
+        self.oneOfTest("SUBACCTSEC", INVSUBACCTS)
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -773,29 +917,35 @@ class ClosureoptTestCase(unittest.TestCase, base.TestAggregate):
 
 class IncomeTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVTRAN', 'SECID', 'INCOMETYPE', 'TOTAL',
-                        'SUBACCTSEC', 'SUBACCTFUND', )
-    optionalElements = ('TAXEXEMPT', 'WITHHOLDING', 'CURRENCY',
-                        'INV401KSOURCE', )
+    requiredElements = (
+        "INVTRAN",
+        "SECID",
+        "INCOMETYPE",
+        "TOTAL",
+        "SUBACCTSEC",
+        "SUBACCTFUND",
+    )
+    optionalElements = ("TAXEXEMPT", "WITHHOLDING", "CURRENCY", "INV401KSOURCE")
 
     @property
     def root(self):
-        root = Element('INCOME')
+        root = Element("INCOME")
         invtran = InvtranTestCase().root
         root.append(invtran)
         secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
-        SubElement(root, 'INCOMETYPE').text = 'CGLONG'
-        SubElement(root, 'TOTAL').text = '1500'
-        SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
-        SubElement(root, 'SUBACCTFUND').text = 'CASH'
-        SubElement(root, 'TAXEXEMPT').text = 'Y'
-        SubElement(root, 'WITHHOLDING').text = '123.45'
+        SubElement(root, "INCOMETYPE").text = "CGLONG"
+        SubElement(root, "TOTAL").text = "1500"
+        SubElement(root, "SUBACCTSEC").text = "MARGIN"
+        SubElement(root, "SUBACCTFUND").text = "CASH"
+        SubElement(root, "TAXEXEMPT").text = "Y"
+        SubElement(root, "WITHHOLDING").text = "123.45"
         currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
-        SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
+        SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
         return root
 
     def testConvert(self):
@@ -803,21 +953,21 @@ class IncomeTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root, INCOME)
         self.assertIsInstance(root.invtran, INVTRAN)
         self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.incometype, 'CGLONG')
-        self.assertEqual(root.total, Decimal('1500'))
-        self.assertEqual(root.subacctsec, 'MARGIN')
-        self.assertEqual(root.subacctfund, 'CASH')
+        self.assertEqual(root.incometype, "CGLONG")
+        self.assertEqual(root.total, Decimal("1500"))
+        self.assertEqual(root.subacctsec, "MARGIN")
+        self.assertEqual(root.subacctfund, "CASH")
         self.assertEqual(root.taxexempt, True)
-        self.assertEqual(root.withholding, Decimal('123.45'))
+        self.assertEqual(root.withholding, Decimal("123.45"))
         self.assertIsInstance(root.currency, CURRENCY)
-        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
+        self.assertEqual(root.inv401ksource, "PROFITSHARING")
         return root
 
     def testOneOf(self):
-        self.oneOfTest('INCOMETYPE', INCOMETYPES)
-        self.oneOfTest('SUBACCTSEC', INVSUBACCTS)
-        self.oneOfTest('SUBACCTFUND', INVSUBACCTS)
-        self.oneOfTest('INV401KSOURCE', INV401KSOURCES)
+        self.oneOfTest("INCOMETYPE", INCOMETYPES)
+        self.oneOfTest("SUBACCTSEC", INVSUBACCTS)
+        self.oneOfTest("SUBACCTFUND", INVSUBACCTS)
+        self.oneOfTest("INV401KSOURCE", INV401KSOURCES)
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -826,32 +976,32 @@ class IncomeTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.memo, root.invtran.memo)
         self.assertEqual(root.uniqueid, root.secid.uniqueid)
         self.assertEqual(root.uniqueidtype, root.secid.uniqueidtype)
-        self.assertEqual(root.curtype, 'CURRENCY')
+        self.assertEqual(root.curtype, "CURRENCY")
         self.assertEqual(root.cursym, root.currency.cursym)
         self.assertEqual(root.currate, root.currency.currate)
 
 
 class InvexpenseTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVTRAN', 'SECID', 'TOTAL', 'SUBACCTSEC',
-                        'SUBACCTFUND', )
-    optionalElements = ('CURRENCY', 'INV401KSOURCE', )
+    requiredElements = ("INVTRAN", "SECID", "TOTAL", "SUBACCTSEC", "SUBACCTFUND")
+    optionalElements = ("CURRENCY", "INV401KSOURCE")
 
     @property
     def root(self):
-        root = Element('INVEXPENSE')
+        root = Element("INVEXPENSE")
         invtran = InvtranTestCase().root
         root.append(invtran)
         secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
-        SubElement(root, 'TOTAL').text = '-161.49'
-        SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
-        SubElement(root, 'SUBACCTFUND').text = 'CASH'
+        SubElement(root, "TOTAL").text = "-161.49"
+        SubElement(root, "SUBACCTSEC").text = "MARGIN"
+        SubElement(root, "SUBACCTFUND").text = "CASH"
         currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
-        SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
+        SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
         return root
 
     def testConvert(self):
@@ -859,16 +1009,16 @@ class InvexpenseTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root, INVEXPENSE)
         self.assertIsInstance(root.invtran, INVTRAN)
         self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.total, Decimal('-161.49'))
-        self.assertEqual(root.subacctsec, 'MARGIN')
-        self.assertEqual(root.subacctfund, 'CASH')
+        self.assertEqual(root.total, Decimal("-161.49"))
+        self.assertEqual(root.subacctsec, "MARGIN")
+        self.assertEqual(root.subacctfund, "CASH")
         self.assertIsInstance(root.currency, CURRENCY)
-        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
+        self.assertEqual(root.inv401ksource, "PROFITSHARING")
 
     def testOneOf(self):
-        self.oneOfTest('SUBACCTSEC', INVSUBACCTS)
-        self.oneOfTest('SUBACCTFUND', INVSUBACCTS)
-        self.oneOfTest('INV401KSOURCE', INV401KSOURCES)
+        self.oneOfTest("SUBACCTSEC", INVSUBACCTS)
+        self.oneOfTest("SUBACCTFUND", INVSUBACCTS)
+        self.oneOfTest("INV401KSOURCE", INV401KSOURCES)
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -877,38 +1027,39 @@ class InvexpenseTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.memo, root.invtran.memo)
         self.assertEqual(root.uniqueid, root.secid.uniqueid)
         self.assertEqual(root.uniqueidtype, root.secid.uniqueidtype)
-        self.assertEqual(root.curtype, 'CURRENCY')
+        self.assertEqual(root.curtype, "CURRENCY")
         self.assertEqual(root.cursym, root.currency.cursym)
         self.assertEqual(root.currate, root.currency.currate)
 
 
 class JrnlfundTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVTRAN', 'SUBACCTTO', 'SUBACCTFROM', 'TOTAL', )
+    requiredElements = ("INVTRAN", "SUBACCTTO", "SUBACCTFROM", "TOTAL")
 
     @property
     def root(self):
-        root = Element('JRNLFUND')
+        root = Element("JRNLFUND")
         invtran = InvtranTestCase().root
         root.append(invtran)
-        SubElement(root, 'SUBACCTTO').text = 'MARGIN'
-        SubElement(root, 'SUBACCTFROM').text = 'CASH'
-        SubElement(root, 'TOTAL').text = '161.49'
+        SubElement(root, "SUBACCTTO").text = "MARGIN"
+        SubElement(root, "SUBACCTFROM").text = "CASH"
+        SubElement(root, "TOTAL").text = "161.49"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, JRNLFUND)
         self.assertIsInstance(root.invtran, INVTRAN)
-        self.assertEqual(root.subacctto, 'MARGIN')
-        self.assertEqual(root.subacctfrom, 'CASH')
-        self.assertEqual(root.total, Decimal('161.49'))
+        self.assertEqual(root.subacctto, "MARGIN")
+        self.assertEqual(root.subacctfrom, "CASH")
+        self.assertEqual(root.total, Decimal("161.49"))
 
     def testOneOf(self):
-        self.oneOfTest('SUBACCTTO', INVSUBACCTS)
-        self.oneOfTest('SUBACCTFROM', INVSUBACCTS)
+        self.oneOfTest("SUBACCTTO", INVSUBACCTS)
+        self.oneOfTest("SUBACCTFROM", INVSUBACCTS)
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -919,21 +1070,21 @@ class JrnlfundTestCase(unittest.TestCase, base.TestAggregate):
 
 class JrnlsecTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVTRAN', 'SECID', 'SUBACCTTO', 'SUBACCTFROM',
-                        'UNITS', )
+    requiredElements = ("INVTRAN", "SECID", "SUBACCTTO", "SUBACCTFROM", "UNITS")
 
     @property
     def root(self):
-        root = Element('JRNLSEC')
+        root = Element("JRNLSEC")
         invtran = InvtranTestCase().root
         root.append(invtran)
         secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
-        SubElement(root, 'SUBACCTTO').text = 'MARGIN'
-        SubElement(root, 'SUBACCTFROM').text = 'CASH'
-        SubElement(root, 'UNITS').text = '1600'
+        SubElement(root, "SUBACCTTO").text = "MARGIN"
+        SubElement(root, "SUBACCTFROM").text = "CASH"
+        SubElement(root, "UNITS").text = "1600"
         return root
 
     def testConvert(self):
@@ -941,13 +1092,13 @@ class JrnlsecTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root, JRNLSEC)
         self.assertIsInstance(root.invtran, INVTRAN)
         self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.subacctto, 'MARGIN')
-        self.assertEqual(root.subacctfrom, 'CASH')
-        self.assertEqual(root.units, Decimal('1600'))
+        self.assertEqual(root.subacctto, "MARGIN")
+        self.assertEqual(root.subacctfrom, "CASH")
+        self.assertEqual(root.units, Decimal("1600"))
 
     def testOneOf(self):
-        self.oneOfTest('SUBACCTTO', INVSUBACCTS)
-        self.oneOfTest('SUBACCTFROM', INVSUBACCTS)
+        self.oneOfTest("SUBACCTTO", INVSUBACCTS)
+        self.oneOfTest("SUBACCTFROM", INVSUBACCTS)
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -960,18 +1111,19 @@ class JrnlsecTestCase(unittest.TestCase, base.TestAggregate):
 
 class MargininterestTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVTRAN', 'TOTAL', 'SUBACCTFUND', )
-    optionalElements = ('CURRENCY', )
+    requiredElements = ("INVTRAN", "TOTAL", "SUBACCTFUND")
+    optionalElements = ("CURRENCY",)
 
     @property
     def root(self):
-        root = Element('MARGININTEREST')
+        root = Element("MARGININTEREST")
         invtran = InvtranTestCase().root
         root.append(invtran)
-        SubElement(root, 'TOTAL').text = '161.49'
-        SubElement(root, 'SUBACCTFUND').text = 'CASH'
+        SubElement(root, "TOTAL").text = "161.49"
+        SubElement(root, "SUBACCTFUND").text = "CASH"
         currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
         return root
@@ -980,53 +1132,68 @@ class MargininterestTestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, MARGININTEREST)
         self.assertIsInstance(root.invtran, INVTRAN)
-        self.assertEqual(root.total, Decimal('161.49'))
-        self.assertEqual(root.subacctfund, 'CASH')
+        self.assertEqual(root.total, Decimal("161.49"))
+        self.assertEqual(root.subacctfund, "CASH")
         self.assertIsInstance(root.currency, CURRENCY)
         return root
 
     def testOneOf(self):
-        self.oneOfTest('SUBACCTFUND', INVSUBACCTS)
+        self.oneOfTest("SUBACCTFUND", INVSUBACCTS)
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
         self.assertEqual(root.fitid, root.invtran.fitid)
         self.assertEqual(root.dttrade, root.invtran.dttrade)
         self.assertEqual(root.memo, root.invtran.memo)
-        self.assertEqual(root.curtype, 'CURRENCY')
+        self.assertEqual(root.curtype, "CURRENCY")
         self.assertEqual(root.cursym, root.currency.cursym)
         self.assertEqual(root.currate, root.currency.currate)
 
 
 class ReinvestTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVTRAN', 'SECID', 'INCOMETYPE', 'TOTAL',
-                        'SUBACCTSEC', 'UNITS', 'UNITPRICE', )
-    optionalElements = ('COMMISSION',  'TAXES', 'FEES', 'LOAD', 'TAXEXEMPT',
-                        'CURRENCY', 'INV401KSOURCE', )
+    requiredElements = (
+        "INVTRAN",
+        "SECID",
+        "INCOMETYPE",
+        "TOTAL",
+        "SUBACCTSEC",
+        "UNITS",
+        "UNITPRICE",
+    )
+    optionalElements = (
+        "COMMISSION",
+        "TAXES",
+        "FEES",
+        "LOAD",
+        "TAXEXEMPT",
+        "CURRENCY",
+        "INV401KSOURCE",
+    )
 
     @property
     def root(self):
-        root = Element('REINVEST')
+        root = Element("REINVEST")
         invtran = InvtranTestCase().root
         root.append(invtran)
         secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
-        SubElement(root, 'INCOMETYPE').text = 'CGLONG'
-        SubElement(root, 'TOTAL').text = '-161.49'
-        SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
-        SubElement(root, 'UNITS').text = '100'
-        SubElement(root, 'UNITPRICE').text = '1.50'
-        SubElement(root, 'COMMISSION').text = '9.99'
-        SubElement(root, 'TAXES').text = '0'
-        SubElement(root, 'FEES').text = '1.50'
-        SubElement(root, 'LOAD').text = '0'
-        SubElement(root, 'TAXEXEMPT').text = 'Y'
+        SubElement(root, "INCOMETYPE").text = "CGLONG"
+        SubElement(root, "TOTAL").text = "-161.49"
+        SubElement(root, "SUBACCTSEC").text = "MARGIN"
+        SubElement(root, "UNITS").text = "100"
+        SubElement(root, "UNITPRICE").text = "1.50"
+        SubElement(root, "COMMISSION").text = "9.99"
+        SubElement(root, "TAXES").text = "0"
+        SubElement(root, "FEES").text = "1.50"
+        SubElement(root, "LOAD").text = "0"
+        SubElement(root, "TAXEXEMPT").text = "Y"
         currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
-        SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
+        SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
         return root
 
     def testConvert(self):
@@ -1034,24 +1201,24 @@ class ReinvestTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root, REINVEST)
         self.assertIsInstance(root.invtran, INVTRAN)
         self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.total, Decimal('-161.49'))
-        self.assertEqual(root.incometype, 'CGLONG')
-        self.assertEqual(root.subacctsec, 'MARGIN')
-        self.assertEqual(root.units, Decimal('100'))
-        self.assertEqual(root.unitprice, Decimal('1.50'))
-        self.assertEqual(root.commission, Decimal('9.99'))
-        self.assertEqual(root.taxes, Decimal('0'))
-        self.assertEqual(root.fees, Decimal('1.50'))
-        self.assertEqual(root.load, Decimal('0'))
+        self.assertEqual(root.total, Decimal("-161.49"))
+        self.assertEqual(root.incometype, "CGLONG")
+        self.assertEqual(root.subacctsec, "MARGIN")
+        self.assertEqual(root.units, Decimal("100"))
+        self.assertEqual(root.unitprice, Decimal("1.50"))
+        self.assertEqual(root.commission, Decimal("9.99"))
+        self.assertEqual(root.taxes, Decimal("0"))
+        self.assertEqual(root.fees, Decimal("1.50"))
+        self.assertEqual(root.load, Decimal("0"))
         self.assertEqual(root.taxexempt, True)
         self.assertIsInstance(root.currency, CURRENCY)
-        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
+        self.assertEqual(root.inv401ksource, "PROFITSHARING")
         return root
 
     def testOneOf(self):
-        self.oneOfTest('INCOMETYPE', INCOMETYPES)
-        self.oneOfTest('SUBACCTSEC', INVSUBACCTS)
-        self.oneOfTest('INV401KSOURCE', INV401KSOURCES)
+        self.oneOfTest("INCOMETYPE", INCOMETYPES)
+        self.oneOfTest("SUBACCTSEC", INVSUBACCTS)
+        self.oneOfTest("INV401KSOURCE", INV401KSOURCES)
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -1060,32 +1227,32 @@ class ReinvestTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.memo, root.invtran.memo)
         self.assertEqual(root.uniqueid, root.secid.uniqueid)
         self.assertEqual(root.uniqueidtype, root.secid.uniqueidtype)
-        self.assertEqual(root.curtype, 'CURRENCY')
+        self.assertEqual(root.curtype, "CURRENCY")
         self.assertEqual(root.cursym, root.currency.cursym)
         self.assertEqual(root.currate, root.currency.currate)
 
 
 class RetofcapTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVTRAN', 'SECID', 'TOTAL', 'SUBACCTSEC',
-                        'SUBACCTFUND', )
-    optionalElements = ('CURRENCY', 'INV401KSOURCE', )
+    requiredElements = ("INVTRAN", "SECID", "TOTAL", "SUBACCTSEC", "SUBACCTFUND")
+    optionalElements = ("CURRENCY", "INV401KSOURCE")
 
     @property
     def root(self):
-        root = Element('RETOFCAP')
+        root = Element("RETOFCAP")
         invtran = InvtranTestCase().root
         root.append(invtran)
         secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
-        SubElement(root, 'TOTAL').text = '-161.49'
-        SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
-        SubElement(root, 'SUBACCTFUND').text = 'CASH'
+        SubElement(root, "TOTAL").text = "-161.49"
+        SubElement(root, "SUBACCTSEC").text = "MARGIN"
+        SubElement(root, "SUBACCTFUND").text = "CASH"
         currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
-        SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
+        SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
         return root
 
     def testConvert(self):
@@ -1093,17 +1260,17 @@ class RetofcapTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root, RETOFCAP)
         self.assertIsInstance(root.invtran, INVTRAN)
         self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.total, Decimal('-161.49'))
-        self.assertEqual(root.subacctsec, 'MARGIN')
-        self.assertEqual(root.subacctfund, 'CASH')
+        self.assertEqual(root.total, Decimal("-161.49"))
+        self.assertEqual(root.subacctsec, "MARGIN")
+        self.assertEqual(root.subacctfund, "CASH")
         self.assertIsInstance(root.currency, CURRENCY)
-        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
+        self.assertEqual(root.inv401ksource, "PROFITSHARING")
         return root
 
     def testOneOf(self):
-        self.oneOfTest('SUBACCTSEC', INVSUBACCTS)
-        self.oneOfTest('SUBACCTFUND', INVSUBACCTS)
-        self.oneOfTest('INV401KSOURCE', INV401KSOURCES)
+        self.oneOfTest("SUBACCTSEC", INVSUBACCTS)
+        self.oneOfTest("SUBACCTFUND", INVSUBACCTS)
+        self.oneOfTest("INV401KSOURCE", INV401KSOURCES)
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -1112,36 +1279,37 @@ class RetofcapTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.memo, root.invtran.memo)
         self.assertEqual(root.uniqueid, root.secid.uniqueid)
         self.assertEqual(root.uniqueidtype, root.secid.uniqueidtype)
-        self.assertEqual(root.curtype, 'CURRENCY')
+        self.assertEqual(root.curtype, "CURRENCY")
         self.assertEqual(root.cursym, root.currency.cursym)
         self.assertEqual(root.currate, root.currency.currate)
 
 
 class SelldebtTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVSELL', 'SELLREASON', )
-    optionalElements = ('ACCRDINT', )
+    requiredElements = ("INVSELL", "SELLREASON")
+    optionalElements = ("ACCRDINT",)
 
     @property
     def root(self):
-        root = Element('SELLDEBT')
+        root = Element("SELLDEBT")
         invsell = InvsellTestCase().root
         root.append(invsell)
-        SubElement(root, 'SELLREASON').text = 'MATURITY'
-        SubElement(root, 'ACCRDINT').text = '25.50'
+        SubElement(root, "SELLREASON").text = "MATURITY"
+        SubElement(root, "ACCRDINT").text = "25.50"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, SELLDEBT)
         self.assertIsInstance(root.invsell, INVSELL)
-        self.assertEqual(root.sellreason, 'MATURITY')
-        self.assertEqual(root.accrdint, Decimal('25.50'))
+        self.assertEqual(root.sellreason, "MATURITY")
+        self.assertEqual(root.accrdint, Decimal("25.50"))
 
     def testOneOf(self):
-        self.oneOfTest('SELLREASON', ('CALL', 'SELL', 'MATURITY'))
+        self.oneOfTest("SELLREASON", ("CALL", "SELL", "MATURITY"))
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -1161,30 +1329,31 @@ class SelldebtTestCase(unittest.TestCase, base.TestAggregate):
 
 class SellmfTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVSELL', 'SELLTYPE', )
-    optionalElements = ('AVGCOSTBASIS', 'RELFITID',)
+    requiredElements = ("INVSELL", "SELLTYPE")
+    optionalElements = ("AVGCOSTBASIS", "RELFITID")
 
     @property
     def root(self):
-        root = Element('SELLMF')
+        root = Element("SELLMF")
         invsell = InvsellTestCase().root
         root.append(invsell)
-        SubElement(root, 'SELLTYPE').text = 'SELLSHORT'
-        SubElement(root, 'AVGCOSTBASIS').text = '2.50'
-        SubElement(root, 'RELFITID').text = '1015'
+        SubElement(root, "SELLTYPE").text = "SELLSHORT"
+        SubElement(root, "AVGCOSTBASIS").text = "2.50"
+        SubElement(root, "RELFITID").text = "1015"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, SELLMF)
         self.assertIsInstance(root.invsell, INVSELL)
-        self.assertEqual(root.selltype, 'SELLSHORT')
-        self.assertEqual(root.relfitid, '1015')
+        self.assertEqual(root.selltype, "SELLSHORT")
+        self.assertEqual(root.relfitid, "1015")
 
     def testOneOf(self):
-        self.oneOfTest('SELLTYPE', SELLTYPES)
+        self.oneOfTest("SELLTYPE", SELLTYPES)
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -1204,37 +1373,38 @@ class SellmfTestCase(unittest.TestCase, base.TestAggregate):
 
 class SelloptTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVSELL', 'OPTSELLTYPE', 'SHPERCTRCT',)
-    optionalElements = ('RELFITID', 'RELTYPE', 'SECURED', )
+    requiredElements = ("INVSELL", "OPTSELLTYPE", "SHPERCTRCT")
+    optionalElements = ("RELFITID", "RELTYPE", "SECURED")
 
     @property
     def root(self):
-        root = Element('SELLOPT')
+        root = Element("SELLOPT")
         invsell = InvsellTestCase().root
         root.append(invsell)
-        SubElement(root, 'OPTSELLTYPE').text = 'SELLTOCLOSE'
-        SubElement(root, 'SHPERCTRCT').text = '100'
-        SubElement(root, 'RELFITID').text = '1001'
-        SubElement(root, 'RELTYPE').text = 'STRADDLE'
-        SubElement(root, 'SECURED').text = 'NAKED'
+        SubElement(root, "OPTSELLTYPE").text = "SELLTOCLOSE"
+        SubElement(root, "SHPERCTRCT").text = "100"
+        SubElement(root, "RELFITID").text = "1001"
+        SubElement(root, "RELTYPE").text = "STRADDLE"
+        SubElement(root, "SECURED").text = "NAKED"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, SELLOPT)
         self.assertIsInstance(root.invsell, INVSELL)
-        self.assertEqual(root.optselltype, 'SELLTOCLOSE')
+        self.assertEqual(root.optselltype, "SELLTOCLOSE")
         self.assertEqual(root.shperctrct, 100)
-        self.assertEqual(root.relfitid, '1001')
-        self.assertEqual(root.reltype, 'STRADDLE')
-        self.assertEqual(root.secured, 'NAKED')
+        self.assertEqual(root.relfitid, "1001")
+        self.assertEqual(root.reltype, "STRADDLE")
+        self.assertEqual(root.secured, "NAKED")
 
     def testOneOf(self):
-        self.oneOfTest('OPTSELLTYPE', ('SELLTOCLOSE', 'SELLTOOPEN',))
-        self.oneOfTest('RELTYPE', ('SPREAD', 'STRADDLE', 'NONE', 'OTHER'))
-        self.oneOfTest('SECURED', ('NAKED', 'COVERED'))
+        self.oneOfTest("OPTSELLTYPE", ("SELLTOCLOSE", "SELLTOOPEN"))
+        self.oneOfTest("RELTYPE", ("SPREAD", "STRADDLE", "NONE", "OTHER"))
+        self.oneOfTest("SECURED", ("NAKED", "COVERED"))
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -1254,13 +1424,14 @@ class SelloptTestCase(unittest.TestCase, base.TestAggregate):
 
 class SellotherTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVSELL', )
+    requiredElements = ("INVSELL",)
 
     @property
     def root(self):
-        root = Element('SELLOTHER')
+        root = Element("SELLOTHER")
         invsell = InvsellTestCase().root
         root.append(invsell)
         return root
@@ -1288,26 +1459,27 @@ class SellotherTestCase(unittest.TestCase, base.TestAggregate):
 
 class SellstockTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVSELL',  'SELLTYPE', )
+    requiredElements = ("INVSELL", "SELLTYPE")
 
     @property
     def root(self):
-        root = Element('SELLSTOCK')
+        root = Element("SELLSTOCK")
         invsell = InvsellTestCase().root
         root.append(invsell)
-        SubElement(root, 'SELLTYPE').text = 'SELLSHORT'
+        SubElement(root, "SELLTYPE").text = "SELLSHORT"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, SELLSTOCK)
         self.assertIsInstance(root.invsell, INVSELL)
-        self.assertEqual(root.selltype, 'SELLSHORT')
+        self.assertEqual(root.selltype, "SELLSHORT")
 
     def testOneOf(self):
-        self.oneOfTest('SELLTYPE', SELLTYPES)
+        self.oneOfTest("SELLTYPE", SELLTYPES)
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -1327,30 +1499,37 @@ class SellstockTestCase(unittest.TestCase, base.TestAggregate):
 
 class SplitTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVTRAN',  'SECID',  'SUBACCTSEC', 'OLDUNITS',
-                        'NEWUNITS', 'NUMERATOR', 'DENOMINATOR', )
-    optionalElements = ('CURRENCY', 'FRACCASH', 'SUBACCTFUND',
-                        'INV401KSOURCE', )
+    requiredElements = (
+        "INVTRAN",
+        "SECID",
+        "SUBACCTSEC",
+        "OLDUNITS",
+        "NEWUNITS",
+        "NUMERATOR",
+        "DENOMINATOR",
+    )
+    optionalElements = ("CURRENCY", "FRACCASH", "SUBACCTFUND", "INV401KSOURCE")
 
     @property
     def root(self):
-        root = Element('SPLIT')
+        root = Element("SPLIT")
         invtran = InvtranTestCase().root
         root.append(invtran)
         secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
-        SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
-        SubElement(root, 'OLDUNITS').text = '200'
-        SubElement(root, 'NEWUNITS').text = '100'
-        SubElement(root, 'NUMERATOR').text = '1'
-        SubElement(root, 'DENOMINATOR').text = '2'
+        SubElement(root, "SUBACCTSEC").text = "MARGIN"
+        SubElement(root, "OLDUNITS").text = "200"
+        SubElement(root, "NEWUNITS").text = "100"
+        SubElement(root, "NUMERATOR").text = "1"
+        SubElement(root, "DENOMINATOR").text = "2"
         currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
-        SubElement(root, 'FRACCASH').text = '0.50'
-        SubElement(root, 'SUBACCTFUND').text = 'CASH'
-        SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
+        SubElement(root, "FRACCASH").text = "0.50"
+        SubElement(root, "SUBACCTFUND").text = "CASH"
+        SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
         return root
 
     def testConvert(self):
@@ -1358,21 +1537,21 @@ class SplitTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root, SPLIT)
         self.assertIsInstance(root.invtran, INVTRAN)
         self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.subacctsec, 'MARGIN')
-        self.assertEqual(root.oldunits, Decimal('200'))
-        self.assertEqual(root.newunits, Decimal('100'))
-        self.assertEqual(root.numerator, Decimal('1'))
-        self.assertEqual(root.denominator, Decimal('2'))
+        self.assertEqual(root.subacctsec, "MARGIN")
+        self.assertEqual(root.oldunits, Decimal("200"))
+        self.assertEqual(root.newunits, Decimal("100"))
+        self.assertEqual(root.numerator, Decimal("1"))
+        self.assertEqual(root.denominator, Decimal("2"))
         self.assertIsInstance(root.currency, CURRENCY)
-        self.assertEqual(root.fraccash, Decimal('0.50'))
-        self.assertEqual(root.subacctfund, 'CASH')
-        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
+        self.assertEqual(root.fraccash, Decimal("0.50"))
+        self.assertEqual(root.subacctfund, "CASH")
+        self.assertEqual(root.inv401ksource, "PROFITSHARING")
         return root
 
     def testOneOf(self):
-        self.oneOfTest('SUBACCTSEC', INVSUBACCTS)
-        self.oneOfTest('SUBACCTFUND', INVSUBACCTS)
-        self.oneOfTest('INV401KSOURCE', INV401KSOURCES)
+        self.oneOfTest("SUBACCTSEC", INVSUBACCTS)
+        self.oneOfTest("SUBACCTFUND", INVSUBACCTS)
+        self.oneOfTest("INV401KSOURCE", INV401KSOURCES)
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -1381,37 +1560,49 @@ class SplitTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.memo, root.invtran.memo)
         self.assertEqual(root.uniqueid, root.secid.uniqueid)
         self.assertEqual(root.uniqueidtype, root.secid.uniqueidtype)
-        self.assertEqual(root.curtype, 'CURRENCY')
+        self.assertEqual(root.curtype, "CURRENCY")
         self.assertEqual(root.cursym, root.currency.cursym)
         self.assertEqual(root.currate, root.currency.currate)
 
 
 class TransferTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVTRAN',  'SECID',  'SUBACCTSEC', 'UNITS',
-                        'TFERACTION', 'POSTYPE', )
-    optionalElements = ('INVACCTFROM', 'AVGCOSTBASIS', 'UNITPRICE',
-                        'DTPURCHASE', 'INV401KSOURCE', )
+    requiredElements = (
+        "INVTRAN",
+        "SECID",
+        "SUBACCTSEC",
+        "UNITS",
+        "TFERACTION",
+        "POSTYPE",
+    )
+    optionalElements = (
+        "INVACCTFROM",
+        "AVGCOSTBASIS",
+        "UNITPRICE",
+        "DTPURCHASE",
+        "INV401KSOURCE",
+    )
 
     @property
     def root(self):
-        root = Element('TRANSFER')
+        root = Element("TRANSFER")
         invtran = InvtranTestCase().root
         root.append(invtran)
         secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
-        SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
-        SubElement(root, 'UNITS').text = '100'
-        SubElement(root, 'TFERACTION').text = 'OUT'
-        SubElement(root, 'POSTYPE').text = 'LONG'
+        SubElement(root, "SUBACCTSEC").text = "MARGIN"
+        SubElement(root, "UNITS").text = "100"
+        SubElement(root, "TFERACTION").text = "OUT"
+        SubElement(root, "POSTYPE").text = "LONG"
         invacctfrom = InvacctfromTestCase().root
         root.append(invacctfrom)
-        SubElement(root, 'AVGCOSTBASIS').text = '22.22'
-        SubElement(root, 'UNITPRICE').text = '23.01'
-        SubElement(root, 'DTPURCHASE').text = '19991231'
-        SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
+        SubElement(root, "AVGCOSTBASIS").text = "22.22"
+        SubElement(root, "UNITPRICE").text = "23.01"
+        SubElement(root, "DTPURCHASE").text = "19991231"
+        SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
         return root
 
     def testConvert(self):
@@ -1419,22 +1610,22 @@ class TransferTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root, TRANSFER)
         self.assertIsInstance(root.invtran, INVTRAN)
         self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.subacctsec, 'MARGIN')
-        self.assertEqual(root.units, Decimal('100'))
-        self.assertEqual(root.tferaction, 'OUT')
-        self.assertEqual(root.postype, 'LONG')
+        self.assertEqual(root.subacctsec, "MARGIN")
+        self.assertEqual(root.units, Decimal("100"))
+        self.assertEqual(root.tferaction, "OUT")
+        self.assertEqual(root.postype, "LONG")
         self.assertIsInstance(root.invacctfrom, INVACCTFROM)
-        self.assertEqual(root.avgcostbasis, Decimal('22.22'))
-        self.assertEqual(root.unitprice, Decimal('23.01'))
+        self.assertEqual(root.avgcostbasis, Decimal("22.22"))
+        self.assertEqual(root.unitprice, Decimal("23.01"))
         self.assertEqual(root.dtpurchase, datetime(1999, 12, 31, tzinfo=UTC))
-        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
+        self.assertEqual(root.inv401ksource, "PROFITSHARING")
         return root
 
     def testOneOf(self):
-        self.oneOfTest('SUBACCTSEC', INVSUBACCTS)
-        self.oneOfTest('TFERACTION', ('IN', 'OUT'))
-        self.oneOfTest('POSTYPE', ('LONG', 'SHORT'))
-        self.oneOfTest('INV401KSOURCE', INV401KSOURCES)
+        self.oneOfTest("SUBACCTSEC", INVSUBACCTS)
+        self.oneOfTest("TFERACTION", ("IN", "OUT"))
+        self.oneOfTest("POSTYPE", ("LONG", "SHORT"))
+        self.oneOfTest("INV401KSOURCE", INV401KSOURCES)
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -1448,23 +1639,30 @@ class TransferTestCase(unittest.TestCase, base.TestAggregate):
 class Inv401kbalTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ('TOTAL',)
-    optionalElements = ('CASHBAL', 'PRETAX', 'AFTERTAX', 'MATCH',
-                        'PROFITSHARING', 'ROLLOVER', 'OTHERVEST',
-                        'OTHERNONVEST',)
+    requiredElements = ("TOTAL",)
+    optionalElements = (
+        "CASHBAL",
+        "PRETAX",
+        "AFTERTAX",
+        "MATCH",
+        "PROFITSHARING",
+        "ROLLOVER",
+        "OTHERVEST",
+        "OTHERNONVEST",
+    )
 
     @property
     def root(self):
-        root = Element('INV401KBAL')
-        SubElement(root, 'CASHBAL').text = '1'
-        SubElement(root, 'PRETAX').text = '2'
-        SubElement(root, 'AFTERTAX').text = '3'
-        SubElement(root, 'MATCH').text = '4'
-        SubElement(root, 'PROFITSHARING').text = '5'
-        SubElement(root, 'ROLLOVER').text = '6'
-        SubElement(root, 'OTHERVEST').text = '7'
-        SubElement(root, 'OTHERNONVEST').text = '8'
-        SubElement(root, 'TOTAL').text = '36'
+        root = Element("INV401KBAL")
+        SubElement(root, "CASHBAL").text = "1"
+        SubElement(root, "PRETAX").text = "2"
+        SubElement(root, "AFTERTAX").text = "3"
+        SubElement(root, "MATCH").text = "4"
+        SubElement(root, "PROFITSHARING").text = "5"
+        SubElement(root, "ROLLOVER").text = "6"
+        SubElement(root, "OTHERVEST").text = "7"
+        SubElement(root, "OTHERNONVEST").text = "8"
+        SubElement(root, "TOTAL").text = "36"
         ballist = test_models_bank.BallistTestCase().root
         root.append(ballist)
         return root
@@ -1474,72 +1672,81 @@ class Inv401kbalTestCase(unittest.TestCase, base.TestAggregate):
         # Aggregate instance attributes with the result
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, INV401KBAL)
-        self.assertEqual(root.cashbal, Decimal('1'))
-        self.assertEqual(root.pretax, Decimal('2'))
-        self.assertEqual(root.aftertax, Decimal('3'))
-        self.assertEqual(root.match, Decimal('4'))
-        self.assertEqual(root.profitsharing, Decimal('5'))
-        self.assertEqual(root.rollover, Decimal('6'))
-        self.assertEqual(root.othervest, Decimal('7'))
-        self.assertEqual(root.othernonvest, Decimal('8'))
-        self.assertEqual(root.total, Decimal('36'))
+        self.assertEqual(root.cashbal, Decimal("1"))
+        self.assertEqual(root.pretax, Decimal("2"))
+        self.assertEqual(root.aftertax, Decimal("3"))
+        self.assertEqual(root.match, Decimal("4"))
+        self.assertEqual(root.profitsharing, Decimal("5"))
+        self.assertEqual(root.rollover, Decimal("6"))
+        self.assertEqual(root.othervest, Decimal("7"))
+        self.assertEqual(root.othernonvest, Decimal("8"))
+        self.assertEqual(root.total, Decimal("36"))
         self.assertIsInstance(root.ballist, BALLIST)
 
 
 class InvposTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('SECID', 'HELDINACCT', 'POSTYPE', 'UNITS', 'UNITPRICE',
-                        'MKTVAL', 'DTPRICEASOF')
-    optionalElements = ('AVGCOSTBASIS', 'CURRENCY', 'MEMO', 'INV401KSOURCE')
+    requiredElements = (
+        "SECID",
+        "HELDINACCT",
+        "POSTYPE",
+        "UNITS",
+        "UNITPRICE",
+        "MKTVAL",
+        "DTPRICEASOF",
+    )
+    optionalElements = ("AVGCOSTBASIS", "CURRENCY", "MEMO", "INV401KSOURCE")
 
     @property
     def root(self):
-        root = Element('INVPOS')
+        root = Element("INVPOS")
         secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
-        SubElement(root, 'HELDINACCT').text = 'MARGIN'
-        SubElement(root, 'POSTYPE').text = 'LONG'
-        SubElement(root, 'UNITS').text = '100'
-        SubElement(root, 'UNITPRICE').text = '90'
-        SubElement(root, 'MKTVAL').text = '9000'
-        SubElement(root, 'AVGCOSTBASIS').text = '85'
-        SubElement(root, 'DTPRICEASOF').text = '20130630'
+        SubElement(root, "HELDINACCT").text = "MARGIN"
+        SubElement(root, "POSTYPE").text = "LONG"
+        SubElement(root, "UNITS").text = "100"
+        SubElement(root, "UNITPRICE").text = "90"
+        SubElement(root, "MKTVAL").text = "9000"
+        SubElement(root, "AVGCOSTBASIS").text = "85"
+        SubElement(root, "DTPRICEASOF").text = "20130630"
         currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
-        SubElement(root, 'MEMO').text = 'Marked to myth'
-        SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
+        SubElement(root, "MEMO").text = "Marked to myth"
+        SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.heldinacct, 'MARGIN')
-        self.assertEqual(root.postype, 'LONG')
-        self.assertEqual(root.units, Decimal('100'))
-        self.assertEqual(root.unitprice, Decimal('90'))
-        self.assertEqual(root.mktval, Decimal('9000'))
-        self.assertEqual(root.avgcostbasis, Decimal('85'))
+        self.assertEqual(root.heldinacct, "MARGIN")
+        self.assertEqual(root.postype, "LONG")
+        self.assertEqual(root.units, Decimal("100"))
+        self.assertEqual(root.unitprice, Decimal("90"))
+        self.assertEqual(root.mktval, Decimal("9000"))
+        self.assertEqual(root.avgcostbasis, Decimal("85"))
         self.assertEqual(root.dtpriceasof, datetime(2013, 6, 30, tzinfo=UTC))
-        self.assertEqual(root.memo, 'Marked to myth')
-        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
+        self.assertEqual(root.memo, "Marked to myth")
+        self.assertEqual(root.inv401ksource, "PROFITSHARING")
         return root
 
     def testOneOf(self):
-        self.oneOfTest('HELDINACCT', INVSUBACCTS)
-        self.oneOfTest('POSTYPE', ('SHORT', 'LONG'))
-        self.oneOfTest('INV401KSOURCE', INV401KSOURCES)
+        self.oneOfTest("HELDINACCT", INVSUBACCTS)
+        self.oneOfTest("POSTYPE", ("SHORT", "LONG"))
+        self.oneOfTest("INV401KSOURCE", INV401KSOURCES)
 
 
 class PosdebtTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVPOS', )
+    requiredElements = ("INVPOS",)
 
     @property
     def root(self):
-        root = Element('POSDEBT')
+        root = Element("POSDEBT")
         invpos = InvposTestCase().root
         root.append(invpos)
         return root
@@ -1565,33 +1772,34 @@ class PosdebtTestCase(unittest.TestCase, base.TestAggregate):
 
 class PosmfTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVPOS', )
-    optionalElements = ('UNITSSTREET', 'UNITSUSER', 'REINVDIV', 'REINVCG', )
+    requiredElements = ("INVPOS",)
+    optionalElements = ("UNITSSTREET", "UNITSUSER", "REINVDIV", "REINVCG")
 
     @property
     def root(self):
-        root = Element('POSMF')
+        root = Element("POSMF")
         invpos = InvposTestCase().root
         root.append(invpos)
-        SubElement(root, 'UNITSSTREET').text = '200'
-        SubElement(root, 'UNITSUSER').text = '300'
-        SubElement(root, 'REINVDIV').text = 'N'
-        SubElement(root, 'REINVCG').text = 'Y'
+        SubElement(root, "UNITSSTREET").text = "200"
+        SubElement(root, "UNITSUSER").text = "300"
+        SubElement(root, "REINVDIV").text = "N"
+        SubElement(root, "REINVCG").text = "Y"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, POSMF)
         self.assertIsInstance(root.invpos, INVPOS)
-        self.assertEqual(root.unitsstreet, Decimal('200'))
-        self.assertEqual(root.unitsuser, Decimal('300'))
+        self.assertEqual(root.unitsstreet, Decimal("200"))
+        self.assertEqual(root.unitsuser, Decimal("300"))
         self.assertEqual(root.reinvdiv, False)
         self.assertEqual(root.reinvcg, True)
 
     def testOneOf(self):
-        self.oneOfTest('REINVDIV', ('Y', 'N'))
+        self.oneOfTest("REINVDIV", ("Y", "N"))
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -1609,27 +1817,28 @@ class PosmfTestCase(unittest.TestCase, base.TestAggregate):
 
 class PosoptTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVPOS', )
-    optionalElements = ('SECURED', )
+    requiredElements = ("INVPOS",)
+    optionalElements = ("SECURED",)
 
     @property
     def root(self):
-        root = Element('POSOPT')
+        root = Element("POSOPT")
         invpos = InvposTestCase().root
         root.append(invpos)
-        SubElement(root, 'SECURED').text = 'COVERED'
+        SubElement(root, "SECURED").text = "COVERED"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, POSOPT)
         self.assertIsInstance(root.invpos, INVPOS)
-        self.assertEqual(root.secured, 'COVERED')
+        self.assertEqual(root.secured, "COVERED")
 
     def testOneOf(self):
-        self.oneOfTest('SECURED', ('NAKED', 'COVERED'))
+        self.oneOfTest("SECURED", ("NAKED", "COVERED"))
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -1647,13 +1856,14 @@ class PosoptTestCase(unittest.TestCase, base.TestAggregate):
 
 class PosotherTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVPOS', )
+    requiredElements = ("INVPOS",)
 
     @property
     def root(self):
-        root = Element('POSOTHER')
+        root = Element("POSOTHER")
         invpos = InvposTestCase().root
         root.append(invpos)
         return root
@@ -1679,31 +1889,32 @@ class PosotherTestCase(unittest.TestCase, base.TestAggregate):
 
 class PosstockTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('INVPOS', )
-    optionalElements = ('UNITSSTREET', 'UNITSUSER', 'REINVDIV', )
+    requiredElements = ("INVPOS",)
+    optionalElements = ("UNITSSTREET", "UNITSUSER", "REINVDIV")
 
     @property
     def root(self):
-        root = Element('POSSTOCK')
+        root = Element("POSSTOCK")
         invpos = InvposTestCase().root
         root.append(invpos)
-        SubElement(root, 'UNITSSTREET').text = '200'
-        SubElement(root, 'UNITSUSER').text = '300'
-        SubElement(root, 'REINVDIV').text = 'N'
+        SubElement(root, "UNITSSTREET").text = "200"
+        SubElement(root, "UNITSUSER").text = "300"
+        SubElement(root, "REINVDIV").text = "N"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, POSSTOCK)
         self.assertIsInstance(root.invpos, INVPOS)
-        self.assertEqual(root.unitsstreet, Decimal('200'))
-        self.assertEqual(root.unitsuser, Decimal('300'))
+        self.assertEqual(root.unitsstreet, Decimal("200"))
+        self.assertEqual(root.unitsuser, Decimal("300"))
         self.assertEqual(root.reinvdiv, False)
 
     def testOneOf(self):
-        self.oneOfTest('REINVDIV', ('Y', 'N'))
+        self.oneOfTest("REINVDIV", ("Y", "N"))
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -1721,58 +1932,73 @@ class PosstockTestCase(unittest.TestCase, base.TestAggregate):
 
 class OoTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('FITID', 'SECID', 'DTPLACED', 'UNITS', 'SUBACCT',
-                        'DURATION', 'RESTRICTION',)
-    optionalElements = ('SRVRTID', 'MINUNITS', 'LIMITPRICE', 'STOPPRICE',
-                        'MEMO', 'CURRENCY', 'INV401KSOURCE',)
+    requiredElements = (
+        "FITID",
+        "SECID",
+        "DTPLACED",
+        "UNITS",
+        "SUBACCT",
+        "DURATION",
+        "RESTRICTION",
+    )
+    optionalElements = (
+        "SRVRTID",
+        "MINUNITS",
+        "LIMITPRICE",
+        "STOPPRICE",
+        "MEMO",
+        "CURRENCY",
+        "INV401KSOURCE",
+    )
 
     @property
     def root(self):
-        root = Element('OO')
-        SubElement(root, 'FITID').text = '1001'
-        SubElement(root, 'SRVRTID').text = '2002'
+        root = Element("OO")
+        SubElement(root, "FITID").text = "1001"
+        SubElement(root, "SRVRTID").text = "2002"
         secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
-        SubElement(root, 'DTPLACED').text = '20040701'
-        SubElement(root, 'UNITS').text = '150'
-        SubElement(root, 'SUBACCT').text = 'CASH'
-        SubElement(root, 'DURATION').text = 'GOODTILCANCEL'
-        SubElement(root, 'RESTRICTION').text = 'ALLORNONE'
-        SubElement(root, 'MINUNITS').text = '100'
-        SubElement(root, 'LIMITPRICE').text = '10.50'
-        SubElement(root, 'STOPPRICE').text = '10.00'
-        SubElement(root, 'MEMO').text = 'Open Order'
+        SubElement(root, "DTPLACED").text = "20040701"
+        SubElement(root, "UNITS").text = "150"
+        SubElement(root, "SUBACCT").text = "CASH"
+        SubElement(root, "DURATION").text = "GOODTILCANCEL"
+        SubElement(root, "RESTRICTION").text = "ALLORNONE"
+        SubElement(root, "MINUNITS").text = "100"
+        SubElement(root, "LIMITPRICE").text = "10.50"
+        SubElement(root, "STOPPRICE").text = "10.00"
+        SubElement(root, "MEMO").text = "Open Order"
         currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
-        SubElement(root, 'INV401KSOURCE').text = 'PROFITSHARING'
+        SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.fitid, '1001')
-        self.assertEqual(root.srvrtid, '2002')
+        self.assertEqual(root.fitid, "1001")
+        self.assertEqual(root.srvrtid, "2002")
         self.assertIsInstance(root.secid, SECID)
         self.assertEqual(root.dtplaced, datetime(2004, 7, 1, tzinfo=UTC))
-        self.assertEqual(root.units, Decimal('150'))
-        self.assertEqual(root.subacct, 'CASH')
-        self.assertEqual(root.duration, 'GOODTILCANCEL')
-        self.assertEqual(root.restriction, 'ALLORNONE')
-        self.assertEqual(root.minunits, Decimal('100'))
-        self.assertEqual(root.limitprice, Decimal('10.50'))
-        self.assertEqual(root.stopprice, Decimal('10.00'))
-        self.assertEqual(root.memo, 'Open Order')
+        self.assertEqual(root.units, Decimal("150"))
+        self.assertEqual(root.subacct, "CASH")
+        self.assertEqual(root.duration, "GOODTILCANCEL")
+        self.assertEqual(root.restriction, "ALLORNONE")
+        self.assertEqual(root.minunits, Decimal("100"))
+        self.assertEqual(root.limitprice, Decimal("10.50"))
+        self.assertEqual(root.stopprice, Decimal("10.00"))
+        self.assertEqual(root.memo, "Open Order")
         self.assertIsInstance(root.currency, CURRENCY)
-        self.assertEqual(root.inv401ksource, 'PROFITSHARING')
+        self.assertEqual(root.inv401ksource, "PROFITSHARING")
         return root
 
     def testOneOf(self):
-        self.oneOfTest('SUBACCT', INVSUBACCTS)
-        self.oneOfTest('DURATION', ('DAY', 'GOODTILCANCEL', 'IMMEDIATE'))
-        self.oneOfTest('RESTRICTION', ('ALLORNONE', 'MINUNITS', 'NONE'))
-        self.oneOfTest('CURSYM', CURRENCY_CODES)
-        self.oneOfTest('INV401KSOURCE', INV401KSOURCES)
+        self.oneOfTest("SUBACCT", INVSUBACCTS)
+        self.oneOfTest("DURATION", ("DAY", "GOODTILCANCEL", "IMMEDIATE"))
+        self.oneOfTest("RESTRICTION", ("ALLORNONE", "MINUNITS", "NONE"))
+        self.oneOfTest("CURSYM", CURRENCY_CODES)
+        self.oneOfTest("INV401KSOURCE", INV401KSOURCES)
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
@@ -1790,18 +2016,19 @@ class OoTestCase(unittest.TestCase, base.TestAggregate):
 
 class OobuydebtTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('OO', 'AUCTION', )
-    optionalElements = ('DTAUCTION', )
+    requiredElements = ("OO", "AUCTION")
+    optionalElements = ("DTAUCTION",)
 
     @property
     def root(self):
-        root = Element('OOBUYDEBT')
+        root = Element("OOBUYDEBT")
         oo = OoTestCase().root
         root.append(oo)
-        SubElement(root, 'AUCTION').text = 'N'
-        SubElement(root, 'DTAUCTION').text = '20120109'
+        SubElement(root, "AUCTION").text = "N"
+        SubElement(root, "DTAUCTION").text = "20120109"
         return root
 
     def testConvert(self):
@@ -1813,109 +2040,114 @@ class OobuydebtTestCase(unittest.TestCase, base.TestAggregate):
 
 class OobuymfTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('OO', 'BUYTYPE', 'UNITTYPE', )
+    requiredElements = ("OO", "BUYTYPE", "UNITTYPE")
 
     @property
     def root(self):
-        root = Element('OOBUYMF')
+        root = Element("OOBUYMF")
         oo = OoTestCase().root
         root.append(oo)
-        SubElement(root, 'BUYTYPE').text = 'BUY'
-        SubElement(root, 'UNITTYPE').text = 'SHARES'
+        SubElement(root, "BUYTYPE").text = "BUY"
+        SubElement(root, "UNITTYPE").text = "SHARES"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root.oo, OO)
-        self.assertEqual(root.buytype, 'BUY')
-        self.assertEqual(root.unittype, 'SHARES')
+        self.assertEqual(root.buytype, "BUY")
+        self.assertEqual(root.unittype, "SHARES")
 
     def testOneOf(self):
-        self.oneOfTest('BUYTYPE', BUYTYPES)
-        self.oneOfTest('UNITTYPE', UNITTYPES)
+        self.oneOfTest("BUYTYPE", BUYTYPES)
+        self.oneOfTest("UNITTYPE", UNITTYPES)
 
 
 class OobuyoptTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('OO', 'OPTBUYTYPE', )
+    requiredElements = ("OO", "OPTBUYTYPE")
 
     @property
     def root(self):
-        root = Element('OOBUYOPT')
+        root = Element("OOBUYOPT")
         oo = OoTestCase().root
         root.append(oo)
-        SubElement(root, 'OPTBUYTYPE').text = 'BUYTOOPEN'
+        SubElement(root, "OPTBUYTYPE").text = "BUYTOOPEN"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root.oo, OO)
-        self.assertEqual(root.optbuytype, 'BUYTOOPEN')
+        self.assertEqual(root.optbuytype, "BUYTOOPEN")
 
     def testOneOf(self):
-        self.oneOfTest('OPTBUYTYPE', OPTBUYTYPES)
+        self.oneOfTest("OPTBUYTYPE", OPTBUYTYPES)
 
 
 class OobuyotherTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('OO', 'UNITTYPE', )
+    requiredElements = ("OO", "UNITTYPE")
 
     @property
     def root(self):
-        root = Element('OOBUYOTHER')
+        root = Element("OOBUYOTHER")
         oo = OoTestCase().root
         root.append(oo)
-        SubElement(root, 'UNITTYPE').text = 'SHARES'
+        SubElement(root, "UNITTYPE").text = "SHARES"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root.oo, OO)
-        self.assertEqual(root.unittype, 'SHARES')
+        self.assertEqual(root.unittype, "SHARES")
 
     def testOneOf(self):
-        self.oneOfTest('UNITTYPE', UNITTYPES)
+        self.oneOfTest("UNITTYPE", UNITTYPES)
 
 
 class OobuystockTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('OO', 'BUYTYPE', )
+    requiredElements = ("OO", "BUYTYPE")
 
     @property
     def root(self):
-        root = Element('OOBUYSTOCK')
+        root = Element("OOBUYSTOCK")
         oo = OoTestCase().root
         root.append(oo)
-        SubElement(root, 'BUYTYPE').text = 'BUYTOCOVER'
+        SubElement(root, "BUYTYPE").text = "BUYTOCOVER"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root.oo, OO)
-        self.assertEqual(root.buytype, 'BUYTOCOVER')
+        self.assertEqual(root.buytype, "BUYTOCOVER")
 
     def testOneOf(self):
-        self.oneOfTest('BUYTYPE', BUYTYPES)
+        self.oneOfTest("BUYTYPE", BUYTYPES)
 
 
 class OoselldebtTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('OO', )
+    requiredElements = ("OO",)
     optionalElements = ()
 
     @property
     def root(self):
-        root = Element('OOSELLDEBT')
+        root = Element("OOSELLDEBT")
         oo = OoTestCase().root
         root.append(oo)
         return root
@@ -1927,154 +2159,159 @@ class OoselldebtTestCase(unittest.TestCase, base.TestAggregate):
 
 class OosellmfTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('OO', 'SELLTYPE', 'UNITTYPE', 'SELLALL', )
+    requiredElements = ("OO", "SELLTYPE", "UNITTYPE", "SELLALL")
     optionalElements = ()
 
     @property
     def root(self):
-        root = Element('OOSELLMF')
+        root = Element("OOSELLMF")
         oo = OoTestCase().root
         root.append(oo)
-        SubElement(root, 'SELLTYPE').text = 'SELLSHORT'
-        SubElement(root, 'UNITTYPE').text = 'SHARES'
-        SubElement(root, 'SELLALL').text = 'Y'
+        SubElement(root, "SELLTYPE").text = "SELLSHORT"
+        SubElement(root, "UNITTYPE").text = "SHARES"
+        SubElement(root, "SELLALL").text = "Y"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root.oo, OO)
-        self.assertEqual(root.selltype, 'SELLSHORT')
-        self.assertEqual(root.unittype, 'SHARES')
+        self.assertEqual(root.selltype, "SELLSHORT")
+        self.assertEqual(root.unittype, "SHARES")
         self.assertEqual(root.sellall, True)
 
     def testOneOf(self):
-        self.oneOfTest('SELLTYPE', SELLTYPES)
-        self.oneOfTest('UNITTYPE', UNITTYPES)
+        self.oneOfTest("SELLTYPE", SELLTYPES)
+        self.oneOfTest("UNITTYPE", UNITTYPES)
 
 
 class OoselloptTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('OO', 'OPTSELLTYPE', )
+    requiredElements = ("OO", "OPTSELLTYPE")
     optionalElements = ()
 
     @property
     def root(self):
-        root = Element('OOSELLOPT')
+        root = Element("OOSELLOPT")
         oo = OoTestCase().root
         root.append(oo)
-        SubElement(root, 'OPTSELLTYPE').text = 'SELLTOCLOSE'
+        SubElement(root, "OPTSELLTYPE").text = "SELLTOCLOSE"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root.oo, OO)
-        self.assertEqual(root.optselltype, 'SELLTOCLOSE')
+        self.assertEqual(root.optselltype, "SELLTOCLOSE")
 
     def testOneOf(self):
-        self.oneOfTest('OPTSELLTYPE', OPTSELLTYPES)
+        self.oneOfTest("OPTSELLTYPE", OPTSELLTYPES)
 
 
 class OosellotherTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('OO', 'UNITTYPE', )
+    requiredElements = ("OO", "UNITTYPE")
     optionalElements = ()
 
     @property
     def root(self):
-        root = Element('OOSELLOTHER')
+        root = Element("OOSELLOTHER")
         oo = OoTestCase().root
         root.append(oo)
-        SubElement(root, 'UNITTYPE').text = 'SHARES'
+        SubElement(root, "UNITTYPE").text = "SHARES"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root.oo, OO)
-        self.assertEqual(root.unittype, 'SHARES')
+        self.assertEqual(root.unittype, "SHARES")
 
     def testOneOf(self):
-        self.oneOfTest('UNITTYPE', UNITTYPES)
+        self.oneOfTest("UNITTYPE", UNITTYPES)
 
 
 class OosellstockTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('OO', 'SELLTYPE', )
+    requiredElements = ("OO", "SELLTYPE")
     optionalElements = ()
 
     @property
     def root(self):
-        root = Element('OOSELLSTOCK')
+        root = Element("OOSELLSTOCK")
         oo = OoTestCase().root
         root.append(oo)
-        SubElement(root, 'SELLTYPE').text = 'SELLSHORT'
+        SubElement(root, "SELLTYPE").text = "SELLSHORT"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root.oo, OO)
-        self.assertEqual(root.selltype, 'SELLSHORT')
+        self.assertEqual(root.selltype, "SELLSHORT")
 
     def testOneOf(self):
-        self.oneOfTest('SELLTYPE', SELLTYPES)
+        self.oneOfTest("SELLTYPE", SELLTYPES)
 
 
 class SwitchmfTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
-    requiredElements = ('OO', 'SECID', 'UNITTYPE', 'SWITCHALL', )
+    requiredElements = ("OO", "SECID", "UNITTYPE", "SWITCHALL")
     optionalElements = ()
 
     @property
     def root(self):
-        root = Element('SWITCHMF')
+        root = Element("SWITCHMF")
         oo = OoTestCase().root
         root.append(oo)
         secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
-        SubElement(root, 'UNITTYPE').text = 'SHARES'
-        SubElement(root, 'SWITCHALL').text = 'Y'
+        SubElement(root, "UNITTYPE").text = "SHARES"
+        SubElement(root, "SWITCHALL").text = "Y"
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root.oo, OO)
         self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.unittype, 'SHARES')
+        self.assertEqual(root.unittype, "SHARES")
         self.assertEqual(root.switchall, True)
 
     def testOneOf(self):
-        self.oneOfTest('UNITTYPE', UNITTYPES)
+        self.oneOfTest("UNITTYPE", UNITTYPES)
 
 
 class InvstmtrqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ('INVACCTFROM', 'INCOO', 'INCPOS', 'INCBAL', )
-    optionalElements = ('INCTRAN', 'INC401K', 'INC401KBAL', 'INCTRANIMG', )
+    requiredElements = ("INVACCTFROM", "INCOO", "INCPOS", "INCBAL")
+    optionalElements = ("INCTRAN", "INC401K", "INC401KBAL", "INCTRANIMG")
 
     @property
     def root(self):
-        root = Element('INVSTMTRQ')
+        root = Element("INVSTMTRQ")
         acctfrom = InvacctfromTestCase().root
         root.append(acctfrom)
         inctran = test_models_bank.InctranTestCase().root
         root.append(inctran)
-        SubElement(root, 'INCOO').text = 'N'
+        SubElement(root, "INCOO").text = "N"
         incpos = IncposTestCase().root
         root.append(incpos)
-        SubElement(root, 'INCBAL').text = 'N'
-        SubElement(root, 'INC401K').text = 'Y'
-        SubElement(root, 'INC401KBAL').text = 'N'
-        SubElement(root, 'INCTRANIMG').text = 'Y'
+        SubElement(root, "INCBAL").text = "N"
+        SubElement(root, "INC401K").text = "Y"
+        SubElement(root, "INC401KBAL").text = "N"
+        SubElement(root, "INCTRANIMG").text = "Y"
 
         return root
 
@@ -2096,18 +2333,24 @@ class InvstmtrqTestCase(unittest.TestCase, base.TestAggregate):
 class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ('DTASOF', 'CURDEF', 'INVACCTFROM',)
-    optionalElements = ('INVTRANLIST', 'INVPOSLIST', 'INVBAL',
-                        # FIXME - INVOOLIST
-                        'INVOOLIST', 'MKTGINFO', 'INV401KBAL',)
-                        # 'MKTGINFO', 'INV401KBAL',)
-    unsupported = ('INV401K', )
+    requiredElements = ("DTASOF", "CURDEF", "INVACCTFROM")
+    optionalElements = (
+        "INVTRANLIST",
+        "INVPOSLIST",
+        "INVBAL",
+        # FIXME - INVOOLIST
+        "INVOOLIST",
+        "MKTGINFO",
+        "INV401KBAL",
+    )
+    # 'MKTGINFO', 'INV401KBAL',)
+    unsupported = ("INV401K",)
 
     @property
     def root(self):
-        root = Element('INVSTMTRS')
-        SubElement(root, 'DTASOF').text = '20010530'
-        SubElement(root, 'CURDEF').text = 'USD'
+        root = Element("INVSTMTRS")
+        SubElement(root, "DTASOF").text = "20010530"
+        SubElement(root, "CURDEF").text = "USD"
         acctfrom = InvacctfromTestCase().root
         root.append(acctfrom)
         tranlist = InvtranlistTestCase().root
@@ -2119,7 +2362,7 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
         # FIXME - INVOOLIST
         invoolist = InvoolistTestCase().root
         root.append(invoolist)
-        SubElement(root, 'MKTGINFO').text = 'Get Free Stuff NOW!!'
+        SubElement(root, "MKTGINFO").text = "Get Free Stuff NOW!!"
         # FIXME - INV401K
         inv401kbal = Inv401kbalTestCase().root
         root.append(inv401kbal)
@@ -2132,13 +2375,13 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, INVSTMTRS)
         self.assertEqual(root.dtasof, datetime(2001, 5, 30, tzinfo=UTC))
-        self.assertEqual(root.curdef, 'USD')
+        self.assertEqual(root.curdef, "USD")
         self.assertIsInstance(root.invacctfrom, INVACCTFROM)
         self.assertIsInstance(root.invtranlist, INVTRANLIST)
         self.assertIsInstance(root.invposlist, INVPOSLIST)
         self.assertIsInstance(root.invbal, INVBAL)
         self.assertIsInstance(root.invoolist, INVOOLIST)
-        self.assertEqual(root.mktginfo, 'Get Free Stuff NOW!!')
+        self.assertEqual(root.mktginfo, "Get Free Stuff NOW!!")
         self.assertIsInstance(root.inv401kbal, INV401KBAL)
 
     def testUnsupported(self):
@@ -2157,15 +2400,15 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
 class InvstmttrnrqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ('TRNUID', )
-    optionalElements = ('CLIENTCOOKIE', 'TAN', 'OFXEXTENSION', 'INVSTMTRQ', )
+    requiredElements = ("TRNUID",)
+    optionalElements = ("CLIENTCOOKIE", "TAN", "OFXEXTENSION", "INVSTMTRQ")
 
     @property
     def root(self):
-        root = Element('INVSTMTTRNRQ')
-        SubElement(root, 'TRNUID').text = '1001'
-        SubElement(root, 'CLIENTCOOKIE').text = 'DEADBEEF'
-        SubElement(root, 'TAN').text = 'B00B135'
+        root = Element("INVSTMTTRNRQ")
+        SubElement(root, "TRNUID").text = "1001"
+        SubElement(root, "CLIENTCOOKIE").text = "DEADBEEF"
+        SubElement(root, "TAN").text = "B00B135"
         ofxextension = test_models_common.OfxextensionTestCase().root
         root.append(ofxextension)
         stmtrq = InvstmtrqTestCase().root
@@ -2178,9 +2421,9 @@ class InvstmttrnrqTestCase(unittest.TestCase, base.TestAggregate):
         # Everything below that is tested elsewhere.
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, INVSTMTTRNRQ)
-        self.assertEqual(root.trnuid, '1001')
-        self.assertEqual(root.clientcookie, 'DEADBEEF')
-        self.assertEqual(root.tan, 'B00B135')
+        self.assertEqual(root.trnuid, "1001")
+        self.assertEqual(root.clientcookie, "DEADBEEF")
+        self.assertEqual(root.tan, "B00B135")
         self.assertIsInstance(root.ofxextension, OFXEXTENSION)
         self.assertIsInstance(root.invstmtrq, INVSTMTRQ)
 
@@ -2188,16 +2431,16 @@ class InvstmttrnrqTestCase(unittest.TestCase, base.TestAggregate):
 class InvstmttrnrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ('TRNUID', 'STATUS', )
-    optionalElements = ('CLIENTCOOKIE', 'OFXEXTENSION', 'INVSTMTRS', )
+    requiredElements = ("TRNUID", "STATUS")
+    optionalElements = ("CLIENTCOOKIE", "OFXEXTENSION", "INVSTMTRS")
 
     @property
     def root(self):
-        root = Element('INVSTMTTRNRS')
-        SubElement(root, 'TRNUID').text = '1001'
+        root = Element("INVSTMTTRNRS")
+        SubElement(root, "TRNUID").text = "1001"
         status = test_models_common.StatusTestCase().root
         root.append(status)
-        SubElement(root, 'CLIENTCOOKIE').text = 'DEADBEEF'
+        SubElement(root, "CLIENTCOOKIE").text = "DEADBEEF"
         ofxextension = test_models_common.OfxextensionTestCase().root
         root.append(ofxextension)
         stmtrs = InvstmtrsTestCase().root
@@ -2210,9 +2453,9 @@ class InvstmttrnrsTestCase(unittest.TestCase, base.TestAggregate):
         # Everything below that is tested elsewhere.
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, INVSTMTTRNRS)
-        self.assertEqual(root.trnuid, '1001')
+        self.assertEqual(root.trnuid, "1001")
         self.assertIsInstance(root.status, STATUS)
-        self.assertEqual(root.clientcookie, 'DEADBEEF')
+        self.assertEqual(root.clientcookie, "DEADBEEF")
         self.assertIsInstance(root.ofxextension, OFXEXTENSION)
         self.assertIsInstance(root.invstmtrs, INVSTMTRS)
 
@@ -2231,7 +2474,7 @@ class Invstmtmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
 
     @property
     def root(self):
-        root = Element('INVSTMTMSGSRQV1')
+        root = Element("INVSTMTMSGSRQV1")
         for i in range(2):
             stmttrnrq = InvstmttrnrqTestCase().root
             root.append(stmttrnrq)
@@ -2260,7 +2503,7 @@ class Invstmtmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
 
     @property
     def root(self):
-        root = Element('INVSTMTMSGSRSV1')
+        root = Element("INVSTMTMSGSRSV1")
         for i in range(2):
             stmttrnrs = InvstmttrnrsTestCase().root
             root.append(stmttrnrs)
@@ -2291,22 +2534,28 @@ class Invstmtmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
 class Invstmtmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ['MSGSETCORE', 'TRANDNLD', 'OODNLD', 'POSDNLD',
-                        'BALDNLD', 'CANEMAIL', ]
-    optionalElements = ['INV401KDNLD', 'CLOSINGAVAIL', ]
+    requiredElements = [
+        "MSGSETCORE",
+        "TRANDNLD",
+        "OODNLD",
+        "POSDNLD",
+        "BALDNLD",
+        "CANEMAIL",
+    ]
+    optionalElements = ["INV401KDNLD", "CLOSINGAVAIL"]
 
     @property
     def root(self):
-        root = Element('INVSTMTMSGSETV1')
+        root = Element("INVSTMTMSGSETV1")
         msgsetcore = test_models_common.MsgsetcoreTestCase().root
         root.append(msgsetcore)
-        SubElement(root, 'TRANDNLD').text = 'Y'
-        SubElement(root, 'OODNLD').text = 'Y'
-        SubElement(root, 'POSDNLD').text = 'Y'
-        SubElement(root, 'BALDNLD').text = 'Y'
-        SubElement(root, 'CANEMAIL').text = 'N'
-        SubElement(root, 'INV401KDNLD').text = 'N'
-        SubElement(root, 'CLOSINGAVAIL').text = 'Y'
+        SubElement(root, "TRANDNLD").text = "Y"
+        SubElement(root, "OODNLD").text = "Y"
+        SubElement(root, "POSDNLD").text = "Y"
+        SubElement(root, "BALDNLD").text = "Y"
+        SubElement(root, "CANEMAIL").text = "N"
+        SubElement(root, "INV401KDNLD").text = "N"
+        SubElement(root, "CLOSINGAVAIL").text = "Y"
 
         return root
 
@@ -2328,7 +2577,7 @@ class InvstmtmsgsetTestCase(unittest.TestCase, base.TestAggregate):
 
     @property
     def root(self):
-        root = Element('INVSTMTMSGSET')
+        root = Element("INVSTMTMSGSET")
         invstmtmsgsetv1 = Invstmtmsgsetv1TestCase().root
         root.append(invstmtmsgsetv1)
         return root
@@ -2339,5 +2588,5 @@ class InvstmtmsgsetTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root.invstmtmsgsetv1, INVSTMTMSGSETV1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

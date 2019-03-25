@@ -50,7 +50,7 @@ class TestAggregate(object):
 
     def testExtraElement(self):
         root = deepcopy(self.root)
-        SubElement(root, 'FAKEELEMENT').text = 'garbage'
+        SubElement(root, "FAKEELEMENT").text = "garbage"
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
 
@@ -59,12 +59,12 @@ class TestAggregate(object):
         # illegal values
         for text in texts:
             root = deepcopy(self.root)
-            target = root.find('.//%s' % tag)
+            target = root.find(".//%s" % tag)
             target.text = text
             Aggregate.from_etree(root)
 
         root = deepcopy(self.root)
-        target = root.find('.//%s' % tag)
-        target.text = 'garbage'
+        target = root.find(".//%s" % tag)
+        target.text = "garbage"
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)

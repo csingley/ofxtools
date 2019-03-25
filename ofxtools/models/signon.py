@@ -1,27 +1,34 @@
 # coding: utf-8
 # local imports
-from ofxtools.Types import (
-    String, Integer, OneOf, DateTime, Bool,
-)
-from ofxtools.models.base import (
-    Aggregate, SubAggregate, List, Unsupported,
-)
-from ofxtools.models.common import (STATUS, MSGSETCORE,)
+from ofxtools.Types import String, Integer, OneOf, DateTime, Bool
+from ofxtools.models.base import Aggregate, SubAggregate, List, Unsupported
+from ofxtools.models.common import STATUS, MSGSETCORE
 from ofxtools.models.i18n import LANG_CODES
 
 
-__all__ = ['SIGNONMSGSRQV1', 'SIGNONMSGSRSV1', 'SONRQ', 'SONRS', 'FI',
-           'SIGNONINFOLIST', 'SIGNONINFO', 'SIGNONMSGSETV1', 'SIGNONMSGSET', ]
+__all__ = [
+    "SIGNONMSGSRQV1",
+    "SIGNONMSGSRSV1",
+    "SONRQ",
+    "SONRS",
+    "FI",
+    "SIGNONINFOLIST",
+    "SIGNONINFO",
+    "SIGNONMSGSETV1",
+    "SIGNONMSGSET",
+]
 
 
 class FI(Aggregate):
     """ OFX section 2.5.1.8 """
+
     org = String(32, required=True)
     fid = String(32)
 
 
 class SONRQ(Aggregate):
     """ OFX section 2.5.1.5 """
+
     dtclient = DateTime(required=True)
     userid = String(32)
     userpass = String(171)
@@ -45,6 +52,7 @@ class SONRQ(Aggregate):
 
 class SONRS(Aggregate):
     """ OFX section 2.5.1.6 """
+
     status = SubAggregate(STATUS, required=True)
     dtserver = DateTime(required=True)
     userkey = String(64)
@@ -61,7 +69,7 @@ class SONRS(Aggregate):
     def groom(elem):
         """ Remove proprietary tags e.g. INTU.XXX """
         for child in set(elem):
-            if '.' in child.tag:
+            if "." in child.tag:
                 elem.remove(child)
 
         return super(SONRS, SONRS).groom(elem)
@@ -78,11 +86,13 @@ class SONRS(Aggregate):
 
 class SIGNONINFO(Aggregate):
     """ OFX section 7.2.2 """
+
     signonrealm = String(32, required=True)
     min = Integer(required=True)
     max = Integer(required=True)
-    chartype = OneOf('ALPHAONLY', 'NUMERICONLY', 'ALPHAORNUMERIC',
-                     'ALPHAANDNUMERIC', required=True)
+    chartype = OneOf(
+        "ALPHAONLY", "NUMERICONLY", "ALPHAORNUMERIC", "ALPHAANDNUMERIC", required=True
+    )
     casesen = Bool(required=True)
     special = Bool(required=True)
     spaces = Bool(required=True)
@@ -101,24 +111,29 @@ class SIGNONINFO(Aggregate):
 
 class SIGNONINFOLIST(List):
     """ OFX section 7.2 """
-    dataTags = ['SIGNONINFO']
+
+    dataTags = ["SIGNONINFO"]
 
 
 class SIGNONMSGSRQV1(Aggregate):
     """ """
+
     sonrq = SubAggregate(SONRQ)
 
 
 class SIGNONMSGSRSV1(Aggregate):
     """ """
+
     sonrs = SubAggregate(SONRS)
 
 
 class SIGNONMSGSETV1(Aggregate):
     """ OFX section 2.5.5 """
+
     msgsetcore = SubAggregate(MSGSETCORE, required=True)
 
 
 class SIGNONMSGSET(Aggregate):
     """ OFX section 2.5.5 """
+
     signonmsgsetv1 = SubAggregate(SIGNONMSGSETV1, required=True)

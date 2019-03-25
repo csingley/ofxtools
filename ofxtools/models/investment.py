@@ -3,68 +3,118 @@
 Python object model for transactions,
 """
 # local imports
-from ofxtools.models.base import (
-    Aggregate, List, TranList, SubAggregate, Unsupported,
-)
-from ofxtools.models.common import (
-    STATUS, OFXEXTENSION, MSGSETCORE, SVCSTATUSES
-)
-from ofxtools.models.bank import (
-    STMTTRN, INCTRAN, BALLIST, INV401KSOURCES,
-)
+from ofxtools.models.base import Aggregate, List, TranList, SubAggregate, Unsupported
+from ofxtools.models.common import STATUS, OFXEXTENSION, MSGSETCORE, SVCSTATUSES
+from ofxtools.models.bank import STMTTRN, INCTRAN, BALLIST, INV401KSOURCES
 from ofxtools.models.seclist import SECID
-from ofxtools.models.i18n import (
-    CURRENCY, ORIGCURRENCY,
-    Origcurrency,
-    CURRENCY_CODES,
-)
-from ofxtools.Types import (
-    Bool, String, OneOf, Integer, Decimal, DateTime,
-)
+from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, Origcurrency, CURRENCY_CODES
+from ofxtools.Types import Bool, String, OneOf, Integer, Decimal, DateTime
 
 
-__all__ = ['INVACCTFROM', 'INVACCTTO', 'INVACCTINFO', 'INVBAL', 'INV401KBAL', 'INVTRAN',
-           'INVBUY', 'INVSELL', 'OO', 'INVBANKTRAN', 'REINVEST', 'RETOFCAP',
-           'SPLIT', 'TRANSFER', 'CLOSUREOPT', 'INCOME', 'INVEXPENSE', 'JRNLFUND',
-           'JRNLSEC', 'MARGININTEREST', 'BUYDEBT', 'BUYMF', 'BUYOPT',
-           'BUYOTHER', 'BUYSTOCK', 'SELLDEBT', 'SELLMF', 'SELLOPT',
-           'SELLOTHER', 'SELLSTOCK', 'INVPOS', 'POSDEBT', 'POSMF', 'POSOPT',
-           'POSOTHER', 'POSSTOCK', 'OOBUYDEBT', 'OOBUYMF', 'OOBUYOPT',
-           'OOBUYOTHER', 'OOBUYSTOCK', 'OOSELLDEBT', 'OOSELLMF', 'OOSELLOPT',
-           'OOSELLOTHER', 'OOSELLSTOCK', 'SWITCHMF', 'INVTRANLIST',
-           'INVPOSLIST', 'INVOOLIST', 'INVSTMTRQ', 'INVSTMTRS',
-           'INVSTMTTRNRQ', 'INVSTMTTRNRS', 'INVSTMTMSGSRQV1',
-           'INVSTMTMSGSRSV1', 'INVSTMTMSGSETV1', 'INVSTMTMSGSET',
-           'INCPOS', ]
+__all__ = [
+    "INVACCTFROM",
+    "INVACCTTO",
+    "INVACCTINFO",
+    "INVBAL",
+    "INV401KBAL",
+    "INVTRAN",
+    "INVBUY",
+    "INVSELL",
+    "OO",
+    "INVBANKTRAN",
+    "REINVEST",
+    "RETOFCAP",
+    "SPLIT",
+    "TRANSFER",
+    "CLOSUREOPT",
+    "INCOME",
+    "INVEXPENSE",
+    "JRNLFUND",
+    "JRNLSEC",
+    "MARGININTEREST",
+    "BUYDEBT",
+    "BUYMF",
+    "BUYOPT",
+    "BUYOTHER",
+    "BUYSTOCK",
+    "SELLDEBT",
+    "SELLMF",
+    "SELLOPT",
+    "SELLOTHER",
+    "SELLSTOCK",
+    "INVPOS",
+    "POSDEBT",
+    "POSMF",
+    "POSOPT",
+    "POSOTHER",
+    "POSSTOCK",
+    "OOBUYDEBT",
+    "OOBUYMF",
+    "OOBUYOPT",
+    "OOBUYOTHER",
+    "OOBUYSTOCK",
+    "OOSELLDEBT",
+    "OOSELLMF",
+    "OOSELLOPT",
+    "OOSELLOTHER",
+    "OOSELLSTOCK",
+    "SWITCHMF",
+    "INVTRANLIST",
+    "INVPOSLIST",
+    "INVOOLIST",
+    "INVSTMTRQ",
+    "INVSTMTRS",
+    "INVSTMTTRNRQ",
+    "INVSTMTTRNRS",
+    "INVSTMTMSGSRQV1",
+    "INVSTMTMSGSRSV1",
+    "INVSTMTMSGSETV1",
+    "INVSTMTMSGSET",
+    "INCPOS",
+]
 
 
 # Enums used in aggregate validation
-INVSUBACCTS = ('CASH', 'MARGIN', 'SHORT', 'OTHER')
-BUYTYPES = ('BUY', 'BUYTOCOVER')
-OPTBUYTYPES = ('BUYTOOPEN', 'BUYTOCLOSE')
-SELLTYPES = ('SELL', 'SELLSHORT')
-OPTSELLTYPES = ('SELLTOCLOSE', 'SELLTOOPEN')
-INCOMETYPES = ('CGLONG', 'CGSHORT', 'DIV', 'INTEREST', 'MISC')
-UNITTYPES = ('SHARES', 'CURRENCY')
-USPRODUCTTYPES = ('401K', '403B', 'IRA', 'KEOGH', 'OTHER', 'SARSEP', 'SIMPLE',
-                  'NORMAL', 'TDA', 'TRUST', 'UGMA')
-INVACCTTYPES = ('INDIVIDUAL', 'JOINT', 'TRUST', 'CORPORATE')
+INVSUBACCTS = ("CASH", "MARGIN", "SHORT", "OTHER")
+BUYTYPES = ("BUY", "BUYTOCOVER")
+OPTBUYTYPES = ("BUYTOOPEN", "BUYTOCLOSE")
+SELLTYPES = ("SELL", "SELLSHORT")
+OPTSELLTYPES = ("SELLTOCLOSE", "SELLTOOPEN")
+INCOMETYPES = ("CGLONG", "CGSHORT", "DIV", "INTEREST", "MISC")
+UNITTYPES = ("SHARES", "CURRENCY")
+USPRODUCTTYPES = (
+    "401K",
+    "403B",
+    "IRA",
+    "KEOGH",
+    "OTHER",
+    "SARSEP",
+    "SIMPLE",
+    "NORMAL",
+    "TDA",
+    "TRUST",
+    "UGMA",
+)
+INVACCTTYPES = ("INDIVIDUAL", "JOINT", "TRUST", "CORPORATE")
 
 
 class INVACCTFROM(Aggregate):
     """ OFX section 13.6.1 """
+
     brokerid = String(22, required=True)
     acctid = String(22, required=True)
 
 
 class INVACCTTO(Aggregate):
     """ OFX section 13.6.1 """
+
     brokerid = String(22, required=True)
     acctid = String(22, required=True)
 
 
 class INVACCTINFO(Aggregate):
     """ OFX section 13.6.2 """
+
     invacctfrom = SubAggregate(INVACCTFROM, required=True)
     usproducttype = OneOf(*USPRODUCTTYPES, required=True)
     checking = Bool(required=True)
@@ -75,12 +125,14 @@ class INVACCTINFO(Aggregate):
 
 class INCPOS(Aggregate):
     """ OFX section 13.9.1.2 """
+
     dtasof = DateTime()
     include = Bool(required=True)
 
 
 class INVSTMTRQ(Aggregate):
     """ OFX section 13.9.1.2 """
+
     invacctfrom = SubAggregate(INVACCTFROM, required=True)
     inctran = SubAggregate(INCTRAN)
     incoo = Bool(required=True)
@@ -94,12 +146,14 @@ class INVSTMTRQ(Aggregate):
 # Transactions
 class INVBANKTRAN(Aggregate):
     """ OFX section 13.9.2.3 """
+
     stmttrn = SubAggregate(STMTTRN, required=True)
     subacctfund = OneOf(*INVSUBACCTS, required=True)
 
 
 class INVTRAN(Aggregate):
     """ OFX section 13.9.2.4.2 """
+
     fitid = String(255, required=True)
     srvrtid = String(10)
     dttrade = DateTime(required=True)
@@ -110,6 +164,7 @@ class INVTRAN(Aggregate):
 
 class INVBUY(Aggregate, Origcurrency):
     """ OFX section 13.9.2.4.3 """
+
     invtran = SubAggregate(INVTRAN, required=True)
     secid = SubAggregate(SECID, required=True)
     units = Decimal(required=True)
@@ -134,6 +189,7 @@ class INVBUY(Aggregate, Origcurrency):
 
 class INVSELL(Aggregate, Origcurrency):
     """ OFX section 13.9.2.4.3 """
+
     invtran = SubAggregate(INVTRAN, required=True)
     secid = SubAggregate(SECID, required=True)
     units = Decimal(required=True)
@@ -159,12 +215,14 @@ class INVSELL(Aggregate, Origcurrency):
 
 class BUYDEBT(Aggregate):
     """ OFX section 13.9.2.4.4 """
+
     invbuy = SubAggregate(INVBUY, required=True)
     accrdint = Decimal()
 
 
 class BUYMF(Aggregate):
     """ OFX section 13.9.2.4.4 """
+
     invbuy = SubAggregate(INVBUY, required=True)
     buytype = OneOf(*BUYTYPES, required=True)
     relfitid = String(255)
@@ -172,6 +230,7 @@ class BUYMF(Aggregate):
 
 class BUYOPT(Aggregate):
     """ OFX section 13.9.2.4.4 """
+
     invbuy = SubAggregate(INVBUY, required=True)
     optbuytype = OneOf(*OPTBUYTYPES, required=True)
     shperctrct = Integer(required=True)
@@ -179,20 +238,23 @@ class BUYOPT(Aggregate):
 
 class BUYOTHER(Aggregate):
     """ OFX section 13.9.2.4.4 """
+
     invbuy = SubAggregate(INVBUY, required=True)
 
 
 class BUYSTOCK(Aggregate):
     """ OFX section 13.9.2.4.4 """
+
     invbuy = SubAggregate(INVBUY, required=True)
     buytype = OneOf(*BUYTYPES, required=True)
 
 
 class CLOSUREOPT(Aggregate):
     """ OFX section 13.9.2.4.4 """
+
     invtran = SubAggregate(INVTRAN, required=True)
     secid = SubAggregate(SECID, required=True)
-    optaction = OneOf('EXERCISE', 'ASSIGN', 'EXPIRE', required=True)
+    optaction = OneOf("EXERCISE", "ASSIGN", "EXPIRE", required=True)
     units = Decimal(required=True)
     shperctrct = Integer(required=True)
     subacctsec = OneOf(*INVSUBACCTS, required=True)
@@ -202,6 +264,7 @@ class CLOSUREOPT(Aggregate):
 
 class INCOME(Aggregate, Origcurrency):
     """ OFX section 13.9.2.4.4 """
+
     invtran = SubAggregate(INVTRAN, required=True)
     secid = SubAggregate(SECID, required=True)
     incometype = OneOf(*INCOMETYPES, required=True)
@@ -217,6 +280,7 @@ class INCOME(Aggregate, Origcurrency):
 
 class INVEXPENSE(Aggregate, Origcurrency):
     """ OFX section 13.9.2.4.4 """
+
     invtran = SubAggregate(INVTRAN, required=True)
     secid = SubAggregate(SECID, required=True)
     total = Decimal(required=True)
@@ -229,6 +293,7 @@ class INVEXPENSE(Aggregate, Origcurrency):
 
 class JRNLFUND(Aggregate):
     """ OFX section 13.9.2.4.4 """
+
     invtran = SubAggregate(INVTRAN, required=True)
     subacctto = OneOf(*INVSUBACCTS, required=True)
     subacctfrom = OneOf(*INVSUBACCTS, required=True)
@@ -237,6 +302,7 @@ class JRNLFUND(Aggregate):
 
 class JRNLSEC(Aggregate):
     """ OFX section 13.9.2.4.4 """
+
     invtran = SubAggregate(INVTRAN, required=True)
     secid = SubAggregate(SECID, required=True)
     subacctto = OneOf(*INVSUBACCTS, required=True)
@@ -246,6 +312,7 @@ class JRNLSEC(Aggregate):
 
 class MARGININTEREST(Aggregate, Origcurrency):
     """ OFX section 13.9.2.4.4 """
+
     invtran = SubAggregate(INVTRAN, required=True)
     total = Decimal(required=True)
     subacctfund = OneOf(*INVSUBACCTS, required=True)
@@ -255,6 +322,7 @@ class MARGININTEREST(Aggregate, Origcurrency):
 
 class REINVEST(Aggregate, Origcurrency):
     """ OFX section 13.9.2.4.4 """
+
     invtran = SubAggregate(INVTRAN, required=True)
     secid = SubAggregate(SECID, required=True)
     incometype = OneOf(*INCOMETYPES, required=True)
@@ -274,6 +342,7 @@ class REINVEST(Aggregate, Origcurrency):
 
 class RETOFCAP(Aggregate, Origcurrency):
     """ OFX section 13.9.2.4.4 """
+
     invtran = SubAggregate(INVTRAN, required=True)
     secid = SubAggregate(SECID, required=True)
     total = Decimal(required=True)
@@ -286,13 +355,15 @@ class RETOFCAP(Aggregate, Origcurrency):
 
 class SELLDEBT(Aggregate):
     """ OFX section 13.9.2.4.4 """
+
     invsell = SubAggregate(INVSELL, required=True)
-    sellreason = OneOf('CALL', 'SELL', 'MATURITY', required=True)
+    sellreason = OneOf("CALL", "SELL", "MATURITY", required=True)
     accrdint = Decimal()
 
 
 class SELLMF(Aggregate):
     """ OFX section 13.9.2.4.4 """
+
     invsell = SubAggregate(INVSELL, required=True)
     selltype = OneOf(*SELLTYPES, required=True)
     avgcostbasis = Decimal()
@@ -301,27 +372,31 @@ class SELLMF(Aggregate):
 
 class SELLOPT(Aggregate):
     """ OFX section 13.9.2.4.4 """
+
     invsell = SubAggregate(INVSELL, required=True)
     optselltype = OneOf(*OPTSELLTYPES, required=True)
     shperctrct = Integer(required=True)
     relfitid = String(255)
-    reltype = OneOf('SPREAD', 'STRADDLE', 'NONE', 'OTHER')
-    secured = OneOf('NAKED', 'COVERED')
+    reltype = OneOf("SPREAD", "STRADDLE", "NONE", "OTHER")
+    secured = OneOf("NAKED", "COVERED")
 
 
 class SELLOTHER(Aggregate):
     """ OFX section 13.9.2.4.4 """
+
     invsell = SubAggregate(INVSELL, required=True)
 
 
 class SELLSTOCK(Aggregate):
     """ OFX section 13.9.2.4.4 """
+
     invsell = SubAggregate(INVSELL, required=True)
     selltype = OneOf(*SELLTYPES, required=True)
 
 
 class SPLIT(Aggregate, Origcurrency):
     """ OFX section 13.9.2.4.4 """
+
     invtran = SubAggregate(INVTRAN, required=True)
     secid = SubAggregate(SECID, required=True)
     subacctsec = OneOf(*INVSUBACCTS, required=True)
@@ -338,12 +413,13 @@ class SPLIT(Aggregate, Origcurrency):
 
 class TRANSFER(Aggregate):
     """ OFX section 13.9.2.4.4 """
+
     invtran = SubAggregate(INVTRAN, required=True)
     secid = SubAggregate(SECID, required=True)
     subacctsec = OneOf(*INVSUBACCTS, required=True)
     units = Decimal(required=True)
-    tferaction = OneOf('IN', 'OUT', required=True)
-    postype = OneOf('SHORT', 'LONG', required=True)
+    tferaction = OneOf("IN", "OUT", required=True)
+    postype = OneOf("SHORT", "LONG", required=True)
     invacctfrom = SubAggregate(INVACCTFROM)
     avgcostbasis = Decimal()
     unitprice = Decimal()
@@ -353,19 +429,39 @@ class TRANSFER(Aggregate):
 
 class INVTRANLIST(TranList):
     """ OFX section 13.9.2.2 """
-    dataTags = ['INVBANKTRAN', 'BUYDEBT', 'BUYMF', 'BUYOPT', 'BUYOTHER',
-                'BUYSTOCK', 'CLOSUREOPT', 'INCOME', 'INVEXPENSE', 'JRNLFUND',
-                'JRNLSEC', 'MARGININTEREST', 'REINVEST', 'RETOFCAP',
-                'SELLDEBT', 'SELLMF', 'SELLOPT', 'SELLOTHER', 'SELLSTOCK',
-                'SPLIT', 'TRANSFER']
+
+    dataTags = [
+        "INVBANKTRAN",
+        "BUYDEBT",
+        "BUYMF",
+        "BUYOPT",
+        "BUYOTHER",
+        "BUYSTOCK",
+        "CLOSUREOPT",
+        "INCOME",
+        "INVEXPENSE",
+        "JRNLFUND",
+        "JRNLSEC",
+        "MARGININTEREST",
+        "REINVEST",
+        "RETOFCAP",
+        "SELLDEBT",
+        "SELLMF",
+        "SELLOPT",
+        "SELLOTHER",
+        "SELLSTOCK",
+        "SPLIT",
+        "TRANSFER",
+    ]
 
 
 # Positions
 class INVPOS(Aggregate):
     """ OFX section 13.9.2.6.1 """
+
     secid = SubAggregate(SECID, required=True)
     heldinacct = OneOf(*INVSUBACCTS, required=True)
-    postype = OneOf('SHORT', 'LONG', required=True)
+    postype = OneOf("SHORT", "LONG", required=True)
     units = Decimal(required=True)
     unitprice = Decimal(required=True)
     mktval = Decimal(required=True)
@@ -378,11 +474,13 @@ class INVPOS(Aggregate):
 
 class POSDEBT(Aggregate):
     """ OFX section 13.9.2.6.1 """
+
     invpos = SubAggregate(INVPOS, required=True)
 
 
 class POSMF(Aggregate):
     """ OFX section 13.9.2.6.1 """
+
     invpos = SubAggregate(INVPOS, required=True)
     unitsstreet = Decimal()
     unitsuser = Decimal()
@@ -392,17 +490,20 @@ class POSMF(Aggregate):
 
 class POSOPT(Aggregate):
     """ OFX section 13.9.2.6.1 """
+
     invpos = SubAggregate(INVPOS, required=True)
-    secured = OneOf('NAKED', 'COVERED')
+    secured = OneOf("NAKED", "COVERED")
 
 
 class POSOTHER(Aggregate):
     """ OFX section 13.9.2.6.1 """
+
     invpos = SubAggregate(INVPOS, required=True)
 
 
 class POSSTOCK(Aggregate):
     """ OFX section 13.9.2.6.1 """
+
     invpos = SubAggregate(INVPOS, required=True)
     unitsstreet = Decimal()
     unitsuser = Decimal()
@@ -411,12 +512,14 @@ class POSSTOCK(Aggregate):
 
 class INVPOSLIST(List):
     """ OFX section 13.9.2.2 """
-    dataTags = ['POSDEBT', 'POSMF', 'POSOPT', 'POSOTHER', 'POSSTOCK']
+
+    dataTags = ["POSDEBT", "POSMF", "POSOPT", "POSOTHER", "POSSTOCK"]
 
 
 # Balances
 class INVBAL(Aggregate):
     """ OFX section 13.9.2.7 """
+
     availcash = Decimal(required=True)
     marginbalance = Decimal(required=True)
     shortbalance = Decimal(required=True)
@@ -426,6 +529,7 @@ class INVBAL(Aggregate):
 
 class INV401KBAL(Aggregate):
     """ OFX section 13.9.2.9 """
+
     cashbal = Decimal()
     pretax = Decimal()
     aftertax = Decimal()
@@ -441,14 +545,15 @@ class INV401KBAL(Aggregate):
 # Open orders
 class OO(Aggregate):
     """ OFX section 13.9.2.5.1 - General open order aggregate """
+
     fitid = String(255, required=True)
     srvrtid = String(10)
     secid = SubAggregate(SECID, required=True)
     dtplaced = DateTime(required=True)
     units = Decimal(required=True)
     subacct = OneOf(*INVSUBACCTS, required=True)
-    duration = OneOf('DAY', 'GOODTILCANCEL', 'IMMEDIATE', required=True)
-    restriction = OneOf('ALLORNONE', 'MINUNITS', 'NONE', required=True)
+    duration = OneOf("DAY", "GOODTILCANCEL", "IMMEDIATE", required=True)
+    restriction = OneOf("ALLORNONE", "MINUNITS", "NONE", required=True)
     minunits = Decimal()
     limitprice = Decimal()
     stopprice = Decimal()
@@ -459,6 +564,7 @@ class OO(Aggregate):
 
 class OOBUYDEBT(Aggregate):
     """ OFX section 13.9.2.5.2 """
+
     oo = SubAggregate(OO, required=True)
     auction = Bool(required=True)
     dtauction = DateTime()
@@ -466,6 +572,7 @@ class OOBUYDEBT(Aggregate):
 
 class OOBUYMF(Aggregate):
     """ OFX section 13.9.2.5.2 """
+
     oo = SubAggregate(OO, required=True)
     buytype = OneOf(*BUYTYPES, required=True)
     unittype = OneOf(*UNITTYPES, required=True)
@@ -473,29 +580,34 @@ class OOBUYMF(Aggregate):
 
 class OOBUYOPT(Aggregate):
     """ OFX section 13.9.2.5.2 """
+
     oo = SubAggregate(OO, required=True)
     optbuytype = OneOf(*OPTBUYTYPES, required=True)
 
 
 class OOBUYOTHER(Aggregate):
     """ OFX section 13.9.2.5.2 """
+
     oo = SubAggregate(OO, required=True)
     unittype = OneOf(*UNITTYPES, required=True)
 
 
 class OOBUYSTOCK(Aggregate):
     """ OFX section 13.9.2.5.2 """
+
     oo = SubAggregate(OO, required=True)
     buytype = OneOf(*BUYTYPES, required=True)
 
 
 class OOSELLDEBT(Aggregate):
     """ OFX section 13.9.2.5.2 """
+
     oo = SubAggregate(OO, required=True)
 
 
 class OOSELLMF(Aggregate):
     """ OFX section 13.9.2.5.2 """
+
     oo = SubAggregate(OO, required=True)
     selltype = OneOf(*SELLTYPES, required=True)
     unittype = OneOf(*UNITTYPES, required=True)
@@ -504,24 +616,28 @@ class OOSELLMF(Aggregate):
 
 class OOSELLOPT(Aggregate):
     """ OFX section 13.9.2.5.2 """
+
     oo = SubAggregate(OO, required=True)
     optselltype = OneOf(*OPTSELLTYPES, required=True)
 
 
 class OOSELLOTHER(Aggregate):
     """ OFX section 13.9.2.5.2 """
+
     oo = SubAggregate(OO, required=True)
     unittype = OneOf(*UNITTYPES, required=True)
 
 
 class OOSELLSTOCK(Aggregate):
     """ OFX section 13.9.2.5.2 """
+
     oo = SubAggregate(OO, required=True)
     selltype = OneOf(*SELLTYPES, required=True)
 
 
 class SWITCHMF(Aggregate):
     """ OFX section 13.9.2.5.2 """
+
     oo = SubAggregate(OO, required=True)
     secid = SubAggregate(SECID, required=True)
     unittype = OneOf(*UNITTYPES, required=True)
@@ -530,13 +646,25 @@ class SWITCHMF(Aggregate):
 
 class INVOOLIST(List):
     """ OFX section 13.9.2.2 """
-    dataTags = ['OOBUYDEBT', 'OOBUYMF', 'OOBUYOPT', 'OOBUYOTHER',
-                'OOBUYSTOCK', 'OOSELLDEBT', 'OOSELLMF', 'OOSELLOPT',
-                'OOSELLOTHER', 'OOSELLSTOCK', 'SWITCHMF']
+
+    dataTags = [
+        "OOBUYDEBT",
+        "OOBUYMF",
+        "OOBUYOPT",
+        "OOBUYOTHER",
+        "OOBUYSTOCK",
+        "OOSELLDEBT",
+        "OOSELLMF",
+        "OOSELLOPT",
+        "OOSELLOTHER",
+        "OOSELLSTOCK",
+        "SWITCHMF",
+    ]
 
 
 class INVSTMTRS(Aggregate):
     """ OFX section 13.9.2.1 """
+
     dtasof = DateTime(required=True)
     curdef = OneOf(*CURRENCY_CODES, required=True)
     invacctfrom = SubAggregate(INVACCTFROM, required=True)
@@ -569,6 +697,7 @@ class INVSTMTRS(Aggregate):
 
 class INVSTMTTRNRQ(Aggregate):
     """ OFX section 13.9.1.1 """
+
     trnuid = String(36, required=True)
     clientcookie = String(32)
     tan = String(80)
@@ -578,6 +707,7 @@ class INVSTMTTRNRQ(Aggregate):
 
 class INVSTMTTRNRS(Aggregate):
     """ OFX section 13.9.2.1 """
+
     trnuid = String(36, required=True)
     status = SubAggregate(STATUS, required=True)
     clientcookie = String(32)
@@ -591,12 +721,14 @@ class INVSTMTTRNRS(Aggregate):
 
 class INVSTMTMSGSRQV1(List):
     """ OFX section 13.7.1.2.1 """
-    dataTags = ['INVSTMTTRNRQ']
+
+    dataTags = ["INVSTMTTRNRQ"]
 
 
 class INVSTMTMSGSRSV1(List):
     """ OFX section 13.7.1.2.2 """
-    dataTags = ['INVSTMTTRNRS']
+
+    dataTags = ["INVSTMTTRNRS"]
 
     @property
     def statements(self):
@@ -605,6 +737,7 @@ class INVSTMTMSGSRSV1(List):
 
 class INVSTMTMSGSETV1(Aggregate):
     """ OFX section 13.7.1.1 """
+
     msgsetcore = SubAggregate(MSGSETCORE, required=True)
     trandnld = Bool(required=True)
     oodnld = Bool(required=True)
@@ -618,4 +751,5 @@ class INVSTMTMSGSETV1(Aggregate):
 
 class INVSTMTMSGSET(Aggregate):
     """ OFX section 13.7.1.1 """
+
     invstmtmsgsetv1 = SubAggregate(INVSTMTMSGSETV1, required=True)

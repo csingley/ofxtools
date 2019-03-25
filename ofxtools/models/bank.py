@@ -3,41 +3,81 @@
 Data structures for bank download - OFX Section 11
 """
 # local imports
-from ofxtools.Types import (
-    String, NagString, Decimal, Integer, OneOf, DateTime, Bool,
-)
-from ofxtools.models.base import (
-    Aggregate, List, TranList, SubAggregate, Unsupported,
-)
-from ofxtools.models.common import (STATUS, MSGSETCORE, SVCSTATUSES)
+from ofxtools.Types import String, NagString, Decimal, Integer, OneOf, DateTime, Bool
+from ofxtools.models.base import Aggregate, List, TranList, SubAggregate, Unsupported
+from ofxtools.models.common import STATUS, MSGSETCORE, SVCSTATUSES
 from ofxtools.models.i18n import (
-    CURRENCY, ORIGCURRENCY,
+    CURRENCY,
+    ORIGCURRENCY,
     Origcurrency,
-    CURRENCY_CODES, COUNTRY_CODES,
+    CURRENCY_CODES,
+    COUNTRY_CODES,
 )
 
 
-__all__ = ['BANKACCTFROM', 'CCACCTFROM', 'BANKACCTTO', 'CCACCTTO',
-           'BANKACCTINFO', 'CCACCTINFO', 'INCTRAN',
-           'PAYEE', 'EMAILPROF',
-           'LEDGERBAL', 'AVAILBAL', 'BALLIST', 'STMTTRN', 'BANKTRANLIST',
-           'STMTRQ', 'STMTRS', 'STMTTRNRQ', 'STMTTRNRS', 'BANKMSGSRQV1',
-           'BANKMSGSRSV1', 'BANKMSGSETV1', 'BANKMSGSET', 'EMAILPROF', ]
+__all__ = [
+    "BANKACCTFROM",
+    "CCACCTFROM",
+    "BANKACCTTO",
+    "CCACCTTO",
+    "BANKACCTINFO",
+    "CCACCTINFO",
+    "INCTRAN",
+    "PAYEE",
+    "EMAILPROF",
+    "LEDGERBAL",
+    "AVAILBAL",
+    "BALLIST",
+    "STMTTRN",
+    "BANKTRANLIST",
+    "STMTRQ",
+    "STMTRS",
+    "STMTTRNRQ",
+    "STMTTRNRS",
+    "BANKMSGSRQV1",
+    "BANKMSGSRSV1",
+    "BANKMSGSETV1",
+    "BANKMSGSET",
+    "EMAILPROF",
+]
 
 
 # Enums used in aggregate validation
-INV401KSOURCES = ('PRETAX', 'AFTERTAX', 'MATCH', 'PROFITSHARING',
-                  'ROLLOVER', 'OTHERVEST', 'OTHERNONVEST')
+INV401KSOURCES = (
+    "PRETAX",
+    "AFTERTAX",
+    "MATCH",
+    "PROFITSHARING",
+    "ROLLOVER",
+    "OTHERVEST",
+    "OTHERNONVEST",
+)
 # OFX section 11.3.1.1
-ACCTTYPES = ('CHECKING', 'SAVINGS', 'MONEYMRKT', 'CREDITLINE', 'CD')
-TRNTYPES = ('CREDIT', 'DEBIT', 'INT', 'DIV', 'FEE', 'SRVCHG',
-            'DEP', 'ATM', 'POS', 'XFER', 'CHECK', 'PAYMENT',
-            'CASH', 'DIRECTDEP', 'DIRECTDEBIT', 'REPEATPMT',
-            'OTHER')
+ACCTTYPES = ("CHECKING", "SAVINGS", "MONEYMRKT", "CREDITLINE", "CD")
+TRNTYPES = (
+    "CREDIT",
+    "DEBIT",
+    "INT",
+    "DIV",
+    "FEE",
+    "SRVCHG",
+    "DEP",
+    "ATM",
+    "POS",
+    "XFER",
+    "CHECK",
+    "PAYMENT",
+    "CASH",
+    "DIRECTDEP",
+    "DIRECTDEBIT",
+    "REPEATPMT",
+    "OTHER",
+)
 
 
 class BANKACCTFROM(Aggregate):
     """ OFX section 11.3.1 """
+
     bankid = String(9, required=True)
     branchid = String(22)
     acctid = String(22, required=True)
@@ -47,6 +87,7 @@ class BANKACCTFROM(Aggregate):
 
 class BANKACCTTO(Aggregate):
     """ OFX section 11.3.1 """
+
     bankid = String(9, required=True)
     branchid = String(22)
     acctid = String(22, required=True)
@@ -56,18 +97,21 @@ class BANKACCTTO(Aggregate):
 
 class CCACCTFROM(Aggregate):
     """ OFX section 11.3.2 """
+
     acctid = String(22, required=True)
     acctkey = String(22)
 
 
 class CCACCTTO(Aggregate):
     """ OFX section 11.3.2 """
+
     acctid = String(22, required=True)
     acctkey = String(22)
 
 
 class BANKACCTINFO(Aggregate):
     """ OFX section 11.3.3 """
+
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     suptxdl = Bool(required=True)
     xfersrc = Bool(required=True)
@@ -77,6 +121,7 @@ class BANKACCTINFO(Aggregate):
 
 class CCACCTINFO(Aggregate):
     """ OFX section 11.3.4 """
+
     ccacctfrom = SubAggregate(CCACCTFROM, required=True)
     suptxdl = Bool(required=True)
     xfersrc = Bool(required=True)
@@ -86,6 +131,7 @@ class CCACCTINFO(Aggregate):
 
 class INCTRAN(Aggregate):
     """ OFX section 11.4.2.1 """
+
     dtstart = DateTime()
     dtend = DateTime()
     include = Bool(required=True)
@@ -93,6 +139,7 @@ class INCTRAN(Aggregate):
 
 class STMTRQ(Aggregate):
     """ OFX section 11.4.2.1 """
+
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     inctran = SubAggregate(INCTRAN)
     includepending = Bool()
@@ -101,6 +148,7 @@ class STMTRQ(Aggregate):
 
 class PAYEE(Aggregate):
     """ OFX section 12.5.2.1 """
+
     name = NagString(32, required=True)
     addr1 = String(32, required=True)
     addr2 = String(32)
@@ -114,6 +162,7 @@ class PAYEE(Aggregate):
 
 class STMTTRN(Aggregate, Origcurrency):
     """ OFX section 11.4.3 """
+
     trntype = OneOf(*TRNTYPES, required=True)
     dtposted = DateTime(required=True)
     dtuser = DateTime()
@@ -121,7 +170,7 @@ class STMTTRN(Aggregate, Origcurrency):
     trnamt = Decimal(required=True)
     fitid = String(255, required=True)
     correctfitid = String(255)
-    correctaction = OneOf('REPLACE', 'DELETE')
+    correctaction = OneOf("REPLACE", "DELETE")
     srvrtid = String(10)
     checknum = String(12)
     refnum = String(32)
@@ -141,33 +190,39 @@ class STMTTRN(Aggregate, Origcurrency):
     optionalMutexes = [
         ("ccacctto", "bankacctto"),
         ("name", "payee"),
-        ("currency", "origcurrency")]
+        ("currency", "origcurrency"),
+    ]
 
 
 class BANKTRANLIST(TranList):
     """ OFX section 11.4.2.2 """
-    dataTags = ['STMTTRN']
+
+    dataTags = ["STMTTRN"]
 
 
 class LEDGERBAL(Aggregate):
     """ OFX section 11.4.2.2 """
+
     balamt = Decimal(required=True)
     dtasof = DateTime(required=True)
 
 
 class AVAILBAL(Aggregate):
     """ OFX section 11.4.2.2 """
+
     balamt = Decimal(required=True)
     dtasof = DateTime(required=True)
 
 
 class BALLIST(List):
     """ OFX section 11.4.2.2 & 13.9.2.7 """
-    dataTags = ['BAL']
+
+    dataTags = ["BAL"]
 
 
 class STMTRS(Aggregate):
     """ OFX section 11.4.2.2 """
+
     curdef = OneOf(*CURRENCY_CODES, required=True)
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     banktranlist = SubAggregate(BANKTRANLIST)
@@ -194,12 +249,14 @@ class STMTRS(Aggregate):
 
 class STMTTRNRQ(Aggregate):
     """ OFX section 11.4.2.1 """
+
     trnuid = String(36, required=True)
     stmtrq = SubAggregate(STMTRQ)
 
 
 class STMTTRNRS(Aggregate):
     """ OFX section 11.4.2.2 """
+
     trnuid = String(36, required=True)
     status = SubAggregate(STATUS, required=True)
     stmtrs = SubAggregate(STMTRS)
@@ -211,12 +268,14 @@ class STMTTRNRS(Aggregate):
 
 class BANKMSGSRQV1(List):
     """ OFX section 11.13.1.1.1 """
-    dataTags = ['STMTTRNRQ']
+
+    dataTags = ["STMTTRNRQ"]
 
 
 class BANKMSGSRSV1(List):
     """ OFX section 11.13.1.1.2 """
-    dataTags = ['STMTTRNRS']
+
+    dataTags = ["STMTTRNRS"]
 
     @property
     def statements(self):
@@ -225,12 +284,14 @@ class BANKMSGSRSV1(List):
 
 class EMAILPROF(Aggregate):
     """ OFX section 11.13.2.4 """
+
     canemail = Bool(required=True)
     cannotify = Bool(required=True)
 
 
 class BANKMSGSETV1(Aggregate):
     """ OFX section 11.13.2.1 """
+
     msgsetcore = SubAggregate(MSGSETCORE, required=True)
     invalidaccttype = OneOf(*ACCTTYPES)
     closingavail = Bool(required=True)
@@ -243,4 +304,5 @@ class BANKMSGSETV1(Aggregate):
 
 class BANKMSGSET(Aggregate):
     """ OFX section 7.3 """
+
     bankmsgsetv1 = SubAggregate(BANKMSGSETV1, required=True)

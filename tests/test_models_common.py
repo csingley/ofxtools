@@ -4,10 +4,7 @@
 import unittest
 from datetime import datetime
 from decimal import Decimal
-from xml.etree.ElementTree import (
-    Element,
-    SubElement,
-)
+from xml.etree.ElementTree import Element, SubElement
 
 
 # local imports
@@ -16,24 +13,29 @@ import test_models_i18n
 
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import (
-    STATUS, BAL, CURRENCY, OFXELEMENT, OFXEXTENSION, MSGSETCORE,
+    STATUS,
+    BAL,
+    CURRENCY,
+    OFXELEMENT,
+    OFXEXTENSION,
+    MSGSETCORE,
 )
-from ofxtools.models.i18n import (CURRENCY_CODES, LANG_CODES)
+from ofxtools.models.i18n import CURRENCY_CODES, LANG_CODES
 from ofxtools.utils import UTC
 
 
 class StatusTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ('CODE', 'SEVERITY')
-    optionalElements = ('MESSAGE',)
+    requiredElements = ("CODE", "SEVERITY")
+    optionalElements = ("MESSAGE",)
 
     @property
     def root(self):
-        root = Element('STATUS')
-        SubElement(root, 'CODE').text = '0'
-        SubElement(root, 'SEVERITY').text = 'INFO'
-        SubElement(root, 'MESSAGE').text = 'Do your laundry!'
+        root = Element("STATUS")
+        SubElement(root, "CODE").text = "0"
+        SubElement(root, "SEVERITY").text = "INFO"
+        SubElement(root, "MESSAGE").text = "Do your laundry!"
         return root
 
     def testConvert(self):
@@ -42,11 +44,11 @@ class StatusTestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, STATUS)
         self.assertEqual(root.code, 0)
-        self.assertEqual(root.severity, 'INFO')
-        self.assertEqual(root.message, 'Do your laundry!')
+        self.assertEqual(root.severity, "INFO")
+        self.assertEqual(root.message, "Do your laundry!")
 
     def testOneOf(self):
-        self.oneOfTest('SEVERITY', ('INFO', 'WARN', 'ERROR'))
+        self.oneOfTest("SEVERITY", ("INFO", "WARN", "ERROR"))
 
 
 class BalTestCase(unittest.TestCase, base.TestAggregate):
@@ -54,17 +56,17 @@ class BalTestCase(unittest.TestCase, base.TestAggregate):
     # (which are mandatory per the OFX spec) aren't marked as required.
     __test__ = True
 
-    requiredElements = ['NAME', 'DESC', 'BALTYPE', 'VALUE', ]
-    optionalElements = ['DTASOF', 'CURRENCY', ]
+    requiredElements = ["NAME", "DESC", "BALTYPE", "VALUE"]
+    optionalElements = ["DTASOF", "CURRENCY"]
 
     @property
     def root(self):
-        root = Element('BAL')
-        SubElement(root, 'NAME').text = 'balance'
-        SubElement(root, 'DESC').text = 'Balance'
-        SubElement(root, 'BALTYPE').text = 'DOLLAR'
-        SubElement(root, 'VALUE').text = '111.22'
-        SubElement(root, 'DTASOF').text = '20010630'
+        root = Element("BAL")
+        SubElement(root, "NAME").text = "balance"
+        SubElement(root, "DESC").text = "Balance"
+        SubElement(root, "BALTYPE").text = "DOLLAR"
+        SubElement(root, "VALUE").text = "111.22"
+        SubElement(root, "DTASOF").text = "20010630"
         currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
         return root
@@ -74,16 +76,16 @@ class BalTestCase(unittest.TestCase, base.TestAggregate):
         # Aggregate instance attributes with the result
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, BAL)
-        self.assertEqual(root.name, 'balance')
-        self.assertEqual(root.desc, 'Balance')
-        self.assertEqual(root.baltype, 'DOLLAR')
-        self.assertEqual(root.value, Decimal('111.22'))
+        self.assertEqual(root.name, "balance")
+        self.assertEqual(root.desc, "Balance")
+        self.assertEqual(root.baltype, "DOLLAR")
+        self.assertEqual(root.value, Decimal("111.22"))
         self.assertEqual(root.dtasof, datetime(2001, 6, 30, tzinfo=UTC))
         self.assertIsInstance(root.currency, CURRENCY)
 
     def testOneOf(self):
-        self.oneOfTest('BALTYPE', ('DOLLAR', 'PERCENT', 'NUMBER'))
-        self.oneOfTest('CURSYM', CURRENCY_CODES)
+        self.oneOfTest("BALTYPE", ("DOLLAR", "PERCENT", "NUMBER"))
+        self.oneOfTest("CURSYM", CURRENCY_CODES)
 
 
 class OfxelementTestCase(unittest.TestCase, base.TestAggregate):
@@ -91,11 +93,11 @@ class OfxelementTestCase(unittest.TestCase, base.TestAggregate):
 
     @property
     def root(self):
-        root = Element('OFXELEMENT')
-        SubElement(root, 'TAGNAME').text = 'ABC.SOMETHING'
-        SubElement(root, 'NAME').text = 'Some OFX extension'
-        SubElement(root, 'TAGTYPE').text = 'A-32'
-        SubElement(root, 'TAGVALUE').text = 'Foobar'
+        root = Element("OFXELEMENT")
+        SubElement(root, "TAGNAME").text = "ABC.SOMETHING"
+        SubElement(root, "NAME").text = "Some OFX extension"
+        SubElement(root, "TAGTYPE").text = "A-32"
+        SubElement(root, "TAGVALUE").text = "Foobar"
         return root
 
     def testConvert(self):
@@ -103,21 +105,22 @@ class OfxelementTestCase(unittest.TestCase, base.TestAggregate):
         # Aggregate instance attributes with the result
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, OFXELEMENT)
-        self.assertEqual(root.tagname, 'ABC.SOMETHING')
-        self.assertEqual(root.name, 'Some OFX extension')
-        self.assertEqual(root.tagtype, 'A-32')
-        self.assertEqual(root.tagvalue, 'Foobar')
+        self.assertEqual(root.tagname, "ABC.SOMETHING")
+        self.assertEqual(root.name, "Some OFX extension")
+        self.assertEqual(root.tagtype, "A-32")
+        self.assertEqual(root.tagvalue, "Foobar")
 
 
 class OfxextensionTestCase(unittest.TestCase, base.TestAggregate):
     """ """
+
     __test__ = True
 
     optionalElements = []  # FIXME - how to handle multiple OFXELEMENTs?
 
     @property
     def root(self):
-        root = Element('OFXEXTENSION')
+        root = Element("OFXEXTENSION")
         ofxelement1 = OfxelementTestCase().root
         ofxelement2 = OfxelementTestCase().root
         root.append(ofxelement1)
@@ -136,24 +139,32 @@ class OfxextensionTestCase(unittest.TestCase, base.TestAggregate):
 class MsgsetcoreTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ['VER', 'URL', 'OFXSEC', 'TRANSPSEC', 'SIGNONREALM',
-                        'LANGUAGE', 'SYNCMODE', 'RESPFILEER']
+    requiredElements = [
+        "VER",
+        "URL",
+        "OFXSEC",
+        "TRANSPSEC",
+        "SIGNONREALM",
+        "LANGUAGE",
+        "SYNCMODE",
+        "RESPFILEER",
+    ]
     # optionalElements = ['REFRESHSUPT', 'SPNAME', 'OFXEXTENSION']
 
     @property
     def root(self):
-        root = Element('MSGSETCORE')
-        SubElement(root, 'VER').text = '1'
-        SubElement(root, 'URL').text = 'https://ofxs.ameritrade.com/cgi-bin/apps/OFX'
-        SubElement(root, 'OFXSEC').text = 'NONE'
-        SubElement(root, 'TRANSPSEC').text = 'Y'
-        SubElement(root, 'SIGNONREALM').text = 'AMERITRADE'
-        SubElement(root, 'LANGUAGE').text = 'ENG'
-        SubElement(root, 'SYNCMODE').text = 'FULL'
-        SubElement(root, 'REFRESHSUPT').text = 'N'
-        SubElement(root, 'RESPFILEER').text = 'N'
-        SubElement(root, 'INTU.TIMEOUT').text = '360'
-        SubElement(root, 'SPNAME').text = 'Dewey Cheatham & Howe'
+        root = Element("MSGSETCORE")
+        SubElement(root, "VER").text = "1"
+        SubElement(root, "URL").text = "https://ofxs.ameritrade.com/cgi-bin/apps/OFX"
+        SubElement(root, "OFXSEC").text = "NONE"
+        SubElement(root, "TRANSPSEC").text = "Y"
+        SubElement(root, "SIGNONREALM").text = "AMERITRADE"
+        SubElement(root, "LANGUAGE").text = "ENG"
+        SubElement(root, "SYNCMODE").text = "FULL"
+        SubElement(root, "REFRESHSUPT").text = "N"
+        SubElement(root, "RESPFILEER").text = "N"
+        SubElement(root, "INTU.TIMEOUT").text = "360"
+        SubElement(root, "SPNAME").text = "Dewey Cheatham & Howe"
         ofxextension = OfxextensionTestCase().root
         root.append(ofxextension)
         return root
@@ -162,22 +173,22 @@ class MsgsetcoreTestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, MSGSETCORE)
         self.assertEqual(root.ver, 1)
-        self.assertEqual(root.url, 'https://ofxs.ameritrade.com/cgi-bin/apps/OFX')
-        self.assertEqual(root.ofxsec, 'NONE')
+        self.assertEqual(root.url, "https://ofxs.ameritrade.com/cgi-bin/apps/OFX")
+        self.assertEqual(root.ofxsec, "NONE")
         self.assertEqual(root.transpsec, True)
-        self.assertEqual(root.signonrealm, 'AMERITRADE')
-        self.assertEqual(root.language, 'ENG')
-        self.assertEqual(root.syncmode, 'FULL')
+        self.assertEqual(root.signonrealm, "AMERITRADE")
+        self.assertEqual(root.language, "ENG")
+        self.assertEqual(root.syncmode, "FULL")
         self.assertEqual(root.refreshsupt, False)
         self.assertEqual(root.respfileer, False)
-        self.assertEqual(root.spname, 'Dewey Cheatham & Howe')
+        self.assertEqual(root.spname, "Dewey Cheatham & Howe")
         self.assertIsInstance(root.ofxextension, OFXEXTENSION)
 
     def testOneOf(self):
-        self.oneOfTest('OFXSEC', ('NONE', 'TYPE1'))
-        self.oneOfTest('LANGUAGE', LANG_CODES)
-        self.oneOfTest('SYNCMODE', ('FULL', 'LITE'))
+        self.oneOfTest("OFXSEC", ("NONE", "TYPE1"))
+        self.oneOfTest("LANGUAGE", LANG_CODES)
+        self.oneOfTest("SYNCMODE", ("FULL", "LITE"))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

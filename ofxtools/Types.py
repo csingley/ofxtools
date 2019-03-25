@@ -16,6 +16,7 @@ from .utils import UTC
 
 class OFXTypeWarning(UserWarning):
     """ Base class for warnings in this module """
+
     pass
 
 
@@ -29,6 +30,7 @@ class InstanceCounterMixin:
     This is not needed for Python v3.6+
     https://docs.python.org/3/whatsnew/3.6.html#whatsnew36-pep520
     """
+
     _element_counter = itertools.count()
 
     @classmethod
@@ -60,17 +62,20 @@ class Element(InstanceCounterMixin):
     (using the arguments passed to __init__()) and type conversion (using the
     logic implemented in convert()).
     """
+
     def __init__(self, *args, **kwargs):
         InstanceCounterMixin.__init__(self)
         self.data = defaultdict(None)
-        self.required = kwargs.pop('required', False)
+        self.required = kwargs.pop("required", False)
         self._init(*args, **kwargs)
 
     def _init(self, *args, **kwargs):
         """ Override in subclass """
         if args or kwargs:
-            raise ValueError("Unknown args for '%s'- args: %r; kwargs: %r"
-                             % (self.__class__.__name__, args, kwargs))
+            raise ValueError(
+                "Unknown args for '%s'- args: %r; kwargs: %r"
+                % (self.__class__.__name__, args, kwargs)
+            )
 
     def __get__(self, parent, parent_type):
         # HACK - `parent is not None` is needed for tests/test_models_base.py,
@@ -98,7 +103,7 @@ class Element(InstanceCounterMixin):
 
 
 class Bool(Element):
-    mapping = {'Y': True, 'N': False}
+    mapping = {"Y": True, "N": False}
 
     def convert(self, value):
         if value is None:
@@ -114,15 +119,18 @@ class Bool(Element):
         try:
             return self.mapping[value]
         except KeyError as e:
-            raise ValueError("%s is not one of the allowed values %s" % (
-                e.args[0], self.mapping.keys(), ))
+            raise ValueError(
+                "%s is not one of the allowed values %s"
+                % (e.args[0], self.mapping.keys())
+            )
 
     def unconvert(self, value):
         if value is None:
             return None
         if not isinstance(value, bool):
-            raise ValueError("%s is not one of the allowed values %s" % (
-                value, self.mapping.keys(), ))
+            raise ValueError(
+                "%s is not one of the allowed values %s" % (value, self.mapping.keys())
+            )
 
         return {v: k for k, v in self.mapping.items()}[value]
 
@@ -139,7 +147,7 @@ class String(Element):
         super()._init(*args, **kwargs)
 
     def convert(self, value):
-        if value == '':
+        if value == "":
             value = None
         if value is None:
             if self.required:
@@ -152,9 +160,7 @@ class String(Element):
         # Unescape '&amp;' '&lt;' '&gt;' '&nbsp;' per OFX section 2.3
         # Also go ahead and unescape other XML control characters,
         # because FIs tend to mix &amp; match...
-        value = saxutils.unescape(value,
-                                  {'&nbsp;': ' ', '&apos;': "'", '&quot;': '"'}
-                                 )
+        value = saxutils.unescape(value, {"&nbsp;": " ", "&apos;": "'", "&quot;": '"'})
 
         if self.length is not None and len(value) > self.length:
             if self.strict:
@@ -173,6 +179,7 @@ class NagString(String):
     Used to handle OFX data that violates the spec with respect to
     string length on non-critical fields.
     """
+
     strict = False
 
 
@@ -182,7 +189,7 @@ class OneOf(Element):
         super()._init(**kwargs)
 
     def convert(self, value):
-        if value == '':
+        if value == "":
             value = None
         if value is None:
             if self.required:
@@ -210,8 +217,8 @@ class Integer(Element):
             else:
                 return None
         value = int(value)
-        if self.length is not None and value >= 10**self.length:
-            msg = '%s has too many digits; max digits=%s'
+        if self.length is not None and value >= 10 ** self.length:
+            msg = "%s has too many digits; max digits=%s"
             raise ValueError(msg % (value, self.length))
         return int(value)
 
@@ -222,7 +229,7 @@ class Decimal(Element):
         if args:
             precision = args[0]
             args = args[1:]
-            self.precision = decimal.Decimal('0.' + '0'*(precision-1) + '1')
+            self.precision = decimal.Decimal("0." + "0" * (precision - 1) + "1")
         super()._init(*args, **kwargs)
 
     def convert(self, value):
@@ -237,7 +244,7 @@ class Decimal(Element):
             value = decimal.Decimal(value)
         except decimal.InvalidOperation:
             if isinstance(value, str):
-                value = decimal.Decimal(value.replace(',', '.'))
+                value = decimal.Decimal(value.replace(",", "."))
 
         if self.precision is not None:
             value = value.quantize(self.precision)
@@ -247,12 +254,9 @@ class Decimal(Element):
 
 class DateTime(Element):
     # Valid datetime formats given by OFX spec in section 3.2.8.2
-    tz_re = re.compile(r'\[([-+]?\d{0,2}\.?\d*):?(\w*)\]')
+    tz_re = re.compile(r"\[([-+]?\d{0,2}\.?\d*):?(\w*)\]")
     # strftime formats keyed by the length of the corresponding string
-    formats = {
-        18: '%Y%m%d%H%M%S.%f', 14: '%Y%m%d%H%M%S',
-        12: '%Y%m%d%H%M', 8: '%Y%m%d'
-    }
+    formats = {18: "%Y%m%d%H%M%S.%f", 14: "%Y%m%d%H%M%S", 12: "%Y%m%d%H%M", 8: "%Y%m%d"}
 
     def convert(self, value):
         if value is None:
@@ -270,7 +274,8 @@ class DateTime(Element):
         # Otherwise it needs to be a string
         if not isinstance(value, str):
             msg = "'{}' is type '{}'; can't convert to datetime".format(
-                value, type(value))
+                value, type(value)
+            )
 
             raise ValueError(msg)
 
@@ -284,19 +289,24 @@ class DateTime(Element):
             gmt_offset, tz_name = chunks[:2]
             # Some FIs *cough* IBKR *cough* write crap for the TZ offset
             # FIXME
-            if gmt_offset == '-':
-                tz_kludge = {'EST': '-5', 'EDT': '-4',
-                             'CST': '-6', 'CDT': '-5',
-                             'MST': '-7', 'MDT': '-6',
-                             'PST': '-8', 'PDT': '-7',
-                            }
+            if gmt_offset == "-":
+                tz_kludge = {
+                    "EST": "-5",
+                    "EDT": "-4",
+                    "CST": "-6",
+                    "CDT": "-5",
+                    "MST": "-7",
+                    "MDT": "-6",
+                    "PST": "-8",
+                    "PDT": "-7",
+                }
                 try:
                     gmt_offset = tz_kludge[tz_name]
                 except KeyError:
                     msg = "Can't parse timezone '{}' into a valid GMT offset"
                     raise ValueError(msg.format(tz_name))
             # hours -> seconds
-            gmt_offset = int(decimal.Decimal(gmt_offset)*3600)
+            gmt_offset = int(decimal.Decimal(gmt_offset) * 3600)
         else:
             gmt_offset = 0
             #  tz_name = 'GMT'
@@ -307,12 +317,14 @@ class DateTime(Element):
             # OFX spec gives fractional seconds as milliseconds; convert to
             # microseconds as required by strptime()
             if len(value) == 18:
-                value = value.replace('.', '.000')
+                value = value.replace(".", ".000")
 
             value = datetime.datetime.strptime(value, format)
         except (KeyError, ValueError):
-            raise ValueError("Datetime '%s' does not match OFX formats %s" %
-                             (orig_value, self.formats.values()))
+            raise ValueError(
+                "Datetime '%s' does not match OFX formats %s"
+                % (orig_value, self.formats.values())
+            )
 
         # Adjust timezone to GMT/UTC
         value -= datetime.timedelta(seconds=gmt_offset)
@@ -322,9 +334,11 @@ class DateTime(Element):
         """
         Input timezone-aware datetime.datetime instance; output str in GMT.
         """
-        if not hasattr(value, 'utcoffset') or value.utcoffset() is None:
-            msg = ("'{}' isn't a timezone-aware datetime.datetime instance; "
-                   "can't convert to GMT").format(value)
+        if not hasattr(value, "utcoffset") or value.utcoffset() is None:
+            msg = (
+                "'{}' isn't a timezone-aware datetime.datetime instance; "
+                "can't convert to GMT"
+            ).format(value)
             raise ValueError(msg)
 
         # Transform to GMT

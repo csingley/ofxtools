@@ -34,6 +34,7 @@ from ofxtools.models.base import Aggregate
 
 class ParseError(SyntaxError):
     """ Exception raised by parsing errors in this module """
+
     pass
 
 
@@ -57,6 +58,7 @@ class OFXTree(ET.ElementTree):
     is performed by calling `ofxtools.models.base.Aggregate.to_etree()` on
     the root node of the hierarchy.
     """
+
     def parse(self, source, parser=None):
         """
         Deserialize OFX document into tree of `ElementTree.Element` instances.
@@ -86,10 +88,10 @@ class OFXTree(ET.ElementTree):
 
         Factored out from `parse()` to facilitate unit testing.
         """
-        if not hasattr(source, 'read'):
-            source = open(source, 'rb')
+        if not hasattr(source, "read"):
+            source = open(source, "rb")
 
-        if hasattr(source, 'mode') and 'b' not in source.mode:
+        if hasattr(source, "mode") and "b" not in source.mode:
             raise ValueError("Source must be opened in binary mode")
 
         header, message = parse_header(source)
@@ -101,7 +103,7 @@ class OFXTree(ET.ElementTree):
         `ofxtools.models.base.Aggregate` & `ofxtools.Types.Element` instances.
         """
         if not isinstance(self._root, ET.Element):
-            raise ValueError('Must first call parse() to have data to convert')
+            raise ValueError("Must first call parse() to have data to convert")
         instance = Aggregate.from_etree(self._root)
         return instance
 
@@ -113,14 +115,18 @@ class TreeBuilder(ET.TreeBuilder):
     Overrides ElementTree.TreeBuilder.feed() with a regex-based parser that
     handles both OFXv1(SGML) and OFXv2(XML).
     """
+
     # The body of an OFX document consists of a series of tags.
     # Each start tag may be followed by text (if a data-bearing element)
     # and optionally an end tag (not mandatory for OFXv1 syntax).
-    regex = re.compile(r"""<(?P<tag>[A-Z0-9./ ]+?)>
+    regex = re.compile(
+        r"""<(?P<tag>[A-Z0-9./ ]+?)>
                             (?P<text>[^<]+)?
                             (</(?P<closetag>(?P=tag))>)?
                             (?P<tail>[^<]+)?
-                            """, re.VERBOSE)
+                            """,
+        re.VERBOSE,
+    )
 
     def feed(self, data):
         """
@@ -130,19 +136,19 @@ class TreeBuilder(ET.TreeBuilder):
             try:
                 groupdict = match.groupdict()
 
-                tail = self._groomstring(groupdict['tail'])
+                tail = self._groomstring(groupdict["tail"])
                 if tail:
                     msg = "Tail text '{}' in {}".format(tail, match.string)
                     raise ParseError(msg)
 
-                tag = groupdict['tag']
-                text = self._groomstring(groupdict['text'])
-                closetag = groupdict['closetag']
+                tag = groupdict["tag"]
+                text = self._groomstring(groupdict["text"])
+                closetag = groupdict["closetag"]
                 self._feedmatch(tag, text, closetag)
             except ParseError as err:
                 # Report the position of the error
                 msg = err.args[0]
-                msg += ' - position=[{}:{}]'.format(match.start(), match.end())
+                msg += " - position=[{}:{}]".format(match.start(), match.end())
                 raise ParseError(msg)
 
     def _feedmatch(self, tag, text, closetag):
@@ -153,7 +159,7 @@ class TreeBuilder(ET.TreeBuilder):
         """
         assert tag
         assert closetag is None or closetag == tag
-        if tag.startswith('/'):
+        if tag.startswith("/"):
             if text:
                 msg = "Tail text '{}' after <{}>".format(text, tag)
                 raise ParseError(msg.format(tag, text))
@@ -184,7 +190,7 @@ class TreeBuilder(ET.TreeBuilder):
     def _groomstring(string):
         """ Strips whitespace and returns None for empty string """
         # Can't strip() None
-        string = (string or '').strip()
+        string = (string or "").strip()
         return string or None
 
 
@@ -199,10 +205,10 @@ def main(*files):
         print(response.statements[0].transactions[:])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from argparse import ArgumentParser
 
-    argparser = ArgumentParser(description='Parse OFX data; dump transactions')
-    argparser.add_argument('file', nargs='+', help='OFX file(s)')
+    argparser = ArgumentParser(description="Parse OFX data; dump transactions")
+    argparser.add_argument("file", nargs="+", help="OFX file(s)")
     args = argparser.parse_args()
     main(*args.file)
