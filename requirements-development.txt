@@ -6,7 +6,7 @@
 # test running
 mock==2.0.0; python_version < '3.3'
 nose==1.3.7
-coverage
+coverage==4.5.3
 pylint
 ipdb
 ipdbplugin
