@@ -1,12 +1,15 @@
 language: python
 python:
-  - '3.4'
-  - '3.5'
-  - '3.6'
+- '3.4'
+- '3.5'
+- '3.6'
 install:
-  - pip install -r requirements-development.txt
-  - pip install .
-script: make test
+- pip install -r requirements-development.txt
+- pip install .
+script:
+- make test
+after_success:
+- bash < (curl -s https://codecov.io/bash)
 deploy:
   provider: pypi
   user: csingley
