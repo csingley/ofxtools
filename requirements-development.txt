@@ -4,7 +4,7 @@
 -e .
 
 # test running
-mock; python_version < '3.3'
+mock==2.0.0; python_version < '3.3'
 nose
 coverage
 pylint
