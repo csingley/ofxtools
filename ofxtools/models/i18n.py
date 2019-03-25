@@ -164,7 +164,7 @@ class ORIGCURRENCY(Aggregate):
     cursym = OneOf(*CURRENCY_CODES, required=True)
 
 
-class Origcurrency(object):
+class Origcurrency:
     """ Mixin providing property aliases and CURRENCY/ORIGCURRENCY mutex """
     optionalMutexes = [("currency", "origcurrency"), ]
 

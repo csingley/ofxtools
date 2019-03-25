@@ -129,7 +129,7 @@ def settleDate(dt):
     return dt
 
 
-class NYSEcalendar(object):
+class NYSEcalendar:
     """
     The Board has determined that the Exchange will not be open for business on
         New Year's Day,

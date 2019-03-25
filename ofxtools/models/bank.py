@@ -113,7 +113,7 @@ class PAYEE(Aggregate):
 
 
 class STMTTRN(Aggregate, Origcurrency):
-    """ OFX section 11.4.4.1 """
+    """ OFX section 11.4.3 """
     trntype = OneOf(*TRNTYPES, required=True)
     dtposted = DateTime(required=True)
     dtuser = DateTime()

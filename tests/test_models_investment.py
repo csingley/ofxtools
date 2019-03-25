@@ -693,8 +693,8 @@ class BuystockTestCase(unittest.TestCase, base.TestAggregate):
     def root(self):
         root = Element('BUYSTOCK')
         invbuy = InvbuyTestCase().root
-        SubElement(root, 'BUYTYPE').text = 'BUYTOCOVER'
         root.append(invbuy)
+        SubElement(root, 'BUYTYPE').text = 'BUYTOCOVER'
         return root
 
     def testConvert(self):
@@ -1014,8 +1014,8 @@ class ReinvestTestCase(unittest.TestCase, base.TestAggregate):
         root.append(invtran)
         secid = test_models_seclist.SecidTestCase().root
         root.append(secid)
-        SubElement(root, 'TOTAL').text = '-161.49'
         SubElement(root, 'INCOMETYPE').text = 'CGLONG'
+        SubElement(root, 'TOTAL').text = '-161.49'
         SubElement(root, 'SUBACCTSEC').text = 'MARGIN'
         SubElement(root, 'UNITS').text = '100'
         SubElement(root, 'UNITPRICE').text = '1.50'

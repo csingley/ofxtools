@@ -19,7 +19,7 @@ class OFXTypeWarning(UserWarning):
     pass
 
 
-class InstanceCounterMixin(object):
+class InstanceCounterMixin:
     """
     Objects that derive from this mixin get a globally unique monotonically
     increasing integer member named '_counter'. This is used for ordering class

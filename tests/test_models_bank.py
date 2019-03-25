@@ -358,7 +358,7 @@ class StmttrnOrigcurrencyTestCase(unittest.TestCase, base.TestAggregate):
         name = root.find('CURRENCY')
         root.remove(name)
         origcurrency = test_models_i18n.OrigcurrencyTestCase().root
-        root.append(origcurrency)
+        root.insert(16, origcurrency)
         return root
 
     def testConvert(self):
@@ -406,7 +406,7 @@ class StmttrnPayeeTestCase(unittest.TestCase, base.TestAggregate):
         name = root.find('NAME')
         root.remove(name)
         payee = PayeeTestCase().root
-        root.append(payee)
+        root.insert(13, payee)
         return root
 
     def testConvert(self):
@@ -446,7 +446,7 @@ class StmttrnBankaccttoTestCase(unittest.TestCase, base.TestAggregate):
     def root(self):
         root = StmttrnTestCase().root
         bankacctto = BankaccttoTestCase().root
-        root.append(bankacctto)
+        root.insert(-3, bankacctto)
         return root
 
     def testConvert(self):
@@ -468,7 +468,7 @@ class StmttrnCcaccttoTestCase(unittest.TestCase, base.TestAggregate):
     def root(self):
         root = StmttrnTestCase().root
         ccacctto = CcaccttoTestCase().root
-        root.append(ccacctto)
+        root.insert(-3, ccacctto)
         return root
 
     def testConvert(self):

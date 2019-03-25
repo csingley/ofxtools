@@ -92,7 +92,7 @@ InvStmtRq.__new__.__defaults__ = (None, None, None, None, True, False, True,
                                   True)
 
 
-class OFXClient(object):
+class OFXClient:
     """
     Basic OFX client to download statement and profile requests.
     """

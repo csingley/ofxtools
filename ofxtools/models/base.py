@@ -20,7 +20,7 @@ class classproperty(property):
         return self.fget.__get__(None, owner)()
 
 
-class Aggregate(object):
+class Aggregate:
     """
     Base class for Python representation of OFX 'aggregate', i.e. SGML parent
     node that contains no data.
@@ -146,19 +146,34 @@ class Aggregate(object):
 
         Generic ``Aggregate`` subclass __init__() accepts only keyword args.
         """
-        # Simple dict comprehension silently updates duplicate keys, so we
-        # can't use that.  In OFX, only *LIST contain repeated child tags.
-        def frozendict(iterator):
-            d = {}
-            for k, v in iterator:
-                if k in d:
-                    msg = "{} contains multiple {}"
-                    raise ValueError(msg.format(cls.__name__, k))
-                d[k] = v
-            return d
+        # Verify that SubElements appear in the correct order
+        spec = list(cls.spec)
+        children = [(el.tag.lower(), el.text or el) for el in elem]
+
+        def indexOrRaise(tag, value):
+            try:
+                return spec.index(tag)
+            except ValueError:
+                msg = "Aggregate {} does not define {}".format(
+                    cls.__name__, tag)
+                raise ValueError(msg)
+
+        indices = [indexOrRaise(*child) for child in children]
+        if indices != sorted(indices):
+            msg = "{} SubElements out of order: {}"
+            raise ValueError(msg.format(cls.__name__,
+                                        [c[0] for c in children]))
 
         args = []
-        kwargs = frozendict((el.tag.lower(), el.text or el) for el in elem)
+
+        # ``dict.__init__()`` updates duplicate keys, so we can't use that.
+        # In OFX, only *LIST may contain repeated child tags.
+        kwargs = {}
+        for tag, value in children:
+            if tag in kwargs:
+                msg = "{} contains multiple {}"
+                raise ValueError(msg.format(cls.__name__, tag))
+            kwargs[tag] = value
 
         return args, kwargs
 
