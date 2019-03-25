@@ -1,11 +1,11 @@
 Open Financial Exchange (OFX) Tools for Python
 ==============================================
 .. Travis CI badge
-.. image:: https://travis-ci.org/csingley/ofxtools.svg?branch=master
+.. .. image:: https://travis-ci.org/csingley/ofxtools.svg?branch=master
     :target: https://travis-ci.org/csingley/ofxtools
 
 .. Codecov badge
-.. image:: https://codecov.io/gh/csingley/ofxtools/branch/master/graph/badge.svg
+.. .. image:: https://codecov.io/gh/csingley/ofxtools/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/csingley/ofxtools
 
 ``ofxtools`` is a Python library for working with Open Financial Exchange (OFX)
@@ -34,7 +34,8 @@ or export your data in OFX format.
 It targets compliance with the `OFX specification`_, specifically OFX versions
 1.6 and 2.03.
 
-So far, ``ofxtools`` complies with nearly all of:
+The OFX message sets are defined in Sections 7-14 of the spec.  Of these,
+so far ``ofxtools`` complies with nearly all of
     * Section 7 (financial institution profile)
     * Section 8 (service activation; account information)
     * Section 11 (banking)
@@ -45,7 +46,9 @@ focus of ``ofxtools`` is full support of the OFX investment message set,
 which has been somewhat neglected by the Python community.
 
 The major item remaining on the ``ofxtools`` "to do" list is implementing
-OFX Section 12 (payments).
+OFX Section 12 (payments).  Absent a compelling use case, I can't see
+implementing Section 9 (email in OFX) or 14 (bill presentment).  Section 10
+(recurring payments) is a low priority.
 
 Some care has been taken with the data model to make it easily maintainable
 and extensible.  The ``ofxtools.models`` subpackage contains simple, direct

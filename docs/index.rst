@@ -55,6 +55,9 @@ focus of ``ofxtools`` is full support of the OFX investment message set,
 which has been somewhat neglected by the Python community.
 
 The major item remaining on the ``ofxtools`` "to do" list is implementing
+OFX Section 12 (payments).  Absent a compelling use case, I can't see
+implementing Section 9 (email in OFX) or 14 (bill presentment).  Section 10
+(recurring payments) is a low priority.
 OFX Section 12 (payments).
 
 Some care has been taken with the data model to make it easily maintainable
