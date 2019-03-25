@@ -250,7 +250,6 @@ try:
 except ImportError:
     # Otherwise create our own UTC tzinfo.
     class _UTC(datetime.tzinfo):
-
         def tzname(self, dt):
             """datetime -> string name of time zone."""
             return "UTC"
@@ -266,5 +265,8 @@ except ImportError:
             offset.
             """
             return datetime.timedelta(0)
+
+        def __repr__(self):
+            return "<UTC>"
 
     UTC = _UTC()
