@@ -34,6 +34,11 @@ __all__ = [
     "STMTRS",
     "STMTTRNRQ",
     "STMTTRNRS",
+    "CLOSING",
+    "STMTENDRQ",
+    "STMTENDRS",
+    "STMTENDTRNRQ",
+    "STMTENDTRNRS",
     "BANKMSGSRQV1",
     "BANKMSGSRSV1",
     "BANKMSGSETV1",
@@ -300,6 +305,11 @@ class STMTENDRS(List):
 
     metadataTags = ["CURDEF", "BANKACCTFROM"]
     dataTags = ["CLOSING"]
+
+    def __init__(self, curdef, bankacctfrom, *members):
+        self.curdef = curdef
+        self.bankacctfrom = bankacctfrom
+        super().__init__(*members)
 
 
 class STMTENDTRNRQ(Aggregate):

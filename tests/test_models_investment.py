@@ -2481,9 +2481,10 @@ class Invstmtmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testdataTags(self):
-        # INVSTMTMSGSRQV1 may only contain INVSTMTTRNRQ
+        # INVSTMTMSGSRQV1 may only contain
+        # ["INVSTMTTRNRQ", "INVMAILTRNRQ", "INVMAILSYNCRQ"]
         allowedTags = INVSTMTMSGSRQV1.dataTags
-        self.assertEqual(len(allowedTags), 1)
+        self.assertEqual(len(allowedTags), 3)
         root = deepcopy(self.root)
         root.append(InvstmttrnrsTestCase().root)
 
@@ -2510,9 +2511,10 @@ class Invstmtmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testdataTags(self):
-        # INVSTMTMSGSRSV1 may only contain INVSTMTTRNRS
+        # INVSTMTMSGSRSV1 may only contain
+        # ["INVSTMTTRNRS", "INVMAILTRNRS", "INVMAILSYNCRS"]
         allowedTags = INVSTMTMSGSRSV1.dataTags
-        self.assertEqual(len(allowedTags), 1)
+        self.assertEqual(len(allowedTags), 3)
         root = deepcopy(self.root)
         root.append(InvstmttrnrqTestCase().root)
 

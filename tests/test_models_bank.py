@@ -890,10 +890,11 @@ class ClosingTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "CHKANDDEBIT").text = "-5"
         SubElement(root, "TOTALFEES").text = "0"
         SubElement(root, "TOTALINT").text = "0"
-        SubElement(root, "DTPOSTOPEN").text = "20161201"
-        SubElement(root, "DTPOSTCLOSE").text = "20161225"
+        SubElement(root, "DTPOSTSTART").text = "20161201"
+        SubElement(root, "DTPOSTEND").text = "20161225"
         SubElement(root, "MKTGINFO").text = "Get Free Stuff NOW!!"
-        SubElement(root, "CURRENCY").text = "TWD"
+        currency = test_models_i18n.CurrencyTestCase().root
+        root.append(currency)
 
         return root
 
@@ -901,9 +902,9 @@ class ClosingTestCase(unittest.TestCase, base.TestAggregate):
         instance = Aggregate.from_etree(self.root)
         self.assertIsInstance(instance, CLOSING)
         self.assertEqual(instance.fitid, "DEADBEEF")
-        self.assertEqual(instance.dtopen, datetime(2016, 12, 1))
-        self.assertEqual(instance.dtclose, datetime(2016, 12, 25))
-        self.assertEqual(instance.dtnext, datetime(2017, 1, 1))
+        self.assertEqual(instance.dtopen, datetime(2016, 12, 1, tzinfo=UTC))
+        self.assertEqual(instance.dtclose, datetime(2016, 12, 25, tzinfo=UTC))
+        self.assertEqual(instance.dtnext, datetime(2017, 1, 1, tzinfo=UTC))
         self.assertEqual(instance.balopen, Decimal('11'))
         self.assertEqual(instance.balclose, Decimal('20'))
         self.assertEqual(instance.balmin, Decimal('6'))
@@ -911,10 +912,10 @@ class ClosingTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(instance.chkanddebit, Decimal('-5'))
         self.assertEqual(instance.totalfees, Decimal('0'))
         self.assertEqual(instance.totalint, Decimal('0'))
-        self.assertEqual(instance.dtpostopen, datetime(2016, 12, 1))
-        self.assertEqual(instance.dtpostclose, datetime(2016, 12, 25))
+        self.assertEqual(instance.dtpoststart, datetime(2016, 12, 1, tzinfo=UTC))
+        self.assertEqual(instance.dtpostend, datetime(2016, 12, 25, tzinfo=UTC))
         self.assertEqual(instance.mktginfo, "Get Free Stuff NOW!!")
-        self.assertEqual(instance.currency, "TWD")
+        self.assertIsInstance(instance.currency, CURRENCY)
 
 
 class StmtendrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -926,7 +927,7 @@ class StmtendrqTestCase(unittest.TestCase, base.TestAggregate):
     @property
     def root(self):
         root = Element("STMTENDRQ")
-        root.append(BankacctfromTestCase.root)
+        root.append(BankacctfromTestCase().root)
         SubElement(root, "DTSTART").text = "20161201"
         SubElement(root, "DTEND").text = "20161225"
 
@@ -936,8 +937,8 @@ class StmtendrqTestCase(unittest.TestCase, base.TestAggregate):
         instance = Aggregate.from_etree(self.root)
         self.assertIsInstance(instance, STMTENDRQ)
         self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
-        self.assertEqual(instance.dtstart, datetime(2016, 12, 1))
-        self.assertEqual(instance.dtend, datetime(2016, 12, 25))
+        self.assertEqual(instance.dtstart, datetime(2016, 12, 1, tzinfo=UTC))
+        self.assertEqual(instance.dtend, datetime(2016, 12, 25, tzinfo=UTC))
 
 
 class StmtendrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -950,16 +951,16 @@ class StmtendrsTestCase(unittest.TestCase, base.TestAggregate):
     def root(self):
         root = Element("STMTENDRS")
         SubElement(root, "CURDEF").text = "CAD"
-        root.append(BankacctfromTestCase.root)
-        root.append(ClosingTestCase.root)
-        root.append(ClosingTestCase.root)
+        root.append(BankacctfromTestCase().root)
+        root.append(ClosingTestCase().root)
+        root.append(ClosingTestCase().root)
 
         return root
 
     def testConvert(self):
         instance = Aggregate.from_etree(self.root)
         self.assertIsInstance(instance, STMTENDRS)
-        self.assertEqual(instance.curdef, "CURDEF")
+        self.assertEqual(instance.curdef, "CAD")
         self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
         self.assertEqual(len(instance), 2)
         self.assertIsInstance(instance[0], CLOSING)
@@ -976,7 +977,7 @@ class StmtendtrnrqTestCase(unittest.TestCase, base.TestAggregate):
     def root(self):
         root = Element("STMTENDTRNRQ")
         SubElement(root, "TRNUID").text = "B16B00B5"
-        root.append(StmtendrqTestCase.root)
+        root.append(StmtendrqTestCase().root)
 
         return root
 
@@ -999,7 +1000,7 @@ class StmtendtrnrsTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "TRNUID").text = "B16B00B5"
         status = test_models_common.StatusTestCase().root
         root.append(status)
-        root.append(StmtendrqTestCase.root)
+        root.append(StmtendrsTestCase().root)
 
         return root
 
@@ -1008,7 +1009,7 @@ class StmtendtrnrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(instance, STMTENDTRNRS)
         self.assertEqual(instance.trnuid, "B16B00B5")
         self.assertIsInstance(instance.status, STATUS)
-        self.assertIsInstance(instance.stmtendrq, STMTENDRQ)
+        self.assertIsInstance(instance.stmtendrs, STMTENDRS)
 
 
 class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):

@@ -722,13 +722,13 @@ class INVSTMTTRNRS(Aggregate):
 class INVSTMTMSGSRQV1(List):
     """ OFX section 13.7.1.2.1 """
 
-    dataTags = ["INVSTMTTRNRQ"]
+    dataTags = ["INVSTMTTRNRQ", "INVMAILTRNRQ", "INVMAILSYNCRQ"]
 
 
 class INVSTMTMSGSRSV1(List):
     """ OFX section 13.7.1.2.2 """
 
-    dataTags = ["INVSTMTTRNRS"]
+    dataTags = ["INVSTMTTRNRS", "INVMAILTRNRS", "INVMAILSYNCRS"]
 
     @property
     def statements(self):
