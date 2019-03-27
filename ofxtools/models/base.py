@@ -313,7 +313,8 @@ class SubAggregate(Element):
     def convert(self, value):
         if value is None:
             if self.required:
-                raise ValueError("Value is required")
+                msg = "{}: Value is required"
+                raise ValueError(msg.format(self.type.__name__))
             else:
                 return None
         if isinstance(value, self.type):
@@ -363,8 +364,9 @@ class List(Aggregate, list):
         for member in members:
             cls_name = member.__class__.__name__
             if cls_name not in self.dataTags:
-                msg = "{} can't contain {} as List data"
-                raise ValueError(msg.format(self.__class__.__name__, cls_name))
+                msg = "{} can't contain {} as List data: {}"
+                raise ValueError(msg.format(self.__class__.__name__, cls_name,
+                                            member))
             self.append(member)
 
     @classmethod
@@ -376,14 +378,19 @@ class List(Aggregate, list):
         (unlike ``Aggregate.__init__()``)
         """
         # Remove List metadata and pass as positional args before list members
-        def find(tag):
+        def find_metadata(tag):
             child = elem.find(tag)
             if child is not None:
                 elem.remove(child)
-                child = child.text
+                # If the child contains text data, the metadata is an Element;
+                # return the text data.  Otherwise it's an Aggregate - return
+                # the Aggregate.
+                text = child.text
+                if text:
+                    child = text
             return child
 
-        args = [find(tag) for tag in cls.metadataTags]
+        args = [find_metadata(tag) for tag in cls.metadataTags]
 
         # Add list members as variable-length positional args
         args.extend([Aggregate.from_etree(el) for el in elem])

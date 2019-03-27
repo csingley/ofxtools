@@ -38,6 +38,11 @@ from ofxtools.models.bank import (
     STMTTRNRQ,
     BANKMSGSRQV1,
     TRNTYPES,
+    CLOSING,
+    STMTENDRQ,
+    STMTENDRS,
+    STMTENDTRNRQ,
+    STMTENDTRNRS,
     BANKMSGSETV1,
     BANKMSGSET,
     EMAILPROF,
@@ -835,9 +840,6 @@ class StmttrnrqTestCase(unittest.TestCase, base.TestAggregate):
 
 
 class StmttrnrsTestCase(unittest.TestCase, base.TestAggregate):
-    """
-    """
-
     __test__ = True
 
     requiredElements = ["TRNUID", "STATUS"]
@@ -857,15 +859,156 @@ class StmttrnrsTestCase(unittest.TestCase, base.TestAggregate):
     def testConvert(self):
         # Test *TRNRS wrapper and **RS Aggregate.
         # Everything below that is tested elsewhere.
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, STMTTRNRS)
-        self.assertEqual(root.trnuid, "1001")
-        self.assertIsInstance(root.status, STATUS)
-        self.assertIsInstance(root.stmtrs, STMTRS)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, STMTTRNRS)
+        self.assertEqual(instance.trnuid, "1001")
+        self.assertIsInstance(instance.status, STATUS)
+        self.assertIsInstance(instance.stmtrs, STMTRS)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root.statement, STMTRS)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance.statement, STMTRS)
+
+
+class ClosingTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["FITID", "DTCLOSE", "BALCLOSE", "DTPOSTSTART", "DTPOSTEND"]
+    optionalElements = ["DTOPEN", "DTNEXT", "BALOPEN", "BALMIN", "DEPANDCREDIT", "CHKANDDEBIT", "TOTALFEES", "TOTALINT", "MKTGINFO", "CURRENCY"]
+
+    @property
+    def root(self):
+        root = Element("CLOSING")
+        SubElement(root, "FITID").text = "DEADBEEF"
+        SubElement(root, "DTOPEN").text = "20161201"
+        SubElement(root, "DTCLOSE").text = "20161225"
+        SubElement(root, "DTNEXT").text = "20170101"
+        SubElement(root, "BALOPEN").text = "11"
+        SubElement(root, "BALCLOSE").text = "20"
+        SubElement(root, "BALMIN").text = "6"
+        SubElement(root, "DEPANDCREDIT").text = "14"
+        SubElement(root, "CHKANDDEBIT").text = "-5"
+        SubElement(root, "TOTALFEES").text = "0"
+        SubElement(root, "TOTALINT").text = "0"
+        SubElement(root, "DTPOSTOPEN").text = "20161201"
+        SubElement(root, "DTPOSTCLOSE").text = "20161225"
+        SubElement(root, "MKTGINFO").text = "Get Free Stuff NOW!!"
+        SubElement(root, "CURRENCY").text = "TWD"
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, CLOSING)
+        self.assertEqual(instance.fitid, "DEADBEEF")
+        self.assertEqual(instance.dtopen, datetime(2016, 12, 1))
+        self.assertEqual(instance.dtclose, datetime(2016, 12, 25))
+        self.assertEqual(instance.dtnext, datetime(2017, 1, 1))
+        self.assertEqual(instance.balopen, Decimal('11'))
+        self.assertEqual(instance.balclose, Decimal('20'))
+        self.assertEqual(instance.balmin, Decimal('6'))
+        self.assertEqual(instance.depandcredit, Decimal('14'))
+        self.assertEqual(instance.chkanddebit, Decimal('-5'))
+        self.assertEqual(instance.totalfees, Decimal('0'))
+        self.assertEqual(instance.totalint, Decimal('0'))
+        self.assertEqual(instance.dtpostopen, datetime(2016, 12, 1))
+        self.assertEqual(instance.dtpostclose, datetime(2016, 12, 25))
+        self.assertEqual(instance.mktginfo, "Get Free Stuff NOW!!")
+        self.assertEqual(instance.currency, "TWD")
+
+
+class StmtendrqTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["BANKACCTFROM"]
+    optionalElements = ["DTSTART", "DTEND"]
+
+    @property
+    def root(self):
+        root = Element("STMTENDRQ")
+        root.append(BankacctfromTestCase.root)
+        SubElement(root, "DTSTART").text = "20161201"
+        SubElement(root, "DTEND").text = "20161225"
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, STMTENDRQ)
+        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
+        self.assertEqual(instance.dtstart, datetime(2016, 12, 1))
+        self.assertEqual(instance.dtend, datetime(2016, 12, 25))
+
+
+class StmtendrsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["CURDEF", "BANKACCTFROM"]
+    optionalElements = ["CLOSING"]
+
+    @property
+    def root(self):
+        root = Element("STMTENDRS")
+        SubElement(root, "CURDEF").text = "CAD"
+        root.append(BankacctfromTestCase.root)
+        root.append(ClosingTestCase.root)
+        root.append(ClosingTestCase.root)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, STMTENDRS)
+        self.assertEqual(instance.curdef, "CURDEF")
+        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
+        self.assertEqual(len(instance), 2)
+        self.assertIsInstance(instance[0], CLOSING)
+        self.assertIsInstance(instance[1], CLOSING)
+
+
+class StmtendtrnrqTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["TRNUID"]
+    optionalElements = ["STMTENDRQ"]
+
+    @property
+    def root(self):
+        root = Element("STMTENDTRNRQ")
+        SubElement(root, "TRNUID").text = "B16B00B5"
+        root.append(StmtendrqTestCase.root)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, STMTENDTRNRQ)
+        self.assertEqual(instance.trnuid, "B16B00B5")
+        self.assertIsInstance(instance.stmtendrq, STMTENDRQ)
+
+
+class StmtendtrnrsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["TRNUID", "STATUS"]
+    optionalElements = ["STMTENDRS"]
+
+    @property
+    def root(self):
+        root = Element("STMTENDTRNRS")
+        SubElement(root, "TRNUID").text = "B16B00B5"
+        status = test_models_common.StatusTestCase().root
+        root.append(status)
+        root.append(StmtendrqTestCase.root)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, STMTENDTRNRS)
+        self.assertEqual(instance.trnuid, "B16B00B5")
+        self.assertIsInstance(instance.status, STATUS)
+        self.assertIsInstance(instance.stmtendrq, STMTENDRQ)
 
 
 class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
@@ -880,9 +1023,13 @@ class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testdataTags(self):
-        # BANKMSGSRQV! may only contain STMTTRNRQ
+        # BANKMSGSRQV! may contain
+        # ["STMTTRNRQ", "STMTENDRQ", "STPCHKTRNRQ", "INTRATRNRQ",
+        # "RECINTRATRNRQ", "BANKMAILTRNRQ", "STPCHKSYNCRQ", "INTRASYNCRQ",
+        # "RECINTRASYNCRQ", "BANKMAILSYNCRQ"]
+
         allowedTags = BANKMSGSRQV1.dataTags
-        self.assertEqual(len(allowedTags), 1)
+        self.assertEqual(len(allowedTags), 10)
         root = deepcopy(self.root)
         root.append(StmttrnrsTestCase().root)
 
@@ -909,9 +1056,12 @@ class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testdataTags(self):
-        # BANKMSGSRSV! may only contain STMTTRNRS
+        # BANKMSGSRSV! may contain
+        # dataTags = ["STMTTRNRS", "STMTENDRS", "STPCHKTRNRS", "INTRATRNRS",
+        # "RECINTRATRNRS", "BANKMAILTRNRS", "STPCHKSYNCRS", "INTRASYNCRS",
+        # "RECINTRASYNCRS", "BANKMAILSYNCRS"]
         allowedTags = BANKMSGSRSV1.dataTags
-        self.assertEqual(len(allowedTags), 1)
+        self.assertEqual(len(allowedTags), 10)
         root = deepcopy(self.root)
         root.append(StmttrnrqTestCase().root)
 

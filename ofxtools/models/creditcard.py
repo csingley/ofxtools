@@ -110,6 +110,7 @@ class CCSTMTTRNRS(Aggregate):
 
 
 class CCCLOSING(Aggregate):
+    """ OFX Section 11.5.4.2 """
     fitid = String(255, required=True)
     dtopen = DateTime()
     dtclose = DateTime(required=True)
@@ -150,12 +151,19 @@ class CCSTMTENDRQ(Aggregate):
     incstmtimg = Bool()
 
 
-class CCSTMTENDRS(Aggregate):
+class CCSTMTENDRS(List):
     """ OFX section 11.5.4 """
 
     curdef = OneOf(*CURRENCY_CODES, required=True)
     ccacctfrom = SubAggregate(CCACCTFROM, required=True)
-    ccclosing = SubAggregate(CCCLOSING)
+
+    metadataTags = ["CURDEF", "CCACCTFROM"]
+    dataTags = ["CCCLOSING"]
+
+    def __init__(self, curdef, ccacctfrom, *members):
+        self.curdef = curdef
+        self.ccacctfrom = ccacctfrom
+        super().__init__(*members)
 
 
 class CCSTMTENDTRNRQ(Aggregate):

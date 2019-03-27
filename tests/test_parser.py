@@ -7,15 +7,13 @@ from unittest import TestCase
 
 try:
     from unittest.mock import MagicMock, call, patch, sentinel
-    import builtins
 except ImportError:
-    # Python 2 depends on external mock package
+    # Python < 3.3 depends on external mock package
     from mock import MagicMock, call, patch, sentinel
-    import __builtin__ as builtins
 
 from xml.etree.ElementTree import Element
 from io import BytesIO, StringIO
-from tempfile import TemporaryFile, NamedTemporaryFile
+from tempfile import NamedTemporaryFile
 
 
 # local imports

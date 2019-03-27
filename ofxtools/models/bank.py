@@ -266,20 +266,75 @@ class STMTTRNRS(Aggregate):
         return self.stmtrs
 
 
+class CLOSING(Aggregate, Origcurrency):
+    """ OFX section 11.5.2 """
+    fitid = String(255, required=True)
+    dtopen = DateTime()
+    dtclose = DateTime(required=True)
+    dtnext = DateTime()
+    balopen = Decimal()
+    balclose = Decimal(required=True)
+    balmin = Decimal()
+    depandcredit = Decimal()
+    chkanddebit = Decimal()
+    totalfees = Decimal()
+    totalint = Decimal()
+    dtpoststart = DateTime(required=True)
+    dtpostend = DateTime(required=True)
+    mktginfo = String(360)
+    currency = SubAggregate(CURRENCY)
+    origcurrency = SubAggregate(ORIGCURRENCY)
+
+
+class STMTENDRQ(Aggregate):
+    """ OFX section 11.5.1 """
+    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
+    dtstart = DateTime()
+    dtend = DateTime()
+
+
+class STMTENDRS(List):
+    """ OFX section 11.5.2 """
+    curdef = OneOf(*CURRENCY_CODES, required=True)
+    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
+
+    metadataTags = ["CURDEF", "BANKACCTFROM"]
+    dataTags = ["CLOSING"]
+
+
+class STMTENDTRNRQ(Aggregate):
+    """ OFX section 11.5.1 """
+
+    trnuid = String(36, required=True)
+    stmtendrq = SubAggregate(STMTENDRQ)
+
+
+class STMTENDTRNRS(Aggregate):
+    """ OFX section 11.5.2 """
+
+    trnuid = String(36, required=True)
+    status = SubAggregate(STATUS, required=True)
+    stmtendrs = SubAggregate(STMTENDRS)
+
+    @property
+    def statement(self):
+        return self.stmtendrs
+
+
 class BANKMSGSRQV1(List):
     """ OFX section 11.13.1.1.1 """
 
-    dataTags = ["STMTTRNRQ"]
+    dataTags = ["STMTTRNRQ", "STMTENDRQ", "STPCHKTRNRQ", "INTRATRNRQ", "RECINTRATRNRQ", "BANKMAILTRNRQ", "STPCHKSYNCRQ", "INTRASYNCRQ", "RECINTRASYNCRQ", "BANKMAILSYNCRQ"]
 
 
 class BANKMSGSRSV1(List):
     """ OFX section 11.13.1.1.2 """
 
-    dataTags = ["STMTTRNRS"]
+    dataTags = ["STMTTRNRS", "STMTENDRS", "STPCHKTRNRS", "INTRATRNRS", "RECINTRATRNRS", "BANKMAILTRNRS", "STPCHKSYNCRS", "INTRASYNCRS", "RECINTRASYNCRS", "BANKMAILSYNCRS"]
 
     @property
     def statements(self):
-        return [trnrs.stmtrs for trnrs in self]
+        return [trnrs.statement for trnrs in self]
 
 
 class EMAILPROF(Aggregate):

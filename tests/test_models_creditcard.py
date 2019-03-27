@@ -370,17 +370,20 @@ class CcstmtendrsTestCase(unittest.TestCase, base.TestAggregate):
         root.append(acctfrom)
         ccclosing = CcclosingTestCase().root
         root.append(ccclosing)
+        root.append(ccclosing)
 
         return root
 
     def testConvert(self):
         # Test *RS and direct child elements.
         # Everything below that is tested elsewhere.
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, CCSTMTENDRS)
-        self.assertEqual(root.curdef, "USD")
-        self.assertIsInstance(root.ccacctfrom, CCACCTFROM)
-        self.assertIsInstance(root.ccclosing, CCCLOSING)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, CCSTMTENDRS)
+        self.assertEqual(instance.curdef, "USD")
+        self.assertIsInstance(instance.ccacctfrom, CCACCTFROM)
+        self.assertEqual(len(instance), 2)
+        self.assertIsInstance(instance[0], CCCLOSING)
+        self.assertIsInstance(instance[1], CCCLOSING)
 
 
 class CcstmtendtrnrqTestCase(unittest.TestCase, base.TestAggregate):

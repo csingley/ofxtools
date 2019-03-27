@@ -3,7 +3,6 @@
 
 # stdlib imports
 import itertools
-import sys
 import decimal
 import datetime
 import time
