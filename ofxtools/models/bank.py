@@ -4,7 +4,15 @@ Data structures for bank download - OFX Section 11
 """
 # local imports
 from ofxtools.Types import String, NagString, Decimal, Integer, OneOf, DateTime, Bool
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List, TranList, SyncRqList, SyncRsList
+from ofxtools.models.base import (
+    Aggregate,
+    SubAggregate,
+    Unsupported,
+    List,
+    TranList,
+    SyncRqList,
+    SyncRsList,
+)
 from ofxtools.models.common import STATUS, MSGSETCORE, SVCSTATUSES
 from ofxtools.models.i18n import (
     CURRENCY,
@@ -282,6 +290,7 @@ class STMTTRNRS(Aggregate):
 
 class CLOSING(Aggregate, Origcurrency):
     """ OFX section 11.5.2 """
+
     fitid = String(255, required=True)
     dtopen = DateTime()
     dtclose = DateTime(required=True)
@@ -302,6 +311,7 @@ class CLOSING(Aggregate, Origcurrency):
 
 class STMTENDRQ(Aggregate):
     """ OFX section 11.5.1 """
+
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     dtstart = DateTime()
     dtend = DateTime()
@@ -309,16 +319,12 @@ class STMTENDRQ(Aggregate):
 
 class STMTENDRS(List):
     """ OFX section 11.5.2 """
+
     curdef = OneOf(*CURRENCY_CODES, required=True)
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
 
     metadataTags = ["CURDEF", "BANKACCTFROM"]
     dataTags = ["CLOSING"]
-
-    def __init__(self, curdef, bankacctfrom, *members):
-        self.curdef = curdef
-        self.bankacctfrom = bankacctfrom
-        super().__init__(*members)
 
 
 class STMTENDTRNRQ(Aggregate):
@@ -342,12 +348,14 @@ class STMTENDTRNRS(Aggregate):
 
 class CHKRANGE(Aggregate):
     """ OFX section 11.6.1.1.1 """
+
     chknumstart = String(12, required=True)
     chknumend = String(12)
 
 
 class CHKDESC(Aggregate):
     """ OFX section 11.6.1.1.2 """
+
     name = String(32, required=True)
     chknum = String(12)
     dtuser = DateTime()
@@ -356,15 +364,17 @@ class CHKDESC(Aggregate):
 
 class STPCHKRQ(Aggregate):
     """ OFX section 11.6.1.1 """
+
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     chkrange = SubAggregate(CHKRANGE)
     chkdesc = SubAggregate(CHKDESC)
 
-    requiredMutexes = [('chkrange', 'chkdesc')]
+    requiredMutexes = [("chkrange", "chkdesc")]
 
 
 class STPCHKNUM(Aggregate, Origcurrency):
     """ OFX section 11.6.1.2.1 """
+
     checknum = String(12, required=True)
     name = String(32)
     dtuser = DateTime()
@@ -379,20 +389,14 @@ class STPCHKNUM(Aggregate, Origcurrency):
 
 class STPCHKRS(List):
     """ OFX section 11.6.1.1 """
+
     curdef = OneOf(*CURRENCY_CODES, required=True)
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     fee = Decimal(required=True)
     feemsg = String(80, required=True)
 
-    metadataTags = ['CURDEF', 'BANKACCTFROM', 'FEE', 'FEEMSG']
-    dataTags = ['STPCHKNUM']
-
-    def __init__(self, curdef, bankacctfrom, fee, feemsg, *members):
-        self.curdef = curdef
-        self.bankacctfrom = bankacctfrom
-        self.fee = fee
-        self.feemsg = feemsg
-        super().__init__(*members)
+    metadataTags = ["CURDEF", "BANKACCTFROM", "FEE", "FEEMSG"]
+    dataTags = ["STPCHKNUM"]
 
 
 class STPCHKTRNRQ(Aggregate):
@@ -412,39 +416,54 @@ class STPCHKTRNRS(Aggregate):
 
 class STPCHKSYNCRQ(SyncRqList):
     """ OFX section 11.12.1.1 """
+
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
 
     metadataTags = ["TOKEN", "TOKENONLY", "REFRESH", "REJECTIFMISSING", "BANKACCTFROM"]
     dataTags = ["STPCHKTRNRQ"]
 
-    def __init__(self, token, tokenonly, refresh, rejectifmissing, bankacctfrom, *members):
-        self.bankacctfrom = bankacctfrom
-        super().__init__(token, tokenonly, refresh, rejectifmissing, *members)
-
 
 class STPCHKSYNCRS(SyncRsList):
     """ OFX section 11.12.1.2 """
+
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
 
     metadataTags = ["TOKEN", "LOSTSYNC", "BANKACCTFROM"]
     dataTags = ["STPCHKTRNRS"]
 
-    def __init__(self, token, lostsync, bankacctfrom, *members):
-        self.bankacctfrom = bankacctfrom
-
-        super().__init__(token, lostsync, *members)
-
 
 class BANKMSGSRQV1(List):
     """ OFX section 11.13.1.1.1 """
 
-    dataTags = ["STMTTRNRQ", "STMTENDRQ", "STPCHKTRNRQ", "INTRATRNRQ", "RECINTRATRNRQ", "BANKMAILTRNRQ", "STPCHKSYNCRQ", "INTRASYNCRQ", "RECINTRASYNCRQ", "BANKMAILSYNCRQ"]
+    dataTags = [
+        "STMTTRNRQ",
+        "STMTENDRQ",
+        "STPCHKTRNRQ",
+        "INTRATRNRQ",
+        "RECINTRATRNRQ",
+        "BANKMAILTRNRQ",
+        "STPCHKSYNCRQ",
+        "INTRASYNCRQ",
+        "RECINTRASYNCRQ",
+        "BANKMAILSYNCRQ",
+    ]
 
 
 class BANKMSGSRSV1(List):
     """ OFX section 11.13.1.1.2 """
 
-    dataTags = ["STMTTRNRS", "STMTENDRS", "STPCHKTRNRS", "INTRATRNRS", "RECINTRATRNRS", "BANKMAILTRNRS", "STPCHKSYNCRS", "INTRASYNCRS", "RECINTRASYNCRS", "BANKMAILSYNCRS"]
+    dataTags = [
+        "STMTTRNRS",
+        "STMTENDRS",
+        "STPCHKTRNRS",
+        "INTRATRNRS",
+        "RECINTRATRNRS",
+        "BANKMAILTRNRS",
+        "STPCHKSYNCRS",
+        "INTRASYNCRS",
+        "RECINTRASYNCRS",
+        "BANKMAILSYNCRS",
+    ]
 
     @property
     def statements(self):

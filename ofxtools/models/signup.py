@@ -157,12 +157,11 @@ class ACCTINFO(List):
         "PRESACCTINFO",
     ]
 
-    def __init__(self, desc=None, phone=None, *members):
-        self.desc = desc
-        self.phone = phone
+    def __init__(self, *args):
+        super().__init__(*args)
 
         # Must contain at least one <xxxACCTINFO>
-        if not members:
+        if len(self) == 0:
             msg = "{} must contain at least one of {}"
             raise ValueError(msg.format(self.__class__.__name__, self.dataTags))
 
@@ -170,13 +169,11 @@ class ACCTINFO(List):
         #  returned. For example, you cannot return two <BANKACCTINFO>
         #  aggregates.
         sortKey = operator.attrgetter("__class__.__name__")
-        members_copy = sorted(members, key=sortKey)
+        members_copy = sorted(self, key=sortKey)
         for tag, group in itertools.groupby(members_copy, key=sortKey):
             if len(list(group)) > 1:
                 msg = "{} contains multiple {} aggregates"
                 raise ValueError(msg.format(self.__class__, tag))
-
-        super().__init__(*members)
 
     def __repr__(self):
         return "<{} desc='{}' phone='{}' len={}>".format(
@@ -190,12 +187,7 @@ class ACCTINFORS(List):
     dtacctup = DateTime(required=True)
 
     metadataTags = ["DTACCTUP"]
-
     dataTags = ["ACCTINFO"]
-
-    def __init__(self, dtacctup, *members):
-        self.dtacctup = dtacctup
-        super().__init__(*members)
 
     def __repr__(self):
         return "<{} dtacctup='{}' len={}>".format(
@@ -332,28 +324,33 @@ class ACCTRS(Aggregate):
 
 class ACCTTRNRQ(Aggregate):
     """ OFX section 8.6.1 """
+
     trnuid = String(36, required=True)
     acctrq = SubAggregate(ACCTRQ, required=True)
 
 
 class ACCTTRNRS(Aggregate):
     """ OFX section 8.6.2 """
+
     trnuid = String(36, required=True)
     acctrs = SubAggregate(ACCTRS, required=True)
 
 
 class ACCTSYNCRQ(SyncRqList):
     """ OFX section 8.6.4.1 """
+
     dataTags = ["ACCTTRNRQ"]
 
 
 class ACCTSYNCRS(SyncRsList):
     """ OFX section 8.6.4.2 """
+
     dataTags = ["ACCTTRNRS"]
 
 
 class CHGUSERINFORQ(Aggregate):
     """ OFX section 8.7.1 """
+
     firstname = String(32)
     middlename = String(32)
     lastname = String(32)
@@ -371,6 +368,7 @@ class CHGUSERINFORQ(Aggregate):
 
 class CHGUSERINFORS(Aggregate):
     """ OFX section 8.7.2 """
+
     firstname = String(32)
     middlename = String(32)
     lastname = String(32)
@@ -389,21 +387,25 @@ class CHGUSERINFORS(Aggregate):
 
 class CHGUSERINFOTRNRQ(Aggregate):
     """ OFX section 8.7 """
+
     trnuid = String(36, required=True)
     chguserinforq = SubAggregate(CHGUSERINFORQ, required=True)
 
 
 class CHGUSERINFOTRNRS(Aggregate):
     """ OFX section 8.7 """
+
     trnuid = String(36, required=True)
     chguserinfors = SubAggregate(CHGUSERINFORS, required=True)
 
 
 class CHGUSERINFOSYNCRQ(SyncRqList):
     """ OFX section 8.7.4.1 """
+
     dataTags = ["CHGUSERINFOTRNRQ"]
 
 
 class CHGUSERINFOSYNCRS(SyncRsList):
     """ OFX section 8.7.4.2 """
+
     dataTags = ["CHGUSERINFOTRNRS"]

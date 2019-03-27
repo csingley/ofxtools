@@ -157,8 +157,8 @@ class Aggregate:
             try:
                 return spec.index(tag)
             except ValueError:
-                msg = "Aggregate {} does not define {}".format(cls.__name__, tag)
-                raise ValueError(msg)
+                msg = "Aggregate {} does not define {}"
+                raise ValueError(msg.format(cls.__name__, tag))
 
         indices = [indexOrRaise(*child) for child in children]
         if indices != sorted(indices):
@@ -287,9 +287,8 @@ class Aggregate:
                 return getattr(subagg, attr)
             except AttributeError:
                 continue
-        raise AttributeError(
-            "'{}' object has no attribute '{}'".format(self.__class__.__name__, attr)
-        )
+        msg = "'{}' object has no attribute '{}'"
+        raise AttributeError(msg.format(self.__class__.__name__, attr))
 
 
 class SubAggregate(Element):
@@ -354,15 +353,27 @@ class List(Aggregate, list):
     # Used by ``__init__()`` to validate args.
     dataTags = []
 
-    def __init__(self, *members):
+    def __init__(self, *args):
         list.__init__(self)
 
-        for member in members:
+        # ``List.__init__()`` only accepts positional args, not kwargs.
+        # Parse the first n args as fixed-position metadata (with position
+        # corresponding to the order they appear in ``metadataTags``.
+        metadataTags = self.metadataTags
+        metadataLen = len(metadataTags)
+        if len(args) < metadataLen:
+            msg = "{}.__init__() needs positional args for each of {}"
+            raise ValueError(msg.format(self.__class__.__name__, self.metadataTags))
+
+        for i, tag in enumerate(metadataTags):
+            setattr(self, tag.lower(), args[i])
+
+        # Remaining args as variable-length contained data.
+        for member in args[metadataLen:]:
             cls_name = member.__class__.__name__
             if cls_name not in self.dataTags:
                 msg = "{} can't contain {} as List data: {}"
-                raise ValueError(msg.format(self.__class__.__name__, cls_name,
-                                            member))
+                raise ValueError(msg.format(self.__class__.__name__, cls_name, member))
             self.append(member)
 
     @classmethod
@@ -434,11 +445,6 @@ class TranList(List):
 
     metadataTags = ["DTSTART", "DTEND"]
 
-    def __init__(self, dtstart, dtend, *members):
-        self.dtstart = dtstart
-        self.dtend = dtend
-        super().__init__(*members)
-
     def __repr__(self):
         return "<{} dtstart='{}' dtend='{}' len={}>".format(
             self.__class__.__name__, self.dtstart, self.dtend, len(self)
@@ -447,6 +453,7 @@ class TranList(List):
 
 class SyncRqList(List):
     """ Base cass for *SYNCRQ """
+
     token = String(10)
     tokenonly = Bool()
     refresh = Bool()
@@ -455,19 +462,15 @@ class SyncRqList(List):
     metadataTags = ["TOKEN", "TOKENONLY", "REFRESH", "REJECTIFMISSING"]
     requiredMutexes = [("token", "tokenonly", "refresh")]
 
-    def __init__(self, token, tokenonly, refresh, rejectifmissing, *members):
+    def __init__(self, *args):
+        super().__init__(*args)
+
         # To validate "choice" args (token/tokenonly/refresh) we stick them
         # into ``requiredMutexes`` and reuse the logic in
         # ``Agregate.validate_kwargs()``
         self.validate_kwargs(
-            {"token": token, "tokenonly": tokenonly, "refresh": refresh}
+            {"token": self.token, "tokenonly": self.tokenonly, "refresh": self.refresh}
         )
-        self.token = token
-        self.tokenonly = tokenonly
-        self.refresh = refresh
-        self.rejectifmissing = rejectifmissing
-
-        super().__init__(*members)
 
 
 class SyncRsList(List):
@@ -477,9 +480,3 @@ class SyncRsList(List):
     lostsync = Bool()
 
     metadataTags = ["TOKEN", "LOSTSYNC"]
-
-    def __init__(self, token, lostsync, *members):
-        self.token = token
-        self.lostsync = lostsync
-
-        super().__init__(*members)
