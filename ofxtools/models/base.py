@@ -57,7 +57,7 @@ class Aggregate:
                 # If ``attr`` (i.e. key from kwargs) refers to a SubAggregate
                 # instance, then that SubAggregate instance gets overwritten on
                 # this Aggregate instance by the corresponding kwargs value,
-                # after its been type-converted.
+                # after it's been type-converted.
                 # (This is pretty normal behavior for an __init__() function)
                 #
                 # If ``attr`` (i.e. key from kwargs) refers to an instance
@@ -129,6 +129,7 @@ class Aggregate:
         SubClass.groom(elem)
 
         args, kwargs = SubClass._etree2args(elem)
+
         instance = SubClass(*args, **kwargs)
         return instance
 
@@ -321,11 +322,6 @@ class SubAggregate(Element):
             return value
         return Aggregate.from_etree(value)
 
-    # This doesn't get used
-    #  def __repr__(self):
-    #  repr = "<SubAggregate {}>".format(self.type)
-    #  return repr
-
 
 class Unsupported(InstanceCounterMixin):
     """
@@ -392,7 +388,7 @@ class List(Aggregate, list):
 
         args = [find_metadata(tag) for tag in cls.metadataTags]
 
-        # Add list members as variable-length positional args
+        # Append list members as variable-length positional args
         args.extend([Aggregate.from_etree(el) for el in elem])
 
         kwargs = {}
@@ -451,7 +447,6 @@ class TranList(List):
 
 class SyncRqList(List):
     """ Base cass for *SYNCRQ """
-
     token = String(10)
     tokenonly = Bool()
     refresh = Bool()

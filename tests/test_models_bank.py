@@ -43,6 +43,15 @@ from ofxtools.models.bank import (
     STMTENDRS,
     STMTENDTRNRQ,
     STMTENDTRNRS,
+    CHKRANGE,
+    CHKDESC,
+    STPCHKNUM,
+    STPCHKRQ,
+    STPCHKRS,
+    STPCHKTRNRQ,
+    STPCHKTRNRS,
+    STPCHKSYNCRQ,
+    STPCHKSYNCRS,
     BANKMSGSETV1,
     BANKMSGSET,
     EMAILPROF,
@@ -580,15 +589,6 @@ class StmttrnBankaccttoCcaccttoTestCase(unittest.TestCase, base.TestAggregate):
         with self.assertRaises(ValueError):
             Aggregate.from_etree(self.root)
 
-    def testOneOf(self):
-        pass
-
-    def testUnsupported(self):
-        pass
-
-    def testPropertyAliases(self):
-        pass
-
 
 class StmttrnNamePayeeTestCase(unittest.TestCase, base.TestAggregate):
     """ STMTTRN with both NAME and PAYEE - not allowed per OFX spec """
@@ -640,7 +640,7 @@ class BanktranlistTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "DTSTART").text = "20130601"
         SubElement(root, "DTEND").text = "20130630"
         for i in range(2):
-            stmttrn = StmttrnTestCase().root
+            stmttrn = deepcopy(StmttrnTestCase().root)
             root.append(stmttrn)
         return root
 
@@ -718,7 +718,7 @@ class BallistTestCase(unittest.TestCase, base.TestAggregate):
     def root(self):
         root = Element("BALLIST")
         bal1 = test_models_common.BalTestCase().root
-        bal2 = test_models_common.BalTestCase().root
+        bal2 = deepcopy(bal1)
         root.append(bal1)
         root.append(bal2)
 
@@ -952,8 +952,9 @@ class StmtendrsTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("STMTENDRS")
         SubElement(root, "CURDEF").text = "CAD"
         root.append(BankacctfromTestCase().root)
-        root.append(ClosingTestCase().root)
-        root.append(ClosingTestCase().root)
+        closing = ClosingTestCase().root
+        root.append(closing)
+        root.append(deepcopy(closing))
 
         return root
 
@@ -1012,6 +1013,454 @@ class StmtendtrnrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(instance.stmtendrs, STMTENDRS)
 
 
+class ChkrangeTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["CHKNUMSTART"]
+    optionalElements = ["CHKNUMEND"]
+
+    @property
+    def root(self):
+        root = Element("CHKRANGE")
+        SubElement(root, "CHKNUMSTART").text = "123"
+        SubElement(root, "CHKNUMEND").text = "125"
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, CHKRANGE)
+        self.assertEqual(instance.chknumstart, "123")
+        self.assertEqual(instance.chknumend, "125")
+
+
+class ChkdescTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["NAME"]
+    optionalElements = ["CHKNUM", "DTUSER", "TRNAMT"]
+
+    @property
+    def root(self):
+        root = Element("CHKDESC")
+        SubElement(root, "NAME").text = "Bucky Beaver"
+        SubElement(root, "CHKNUM").text = "125"
+        SubElement(root, "DTUSER").text = "20051122"
+        SubElement(root, "TRNAMT").text = "2533"
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, CHKDESC)
+        self.assertEqual(instance.name, "Bucky Beaver")
+        self.assertEqual(instance.dtuser, datetime(2005, 11, 22, tzinfo=UTC))
+        self.assertEqual(instance.trnamt, Decimal("2533"))
+
+
+class StpchkrqTestCase(unittest.TestCase, base.TestAggregate):
+    """ STPCHKRQ with CHKRANGE """
+    __test__ = True
+
+    requiredElements = ["BANKACCTFROM", "CHKRANGE"]  # requiredMutex
+
+    @property
+    def root(self):
+        root = Element("STPCHKRQ")
+        root.append(BankacctfromTestCase().root)
+        root.append(ChkrangeTestCase().root)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, STPCHKRQ)
+        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
+        self.assertIsInstance(instance.chkrange, CHKRANGE)
+
+
+class StpchkrqChkdescTestCase(unittest.TestCase, base.TestAggregate):
+    """ STPCHKRQ with CHKDESC """
+    __test__ = True
+
+    requiredElements = ["BANKACCTFROM", "CHKDESC"]  # requiredMutex
+
+    @property
+    def root(self):
+        root = Element("STPCHKRQ")
+        root.append(BankacctfromTestCase().root)
+        root.append(ChkdescTestCase().root)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, STPCHKRQ)
+        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
+        self.assertIsInstance(instance.chkdesc, CHKDESC)
+
+
+class StpchkrqChkrangeChkdescTestCase(unittest.TestCase):
+    """ STPCHKRQ with both CHKRANGE and CHKDESC - not allowed """
+
+    @property
+    def root(self):
+        root = Element("STPCHKRQ")
+        root.append(BankacctfromTestCase().root)
+        root.append(ChkrangeTestCase().root)
+        root.append(ChkdescTestCase().root)
+
+        return root
+
+    def testConvert(self):
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(self.root)
+
+
+class StpchknumTestCase(unittest.TestCase, base.TestAggregate):
+    """ STPCHKNUM with CURRENCY """
+    __test__ = True
+
+    requiredElements = ["CHECKNUM", "CHKSTATUS"]
+    optionalElements = ["NAME", "DTUSER", "TRNAMT", "CHKERROR", "CURRENCY"]
+
+    @property
+    def root(self):
+        root = Element("STPCHKNUM")
+        SubElement(root, "CHECKNUM").text = "123"
+        SubElement(root, "NAME").text = "Buckaroo Banzai"
+        SubElement(root, "DTUSER").text = "17760704"
+        SubElement(root, "TRNAMT").text = "4500"
+        SubElement(root, "CHKSTATUS").text = "0"
+        SubElement(root, "CHKERROR").text = "Stop check succeeded"
+        currency = test_models_i18n.CurrencyTestCase().root
+        root.append(currency)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, STPCHKNUM)
+        self.assertEqual(instance.checknum, "123")
+        self.assertEqual(instance.name, "Buckaroo Banzai")
+        self.assertEqual(instance.dtuser, datetime(1776, 7, 4, tzinfo=UTC))
+        self.assertEqual(instance.trnamt, Decimal("4500"))
+        self.assertEqual(instance.chkstatus, "0")
+        self.assertEqual(instance.chkerror, "Stop check succeeded")
+        self.assertIsInstance(instance.currency, CURRENCY)
+
+    def testChkstatusConvert(self):
+        """ CHKNUM.chkstatus validates enum """
+        root = deepcopy(self.root)
+        for code in ("0", "1", "100", "101"):
+            chkstatus = root.find("CHKSTATUS")
+            chkstatus.text = str(code)
+            Aggregate.from_etree(root)
+
+        chkstatus = root.find("CHKSTATUS")
+        chkstatus.text = "2"
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+
+class StpchknumOrigcurrencyTestCase(unittest.TestCase, base.TestAggregate):
+    """ STPCHKNUM with ORIGCURRENCY """
+    __test__ = True
+
+    requiredElements = ["CHECKNUM", "CHKSTATUS"]
+    optionalElements = ["NAME", "DTUSER", "TRNAMT", "CHKERROR", "ORIGCURRENCY"]
+
+    @property
+    def root(self):
+        root = Element("STPCHKNUM")
+        SubElement(root, "CHECKNUM").text = "123"
+        SubElement(root, "NAME").text = "Buckaroo Banzai"
+        SubElement(root, "DTUSER").text = "17760704"
+        SubElement(root, "TRNAMT").text = "4500"
+        SubElement(root, "CHKSTATUS").text = "0"
+        SubElement(root, "CHKERROR").text = "Stop check succeeded"
+        origcurrency = test_models_i18n.OrigcurrencyTestCase().root
+        root.append(origcurrency)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, STPCHKNUM)
+        self.assertEqual(instance.checknum, "123")
+        self.assertEqual(instance.name, "Buckaroo Banzai")
+        self.assertEqual(instance.dtuser, datetime(1776, 7, 4, tzinfo=UTC))
+        self.assertEqual(instance.trnamt, Decimal("4500"))
+        self.assertEqual(instance.chkstatus, "0")
+        self.assertEqual(instance.chkerror, "Stop check succeeded")
+        self.assertIsInstance(instance.origcurrency, ORIGCURRENCY)
+
+
+class StpchknumCurrencyOrigcurrencyTestCase(unittest.TestCase):
+    """ STPCHKNUM with both CURRENCY and ORIGCURRENCY - not allowed """
+    @property
+    def root(self):
+        root = Element("STPCHKNUM")
+        SubElement(root, "CHECKNUM").text = "123"
+        SubElement(root, "NAME").text = "Buckaroo Banzai"
+        SubElement(root, "DTUSER").text = "17760704"
+        SubElement(root, "TRNAMT").text = "4500"
+        SubElement(root, "CHKSTATUS").text = "0"
+        SubElement(root, "CHKERROR").text = "Stop check succeeded"
+        currency = test_models_i18n.CurrencyTestCase().root
+        root.append(currency)
+        origcurrency = test_models_i18n.OrigcurrencyTestCase().root
+        root.append(origcurrency)
+
+        return root
+
+    def testConvert(self):
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(self.root)
+
+
+class StpchkrsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["CURDEF", "BANKACCTFROM", "FEE", "FEEMSG"]
+
+    @property
+    def root(self):
+        root = Element("STPCHKRS")
+        SubElement(root, "CURDEF").text = "CAD"
+        root.append(BankacctfromTestCase().root)
+        stpchknum = StpchknumTestCase().root
+        root.append(stpchknum)
+        root.append(deepcopy(stpchknum))
+        SubElement(root, "FEE").text = "25"
+        SubElement(root, "FEEMSG").text = "Shit's expensive yo"
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, STPCHKRS)
+        self.assertEqual(instance.curdef, "CAD")
+        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
+        self.assertEqual(len(instance), 2)
+        self.assertIsInstance(instance[0], STPCHKNUM)
+        self.assertIsInstance(instance[1], STPCHKNUM)
+        self.assertEqual(instance.fee, Decimal("25"))
+        self.assertEqual(instance.feemsg, "Shit's expensive yo")
+
+
+class StpchktrnrqTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["TRNUID"]
+    optionalElements = ["STPCHKRQ"]
+
+    @property
+    def root(self):
+        root = Element("STPCHKTRNRQ")
+        SubElement(root, "TRNUID").text = "B16B00B5"
+        root.append(StpchkrqTestCase().root)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, STPCHKTRNRQ)
+        self.assertEqual(instance.trnuid, "B16B00B5")
+        self.assertIsInstance(instance.stpchkrq, STPCHKRQ)
+
+
+class StpchktrnrsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["TRNUID", "STATUS"]
+    optionalElements = ["STPCHKRS"]
+
+    @property
+    def root(self):
+        root = Element("STPCHKTRNRS")
+        SubElement(root, "TRNUID").text = "B16B00B5"
+        status = test_models_common.StatusTestCase().root
+        root.append(status)
+        root.append(StpchkrsTestCase().root)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, STPCHKTRNRS)
+        self.assertEqual(instance.trnuid, "B16B00B5")
+        self.assertIsInstance(instance.status, STATUS)
+        self.assertIsInstance(instance.stpchkrs, STPCHKRS)
+
+
+class StpchksyncrqTestCase(unittest.TestCase, base.TestAggregate):
+    """ STPCHKSYNCRQ with TOKEN """
+    __test__ = True
+
+    requiredElements = ["REJECTIFMISSING", "BANKACCTFROM"]
+
+    @property
+    def root(self):
+        root = Element("STPCHKSYNCRQ")
+        SubElement(root, "TOKEN").text = "DEADBEEF"
+        SubElement(root, "REJECTIFMISSING").text = "Y"
+        root.append(BankacctfromTestCase().root)
+        trnrq = StpchktrnrqTestCase().root
+        root.append(trnrq)
+        root.append(deepcopy(trnrq))
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, STPCHKSYNCRQ)
+        self.assertEqual(instance.token, "DEADBEEF")
+        self.assertEqual(instance.rejectifmissing, True)
+        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
+        self.assertEqual(len(instance), 2)
+        self.assertIsInstance(instance[0], STPCHKTRNRQ)
+        self.assertIsInstance(instance[1], STPCHKTRNRQ)
+
+
+class StpchksyncrqTokenonlyTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["REJECTIFMISSING", "BANKACCTFROM"]
+
+    @property
+    def root(self):
+        root = Element("STPCHKSYNCRQ")
+        SubElement(root, "TOKENONLY").text = "Y"
+        SubElement(root, "REJECTIFMISSING").text = "Y"
+        root.append(BankacctfromTestCase().root)
+        trnrq = StpchktrnrqTestCase().root
+        root.append(trnrq)
+        root.append(deepcopy(trnrq))
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, STPCHKSYNCRQ)
+        self.assertEqual(instance.tokenonly, True)
+        self.assertEqual(instance.rejectifmissing, True)
+        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
+        self.assertEqual(len(instance), 2)
+        self.assertIsInstance(instance[0], STPCHKTRNRQ)
+        self.assertIsInstance(instance[1], STPCHKTRNRQ)
+
+
+class StpchksyncrqRefreshTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["REJECTIFMISSING", "BANKACCTFROM"]
+
+    @property
+    def root(self):
+        root = Element("STPCHKSYNCRQ")
+        SubElement(root, "REFRESH").text = "Y"
+        SubElement(root, "REJECTIFMISSING").text = "Y"
+        root.append(BankacctfromTestCase().root)
+        trnrq = StpchktrnrqTestCase().root
+        root.append(trnrq)
+        root.append(deepcopy(trnrq))
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, STPCHKSYNCRQ)
+        self.assertEqual(instance.refresh, True)
+        self.assertEqual(instance.rejectifmissing, True)
+        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
+        self.assertEqual(len(instance), 2)
+        self.assertIsInstance(instance[0], STPCHKTRNRQ)
+        self.assertIsInstance(instance[1], STPCHKTRNRQ)
+
+
+class StpchksyncrqEmptyTestCase(unittest.TestCase):
+    @property
+    def root(self):
+        root = Element("STPCHKSYNCRQ")
+        SubElement(root, "TOKEN").text = "DEADBEEF"
+        SubElement(root, "REJECTIFMISSING").text = "Y"
+        return root
+
+    def testConvert(self):
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(self.root)
+
+
+class StpchksyncrqMalformedTestCase(unittest.TestCase):
+    def testTokenWithTokenOnly(self):
+        root = Element("STPCHKSYNCRQ")
+        SubElement(root, "TOKEN").text = "DEADBEEF"
+        SubElement(root, "TOKENONLY").text = "N"
+        SubElement(root, "REJECTIFMISSING").text = "Y"
+        trnrq = StpchktrnrqTestCase().root
+        root.append(trnrq)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+    def testTokenWithRefresh(self):
+        root = Element("STPCHKSYNCRQ")
+        SubElement(root, "TOKEN").text = "DEADBEEF"
+        SubElement(root, "REFRESH").text = "N"
+        SubElement(root, "REJECTIFMISSING").text = "Y"
+        trnrq = StpchktrnrqTestCase().root
+        root.append(trnrq)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+    def testTokenonlyWithRefresh(self):
+        root = Element("STPCHKSYNCRQ")
+        SubElement(root, "TOKENONLY").text = "N"
+        SubElement(root, "REFRESH").text = "N"
+        SubElement(root, "REJECTIFMISSING").text = "Y"
+        trnrq = StpchktrnrqTestCase().root
+        root.append(trnrq)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+
+class StpchksyncrsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = [ "TOKEN", "BANKACCTFROM" ]
+    optionalElements = [ "LOSTSYNC" ]
+
+    @property
+    def root(self):
+        root = Element("STPCHKSYNCRS")
+        SubElement(root, "TOKEN").text = "DEADBEEF"
+        SubElement(root, "LOSTSYNC").text = "Y"
+        root.append(BankacctfromTestCase().root)
+        trnrs = StpchktrnrsTestCase().root
+        root.append(trnrs)
+        root.append(deepcopy(trnrs))
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, STPCHKSYNCRS)
+        self.assertEqual(instance.token, "DEADBEEF")
+        self.assertEqual(instance.lostsync, True)
+        self.assertEqual(len(instance), 2)
+        self.assertIsInstance(instance[0], STPCHKTRNRS)
+        self.assertIsInstance(instance[1], STPCHKTRNRS)
+
+    #  def testMissingAccttrnrs(self):
+        #  root = deepcopy(self.root)
+        #  for accttrnrs in root.findall("STPCHKTRNRS"):
+            #  root.remove(accttrnrs)
+        #  instance = Aggregate.from_etree(root)
+        #  self.assertIsInstance(instance, STPCHKSYNCRS)
+        #  self.assertEqual(instance.token, "DEADBEEF")
+        #  self.assertEqual(instance.lostsync, True)
+        #  self.assertEqual(len(instance), 0)
+
+
 class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
@@ -1051,9 +1500,9 @@ class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     @property
     def root(self):
         root = Element("BANKMSGSRSV1")
+        stmttrnrs = StmttrnrsTestCase().root
         for i in range(2):
-            stmttrnrs = StmttrnrsTestCase().root
-            root.append(stmttrnrs)
+            root.append(deepcopy(stmttrnrs))
         return root
 
     def testdataTags(self):

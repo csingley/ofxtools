@@ -4,7 +4,7 @@ Data structures for bank download - OFX Section 11
 """
 # local imports
 from ofxtools.Types import String, NagString, Decimal, Integer, OneOf, DateTime, Bool
-from ofxtools.models.base import Aggregate, List, TranList, SubAggregate, Unsupported
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List, TranList, SyncRqList, SyncRsList
 from ofxtools.models.common import STATUS, MSGSETCORE, SVCSTATUSES
 from ofxtools.models.i18n import (
     CURRENCY,
@@ -39,6 +39,15 @@ __all__ = [
     "STMTENDRS",
     "STMTENDTRNRQ",
     "STMTENDTRNRS",
+    "CHKRANGE",
+    "CHKDESC",
+    "STPCHKRQ",
+    "STPCHKRS",
+    "STPCHKNUM",
+    "STPCHKTRNRQ",
+    "STPCHKTRNRS",
+    "STPCHKSYNCRQ",
+    "STPCHKSYNCRS",
     "BANKMSGSRQV1",
     "BANKMSGSRSV1",
     "BANKMSGSETV1",
@@ -329,6 +338,101 @@ class STMTENDTRNRS(Aggregate):
     @property
     def statement(self):
         return self.stmtendrs
+
+
+class CHKRANGE(Aggregate):
+    """ OFX section 11.6.1.1.1 """
+    chknumstart = String(12, required=True)
+    chknumend = String(12)
+
+
+class CHKDESC(Aggregate):
+    """ OFX section 11.6.1.1.2 """
+    name = String(32, required=True)
+    chknum = String(12)
+    dtuser = DateTime()
+    trnamt = Decimal()
+
+
+class STPCHKRQ(Aggregate):
+    """ OFX section 11.6.1.1 """
+    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
+    chkrange = SubAggregate(CHKRANGE)
+    chkdesc = SubAggregate(CHKDESC)
+
+    requiredMutexes = [('chkrange', 'chkdesc')]
+
+
+class STPCHKNUM(Aggregate, Origcurrency):
+    """ OFX section 11.6.1.2.1 """
+    checknum = String(12, required=True)
+    name = String(32)
+    dtuser = DateTime()
+    trnamt = Decimal()
+    chkstatus = OneOf("0", "1", "100", "101", required=True)
+    chkerror = String(255)
+    currency = SubAggregate(CURRENCY)
+    origcurrency = SubAggregate(ORIGCURRENCY)
+
+    optionalMutexes = [("currency", "origcurrency")]
+
+
+class STPCHKRS(List):
+    """ OFX section 11.6.1.1 """
+    curdef = OneOf(*CURRENCY_CODES, required=True)
+    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
+    fee = Decimal(required=True)
+    feemsg = String(80, required=True)
+
+    metadataTags = ['CURDEF', 'BANKACCTFROM', 'FEE', 'FEEMSG']
+    dataTags = ['STPCHKNUM']
+
+    def __init__(self, curdef, bankacctfrom, fee, feemsg, *members):
+        self.curdef = curdef
+        self.bankacctfrom = bankacctfrom
+        self.fee = fee
+        self.feemsg = feemsg
+        super().__init__(*members)
+
+
+class STPCHKTRNRQ(Aggregate):
+    """ OFX section 11.6.1.1 """
+
+    trnuid = String(36, required=True)
+    stpchkrq = SubAggregate(STPCHKRQ)
+
+
+class STPCHKTRNRS(Aggregate):
+    """ OFX section 11.6.1.2 """
+
+    trnuid = String(36, required=True)
+    status = SubAggregate(STATUS, required=True)
+    stpchkrs = SubAggregate(STPCHKRS)
+
+
+class STPCHKSYNCRQ(SyncRqList):
+    """ OFX section 11.12.1.1 """
+    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
+
+    metadataTags = ["TOKEN", "TOKENONLY", "REFRESH", "REJECTIFMISSING", "BANKACCTFROM"]
+    dataTags = ["STPCHKTRNRQ"]
+
+    def __init__(self, token, tokenonly, refresh, rejectifmissing, bankacctfrom, *members):
+        self.bankacctfrom = bankacctfrom
+        super().__init__(token, tokenonly, refresh, rejectifmissing, *members)
+
+
+class STPCHKSYNCRS(SyncRsList):
+    """ OFX section 11.12.1.2 """
+    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
+
+    metadataTags = ["TOKEN", "LOSTSYNC", "BANKACCTFROM"]
+    dataTags = ["STPCHKTRNRS"]
+
+    def __init__(self, token, lostsync, bankacctfrom, *members):
+        self.bankacctfrom = bankacctfrom
+
+        super().__init__(token, lostsync, *members)
 
 
 class BANKMSGSRQV1(List):
