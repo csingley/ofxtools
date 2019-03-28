@@ -5,7 +5,7 @@ Data structures for credit card download - OFX Section 11
 # local imports
 from ofxtools.Types import String, Decimal, OneOf, Bool, DateTime
 from ofxtools.models.base import Aggregate, List, SubAggregate, Unsupported
-from ofxtools.models.common import STATUS, MSGSETCORE
+from ofxtools.models.common import MSGSETCORE, TrnRq, TrnRs
 from ofxtools.models.bank import (
     CCACCTFROM,
     INCTRAN,
@@ -90,18 +90,15 @@ class CCSTMTRS(Aggregate):
         return self.ledgerbal
 
 
-class CCSTMTTRNRQ(Aggregate):
+class CCSTMTTRNRQ(TrnRq):
     """ OFX section 11.4.3.1 """
 
-    trnuid = String(36, required=True)
-    ccstmtrq = SubAggregate(CCSTMTRQ)
+    ccstmtrq = SubAggregate(CCSTMTRQ, required=True)
 
 
-class CCSTMTTRNRS(Aggregate):
+class CCSTMTTRNRS(TrnRs):
     """ OFX section 11.4.3.2 """
 
-    trnuid = String(36, required=True)
-    status = SubAggregate(STATUS, required=True)
     ccstmtrs = SubAggregate(CCSTMTRS)
 
     @property
@@ -162,18 +159,15 @@ class CCSTMTENDRS(List):
     dataTags = ["CCCLOSING"]
 
 
-class CCSTMTENDTRNRQ(Aggregate):
+class CCSTMTENDTRNRQ(TrnRq):
     """ OFX section 11.4.3.1 """
 
-    trnuid = String(36, required=True)
-    ccstmtendrq = SubAggregate(CCSTMTENDRQ)
+    ccstmtendrq = SubAggregate(CCSTMTENDRQ, required=True)
 
 
-class CCSTMTENDTRNRS(Aggregate):
+class CCSTMTENDTRNRS(TrnRs):
     """ OFX section 11.4.3.2 """
 
-    trnuid = String(36, required=True)
-    status = SubAggregate(STATUS, required=True)
     ccstmtendrs = SubAggregate(CCSTMTENDRS)
 
     @property

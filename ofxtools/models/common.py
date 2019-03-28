@@ -7,7 +7,16 @@ from ofxtools.models.base import Aggregate, List, SubAggregate, Unsupported
 from ofxtools.models.i18n import CURRENCY, LANG_CODES
 
 
-__all__ = ["SVCSTATUSES", "STATUS", "BAL", "OFXELEMENT", "OFXEXTENSION", "MSGSETCORE"]
+__all__ = [
+    "SVCSTATUSES",
+    "STATUS",
+    "BAL",
+    "OFXELEMENT",
+    "OFXEXTENSION",
+    "MSGSETCORE",
+    "TrnRq",
+    "TrnRs",
+]
 
 
 SVCSTATUSES = ["AVAIL", "PEND", "ACTIVE"]
@@ -72,3 +81,29 @@ class MSGSETCORE(Aggregate):
                 elem.remove(child)
 
         return super(MSGSETCORE, MSGSETCORE).groom(elem)
+
+
+class TrnRq(Aggregate):
+    """
+    Base class implementing common attributes for transaction request wrappers.
+
+    OFX section 2.4.6.1
+    """
+
+    trnuid = String(36, required=True)
+    cltcookie = String(32)
+    tan = String(80)
+    ofxextension = SubAggregate(OFXEXTENSION)
+
+
+class TrnRs(Aggregate):
+    """
+    Base class implementing common attributes for transaction response wrappers.
+
+    OFX section 2.4.6.1
+    """
+
+    trnuid = String(36, required=True)
+    status = SubAggregate(STATUS, required=True)
+    cltcookie = String(32)
+    ofxextension = SubAggregate(OFXEXTENSION)

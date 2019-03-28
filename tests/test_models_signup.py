@@ -22,9 +22,6 @@ from ofxtools.models.signup import (
     ACCTINFOTRNRS,
     SIGNUPMSGSRQV1,
     SIGNUPMSGSRSV1,
-    BANKACCTINFO,
-    CCACCTINFO,
-    INVACCTINFO,
     ACCTINFO,
     ENROLLRQ,
     ENROLLRS,
@@ -47,8 +44,15 @@ from ofxtools.models.signup import (
     CHGUSERINFOSYNCRS,
     SVCS,
 )
-from ofxtools.models.bank import BANKACCTFROM, BANKACCTTO, CCACCTFROM, CCACCTTO
-from ofxtools.models.investment import INVACCTFROM, INVACCTTO
+from ofxtools.models.bank import (
+    BANKACCTFROM,
+    BANKACCTTO,
+    BANKACCTINFO,
+    CCACCTFROM,
+    CCACCTTO,
+    CCACCTINFO,
+)
+from ofxtools.models.investment import INVACCTFROM, INVACCTTO, INVACCTINFO
 from ofxtools.utils import UTC
 from ofxtools.models.i18n import COUNTRY_CODES
 
@@ -312,26 +316,28 @@ class AcctinfotrnrsTestCase(unittest.TestCase, base.TestAggregate):
 class EnrollrqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "FIRSTNAME",
-                        "LASTNAME",
-                        "ADDR1",
-                        "CITY",
-                        "STATE",
-                        "POSTALCODE",
-                        "EMAIL",
-                       ]
+    requiredElements = [
+        "FIRSTNAME",
+        "LASTNAME",
+        "ADDR1",
+        "CITY",
+        "STATE",
+        "POSTALCODE",
+        "EMAIL",
+    ]
     # FIXME BANKACCTFROM/CCACCTFROM/INVACCTFROM mutex
-    optionalElements = [ "MIDDLENAME",
-                        "ADDR2",
-                        "ADDR3",
-                        "COUNTRY",
-                        "DAYPHONE",
-                        "EVEPHONE",
-                        "USERID",
-                        "TAXID",
-                        "SECURITYNAME",
-                        "DATEBIRTH",
-                       ]
+    optionalElements = [
+        "MIDDLENAME",
+        "ADDR2",
+        "ADDR3",
+        "COUNTRY",
+        "DAYPHONE",
+        "EVEPHONE",
+        "USERID",
+        "TAXID",
+        "SECURITYNAME",
+        "DATEBIRTH",
+    ]
 
     @property
     def root(self):
@@ -486,7 +492,7 @@ class EnrollrsTestCase(unittest.TestCase, base.TestAggregate):
 class EnrolltrnrqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "TRNUID", "ENROLLRQ" ]
+    requiredElements = ["TRNUID", "ENROLLRQ"]
 
     @property
     def root(self):
@@ -505,7 +511,8 @@ class EnrolltrnrqTestCase(unittest.TestCase, base.TestAggregate):
 class EnrolltrnrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "TRNUID", "STATUS", "ENROLLRS" ]
+    requiredElements = ["TRNUID", "STATUS"]
+    optionalElements = ["ENROLLRS"]
 
     @property
     def root(self):
@@ -566,9 +573,10 @@ class Signupmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testdataTags(self):
-        # SIGNUPMSGSRSV1 may only contain ENROLLTRNRS
+        # SIGNUPMSGSRSV1 may contain
+        # ["ENROLLTRNRS", "ACCTINFOTRNRS", "ACCTTRNRS", "CHGUSERINFOTRNRS"]
         allowedTags = SIGNUPMSGSRSV1.dataTags
-        self.assertEqual(len(allowedTags), 1)
+        self.assertEqual(len(allowedTags), 4)
         root = deepcopy(self.root)
         root.append(EnrolltrnrqTestCase().root)
 
@@ -842,7 +850,7 @@ class SvcdelMalformedTestCase(unittest.TestCase):
 class AcctrqSvcaddTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "SVC" ]
+    requiredElements = ["SVC"]
 
     @property
     def root(self):
@@ -865,7 +873,7 @@ class AcctrqSvcaddTestCase(unittest.TestCase, base.TestAggregate):
 class AcctrqSvcchgTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "SVC" ]
+    requiredElements = ["SVC"]
 
     @property
     def root(self):
@@ -888,7 +896,7 @@ class AcctrqSvcchgTestCase(unittest.TestCase, base.TestAggregate):
 class AcctrqSvcdelTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "SVC" ]
+    requiredElements = ["SVC"]
 
     @property
     def root(self):
@@ -949,7 +957,7 @@ class AcctrqMalformedTestCase(unittest.TestCase):
 class AcctrsSvcaddTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "SVC", "SVCSTATUS" ]
+    requiredElements = ["SVC", "SVCSTATUS"]
 
     @property
     def root(self):
@@ -974,7 +982,7 @@ class AcctrsSvcaddTestCase(unittest.TestCase, base.TestAggregate):
 class AcctrsSvcchgTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "SVC", "SVCSTATUS" ]
+    requiredElements = ["SVC", "SVCSTATUS"]
 
     @property
     def root(self):
@@ -999,7 +1007,7 @@ class AcctrsSvcchgTestCase(unittest.TestCase, base.TestAggregate):
 class AcctrsSvcdelTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "SVC", "SVCSTATUS" ]
+    requiredElements = ["SVC", "SVCSTATUS"]
 
     @property
     def root(self):
@@ -1091,12 +1099,16 @@ class AccttrnrqTestCase(unittest.TestCase, base.TestAggregate):
 class AccttrnrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ["TRNUID", "ACCTRS"]
+    requiredElements = ["TRNUID", "STATUS"]
+    optionalElements = ["CLTCOOKIE", "ACCTRS"]
 
     @property
     def root(self):
         root = Element("ACCTTRNRS")
         SubElement(root, "TRNUID").text = "DEADBEEF"
+        status = test_models_common.StatusTestCase().root
+        root.append(status)
+        SubElement(root, "CLTCOOKIE").text = "B00B1E5"
         acctrs = AcctrsSvcaddTestCase().root
         root.append(acctrs)
         return root
@@ -1105,11 +1117,14 @@ class AccttrnrsTestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, ACCTTRNRS)
         self.assertEqual(root.trnuid, "DEADBEEF")
+        self.assertIsInstance(root.status, STATUS)
+        self.assertEqual(root.cltcookie, "B00B1E5")
         self.assertIsInstance(root.acctrs, ACCTRS)
 
 
 class AcctsyncrqTestCase(unittest.TestCase, base.TestAggregate):
     """ ACCTSYNCRQ with TOKEN """
+
     __test__ = True
 
     requiredElements = ["REJECTIFMISSING"]
@@ -1137,7 +1152,7 @@ class AcctsyncrqTestCase(unittest.TestCase, base.TestAggregate):
 class AcctsyncrqTokenonlyTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "REJECTIFMISSING" ]
+    requiredElements = ["REJECTIFMISSING"]
 
     @property
     def root(self):
@@ -1162,7 +1177,7 @@ class AcctsyncrqTokenonlyTestCase(unittest.TestCase, base.TestAggregate):
 class AcctsyncrqRefreshTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "REJECTIFMISSING" ]
+    requiredElements = ["REJECTIFMISSING"]
 
     @property
     def root(self):
@@ -1187,7 +1202,7 @@ class AcctsyncrqRefreshTestCase(unittest.TestCase, base.TestAggregate):
 class AcctsyncrqEmptyTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "REJECTIFMISSING" ]
+    requiredElements = ["REJECTIFMISSING"]
 
     @property
     def root(self):
@@ -1242,8 +1257,8 @@ class AcctsyncrqMalformedTestCase(unittest.TestCase):
 class AcctsyncrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "TOKEN" ]
-    optionalElements = [ "LOSTSYNC" ]
+    requiredElements = ["TOKEN"]
+    optionalElements = ["LOSTSYNC"]
 
     @property
     def root(self):
@@ -1333,21 +1348,22 @@ class ChguserinforqTestCase(unittest.TestCase, base.TestAggregate):
 class ChguserinforsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "DTINFOCHG" ]
-    optionalElements = [ "FIRSTNAME",
-                        "MIDDLENAME",
-                        "LASTNAME",
-                        "ADDR1",
-                        "ADDR2",
-                        "ADDR3",
-                        "CITY",
-                        "STATE",
-                        "POSTALCODE",
-                        "COUNTRY",
-                        "DAYPHONE",
-                        "EVEPHONE",
-                        "EMAIL",
-                       ]
+    requiredElements = ["DTINFOCHG"]
+    optionalElements = [
+        "FIRSTNAME",
+        "MIDDLENAME",
+        "LASTNAME",
+        "ADDR1",
+        "ADDR2",
+        "ADDR3",
+        "CITY",
+        "STATE",
+        "POSTALCODE",
+        "COUNTRY",
+        "DAYPHONE",
+        "EVEPHONE",
+        "EMAIL",
+    ]
 
     @property
     def root(self):
@@ -1390,7 +1406,7 @@ class ChguserinforsTestCase(unittest.TestCase, base.TestAggregate):
 class ChguserinfotrnrqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "TRNUID", "CHGUSERINFORQ" ]
+    requiredElements = ["TRNUID", "CHGUSERINFORQ"]
 
     @property
     def root(self):
@@ -1410,12 +1426,16 @@ class ChguserinfotrnrqTestCase(unittest.TestCase, base.TestAggregate):
 class ChguserinfotrnrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "TRNUID", "CHGUSERINFORS" ]
+    requiredElements = ["TRNUID", "STATUS"]
+    optionalElements = ["CLTCOOKIE", "CHGUSERINFORS"]
 
     @property
     def root(self):
         root = Element("CHGUSERINFOTRNRS")
         SubElement(root, "TRNUID").text = "DEADBEEF"
+        status = test_models_common.StatusTestCase().root
+        root.append(status)
+        SubElement(root, "CLTCOOKIE").text = "B00B1E5"
         chguserinfors = ChguserinforsTestCase().root
         root.append(chguserinfors)
         return root
@@ -1424,13 +1444,15 @@ class ChguserinfotrnrsTestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, CHGUSERINFOTRNRS)
         self.assertEqual(root.trnuid, "DEADBEEF")
+        self.assertIsInstance(root.status, STATUS)
+        self.assertEqual(root.cltcookie, "B00B1E5")
         self.assertIsInstance(root.chguserinfors, CHGUSERINFORS)
 
 
 class ChguserinfosyncrqTokenTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "REJECTIFMISSING", ]
+    requiredElements = ["REJECTIFMISSING"]
 
     @property
     def root(self):
@@ -1455,7 +1477,7 @@ class ChguserinfosyncrqTokenTestCase(unittest.TestCase, base.TestAggregate):
 class ChguserinfosyncrqTokenonlyTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "REJECTIFMISSING" ]
+    requiredElements = ["REJECTIFMISSING"]
 
     @property
     def root(self):
@@ -1480,7 +1502,7 @@ class ChguserinfosyncrqTokenonlyTestCase(unittest.TestCase, base.TestAggregate):
 class ChguserinfosyncrqRefreshTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "REJECTIFMISSING" ]
+    requiredElements = ["REJECTIFMISSING"]
 
     @property
     def root(self):
@@ -1505,7 +1527,7 @@ class ChguserinfosyncrqRefreshTestCase(unittest.TestCase, base.TestAggregate):
 class ChguserinfosyncrqEmptyTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "REJECTIFMISSING" ]
+    requiredElements = ["REJECTIFMISSING"]
 
     @property
     def root(self):
@@ -1560,8 +1582,8 @@ class ChguserinfosyncrqMalformedTestCase(unittest.TestCase):
 class ChguserinfosyncrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "TOKEN" ]
-    optionalElements = [ "LOSTSYNC" ]
+    requiredElements = ["TOKEN"]
+    optionalElements = ["LOSTSYNC"]
 
     @property
     def root(self):

@@ -77,14 +77,13 @@ class OFX(Aggregate):
     @property
     def securities(self):
         seclist = []
-        attr = getattr(self, "seclistmsgsrsv1", None)
-        if attr:
-            seclist = self.seclistmsgsrsv1.seclist
+        msgs = getattr(self, "seclistmsgsrsv1", None)
+        if msgs:
+            seclist = msgs.securities
         return seclist
 
     @property
     def statements(self):
-        """ """
         stmts = []
         for msgs in ("bankmsgsrsv1", "creditcardmsgsrsv1", "invstmtmsgsrsv1"):
             msg = getattr(self, msgs, None)

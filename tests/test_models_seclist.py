@@ -570,12 +570,15 @@ class Seclistmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         root = Element("SECLISTMSGSRSV1")
         seclist = SeclistTestCase().root
         root.append(seclist)
+        root.append(deepcopy(seclist))
         return root
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, SECLISTMSGSRSV1)
-        self.assertIsInstance(root.seclist, SECLIST)
+        self.assertEqual(len(root), 2)
+        self.assertIsInstance(root[0], SECLIST)
+        self.assertIsInstance(root[1], SECLIST)
 
 
 class Seclistmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):

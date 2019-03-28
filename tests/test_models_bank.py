@@ -818,8 +818,7 @@ class StmttrnrqTestCase(unittest.TestCase, base.TestAggregate):
 
     __test__ = True
 
-    requiredElements = ["TRNUID"]
-    optionalElements = ["STMTRQ"]
+    requiredElements = ["TRNUID", "STMTRQ"]
 
     @property
     def root(self):
@@ -874,7 +873,18 @@ class ClosingTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["FITID", "DTCLOSE", "BALCLOSE", "DTPOSTSTART", "DTPOSTEND"]
-    optionalElements = ["DTOPEN", "DTNEXT", "BALOPEN", "BALMIN", "DEPANDCREDIT", "CHKANDDEBIT", "TOTALFEES", "TOTALINT", "MKTGINFO", "CURRENCY"]
+    optionalElements = [
+        "DTOPEN",
+        "DTNEXT",
+        "BALOPEN",
+        "BALMIN",
+        "DEPANDCREDIT",
+        "CHKANDDEBIT",
+        "TOTALFEES",
+        "TOTALINT",
+        "MKTGINFO",
+        "CURRENCY",
+    ]
 
     @property
     def root(self):
@@ -905,13 +915,13 @@ class ClosingTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(instance.dtopen, datetime(2016, 12, 1, tzinfo=UTC))
         self.assertEqual(instance.dtclose, datetime(2016, 12, 25, tzinfo=UTC))
         self.assertEqual(instance.dtnext, datetime(2017, 1, 1, tzinfo=UTC))
-        self.assertEqual(instance.balopen, Decimal('11'))
-        self.assertEqual(instance.balclose, Decimal('20'))
-        self.assertEqual(instance.balmin, Decimal('6'))
-        self.assertEqual(instance.depandcredit, Decimal('14'))
-        self.assertEqual(instance.chkanddebit, Decimal('-5'))
-        self.assertEqual(instance.totalfees, Decimal('0'))
-        self.assertEqual(instance.totalint, Decimal('0'))
+        self.assertEqual(instance.balopen, Decimal("11"))
+        self.assertEqual(instance.balclose, Decimal("20"))
+        self.assertEqual(instance.balmin, Decimal("6"))
+        self.assertEqual(instance.depandcredit, Decimal("14"))
+        self.assertEqual(instance.chkanddebit, Decimal("-5"))
+        self.assertEqual(instance.totalfees, Decimal("0"))
+        self.assertEqual(instance.totalint, Decimal("0"))
         self.assertEqual(instance.dtpoststart, datetime(2016, 12, 1, tzinfo=UTC))
         self.assertEqual(instance.dtpostend, datetime(2016, 12, 25, tzinfo=UTC))
         self.assertEqual(instance.mktginfo, "Get Free Stuff NOW!!")
@@ -971,8 +981,7 @@ class StmtendrsTestCase(unittest.TestCase, base.TestAggregate):
 class StmtendtrnrqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ["TRNUID"]
-    optionalElements = ["STMTENDRQ"]
+    requiredElements = ["TRNUID", "STMTENDRQ"]
 
     @property
     def root(self):
@@ -1060,6 +1069,7 @@ class ChkdescTestCase(unittest.TestCase, base.TestAggregate):
 
 class StpchkrqTestCase(unittest.TestCase, base.TestAggregate):
     """ STPCHKRQ with CHKRANGE """
+
     __test__ = True
 
     requiredElements = ["BANKACCTFROM", "CHKRANGE"]  # requiredMutex
@@ -1081,6 +1091,7 @@ class StpchkrqTestCase(unittest.TestCase, base.TestAggregate):
 
 class StpchkrqChkdescTestCase(unittest.TestCase, base.TestAggregate):
     """ STPCHKRQ with CHKDESC """
+
     __test__ = True
 
     requiredElements = ["BANKACCTFROM", "CHKDESC"]  # requiredMutex
@@ -1119,6 +1130,7 @@ class StpchkrqChkrangeChkdescTestCase(unittest.TestCase):
 
 class StpchknumTestCase(unittest.TestCase, base.TestAggregate):
     """ STPCHKNUM with CURRENCY """
+
     __test__ = True
 
     requiredElements = ["CHECKNUM", "CHKSTATUS"]
@@ -1165,6 +1177,7 @@ class StpchknumTestCase(unittest.TestCase, base.TestAggregate):
 
 class StpchknumOrigcurrencyTestCase(unittest.TestCase, base.TestAggregate):
     """ STPCHKNUM with ORIGCURRENCY """
+
     __test__ = True
 
     requiredElements = ["CHECKNUM", "CHKSTATUS"]
@@ -1198,6 +1211,7 @@ class StpchknumOrigcurrencyTestCase(unittest.TestCase, base.TestAggregate):
 
 class StpchknumCurrencyOrigcurrencyTestCase(unittest.TestCase):
     """ STPCHKNUM with both CURRENCY and ORIGCURRENCY - not allowed """
+
     @property
     def root(self):
         root = Element("STPCHKNUM")
@@ -1252,8 +1266,7 @@ class StpchkrsTestCase(unittest.TestCase, base.TestAggregate):
 class StpchktrnrqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ["TRNUID"]
-    optionalElements = ["STPCHKRQ"]
+    requiredElements = ["TRNUID", "STPCHKRQ"]
 
     @property
     def root(self):
@@ -1296,6 +1309,7 @@ class StpchktrnrsTestCase(unittest.TestCase, base.TestAggregate):
 
 class StpchksyncrqTestCase(unittest.TestCase, base.TestAggregate):
     """ STPCHKSYNCRQ with TOKEN """
+
     __test__ = True
 
     requiredElements = ["REJECTIFMISSING", "BANKACCTFROM"]
@@ -1427,8 +1441,8 @@ class StpchksyncrqMalformedTestCase(unittest.TestCase):
 class StpchksyncrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "TOKEN", "BANKACCTFROM" ]
-    optionalElements = [ "LOSTSYNC" ]
+    requiredElements = ["TOKEN", "BANKACCTFROM"]
+    optionalElements = ["LOSTSYNC"]
 
     @property
     def root(self):
@@ -1451,14 +1465,14 @@ class StpchksyncrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(instance[1], STPCHKTRNRS)
 
     #  def testMissingAccttrnrs(self):
-        #  root = deepcopy(self.root)
-        #  for accttrnrs in root.findall("STPCHKTRNRS"):
-            #  root.remove(accttrnrs)
-        #  instance = Aggregate.from_etree(root)
-        #  self.assertIsInstance(instance, STPCHKSYNCRS)
-        #  self.assertEqual(instance.token, "DEADBEEF")
-        #  self.assertEqual(instance.lostsync, True)
-        #  self.assertEqual(len(instance), 0)
+    #  root = deepcopy(self.root)
+    #  for accttrnrs in root.findall("STPCHKTRNRS"):
+    #  root.remove(accttrnrs)
+    #  instance = Aggregate.from_etree(root)
+    #  self.assertIsInstance(instance, STPCHKSYNCRS)
+    #  self.assertEqual(instance.token, "DEADBEEF")
+    #  self.assertEqual(instance.lostsync, True)
+    #  self.assertEqual(len(instance), 0)
 
 
 class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):

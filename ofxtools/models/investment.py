@@ -4,7 +4,14 @@ Python object model for transactions,
 """
 # local imports
 from ofxtools.models.base import Aggregate, List, TranList, SubAggregate, Unsupported
-from ofxtools.models.common import STATUS, OFXEXTENSION, MSGSETCORE, SVCSTATUSES
+from ofxtools.models.common import (
+    STATUS,
+    OFXEXTENSION,
+    MSGSETCORE,
+    SVCSTATUSES,
+    TrnRq,
+    TrnRs,
+)
 from ofxtools.models.bank import STMTTRN, INCTRAN, BALLIST, INV401KSOURCES
 from ofxtools.models.seclist import SECID
 from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, Origcurrency, CURRENCY_CODES
@@ -695,23 +702,15 @@ class INVSTMTRS(Aggregate):
         return self.invbal
 
 
-class INVSTMTTRNRQ(Aggregate):
+class INVSTMTTRNRQ(TrnRq):
     """ OFX section 13.9.1.1 """
 
-    trnuid = String(36, required=True)
-    clientcookie = String(32)
-    tan = String(80)
-    ofxextension = SubAggregate(OFXEXTENSION)
-    invstmtrq = SubAggregate(INVSTMTRQ)
+    invstmtrq = SubAggregate(INVSTMTRQ, required=True)
 
 
-class INVSTMTTRNRS(Aggregate):
+class INVSTMTTRNRS(TrnRs):
     """ OFX section 13.9.2.1 """
 
-    trnuid = String(36, required=True)
-    status = SubAggregate(STATUS, required=True)
-    clientcookie = String(32)
-    ofxextension = SubAggregate(OFXEXTENSION)
     invstmtrs = SubAggregate(INVSTMTRS)
 
     @property
@@ -729,6 +728,16 @@ class INVSTMTMSGSRSV1(List):
     """ OFX section 13.7.1.2.2 """
 
     dataTags = ["INVSTMTTRNRS", "INVMAILTRNRS", "INVMAILSYNCRS"]
+
+    @property
+    def statements(self):
+        stmts = []
+        for rs in self:
+            if isinstance(rs, INVSTMTTRNRS):
+                stmtrs = rs.invstmtrs
+                if stmtrs is not None:
+                    stmts.append(stmtrs)
+        return stmts
 
     @property
     def statements(self):

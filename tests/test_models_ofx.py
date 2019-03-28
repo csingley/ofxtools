@@ -69,25 +69,25 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
     def testConvert(self):
         # Make sure Aggregate.from_etree() calls Element.convert() and sets
         # Aggregate instance attributes with the result
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, OFX)
-        self.assertIsInstance(root.signonmsgsrsv1, SIGNONMSGSRSV1)
-        self.assertIsInstance(root.bankmsgsrsv1, BANKMSGSRSV1)
-        self.assertIsInstance(root.creditcardmsgsrsv1, CREDITCARDMSGSRSV1)
-        self.assertIsInstance(root.invstmtmsgsrsv1, INVSTMTMSGSRSV1)
-        self.assertIsInstance(root.seclistmsgsrsv1, SECLISTMSGSRSV1)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, OFX)
+        self.assertIsInstance(instance.signonmsgsrsv1, SIGNONMSGSRSV1)
+        self.assertIsInstance(instance.bankmsgsrsv1, BANKMSGSRSV1)
+        self.assertIsInstance(instance.creditcardmsgsrsv1, CREDITCARDMSGSRSV1)
+        self.assertIsInstance(instance.invstmtmsgsrsv1, INVSTMTMSGSRSV1)
+        self.assertIsInstance(instance.seclistmsgsrsv1, SECLISTMSGSRSV1)
 
     def testUnsupported(self):
-        root = Aggregate.from_etree(self.root)
-        unsupported = list(root.unsupported)
+        instance = Aggregate.from_etree(self.root)
+        unsupported = list(instance.unsupported)
         self.assertEqual(unsupported, self.unsupported)
         for unsupp in unsupported:
-            setattr(root, unsupp, "FOOBAR")
-            self.assertIsNone(getattr(root, unsupp))
+            setattr(instance, unsupp, "FOOBAR")
+            self.assertIsNone(getattr(instance, unsupp))
 
     def testRepr(self):
-        agg = Aggregate.from_etree(self.root)
-        rep = repr(agg)
+        instance = Aggregate.from_etree(self.root)
+        rep = repr(instance)
         rep_template = (
             "<OFX fid='{fid}' org='{org}' dtserver='{dtserver}' "
             "len(statements)={stmtlen} len(securities)={seclen}>"
@@ -95,30 +95,31 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
         # SIGNON values from test_models_signon.FiTestCase
         # DTSERVER from test_models_signon.SonrsTestCase
         # 2 *STMTs each from bank/cc/invstmt (6 total)
-        # 5 securitites from test_models_seclist.SeclistTestCase
+        # 5 securitites each from 2 SECLISTs in test_models_seclist.SeclistTestCase
         rep_values = {
             "fid": "4705",
             "org": "IBLLC-US",
             "dtserver": datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC),
             "stmtlen": 6,
-            "seclen": 5,
+            "seclen": 10,
         }
         self.assertEqual(rep, rep_template.format(**rep_values))
 
     def testPropertyAliases(self):
         # Make sure class property aliases have been defined correctly
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root.sonrs, SONRS)
-        self.assertIsInstance(root.securities, SECLIST)
-        self.assertIsInstance(root.statements, list)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, OFX)
+        self.assertIsInstance(instance.sonrs, SONRS)
+        self.assertIsInstance(instance.securities, list)
+        self.assertIsInstance(instance.statements, list)
         # *MSGSRSV1 test cases include 2 of each *STMTRS
-        self.assertEqual(len(root.statements), 6)
-        self.assertIsInstance(root.statements[0], STMTRS)
-        self.assertIsInstance(root.statements[1], STMTRS)
-        self.assertIsInstance(root.statements[2], CCSTMTRS)
-        self.assertIsInstance(root.statements[3], CCSTMTENDRS)
-        self.assertIsInstance(root.statements[4], INVSTMTRS)
-        self.assertIsInstance(root.statements[5], INVSTMTRS)
+        self.assertEqual(len(instance.statements), 6)
+        self.assertIsInstance(instance.statements[0], STMTRS)
+        self.assertIsInstance(instance.statements[1], STMTRS)
+        self.assertIsInstance(instance.statements[2], CCSTMTRS)
+        self.assertIsInstance(instance.statements[3], CCSTMTENDRS)
+        self.assertIsInstance(instance.statements[4], INVSTMTRS)
+        self.assertIsInstance(instance.statements[5], INVSTMTRS)
 
 
 if __name__ == "__main__":

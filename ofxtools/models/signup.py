@@ -6,14 +6,7 @@ import itertools
 # local imports
 from ofxtools.Types import Bool, DateTime, String, OneOf
 from ofxtools.models.i18n import COUNTRY_CODES
-from ofxtools.models.bank import (
-    BANKACCTFROM,
-    CCACCTFROM,
-    BANKACCTTO,
-    CCACCTTO,
-    BANKACCTINFO,
-    CCACCTINFO,
-)
+from ofxtools.models.bank import BANKACCTFROM, CCACCTFROM, BANKACCTTO, CCACCTTO
 from ofxtools.models.base import (
     Aggregate,
     SubAggregate,
@@ -22,8 +15,8 @@ from ofxtools.models.base import (
     SyncRqList,
     SyncRsList,
 )
-from ofxtools.models.common import MSGSETCORE, STATUS, SVCSTATUSES
-from ofxtools.models.investment import INVACCTFROM, INVACCTTO, INVACCTINFO
+from ofxtools.models.common import MSGSETCORE, SVCSTATUSES, TrnRq, TrnRs
+from ofxtools.models.investment import INVACCTFROM, INVACCTTO
 
 
 __all__ = [
@@ -112,10 +105,9 @@ class ACCTINFORQ(Aggregate):
     dtacctup = DateTime(required=True)
 
 
-class ACCTINFOTRNRQ(Aggregate):
+class ACCTINFOTRNRQ(TrnRq):
     """ OFX section 8.5"""
 
-    trnuid = String(36, required=True)
     acctinforq = SubAggregate(ACCTINFORQ, required=True)
 
 
@@ -195,18 +187,16 @@ class ACCTINFORS(List):
         )
 
 
-class ACCTINFOTRNRS(Aggregate):
+class ACCTINFOTRNRS(TrnRs):
     """ OFX section 8.5.2 """
 
-    trnuid = String(36, required=True)
-    status = SubAggregate(STATUS, required=True)
     acctinfors = SubAggregate(ACCTINFORS)
 
 
 class SIGNUPMSGSRSV1(List):
     """ OFX section 8.1 """
 
-    dataTags = ["ENROLLTRNRS"]
+    dataTags = ["ENROLLTRNRS", "ACCTINFOTRNRS", "ACCTTRNRS", "CHGUSERINFOTRNRS"]
 
 
 class ENROLLRQ(Aggregate):
@@ -240,10 +230,9 @@ class ENROLLRQ(Aggregate):
     ]
 
 
-class ENROLLTRNRQ(Aggregate):
+class ENROLLTRNRQ(TrnRq):
     """ OFX section 8.4.2 """
 
-    trnuid = String(36, required=True)
     enrollrq = SubAggregate(ENROLLRQ, required=True)
 
 
@@ -255,12 +244,10 @@ class ENROLLRS(Aggregate):
     dtexpire = DateTime()
 
 
-class ENROLLTRNRS(Aggregate):
+class ENROLLTRNRS(TrnRs):
     """ OFX section 8.4.3 """
 
-    trnuid = String(36, required=True)
-    status = SubAggregate(STATUS, required=True)
-    enrollrs = SubAggregate(ENROLLRS, required=True)
+    enrollrs = SubAggregate(ENROLLRS)
 
 
 class SVCADD(Aggregate):
@@ -322,18 +309,16 @@ class ACCTRS(Aggregate):
     requiredMutexes = [("svcadd", "svcchg", "svcdel")]
 
 
-class ACCTTRNRQ(Aggregate):
+class ACCTTRNRQ(TrnRq):
     """ OFX section 8.6.1 """
 
-    trnuid = String(36, required=True)
     acctrq = SubAggregate(ACCTRQ, required=True)
 
 
-class ACCTTRNRS(Aggregate):
+class ACCTTRNRS(TrnRs):
     """ OFX section 8.6.2 """
 
-    trnuid = String(36, required=True)
-    acctrs = SubAggregate(ACCTRS, required=True)
+    acctrs = SubAggregate(ACCTRS)
 
 
 class ACCTSYNCRQ(SyncRqList):
@@ -385,18 +370,16 @@ class CHGUSERINFORS(Aggregate):
     dtinfochg = DateTime(required=True)
 
 
-class CHGUSERINFOTRNRQ(Aggregate):
+class CHGUSERINFOTRNRQ(TrnRq):
     """ OFX section 8.7 """
 
-    trnuid = String(36, required=True)
     chguserinforq = SubAggregate(CHGUSERINFORQ, required=True)
 
 
-class CHGUSERINFOTRNRS(Aggregate):
+class CHGUSERINFOTRNRS(TrnRs):
     """ OFX section 8.7 """
 
-    trnuid = String(36, required=True)
-    chguserinfors = SubAggregate(CHGUSERINFORS, required=True)
+    chguserinfors = SubAggregate(CHGUSERINFORS)
 
 
 class CHGUSERINFOSYNCRQ(SyncRqList):

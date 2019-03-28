@@ -5,7 +5,7 @@ Message set response aggregates (i.e. *MSGSRSV1) - OFX section 2.4.5
 # local imports
 from ofxtools.Types import String, NagString, Integer, Decimal, DateTime, OneOf, Bool
 from ofxtools.models.base import Aggregate, SubAggregate, List, Unsupported
-from ofxtools.models.common import MSGSETCORE
+from ofxtools.models.common import MSGSETCORE, TrnRq, TrnRs
 from ofxtools.models.i18n import CURRENCY
 
 
@@ -27,7 +27,9 @@ __all__ = [
     "STOCKINFO",
     "SECRQ",
     "SECLISTRQ",
+    "SECLISTRS",
     "SECLISTTRNRQ",
+    "SECLISTTRNRS",
     "SECLISTMSGSRQV1",
     "SECLISTMSGSRSV1",
     "SECLISTMSGSETV1",
@@ -224,26 +226,44 @@ class SECLISTRQ(List):
     dataTags = ["SECRQ"]
 
 
-class SECLISTTRNRQ(Aggregate):
+class SECLISTTRNRQ(TrnRq):
     """ OFX section 13.8.2.1 """
 
-    trnuid = String(36, required=True)
-    cltcookie = String(32)
-    tan = String(80)
-    ofxextension = Unsupported()
     seclisttrq = SubAggregate(SECLISTRQ)
 
 
-class SECLISTMSGSRQV1(Aggregate):
+class SECLISTRS(Aggregate):
+    """
+    The only empty aggregate in OFX.
+
+    OFX section 13.8.2.2
+    """
+
+
+class SECLISTTRNRS(TrnRs):
+    """ OFX section 13.8.2.1 """
+
+    seclisttrs = SubAggregate(SECLISTRS)
+
+
+class SECLISTMSGSRQV1(List):
     """ OFX section 13.7.2.2.1 """
 
-    seclisttrnrq = SubAggregate(SECLISTTRNRQ)
+    dataTags = ["SECLISTTRNRQ"]
 
 
-class SECLISTMSGSRSV1(Aggregate):
-    """ """
+class SECLISTMSGSRSV1(List):
+    """ OFX section 13.7.2.2.2 """
 
-    seclist = SubAggregate(SECLIST)
+    dataTags = ["SECLISTTRNRS", "SECLIST"]
+
+    @property
+    def securities(self):
+        securities = []
+        for child in self:
+            if isinstance(child, SECLIST):
+                securities.extend(child)
+        return securities
 
 
 class SECLISTMSGSETV1(Aggregate):

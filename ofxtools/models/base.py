@@ -75,8 +75,10 @@ class Aggregate:
         # Check that all args have been consumed, i.e. we haven't been passed
         # any args that aren't in ``self.spec()``.
         if kwargs:
-            msg = "Aggregate {} does not define {}".format(
-                self.__class__.__name__, str(list(kwargs.keys()))
+            msg = "Aggregate {} does not define {} (spec={})".format(
+                self.__class__.__name__,
+                str(list(kwargs.keys())),
+                str(list(self.spec.keys())),
             )
             raise ValueError(msg)
 
@@ -157,8 +159,8 @@ class Aggregate:
             try:
                 return spec.index(tag)
             except ValueError:
-                msg = "Aggregate {} does not define {}"
-                raise ValueError(msg.format(cls.__name__, tag))
+                msg = "Aggregate {} does not define {} in spec {}"
+                raise ValueError(msg.format(cls.__name__, tag, spec))
 
         indices = [indexOrRaise(*child) for child in children]
         if indices != sorted(indices):
@@ -194,10 +196,24 @@ class Aggregate:
                 value.ungroom(child)
                 root.append(child)
             else:
-                converter = cls.__dict__[spec]
+                converter = cls._superdict[spec]
                 text = converter.unconvert(value)
                 ET.SubElement(root, spec.upper()).text = text
         return root
+
+    @classproperty
+    @classmethod
+    def _superdict(cls):
+        """
+        Consolidate cls.__dict__ with that of all superclasses.
+
+        Traverse the method resolution order in reverse so that attributes
+        defined on subclass override attributes defined on superclass.
+        """
+        d = OrderedDict()
+        for base in reversed(cls.mro()):
+            d.update(base.__dict__)
+        return d
 
     @staticmethod
     def ungroom(elem):
@@ -218,7 +234,7 @@ class Aggregate:
         N.B. predicate tests *values* of cls.__dict__
              (not keys i.e. attribute names)
         """
-        match_items = [(k, v) for k, v in cls.__dict__.items() if predicate(v)]
+        match_items = [(k, v) for k, v in cls._superdict.items() if predicate(v)]
         match_items.sort(key=lambda it: it[1]._counter)
         return OrderedDict(match_items)
 
@@ -321,6 +337,9 @@ class SubAggregate(Element):
             return value
         return Aggregate.from_etree(value)
 
+    def __repr__(self):
+        return "<{}>".format(self.type.__name__)
+
 
 class Unsupported(InstanceCounterMixin):
     """
@@ -417,7 +436,7 @@ class List(Aggregate, list):
         for spec in self.spec:
             value = getattr(self, spec)
             if value is not None:
-                converter = cls.__dict__[spec]
+                converter = cls._superdict[spec]
                 text = converter.unconvert(value)
                 ET.SubElement(root, spec.upper()).text = text
 

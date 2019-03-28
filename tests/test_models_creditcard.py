@@ -186,8 +186,7 @@ class CcstmtrsTestCase(unittest.TestCase, base.TestAggregate):
 class CcstmttrnrqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("TRNUID",)
-    optionalElements = ("CCSTMTRQ",)
+    requiredElements = ["TRNUID", "CCSTMTRQ"]
 
     @property
     def root(self):
@@ -389,8 +388,7 @@ class CcstmtendrsTestCase(unittest.TestCase, base.TestAggregate):
 class CcstmtendtrnrqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("TRNUID",)
-    optionalElements = ("CCSTMTENDRQ",)
+    requiredElements = ["TRNUID", "CCSTMTENDRQ"]
 
     @property
     def root(self):

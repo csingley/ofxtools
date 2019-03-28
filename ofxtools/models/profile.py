@@ -2,7 +2,7 @@
 # local imports
 from ofxtools.Types import String, OneOf, DateTime
 from ofxtools.models.base import Aggregate, SubAggregate, List
-from ofxtools.models.common import STATUS, MSGSETCORE
+from ofxtools.models.common import MSGSETCORE, TrnRq, TrnRs
 from ofxtools.models.i18n import COUNTRY_CODES
 from ofxtools.models.signon import SIGNONINFOLIST
 
@@ -72,14 +72,11 @@ class PROFRS(Aggregate):
         return super(PROFRS, PROFRS).groom(elem)
 
 
-class PROFTRNRQ(Aggregate):
-    trnuid = String(36, required=True)
-    profrq = SubAggregate(PROFRQ)
+class PROFTRNRQ(TrnRq):
+    profrq = SubAggregate(PROFRQ, required=True)
 
 
-class PROFTRNRS(Aggregate):
-    trnuid = String(36, required=True)
-    status = SubAggregate(STATUS)
+class PROFTRNRS(TrnRs):
     profrs = SubAggregate(PROFRS)
 
     @property

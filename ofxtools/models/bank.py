@@ -13,7 +13,7 @@ from ofxtools.models.base import (
     SyncRqList,
     SyncRsList,
 )
-from ofxtools.models.common import STATUS, MSGSETCORE, SVCSTATUSES
+from ofxtools.models.common import MSGSETCORE, SVCSTATUSES, TrnRq, TrnRs
 from ofxtools.models.i18n import (
     CURRENCY,
     ORIGCURRENCY,
@@ -269,18 +269,15 @@ class STMTRS(Aggregate):
         return self.ledgerbal
 
 
-class STMTTRNRQ(Aggregate):
+class STMTTRNRQ(TrnRq):
     """ OFX section 11.4.2.1 """
 
-    trnuid = String(36, required=True)
-    stmtrq = SubAggregate(STMTRQ)
+    stmtrq = SubAggregate(STMTRQ, required=True)
 
 
-class STMTTRNRS(Aggregate):
+class STMTTRNRS(TrnRs):
     """ OFX section 11.4.2.2 """
 
-    trnuid = String(36, required=True)
-    status = SubAggregate(STATUS, required=True)
     stmtrs = SubAggregate(STMTRS)
 
     @property
@@ -327,18 +324,15 @@ class STMTENDRS(List):
     dataTags = ["CLOSING"]
 
 
-class STMTENDTRNRQ(Aggregate):
+class STMTENDTRNRQ(TrnRq):
     """ OFX section 11.5.1 """
 
-    trnuid = String(36, required=True)
-    stmtendrq = SubAggregate(STMTENDRQ)
+    stmtendrq = SubAggregate(STMTENDRQ, required=True)
 
 
-class STMTENDTRNRS(Aggregate):
+class STMTENDTRNRS(TrnRs):
     """ OFX section 11.5.2 """
 
-    trnuid = String(36, required=True)
-    status = SubAggregate(STATUS, required=True)
     stmtendrs = SubAggregate(STMTENDRS)
 
     @property
@@ -399,18 +393,15 @@ class STPCHKRS(List):
     dataTags = ["STPCHKNUM"]
 
 
-class STPCHKTRNRQ(Aggregate):
+class STPCHKTRNRQ(TrnRq):
     """ OFX section 11.6.1.1 """
 
-    trnuid = String(36, required=True)
-    stpchkrq = SubAggregate(STPCHKRQ)
+    stpchkrq = SubAggregate(STPCHKRQ, required=True)
 
 
-class STPCHKTRNRS(Aggregate):
+class STPCHKTRNRS(TrnRs):
     """ OFX section 11.6.1.2 """
 
-    trnuid = String(36, required=True)
-    status = SubAggregate(STATUS, required=True)
     stpchkrs = SubAggregate(STPCHKRS)
 
 
@@ -467,7 +458,13 @@ class BANKMSGSRSV1(List):
 
     @property
     def statements(self):
-        return [trnrs.statement for trnrs in self]
+        stmts = []
+        for rs in self:
+            if isinstance(rs, STMTTRNRS):
+                stmtrs = rs.stmtrs
+                if stmtrs is not None:
+                    stmts.append(stmtrs)
+        return stmts
 
 
 class EMAILPROF(Aggregate):
@@ -475,6 +472,157 @@ class EMAILPROF(Aggregate):
 
     canemail = Bool(required=True)
     cannotify = Bool(required=True)
+
+
+class XFERINFO(Aggregate):
+    """ OFX section 11.3.5 """
+
+    bankacctfrom = SubAggregate(BANKACCTFROM)
+    ccacctfrom = SubAggregate(CCACCTFROM)
+    bankacctto = SubAggregate(BANKACCTTO)
+    ccacctto = SubAggregate(CCACCTTO)
+    trnamt = Decimal(required=True)
+    dtdue = DateTime()
+
+    requiredMutexes = [("bankacctfrom", "ccacctfrom"), ("bankacctto", "ccacctto")]
+
+
+class INTRARQ(Aggregate):
+    """ OFX section 11.7.1.1 """
+
+    xferinfo = SubAggregate(XFERINFO, required=True)
+
+
+class XFERPRCSTS(Aggregate):
+    """ OFX section 11.3.6 """
+
+    xferprccode = OneOf(
+        "WILLPROCESSON",
+        "POSTEDON",
+        "NOFUNDSON",
+        "CANCELEDON",
+        "FAILEDON",
+        required=True,
+    )
+    dtxferprc = DateTime(required=True)
+
+
+class INTRARS(Aggregate):
+    """ OFX section 11.7.1.2 """
+
+    curdef = OneOf(*CURRENCY_CODES, required=True)
+    srvrtid = String(10, required=True)
+    xferinfo = SubAggregate(XFERINFO, required=True)
+    dtxferprj = DateTime()
+    dtposted = DateTime()
+    recsrvrtid = String(10)
+    xferprcsts = SubAggregate(XFERPRCSTS)
+
+    optionalMutexes = [("dtxferprj", "dtposted")]
+
+
+class INTRAMODRQ(Aggregate):
+    """ OFX section 11.7.2.1 """
+
+    srvrtid = String(10, required=True)
+    xferinfo = SubAggregate(XFERINFO, required=True)
+
+
+class INTRACANRQ(Aggregate):
+    """ OFX section 11.7.3.1 """
+
+    srvrtid = String(10, required=True)
+
+
+class INTRAMODRS(Aggregate):
+    """ OFX section 11.7.2.2 """
+
+    srvrtid = String(10, required=True)
+    xferinfo = SubAggregate(XFERINFO, required=True)
+    xferprcsts = SubAggregate(XFERPRCSTS)
+
+
+class INTRACANRS(Aggregate):
+    """ OFX section 11.7.3.2 """
+
+    srvrtid = String(10, required=True)
+
+
+class INTRATRNRQ(TrnRq):
+    """ OFX section 11.7.1.1 """
+
+    intrarq = SubAggregate(STMTRQ)
+    intramodrq = SubAggregate(INTRAMODRQ)
+    intracanrq = SubAggregate(INTRACANRQ)
+
+    requiredMutexes = [("intrarq", "intramodrq", "intracanrq")]
+
+
+class INTRATRNRS(TrnRs):
+    """ OFX section 11.7.1.2 """
+
+    intrars = SubAggregate(INTRARS)
+    intramodrs = SubAggregate(INTRAMODRS)
+    intracanrs = SubAggregate(INTRACANRS)
+
+    optionalMutexes = [
+        (
+            "intrars",
+            "intramodrs",
+            "intracanrs",
+            "intermodrs",
+            "intercanrs",
+            "intermodrs",
+        )
+    ]
+
+
+class INTERRQ(Aggregate):
+    """ OFX section 11.8.2.1 """
+
+    xferinfo = SubAggregate(XFERINFO, required=True)
+
+
+class INTERRS(Aggregate):
+    """ OFX section 11.8.2.2 """
+
+    curdef = OneOf(*CURRENCY_CODES, required=True)
+    srvrtid = String(10, required=True)
+    xferinfo = SubAggregate(XFERINFO, required=True)
+    dtxferprj = DateTime()
+    dtposted = DateTime()
+    refnum = String(32)
+    recsrvrtid = String(10)
+    xferprcsts = SubAggregate(XFERPRCSTS)
+
+    optionalMutexes = [("dtxferprj", "dtposted")]
+
+
+class INTERMODRQ(Aggregate):
+    """ OFX section 11.8.3.1 """
+
+    srvrtid = String(10, required=True)
+    xferinfo = SubAggregate(XFERINFO, required=True)
+
+
+class INTERCANRQ(Aggregate):
+    """ OFX section 11.8.4444"""
+
+    srvrtid = String(10, required=True)
+
+
+class INTERMODRS(Aggregate):
+    """ OFX section 11.8.3.2 """
+
+    srvrtid = String(10, required=True)
+    xferinfo = SubAggregate(XFERINFO, required=True)
+    xferprcsts = SubAggregate(XFERPRCSTS)
+
+
+class INTERCANRS(Aggregate):
+    """ OFX section 11.8.4.2 """
+
+    srvrtid = String(10, required=True)
 
 
 class BANKMSGSETV1(Aggregate):
