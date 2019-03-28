@@ -437,7 +437,7 @@ class BANKMSGSRQV1(List):
 
     dataTags = [
         "STMTTRNRQ",
-        "STMTENDRQ",
+        "STMTENDTRNRQ",
         "STPCHKTRNRQ",
         "INTRATRNRQ",
         "RECINTRATRNRQ",

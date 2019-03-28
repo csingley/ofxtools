@@ -536,9 +536,10 @@ class Signupmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testdataTags(self):
-        # SIGNUPMSGSRQV1 may only contain ENROLLTRNRQ
+        # SIGNUPMSGSRQV1 may contain
+        # ["ENROLLTRNRQ", "ACCTINFOTRNRQ", "ACCTTRNRQ", "CHGUSERINFOTRNRQ"]
         allowedTags = SIGNUPMSGSRQV1.dataTags
-        self.assertEqual(len(allowedTags), 1)
+        self.assertEqual(len(allowedTags), 4)
         root = deepcopy(self.root)
         root.append(EnrolltrnrsTestCase().root)
 

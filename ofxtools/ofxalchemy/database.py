@@ -9,15 +9,9 @@ import sqlite3
 
 
 # 3rd party imports
-from sqlalchemy import (
-    create_engine,
-    event,
-)
+from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import (
-    scoped_session,
-    sessionmaker,
-)
+from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import (
     as_declarative,
     declared_attr,
@@ -25,7 +19,7 @@ from sqlalchemy.ext.declarative import (
 )
 
 
-Session = scoped_session(sessionmaker(autocommit=False, autoflush=True,))
+Session = scoped_session(sessionmaker(autocommit=False, autoflush=True))
 
 
 @contextmanager
@@ -59,6 +53,7 @@ class Base(object):
     per the OFX specification, they are not persisted by our model; their
     transitory representations are modelled in ofxalchemy.Parser.
     """
+
     query = Session.query_property()
 
     @declared_attr
@@ -69,11 +64,16 @@ class Base(object):
         """
         Lists all non-NULL instance attributes.
         """
-        return '<%s(%s)>' % (self.__class__.__name__, ', '.join(
-            ['%s=%r' % (c.name, str(getattr(self, c.name)))
-             for c in self.__class__.__table__.c
-             if getattr(self, c.name) is not None]
-        ))
+        return "<%s(%s)>" % (
+            self.__class__.__name__,
+            ", ".join(
+                [
+                    "%s=%r" % (c.name, str(getattr(self, c.name)))
+                    for c in self.__class__.__table__.c
+                    if getattr(self, c.name) is not None
+                ]
+            ),
+        )
 
     @classmethod
     def primary_keys(cls):
@@ -89,7 +89,7 @@ class Base(object):
             v = attrs[k]
         except KeyError:
             # Allow relationship, not just FK id integer
-            if k.endswith('_id'):
+            if k.endswith("_id"):
                 k = k[:-3]
                 v = attrs[k]
             else:
@@ -103,7 +103,10 @@ class Base(object):
             return dict([cls._bindattr(pk, attrs) for pk in cls.primary_keys()])
         except KeyError:
             msg = "%s: Required attributes %s not satisfied by arguments %s" % (
-                cls.__name__, cls.primary_keys(), attrs)
+                cls.__name__,
+                cls.primary_keys(),
+                attrs,
+            )
             raise ValueError(msg)
 
     @classmethod

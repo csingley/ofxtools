@@ -122,7 +122,7 @@ class ACCTINFOTRNRQ(Aggregate):
 class SIGNUPMSGSRQV1(List):
     """ OFX section 8.1 """
 
-    dataTags = ["ENROLLTRNRQ"]
+    dataTags = ["ENROLLTRNRQ", "ACCTINFOTRNRQ", "ACCTTRNRQ", "CHGUSERINFOTRNRQ"]
 
 
 class ACCTINFO(List):

@@ -17,24 +17,20 @@ from ofxtools.ofxalchemy import models
 
 class OFXTree(ofxtools.Parser.OFXTree):
     """ """
+
     def convert(self):
         raise NotImplementedError
 
     def instantiate(self):
         """ """
-        if not hasattr(self, '_root'):
-            raise ValueError(
-                'Must first call parse() to have data to instantiate'
-            )
+        if not hasattr(self, "_root"):
+            raise ValueError("Must first call parse() to have data to instantiate")
 
         # SECLIST - list of description of securities referenced by
         # INVSTMT (investment account statement)
-        seclist = self.find('SECLISTMSGSRSV1/SECLIST')
+        seclist = self.find("SECLISTMSGSRSV1/SECLIST")
         if seclist is not None:
-            self.securities = [
-                self._instantiate(sec)
-                for sec in seclist
-            ]
+            self.securities = [self._instantiate(sec) for sec in seclist]
         else:
             self.securities = []
 
@@ -44,14 +40,12 @@ class OFXTree(ofxtools.Parser.OFXTree):
         # N.B. This iteration method doesn't preserve the original
         # ordering of the statements within the OFX response
         self.statements = []
-        for stmtClass in (
-            BankStatement, CreditCardStatement, InvestmentStatement
-        ):
+        for stmtClass in (BankStatement, CreditCardStatement, InvestmentStatement):
             tagname = stmtClass._tagName
-            for trnrs in self.findall('*/%sTRNRS' % tagname):
+            for trnrs in self.findall("*/%sTRNRS" % tagname):
                 # *STMTTRNRS may have no *STMTRS (in case of error).
                 # Don't blow up; skip silently.
-                stmtrs = trnrs.find('%sRS' % tagname)
+                stmtrs = trnrs.find("%sRS" % tagname)
                 if stmtrs is not None:
                     stmt = stmtClass(stmtrs)
                     self.statements.append(stmt)
@@ -70,13 +64,13 @@ class OFXTree(ofxtools.Parser.OFXTree):
         leaves = {}
         for child in elem:
             tag = child.tag
-            data = child.text or ''
+            data = child.text or ""
             data = data.strip()
             if data:
                 # it's a data-bearing leaf element.
                 assert tag not in leaves
                 # Silently drop all private tags (e.g. <INTU.XXXX>
-                if '.' not in tag:
+                if "." not in tag:
                     leaves[tag.lower()] = data
             else:
                 # it's an aggregate.
@@ -106,24 +100,26 @@ class OFXTree(ofxtools.Parser.OFXTree):
         important to interpreting transactions in foreign correncies, we
         preserve this information by adding a nonstandard curtype element.
         """
-        currency = elem.find('*/CURRENCY')
-        origcurrency = elem.find('*/ORIGCURRENCY')
+        currency = elem.find("*/CURRENCY")
+        origcurrency = elem.find("*/ORIGCURRENCY")
         if (currency is not None) or (origcurrency is not None):
             if (currency is not None) and (origcurrency is not None):
-                msg = '<%s> may not contain both <CURRENCY> and <ORIGCURRENCY>' % elem.tag
+                msg = (
+                    "<%s> may not contain both <CURRENCY> and <ORIGCURRENCY>" % elem.tag
+                )
                 raise ofxtools.Parser.ParseError(msg)
             curtype = currency
             if curtype is None:
                 curtype = origcurrency
-            if (curtype is not None):
-                extra_attributes = elem.get('extra_attributes')
-                extra_attributes['curtype'] = curtype.tag
-                elem.set('extra_attributes', extra_attributes)
+            if curtype is not None:
+                extra_attributes = elem.get("extra_attributes")
+                extra_attributes["curtype"] = curtype.tag
+                elem.set("extra_attributes", extra_attributes)
 
     @classmethod
     def _preflatten(cls, elem):
         """ """
-        if elem.tag == 'OPTINFO':
+        if elem.tag == "OPTINFO":
             # A <SECID> aggregate referring to the security underlying the
             # option is, in general, *not* going to be contained in <SECLIST>
             # (because you don't necessarily have a position in the underlying).
@@ -133,11 +129,11 @@ class OFXTree(ofxtools.Parser.OFXTree):
             # lack information about the security subclass).  It's unclear that
             # the SECID of the underlying is really needed for anything, so we
             # disregard it.
-            secid = elem.find('./SECID')
+            secid = elem.find("./SECID")
             if secid is not None:
                 elem.remove(secid)
 
-        elif elem.tag == 'MFINFO':
+        elif elem.tag == "MFINFO":
             # Strip {MF, FIMF}ASSETCLASS - lists that will blow up _flatten()
             # These are nearly useless for asset allocation since they're
             # so unreliable.  Since they're also a lot of trouble to process,
@@ -146,24 +142,24 @@ class OFXTree(ofxtools.Parser.OFXTree):
             # Do all XPath searches before removing nodes from the tree
             #   which seems to mess up the DOM in Python3 and throw an
             #   AttributeError on subsequent searches.
-            mfassetclass = elem.find('./MFASSETCLASS')
-            fimfassetclass = elem.find('./FIMFASSETCLASS')
+            mfassetclass = elem.find("./MFASSETCLASS")
+            fimfassetclass = elem.find("./FIMFASSETCLASS")
 
             if mfassetclass is not None:
                 elem.remove(mfassetclass)
             if fimfassetclass is not None:
                 elem.remove(fimfassetclass)
 
-        elif elem.tag.startswith('POS'):
-            secid = elem.find('.//SECID')
+        elif elem.tag.startswith("POS"):
+            secid = elem.find(".//SECID")
             if secid is None:
-                msg = '<%s> does not contain <SECID>'
+                msg = "<%s> does not contain <SECID>"
                 raise ofxtools.Parser.ParseError(msg)
-            extra_attributes = elem.get('extra_attributes')
-            extra_attributes['secinfo'] = cls._dereference(secid)
-            elem.set('extra_attributes', extra_attributes)
+            extra_attributes = elem.get("extra_attributes")
+            extra_attributes["secinfo"] = cls._dereference(secid)
+            elem.set("extra_attributes", extra_attributes)
 
-        elif elem.tag in ('STMTTRN', 'INVBANKTRAN'):
+        elif elem.tag in ("STMTTRN", "INVBANKTRAN"):
             # Replace BANKACCTTO/CCACCTTO/PAYEE with FK references.  This is
             # needed for {BANK,CC}ACCTTO because account type information is
             # contained in the aggregate container, which will be lost by
@@ -173,48 +169,48 @@ class OFXTree(ofxtools.Parser.OFXTree):
             # Do all XPath searches before removing nodes from the tree
             #   which seems to mess up the DOM in Python3 and throw an
             #   AttributeError on subsequent searches.
-            bankacctto = elem.find('BANKACCTTO')
-            ccacctto = elem.find('CCACCTTO')
-            payee = elem.find('PAYEE')
+            bankacctto = elem.find("BANKACCTTO")
+            ccacctto = elem.find("CCACCTTO")
+            payee = elem.find("PAYEE")
 
             cls._do_origcurrency(elem)
 
             if bankacctto is not None:
-                extra_attributes = elem.get('extra_attributes')
-                extra_attributes['acctto'] = cls._dereference(bankacctto)
-                elem.set('extra_attributes', extra_attributes)
+                extra_attributes = elem.get("extra_attributes")
+                extra_attributes["acctto"] = cls._dereference(bankacctto)
+                elem.set("extra_attributes", extra_attributes)
             if ccacctto is not None:
-                extra_attributes = elem.get('extra_attributes')
-                extra_attributes['acctto'] = cls._dereference(ccacctto)
-                elem.set('extra_attributes', extra_attributes)
+                extra_attributes = elem.get("extra_attributes")
+                extra_attributes["acctto"] = cls._dereference(ccacctto)
+                elem.set("extra_attributes", extra_attributes)
             if (bankacctto is not None) and (ccacctto is not None):
-                msg = '<%s> may not contain both <BANKACCTTO> and <CCACCTTO>' % elem.tag
+                msg = "<%s> may not contain both <BANKACCTTO> and <CCACCTTO>" % elem.tag
                 raise ofxtools.Parser.ParseError(msg)
             if payee is not None:
-                extra_attributes = elem.get('extra_attributes')
-                extra_attributes['payee'] = cls._dereference(payee)
-                elem.set('extra_attributes', extra_attributes)
+                extra_attributes = elem.get("extra_attributes")
+                extra_attributes["payee"] = cls._dereference(payee)
+                elem.set("extra_attributes", extra_attributes)
 
-        elif elem.find('.//INVTRAN') is not None:
+        elif elem.find(".//INVTRAN") is not None:
             # Do all XPath searches before removing nodes from the tree
             #   which seems to mess up the DOM in Python3 and throw an
             #   AttributeError on subsequent searches.
             cls._do_origcurrency(elem)
 
-            secid = elem.find('.//SECID')
+            secid = elem.find(".//SECID")
             if secid is not None:
-                extra_attributes = elem.get('extra_attributes')
-                extra_attributes['secinfo'] = cls._dereference(secid)
-                elem.set('extra_attributes', extra_attributes)
+                extra_attributes = elem.get("extra_attributes")
+                extra_attributes["secinfo"] = cls._dereference(secid)
+                elem.set("extra_attributes", extra_attributes)
 
     @classmethod
     def _postflatten(cls, elem):
         # Rename 'yield' (a reserved word in Python) to 'yld'
-        attributes = elem.get('attributes')
-        yld = attributes.pop('yield', None)
+        attributes = elem.get("attributes")
+        yld = attributes.pop("yield", None)
         if yld:
-            attributes['yld'] = yld
-            elem.set('attributes', attributes)
+            attributes["yld"] = yld
+            elem.set("attributes", attributes)
 
     @classmethod
     def _instantiate(cls, elem, **extra_attrs):
@@ -225,21 +221,21 @@ class OFXTree(ofxtools.Parser.OFXTree):
         If an instance that matches the given primary key signature has
         already been given, return that instead of creating a new one.
         """
-        elem.set('extra_attributes', extra_attrs)
+        elem.set("extra_attributes", extra_attrs)
 
         cls._preflatten(elem)
         flatattrs = cls._flatten(elem)
-        elem.set('attributes', flatattrs)
+        elem.set("attributes", flatattrs)
 
         cls._postflatten(elem)
         # Combine extra_attributes into attributes
-        attributes = elem.get('attributes')
-        attributes.update(elem.get('extra_attributes'))
-        elem.set('attributes', attributes)
-        elem.set('extra_attributes', {})
+        attributes = elem.get("attributes")
+        attributes.update(elem.get("extra_attributes"))
+        elem.set("attributes", attributes)
+        elem.set("extra_attributes", {})
 
         # SECID needs to instantiate as SECINFO
-        if elem.tag == 'SECID':
+        if elem.tag == "SECID":
             LookupSubclass = models.SECINFO
             # A SECID aggregate refers to a SECINFO that should be known from
             # SECLIST.  We really don't want to be seeing a CUSIP for the
@@ -280,11 +276,13 @@ class OFXTree(ofxtools.Parser.OFXTree):
             instance = LookupSubclass.query.filter_by(**fingerprint).one()
         except NoResultFound:
             if not Subclass:
-                msg = '%s finds no corresponding %s instance with %s' % (
-                    elem.tag, LookupSubclass.__name__, fingerprint
+                msg = "%s finds no corresponding %s instance with %s" % (
+                    elem.tag,
+                    LookupSubclass.__name__,
+                    fingerprint,
                 )
                 raise ofxtools.Parser.ParseError(msg)
-            attributes = elem.get('attributes')
+            attributes = elem.get("attributes")
             instance = Subclass(**attributes)
             Session.add(instance)
 
@@ -298,12 +296,13 @@ OFXParser = OFXTree
 ### STATEMENTS
 class Statement(object):
     """ Base class for Python representation of OFX *STMT aggregate """
+
     currency = None
     account = None
 
     def __init__(self, stmtrs):
         """ Initialize with *STMTRS Element """
-        self.currency = stmtrs.find('CURDEF').text
+        self.currency = stmtrs.find("CURDEF").text
         acctfrom = stmtrs.find(self._acctTag)
         self.account = OFXTree._instantiate(acctfrom)
         self.transactions = []
@@ -325,46 +324,48 @@ class Statement(object):
 
 class BankStatement(Statement):
     """ Python representation of OFX STMT (bank statement) aggregate """
-    _tagName = 'STMT'
-    _acctTag = 'BANKACCTFROM'
+
+    _tagName = "STMT"
+    _acctTag = "BANKACCTFROM"
 
     def _init(self, stmtrs):
         # BANKTRANLIST
-        tranlist = stmtrs.find('BANKTRANLIST')
+        tranlist = stmtrs.find("BANKTRANLIST")
         if tranlist is not None:
-            self.transactions = TransactionList(self.account, tranlist,)
+            self.transactions = TransactionList(self.account, tranlist)
 
         # LEDGERBAL - mandatory
-        ledgerbal = stmtrs.find('LEDGERBAL')
+        ledgerbal = stmtrs.find("LEDGERBAL")
         self.ledgerbal = OFXTree._instantiate(ledgerbal, acctfrom=self.account)
 
         # AVAILBAL
-        availbal = stmtrs.find('AVAILBAL')
+        availbal = stmtrs.find("AVAILBAL")
         if availbal is not None:
-            self.availbal = OFXTree._instantiate(availbal,acctfrom=self.account)
+            self.availbal = OFXTree._instantiate(availbal, acctfrom=self.account)
         else:
             self.availbal = None
 
-        ballist = stmtrs.find('BALLIST')
+        ballist = stmtrs.find("BALLIST")
         if ballist:
             self.other_balances = [OFXTree._instantiate(bal) for bal in ballist]
 
         # Unsupported subaggregates
-        for tag in ('MKTGINFO', ):
+        for tag in ("MKTGINFO",):
             child = stmtrs.find(tag)
             if child:
                 stmtrs.remove(child)
 
     def __repr__(self):
         s = "<%s account=%s currency=%s ledgerbal=%s availbal=%s len(other_balances)=%d len(transactions)=%d>"
-        return s % (self.__class__.__name__,
-                    self.account,
-                    self.currency,
-                    self.ledgerbal,
-                    self.availbal,
-                    len(self.other_balances),
-                    len(self.transactions),
-                   )
+        return s % (
+            self.__class__.__name__,
+            self.account,
+            self.currency,
+            self.ledgerbal,
+            self.availbal,
+            len(self.other_balances),
+            len(self.transactions),
+        )
 
 
 class CreditCardStatement(BankStatement):
@@ -372,8 +373,9 @@ class CreditCardStatement(BankStatement):
     Python representation of OFX CCSTMT (credit card statement)
     aggregate
     """
-    _tagName = 'CCSTMT'
-    _acctTag = 'CCACCTFROM'
+
+    _tagName = "CCSTMT"
+    _acctTag = "CCACCTFROM"
 
 
 class InvestmentStatement(Statement):
@@ -381,22 +383,21 @@ class InvestmentStatement(Statement):
     Python representation of OFX InvestmentStatement (investment account statement)
     aggregate
     """
-    _tagName = 'INVSTMT'
-    _acctTag = 'INVACCTFROM'
+
+    _tagName = "INVSTMT"
+    _acctTag = "INVACCTFROM"
 
     def _init(self, invstmtrs):
-        dtasof = invstmtrs.find('DTASOF').text
+        dtasof = invstmtrs.find("DTASOF").text
         self.datetime = ofxtools.Types.DateTime().convert(dtasof)
 
         # INVTRANLIST
-        tranlist = invstmtrs.find('INVTRANLIST')
+        tranlist = invstmtrs.find("INVTRANLIST")
         if tranlist is not None:
-            self.transactions = TransactionList(
-                self.account, tranlist
-            )
+            self.transactions = TransactionList(self.account, tranlist)
 
         # INVPOSLIST
-        poslist = invstmtrs.find('INVPOSLIST')
+        poslist = invstmtrs.find("INVPOSLIST")
         if poslist is not None:
             # FIs can list multiple INVPOS lots per security, so we
             # can't just naively instantiate what they give us or we'll
@@ -405,46 +406,47 @@ class InvestmentStatement(Statement):
             # only a single INVPOS lot per security
             positions = {}
             for pos in poslist:
-                secid = pos.find('.//SECID')
-                uniqueid = secid.find('UNIQUEID')
-                uniqueidtype = secid.find('UNIQUEIDTYPE')
-                units = pos.find('./INVPOS/UNITS')
+                secid = pos.find(".//SECID")
+                uniqueid = secid.find("UNIQUEID")
+                uniqueidtype = secid.find("UNIQUEIDTYPE")
+                units = pos.find("./INVPOS/UNITS")
                 seckey = (uniqueid.text, uniqueidtype.text)
                 position = positions.get(seckey, None)
                 if position is None:
                     positions[seckey] = (pos, Decimal(units.text))
                 else:
-                    positions[seckey] = (position[0],
-                                         position[1] + Decimal(units.text)
-                                        )
-            self.positions = [OFXTree._instantiate(
-                pos, units=units, acctfrom=self.account,
-                dtasof=self.datetime)
-                for pos, units in positions.values()]
+                    positions[seckey] = (position[0], position[1] + Decimal(units.text))
+            self.positions = [
+                OFXTree._instantiate(
+                    pos, units=units, acctfrom=self.account, dtasof=self.datetime
+                )
+                for pos, units in positions.values()
+            ]
         else:
             self.positions = []
 
         # INVBAL
-        invbal = invstmtrs.find('INVBAL')
+        invbal = invstmtrs.find("INVBAL")
         if invbal is not None:
             # First strip off BALLIST & process it
-            ballist = invbal.find('BALLIST')
+            ballist = invbal.find("BALLIST")
             if ballist is not None:
                 invbal.remove(ballist)
                 self.other_balances = [
                     OFXTree._instantiate(
-                        bal, acctfrom=self.account, dtasof=self.datetime,
-                    ) for bal in ballist
+                        bal, acctfrom=self.account, dtasof=self.datetime
+                    )
+                    for bal in ballist
                 ]
             # Now we can flatten the rest of INVBAL
             self.balances = OFXTree._instantiate(
-                invbal, acctfrom=self.account, dtasof=self.datetime,
+                invbal, acctfrom=self.account, dtasof=self.datetime
             )
         else:
             self.balances = []
 
         # Unsupported subaggregates
-        for tag in ('INVOOLIST', 'INV401K', 'INV401KBAL', 'MKTGINFO'):
+        for tag in ("INVOOLIST", "INV401K", "INV401KBAL", "MKTGINFO"):
             child = invstmtrs.find(tag)
             if child is not None:
                 invstmtrs.remove
@@ -454,15 +456,16 @@ class InvestmentStatement(Statement):
             <%s datetime='%s' account=%s currency='%s' balances=%s
             \len(other_balances)=%d len(positions)=%d len(transactions)=%d>
         """
-        return s % (self.__class__.__name__,
-                    self.datetime,
-                    self.account,
-                    self.currency,
-                    self.balances,
-                    len(self.other_balances),
-                    len(self.positions),
-                    len(self.transactions),
-                   )
+        return s % (
+            self.__class__.__name__,
+            self.datetime,
+            self.account,
+            self.currency,
+            self.balances,
+            len(self.other_balances),
+            len(self.positions),
+            len(self.transactions),
+        )
 
 
 ### TRANSACTION LISTS
@@ -471,6 +474,7 @@ class TransactionList(list):
     Base class for Python representation of OFX *TRANLIST (transaction list)
     aggregate
     """
+
     def __init__(self, account, tranlist):
         self.account = account
         dtstart, dtend = tranlist[0:2]
@@ -485,18 +489,23 @@ class TransactionList(list):
         return instance
 
     def __repr__(self):
-        return "<%s dtstart='%s' dtend='%s' len(self)=%d>" % \
-                (self.__class__.__name__, self.dtstart, self.dtend, len(self))
+        return "<%s dtstart='%s' dtend='%s' len(self)=%d>" % (
+            self.__class__.__name__,
+            self.dtstart,
+            self.dtend,
+            len(self),
+        )
 
 
 def main():
     from argparse import ArgumentParser
     from ofxtools.ofxalchemy.database import init_db, sessionmanager
 
-    argparser = ArgumentParser(description='Import OFX data')
-    argparser.add_argument('-d', '--database', default='sqlite://',
-                           help='Database connection')
-    argparser.add_argument('file', nargs='+', help='OFX file(s)')
+    argparser = ArgumentParser(description="Import OFX data")
+    argparser.add_argument(
+        "-d", "--database", default="sqlite://", help="Database connection"
+    )
+    argparser.add_argument("file", nargs="+", help="OFX file(s)")
     args = argparser.parse_args()
 
     init_db(args.database)
@@ -508,5 +517,5 @@ def main():
             ofxparser.instantiate()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
