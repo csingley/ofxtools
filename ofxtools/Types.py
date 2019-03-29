@@ -149,7 +149,9 @@ class String(Element):
         if value == "":
             value = None
         if value is not None:
-            value = str(value)
+            if not isinstance(value, str):
+                msg = "'{}' is not a str"
+                raise ValueError(msg.format(value))
 
             # Unescape '&amp;' '&lt;' '&gt;' '&nbsp;' per OFX section 2.3
             # Also go ahead and unescape other XML control characters,

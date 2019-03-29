@@ -323,8 +323,8 @@ class SubAggregate(Element):
     instances with the Aggregate instances to which they refer.
 
     The main job of a SubAggregate is to contribute to the ``spec`` of its
-    parent model class.  It also validates ``required=True`` via its convert()
-    method inherited from ``ofxtools.Types.Element``.
+    parent model class.  It also validates ``__init__()`` args via its
+    ``convert()`` method.
     """
 
     def _init(self, *args, **kwargs):
@@ -332,6 +332,13 @@ class SubAggregate(Element):
         self.type = args.pop(0)
         assert issubclass(self.type, Aggregate)
         super()._init(*args, **kwargs)
+
+    def convert(self, value):
+        if not isinstance(value, (self.type, type(None))):
+            msg = "'{}' is not an instance of {}"
+            raise ValueError(msg.format(value, self.type))
+
+        return super().convert(value)
 
     def __repr__(self):
         return "<{}>".format(self.type.__name__)

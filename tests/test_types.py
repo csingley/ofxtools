@@ -104,8 +104,11 @@ class StringTestCase(unittest.TestCase, Base):
 
     def test_convert(self):
         t = self.type_()
+        # Pass string
         self.assertEqual("foo", t.convert("foo"))
-        self.assertEqual("123", t.convert(123))
+        # Don't pass non-string
+        with self.assertRaises(ValueError):
+            t.convert(123)
 
     def test_unescape(self):
         # Issue # 28

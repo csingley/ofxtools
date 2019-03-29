@@ -561,7 +561,7 @@ class INTRACANRS(Aggregate):
 class INTRATRNRQ(TrnRq):
     """ OFX section 11.7.1.1 """
 
-    intrarq = SubAggregate(STMTRQ)
+    intrarq = SubAggregate(INTRARQ)
     intramodrq = SubAggregate(INTRAMODRQ)
     intracanrq = SubAggregate(INTRACANRQ)
 
