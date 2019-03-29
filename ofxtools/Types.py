@@ -89,8 +89,12 @@ class Element(InstanceCounterMixin):
         self.data[parent] = value
 
     def convert(self, value):
-        """ Override in subclass """
-        raise NotImplementedError
+        """ Extend in subclass """
+        if value is None and self.required:
+            msg = "{}: Value is required"
+            raise ValueError(msg.format(self.__class__.__name__))
+
+        return value
 
     def unconvert(self, value):
         """ Override in subclass """
@@ -105,23 +109,15 @@ class Bool(Element):
     mapping = {"Y": True, "N": False}
 
     def convert(self, value):
-        if value is None:
-            if self.required:
-                raise ValueError("Value is required")
-            else:
-                return None
-        # Pass through values already converted to bool
-        # (for instantiating from Aggregate.__init__ rather than parsed
-        # via Aggregate.from_etree)
-        if isinstance(value, bool):
-            return value
-        try:
-            return self.mapping[value]
-        except KeyError as e:
-            raise ValueError(
-                "%s is not one of the allowed values %s"
-                % (e.args[0], self.mapping.keys())
-            )
+        if value is not None and not isinstance(value, bool):
+            try:
+                value = self.mapping[value]
+            except KeyError as e:
+                raise ValueError(
+                    "%s is not one of the allowed values %s"
+                    % (e.args[0], self.mapping.keys())
+                )
+        return super().convert(value)
 
     def unconvert(self, value):
         if value is None:
@@ -148,27 +144,23 @@ class String(Element):
     def convert(self, value):
         if value == "":
             value = None
-        if value is None:
-            if self.required:
-                raise ValueError("Value is required")
-            else:
-                return None
+        if value is not None:
+            value = str(value)
 
-        value = str(value)
+            # Unescape '&amp;' '&lt;' '&gt;' '&nbsp;' per OFX section 2.3
+            # Also go ahead and unescape other XML control characters,
+            # because FIs tend to mix &amp; match...
+            value = saxutils.unescape(value, {"&nbsp;": " ", "&apos;": "'", "&quot;": '"'})
 
-        # Unescape '&amp;' '&lt;' '&gt;' '&nbsp;' per OFX section 2.3
-        # Also go ahead and unescape other XML control characters,
-        # because FIs tend to mix &amp; match...
-        value = saxutils.unescape(value, {"&nbsp;": " ", "&apos;": "'", "&quot;": '"'})
+            if self.length is not None and len(value) > self.length:
+                if self.strict:
+                    msg = "'%s' is too long; max length=%s" % (value, self.length)
+                    raise ValueError(msg)
+                else:
+                    msg = "Value '%s' exceeds length=%s" % (value, self.length)
+                    warnings.warn(msg, category=OFXTypeWarning)
 
-        if self.length is not None and len(value) > self.length:
-            if self.strict:
-                msg = "'%s' is too long; max length=%s" % (value, self.length)
-                raise ValueError(msg)
-            else:
-                msg = "Value '%s' exceeds length=%s" % (value, self.length)
-                warnings.warn(msg, category=OFXTypeWarning)
-        return value
+        return super().convert(value)
 
 
 class NagString(String):
@@ -190,14 +182,10 @@ class OneOf(Element):
     def convert(self, value):
         if value == "":
             value = None
-        if value is None:
-            if self.required:
-                raise ValueError("Value is required")
-            else:
-                return None
-        if value in self.valid:
-            return value
-        raise ValueError("'%s' is not OneOf %r" % (value, self.valid))
+        if value is not None and value not in self.valid:
+            raise ValueError("'%s' is not OneOf %r" % (value, self.valid))
+
+        return super().convert(value)
 
 
 class Integer(Element):
@@ -210,16 +198,13 @@ class Integer(Element):
         super()._init(*args, **kwargs)
 
     def convert(self, value):
-        if value is None:
-            if self.required:
-                raise ValueError("Value is required")
-            else:
-                return None
-        value = int(value)
-        if self.length is not None and value >= 10 ** self.length:
-            msg = "%s has too many digits; max digits=%s"
-            raise ValueError(msg % (value, self.length))
-        return int(value)
+        if value is not None:
+            value = int(value)
+            if self.length is not None and value >= 10 ** self.length:
+                msg = "%s has too many digits; max digits=%s"
+                raise ValueError(msg % (value, self.length))
+
+        return super().convert(value)
 
 
 class Decimal(Element):
@@ -232,23 +217,18 @@ class Decimal(Element):
         super()._init(*args, **kwargs)
 
     def convert(self, value):
-        if value is None:
-            if self.required:
-                raise ValueError("Value is required")
-            else:
-                return None
+        if value is not None:
+            # Handle Euro-style decimal separators (comma)
+            try:
+                value = decimal.Decimal(value)
+            except decimal.InvalidOperation:
+                if isinstance(value, str):
+                    value = decimal.Decimal(value.replace(",", "."))
 
-        # Handle Euro-style decimal separators (comma)
-        try:
-            value = decimal.Decimal(value)
-        except decimal.InvalidOperation:
-            if isinstance(value, str):
-                value = decimal.Decimal(value.replace(",", "."))
+            if self.precision is not None:
+                value = value.quantize(self.precision)
 
-        if self.precision is not None:
-            value = value.quantize(self.precision)
-
-        return value
+        return super().convert(value)
 
 
 class DateTime(Element):
@@ -258,76 +238,71 @@ class DateTime(Element):
     formats = {18: "%Y%m%d%H%M%S.%f", 14: "%Y%m%d%H%M%S", 12: "%Y%m%d%H%M", 8: "%Y%m%d"}
 
     def convert(self, value):
-        if value is None:
-            if self.required:
-                raise ValueError("Value is required")
+        if value is not None:
+            # If it's already a datetime, it needs to be timezone-aware
+            if isinstance(value, datetime.datetime):
+                if value.utcoffset() is None:
+                    msg = "{} is not timezone-aware".format(value)
+                    raise ValueError(msg)
+
+            # Otherwise it needs to be a string
             else:
-                return None
-        # If it's already a datetime, it needs to be timezone-aware
-        if isinstance(value, datetime.datetime):
-            if value.utcoffset() is None:
-                msg = "{} is not timezone-aware".format(value)
-                raise ValueError(msg)
-            return value
+                if not isinstance(value, str):
+                    msg = "'{}' is type '{}'; can't convert to datetime"
+                    raise ValueError(msg.format(value, type(value)))
 
-        # Otherwise it needs to be a string
-        if not isinstance(value, str):
-            msg = "'{}' is type '{}'; can't convert to datetime".format(
-                value, type(value)
-            )
+                # Pristine copy of input for error reporting purposes
+                orig_value = value
 
-            raise ValueError(msg)
+                # Strip out timezone, on which strptime() chokes
+                chunks = self.tz_re.split(value)
+                value = chunks.pop(0)
+                if chunks:
+                    gmt_offset, tz_name = chunks[:2]
+                    # Some FIs *cough* IBKR *cough* write crap for the TZ offset
+                    # FIXME
+                    if gmt_offset == "-":
+                        tz_kludge = {
+                            "EST": "-5",
+                            "EDT": "-4",
+                            "CST": "-6",
+                            "CDT": "-5",
+                            "MST": "-7",
+                            "MDT": "-6",
+                            "PST": "-8",
+                            "PDT": "-7",
+                        }
+                        try:
+                            gmt_offset = tz_kludge[tz_name]
+                        except KeyError:
+                            msg = "Can't parse timezone '{}' into a valid GMT offset"
+                            raise ValueError(msg.format(tz_name))
+                    # hours -> seconds
+                    gmt_offset = int(decimal.Decimal(gmt_offset) * 3600)
+                else:
+                    gmt_offset = 0
+                    #  tz_name = 'GMT'
 
-        # Pristine copy of input for error reporting purposes
-        orig_value = value
-
-        # Strip out timezone, on which strptime() chokes
-        chunks = self.tz_re.split(value)
-        value = chunks.pop(0)
-        if chunks:
-            gmt_offset, tz_name = chunks[:2]
-            # Some FIs *cough* IBKR *cough* write crap for the TZ offset
-            # FIXME
-            if gmt_offset == "-":
-                tz_kludge = {
-                    "EST": "-5",
-                    "EDT": "-4",
-                    "CST": "-6",
-                    "CDT": "-5",
-                    "MST": "-7",
-                    "MDT": "-6",
-                    "PST": "-8",
-                    "PDT": "-7",
-                }
                 try:
-                    gmt_offset = tz_kludge[tz_name]
-                except KeyError:
-                    msg = "Can't parse timezone '{}' into a valid GMT offset"
-                    raise ValueError(msg.format(tz_name))
-            # hours -> seconds
-            gmt_offset = int(decimal.Decimal(gmt_offset) * 3600)
-        else:
-            gmt_offset = 0
-            #  tz_name = 'GMT'
+                    format = self.formats[len(value)]
 
-        try:
-            format = self.formats[len(value)]
+                    # OFX spec gives fractional seconds as milliseconds; convert to
+                    # microseconds as required by strptime()
+                    if len(value) == 18:
+                        value = value.replace(".", ".000")
 
-            # OFX spec gives fractional seconds as milliseconds; convert to
-            # microseconds as required by strptime()
-            if len(value) == 18:
-                value = value.replace(".", ".000")
+                    value = datetime.datetime.strptime(value, format)
+                except (KeyError, ValueError):
+                    raise ValueError(
+                        "Datetime '%s' does not match OFX formats %s"
+                        % (orig_value, self.formats.values())
+                    )
 
-            value = datetime.datetime.strptime(value, format)
-        except (KeyError, ValueError):
-            raise ValueError(
-                "Datetime '%s' does not match OFX formats %s"
-                % (orig_value, self.formats.values())
-            )
+                # Adjust timezone to GMT/UTC
+                value -= datetime.timedelta(seconds=gmt_offset)
+                value = value.replace(tzinfo=UTC)
 
-        # Adjust timezone to GMT/UTC
-        value -= datetime.timedelta(seconds=gmt_offset)
-        return value.replace(tzinfo=UTC)
+        return super().convert(value)
 
     def unconvert(self, value):
         """
