@@ -497,14 +497,9 @@ def do_stmt(args):
     else:
         password = getpass()
 
-    with client.request_statements(
-        args.user,
-        password,
-        *stmtrqs,
-        clientuid=args.clientuid,
-        dryrun=args.dryrun,
-        close_elements=not args.unclosedelements,
-    ) as f:
+    with client.request_statements(args.user, password, *stmtrqs,
+                                   clientuid=args.clientuid, dryrun=args.dryrun,
+                                   close_elements=not args.unclosedelements) as f:
         response = f.read()
 
     print(response.decode())
