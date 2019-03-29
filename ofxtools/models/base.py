@@ -22,11 +22,8 @@ class classproperty(property):
 
 class Aggregate:
     """
-    Base class for Python representation of OFX 'aggregate', i.e. SGML parent
-    node that contains no data.
-
-    Performs validation & type conversion for class attributes of type
-    ``Element``, ``SubAggregate``, ``Unsupported``.
+    Base class for Python representation of OFX 'aggregate', i.e. SGML/XML
+    parent node that is empty of data text.
 
     The alternate ``from_etree()`` instance constructor takes an instance of
     ``xml.etree.ElementTree.Element``.
@@ -34,9 +31,10 @@ class Aggregate:
 
     # Validation constraints used by ``validate_kwargs()``.
     # Sequences of tuples (type str) defining mutually exclusive child tags.
-    # Aggregate MAY have a child from  `optionalMutexes``;
-    # MUST contain child from ``requiredMutexes``.
+
+    # Aggregate MAY have at most child from  `optionalMutexes``
     optionalMutexes = []
+    # Aggregate MUST contain exactly one child from ``requiredMutexes``
     requiredMutexes = []
 
     def __init__(self, **kwargs):
@@ -48,23 +46,6 @@ class Aggregate:
         for attr in self.spec:
             value = kwargs.pop(attr, None)
             try:
-                # Each member of ``Aggregate.spec`` is a string referring
-                # to a class attribute that's a subclass of ``Types.Element``.
-                # These are data descriptors that call the subclass's
-                # ``convert()`` in its overriden  ``__set__()``.
-                # This is where the type conversion happens.
-                #
-                # If ``attr`` (i.e. key from kwargs) refers to a SubAggregate
-                # instance, then that SubAggregate instance gets overwritten on
-                # this Aggregate instance by the corresponding kwargs value,
-                # after it's been type-converted.
-                # (This is pretty normal behavior for an __init__() function)
-                #
-                # If ``attr`` (i.e. key from kwargs) refers to an instance
-                # of a ``Types.Element`` subclass (i.e. a data-bearing leaf
-                # node as defined in the OFX spec), then setting its value
-                # invokes the proxy caching logic in ``ofxtools.Types`` (q.v.)
-                # (This is the weird part)
                 setattr(self, attr, value)
             except ValueError as e:
                 msg = "Can't set {}.{} to {}: {}".format(
@@ -85,26 +66,40 @@ class Aggregate:
     @classmethod
     def validate_kwargs(cls, kwargs):
         """
-        Extra validation constraints from the OFX spec not captured by
-        ofxtools class definition or type validators.
+        Extra class-level validation constraints from the OFX spec not captured
+        by class attribute validators.
         """
-        # Aggregate MAY contain at most one child from each tuple
-        for (attr0, attr1) in cls.optionalMutexes:
-            val0 = kwargs.get(attr0, None)
-            val1 = kwargs.get(attr1, None)
-            if val0 and val1:
-                msg = "{} may not set both {} and {}"
-                raise ValueError(msg.format(cls.__name__, attr0, attr1))
 
-        # Aggregate MUST contain exactly one child from each tuple
-        for choices in cls.requiredMutexes:
-            count = sum([kwargs.get(ch, None) is not None for ch in choices])
-            if count != 1:
-                args = ", ".join(
-                    ["{}={}".format(ch, kwargs.get(ch, None)) for ch in choices]
-                )
-                msg = "{}({}): must contain exactly 1 of [{}]"
-                raise ValueError(msg.format(cls.__name__, args, choices))
+        def enforce_count(attr, predicate, errMsg):
+            """
+            Raise error if the # of non-empty elements of each subsequence
+            of ``attr`` doesn't conform to ``predicate``
+            """
+            for mutex in attr:
+                count = sum([kwargs.get(i, None) is not None for i in mutex])
+                if not predicate(count):
+                    args = ", ".join(
+                        ["{}={}".format(i, kwargs.get(i, None)) for i in mutex]
+                    )
+                    errFields = {
+                        "cls": cls.__name__,
+                        "args": args,
+                        "mutex": mutex,
+                        "count": count,
+                    }
+                    raise ValueError(errMsg.format(**errFields))
+
+        enforce_count(
+            cls.optionalMutexes,
+            lambda x: x <= 1,
+            errMsg="{cls}({args}): must contain at most 1 of [{mutex}] (not {count})",
+        )
+
+        enforce_count(
+            cls.requiredMutexes,
+            lambda x: x == 1,
+            errMsg="{cls}({args}): must contain exactly 1 of [{mutex}] (not {count})",
+        )
 
     @classmethod
     def from_etree(cls, elem):
@@ -114,9 +109,6 @@ class Aggregate:
         Look up `Aggregate`` subclass corresponding to ``Element.tag``;
         parse the Element structure into (args, kwargs) and pass those
         to the subclass __init__().
-
-        Main entry point for type conversion from ``ET.Element`` to
-        ``Aggregate``.
         """
         if not isinstance(elem, ET.Element):
             msg = "Bad type {} - should be xml.etree.ElementTree.Element"
@@ -147,38 +139,48 @@ class Aggregate:
     @classmethod
     def _etree2args(cls, elem):
         """
-        Extract args to pass to __init__() from ``ET.Element``.
+        Extract args from ``ET.Element`` to pass to __init__().
 
         Generic ``Aggregate`` subclass __init__() accepts only keyword args.
         """
-        # Verify that SubElements appear in the correct order
         spec = list(cls.spec)
-        children = [(el.tag.lower(), el.text or el) for el in elem]
 
-        def indexOrRaise(tag, value):
+        def indexOrRaise(attr):
             try:
-                return spec.index(tag)
+                return spec.index(attr)
             except ValueError:
                 msg = "Aggregate {} does not define {} in spec {}"
-                raise ValueError(msg.format(cls.__name__, tag, spec))
+                raise ValueError(msg.format(cls.__name__, attr, spec))
 
-        indices = [indexOrRaise(*child) for child in children]
-        if indices != sorted(indices):
-            msg = "{} SubElements out of order: {}"
-            raise ValueError(msg.format(cls.__name__, [c[0] for c in children]))
-
-        args = []
-
-        # ``dict.__init__()`` updates duplicate keys, so we can't use that.
-        # In OFX, only *LIST may contain repeated child tags.
         kwargs = {}
-        for tag, value in children:
-            if tag in kwargs:
-                msg = "{} contains multiple {}"
-                raise ValueError(msg.format(cls.__name__, tag))
-            kwargs[tag] = value
+        specIndices = []
 
-        return args, kwargs
+        for subelem in elem:
+            key = subelem.tag.lower()
+            # If the child contains text data, the metadata is an Element;
+            # return the text data.  Otherwise it's an Aggregate - perform
+            # type conversion.
+            if key in cls.unsupported:
+                value = None
+            elif subelem.text:
+                value = subelem.text
+            else:
+                value = Aggregate.from_etree(subelem)
+
+            specIndices.append(indexOrRaise(key))
+            # In OFX, child tags may not be repeated (except for list-type
+            # Aggregates - see subclass ``List._etree2args()`` below).
+            if key in kwargs:
+                msg = "{} contains multiple {}"
+                raise ValueError(msg.format(cls.__name__, key))
+            kwargs[key] = value
+
+        # Verify that SubElements appear in the order defined by the ``spec``.
+        if specIndices != sorted(specIndices):
+            msg = "{} SubElements out of order: {}"
+            raise ValueError(msg.format(cls.__name__, [el.tag for el in elem]))
+
+        return [], kwargs
 
     def to_etree(self):
         """
@@ -227,11 +229,12 @@ class Aggregate:
     @classmethod
     def _ordered_attrs(cls, predicate):
         """
-        Filter cls.__dict__ for items matching the given predicate and return
-        them as an OrderedDict in the same order they're declared in the class
-        definition.
+        Filter class attributes for items matching the given predicate.
 
-        N.B. predicate tests *values* of cls.__dict__
+        Return them as an OrderedDict in the same order they're declared in the
+        class definition.
+
+        N.B. predicate tests *values* of cls._superdict
              (not keys i.e. attribute names)
         """
         match_items = [(k, v) for k, v in cls._superdict.items() if predicate(v)]
@@ -242,7 +245,7 @@ class Aggregate:
     @classmethod
     def spec(cls):
         """
-        OrderedDict of all Aggregate attributes that are
+        OrderedDict of all class attributes that are
         Elements/SubAggregates/Unsupported.
 
         N.B. SubAggregate is a subclass of Element.
@@ -253,7 +256,7 @@ class Aggregate:
     @classmethod
     def elements(cls):
         """
-        OrderedDict of all Aggregate attributes that are Elements but not
+        OrderedDict of all class attributes that are Elements but not
         SubAggregates.
         """
         return cls._ordered_attrs(
@@ -264,7 +267,7 @@ class Aggregate:
     @classmethod
     def subaggregates(cls):
         """
-        OrderedDict of all Aggregate attributes that are SubAggregates.
+        OrderedDict of all class attributes that are SubAggregates.
         """
         return cls._ordered_attrs(lambda v: isinstance(v, SubAggregate))
 
@@ -272,15 +275,15 @@ class Aggregate:
     @classmethod
     def unsupported(cls):
         """
-        OrderedDict of all Aggregate attributes that are Unsupported.
+        OrderedDict of all class attributes that are Unsupported.
         """
         return cls._ordered_attrs(lambda v: isinstance(v, Unsupported))
 
     @property
     def _spec_repr(self):
         """
-        Sequence of (name, repr()) for each item in the subclass spec
-        (see property above) that has a value for this instance.
+        Sequence of (name, repr()) for each non-empty attribute in the
+        class ``_spec`` (see property above).
 
         Used by __repr__().
         """
@@ -312,30 +315,19 @@ class SubAggregate(Element):
     Aggregate that is a child of this parent Aggregate.
 
     SubAggregate instances appear only in the model class definitions
-    (Aggregate subclasses).  Their main utility is to define the ``spec``
-    class attribute for a model class, via ``Aggregate._ordered_attrs()``.
+    (Aggregate subclasses).  Actual model instances replace these SubAggregate
+    instances with the Aggregate instances to which they refer.
 
-    Actual model instances replace these SubAggregate instances with Aggregate
-    instances; cf. ``Aggregate.__init__()`` call to ``setattr()``.
+    The main job of a SubAggregate is to contribute to the ``spec`` of its
+    parent model class.  It also validates ``required=True`` via its convert()
+    method inherited from ``ofxtools.Types.Element``.
     """
 
     def _init(self, *args, **kwargs):
         args = list(args)
-        agg = args.pop(0)
-        assert issubclass(agg, Aggregate)
-        self.type = agg
+        self.type = args.pop(0)
+        assert issubclass(self.type, Aggregate)
         super()._init(*args, **kwargs)
-
-    def convert(self, value):
-        if value is None:
-            if self.required:
-                msg = "{}: Value is required"
-                raise ValueError(msg.format(self.type.__name__))
-            else:
-                return None
-        if isinstance(value, self.type):
-            return value
-        return Aggregate.from_etree(value)
 
     def __repr__(self):
         return "<{}>".format(self.type.__name__)
@@ -361,8 +353,8 @@ class List(Aggregate, list):
     Base class for OFX *LIST
     """
 
-    # ``List.metadataTags`` means fixed child ``Elements``  (in the OFX spec)
-    # preceding the variable-length sequence of contained ``Aggregates``.
+    # ``List.metadataTags`` means fixed child entities (in the OFX spec)
+    # other than the variable-length sequence of contained ``Aggregates``.
     # Define as sequence of OFX tags (type str) corresponding to __init__()
     # positional args - order is significant.
     # Used by ``_etree2args()`` to parse args.
@@ -387,6 +379,14 @@ class List(Aggregate, list):
         for i, tag in enumerate(metadataTags):
             setattr(self, tag.lower(), args[i])
 
+        # In the base ``Aggregate`` class, ``requiredMutexes`` are validated
+        # by ``validate_kwargs()``.  ``List`` subclasses don't accept kwargs,
+        # so pack up our args in a dict and reuse the function.
+        fake_kwargs = {}
+        for mutexes in self.requiredMutexes:
+            fake_kwargs.update(({mx: getattr(self, mx) for mx in mutexes}))
+        self.validate_kwargs(fake_kwargs)
+
         # Remaining args as variable-length contained data.
         for member in args[metadataLen:]:
             cls_name = member.__class__.__name__
@@ -407,13 +407,16 @@ class List(Aggregate, list):
         def find_metadata(tag):
             child = elem.find(tag)
             if child is not None:
+                assert child not in cls.unsupported
                 elem.remove(child)
                 # If the child contains text data, the metadata is an Element;
-                # return the text data.  Otherwise it's an Aggregate - return
-                # the Aggregate.
+                # return the text data.  Otherwise it's an Aggregate - perform
+                # type conversion.
                 text = child.text
                 if text:
                     child = text
+                else:
+                    child = Aggregate.from_etree(child)
             return child
 
         args = [find_metadata(tag) for tag in cls.metadataTags]
@@ -454,48 +457,3 @@ class List(Aggregate, list):
 
     def __repr__(self):
         return "<{} len={}>".format(self.__class__.__name__, len(self))
-
-
-class TranList(List):
-    """ Base class for OFX *TRANLIST """
-
-    dtstart = DateTime(required=True)
-    dtend = DateTime(required=True)
-
-    metadataTags = ["DTSTART", "DTEND"]
-
-    def __repr__(self):
-        return "<{} dtstart='{}' dtend='{}' len={}>".format(
-            self.__class__.__name__, self.dtstart, self.dtend, len(self)
-        )
-
-
-class SyncRqList(List):
-    """ Base cass for *SYNCRQ """
-
-    token = String(10)
-    tokenonly = Bool()
-    refresh = Bool()
-    rejectifmissing = Bool(required=True)
-
-    metadataTags = ["TOKEN", "TOKENONLY", "REFRESH", "REJECTIFMISSING"]
-    requiredMutexes = [("token", "tokenonly", "refresh")]
-
-    def __init__(self, *args):
-        super().__init__(*args)
-
-        # To validate "choice" args (token/tokenonly/refresh) we stick them
-        # into ``requiredMutexes`` and reuse the logic in
-        # ``Agregate.validate_kwargs()``
-        self.validate_kwargs(
-            {"token": self.token, "tokenonly": self.tokenonly, "refresh": self.refresh}
-        )
-
-
-class SyncRsList(List):
-    """ Base cass for *SYNCRS """
-
-    token = String(10, required=True)
-    lostsync = Bool()
-
-    metadataTags = ["TOKEN", "LOSTSYNC"]
