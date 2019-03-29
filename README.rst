@@ -34,9 +34,8 @@ or export your data in OFX format.
 It targets compliance with the `OFX specification`_, specifically OFX versions
 1.6 and 2.03.
 
-The OFX message sets are defined in Sections 7-14 of the spec.  Of these,
-so far ``ofxtools`` complies with nearly all of
-    * Section 7 (financial institution profile)
+So far, ``ofxtools`` complies with nearly all of
+    * Section 7 (financial institution profile) up through 11.7
     * Section 8 (service activation; account information)
     * Section 11 (banking)
     * Section 13 (investments)
@@ -45,8 +44,9 @@ This should cover the great majority of real-world OFX use cases.  A particular
 focus of ``ofxtools`` is full support of the OFX investment message set,
 which has been somewhat neglected by the Python community.
 
-The major item remaining on the ``ofxtools`` "to do" list is implementing
-OFX Section 12 (payments).  Absent a compelling use case, I can't see
+The major items remaining on the ``ofxtools`` "to do" list are to implement
+interbank payments (OFX Sections 11.8 - 11.9, ACH and wire transfers) and
+bill pay (OFX Section 12).  Absent a compelling use case, I can't see
 implementing Section 9 (email in OFX) or 14 (bill presentment).  Section 10
 (recurring payments) is a low priority.
 
@@ -69,13 +69,14 @@ For ease of installation, ``ofxtools`` is released on `PyPI`_.
 Development of ``ofxtools`` is centralized at `GitHub`_, where you will find
 a `bug tracker`_.
 
-Dependencies
-------------
-``ofxtools`` is compatible with Python version 3.1+.  Its only external
-dependency is `Requests`_.
+Installation Dependencies
+-------------------------
+``ofxtools`` requires Python version 3.4+, and depends only on the standard
+libary (no external dependencies).
 
 **NOTE: As of version 0.6, ``ofxtools`` no longer supports Python version 2,
-which goes EOL 2019-01-01.**
+which goes EOL 2020-01-01.**
+
 
 .. _OFX specification: http://www.ofx.net/downloads.html
 .. _Requests: http://docs.python-requests.org/en/master/

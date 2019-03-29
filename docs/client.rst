@@ -47,8 +47,8 @@ client application identifiers (it's usually safest to tell them you're a
 recent version of Quicken for Windows).
 
 
-Using the ``ofxget`` script
----------------------------
+Using the ofxget script
+-----------------------
 -  Copy ``~/.config/ofxtools/ofxget_example.cfg`` to
    ``~/.config/ofxtools/ofxget.cfg`` and edit:
 -  Add a section for your financial institution, including URL, account
@@ -57,14 +57,14 @@ Using the ``ofxget`` script
 
 ``ofxget amex stmt -s 20140101 -e 20140630 > 2014-04_amex.ofx``
 
-Please note that the CLI accepts OFX-formatted dates (YYYYmmdd) not
+Please note that the CLI accepts OFX-formatted dates (YYYYmmdd) rather than
 ISO-8601 (YYYY-mm-dd).
 
 See the ``--help`` for explanation of the script options.
 
 
-Using ``OFXClient`` in another program
---------------------------------------
+Using OFXClient in another program
+----------------------------------
 To use within another program, first initialize an ``ofxtools.Client.OFXClient``
 instance with the relevant connection parameters.
 

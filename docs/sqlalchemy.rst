@@ -1,15 +1,28 @@
-.. ofxalchemy:
+.. sqlalchemy:
 
-``ofxtools`` and SQL
-====================
-``ofxtools`` does include the ``ofxalchemy`` subpackage, but you probably don't
-want to use it.  The implementation is pretty nasty, and the SQL tables it
-generates are cumbersome and inefficient.
+Using ``ofxtools`` with SQL
+===========================
+As of version 0.7, ``ofxtools`` no longer includes the ``ofxalchemy``
+subpackage.  The nature of its fundamental architectural flaw is well expressed
+by this quote from a `moderately reputable source`_:
 
-Frankly, OFX is a poor data format for serious use, as is obvious to anyone
+    SQLAlchemy supports class inheritance mapped to databases but it's not
+    really something that scales well to deep hierarchies.  You can actually
+    stretch this a lot by emphasizing single-table inheritance so that you
+    aren't hobbled with dozens of joins, but this seems like it is still a very
+    deep hierarchy even for that approach.
+
+    What you need to do here is forget about your whole class hierarchy, and
+    first design the database schema.   You want to persist this data in a
+    relational database.  How?  What do the tables look like?  For any
+    non-trivial application, this is where you need to design things from.  
+
+OFX is a poor fit for a relational data model, as is obvious to anyone
 who's tried to work with its handling of online bill payees or securities
-reorganizations.  A better approach is to decouple your SQL data model from
-OFX, which will also allow you to better handle other financial data formats.
+reorganizations.  You don't really want to map that mess directly onto your
+database tables... the heart of any ORM-based application.  A better approach
+is to decouple your SQL data model from OFX, which will also allow you better
+to handle other financial data formats.
 
 It's recommended to define your own ORM models based on your needs.  Import
 OFX into Python using the main ``ofxtools.Parser.OFXTree`` parser, extract
@@ -79,7 +92,8 @@ the relevant data, and feed it to your model classes.  Something like this:
                        brokerid='ameritrade.com')
     stmtrq = InvStmtRq(acctid='999999999')
     response = client.request_statements(user='elmerfudd',
-                                         password='T0PS3CR3T', invstmtrqs=[stmtrq])
+                                         password='T0PS3CR3T',
+                                         invstmtrqs=[stmtrq])
     parser = OFXTree()
     parser.parse(response)
     ofx = parser.convert()
@@ -123,3 +137,4 @@ the relevant data, and feed it to your model classes.  Something like this:
     session.commit()
 
 
+.. _moderately reputable source: https://groups.google.com/d/msg/sqlalchemy/a7xeKebSgTE/6m-qdR4BBgAJ

@@ -24,7 +24,7 @@ if you need to generate your own OFX-formatted data... ``ofxtools`` is for you!
    client
    parser
    generating
-   ofxalchemy
+   sqlalchemy
    contributing
    resources
 
@@ -44,8 +44,8 @@ or export your data in OFX format.
 It targets compliance with the `OFX specification`_, specifically OFX versions
 1.6 and 2.03.
 
-So far, ``ofxtools`` complies with nearly all of:
-    * Section 7 (financial institution profile)
+So far, ``ofxtools`` complies with nearly all of
+    * Section 7 (financial institution profile) up through 11.7
     * Section 8 (service activation; account information)
     * Section 11 (banking)
     * Section 13 (investments)
@@ -54,17 +54,18 @@ This should cover the great majority of real-world OFX use cases.  A particular
 focus of ``ofxtools`` is full support of the OFX investment message set,
 which has been somewhat neglected by the Python community.
 
-The major item remaining on the ``ofxtools`` "to do" list is implementing
-OFX Section 12 (payments).  Absent a compelling use case, I can't see
+The major items remaining on the ``ofxtools`` "to do" list are to implement
+interbank payments (OFX Sections 11.8 - 11.9, ACH and wire transfers) and
+bill pay (OFX Section 12).  Absent a compelling use case, I can't see
 implementing Section 9 (email in OFX) or 14 (bill presentment).  Section 10
 (recurring payments) is a low priority.
-OFX Section 12 (payments).
 
 Some care has been taken with the data model to make it easily maintainable
 and extensible.  The ``ofxtools.models`` subpackage contains simple, direct
 translations of the relevant sections of the OFX specification.  Using existing
 models as templates, it's quite straightforward to define new models and
 cover more of the spec as needed (the odd corner case notwithstanding).
+See :ref:`contributing` for a detailed example.
 
 More than 10 years' worth of OFX data from various financial institutions
 has been run through the ``ofxtools`` parser, with the results checked.  Test
@@ -79,13 +80,13 @@ For ease of installation, ``ofxtools`` is released on `PyPI`_.
 Development of ``ofxtools`` is centralized at `GitHub`_, where you will find
 a `bug tracker`_.
 
-Dependencies
-------------
-``ofxtools`` is compatible with Python version 3.1+.  Its only external
-dependency is `Requests`_.
+Installation Dependencies
+-------------------------
+``ofxtools`` requires Python version 3.4+, and depends only on the standard
+libary (no external dependencies).
 
 **NOTE: As of version 0.6, ``ofxtools`` no longer supports Python version 2,
-which goes EOL 2019-01-01.**
+which goes EOL 2020-01-01.**
 
 
 .. _OFX specification: http://www.ofx.net/downloads.html
