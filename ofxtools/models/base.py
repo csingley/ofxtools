@@ -46,6 +46,10 @@ class Aggregate:
         for attr in self.spec:
             value = kwargs.pop(attr, None)
             try:
+                # If attr is an element (i.e. its class is defined in
+                # ``ofxtools.Types``, not defined below as ``Subaggregate``,
+                # ``List``, etc.) then its value is type-converted here.
+                # ``Types.Element.__set__()`` calls ``convert()``
                 setattr(self, attr, value)
             except ValueError as e:
                 msg = "Can't set {}.{} to {}: {}".format(
