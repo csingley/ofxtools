@@ -97,7 +97,12 @@ class Element(InstanceCounterMixin):
         return value
 
     def unconvert(self, value):
-        """ Override in subclass """
+        """ Extend in subclass """
+        if value is not None:
+            value = str(value)
+        elif self.required:
+            msg = "{}: Value is required"
+            raise ValueError(msg.format(self.__class__.__name__))
         return value
 
     def __repr__(self):
@@ -120,14 +125,13 @@ class Bool(Element):
         return super().convert(value)
 
     def unconvert(self, value):
-        if value is None:
-            return None
-        if not isinstance(value, bool):
-            raise ValueError(
-                "%s is not one of the allowed values %s" % (value, self.mapping.keys())
-            )
+        if value is not None:
+            if not isinstance(value, bool):
+                msg = "{} is not a bool"
+                raise ValueError(msg.format(value))
+            value = {v: k for k, v in self.mapping.items()}[value]
 
-        return {v: k for k, v in self.mapping.items()}[value]
+        return super().unconvert(value)
 
 
 class String(Element):
@@ -154,13 +158,28 @@ class String(Element):
 
             if self.length is not None and len(value) > self.length:
                 if self.strict:
-                    msg = "'%s' is too long; max length=%s" % (value, self.length)
-                    raise ValueError(msg)
+                    msg = "'{}' is too long; max length={}"
+                    raise ValueError(msg.format(value, self.length))
                 else:
-                    msg = "Value '%s' exceeds length=%s" % (value, self.length)
-                    warnings.warn(msg, category=OFXTypeWarning)
+                    msg = "Value '{}' exceeds length={}"
+                    warnings.warn(msg.format(value, self.length),
+                                  category=OFXTypeWarning)
 
         return super().convert(value)
+
+    def unconvert(self, value):
+        if value is not None:
+            value = str(value)
+            if self.length is not None and len(value) > self.length:
+                if self.strict:
+                    msg = "'{}' is too long; max length={}"
+                    raise ValueError(msg.format(value, self.length))
+                else:
+                    msg = "Value '{}' exceeds length={}"
+                    warnings.warn(msg.format(value, self.length),
+                                  category=OFXTypeWarning)
+
+        return super().unconvert(value)
 
 
 class NagString(String):
@@ -183,9 +202,14 @@ class OneOf(Element):
         if value == "":
             value = None
         if value is not None and value not in self.valid:
-            raise ValueError("'%s' is not OneOf %r" % (value, self.valid))
+            raise ValueError("'{}' is not OneOf {}".format(value, self.valid))
 
         return super().convert(value)
+
+    def unconvert(self, value):
+        if value is not None and value not in self.valid:
+            raise ValueError("'{}' is not OneOf {}".format(value, self.valid))
+        return super().unconvert(value)
 
 
 class Integer(Element):
@@ -201,10 +225,21 @@ class Integer(Element):
         if value is not None:
             value = int(value)
             if self.length is not None and value >= 10 ** self.length:
-                msg = "%s has too many digits; max digits=%s"
-                raise ValueError(msg % (value, self.length))
+                msg = "'{}' has too many digits; max digits={}"
+                raise ValueError(msg.format(value, self.length))
 
         return super().convert(value)
+
+    def unconvert(self, value):
+        if value is not None:
+            if not isinstance(value, int):
+                msg = "'{}' is not an integer"
+                raise ValueError(msg.format(value))
+            if self.length is not None and value >= 10 ** self.length:
+                msg = "'{}' has too many digits; max digits={}"
+                raise ValueError(msg.format(value, self.length))
+
+        return super().unconvert(value)
 
 
 class Decimal(Element):
@@ -231,7 +266,17 @@ class Decimal(Element):
         return super().convert(value)
 
     def unconvert(self, value):
-        return str(value)
+        if value is not None:
+            if not isinstance(value, decimal.Decimal):
+                msg = "'{}' is not a Decimal"
+                raise ValueError(msg.format(msg))
+            if self.precision is not None:
+                # FIXME - there must be a more efficient way
+                if value.quantize(self.precision) != value:
+                    msg = "'{}' exceeds precision={}"
+                    raise ValueError(msg.format(value, self.precision))
+
+        return super().unconvert(value)
 
 
 class DateTime(Element):
@@ -252,7 +297,7 @@ class DateTime(Element):
             else:
                 if not isinstance(value, str):
                     msg = "'{}' is type '{}'; can't convert to datetime"
-                    raise ValueError(msg.format(value, type(value)))
+                    raise ValueError(msg.format(value, value.__class__.__name__))
 
                 # Pristine copy of input for error reporting purposes
                 orig_value = value
@@ -311,15 +356,21 @@ class DateTime(Element):
         """
         Input timezone-aware datetime.datetime instance; output str in GMT.
         """
-        if not hasattr(value, "utcoffset") or value.utcoffset() is None:
-            msg = (
-                "'{}' isn't a timezone-aware datetime.datetime instance; "
-                "can't convert to GMT"
-            ).format(value)
-            raise ValueError(msg)
+        if value is not None:
+            if not isinstance(value, datetime.datetime):
+                msg = "'{}' is not a datetime"
+                raise ValueError(msg.format(value))
+            if not hasattr(value, "utcoffset") or value.utcoffset() is None:
+                msg = (
+                    "'{}' isn't a timezone-aware datetime.datetime instance; "
+                    "can't convert to GMT"
+                ).format(value)
+                raise ValueError(msg)
 
-        # Transform to GMT
-        gmt_value = value.utctimetuple()
+            # Transform to GMT
+            gmt_value = value.utctimetuple()
 
-        # timetuples don't have usec precision
-        return time.strftime(self.formats[14], gmt_value)
+            # timetuples don't have usec precision
+            value = time.strftime(self.formats[14], gmt_value)
+
+        return super().convert(value)

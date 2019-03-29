@@ -88,6 +88,16 @@ class BoolTestCase(unittest.TestCase, Base):
             with self.assertRaises(ValueError):
                 t.unconvert(illegal)
 
+    def test_convert_roundtrip(self):
+        t = self.type_()
+        value = "N"
+        self.assertEqual(t.unconvert(t.convert(value)), value)
+
+    def test_unconvert_roundtrip(self):
+        t = self.type_()
+        value = True
+        self.assertEqual(t.convert(t.unconvert(value)), value)
+
 
 class StringTestCase(unittest.TestCase, Base):
     type_ = ofxtools.Types.String
@@ -130,6 +140,33 @@ class StringTestCase(unittest.TestCase, Base):
         t = self.type_(required=False)
         self.assertEqual(t.convert(""), None)
 
+    def test_unconvert(self):
+        t = self.type_()
+        # Pass string
+        s = "漢字"
+        self.assertEqual(s, t.unconvert(s))
+        # Pass None
+        self.assertEqual(None, t.unconvert(None))
+
+        # Validator behavior for ``unconvert()``
+        t = self.type_(10, required=True)
+        # required=True + value=None -> ValueError
+        with self.assertRaises(ValueError):
+            t.unconvert(None)
+        # value > length constraint -> ValueError
+        with self.assertRaises(ValueError):
+            t.unconvert("My car is fast, my teeth are shiny")
+
+    def test_convert_roundtrip(self):
+        t = self.type_()
+        value = "漢字"
+        self.assertEqual(t.unconvert(t.convert(value)), value)
+
+    def test_unconvert_roundtrip(self):
+        t = self.type_()
+        value = "漢字"
+        self.assertEqual(t.convert(t.unconvert(value)), value)
+
 
 class NagstringTestCase(StringTestCase):
     type_ = ofxtools.Types.NagString
@@ -140,6 +177,26 @@ class NagstringTestCase(StringTestCase):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             t.convert("foobar")
+            self.assertEqual(len(w), 1)
+            self.assertEqual(w[0].category, OFXTypeWarning)
+
+    def test_unconvert(self):
+        t = self.type_()
+        # Pass string
+        s = "漢字"
+        self.assertEqual(s, t.unconvert(s))
+        # Pass None
+        self.assertEqual(None, t.unconvert(None))
+
+        # Validator behavior for ``unconvert()``
+        t = self.type_(10, required=True)
+        # required=True + value=None -> ValueError
+        with self.assertRaises(ValueError):
+            t.unconvert(None)
+        # value > length constraint -> OFXTypeWarning
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            t.unconvert("My car is fast, my teeth are shiny")
             self.assertEqual(len(w), 1)
             self.assertEqual(w[0].category, OFXTypeWarning)
 
@@ -156,6 +213,35 @@ class OneOfTestCase(unittest.TestCase, Base):
             t.convert("3")
         with self.assertRaises(ValueError):
             t.convert(1)
+
+    def test_unconvert(self):
+        t = self.type_("1", "2")
+        # Pass enum
+        self.assertEqual("1", t.unconvert("1"))
+        self.assertEqual("2", t.unconvert("2"))
+        # Pass None
+        self.assertEqual(None, t.unconvert(None))
+
+        # Validator behavior for ``unconvert()``
+        t = self.type_("1", "2", required=True)
+        # required=True + value=None -> ValueError (never should have been
+        # allowed by ``__set__()`` in the first place)
+        with self.assertRaises(ValueError):
+            t.unconvert(None)
+        # value not in enum -> ValueError (never should have been
+        # allowed by ``__set__()`` in the first place)
+        with self.assertRaises(ValueError):
+            t.unconvert("3")
+
+    def test_convert_roundtrip(self):
+        t = self.type_("1", "2")
+        value = "1"
+        self.assertEqual(t.unconvert(t.convert(value)), value)
+
+    def test_unconvert_roundtrip(self):
+        t = self.type_("1", "2")
+        value = "1"
+        self.assertEqual(t.convert(t.unconvert(value)), value)
 
 
 class IntegerTestCase(unittest.TestCase, Base):
@@ -178,6 +264,39 @@ class IntegerTestCase(unittest.TestCase, Base):
         # Don't accept strings that can't be converted to int
         with self.assertRaises(ValueError):
             t.convert("foobar")
+
+    def test_unconvert(self):
+        t = self.type_()
+        # integer -> string
+        self.assertEqual(t.unconvert(1), "1")
+        self.assertEqual(t.unconvert(999999), "999999")
+        # Pass None
+        self.assertEqual(None, t.unconvert(None))
+
+        # Validator behavior for ``unconvert()``
+        t = self.type_(2, required=True)
+        # type(value) is not int -> ValueError (never should have been
+        # allowed by ``__set__()`` in the first place)
+        with self.assertRaises(ValueError):
+            t.unconvert(decimal.Decimal("1"))
+        # required=True + value=None -> ValueError (never should have been
+        # allowed by ``__set__()`` in the first place)
+        with self.assertRaises(ValueError):
+            t.unconvert(None)
+        # value has more digits than length constraint -> ValueError
+        # (never should have been allowed by ``__set__()`` in the first place)
+        with self.assertRaises(ValueError):
+            t.unconvert(123)
+
+    def test_convert_roundtrip(self):
+        t = self.type_()
+        value = "2152"
+        self.assertEqual(t.unconvert(t.convert(value)), value)
+
+    def test_unconvert_roundtrip(self):
+        t = self.type_()
+        value = 2152
+        self.assertEqual(t.convert(t.unconvert(value)), value)
 
 
 class DecimalTestCase(unittest.TestCase, Base):
@@ -218,8 +337,26 @@ class DecimalTestCase(unittest.TestCase, Base):
 
     def test_unconvert(self):
         t = self.type_()
-        check = decimal.Decimal('21.52')
+        # decimal -> string
+        check = decimal.Decimal("21.52")
         self.assertEqual(t.unconvert(check), "21.52")
+        # Pass None
+        self.assertEqual(None, t.unconvert(None))
+
+        # Validator behavior for ``unconvert()``
+        t = self.type_(2, required=True)
+        # type(value) is not decimal -> ValueError (never should have been
+        # allowed by ``__set__()`` in the first place)
+        with self.assertRaises(ValueError):
+            t.unconvert(1)
+        # required=True + value=None -> ValueError (never should have been
+        # allowed by ``__set__()`` in the first place)
+        with self.assertRaises(ValueError):
+            t.unconvert(None)
+        # value doesn't match precision constraint -> ValueError
+        # (never should have been allowed by ``__set__()`` in the first place)
+        with self.assertRaises(ValueError):
+            t.unconvert(decimal.Decimal("0.123"))
 
     def test_convert_roundtrip(self):
         t = self.type_()
