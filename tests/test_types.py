@@ -27,9 +27,9 @@ class ElementTestCase(unittest.TestCase):
             ofxtools.Types.Element(required=False, otherarg=5)
 
     def testConvert(self):
-        """ Element base class doesn't implement convert() """
-        with self.assertRaises(NotImplementedError):
-            instance = ofxtools.Types.Element(required=False)
+        """ Element base class convert() validates ``required`` """
+        with self.assertRaises(ValueError):
+            instance = ofxtools.Types.Element(required=True)
             instance.convert(None)
 
     def testRepr(self):

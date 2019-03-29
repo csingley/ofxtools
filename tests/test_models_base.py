@@ -9,7 +9,7 @@ from datetime import datetime
 
 # local imports
 from ofxtools import models
-from ofxtools.models.base import Aggregate, List, TranList, SubAggregate, Unsupported
+from ofxtools.models.base import Aggregate, List, SubAggregate, Unsupported
 from ofxtools.Types import String, DateTime
 from ofxtools.utils import UTC
 
@@ -25,13 +25,6 @@ class TESTAGGREGATE(Aggregate):
 
 
 class TESTLIST(List):
-    dataTags = ("TESTAGGREGATE",)
-
-
-class TESTTRANLIST(TranList):
-    dtstart = DateTime(required=True)
-    dtend = DateTime(required=True)
-
     dataTags = ("TESTAGGREGATE",)
 
 
@@ -288,6 +281,32 @@ class AggregateTestCase(unittest.TestCase):
         pass
 
 
+class SubAggregateTestCase(unittest.TestCase):
+    @property
+    def instance(self):
+        return TESTSUBAGGREGATE(data="foo")
+
+    def testInit(self):
+        pass
+
+    def testConvert(self):
+        pass
+
+    def testRepr(self):
+        rep = repr(self.instance)
+        self.assertEqual(rep, "<TESTSUBAGGREGATE(data='foo')>")
+
+
+class UnsupportedTestCase(unittest.TestCase):
+    @property
+    def instance(self):
+        return Unsupported()
+
+    def testRepr(self):
+        rep = repr(self.instance)
+        self.assertEqual(rep, "<Unsupported>")
+
+
 class ListTestCase(unittest.TestCase):
     @property
     def instance(self):
@@ -354,112 +373,6 @@ class ListTestCase(unittest.TestCase):
     def testRepr(self):
         rep = repr(self.instance)
         self.assertEqual(rep, "<TESTLIST len=2>")
-
-
-class TranListTestCase(unittest.TestCase):
-    @property
-    def instance(self):
-        subagg0 = TESTSUBAGGREGATE(data="baz")
-        agg0 = TESTAGGREGATE(metadata="foo", testsubaggregate=subagg0)
-        subagg1 = TESTSUBAGGREGATE(data="quux")
-        agg1 = TESTAGGREGATE(metadata="bar", testsubaggregate=subagg1)
-        dtstart = datetime(2015, 1, 1, tzinfo=UTC)
-        dtend = datetime(2015, 3, 31, tzinfo=UTC)
-        return TESTTRANLIST(dtstart, dtend, agg0, agg1)
-
-    def testToEtree(self):
-        root = self.instance.to_etree()
-        self.assertIsInstance(root, ET.Element)
-        self.assertEqual(root.tag, "TESTTRANLIST")
-        self.assertIsNone(root.text)
-        self.assertEqual(len(root), 4)
-        dtstart, dtend, agg0, agg1 = root[:]
-
-        self.assertIsInstance(dtstart, ET.Element)
-        self.assertEqual(dtstart.tag, "DTSTART")
-        self.assertEqual(dtstart.text, "20150101000000")
-        self.assertEqual(len(dtstart), 0)
-
-        self.assertIsInstance(dtend, ET.Element)
-        self.assertEqual(dtend.tag, "DTEND")
-        self.assertEqual(dtend.text, "20150331000000")
-        self.assertEqual(len(dtend), 0)
-
-        self.assertIsInstance(agg0, ET.Element)
-        self.assertEqual(agg0.tag, "TESTAGGREGATE")
-        self.assertIsNone(agg0.text)
-        self.assertEqual(len(agg0), 2)
-
-        elem, subagg = agg0[:]
-
-        self.assertIsInstance(elem, ET.Element)
-        self.assertEqual(elem.tag, "METADATA")
-        self.assertEqual(elem.text, "foo")
-        self.assertEqual(len(subagg), 1)
-
-        self.assertIsInstance(subagg, ET.Element)
-        self.assertEqual(subagg.tag, "TESTSUBAGGREGATE")
-        self.assertIsNone(subagg.text)
-        self.assertEqual(len(subagg), 1)
-
-        elem = subagg[0]
-        self.assertIsInstance(elem, ET.Element)
-        self.assertEqual(elem.tag, "DATA")
-        self.assertEqual(elem.text, "baz")
-        self.assertEqual(len(elem), 0)
-
-        elem, subagg = agg1[:]
-
-        self.assertIsInstance(elem, ET.Element)
-        self.assertEqual(elem.tag, "METADATA")
-        self.assertEqual(elem.text, "bar")
-        self.assertEqual(len(subagg), 1)
-
-        self.assertIsInstance(subagg, ET.Element)
-        self.assertEqual(subagg.tag, "TESTSUBAGGREGATE")
-        self.assertIsNone(subagg.text)
-        self.assertEqual(len(subagg), 1)
-
-        elem = subagg[0]
-        self.assertIsInstance(elem, ET.Element)
-        self.assertEqual(elem.tag, "DATA")
-        self.assertEqual(elem.text, "quux")
-        self.assertEqual(len(elem), 0)
-
-    def testRepr(self):
-        rep = repr(self.instance)
-        self.assertEqual(
-            rep,
-            "<TESTTRANLIST dtstart='{}' dtend='{}' len=2>".format(
-                datetime(2015, 1, 1, tzinfo=UTC), datetime(2015, 3, 31, tzinfo=UTC)
-            ),
-        )
-
-
-class SubAggregateTestCase(unittest.TestCase):
-    @property
-    def instance(self):
-        return TESTSUBAGGREGATE(data="foo")
-
-    def testInit(self):
-        pass
-
-    def testConvert(self):
-        pass
-
-    def testRepr(self):
-        rep = repr(self.instance)
-        self.assertEqual(rep, "<TESTSUBAGGREGATE(data='foo')>")
-
-
-class UnsupportedTestCase(unittest.TestCase):
-    @property
-    def instance(self):
-        return Unsupported()
-
-    def testRepr(self):
-        rep = repr(self.instance)
-        self.assertEqual(rep, "<Unsupported>")
 
 
 if __name__ == "__main__":

@@ -52,6 +52,18 @@ from ofxtools.models.bank import (
     STPCHKTRNRS,
     STPCHKSYNCRQ,
     STPCHKSYNCRS,
+    XFERINFO,
+    XFERPRCSTS,
+    INTRARQ,
+    INTRARS,
+    INTRAMODRQ,
+    INTRAMODRS,
+    INTRACANRQ,
+    INTRACANRS,
+    INTRATRNRQ,
+    INTRATRNRS,
+    INTRASYNCRQ,
+    INTRASYNCRS,
     BANKMSGSETV1,
     BANKMSGSET,
     EMAILPROF,
@@ -1464,15 +1476,655 @@ class StpchksyncrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(instance[0], STPCHKTRNRS)
         self.assertIsInstance(instance[1], STPCHKTRNRS)
 
-    #  def testMissingAccttrnrs(self):
-    #  root = deepcopy(self.root)
-    #  for accttrnrs in root.findall("STPCHKTRNRS"):
-    #  root.remove(accttrnrs)
-    #  instance = Aggregate.from_etree(root)
-    #  self.assertIsInstance(instance, STPCHKSYNCRS)
-    #  self.assertEqual(instance.token, "DEADBEEF")
-    #  self.assertEqual(instance.lostsync, True)
-    #  self.assertEqual(len(instance), 0)
+
+class XferinfoTestCase(unittest.TestCase, base.TestAggregate):
+    """ XFERINFO with BANKACCTFROM/BANKACCTTO """
+    __test__ = True
+
+    requiredElements = ["TRNAMT"]
+    optionalElements = ["DTDUE"]
+
+    @property
+    def root(self):
+        root = Element("XFERINFO")
+        acctfrom = BankacctfromTestCase().root
+        root.append(acctfrom)
+        acctto = BankaccttoTestCase().root
+        root.append(acctto)
+        SubElement(root, 'TRNAMT').text = "257.53"
+        SubElement(root, 'DTDUE').text = "20080930000000"
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, XFERINFO)
+        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
+        self.assertIsInstance(instance.bankacctto, BANKACCTTO)
+        self.assertEqual(instance.trnamt, Decimal("257.53"))
+        self.assertEqual(instance.dtdue, datetime(2008, 9, 30, tzinfo=UTC))
+
+
+class XferinfoCcacctfromBankaccttoTestCase(unittest.TestCase, base.TestAggregate):
+    """ XFERINFO with BANKACCTFROM/BANKACCTTO """
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("XFERINFO")
+        acctfrom = CcacctfromTestCase().root
+        root.append(acctfrom)
+        acctto = BankaccttoTestCase().root
+        root.append(acctto)
+        SubElement(root, 'TRNAMT').text = "257.53"
+        SubElement(root, 'DTDUE').text = "20080930000000"
+        
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, XFERINFO)
+        self.assertIsInstance(instance.ccacctfrom, CCACCTFROM)
+        self.assertIsInstance(instance.bankacctto, BANKACCTTO)
+        self.assertEqual(instance.trnamt, Decimal("257.53"))
+        self.assertEqual(instance.dtdue, datetime(2008, 9, 30, tzinfo=UTC))
+
+
+class XferinfoCcacctfromCcaccttoTestCase(unittest.TestCase, base.TestAggregate):
+    """ XFERINFO with BANKACCTFROM/BANKACCTTO """
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("XFERINFO")
+        acctfrom = CcacctfromTestCase().root
+        root.append(acctfrom)
+        acctto = CcaccttoTestCase().root
+        root.append(acctto)
+        SubElement(root, 'TRNAMT').text = "257.53"
+        SubElement(root, 'DTDUE').text = "20080930000000"
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, XFERINFO)
+        self.assertIsInstance(instance.ccacctfrom, CCACCTFROM)
+        self.assertIsInstance(instance.ccacctto, CCACCTTO)
+        self.assertEqual(instance.trnamt, Decimal("257.53"))
+        self.assertEqual(instance.dtdue, datetime(2008, 9, 30, tzinfo=UTC))
+
+
+class XferinfoBankacctfromCcacctfromTestCase(unittest.TestCase, base.TestAggregate):
+    """ XFERINFO with BANKACCTFROM/CCACCTFROM - invalid """
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("XFERINFO")
+        acctfrom = BankacctfromTestCase().root
+        root.append(acctfrom)
+        acctfrom = CcacctfromTestCase().root
+        root.append(acctfrom)
+        acctto = BankaccttoTestCase().root
+        root.append(acctto)
+        SubElement(root, 'TRNAMT').text = "257.53"
+        SubElement(root, 'DTDUE').text = "20080930000000"
+
+        return root
+
+    def testConvert(self):
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(self.root)
+
+
+class XferinfoBankaccttoCcaccttoTestCase(unittest.TestCase, base.TestAggregate):
+    """ XFERINFO with BANKACCTTO/CCACCTTO - invalid """
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("XFERINFO")
+        acctfrom = BankacctfromTestCase().root
+        root.append(acctfrom)
+        acctto = BankaccttoTestCase().root
+        root.append(acctto)
+        acctto = CcaccttoTestCase().root
+        root.append(acctto)
+        SubElement(root, 'TRNAMT').text = "257.53"
+        SubElement(root, 'DTDUE').text = "20080930000000"
+
+        return root
+
+    def testConvert(self):
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(self.root)
+
+
+class XferprcstsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["XFERPRCCODE", "DTXFERPRC"]
+
+    @property
+    def root(self):
+        root = Element("XFERPRCSTS")
+        SubElement(root, 'XFERPRCCODE').text = "POSTEDON"
+        SubElement(root, 'DTXFERPRC').text = "20071231000000"
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, XFERPRCSTS)
+        self.assertEqual(instance.xferprccode, "POSTEDON")
+        self.assertEqual(instance.dtxferprc, datetime(2007, 12, 31, tzinfo=UTC))
+
+    def testOneOf(self):
+        self.oneOfTest('XFERPRCCODE',
+                       ["WILLPROCESSON", "POSTEDON", "NOFUNDSON",
+                        "CANCELEDON", "FAILEDON"])
+
+
+class IntrarqTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["XFERINFO"]
+
+    @property
+    def root(self):
+        root = Element("INTRARQ")
+        xferinfo = XferinfoTestCase().root
+        root.append(xferinfo)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INTRARQ)
+        self.assertIsInstance(instance.xferinfo, XFERINFO)
+
+
+class IntrarsTestCase(unittest.TestCase, base.TestAggregate):
+    """ INTRARS with DTXFERPRJ """
+    __test__ = True
+
+    requiredElements = ["CURDEF", "SRVRTID", "XFERINFO"]
+    optionalElements = ["DTXFERPRJ", "RECSRVRTID", "XFERPRCSTS"]
+
+    @property
+    def root(self):
+        root = Element("INTRARS")
+        SubElement(root, "CURDEF").text = "EUR"
+        SubElement(root, "SRVRTID").text = "DEADBEEF"
+        xferinfo = XferinfoTestCase().root
+        root.append(xferinfo)
+        SubElement(root, "DTXFERPRJ").text = "20150704000000"
+        SubElement(root, "RECSRVRTID").text = "B16B00B5"
+        xferprcsts = XferprcstsTestCase().root
+        root.append(xferprcsts)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INTRARS)
+        self.assertEqual(instance.curdef, "EUR")
+        self.assertIsInstance(instance.xferinfo, XFERINFO)
+        self.assertEqual(instance.dtxferprj, datetime(2015, 7, 4, tzinfo=UTC))
+        self.assertEqual(instance.recsrvrtid, "B16B00B5")
+        self.assertIsInstance(instance.xferprcsts, XFERPRCSTS)
+
+
+class IntrarsDtpostedTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["CURDEF", "SRVRTID", "XFERINFO"]
+    optionalElements = ["DTPOSTED", "RECSRVRTID", "XFERPRCSTS"]
+
+    @property
+    def root(self):
+        root = Element("INTRARS")
+        SubElement(root, "CURDEF").text = "EUR"
+        SubElement(root, "SRVRTID").text = "DEADBEEF"
+        xferinfo = XferinfoTestCase().root
+        root.append(xferinfo)
+        SubElement(root, "DTPOSTED").text = "20150704000000"
+        SubElement(root, "RECSRVRTID").text = "B16B00B5"
+        xferprcsts = XferprcstsTestCase().root
+        root.append(xferprcsts)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INTRARS)
+        self.assertEqual(instance.curdef, "EUR")
+        self.assertIsInstance(instance.xferinfo, XFERINFO)
+        self.assertEqual(instance.dtposted, datetime(2015, 7, 4, tzinfo=UTC))
+        self.assertEqual(instance.recsrvrtid, "B16B00B5")
+        self.assertIsInstance(instance.xferprcsts, XFERPRCSTS)
+
+
+class IntrarsDtxferprjDtpostedTestCase(unittest.TestCase):
+    """ INTRARS with both DTXFERPRJ and DTPOSTED - invalid """
+
+    @property
+    def root(self):
+        root = Element("INTRARS")
+        SubElement(root, "CURDEF").text = "EUR"
+        SubElement(root, "SRVRTID").text = "DEADBEEF"
+        xferinfo = XferinfoTestCase().root
+        root.append(xferinfo)
+        SubElement(root, "DTXFERPRJ").text = "20150704000000"
+        SubElement(root, "DTPOSTED").text = "20150704000000"
+        SubElement(root, "RECSRVRTID").text = "B16B00B5"
+        xferprcsts = XferprcstsTestCase().root
+        root.append(xferprcsts)
+
+        return root
+
+    def testConvert(self):
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(self.root)
+
+
+class IntramodrqTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("INTRAMODRQ")
+        SubElement(root, "SRVRTID").text = "DEADBEEF"
+        xferinfo = XferinfoTestCase().root
+        root.append(xferinfo)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INTRAMODRQ)
+        self.assertIsInstance(instance.xferinfo, XFERINFO)
+        self.assertEqual(instance.srvrtid, "DEADBEEF")
+
+
+class IntracanrqTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("INTRACANRQ")
+        SubElement(root, "SRVRTID").text = "DEADBEEF"
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INTRACANRQ)
+        self.assertEqual(instance.srvrtid, "DEADBEEF")
+
+
+class IntramodrsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("INTRAMODRS")
+        SubElement(root, "SRVRTID").text = "DEADBEEF"
+        xferinfo = XferinfoTestCase().root
+        root.append(xferinfo)
+        xferprcsts = XferprcstsTestCase().root
+        root.append(xferprcsts)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INTRAMODRS)
+        self.assertEqual(instance.srvrtid, "DEADBEEF")
+        self.assertIsInstance(instance.xferinfo, XFERINFO)
+        self.assertIsInstance(instance.xferprcsts, XFERPRCSTS)
+
+
+class IntracanrsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("INTRACANRS")
+        SubElement(root, "SRVRTID").text = "DEADBEEF"
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INTRACANRS)
+        self.assertEqual(instance.srvrtid, "DEADBEEF")
+
+
+class IntratrnrqTestCase(unittest.TestCase, base.TestAggregate):
+    """ INTRATRNQ with INTRARQ """
+    __test__ = True
+    requiredElements = ["TRNUID"]
+    optionalElements = ["CLTCOOKIE", "TAN"]
+
+    @property
+    def root(self):
+        root = Element("INTRATRNRQ")
+        SubElement(root, "TRNUID").text = "DEADBEEF"
+        SubElement(root, "CLTCOOKIE").text = "B00B1E5"
+        SubElement(root, "TAN").text = "B16B00B5"
+        intrarq = IntrarqTestCase().root
+        root.append(intrarq)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INTRATRNRQ)
+        self.assertEqual(instance.trnuid, "DEADBEEF")
+        self.assertEqual(instance.cltcookie, "B00B1E5")
+        self.assertIsInstance(instance.intrarq, INTRARQ)
+
+
+class IntratrnrqIntramodrqTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+    requiredElements = ["TRNUID"]
+    optionalElements = ["CLTCOOKIE", "TAN"]
+
+    @property
+    def root(self):
+        root = Element("INTRATRNRQ")
+        SubElement(root, "TRNUID").text = "DEADBEEF"
+        SubElement(root, "CLTCOOKIE").text = "B00B1E5"
+        SubElement(root, "TAN").text = "B16B00B5"
+        intramodrq = IntramodrqTestCase().root
+        root.append(intramodrq)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INTRATRNRQ)
+        self.assertEqual(instance.trnuid, "DEADBEEF")
+        self.assertEqual(instance.cltcookie, "B00B1E5")
+        self.assertIsInstance(instance.intramodrq, INTRAMODRQ)
+
+
+class IntratrnrqIntracanrqTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+    requiredElements = ["TRNUID"]
+    optionalElements = ["CLTCOOKIE", "TAN"]
+
+    @property
+    def root(self):
+        root = Element("INTRATRNRQ")
+        SubElement(root, "TRNUID").text = "DEADBEEF"
+        SubElement(root, "CLTCOOKIE").text = "B00B1E5"
+        SubElement(root, "TAN").text = "B16B00B5"
+        intracanrq = IntracanrqTestCase().root
+        root.append(intracanrq)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INTRATRNRQ)
+        self.assertEqual(instance.trnuid, "DEADBEEF")
+        self.assertEqual(instance.cltcookie, "B00B1E5")
+        self.assertIsInstance(instance.intracanrq, INTRACANRQ)
+
+
+class IntratrnrqEmptyTestCase(unittest.TestCase):
+    """ INTRATRNRQ with no INTRARQ/INTRAMODRQ/INTRACANRQ - invalid """
+
+    @property
+    def root(self):
+        root = Element("INTRATRNRQ")
+        SubElement(root, "TRNUID").text = "DEADBEEF"
+        SubElement(root, "CLTCOOKIE").text = "B00B1E5"
+        SubElement(root, "TAN").text = "B16B00B5"
+
+        return root
+
+    def testConvert(self):
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(self.root)
+
+
+class IntratrnrqIntrarqIntramodrqTestCase(unittest.TestCase):
+    """ INTRATRNRQ with INTRARQ and INTRAMODRQ - invalid """
+
+    @property
+    def root(self):
+        root = Element("INTRATRNRQ")
+        SubElement(root, "TRNUID").text = "DEADBEEF"
+        SubElement(root, "CLTCOOKIE").text = "B00B1E5"
+        SubElement(root, "TAN").text = "B16B00B5"
+        intrarq = IntrarqTestCase().root
+        root.append(intrarq)
+        intramodrq = IntramodrqTestCase().root
+        root.append(intramodrq)
+
+        return root
+
+    def testConvert(self):
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(self.root)
+
+
+class IntratrnrsIntrarqIntracanrqTestCase(unittest.TestCase):
+    """ INTRATRNRQ with INTRARQ and INTRACANRQ - invalid """
+
+    @property
+    def root(self):
+        root = Element("INTRATRNRQ")
+        SubElement(root, "TRNUID").text = "DEADBEEF"
+        SubElement(root, "CLTCOOKIE").text = "B00B1E5"
+        SubElement(root, "TAN").text = "B16B00B5"
+        intrarq = IntrarqTestCase().root
+        root.append(intrarq)
+        intracanrq = IntracanrqTestCase().root
+        root.append(intracanrq)
+
+        return root
+
+    def testConvert(self):
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(self.root)
+
+
+class IntratrnrqIntramodrqIntracanrqTestCase(unittest.TestCase):
+    """ INTRATRNRS with INTRAMODRS and INTRACANRS - invalid """
+
+    @property
+    def root(self):
+        root = Element("INTRATRNRQ")
+        SubElement(root, "TRNUID").text = "DEADBEEF"
+        SubElement(root, "CLTCOOKIE").text = "B00B1E5"
+        SubElement(root, "TAN").text = "B16B00B5"
+        intramodrq = IntramodrqTestCase().root
+        root.append(intramodrq)
+        intracanrq = IntracanrqTestCase().root
+        root.append(intracanrq)
+
+        return root
+
+    def testConvert(self):
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(self.root)
+
+
+class IntratrnrsTestCase(unittest.TestCase, base.TestAggregate):
+    """ INTRATRNS with INTRARS """
+    __test__ = True
+    requiredElements = ["TRNUID"]
+    optionalElements = ["CLTCOOKIE", "INTRARS"]
+
+    @property
+    def root(self):
+        root = Element("INTRATRNRS")
+        SubElement(root, "TRNUID").text = "DEADBEEF"
+        status = test_models_common.StatusTestCase().root
+        root.append(status)
+        SubElement(root, "CLTCOOKIE").text = "B00B1E5"
+        intrars = IntrarsTestCase().root
+        root.append(intrars)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INTRATRNRS)
+        self.assertEqual(instance.trnuid, "DEADBEEF")
+        self.assertIsInstance(instance.status, STATUS)
+        self.assertEqual(instance.cltcookie, "B00B1E5")
+        self.assertIsInstance(instance.intrars, INTRARS)
+
+
+class IntratrnrsIntramodrsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+    requiredElements = ["TRNUID"]
+    optionalElements = ["CLTCOOKIE", "INTRAMODRS"]
+
+    @property
+    def root(self):
+        root = Element("INTRATRNRS")
+        SubElement(root, "TRNUID").text = "DEADBEEF"
+        status = test_models_common.StatusTestCase().root
+        root.append(status)
+        SubElement(root, "CLTCOOKIE").text = "B00B1E5"
+        intramodrs = IntramodrsTestCase().root
+        root.append(intramodrs)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INTRATRNRS)
+        self.assertEqual(instance.trnuid, "DEADBEEF")
+        self.assertIsInstance(instance.status, STATUS)
+        self.assertEqual(instance.cltcookie, "B00B1E5")
+        self.assertIsInstance(instance.intramodrs, INTRAMODRS)
+
+
+class IntratrnrsIntracanrsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+    requiredElements = ["TRNUID"]
+    optionalElements = ["CLTCOOKIE", "INTRACANRS"]
+
+    @property
+    def root(self):
+        root = Element("INTRATRNRS")
+        SubElement(root, "TRNUID").text = "DEADBEEF"
+        status = test_models_common.StatusTestCase().root
+        root.append(status)
+        SubElement(root, "CLTCOOKIE").text = "B00B1E5"
+        intracanrs = IntracanrsTestCase().root
+        root.append(intracanrs)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INTRATRNRS)
+        self.assertEqual(instance.trnuid, "DEADBEEF")
+        self.assertIsInstance(instance.status, STATUS)
+        self.assertEqual(instance.cltcookie, "B00B1E5")
+        self.assertIsInstance(instance.intracanrs, INTRACANRS)
+
+
+class IntratrnrsIntrarsIntramodrsTestCase(unittest.TestCase):
+    """ INTRATRNRS with INTRARS and INTRAMODRS - invalid """
+
+    @property
+    def root(self):
+        root = Element("INTRATRNRS")
+        SubElement(root, "TRNUID").text = "DEADBEEF"
+        status = test_models_common.StatusTestCase().root
+        root.append(status)
+        SubElement(root, "CLTCOOKIE").text = "B00B1E5"
+        intrars = IntrarsTestCase().root
+        root.append(intrars)
+        intramodrs = IntramodrsTestCase().root
+        root.append(intramodrs)
+
+        return root
+
+    def testConvert(self):
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(self.root)
+
+
+class IntratrnrsIntrarsIntracanrsTestCase(unittest.TestCase):
+    """ INTRATRNRS with INTRARS and INTRACANRS - invalid """
+
+    @property
+    def root(self):
+        root = Element("INTRATRNRS")
+        SubElement(root, "TRNUID").text = "DEADBEEF"
+        status = test_models_common.StatusTestCase().root
+        root.append(status)
+        SubElement(root, "CLTCOOKIE").text = "B00B1E5"
+        intrars = IntrarsTestCase().root
+        root.append(intrars)
+        intracanrs = IntracanrsTestCase().root
+        root.append(intracanrs)
+
+        return root
+
+    def testConvert(self):
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(self.root)
+
+
+class IntratrnrsIntramodrsIntracanrsTestCase(unittest.TestCase):
+    """ INTRATRNRS with INTRAMODRS and INTRACANRS - invalid """
+
+    @property
+    def root(self):
+        root = Element("INTRATRNRS")
+        SubElement(root, "TRNUID").text = "DEADBEEF"
+        status = test_models_common.StatusTestCase().root
+        root.append(status)
+        SubElement(root, "CLTCOOKIE").text = "B00B1E5"
+        intramodrs = IntramodrsTestCase().root
+        root.append(intramodrs)
+        intracanrs = IntracanrsTestCase().root
+        root.append(intracanrs)
+
+        return root
+
+    def testConvert(self):
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(self.root)
+
+
+class IntrasyncrqTestCase(unittest.TestCase, base.TestAggregate):
+    """ INTRASYNC with TOKEN and BANKACCTFROM """
+    __test__ = True
+
+    requiredElements = ["REJECTIFMISSING"]
+
+    @property
+    def root(self):
+        root = Element("INTRASYNCRQ")
+        SubElement(root, "TOKEN").text = "DEADBEEF"
+        SubElement(root, "REJECTIFMISSING").text = "Y"
+        acctfrom = BankacctfromTestCase().root
+        root.append(acctfrom)
+        intratrnrq = IntratrnrqTestCase().root
+        root.append(intratrnrq)
+        root.append(deepcopy(intratrnrq))
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INTRASYNCRQ)
+        self.assertEqual(instance.token, "DEADBEEF")
+        self.assertEqual(instance.rejectifmissing, True)
+        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
 
 
 class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):

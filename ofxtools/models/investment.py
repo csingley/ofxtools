@@ -3,7 +3,7 @@
 Python object model for transactions,
 """
 # local imports
-from ofxtools.models.base import Aggregate, List, TranList, SubAggregate, Unsupported
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List
 from ofxtools.models.common import (
     STATUS,
     OFXEXTENSION,
@@ -11,6 +11,7 @@ from ofxtools.models.common import (
     SVCSTATUSES,
     TrnRq,
     TrnRs,
+    TranList,
 )
 from ofxtools.models.bank import STMTTRN, INCTRAN, BALLIST, INV401KSOURCES
 from ofxtools.models.seclist import SECID

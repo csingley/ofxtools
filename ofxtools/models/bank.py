@@ -4,16 +4,16 @@ Data structures for bank download - OFX Section 11
 """
 # local imports
 from ofxtools.Types import String, NagString, Decimal, Integer, OneOf, DateTime, Bool
-from ofxtools.models.base import (
-    Aggregate,
-    SubAggregate,
-    Unsupported,
-    List,
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List
+from ofxtools.models.common import (
+    MSGSETCORE,
+    SVCSTATUSES,
+    TrnRq,
+    TrnRs,
     TranList,
     SyncRqList,
     SyncRsList,
 )
-from ofxtools.models.common import MSGSETCORE, SVCSTATUSES, TrnRq, TrnRs
 from ofxtools.models.i18n import (
     CURRENCY,
     ORIGCURRENCY,
@@ -56,6 +56,18 @@ __all__ = [
     "STPCHKTRNRS",
     "STPCHKSYNCRQ",
     "STPCHKSYNCRS",
+    "XFERINFO",
+    "XFERPRCSTS",
+    "INTRARQ",
+    "INTRARS",
+    "INTRAMODRQ",
+    "INTRACANRQ",
+    "INTRAMODRS",
+    "INTRACANRS",
+    "INTRATRNRQ",
+    "INTRATRNRS",
+    "INTRASYNCRQ",
+    "INTRASYNCRS",
     "BANKMSGSRQV1",
     "BANKMSGSRSV1",
     "BANKMSGSETV1",
@@ -117,6 +129,18 @@ class BANKACCTTO(Aggregate):
     acctkey = String(22)
 
 
+class BANKACCTINFO(Aggregate):
+    """ OFX section 11.3.3 """
+
+    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
+    suptxdl = Bool(required=True)
+    xfersrc = Bool(required=True)
+    xferdest = Bool(required=True)
+    svcstatus = OneOf(*SVCSTATUSES, required=True)
+
+
+# CCACCTFROM/CCACCTTO are defined here rather than models.creditcard
+# in order to avoid recursive imports.
 class CCACCTFROM(Aggregate):
     """ OFX section 11.3.2 """
 
@@ -129,16 +153,6 @@ class CCACCTTO(Aggregate):
 
     acctid = String(22, required=True)
     acctkey = String(22)
-
-
-class BANKACCTINFO(Aggregate):
-    """ OFX section 11.3.3 """
-
-    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
-    suptxdl = Bool(required=True)
-    xfersrc = Bool(required=True)
-    xferdest = Bool(required=True)
-    svcstatus = OneOf(*SVCSTATUSES, required=True)
 
 
 class CCACCTINFO(Aggregate):
@@ -334,10 +348,6 @@ class STMTENDTRNRS(TrnRs):
     """ OFX section 11.5.2 """
 
     stmtendrs = SubAggregate(STMTENDRS)
-
-    @property
-    def statement(self):
-        return self.stmtendrs
 
 
 class CHKRANGE(Aggregate):
@@ -572,9 +582,30 @@ class INTRATRNRS(TrnRs):
             "intracanrs",
             "intermodrs",
             "intercanrs",
-            "intermodrs",
         )
     ]
+
+
+class INTRASYNCRQ(SyncRqList):
+    """ OFX section 11.12.2.1 """
+
+    bankacctfrom = SubAggregate(BANKACCTFROM)
+    ccacctfrom = SubAggregate(CCACCTFROM)
+
+    metadataTags = SyncRqList.metadataTags + ["BANKACCTFROM", "CCACCTFROM"]
+    dataTags = ["INTRATRNRQ"]
+    requiredMutexes = SyncRqList.requiredMutexes + [("bankacctfrom", "ccacctfrom")]
+
+
+class INTRASYNCRS(SyncRsList):
+    """ OFX section 11.12.2.2 """
+
+    bankacctfrom = SubAggregate(BANKACCTFROM)
+    ccacctfrom = SubAggregate(CCACCTFROM)
+
+    metadataTags = SyncRsList.metadataTags + ["BANKACCTFROM", "CCACCTFROM"]
+    dataTags = ["INTRATRNRS"]
+    requiredMutexes = [("bankacctfrom", "ccacctfrom")]
 
 
 class INTERRQ(Aggregate):
