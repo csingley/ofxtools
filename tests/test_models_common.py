@@ -4,12 +4,14 @@
 import unittest
 from datetime import datetime
 from decimal import Decimal
-from xml.etree.ElementTree import Element, SubElement
+#  from xml.etree.ElementTree import Element, SubElement
+import xml.etree.ElementTree as ET
 
 
 # local imports
 import base
 import test_models_i18n
+from test_models_base import TESTAGGREGATE, TESTSUBAGGREGATE, TESTLIST
 
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import (
@@ -19,9 +21,18 @@ from ofxtools.models.common import (
     OFXELEMENT,
     OFXEXTENSION,
     MSGSETCORE,
+    TranList,
 )
 from ofxtools.models.i18n import CURRENCY_CODES, LANG_CODES
 from ofxtools.utils import UTC
+from ofxtools.Types import DateTime
+
+
+class TESTTRANLIST(TranList):
+    dtstart = DateTime(required=True)
+    dtend = DateTime(required=True)
+
+    dataTags = ("TESTAGGREGATE",)
 
 
 class StatusTestCase(unittest.TestCase, base.TestAggregate):
@@ -32,10 +43,10 @@ class StatusTestCase(unittest.TestCase, base.TestAggregate):
 
     @property
     def root(self):
-        root = Element("STATUS")
-        SubElement(root, "CODE").text = "0"
-        SubElement(root, "SEVERITY").text = "INFO"
-        SubElement(root, "MESSAGE").text = "Do your laundry!"
+        root = ET.Element("STATUS")
+        ET.SubElement(root, "CODE").text = "0"
+        ET.SubElement(root, "SEVERITY").text = "INFO"
+        ET.SubElement(root, "MESSAGE").text = "Do your laundry!"
         return root
 
     def testConvert(self):
@@ -61,12 +72,12 @@ class BalTestCase(unittest.TestCase, base.TestAggregate):
 
     @property
     def root(self):
-        root = Element("BAL")
-        SubElement(root, "NAME").text = "balance"
-        SubElement(root, "DESC").text = "Balance"
-        SubElement(root, "BALTYPE").text = "DOLLAR"
-        SubElement(root, "VALUE").text = "111.22"
-        SubElement(root, "DTASOF").text = "20010630"
+        root = ET.Element("BAL")
+        ET.SubElement(root, "NAME").text = "balance"
+        ET.SubElement(root, "DESC").text = "Balance"
+        ET.SubElement(root, "BALTYPE").text = "DOLLAR"
+        ET.SubElement(root, "VALUE").text = "111.22"
+        ET.SubElement(root, "DTASOF").text = "20010630"
         currency = test_models_i18n.CurrencyTestCase().root
         root.append(currency)
         return root
@@ -93,11 +104,11 @@ class OfxelementTestCase(unittest.TestCase, base.TestAggregate):
 
     @property
     def root(self):
-        root = Element("OFXELEMENT")
-        SubElement(root, "TAGNAME").text = "ABC.SOMETHING"
-        SubElement(root, "NAME").text = "Some OFX extension"
-        SubElement(root, "TAGTYPE").text = "A-32"
-        SubElement(root, "TAGVALUE").text = "Foobar"
+        root = ET.Element("OFXELEMENT")
+        ET.SubElement(root, "TAGNAME").text = "ABC.SOMETHING"
+        ET.SubElement(root, "NAME").text = "Some OFX extension"
+        ET.SubElement(root, "TAGTYPE").text = "A-32"
+        ET.SubElement(root, "TAGVALUE").text = "Foobar"
         return root
 
     def testConvert(self):
@@ -120,7 +131,7 @@ class OfxextensionTestCase(unittest.TestCase, base.TestAggregate):
 
     @property
     def root(self):
-        root = Element("OFXEXTENSION")
+        root = ET.Element("OFXEXTENSION")
         ofxelement1 = OfxelementTestCase().root
         ofxelement2 = OfxelementTestCase().root
         root.append(ofxelement1)
@@ -153,18 +164,18 @@ class MsgsetcoreTestCase(unittest.TestCase, base.TestAggregate):
 
     @property
     def root(self):
-        root = Element("MSGSETCORE")
-        SubElement(root, "VER").text = "1"
-        SubElement(root, "URL").text = "https://ofxs.ameritrade.com/cgi-bin/apps/OFX"
-        SubElement(root, "OFXSEC").text = "NONE"
-        SubElement(root, "TRANSPSEC").text = "Y"
-        SubElement(root, "SIGNONREALM").text = "AMERITRADE"
-        SubElement(root, "LANGUAGE").text = "ENG"
-        SubElement(root, "SYNCMODE").text = "FULL"
-        SubElement(root, "REFRESHSUPT").text = "N"
-        SubElement(root, "RESPFILEER").text = "N"
-        SubElement(root, "INTU.TIMEOUT").text = "360"
-        SubElement(root, "SPNAME").text = "Dewey Cheatham & Howe"
+        root = ET.Element("MSGSETCORE")
+        ET.SubElement(root, "VER").text = "1"
+        ET.SubElement(root, "URL").text = "https://ofxs.ameritrade.com/cgi-bin/apps/OFX"
+        ET.SubElement(root, "OFXSEC").text = "NONE"
+        ET.SubElement(root, "TRANSPSEC").text = "Y"
+        ET.SubElement(root, "SIGNONREALM").text = "AMERITRADE"
+        ET.SubElement(root, "LANGUAGE").text = "ENG"
+        ET.SubElement(root, "SYNCMODE").text = "FULL"
+        ET.SubElement(root, "REFRESHSUPT").text = "N"
+        ET.SubElement(root, "RESPFILEER").text = "N"
+        ET.SubElement(root, "INTU.TIMEOUT").text = "360"
+        ET.SubElement(root, "SPNAME").text = "Dewey Cheatham & Howe"
         ofxextension = OfxextensionTestCase().root
         root.append(ofxextension)
         return root
@@ -188,6 +199,86 @@ class MsgsetcoreTestCase(unittest.TestCase, base.TestAggregate):
         self.oneOfTest("OFXSEC", ("NONE", "TYPE1"))
         self.oneOfTest("LANGUAGE", LANG_CODES)
         self.oneOfTest("SYNCMODE", ("FULL", "LITE"))
+
+
+class TranListTestCase(unittest.TestCase):
+    @property
+    def instance(self):
+        subagg0 = TESTSUBAGGREGATE(data="baz")
+        agg0 = TESTAGGREGATE(metadata="foo", testsubaggregate=subagg0)
+        subagg1 = TESTSUBAGGREGATE(data="quux")
+        agg1 = TESTAGGREGATE(metadata="bar", testsubaggregate=subagg1)
+        dtstart = datetime(2015, 1, 1, tzinfo=UTC)
+        dtend = datetime(2015, 3, 31, tzinfo=UTC)
+        return TESTTRANLIST(dtstart, dtend, agg0, agg1)
+
+    def testToEtree(self):
+        root = self.instance.to_etree()
+        self.assertIsInstance(root, ET.Element)
+        self.assertEqual(root.tag, "TESTTRANLIST")
+        self.assertIsNone(root.text)
+        self.assertEqual(len(root), 4)
+        dtstart, dtend, agg0, agg1 = root[:]
+
+        self.assertIsInstance(dtstart, ET.Element)
+        self.assertEqual(dtstart.tag, "DTSTART")
+        self.assertEqual(dtstart.text, "20150101000000")
+        self.assertEqual(len(dtstart), 0)
+
+        self.assertIsInstance(dtend, ET.Element)
+        self.assertEqual(dtend.tag, "DTEND")
+        self.assertEqual(dtend.text, "20150331000000")
+        self.assertEqual(len(dtend), 0)
+
+        self.assertIsInstance(agg0, ET.Element)
+        self.assertEqual(agg0.tag, "TESTAGGREGATE")
+        self.assertIsNone(agg0.text)
+        self.assertEqual(len(agg0), 2)
+
+        elem, subagg = agg0[:]
+
+        self.assertIsInstance(elem, ET.Element)
+        self.assertEqual(elem.tag, "METADATA")
+        self.assertEqual(elem.text, "foo")
+        self.assertEqual(len(subagg), 1)
+
+        self.assertIsInstance(subagg, ET.Element)
+        self.assertEqual(subagg.tag, "TESTSUBAGGREGATE")
+        self.assertIsNone(subagg.text)
+        self.assertEqual(len(subagg), 1)
+
+        elem = subagg[0]
+        self.assertIsInstance(elem, ET.Element)
+        self.assertEqual(elem.tag, "DATA")
+        self.assertEqual(elem.text, "baz")
+        self.assertEqual(len(elem), 0)
+
+        elem, subagg = agg1[:]
+
+        self.assertIsInstance(elem, ET.Element)
+        self.assertEqual(elem.tag, "METADATA")
+        self.assertEqual(elem.text, "bar")
+        self.assertEqual(len(subagg), 1)
+
+        self.assertIsInstance(subagg, ET.Element)
+        self.assertEqual(subagg.tag, "TESTSUBAGGREGATE")
+        self.assertIsNone(subagg.text)
+        self.assertEqual(len(subagg), 1)
+
+        elem = subagg[0]
+        self.assertIsInstance(elem, ET.Element)
+        self.assertEqual(elem.tag, "DATA")
+        self.assertEqual(elem.text, "quux")
+        self.assertEqual(len(elem), 0)
+
+    def testRepr(self):
+        rep = repr(self.instance)
+        self.assertEqual(
+            rep,
+            "<TESTTRANLIST dtstart='{}' dtend='{}' len=2>".format(
+                datetime(2015, 1, 1, tzinfo=UTC), datetime(2015, 3, 31, tzinfo=UTC)
+            ),
+        )
 
 
 if __name__ == "__main__":

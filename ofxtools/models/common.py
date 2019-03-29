@@ -16,6 +16,8 @@ __all__ = [
     "MSGSETCORE",
     "TrnRq",
     "TrnRs",
+    "SyncRqList",
+    "SyncRsList",
 ]
 
 
@@ -85,7 +87,7 @@ class MSGSETCORE(Aggregate):
 
 class TrnRq(Aggregate):
     """
-    Base class implementing common attributes for transaction request wrappers.
+    Base class for *TRNRQ wrappers.
 
     OFX section 2.4.6.1
     """
@@ -98,7 +100,7 @@ class TrnRq(Aggregate):
 
 class TrnRs(Aggregate):
     """
-    Base class implementing common attributes for transaction response wrappers.
+    Base class for *TRNRS wrappers.
 
     OFX section 2.4.6.1
     """
@@ -107,3 +109,38 @@ class TrnRs(Aggregate):
     status = SubAggregate(STATUS, required=True)
     cltcookie = String(32)
     ofxextension = SubAggregate(OFXEXTENSION)
+
+
+class TranList(List):
+    """ Base class for OFX *TRANLIST """
+
+    dtstart = DateTime(required=True)
+    dtend = DateTime(required=True)
+
+    metadataTags = ["DTSTART", "DTEND"]
+
+    def __repr__(self):
+        return "<{} dtstart='{}' dtend='{}' len={}>".format(
+            self.__class__.__name__, self.dtstart, self.dtend, len(self)
+        )
+
+
+class SyncRqList(List):
+    """ Base class for *SYNCRQ """
+
+    token = String(10)
+    tokenonly = Bool()
+    refresh = Bool()
+    rejectifmissing = Bool(required=True)
+
+    metadataTags = ["TOKEN", "TOKENONLY", "REFRESH", "REJECTIFMISSING"]
+    requiredMutexes = [("token", "tokenonly", "refresh")]
+
+
+class SyncRsList(List):
+    """ Base class for *SYNCRS """
+
+    token = String(10, required=True)
+    lostsync = Bool()
+
+    metadataTags = ["TOKEN", "LOSTSYNC"]
