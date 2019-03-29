@@ -205,9 +205,9 @@ class TranListTestCase(unittest.TestCase):
     @property
     def instance(self):
         subagg0 = TESTSUBAGGREGATE(data="baz")
-        agg0 = TESTAGGREGATE(metadata="foo", testsubaggregate=subagg0)
+        agg0 = TESTAGGREGATE(metadata="foo", req00=True, req11=False, testsubaggregate=subagg0)
         subagg1 = TESTSUBAGGREGATE(data="quux")
-        agg1 = TESTAGGREGATE(metadata="bar", testsubaggregate=subagg1)
+        agg1 = TESTAGGREGATE(metadata="bar", req01=False, req10=True, testsubaggregate=subagg1)
         dtstart = datetime(2015, 1, 1, tzinfo=UTC)
         dtend = datetime(2015, 3, 31, tzinfo=UTC)
         return TESTTRANLIST(dtstart, dtend, agg0, agg1)
@@ -233,14 +233,24 @@ class TranListTestCase(unittest.TestCase):
         self.assertIsInstance(agg0, ET.Element)
         self.assertEqual(agg0.tag, "TESTAGGREGATE")
         self.assertIsNone(agg0.text)
-        self.assertEqual(len(agg0), 2)
 
-        elem, subagg = agg0[:]
+        self.assertEqual(len(agg0), 4)
+        metadata, req00, req11, subagg = agg0[:]
 
-        self.assertIsInstance(elem, ET.Element)
-        self.assertEqual(elem.tag, "METADATA")
-        self.assertEqual(elem.text, "foo")
-        self.assertEqual(len(subagg), 1)
+        self.assertIsInstance(metadata, ET.Element)
+        self.assertEqual(metadata.tag, "METADATA")
+        self.assertEqual(metadata.text, "foo")
+        self.assertEqual(len(metadata), 0)
+
+        self.assertIsInstance(req00, ET.Element)
+        self.assertEqual(req00.tag, "REQ00")
+        self.assertEqual(req00.text, "Y")
+        self.assertEqual(len(req00), 0)
+
+        self.assertIsInstance(req11, ET.Element)
+        self.assertEqual(req11.tag, "REQ11")
+        self.assertEqual(req11.text, "N")
+        self.assertEqual(len(req11), 0)
 
         self.assertIsInstance(subagg, ET.Element)
         self.assertEqual(subagg.tag, "TESTSUBAGGREGATE")
@@ -253,12 +263,23 @@ class TranListTestCase(unittest.TestCase):
         self.assertEqual(elem.text, "baz")
         self.assertEqual(len(elem), 0)
 
-        elem, subagg = agg1[:]
+        self.assertEqual(len(agg1), 4)
+        metadata, req00, req11, subagg = agg1[:]
 
-        self.assertIsInstance(elem, ET.Element)
-        self.assertEqual(elem.tag, "METADATA")
-        self.assertEqual(elem.text, "bar")
-        self.assertEqual(len(subagg), 1)
+        self.assertIsInstance(metadata, ET.Element)
+        self.assertEqual(metadata.tag, "METADATA")
+        self.assertEqual(metadata.text, "bar")
+        self.assertEqual(len(metadata), 0)
+
+        self.assertIsInstance(req00, ET.Element)
+        self.assertEqual(req00.tag, "REQ01")
+        self.assertEqual(req00.text, "N")
+        self.assertEqual(len(req00), 0)
+
+        self.assertIsInstance(req11, ET.Element)
+        self.assertEqual(req11.tag, "REQ10")
+        self.assertEqual(req11.text, "Y")
+        self.assertEqual(len(req11), 0)
 
         self.assertIsInstance(subagg, ET.Element)
         self.assertEqual(subagg.tag, "TESTSUBAGGREGATE")
