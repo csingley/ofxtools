@@ -230,6 +230,9 @@ class Decimal(Element):
 
         return super().convert(value)
 
+    def unconvert(self, value):
+        return str(value)
+
 
 class DateTime(Element):
     # Valid datetime formats given by OFX spec in section 3.2.8.2

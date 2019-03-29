@@ -216,6 +216,21 @@ class DecimalTestCase(unittest.TestCase, Base):
         with self.assertRaises(TypeError):
             t.convert(object)
 
+    def test_unconvert(self):
+        t = self.type_()
+        check = decimal.Decimal('21.52')
+        self.assertEqual(t.unconvert(check), "21.52")
+
+    def test_convert_roundtrip(self):
+        t = self.type_()
+        value = "21.52"
+        self.assertEqual(t.unconvert(t.convert(value)), value)
+
+    def test_unconvert_roundtrip(self):
+        t = self.type_()
+        value = decimal.Decimal("21.52")
+        self.assertEqual(t.convert(t.unconvert(value)), value)
+
 
 class DateTimeTestCase(unittest.TestCase, Base):
     type_ = ofxtools.Types.DateTime
