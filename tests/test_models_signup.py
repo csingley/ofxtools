@@ -11,46 +11,15 @@ from copy import deepcopy
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import MSGSETCORE, STATUS, SVCSTATUSES
 from ofxtools.models.signup import (
-    CLIENTENROLL,
-    WEBENROLL,
-    OTHERENROLL,
-    SIGNUPMSGSETV1,
-    SIGNUPMSGSET,
-    ACCTINFORQ,
-    ACCTINFORS,
-    ACCTINFOTRNRQ,
-    ACCTINFOTRNRS,
-    SIGNUPMSGSRQV1,
-    SIGNUPMSGSRSV1,
-    ACCTINFO,
-    ENROLLRQ,
-    ENROLLRS,
-    ENROLLTRNRQ,
-    ENROLLTRNRS,
-    SVCADD,
-    SVCCHG,
-    SVCDEL,
-    ACCTRQ,
-    ACCTRS,
-    ACCTTRNRQ,
-    ACCTTRNRS,
-    ACCTSYNCRQ,
-    ACCTSYNCRS,
-    CHGUSERINFORQ,
-    CHGUSERINFORS,
-    CHGUSERINFOTRNRQ,
-    CHGUSERINFOTRNRS,
-    CHGUSERINFOSYNCRQ,
-    CHGUSERINFOSYNCRS,
-    SVCS,
+    CLIENTENROLL, WEBENROLL, OTHERENROLL, SIGNUPMSGSETV1, SIGNUPMSGSET,
+    ACCTINFORQ, ACCTINFORS, ACCTINFOTRNRQ, ACCTINFOTRNRS, SIGNUPMSGSRQV1,
+    SIGNUPMSGSRSV1, ACCTINFO, ENROLLRQ, ENROLLRS, ENROLLTRNRQ, ENROLLTRNRS,
+    SVCADD, SVCCHG, SVCDEL, ACCTRQ, ACCTRS, ACCTTRNRQ, ACCTTRNRS, ACCTSYNCRQ,
+    ACCTSYNCRS, CHGUSERINFORQ, CHGUSERINFORS, CHGUSERINFOTRNRQ,
+    CHGUSERINFOTRNRS, CHGUSERINFOSYNCRQ, CHGUSERINFOSYNCRS, SVCS,
 )
 from ofxtools.models.bank import (
-    BANKACCTFROM,
-    BANKACCTTO,
-    BANKACCTINFO,
-    CCACCTFROM,
-    CCACCTTO,
-    CCACCTINFO,
+    BANKACCTFROM, BANKACCTTO, BANKACCTINFO, CCACCTFROM, CCACCTTO, CCACCTINFO,
 )
 from ofxtools.models.investment import INVACCTFROM, INVACCTTO, INVACCTINFO
 from ofxtools.utils import UTC
@@ -1122,172 +1091,38 @@ class AccttrnrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root.acctrs, ACCTRS)
 
 
-class AcctsyncrqTestCase(unittest.TestCase, base.TestAggregate):
-    """ ACCTSYNCRQ with TOKEN """
-
+class AcctsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     __test__ = True
 
-    requiredElements = ["REJECTIFMISSING"]
-
     @property
-    def root(self):
-        root = Element("ACCTSYNCRQ")
-        SubElement(root, "TOKEN").text = "DEADBEEF"
-        SubElement(root, "REJECTIFMISSING").text = "Y"
-        accttrnrq = AccttrnrqTestCase().root
-        root.append(accttrnrq)
-        root.append(accttrnrq)
-        return root
+    def validSoup(self):
+        trnrq = AccttrnrqTestCase().root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, ACCTSYNCRQ)
-        self.assertEqual(instance.token, "DEADBEEF")
-        self.assertEqual(instance.rejectifmissing, True)
-        self.assertEqual(len(instance), 2)
-        self.assertIsInstance(instance[0], ACCTTRNRQ)
-        self.assertIsInstance(instance[1], ACCTTRNRQ)
+        for root_ in super().validSoup:
+            root = deepcopy(root_)
+            # 0 contained aggregrates
+            yield root
+            # 1 or more contained aggregates
+            for n in range(2):
+                root.append(deepcopy(trnrq))
+                yield root
 
 
-class AcctsyncrqTokenonlyTestCase(unittest.TestCase, base.TestAggregate):
+class AcctsyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     __test__ = True
 
-    requiredElements = ["REJECTIFMISSING"]
-
     @property
-    def root(self):
-        root = Element("ACCTSYNCRQ")
-        SubElement(root, "TOKENONLY").text = "Y"
-        SubElement(root, "REJECTIFMISSING").text = "N"
-        accttrnrq = AccttrnrqTestCase().root
-        root.append(accttrnrq)
-        root.append(accttrnrq)
-        return root
+    def validSoup(self):
+        trnrs = AccttrnrsTestCase().root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, ACCTSYNCRQ)
-        self.assertEqual(instance.tokenonly, True)
-        self.assertEqual(instance.rejectifmissing, False)
-        self.assertEqual(len(instance), 2)
-        self.assertIsInstance(instance[0], ACCTTRNRQ)
-        self.assertIsInstance(instance[1], ACCTTRNRQ)
-
-
-class AcctsyncrqRefreshTestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    requiredElements = ["REJECTIFMISSING"]
-
-    @property
-    def root(self):
-        root = Element("ACCTSYNCRQ")
-        SubElement(root, "REFRESH").text = "Y"
-        SubElement(root, "REJECTIFMISSING").text = "N"
-        accttrnrq = AccttrnrqTestCase().root
-        root.append(accttrnrq)
-        root.append(accttrnrq)
-        return root
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, ACCTSYNCRQ)
-        self.assertEqual(instance.refresh, True)
-        self.assertEqual(instance.rejectifmissing, False)
-        self.assertEqual(len(instance), 2)
-        self.assertIsInstance(instance[0], ACCTTRNRQ)
-        self.assertIsInstance(instance[1], ACCTTRNRQ)
-
-
-class AcctsyncrqEmptyTestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    requiredElements = ["REJECTIFMISSING"]
-
-    @property
-    def root(self):
-        root = Element("ACCTSYNCRQ")
-        SubElement(root, "TOKEN").text = "DEADBEEF"
-        SubElement(root, "REJECTIFMISSING").text = "Y"
-        return root
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, ACCTSYNCRQ)
-        self.assertEqual(instance.token, "DEADBEEF")
-        self.assertEqual(instance.rejectifmissing, True)
-        self.assertEqual(len(instance), 0)
-
-
-class AcctsyncrqMalformedTestCase(unittest.TestCase):
-    def testTokenWithTokenOnly(self):
-        root = Element("ACCTSYNCRQ")
-        SubElement(root, "TOKEN").text = "DEADBEEF"
-        SubElement(root, "TOKENONLY").text = "N"
-        SubElement(root, "REJECTIFMISSING").text = "Y"
-        accttrnrq = AccttrnrqTestCase().root
-        root.append(accttrnrq)
-
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
-
-    def testTokenWithRefresh(self):
-        root = Element("ACCTSYNCRQ")
-        SubElement(root, "TOKEN").text = "DEADBEEF"
-        SubElement(root, "REFRESH").text = "N"
-        SubElement(root, "REJECTIFMISSING").text = "Y"
-        accttrnrq = AccttrnrqTestCase().root
-        root.append(accttrnrq)
-
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
-
-    def testTokenonlyWithRefresh(self):
-        root = Element("ACCTSYNCRQ")
-        SubElement(root, "TOKENONLY").text = "N"
-        SubElement(root, "REFRESH").text = "N"
-        SubElement(root, "REJECTIFMISSING").text = "Y"
-        accttrnrq = AccttrnrqTestCase().root
-        root.append(accttrnrq)
-
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
-
-
-class AcctsyncrsTestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    requiredElements = ["TOKEN"]
-    optionalElements = ["LOSTSYNC"]
-
-    @property
-    def root(self):
-        root = Element("ACCTSYNCRS")
-        SubElement(root, "TOKEN").text = "DEADBEEF"
-        SubElement(root, "LOSTSYNC").text = "Y"
-        accttrnrs = AccttrnrsTestCase().root
-        root.append(accttrnrs)
-        root.append(accttrnrs)
-        return root
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, ACCTSYNCRS)
-        self.assertEqual(instance.token, "DEADBEEF")
-        self.assertEqual(instance.lostsync, True)
-        self.assertEqual(len(instance), 2)
-        self.assertIsInstance(instance[0], ACCTTRNRS)
-        self.assertIsInstance(instance[1], ACCTTRNRS)
-
-    def testMissingAccttrnrs(self):
-        root = deepcopy(self.root)
-        for accttrnrs in root.findall("ACCTTRNRS"):
-            root.remove(accttrnrs)
-        instance = Aggregate.from_etree(root)
-        self.assertIsInstance(instance, ACCTSYNCRS)
-        self.assertEqual(instance.token, "DEADBEEF")
-        self.assertEqual(instance.lostsync, True)
-        self.assertEqual(len(instance), 0)
+        for root_ in super().validSoup:
+            root = deepcopy(root_)
+            # 0 contained aggregrates
+            yield root
+            # 1 or more contained aggregates
+            for n in range(2):
+                root.append(deepcopy(trnrs))
+                yield root
 
 
 class ChguserinforqTestCase(unittest.TestCase, base.TestAggregate):
@@ -1449,170 +1284,38 @@ class ChguserinfotrnrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root.chguserinfors, CHGUSERINFORS)
 
 
-class ChguserinfosyncrqTokenTestCase(unittest.TestCase, base.TestAggregate):
+class ChguserinfosyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     __test__ = True
 
-    requiredElements = ["REJECTIFMISSING"]
-
     @property
-    def root(self):
-        root = Element("CHGUSERINFOSYNCRQ")
-        SubElement(root, "TOKEN").text = "DEADBEEF"
-        SubElement(root, "REJECTIFMISSING").text = "Y"
-        chguserinfotrnrq = ChguserinfotrnrqTestCase().root
-        root.append(chguserinfotrnrq)
-        root.append(chguserinfotrnrq)
-        return root
+    def validSoup(self):
+        trnrq = ChguserinfotrnrqTestCase().root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, CHGUSERINFOSYNCRQ)
-        self.assertEqual(instance.token, "DEADBEEF")
-        self.assertEqual(instance.rejectifmissing, True)
-        self.assertEqual(len(instance), 2)
-        self.assertIsInstance(instance[0], CHGUSERINFOTRNRQ)
-        self.assertIsInstance(instance[1], CHGUSERINFOTRNRQ)
+        for root_ in super().validSoup:
+            root = deepcopy(root_)
+            # 0 contained aggregrates
+            yield root
+            # 1 or more contained aggregates
+            for n in range(2):
+                root.append(deepcopy(trnrq))
+                yield root
 
 
-class ChguserinfosyncrqTokenonlyTestCase(unittest.TestCase, base.TestAggregate):
+class ChguserinfosyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     __test__ = True
 
-    requiredElements = ["REJECTIFMISSING"]
-
     @property
-    def root(self):
-        root = Element("CHGUSERINFOSYNCRQ")
-        SubElement(root, "TOKENONLY").text = "Y"
-        SubElement(root, "REJECTIFMISSING").text = "N"
-        chguserinfotrnrq = ChguserinfotrnrqTestCase().root
-        root.append(chguserinfotrnrq)
-        root.append(chguserinfotrnrq)
-        return root
+    def validSoup(self):
+        trnrs = ChguserinfotrnrsTestCase().root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, CHGUSERINFOSYNCRQ)
-        self.assertEqual(instance.tokenonly, True)
-        self.assertEqual(instance.rejectifmissing, False)
-        self.assertEqual(len(instance), 2)
-        self.assertIsInstance(instance[0], CHGUSERINFOTRNRQ)
-        self.assertIsInstance(instance[1], CHGUSERINFOTRNRQ)
-
-
-class ChguserinfosyncrqRefreshTestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    requiredElements = ["REJECTIFMISSING"]
-
-    @property
-    def root(self):
-        root = Element("CHGUSERINFOSYNCRQ")
-        SubElement(root, "REFRESH").text = "Y"
-        SubElement(root, "REJECTIFMISSING").text = "N"
-        chguserinfotrnrq = ChguserinfotrnrqTestCase().root
-        root.append(chguserinfotrnrq)
-        root.append(chguserinfotrnrq)
-        return root
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, CHGUSERINFOSYNCRQ)
-        self.assertEqual(instance.refresh, True)
-        self.assertEqual(instance.rejectifmissing, False)
-        self.assertEqual(len(instance), 2)
-        self.assertIsInstance(instance[0], CHGUSERINFOTRNRQ)
-        self.assertIsInstance(instance[1], CHGUSERINFOTRNRQ)
-
-
-class ChguserinfosyncrqEmptyTestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    requiredElements = ["REJECTIFMISSING"]
-
-    @property
-    def root(self):
-        root = Element("CHGUSERINFOSYNCRQ")
-        SubElement(root, "TOKEN").text = "DEADBEEF"
-        SubElement(root, "REJECTIFMISSING").text = "Y"
-        return root
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, CHGUSERINFOSYNCRQ)
-        self.assertEqual(instance.token, "DEADBEEF")
-        self.assertEqual(instance.rejectifmissing, True)
-        self.assertEqual(len(instance), 0)
-
-
-class ChguserinfosyncrqMalformedTestCase(unittest.TestCase):
-    def testTokenWithTokenOnly(self):
-        root = Element("CHGUSERINFOSYNCRQ")
-        SubElement(root, "TOKEN").text = "DEADBEEF"
-        SubElement(root, "TOKENONLY").text = "N"
-        SubElement(root, "REJECTIFMISSING").text = "Y"
-        chguserinfotrnrq = ChguserinfotrnrqTestCase().root
-        root.append(chguserinfotrnrq)
-
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
-
-    def testTokenWithRefresh(self):
-        root = Element("CHGUSERINFOSYNCRQ")
-        SubElement(root, "TOKEN").text = "DEADBEEF"
-        SubElement(root, "REFRESH").text = "N"
-        SubElement(root, "REJECTIFMISSING").text = "Y"
-        chguserinfotrnrq = ChguserinfotrnrqTestCase().root
-        root.append(chguserinfotrnrq)
-
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
-
-    def testTokenonlyWithRefresh(self):
-        root = Element("CHGUSERINFOSYNCRQ")
-        SubElement(root, "TOKENONLY").text = "N"
-        SubElement(root, "REFRESH").text = "N"
-        SubElement(root, "REJECTIFMISSING").text = "Y"
-        chguserinfotrnrq = ChguserinfotrnrqTestCase().root
-        root.append(chguserinfotrnrq)
-
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
-
-
-class ChguserinfosyncrsTestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    requiredElements = ["TOKEN"]
-    optionalElements = ["LOSTSYNC"]
-
-    @property
-    def root(self):
-        root = Element("CHGUSERINFOSYNCRS")
-        SubElement(root, "TOKEN").text = "DEADBEEF"
-        SubElement(root, "LOSTSYNC").text = "Y"
-        chguserinfotrnrs = ChguserinfotrnrsTestCase().root
-        root.append(chguserinfotrnrs)
-        root.append(chguserinfotrnrs)
-        return root
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, CHGUSERINFOSYNCRS)
-        self.assertEqual(instance.token, "DEADBEEF")
-        self.assertEqual(instance.lostsync, True)
-        self.assertEqual(len(instance), 2)
-        self.assertIsInstance(instance[0], CHGUSERINFOTRNRS)
-        self.assertIsInstance(instance[1], CHGUSERINFOTRNRS)
-
-    def testMissingAccttrnrs(self):
-        root = deepcopy(self.root)
-        for accttrnrs in root.findall("CHGUSERINFOTRNRS"):
-            root.remove(accttrnrs)
-        instance = Aggregate.from_etree(root)
-        self.assertIsInstance(instance, CHGUSERINFOSYNCRS)
-        self.assertEqual(instance.token, "DEADBEEF")
-        self.assertEqual(instance.lostsync, True)
-        self.assertEqual(len(instance), 0)
+        for root_ in super().validSoup:
+            root = deepcopy(root_)
+            # 0 contained aggregrates
+            yield root
+            # 1 or more contained aggregates
+            for n in range(2):
+                root.append(deepcopy(trnrs))
+                yield root
 
 
 if __name__ == "__main__":

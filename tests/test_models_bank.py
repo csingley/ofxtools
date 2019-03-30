@@ -18,56 +18,14 @@ import ofxtools.models
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import STATUS, BAL, MSGSETCORE, SVCSTATUSES
 from ofxtools.models.bank import (
-    BANKACCTFROM,
-    BANKACCTTO,
-    BANKACCTINFO,
-    CCACCTTO,
-    CCACCTFROM,
-    CCACCTINFO,
-    INCTRAN,
-    PAYEE,
-    LEDGERBAL,
-    AVAILBAL,
-    BALLIST,
-    STMTTRN,
-    BANKTRANLIST,
-    STMTRS,
-    STMTTRNRS,
-    BANKMSGSRSV1,
-    STMTRQ,
-    STMTTRNRQ,
-    BANKMSGSRQV1,
-    TRNTYPES,
-    CLOSING,
-    STMTENDRQ,
-    STMTENDRS,
-    STMTENDTRNRQ,
-    STMTENDTRNRS,
-    CHKRANGE,
-    CHKDESC,
-    STPCHKNUM,
-    STPCHKRQ,
-    STPCHKRS,
-    STPCHKTRNRQ,
-    STPCHKTRNRS,
-    STPCHKSYNCRQ,
-    STPCHKSYNCRS,
-    XFERINFO,
-    XFERPRCSTS,
-    INTRARQ,
-    INTRARS,
-    INTRAMODRQ,
-    INTRAMODRS,
-    INTRACANRQ,
-    INTRACANRS,
-    INTRATRNRQ,
-    INTRATRNRS,
-    INTRASYNCRQ,
-    INTRASYNCRS,
-    BANKMSGSETV1,
-    BANKMSGSET,
-    EMAILPROF,
-    ACCTTYPES,
+    BANKACCTFROM, BANKACCTTO, BANKACCTINFO, CCACCTTO, CCACCTFROM, CCACCTINFO,
+    INCTRAN, PAYEE, LEDGERBAL, AVAILBAL, BALLIST, STMTTRN, BANKTRANLIST,
+    STMTRS, STMTTRNRS, BANKMSGSRSV1, STMTRQ, STMTTRNRQ, BANKMSGSRQV1, TRNTYPES,
+    CLOSING, STMTENDRQ, STMTENDRS, STMTENDTRNRQ, STMTENDTRNRS, CHKRANGE,
+    CHKDESC, STPCHKNUM, STPCHKRQ, STPCHKRS, STPCHKTRNRQ, STPCHKTRNRS,
+    STPCHKSYNCRQ, STPCHKSYNCRS, XFERINFO, XFERPRCSTS, INTRARQ, INTRARS,
+    INTRAMODRQ, INTRAMODRS, INTRACANRQ, INTRACANRS, INTRATRNRQ, INTRATRNRS,
+    INTRASYNCRQ, INTRASYNCRS, BANKMSGSETV1, BANKMSGSET, EMAILPROF, ACCTTYPES,
 )
 from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, CURRENCY_CODES
 
@@ -1255,6 +1213,8 @@ class StpchkrsTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("STPCHKRS")
         SubElement(root, "CURDEF").text = "CAD"
         root.append(BankacctfromTestCase().root)
+        #  SubElement(root, "FEE").text = "25"
+        #  SubElement(root, "FEEMSG").text = "Shit's expensive yo"
         stpchknum = StpchknumTestCase().root
         root.append(stpchknum)
         root.append(deepcopy(stpchknum))
@@ -1319,162 +1279,104 @@ class StpchktrnrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(instance.stpchkrs, STPCHKRS)
 
 
-class StpchksyncrqTestCase(unittest.TestCase, base.TestAggregate):
-    """ STPCHKSYNCRQ with TOKEN """
-
+class StpchksyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     __test__ = True
 
-    requiredElements = ["REJECTIFMISSING", "BANKACCTFROM"]
+    requiredElements = base.SyncrqTestCase.requiredElements + ["BANKACCTFROM"]
 
     @property
-    def root(self):
-        root = Element("STPCHKSYNCRQ")
-        SubElement(root, "TOKEN").text = "DEADBEEF"
-        SubElement(root, "REJECTIFMISSING").text = "Y"
-        root.append(BankacctfromTestCase().root)
+    def validSoup(self):
+        acctfrom = BankacctfromTestCase().root
         trnrq = StpchktrnrqTestCase().root
-        root.append(trnrq)
-        root.append(deepcopy(trnrq))
-        return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, STPCHKSYNCRQ)
-        self.assertEqual(instance.token, "DEADBEEF")
-        self.assertEqual(instance.rejectifmissing, True)
-        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
-        self.assertEqual(len(instance), 2)
-        self.assertIsInstance(instance[0], STPCHKTRNRQ)
-        self.assertIsInstance(instance[1], STPCHKTRNRQ)
+        for root_ in super().validSoup:
+            root = deepcopy(root_)
+            root.append(deepcopy(acctfrom))
+            # 0 contained aggregrates
+            yield root
+            # 1 or more contained aggregates
+            for n in range(2):
+                root.append(deepcopy(trnrq))
+                yield root
+
+    @property
+    def invalidSoup(self):
+        acctfrom = BankacctfromTestCase().root
+        #  trnrq = StpchktrnrqTestCase().root
+
+        # SYNCRQ base malformed; STPCHK additions OK
+        for root_ in super().invalidSoup:
+            root = deepcopy(root_)
+            root.append(acctfrom)
+            yield root
+
+        # SYNCRQ base OK; STPCHK additions malformed
+        for root_ in super().validSoup:
+            # BANKACCTFROM in the wrong place
+            # (should be right after REJECTIFMISSING)
+            index = list(root_).index(root_.find('REJECTIFMISSING'))
+            for n in range(index):
+                root = deepcopy(root_)
+                root.insert(n, acctfrom)
+                yield root
+
+            #  STPCHKTRNRQ in the wrong place
+            #  (should be right after BANKACCTFROM)
+            #
+            # FIXME
+            # Currently the ``List`` data model offers no way to verify that
+            # data appears in correct position relative to metadata, since
+            # ``dataTags`` doesn't appear in the ``cls.spec``.
 
 
-class StpchksyncrqTokenonlyTestCase(unittest.TestCase, base.TestAggregate):
+class StpchksyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     __test__ = True
 
-    requiredElements = ["REJECTIFMISSING", "BANKACCTFROM"]
+    requiredElements = base.SyncrsTestCase.requiredElements + ["BANKACCTFROM"]
 
     @property
-    def root(self):
-        root = Element("STPCHKSYNCRQ")
-        SubElement(root, "TOKENONLY").text = "Y"
-        SubElement(root, "REJECTIFMISSING").text = "Y"
-        root.append(BankacctfromTestCase().root)
-        trnrq = StpchktrnrqTestCase().root
-        root.append(trnrq)
-        root.append(deepcopy(trnrq))
-        return root
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, STPCHKSYNCRQ)
-        self.assertEqual(instance.tokenonly, True)
-        self.assertEqual(instance.rejectifmissing, True)
-        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
-        self.assertEqual(len(instance), 2)
-        self.assertIsInstance(instance[0], STPCHKTRNRQ)
-        self.assertIsInstance(instance[1], STPCHKTRNRQ)
-
-
-class StpchksyncrqRefreshTestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    requiredElements = ["REJECTIFMISSING", "BANKACCTFROM"]
-
-    @property
-    def root(self):
-        root = Element("STPCHKSYNCRQ")
-        SubElement(root, "REFRESH").text = "Y"
-        SubElement(root, "REJECTIFMISSING").text = "Y"
-        root.append(BankacctfromTestCase().root)
-        trnrq = StpchktrnrqTestCase().root
-        root.append(trnrq)
-        root.append(deepcopy(trnrq))
-        return root
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, STPCHKSYNCRQ)
-        self.assertEqual(instance.refresh, True)
-        self.assertEqual(instance.rejectifmissing, True)
-        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
-        self.assertEqual(len(instance), 2)
-        self.assertIsInstance(instance[0], STPCHKTRNRQ)
-        self.assertIsInstance(instance[1], STPCHKTRNRQ)
-
-
-class StpchksyncrqEmptyTestCase(unittest.TestCase):
-    @property
-    def root(self):
-        root = Element("STPCHKSYNCRQ")
-        SubElement(root, "TOKEN").text = "DEADBEEF"
-        SubElement(root, "REJECTIFMISSING").text = "Y"
-        return root
-
-    def testConvert(self):
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(self.root)
-
-
-class StpchksyncrqMalformedTestCase(unittest.TestCase):
-    def testTokenWithTokenOnly(self):
-        root = Element("STPCHKSYNCRQ")
-        SubElement(root, "TOKEN").text = "DEADBEEF"
-        SubElement(root, "TOKENONLY").text = "N"
-        SubElement(root, "REJECTIFMISSING").text = "Y"
-        trnrq = StpchktrnrqTestCase().root
-        root.append(trnrq)
-
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
-
-    def testTokenWithRefresh(self):
-        root = Element("STPCHKSYNCRQ")
-        SubElement(root, "TOKEN").text = "DEADBEEF"
-        SubElement(root, "REFRESH").text = "N"
-        SubElement(root, "REJECTIFMISSING").text = "Y"
-        trnrq = StpchktrnrqTestCase().root
-        root.append(trnrq)
-
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
-
-    def testTokenonlyWithRefresh(self):
-        root = Element("STPCHKSYNCRQ")
-        SubElement(root, "TOKENONLY").text = "N"
-        SubElement(root, "REFRESH").text = "N"
-        SubElement(root, "REJECTIFMISSING").text = "Y"
-        trnrq = StpchktrnrqTestCase().root
-        root.append(trnrq)
-
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
-
-
-class StpchksyncrsTestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    requiredElements = ["TOKEN", "BANKACCTFROM"]
-    optionalElements = ["LOSTSYNC"]
-
-    @property
-    def root(self):
-        root = Element("STPCHKSYNCRS")
-        SubElement(root, "TOKEN").text = "DEADBEEF"
-        SubElement(root, "LOSTSYNC").text = "Y"
-        root.append(BankacctfromTestCase().root)
+    def validSoup(self):
+        acctfrom = BankacctfromTestCase().root
         trnrs = StpchktrnrsTestCase().root
-        root.append(trnrs)
-        root.append(deepcopy(trnrs))
-        return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, STPCHKSYNCRS)
-        self.assertEqual(instance.token, "DEADBEEF")
-        self.assertEqual(instance.lostsync, True)
-        self.assertEqual(len(instance), 2)
-        self.assertIsInstance(instance[0], STPCHKTRNRS)
-        self.assertIsInstance(instance[1], STPCHKTRNRS)
+        for root_ in super().validSoup:
+            root = deepcopy(root_)
+            root.append(deepcopy(acctfrom))
+            # 0 contained aggregrates
+            yield root
+            # 1 or more contained aggregates
+            for n in range(2):
+                root.append(deepcopy(trnrs))
+                yield root
+
+    @property
+    def invalidSoup(self):
+        acctfrom = BankacctfromTestCase().root
+        #  trnrs = StpchktrnrsTestCase().root
+
+        # SYNCRS base malformed; STPCHK additions OK
+        for root_ in super().invalidSoup:
+            root = deepcopy(root_)
+            root.append(acctfrom)
+            yield root
+
+        # SYNCRS base OK; STPCHK additions malformed
+        for root_ in super().validSoup:
+            # BANKACCTFROM in the wrong place
+            # (should be right after LOSTSYNC)
+            index = list(root_).index(root_.find("LOSTSYNC"))
+            for n in range(index):
+                root = deepcopy(root_)
+                root.insert(n, acctfrom)
+                yield root
+
+            #  STPCHKTRNRS in the wrong place
+            #  (should be right after BANKACCTFROM)
+            #
+            # FIXME
+            # Currently the ``List`` data model offers no way to verify that
+            # data appears in correct position relative to metadata, since
+            # ``dataTags`` doesn't appear in the ``cls.spec``.
 
 
 class XferinfoTestCase(unittest.TestCase, base.TestAggregate):
@@ -2100,31 +2002,146 @@ class IntratrnrsIntramodrsIntracanrsTestCase(unittest.TestCase):
             Aggregate.from_etree(self.root)
 
 
-class IntrasyncrqTestCase(unittest.TestCase, base.TestAggregate):
-    """ INTRASYNC with TOKEN and BANKACCTFROM """
+class IntrasyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     __test__ = True
 
-    requiredElements = ["REJECTIFMISSING"]
+    @property
+    def validSoup(self):
+        bankacctfrom = BankacctfromTestCase().root
+        ccacctfrom = CcacctfromTestCase().root
+        trnrq = IntratrnrqTestCase().root
+
+        for root_ in super().validSoup:
+            for acctfrom in (bankacctfrom, ccacctfrom):
+                root = deepcopy(root_)
+                root.append(deepcopy(acctfrom))
+                # 0 contained aggregrates
+                yield root
+                # 1 or more contained aggregates
+                for n in range(2):
+                    root.append(deepcopy(trnrq))
+                    yield root
 
     @property
-    def root(self):
-        root = Element("INTRASYNCRQ")
-        SubElement(root, "TOKEN").text = "DEADBEEF"
-        SubElement(root, "REJECTIFMISSING").text = "Y"
-        acctfrom = BankacctfromTestCase().root
-        root.append(acctfrom)
-        intratrnrq = IntratrnrqTestCase().root
-        root.append(intratrnrq)
-        root.append(deepcopy(intratrnrq))
+    def invalidSoup(self):
+        bankacctfrom = BankacctfromTestCase().root
+        ccacctfrom = CcacctfromTestCase().root
+        trnrq = IntratrnrsTestCase().root
 
-        return root
+        # SYNCRQ base malformed; INTRA additions OK
+        for root_ in super().invalidSoup:
+            for acctfrom in (bankacctfrom, ccacctfrom):
+                root = deepcopy(root_)
+                root.append(deepcopy(acctfrom))
+                # 0 contained aggregrates
+                yield root
+                # 1 or more contained aggregates
+                for n in range(2):
+                    root.append(deepcopy(trnrq))
+                    yield root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, INTRASYNCRQ)
-        self.assertEqual(instance.token, "DEADBEEF")
-        self.assertEqual(instance.rejectifmissing, True)
-        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
+        # SYNCRQ base OK; INTRA additions malformed
+        for root_ in super().validSoup:
+            # *ACCTFROM missing (required)
+            yield root_
+            # Both BANKACCTFROM and CCACCTFROM (mutex)
+            root = deepcopy(root_)
+            root.append(bankacctfrom)
+            root.append(ccacctfrom)
+            yield root
+
+            root = deepcopy(root_)
+            root.append(ccacctfrom)
+            root.append(bankacctfrom)
+            yield root
+
+            # *ACCTFROM in the wrong place
+            # (should be right after REJECTIFMISSING)
+            for acctfrom in (bankacctfrom, ccacctfrom):
+                index = list(root_).index(root_.find("REJECTIFMISSING"))
+                for n in range(index):
+                    root = deepcopy(root_)
+                    root.insert(n, acctfrom)
+                    yield root
+
+            #  *TRNRQ in the wrong place
+            #  (should be right after *ACCTFROM)
+            #
+            # FIXME
+            # Currently the ``List`` data model offers no way to verify that
+            # data appears in correct position relative to metadata, since
+            # ``dataTags`` doesn't appear in the ``cls.spec``.
+
+
+class IntrasyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
+    __test__ = True
+
+    @property
+    def validSoup(self):
+        bankacctfrom = BankacctfromTestCase().root
+        ccacctfrom = CcacctfromTestCase().root
+        trnrs = IntratrnrsTestCase().root
+
+        for root_ in super().validSoup:
+            for acctfrom in (bankacctfrom, ccacctfrom):
+                root = deepcopy(root_)
+                root.append(deepcopy(acctfrom))
+                # 0 contained aggregrates
+                yield root
+                # 1 or more contained aggregates
+                for n in range(2):
+                    root.append(deepcopy(trnrs))
+                    yield root
+
+    @property
+    def invalidSoup(self):
+        bankacctfrom = BankacctfromTestCase().root
+        ccacctfrom = CcacctfromTestCase().root
+        trnrs = IntratrnrsTestCase().root
+
+        # SYNCRS base malformed; INTRA additions OK
+        for root_ in super().invalidSoup:
+            for acctfrom in (bankacctfrom, ccacctfrom):
+                root = deepcopy(root_)
+                root.append(deepcopy(acctfrom))
+                # 0 contained aggregrates
+                yield root
+                # 1 or more contained aggregates
+                for n in range(2):
+                    root.append(deepcopy(trnrs))
+                    yield root
+
+        # SYNCRS base OK; INTRA additions malformed
+        for root_ in super().validSoup:
+            # *ACCTFROM missing (required)
+            yield root_
+            # Both BANKACCTFROM and CCACCTFROM (mutex)
+            root = deepcopy(root_)
+            root.append(bankacctfrom)
+            root.append(ccacctfrom)
+            yield root
+
+            root = deepcopy(root_)
+            root.append(ccacctfrom)
+            root.append(bankacctfrom)
+            yield root
+
+            # *ACCTFROM in the wrong place
+            # (should be right after LOSTSYNC)
+            for acctfrom in (bankacctfrom, ccacctfrom):
+                index = list(root_).index(root_.find("LOSTSYNC"))
+                for n in range(index):
+                    root = deepcopy(root_)
+                    root.insert(n, acctfrom)
+                    yield root
+
+            #  *TRNRS in the wrong place
+            #  (should be right after *ACCTFROM)
+            #
+            # FIXME
+            # Currently the ``List`` data model offers no way to verify that
+            # data appears in correct position relative to metadata, since
+            # ``dataTags`` doesn't appear in the ``cls.spec``.
 
 
 class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
