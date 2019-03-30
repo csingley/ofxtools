@@ -334,7 +334,6 @@ class STMTENDRS(List):
     curdef = OneOf(*CURRENCY_CODES, required=True)
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
 
-    metadataTags = ["CURDEF", "BANKACCTFROM"]
     dataTags = ["CLOSING"]
 
 
@@ -399,7 +398,6 @@ class STPCHKRS(List):
     fee = Decimal(required=True)
     feemsg = String(80, required=True)
 
-    metadataTags = ["CURDEF", "BANKACCTFROM", "FEE", "FEEMSG"]
     dataTags = ["STPCHKNUM"]
 
 
@@ -420,7 +418,6 @@ class STPCHKSYNCRQ(SyncRqList):
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
 
-    metadataTags = ["TOKEN", "TOKENONLY", "REFRESH", "REJECTIFMISSING", "BANKACCTFROM"]
     dataTags = ["STPCHKTRNRQ"]
 
 
@@ -429,7 +426,6 @@ class STPCHKSYNCRS(SyncRsList):
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
 
-    metadataTags = ["TOKEN", "LOSTSYNC", "BANKACCTFROM"]
     dataTags = ["STPCHKTRNRS"]
 
 

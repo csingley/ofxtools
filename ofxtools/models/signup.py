@@ -140,7 +140,6 @@ class ACCTINFO(List):
     desc = String(80)
     phone = String(32)
 
-    metadataTags = ["DESC", "PHONE"]
     dataTags = [
         "BANKACCTINFO",
         "CCACCTINFO",
@@ -178,7 +177,6 @@ class ACCTINFORS(List):
 
     dtacctup = DateTime(required=True)
 
-    metadataTags = ["DTACCTUP"]
     dataTags = ["ACCTINFO"]
 
     def __repr__(self):

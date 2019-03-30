@@ -155,7 +155,6 @@ class CCSTMTENDRS(List):
     curdef = OneOf(*CURRENCY_CODES, required=True)
     ccacctfrom = SubAggregate(CCACCTFROM, required=True)
 
-    metadataTags = ["CURDEF", "CCACCTFROM"]
     dataTags = ["CCCLOSING"]
 
 

@@ -124,8 +124,6 @@ class TranList(List):
     dtstart = DateTime(required=True)
     dtend = DateTime(required=True)
 
-    metadataTags = ["DTSTART", "DTEND"]
-
     def __repr__(self):
         return "<{} dtstart='{}' dtend='{}' len={}>".format(
             self.__class__.__name__, self.dtstart, self.dtend, len(self)
@@ -140,7 +138,6 @@ class SyncRqList(List):
     refresh = Bool()
     rejectifmissing = Bool(required=True)
 
-    metadataTags = ["TOKEN", "TOKENONLY", "REFRESH", "REJECTIFMISSING"]
     requiredMutexes = [("token", "tokenonly", "refresh")]
 
 
@@ -149,5 +146,3 @@ class SyncRsList(List):
 
     token = String(10, required=True)
     lostsync = Bool()
-
-    metadataTags = ["TOKEN", "LOSTSYNC"]

@@ -371,16 +371,18 @@ class List(Aggregate, list):
     Base class for OFX *LIST
     """
 
-    # ``List.metadataTags`` means fixed child entities (in the OFX spec)
-    # other than the variable-length sequence of contained ``Aggregates``.
-    # Define as sequence of OFX tags (type str) corresponding to __init__()
-    # positional args - order is significant.
-    # Used by ``_etree2args()`` to parse args.
-    metadataTags = []
     # Sequence of OFX tags (type str) allowed to occur as contained
     # ``Aggregates``.
     # Used by ``__init__()`` to validate args.
     dataTags = []
+
+    # ``List.metadataTags`` means fixed child entities (in the OFX spec)
+    # other than the variable-length sequence of contained ``Aggregates``.
+    # Used by ``_etree2args()`` to parse args.
+    @classproperty
+    @classmethod
+    def metadataTags(cls):
+        return [attr.upper() for attr in cls.spec.keys()]
 
     def __init__(self, *args):
         list.__init__(self)
@@ -424,27 +426,47 @@ class List(Aggregate, list):
         # Keep input free of side effects
         elem = deepcopy(elem)
 
-        # Remove List metadata and pass as positional args before list members
-        def find_metadata(tag):
-            child = elem.find(tag)
-            if child is not None:
-                assert child not in cls.unsupported
-                elem.remove(child)
-                # If the child contains text data, the metadata is an Element;
-                # return the text data.  Otherwise it's an Aggregate - perform
-                # type conversion.
-                text = child.text
-                if text:
-                    child = text
-                else:
-                    child = Aggregate.from_etree(child)
-            return child
+        metadata = []
+        metadataIndices = []
 
-        args = [find_metadata(tag) for tag in cls.metadataTags]
+        elem_ = list(elem)  # indexable
 
-        # Append list members as variable-length positional args
-        args.extend([Aggregate.from_etree(el) for el in elem])
+        for metadataTag in cls.metadataTags:
+            children = elem.findall(metadataTag)
+            if len(children) > 1:
+                msg = "In {}, found duplicate metadata tag '{}'"
+                raise ValueError(msg.format(elem.tag, metadataTag))
+            if len(children) == 0:
+                child = None
+            else:
+                child = children.pop()
+                metadataIndices.append(elem_.index(child))
+            metadata.append(child)
 
+        # Verify that metadata appear in the order defined by the ``spec``.
+        if metadataIndices != sorted(metadataIndices):
+            msg = "{} SubElements out of order: {}"
+            raise ValueError(msg.format(cls.__name__, [el.tag for el in elem]))
+
+        # FIXME
+        # Currently the ``List`` data model offers no way to verify that
+        # data appears in correct position relative to metadata, since
+        # ``dataTags`` doesn't appear in the ``cls.spec``.
+
+        data = []
+        for i, child in enumerate(elem_):
+            if child not in metadata:
+                data.append(Aggregate.from_etree(child))
+
+        def convert_metadata(el):
+            if el is None:
+                return None
+            if el.text:
+                return el.text
+            return Aggregate.from_etree(el)
+
+        args = [convert_metadata(el) for el in metadata]
+        args.extend(data)
         kwargs = {}
         return args, kwargs
 
