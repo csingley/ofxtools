@@ -6,6 +6,7 @@ balances, and securities.
 # stdlib imports
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
+from copy import deepcopy
 
 
 # local imports
@@ -124,7 +125,7 @@ class Aggregate:
             raise ValueError(msg)
 
         # Hook to modify incoming ``ET.Element`` before conversion
-        SubClass.groom(elem)
+        elem = SubClass.groom(elem)
 
         args, kwargs = SubClass._etree2args(elem)
 
@@ -136,9 +137,12 @@ class Aggregate:
         """
         Modify incoming ``ET.Element`` to play nice with our Python schema.
 
-        Extend in subclass.
+        Override in subclass.
+
+        N.B. make sure to perform modifications on a copy.deepcopy(), in order
+        to keep the input free of side effects!
         """
-        pass
+        return elem
 
     @classmethod
     def _etree2args(cls, elem):
@@ -199,7 +203,7 @@ class Aggregate:
             elif isinstance(value, Aggregate):
                 child = value.to_etree()
                 # Hook to modify `ET.ElementTree` after conversion
-                value.ungroom(child)
+                child = value.ungroom(child)
                 root.append(child)
             else:
                 converter = cls._superdict[spec]
@@ -226,9 +230,12 @@ class Aggregate:
         """
         Reverse groom() when converting back to ElementTree.
 
-        Extend in subclass.
+        Override in subclass.
+
+        N.B. make sure to perform modifications on a copy.deepcopy(), in order
+        to keep the input free of side effects!
         """
-        pass
+        return elem
 
     @classmethod
     def _ordered_attrs(cls, predicate):
@@ -414,6 +421,9 @@ class List(Aggregate, list):
         ``List.__init__()`` accepts only positional args
         (unlike ``Aggregate.__init__()``)
         """
+        # Keep input free of side effects
+        elem = deepcopy(elem)
+
         # Remove List metadata and pass as positional args before list members
         def find_metadata(tag):
             child = elem.find(tag)

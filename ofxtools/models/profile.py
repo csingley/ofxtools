@@ -1,4 +1,7 @@
 # coding: utf-8
+# stdlib imports
+from copy import deepcopy
+
 # local imports
 from ofxtools.Types import String, OneOf, DateTime
 from ofxtools.models.base import Aggregate, SubAggregate, List
@@ -65,6 +68,9 @@ class PROFRS(Aggregate):
         """
         Remove proprietary tags e.g. INTU.XXX
         """
+        # Keep input free of side effects
+        elem = deepcopy(elem)
+
         for child in set(elem):
             if "." in child.tag:
                 elem.remove(child)

@@ -2,6 +2,10 @@
 """
 Message set response aggregates (i.e. *MSGSRSV1) - OFX section 2.4.5
 """
+# stdlib imports
+from copy import deepcopy
+
+
 # local imports
 from ofxtools.Types import String, NagString, Integer, Decimal, DateTime, OneOf, Bool
 from ofxtools.models.base import Aggregate, SubAggregate, List, Unsupported
@@ -132,6 +136,9 @@ class MFINFO(Aggregate):
         """
         Rename all Elements tagged YIELD (reserved Python keyword) to YLD
         """
+        # Keep input free of side effects
+        elem = deepcopy(elem)
+
         yld = elem.find("./YIELD")
         if yld is not None:
             yld.tag = "YLD"
@@ -143,6 +150,9 @@ class MFINFO(Aggregate):
         """
         Rename YLD back to YLD
         """
+        # Keep input free of side effects
+        elem = deepcopy(elem)
+
         yld = elem.find("./YLD")
         if yld is not None:
             yld.tag = "YIELD"
@@ -188,6 +198,9 @@ class STOCKINFO(Aggregate):
         """
         Rename all Elements tagged YIELD (reserved Python keyword) to YLD
         """
+        # Keep input free of side effects
+        elem = deepcopy(elem)
+
         yld = elem.find("./YIELD")
         if yld is not None:
             yld.tag = "YLD"
@@ -199,6 +212,9 @@ class STOCKINFO(Aggregate):
         """
         Rename YLD back to YLD
         """
+        # Keep input free of side effects
+        elem = deepcopy(elem)
+
         yld = elem.find("./YLD")
         if yld is not None:
             yld.tag = "YIELD"

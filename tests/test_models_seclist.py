@@ -357,7 +357,7 @@ class MfinfoTestCase(unittest.TestCase, base.TestAggregate):
 
     def testGroom(self):
         root = deepcopy(self.root)
-        MFINFO.groom(root)
+        root = MFINFO.groom(root)
         self.assertIsInstance(root, Element)
         self.assertEqual(len(root), len(self.root))
         secinfo, mftype, yld, dtyieldasof, mfassetclass, fimfassetclass = root[:]
@@ -372,7 +372,8 @@ class MfinfoTestCase(unittest.TestCase, base.TestAggregate):
         root = self.root
         yld = root[2]
         yld.tag = "YLD"
-        MFINFO.ungroom(root)
+        root = MFINFO.ungroom(root)
+        yld = root[2]
         self.assertEqual(yld.tag, "YIELD")
 
     def testConvert(self):
@@ -498,7 +499,7 @@ class StockinfoTestCase(unittest.TestCase, base.TestAggregate):
 
     def testGroom(self):
         root = deepcopy(self.root)
-        STOCKINFO.groom(root)
+        root = STOCKINFO.groom(root)
         self.assertIsInstance(root, Element)
         self.assertEqual(len(root), len(self.root))
         secinfo, stocktype, yld, dtyieldasof, assetclass, fiassetclass = root[:]
@@ -513,7 +514,8 @@ class StockinfoTestCase(unittest.TestCase, base.TestAggregate):
         root = self.root
         yld = root[2]
         yld.tag = "YLD"
-        STOCKINFO.ungroom(root)
+        root = STOCKINFO.ungroom(root)
+        yld = root[2]
         self.assertEqual(yld.tag, "YIELD")
 
     def testOneOf(self):
