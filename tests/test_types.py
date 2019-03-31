@@ -433,10 +433,10 @@ class DateTimeTestCase(unittest.TestCase, Base):
         t = self.type_()
         # Don't accept timezone-naive datetime
         with self.assertRaises(ValueError):
-            t.convert(datetime.datetime(2011, 11, 17, 3, 30, 45, 150))
+            t.unconvert(datetime.datetime(2011, 11, 17, 3, 30, 45, 150))
         # Don't accept date
         with self.assertRaises(ValueError):
-            t.convert(datetime.date(2011, 11, 17))
+            t.unconvert(datetime.date(2011, 11, 17))
         # Don't accept string
         with self.assertRaises(ValueError):
             t.unconvert("20070101")

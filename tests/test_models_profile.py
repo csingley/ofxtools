@@ -221,6 +221,11 @@ class ProftrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
 
     wraps = ProfrsTestCase
 
+    def testPropertyAliases(self):
+        instance = Aggregate.from_etree(self.root)
+        profile = instance.profile
+        self.assertIsInstance(profile, PROFRS)
+
 
 class Profmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True

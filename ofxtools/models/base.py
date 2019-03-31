@@ -347,8 +347,9 @@ class SubAggregate(Element):
 
         return super().convert(value)
 
-    def __repr__(self):
-        return "<{}>".format(self.type.__name__)
+    #  This doesn't get used
+    #  def __repr__(self):
+        #  return "<{}>".format(self.type.__name__)
 
 
 class Unsupported(InstanceCounterMixin):

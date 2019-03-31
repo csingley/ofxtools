@@ -740,10 +740,6 @@ class INVSTMTMSGSRSV1(List):
                     stmts.append(stmtrs)
         return stmts
 
-    @property
-    def statements(self):
-        return [trnrs.invstmtrs for trnrs in self]
-
 
 class INVSTMTMSGSETV1(Aggregate):
     """ OFX section 13.7.1.1 """

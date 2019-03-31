@@ -626,6 +626,11 @@ class StmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
 
     wraps = StmtrsTestCase
 
+    def testPropertyAliases(self):
+        instance = Aggregate.from_etree(self.root)
+        stmt = instance.statement
+        self.assertIsInstance(stmt, STMTRS)
+
 
 class ClosingTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True

@@ -109,10 +109,10 @@ class InvacctfromTestCase(unittest.TestCase, base.TestAggregate):
     def testConvert(self):
         # Make sure Aggregate.from_etree() calls Element.convert() and sets
         # Aggregate instance attributes with the result
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INVACCTFROM)
-        self.assertEqual(root.brokerid, "111000614")
-        self.assertEqual(root.acctid, "123456789123456789")
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INVACCTFROM)
+        self.assertEqual(instance.brokerid, "111000614")
+        self.assertEqual(instance.acctid, "123456789123456789")
 
 
 class InvaccttoTestCase(unittest.TestCase, base.TestAggregate):
@@ -128,10 +128,10 @@ class InvaccttoTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INVACCTTO)
-        self.assertEqual(root.brokerid, "111000614")
-        self.assertEqual(root.acctid, "123456789123456789")
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INVACCTTO)
+        self.assertEqual(instance.brokerid, "111000614")
+        self.assertEqual(instance.acctid, "123456789123456789")
 
 
 class InvacctinfoTestCase(unittest.TestCase, base.TestAggregate):
@@ -153,14 +153,14 @@ class InvacctinfoTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INVACCTINFO)
-        self.assertIsInstance(root.invacctfrom, INVACCTFROM)
-        self.assertEqual(root.usproducttype, "401K")
-        self.assertEqual(root.checking, True)
-        self.assertEqual(root.svcstatus, "ACTIVE")
-        self.assertEqual(root.invaccttype, "INDIVIDUAL")
-        self.assertEqual(root.optionlevel, "No way Jose")
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INVACCTINFO)
+        self.assertIsInstance(instance.invacctfrom, INVACCTFROM)
+        self.assertEqual(instance.usproducttype, "401K")
+        self.assertEqual(instance.checking, True)
+        self.assertEqual(instance.svcstatus, "ACTIVE")
+        self.assertEqual(instance.invaccttype, "INDIVIDUAL")
+        self.assertEqual(instance.optionlevel, "No way Jose")
 
     def testOneOf(self):
         self.oneOfTest("USPRODUCTTYPE", USPRODUCTTYPES)
@@ -182,10 +182,10 @@ class IncposTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INCPOS)
-        self.assertEqual(root.dtasof, datetime(2009, 11, 22, tzinfo=UTC))
-        self.assertEqual(root.include, True)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INCPOS)
+        self.assertEqual(instance.dtasof, datetime(2009, 11, 22, tzinfo=UTC))
+        self.assertEqual(instance.include, True)
 
 
 class InvposlistTestCase(unittest.TestCase, base.TestAggregate):
@@ -213,19 +213,14 @@ class InvposlistTestCase(unittest.TestCase, base.TestAggregate):
 
     def testConvert(self):
         # Test INVPOSLIST wrapper.  INVPOS members are tested elsewhere.
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INVPOSLIST)
-        self.assertEqual(len(root), 5)
-        self.assertIsInstance(root[0], POSDEBT)
-        self.assertIsInstance(root[1], POSMF)
-        self.assertIsInstance(root[2], POSOPT)
-        self.assertIsInstance(root[3], POSOTHER)
-        self.assertIsInstance(root[4], POSSTOCK)
-
-    def testToEtree(self):
-        root = Aggregate.from_etree(self.root)
-        elem = root.to_etree()
-        # FIXME
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INVPOSLIST)
+        self.assertEqual(len(instance), 5)
+        self.assertIsInstance(instance[0], POSDEBT)
+        self.assertIsInstance(instance[1], POSMF)
+        self.assertIsInstance(instance[2], POSOPT)
+        self.assertIsInstance(instance[3], POSOTHER)
+        self.assertIsInstance(instance[4], POSSTOCK)
 
 
 class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
@@ -269,24 +264,20 @@ class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
 
     def testConvert(self):
         # Test OOLIST wrapper.  OO members are tested elsewhere.
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INVOOLIST)
-        self.assertEqual(len(root), 11)
-        self.assertIsInstance(root[0], OOBUYDEBT)
-        self.assertIsInstance(root[1], OOBUYMF)
-        self.assertIsInstance(root[2], OOBUYOPT)
-        self.assertIsInstance(root[3], OOBUYOTHER)
-        self.assertIsInstance(root[4], OOBUYSTOCK)
-        self.assertIsInstance(root[5], OOSELLDEBT)
-        self.assertIsInstance(root[6], OOSELLMF)
-        self.assertIsInstance(root[7], OOSELLOPT)
-        self.assertIsInstance(root[8], OOSELLOTHER)
-        self.assertIsInstance(root[9], OOSELLSTOCK)
-        self.assertIsInstance(root[10], SWITCHMF)
-
-    def testToEtree(self):
-        root = Aggregate.from_etree(self.root)
-        elem = root.to_etree()
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INVOOLIST)
+        self.assertEqual(len(instance), 11)
+        self.assertIsInstance(instance[0], OOBUYDEBT)
+        self.assertIsInstance(instance[1], OOBUYMF)
+        self.assertIsInstance(instance[2], OOBUYOPT)
+        self.assertIsInstance(instance[3], OOBUYOTHER)
+        self.assertIsInstance(instance[4], OOBUYSTOCK)
+        self.assertIsInstance(instance[5], OOSELLDEBT)
+        self.assertIsInstance(instance[6], OOSELLMF)
+        self.assertIsInstance(instance[7], OOSELLOPT)
+        self.assertIsInstance(instance[8], OOSELLOTHER)
+        self.assertIsInstance(instance[9], OOSELLSTOCK)
+        self.assertIsInstance(instance[10], SWITCHMF)
 
 
 class InvbalTestCase(unittest.TestCase, base.TestAggregate):
@@ -308,12 +299,12 @@ class InvbalTestCase(unittest.TestCase, base.TestAggregate):
     def testConvert(self):
         # Make sure Aggregate.from_etree() calls Element.convert() and sets
         # Aggregate instance attributes with the result
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INVBAL)
-        self.assertEqual(root.availcash, Decimal("12345.67"))
-        self.assertEqual(root.marginbalance, Decimal("23456.78"))
-        self.assertEqual(root.shortbalance, Decimal("34567.89"))
-        self.assertEqual(root.buypower, Decimal("45678.90"))
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INVBAL)
+        self.assertEqual(instance.availcash, Decimal("12345.67"))
+        self.assertEqual(instance.marginbalance, Decimal("23456.78"))
+        self.assertEqual(instance.shortbalance, Decimal("34567.89"))
+        self.assertEqual(instance.buypower, Decimal("45678.90"))
 
 
 class InvtranlistTestCase(unittest.TestCase, base.TranlistTestCase):
@@ -373,22 +364,22 @@ class InvbanktranTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INVBANKTRAN)
-        self.assertIsInstance(root.stmttrn, STMTTRN)
-        self.assertEqual(root.subacctfund, "MARGIN")
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INVBANKTRAN)
+        self.assertIsInstance(instance.stmttrn, STMTTRN)
+        self.assertEqual(instance.subacctfund, "MARGIN")
 
     def testOneOf(self):
         self.oneOfTest("SUBACCTFUND", INVSUBACCTS)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
+        instance = Aggregate.from_etree(self.root)
         stmttrn = Aggregate.from_etree(test_models_bank.StmttrnTestCase().root)
-        self.assertEqual(root.trntype, stmttrn.trntype)
-        self.assertEqual(root.dtposted, stmttrn.dtposted)
-        self.assertEqual(root.trnamt, stmttrn.trnamt)
-        self.assertEqual(root.fitid, stmttrn.fitid)
-        self.assertEqual(root.memo, stmttrn.memo)
+        self.assertEqual(instance.trntype, stmttrn.trntype)
+        self.assertEqual(instance.dtposted, stmttrn.dtposted)
+        self.assertEqual(instance.trnamt, stmttrn.trnamt)
+        self.assertEqual(instance.fitid, stmttrn.fitid)
+        self.assertEqual(instance.memo, stmttrn.memo)
 
 
 class InvtranTestCase(unittest.TestCase, base.TestAggregate):
@@ -411,14 +402,14 @@ class InvtranTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.fitid, "1001")
-        self.assertEqual(root.srvrtid, "2002")
-        self.assertEqual(root.dttrade, datetime(2004, 7, 1, tzinfo=UTC))
-        self.assertEqual(root.dtsettle, datetime(2004, 7, 4, tzinfo=UTC))
-        self.assertEqual(root.reversalfitid, "3003")
-        self.assertEqual(root.memo, "Investment Transaction")
-        return root
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.fitid, "1001")
+        self.assertEqual(instance.srvrtid, "2002")
+        self.assertEqual(instance.dttrade, datetime(2004, 7, 1, tzinfo=UTC))
+        self.assertEqual(instance.dtsettle, datetime(2004, 7, 4, tzinfo=UTC))
+        self.assertEqual(instance.reversalfitid, "3003")
+        self.assertEqual(instance.memo, "Investment Transaction")
+        return instance
 
 
 class InvbuyTestCase(unittest.TestCase, base.TestAggregate):
@@ -478,27 +469,27 @@ class InvbuyTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root.invtran, INVTRAN)
-        self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.units, Decimal("100"))
-        self.assertEqual(root.unitprice, Decimal("1.50"))
-        self.assertEqual(root.markup, Decimal("0"))
-        self.assertEqual(root.commission, Decimal("9.99"))
-        self.assertEqual(root.taxes, Decimal("0"))
-        self.assertEqual(root.fees, Decimal("1.50"))
-        self.assertEqual(root.load, Decimal("0"))
-        self.assertEqual(root.total, Decimal("-161.49"))
-        self.assertIsInstance(root.currency, CURRENCY)
-        self.assertEqual(root.subacctsec, "MARGIN")
-        self.assertEqual(root.subacctfund, "CASH")
-        self.assertEqual(root.loanid, "1")
-        self.assertEqual(root.loanprincipal, Decimal("1.50"))
-        self.assertEqual(root.loaninterest, Decimal("3.50"))
-        self.assertEqual(root.inv401ksource, "PROFITSHARING")
-        self.assertEqual(root.dtpayroll, datetime(2004, 6, 15, tzinfo=UTC))
-        self.assertEqual(root.prioryearcontrib, True)
-        return root
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance.invtran, INVTRAN)
+        self.assertIsInstance(instance.secid, SECID)
+        self.assertEqual(instance.units, Decimal("100"))
+        self.assertEqual(instance.unitprice, Decimal("1.50"))
+        self.assertEqual(instance.markup, Decimal("0"))
+        self.assertEqual(instance.commission, Decimal("9.99"))
+        self.assertEqual(instance.taxes, Decimal("0"))
+        self.assertEqual(instance.fees, Decimal("1.50"))
+        self.assertEqual(instance.load, Decimal("0"))
+        self.assertEqual(instance.total, Decimal("-161.49"))
+        self.assertIsInstance(instance.currency, CURRENCY)
+        self.assertEqual(instance.subacctsec, "MARGIN")
+        self.assertEqual(instance.subacctfund, "CASH")
+        self.assertEqual(instance.loanid, "1")
+        self.assertEqual(instance.loanprincipal, Decimal("1.50"))
+        self.assertEqual(instance.loaninterest, Decimal("3.50"))
+        self.assertEqual(instance.inv401ksource, "PROFITSHARING")
+        self.assertEqual(instance.dtpayroll, datetime(2004, 6, 15, tzinfo=UTC))
+        self.assertEqual(instance.prioryearcontrib, True)
+        return instance
 
     def testOneOf(self):
         self.oneOfTest("SUBACCTSEC", INVSUBACCTS)
@@ -506,10 +497,10 @@ class InvbuyTestCase(unittest.TestCase, base.TestAggregate):
         self.oneOfTest("INV401KSOURCE", INV401KSOURCES)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.fitid, root.invtran.fitid)
-        self.assertEqual(root.dttrade, root.invtran.dttrade)
-        self.assertEqual(root.memo, root.invtran.memo)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.fitid, instance.invtran.fitid)
+        self.assertEqual(instance.dttrade, instance.invtran.dttrade)
+        self.assertEqual(instance.memo, instance.invtran.memo)
 
 
 class InvsellTestCase(unittest.TestCase, base.TestAggregate):
@@ -571,28 +562,28 @@ class InvsellTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root.invtran, INVTRAN)
-        self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.units, Decimal("-100"))
-        self.assertEqual(root.unitprice, Decimal("1.50"))
-        self.assertEqual(root.markdown, Decimal("0"))
-        self.assertEqual(root.commission, Decimal("9.99"))
-        self.assertEqual(root.taxes, Decimal("2"))
-        self.assertEqual(root.fees, Decimal("1.50"))
-        self.assertEqual(root.load, Decimal("0"))
-        self.assertEqual(root.withholding, Decimal("3"))
-        self.assertEqual(root.taxexempt, False)
-        self.assertEqual(root.total, Decimal("131"))
-        self.assertEqual(root.gain, Decimal("3.47"))
-        self.assertIsInstance(root.currency, CURRENCY)
-        self.assertEqual(root.subacctsec, "MARGIN")
-        self.assertEqual(root.subacctfund, "CASH")
-        self.assertEqual(root.loanid, "1")
-        self.assertEqual(root.statewithholding, Decimal("2.50"))
-        self.assertEqual(root.penalty, Decimal("0.01"))
-        self.assertEqual(root.inv401ksource, "PROFITSHARING")
-        return root
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance.invtran, INVTRAN)
+        self.assertIsInstance(instance.secid, SECID)
+        self.assertEqual(instance.units, Decimal("-100"))
+        self.assertEqual(instance.unitprice, Decimal("1.50"))
+        self.assertEqual(instance.markdown, Decimal("0"))
+        self.assertEqual(instance.commission, Decimal("9.99"))
+        self.assertEqual(instance.taxes, Decimal("2"))
+        self.assertEqual(instance.fees, Decimal("1.50"))
+        self.assertEqual(instance.load, Decimal("0"))
+        self.assertEqual(instance.withholding, Decimal("3"))
+        self.assertEqual(instance.taxexempt, False)
+        self.assertEqual(instance.total, Decimal("131"))
+        self.assertEqual(instance.gain, Decimal("3.47"))
+        self.assertIsInstance(instance.currency, CURRENCY)
+        self.assertEqual(instance.subacctsec, "MARGIN")
+        self.assertEqual(instance.subacctfund, "CASH")
+        self.assertEqual(instance.loanid, "1")
+        self.assertEqual(instance.statewithholding, Decimal("2.50"))
+        self.assertEqual(instance.penalty, Decimal("0.01"))
+        self.assertEqual(instance.inv401ksource, "PROFITSHARING")
+        return instance
 
     def testOneOf(self):
         self.oneOfTest("SUBACCTSEC", INVSUBACCTS)
@@ -600,10 +591,10 @@ class InvsellTestCase(unittest.TestCase, base.TestAggregate):
         self.oneOfTest("INV401KSOURCE", INV401KSOURCES)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.fitid, root.invtran.fitid)
-        self.assertEqual(root.dttrade, root.invtran.dttrade)
-        self.assertEqual(root.memo, root.invtran.memo)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.fitid, instance.invtran.fitid)
+        self.assertEqual(instance.dttrade, instance.invtran.dttrade)
+        self.assertEqual(instance.memo, instance.invtran.memo)
 
 
 class BuydebtTestCase(unittest.TestCase, base.TestAggregate):
@@ -623,25 +614,25 @@ class BuydebtTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, BUYDEBT)
-        self.assertIsInstance(root.invbuy, INVBUY)
-        self.assertEqual(root.accrdint, Decimal("25.50"))
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, BUYDEBT)
+        self.assertIsInstance(instance.invbuy, INVBUY)
+        self.assertEqual(instance.accrdint, Decimal("25.50"))
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.uniqueid, root.invbuy.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.invbuy.secid.uniqueidtype)
-        self.assertEqual(root.units, root.invbuy.units)
-        self.assertEqual(root.unitprice, root.invbuy.unitprice)
-        self.assertEqual(root.total, root.invbuy.total)
-        self.assertEqual(root.curtype, root.invbuy.curtype)
-        self.assertEqual(root.cursym, root.invbuy.cursym)
-        self.assertEqual(root.currate, root.invbuy.currate)
-        self.assertEqual(root.subacctsec, root.invbuy.subacctsec)
-        self.assertEqual(root.fitid, root.invbuy.invtran.fitid)
-        self.assertEqual(root.dttrade, root.invbuy.invtran.dttrade)
-        self.assertEqual(root.memo, root.invbuy.invtran.memo)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.uniqueid, instance.invbuy.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.invbuy.secid.uniqueidtype)
+        self.assertEqual(instance.units, instance.invbuy.units)
+        self.assertEqual(instance.unitprice, instance.invbuy.unitprice)
+        self.assertEqual(instance.total, instance.invbuy.total)
+        self.assertEqual(instance.curtype, instance.invbuy.curtype)
+        self.assertEqual(instance.cursym, instance.invbuy.cursym)
+        self.assertEqual(instance.currate, instance.invbuy.currate)
+        self.assertEqual(instance.subacctsec, instance.invbuy.subacctsec)
+        self.assertEqual(instance.fitid, instance.invbuy.invtran.fitid)
+        self.assertEqual(instance.dttrade, instance.invbuy.invtran.dttrade)
+        self.assertEqual(instance.memo, instance.invbuy.invtran.memo)
 
 
 class BuymfTestCase(unittest.TestCase, base.TestAggregate):
@@ -662,29 +653,29 @@ class BuymfTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, BUYMF)
-        self.assertIsInstance(root.invbuy, INVBUY)
-        self.assertEqual(root.buytype, "BUYTOCOVER")
-        self.assertEqual(root.relfitid, "1015")
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, BUYMF)
+        self.assertIsInstance(instance.invbuy, INVBUY)
+        self.assertEqual(instance.buytype, "BUYTOCOVER")
+        self.assertEqual(instance.relfitid, "1015")
 
     def testOneOf(self):
         self.oneOfTest("BUYTYPE", BUYTYPES)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.uniqueid, root.invbuy.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.invbuy.secid.uniqueidtype)
-        self.assertEqual(root.units, root.invbuy.units)
-        self.assertEqual(root.unitprice, root.invbuy.unitprice)
-        self.assertEqual(root.total, root.invbuy.total)
-        self.assertEqual(root.curtype, root.invbuy.curtype)
-        self.assertEqual(root.cursym, root.invbuy.cursym)
-        self.assertEqual(root.currate, root.invbuy.currate)
-        self.assertEqual(root.subacctsec, root.invbuy.subacctsec)
-        self.assertEqual(root.fitid, root.invbuy.invtran.fitid)
-        self.assertEqual(root.dttrade, root.invbuy.invtran.dttrade)
-        self.assertEqual(root.memo, root.invbuy.invtran.memo)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.uniqueid, instance.invbuy.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.invbuy.secid.uniqueidtype)
+        self.assertEqual(instance.units, instance.invbuy.units)
+        self.assertEqual(instance.unitprice, instance.invbuy.unitprice)
+        self.assertEqual(instance.total, instance.invbuy.total)
+        self.assertEqual(instance.curtype, instance.invbuy.curtype)
+        self.assertEqual(instance.cursym, instance.invbuy.cursym)
+        self.assertEqual(instance.currate, instance.invbuy.currate)
+        self.assertEqual(instance.subacctsec, instance.invbuy.subacctsec)
+        self.assertEqual(instance.fitid, instance.invbuy.invtran.fitid)
+        self.assertEqual(instance.dttrade, instance.invbuy.invtran.dttrade)
+        self.assertEqual(instance.memo, instance.invbuy.invtran.memo)
 
 
 class BuyoptTestCase(unittest.TestCase, base.TestAggregate):
@@ -704,29 +695,29 @@ class BuyoptTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, BUYOPT)
-        self.assertIsInstance(root.invbuy, INVBUY)
-        self.assertEqual(root.optbuytype, "BUYTOCLOSE")
-        self.assertEqual(root.shperctrct, 100)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, BUYOPT)
+        self.assertIsInstance(instance.invbuy, INVBUY)
+        self.assertEqual(instance.optbuytype, "BUYTOCLOSE")
+        self.assertEqual(instance.shperctrct, 100)
 
     def testOneOf(self):
         self.oneOfTest("OPTBUYTYPE", ("BUYTOOPEN", "BUYTOCLOSE"))
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.uniqueid, root.invbuy.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.invbuy.secid.uniqueidtype)
-        self.assertEqual(root.units, root.invbuy.units)
-        self.assertEqual(root.unitprice, root.invbuy.unitprice)
-        self.assertEqual(root.total, root.invbuy.total)
-        self.assertEqual(root.curtype, root.invbuy.curtype)
-        self.assertEqual(root.cursym, root.invbuy.cursym)
-        self.assertEqual(root.currate, root.invbuy.currate)
-        self.assertEqual(root.subacctsec, root.invbuy.subacctsec)
-        self.assertEqual(root.fitid, root.invbuy.invtran.fitid)
-        self.assertEqual(root.dttrade, root.invbuy.invtran.dttrade)
-        self.assertEqual(root.memo, root.invbuy.invtran.memo)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.uniqueid, instance.invbuy.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.invbuy.secid.uniqueidtype)
+        self.assertEqual(instance.units, instance.invbuy.units)
+        self.assertEqual(instance.unitprice, instance.invbuy.unitprice)
+        self.assertEqual(instance.total, instance.invbuy.total)
+        self.assertEqual(instance.curtype, instance.invbuy.curtype)
+        self.assertEqual(instance.cursym, instance.invbuy.cursym)
+        self.assertEqual(instance.currate, instance.invbuy.currate)
+        self.assertEqual(instance.subacctsec, instance.invbuy.subacctsec)
+        self.assertEqual(instance.fitid, instance.invbuy.invtran.fitid)
+        self.assertEqual(instance.dttrade, instance.invbuy.invtran.dttrade)
+        self.assertEqual(instance.memo, instance.invbuy.invtran.memo)
 
 
 class BuyotherTestCase(unittest.TestCase, base.TestAggregate):
@@ -744,24 +735,24 @@ class BuyotherTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, BUYOTHER)
-        self.assertIsInstance(root.invbuy, INVBUY)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, BUYOTHER)
+        self.assertIsInstance(instance.invbuy, INVBUY)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.uniqueid, root.invbuy.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.invbuy.secid.uniqueidtype)
-        self.assertEqual(root.units, root.invbuy.units)
-        self.assertEqual(root.unitprice, root.invbuy.unitprice)
-        self.assertEqual(root.total, root.invbuy.total)
-        self.assertEqual(root.curtype, root.invbuy.curtype)
-        self.assertEqual(root.cursym, root.invbuy.cursym)
-        self.assertEqual(root.currate, root.invbuy.currate)
-        self.assertEqual(root.subacctsec, root.invbuy.subacctsec)
-        self.assertEqual(root.fitid, root.invbuy.invtran.fitid)
-        self.assertEqual(root.dttrade, root.invbuy.invtran.dttrade)
-        self.assertEqual(root.memo, root.invbuy.invtran.memo)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.uniqueid, instance.invbuy.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.invbuy.secid.uniqueidtype)
+        self.assertEqual(instance.units, instance.invbuy.units)
+        self.assertEqual(instance.unitprice, instance.invbuy.unitprice)
+        self.assertEqual(instance.total, instance.invbuy.total)
+        self.assertEqual(instance.curtype, instance.invbuy.curtype)
+        self.assertEqual(instance.cursym, instance.invbuy.cursym)
+        self.assertEqual(instance.currate, instance.invbuy.currate)
+        self.assertEqual(instance.subacctsec, instance.invbuy.subacctsec)
+        self.assertEqual(instance.fitid, instance.invbuy.invtran.fitid)
+        self.assertEqual(instance.dttrade, instance.invbuy.invtran.dttrade)
+        self.assertEqual(instance.memo, instance.invbuy.invtran.memo)
 
 
 class BuystockTestCase(unittest.TestCase, base.TestAggregate):
@@ -780,28 +771,28 @@ class BuystockTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, BUYSTOCK)
-        self.assertIsInstance(root.invbuy, INVBUY)
-        self.assertEqual(root.buytype, "BUYTOCOVER")
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, BUYSTOCK)
+        self.assertIsInstance(instance.invbuy, INVBUY)
+        self.assertEqual(instance.buytype, "BUYTOCOVER")
 
     def testOneOf(self):
         self.oneOfTest("BUYTYPE", BUYTYPES)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.uniqueid, root.invbuy.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.invbuy.secid.uniqueidtype)
-        self.assertEqual(root.units, root.invbuy.units)
-        self.assertEqual(root.unitprice, root.invbuy.unitprice)
-        self.assertEqual(root.total, root.invbuy.total)
-        self.assertEqual(root.curtype, root.invbuy.curtype)
-        self.assertEqual(root.cursym, root.invbuy.cursym)
-        self.assertEqual(root.currate, root.invbuy.currate)
-        self.assertEqual(root.subacctsec, root.invbuy.subacctsec)
-        self.assertEqual(root.fitid, root.invbuy.invtran.fitid)
-        self.assertEqual(root.dttrade, root.invbuy.invtran.dttrade)
-        self.assertEqual(root.memo, root.invbuy.invtran.memo)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.uniqueid, instance.invbuy.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.invbuy.secid.uniqueidtype)
+        self.assertEqual(instance.units, instance.invbuy.units)
+        self.assertEqual(instance.unitprice, instance.invbuy.unitprice)
+        self.assertEqual(instance.total, instance.invbuy.total)
+        self.assertEqual(instance.curtype, instance.invbuy.curtype)
+        self.assertEqual(instance.cursym, instance.invbuy.cursym)
+        self.assertEqual(instance.currate, instance.invbuy.currate)
+        self.assertEqual(instance.subacctsec, instance.invbuy.subacctsec)
+        self.assertEqual(instance.fitid, instance.invbuy.invtran.fitid)
+        self.assertEqual(instance.dttrade, instance.invbuy.invtran.dttrade)
+        self.assertEqual(instance.memo, instance.invbuy.invtran.memo)
 
 
 class ClosureoptTestCase(unittest.TestCase, base.TestAggregate):
@@ -835,29 +826,29 @@ class ClosureoptTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, CLOSUREOPT)
-        self.assertIsInstance(root.invtran, INVTRAN)
-        self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.optaction, "EXERCISE")
-        self.assertEqual(root.units, Decimal("200"))
-        self.assertEqual(root.shperctrct, 100)
-        self.assertEqual(root.subacctsec, "MARGIN")
-        self.assertEqual(root.relfitid, "1001")
-        self.assertEqual(root.gain, Decimal("123.45"))
-        return root
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, CLOSUREOPT)
+        self.assertIsInstance(instance.invtran, INVTRAN)
+        self.assertIsInstance(instance.secid, SECID)
+        self.assertEqual(instance.optaction, "EXERCISE")
+        self.assertEqual(instance.units, Decimal("200"))
+        self.assertEqual(instance.shperctrct, 100)
+        self.assertEqual(instance.subacctsec, "MARGIN")
+        self.assertEqual(instance.relfitid, "1001")
+        self.assertEqual(instance.gain, Decimal("123.45"))
+        return instance
 
     def testOneOf(self):
         self.oneOfTest("OPTACTION", ("EXERCISE", "ASSIGN", "EXPIRE"))
         self.oneOfTest("SUBACCTSEC", INVSUBACCTS)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.fitid, root.invtran.fitid)
-        self.assertEqual(root.dttrade, root.invtran.dttrade)
-        self.assertEqual(root.memo, root.invtran.memo)
-        self.assertEqual(root.uniqueid, root.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.secid.uniqueidtype)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.fitid, instance.invtran.fitid)
+        self.assertEqual(instance.dttrade, instance.invtran.dttrade)
+        self.assertEqual(instance.memo, instance.invtran.memo)
+        self.assertEqual(instance.uniqueid, instance.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.secid.uniqueidtype)
 
 
 class IncomeTestCase(unittest.TestCase, base.TestAggregate):
@@ -894,19 +885,19 @@ class IncomeTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INCOME)
-        self.assertIsInstance(root.invtran, INVTRAN)
-        self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.incometype, "CGLONG")
-        self.assertEqual(root.total, Decimal("1500"))
-        self.assertEqual(root.subacctsec, "MARGIN")
-        self.assertEqual(root.subacctfund, "CASH")
-        self.assertEqual(root.taxexempt, True)
-        self.assertEqual(root.withholding, Decimal("123.45"))
-        self.assertIsInstance(root.currency, CURRENCY)
-        self.assertEqual(root.inv401ksource, "PROFITSHARING")
-        return root
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INCOME)
+        self.assertIsInstance(instance.invtran, INVTRAN)
+        self.assertIsInstance(instance.secid, SECID)
+        self.assertEqual(instance.incometype, "CGLONG")
+        self.assertEqual(instance.total, Decimal("1500"))
+        self.assertEqual(instance.subacctsec, "MARGIN")
+        self.assertEqual(instance.subacctfund, "CASH")
+        self.assertEqual(instance.taxexempt, True)
+        self.assertEqual(instance.withholding, Decimal("123.45"))
+        self.assertIsInstance(instance.currency, CURRENCY)
+        self.assertEqual(instance.inv401ksource, "PROFITSHARING")
+        return instance
 
     def testOneOf(self):
         self.oneOfTest("INCOMETYPE", INCOMETYPES)
@@ -915,15 +906,15 @@ class IncomeTestCase(unittest.TestCase, base.TestAggregate):
         self.oneOfTest("INV401KSOURCE", INV401KSOURCES)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.fitid, root.invtran.fitid)
-        self.assertEqual(root.dttrade, root.invtran.dttrade)
-        self.assertEqual(root.memo, root.invtran.memo)
-        self.assertEqual(root.uniqueid, root.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.secid.uniqueidtype)
-        self.assertEqual(root.curtype, "CURRENCY")
-        self.assertEqual(root.cursym, root.currency.cursym)
-        self.assertEqual(root.currate, root.currency.currate)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.fitid, instance.invtran.fitid)
+        self.assertEqual(instance.dttrade, instance.invtran.dttrade)
+        self.assertEqual(instance.memo, instance.invtran.memo)
+        self.assertEqual(instance.uniqueid, instance.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.secid.uniqueidtype)
+        self.assertEqual(instance.curtype, "CURRENCY")
+        self.assertEqual(instance.cursym, instance.currency.cursym)
+        self.assertEqual(instance.currate, instance.currency.currate)
 
 
 class InvexpenseTestCase(unittest.TestCase, base.TestAggregate):
@@ -950,15 +941,15 @@ class InvexpenseTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INVEXPENSE)
-        self.assertIsInstance(root.invtran, INVTRAN)
-        self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.total, Decimal("-161.49"))
-        self.assertEqual(root.subacctsec, "MARGIN")
-        self.assertEqual(root.subacctfund, "CASH")
-        self.assertIsInstance(root.currency, CURRENCY)
-        self.assertEqual(root.inv401ksource, "PROFITSHARING")
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INVEXPENSE)
+        self.assertIsInstance(instance.invtran, INVTRAN)
+        self.assertIsInstance(instance.secid, SECID)
+        self.assertEqual(instance.total, Decimal("-161.49"))
+        self.assertEqual(instance.subacctsec, "MARGIN")
+        self.assertEqual(instance.subacctfund, "CASH")
+        self.assertIsInstance(instance.currency, CURRENCY)
+        self.assertEqual(instance.inv401ksource, "PROFITSHARING")
 
     def testOneOf(self):
         self.oneOfTest("SUBACCTSEC", INVSUBACCTS)
@@ -966,15 +957,15 @@ class InvexpenseTestCase(unittest.TestCase, base.TestAggregate):
         self.oneOfTest("INV401KSOURCE", INV401KSOURCES)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.fitid, root.invtran.fitid)
-        self.assertEqual(root.dttrade, root.invtran.dttrade)
-        self.assertEqual(root.memo, root.invtran.memo)
-        self.assertEqual(root.uniqueid, root.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.secid.uniqueidtype)
-        self.assertEqual(root.curtype, "CURRENCY")
-        self.assertEqual(root.cursym, root.currency.cursym)
-        self.assertEqual(root.currate, root.currency.currate)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.fitid, instance.invtran.fitid)
+        self.assertEqual(instance.dttrade, instance.invtran.dttrade)
+        self.assertEqual(instance.memo, instance.invtran.memo)
+        self.assertEqual(instance.uniqueid, instance.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.secid.uniqueidtype)
+        self.assertEqual(instance.curtype, "CURRENCY")
+        self.assertEqual(instance.cursym, instance.currency.cursym)
+        self.assertEqual(instance.currate, instance.currency.currate)
 
 
 class JrnlfundTestCase(unittest.TestCase, base.TestAggregate):
@@ -995,22 +986,22 @@ class JrnlfundTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, JRNLFUND)
-        self.assertIsInstance(root.invtran, INVTRAN)
-        self.assertEqual(root.subacctto, "MARGIN")
-        self.assertEqual(root.subacctfrom, "CASH")
-        self.assertEqual(root.total, Decimal("161.49"))
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, JRNLFUND)
+        self.assertIsInstance(instance.invtran, INVTRAN)
+        self.assertEqual(instance.subacctto, "MARGIN")
+        self.assertEqual(instance.subacctfrom, "CASH")
+        self.assertEqual(instance.total, Decimal("161.49"))
 
     def testOneOf(self):
         self.oneOfTest("SUBACCTTO", INVSUBACCTS)
         self.oneOfTest("SUBACCTFROM", INVSUBACCTS)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.fitid, root.invtran.fitid)
-        self.assertEqual(root.dttrade, root.invtran.dttrade)
-        self.assertEqual(root.memo, root.invtran.memo)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.fitid, instance.invtran.fitid)
+        self.assertEqual(instance.dttrade, instance.invtran.dttrade)
+        self.assertEqual(instance.memo, instance.invtran.memo)
 
 
 class JrnlsecTestCase(unittest.TestCase, base.TestAggregate):
@@ -1033,25 +1024,25 @@ class JrnlsecTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, JRNLSEC)
-        self.assertIsInstance(root.invtran, INVTRAN)
-        self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.subacctto, "MARGIN")
-        self.assertEqual(root.subacctfrom, "CASH")
-        self.assertEqual(root.units, Decimal("1600"))
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, JRNLSEC)
+        self.assertIsInstance(instance.invtran, INVTRAN)
+        self.assertIsInstance(instance.secid, SECID)
+        self.assertEqual(instance.subacctto, "MARGIN")
+        self.assertEqual(instance.subacctfrom, "CASH")
+        self.assertEqual(instance.units, Decimal("1600"))
 
     def testOneOf(self):
         self.oneOfTest("SUBACCTTO", INVSUBACCTS)
         self.oneOfTest("SUBACCTFROM", INVSUBACCTS)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.fitid, root.invtran.fitid)
-        self.assertEqual(root.dttrade, root.invtran.dttrade)
-        self.assertEqual(root.memo, root.invtran.memo)
-        self.assertEqual(root.uniqueid, root.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.secid.uniqueidtype)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.fitid, instance.invtran.fitid)
+        self.assertEqual(instance.dttrade, instance.invtran.dttrade)
+        self.assertEqual(instance.memo, instance.invtran.memo)
+        self.assertEqual(instance.uniqueid, instance.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.secid.uniqueidtype)
 
 
 class MargininterestTestCase(unittest.TestCase, base.TestAggregate):
@@ -1074,25 +1065,25 @@ class MargininterestTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, MARGININTEREST)
-        self.assertIsInstance(root.invtran, INVTRAN)
-        self.assertEqual(root.total, Decimal("161.49"))
-        self.assertEqual(root.subacctfund, "CASH")
-        self.assertIsInstance(root.currency, CURRENCY)
-        return root
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, MARGININTEREST)
+        self.assertIsInstance(instance.invtran, INVTRAN)
+        self.assertEqual(instance.total, Decimal("161.49"))
+        self.assertEqual(instance.subacctfund, "CASH")
+        self.assertIsInstance(instance.currency, CURRENCY)
+        return instance
 
     def testOneOf(self):
         self.oneOfTest("SUBACCTFUND", INVSUBACCTS)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.fitid, root.invtran.fitid)
-        self.assertEqual(root.dttrade, root.invtran.dttrade)
-        self.assertEqual(root.memo, root.invtran.memo)
-        self.assertEqual(root.curtype, "CURRENCY")
-        self.assertEqual(root.cursym, root.currency.cursym)
-        self.assertEqual(root.currate, root.currency.currate)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.fitid, instance.invtran.fitid)
+        self.assertEqual(instance.dttrade, instance.invtran.dttrade)
+        self.assertEqual(instance.memo, instance.invtran.memo)
+        self.assertEqual(instance.curtype, "CURRENCY")
+        self.assertEqual(instance.cursym, instance.currency.cursym)
+        self.assertEqual(instance.currate, instance.currency.currate)
 
 
 class ReinvestTestCase(unittest.TestCase, base.TestAggregate):
@@ -1142,23 +1133,23 @@ class ReinvestTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, REINVEST)
-        self.assertIsInstance(root.invtran, INVTRAN)
-        self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.total, Decimal("-161.49"))
-        self.assertEqual(root.incometype, "CGLONG")
-        self.assertEqual(root.subacctsec, "MARGIN")
-        self.assertEqual(root.units, Decimal("100"))
-        self.assertEqual(root.unitprice, Decimal("1.50"))
-        self.assertEqual(root.commission, Decimal("9.99"))
-        self.assertEqual(root.taxes, Decimal("0"))
-        self.assertEqual(root.fees, Decimal("1.50"))
-        self.assertEqual(root.load, Decimal("0"))
-        self.assertEqual(root.taxexempt, True)
-        self.assertIsInstance(root.currency, CURRENCY)
-        self.assertEqual(root.inv401ksource, "PROFITSHARING")
-        return root
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, REINVEST)
+        self.assertIsInstance(instance.invtran, INVTRAN)
+        self.assertIsInstance(instance.secid, SECID)
+        self.assertEqual(instance.total, Decimal("-161.49"))
+        self.assertEqual(instance.incometype, "CGLONG")
+        self.assertEqual(instance.subacctsec, "MARGIN")
+        self.assertEqual(instance.units, Decimal("100"))
+        self.assertEqual(instance.unitprice, Decimal("1.50"))
+        self.assertEqual(instance.commission, Decimal("9.99"))
+        self.assertEqual(instance.taxes, Decimal("0"))
+        self.assertEqual(instance.fees, Decimal("1.50"))
+        self.assertEqual(instance.load, Decimal("0"))
+        self.assertEqual(instance.taxexempt, True)
+        self.assertIsInstance(instance.currency, CURRENCY)
+        self.assertEqual(instance.inv401ksource, "PROFITSHARING")
+        return instance
 
     def testOneOf(self):
         self.oneOfTest("INCOMETYPE", INCOMETYPES)
@@ -1166,15 +1157,15 @@ class ReinvestTestCase(unittest.TestCase, base.TestAggregate):
         self.oneOfTest("INV401KSOURCE", INV401KSOURCES)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.fitid, root.invtran.fitid)
-        self.assertEqual(root.dttrade, root.invtran.dttrade)
-        self.assertEqual(root.memo, root.invtran.memo)
-        self.assertEqual(root.uniqueid, root.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.secid.uniqueidtype)
-        self.assertEqual(root.curtype, "CURRENCY")
-        self.assertEqual(root.cursym, root.currency.cursym)
-        self.assertEqual(root.currate, root.currency.currate)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.fitid, instance.invtran.fitid)
+        self.assertEqual(instance.dttrade, instance.invtran.dttrade)
+        self.assertEqual(instance.memo, instance.invtran.memo)
+        self.assertEqual(instance.uniqueid, instance.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.secid.uniqueidtype)
+        self.assertEqual(instance.curtype, "CURRENCY")
+        self.assertEqual(instance.cursym, instance.currency.cursym)
+        self.assertEqual(instance.currate, instance.currency.currate)
 
 
 class RetofcapTestCase(unittest.TestCase, base.TestAggregate):
@@ -1201,16 +1192,16 @@ class RetofcapTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, RETOFCAP)
-        self.assertIsInstance(root.invtran, INVTRAN)
-        self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.total, Decimal("-161.49"))
-        self.assertEqual(root.subacctsec, "MARGIN")
-        self.assertEqual(root.subacctfund, "CASH")
-        self.assertIsInstance(root.currency, CURRENCY)
-        self.assertEqual(root.inv401ksource, "PROFITSHARING")
-        return root
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, RETOFCAP)
+        self.assertIsInstance(instance.invtran, INVTRAN)
+        self.assertIsInstance(instance.secid, SECID)
+        self.assertEqual(instance.total, Decimal("-161.49"))
+        self.assertEqual(instance.subacctsec, "MARGIN")
+        self.assertEqual(instance.subacctfund, "CASH")
+        self.assertIsInstance(instance.currency, CURRENCY)
+        self.assertEqual(instance.inv401ksource, "PROFITSHARING")
+        return instance
 
     def testOneOf(self):
         self.oneOfTest("SUBACCTSEC", INVSUBACCTS)
@@ -1218,15 +1209,15 @@ class RetofcapTestCase(unittest.TestCase, base.TestAggregate):
         self.oneOfTest("INV401KSOURCE", INV401KSOURCES)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.fitid, root.invtran.fitid)
-        self.assertEqual(root.dttrade, root.invtran.dttrade)
-        self.assertEqual(root.memo, root.invtran.memo)
-        self.assertEqual(root.uniqueid, root.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.secid.uniqueidtype)
-        self.assertEqual(root.curtype, "CURRENCY")
-        self.assertEqual(root.cursym, root.currency.cursym)
-        self.assertEqual(root.currate, root.currency.currate)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.fitid, instance.invtran.fitid)
+        self.assertEqual(instance.dttrade, instance.invtran.dttrade)
+        self.assertEqual(instance.memo, instance.invtran.memo)
+        self.assertEqual(instance.uniqueid, instance.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.secid.uniqueidtype)
+        self.assertEqual(instance.curtype, "CURRENCY")
+        self.assertEqual(instance.cursym, instance.currency.cursym)
+        self.assertEqual(instance.currate, instance.currency.currate)
 
 
 class SelldebtTestCase(unittest.TestCase, base.TestAggregate):
@@ -1247,29 +1238,29 @@ class SelldebtTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SELLDEBT)
-        self.assertIsInstance(root.invsell, INVSELL)
-        self.assertEqual(root.sellreason, "MATURITY")
-        self.assertEqual(root.accrdint, Decimal("25.50"))
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, SELLDEBT)
+        self.assertIsInstance(instance.invsell, INVSELL)
+        self.assertEqual(instance.sellreason, "MATURITY")
+        self.assertEqual(instance.accrdint, Decimal("25.50"))
 
     def testOneOf(self):
         self.oneOfTest("SELLREASON", ("CALL", "SELL", "MATURITY"))
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.uniqueid, root.invsell.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.invsell.secid.uniqueidtype)
-        self.assertEqual(root.units, root.invsell.units)
-        self.assertEqual(root.unitprice, root.invsell.unitprice)
-        self.assertEqual(root.total, root.invsell.total)
-        self.assertEqual(root.curtype, root.invsell.curtype)
-        self.assertEqual(root.cursym, root.invsell.cursym)
-        self.assertEqual(root.currate, root.invsell.currate)
-        self.assertEqual(root.subacctsec, root.invsell.subacctsec)
-        self.assertEqual(root.fitid, root.invsell.invtran.fitid)
-        self.assertEqual(root.dttrade, root.invsell.invtran.dttrade)
-        self.assertEqual(root.memo, root.invsell.invtran.memo)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.uniqueid, instance.invsell.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.invsell.secid.uniqueidtype)
+        self.assertEqual(instance.units, instance.invsell.units)
+        self.assertEqual(instance.unitprice, instance.invsell.unitprice)
+        self.assertEqual(instance.total, instance.invsell.total)
+        self.assertEqual(instance.curtype, instance.invsell.curtype)
+        self.assertEqual(instance.cursym, instance.invsell.cursym)
+        self.assertEqual(instance.currate, instance.invsell.currate)
+        self.assertEqual(instance.subacctsec, instance.invsell.subacctsec)
+        self.assertEqual(instance.fitid, instance.invsell.invtran.fitid)
+        self.assertEqual(instance.dttrade, instance.invsell.invtran.dttrade)
+        self.assertEqual(instance.memo, instance.invsell.invtran.memo)
 
 
 class SellmfTestCase(unittest.TestCase, base.TestAggregate):
@@ -1291,29 +1282,29 @@ class SellmfTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SELLMF)
-        self.assertIsInstance(root.invsell, INVSELL)
-        self.assertEqual(root.selltype, "SELLSHORT")
-        self.assertEqual(root.relfitid, "1015")
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, SELLMF)
+        self.assertIsInstance(instance.invsell, INVSELL)
+        self.assertEqual(instance.selltype, "SELLSHORT")
+        self.assertEqual(instance.relfitid, "1015")
 
     def testOneOf(self):
         self.oneOfTest("SELLTYPE", SELLTYPES)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.uniqueid, root.invsell.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.invsell.secid.uniqueidtype)
-        self.assertEqual(root.units, root.invsell.units)
-        self.assertEqual(root.unitprice, root.invsell.unitprice)
-        self.assertEqual(root.total, root.invsell.total)
-        self.assertEqual(root.curtype, root.invsell.curtype)
-        self.assertEqual(root.cursym, root.invsell.cursym)
-        self.assertEqual(root.currate, root.invsell.currate)
-        self.assertEqual(root.subacctsec, root.invsell.subacctsec)
-        self.assertEqual(root.fitid, root.invsell.invtran.fitid)
-        self.assertEqual(root.dttrade, root.invsell.invtran.dttrade)
-        self.assertEqual(root.memo, root.invsell.invtran.memo)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.uniqueid, instance.invsell.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.invsell.secid.uniqueidtype)
+        self.assertEqual(instance.units, instance.invsell.units)
+        self.assertEqual(instance.unitprice, instance.invsell.unitprice)
+        self.assertEqual(instance.total, instance.invsell.total)
+        self.assertEqual(instance.curtype, instance.invsell.curtype)
+        self.assertEqual(instance.cursym, instance.invsell.cursym)
+        self.assertEqual(instance.currate, instance.invsell.currate)
+        self.assertEqual(instance.subacctsec, instance.invsell.subacctsec)
+        self.assertEqual(instance.fitid, instance.invsell.invtran.fitid)
+        self.assertEqual(instance.dttrade, instance.invsell.invtran.dttrade)
+        self.assertEqual(instance.memo, instance.invsell.invtran.memo)
 
 
 class SelloptTestCase(unittest.TestCase, base.TestAggregate):
@@ -1337,14 +1328,14 @@ class SelloptTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SELLOPT)
-        self.assertIsInstance(root.invsell, INVSELL)
-        self.assertEqual(root.optselltype, "SELLTOCLOSE")
-        self.assertEqual(root.shperctrct, 100)
-        self.assertEqual(root.relfitid, "1001")
-        self.assertEqual(root.reltype, "STRADDLE")
-        self.assertEqual(root.secured, "NAKED")
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, SELLOPT)
+        self.assertIsInstance(instance.invsell, INVSELL)
+        self.assertEqual(instance.optselltype, "SELLTOCLOSE")
+        self.assertEqual(instance.shperctrct, 100)
+        self.assertEqual(instance.relfitid, "1001")
+        self.assertEqual(instance.reltype, "STRADDLE")
+        self.assertEqual(instance.secured, "NAKED")
 
     def testOneOf(self):
         self.oneOfTest("OPTSELLTYPE", ("SELLTOCLOSE", "SELLTOOPEN"))
@@ -1352,19 +1343,19 @@ class SelloptTestCase(unittest.TestCase, base.TestAggregate):
         self.oneOfTest("SECURED", ("NAKED", "COVERED"))
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.uniqueid, root.invsell.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.invsell.secid.uniqueidtype)
-        self.assertEqual(root.units, root.invsell.units)
-        self.assertEqual(root.unitprice, root.invsell.unitprice)
-        self.assertEqual(root.total, root.invsell.total)
-        self.assertEqual(root.curtype, root.invsell.curtype)
-        self.assertEqual(root.cursym, root.invsell.cursym)
-        self.assertEqual(root.currate, root.invsell.currate)
-        self.assertEqual(root.subacctsec, root.invsell.subacctsec)
-        self.assertEqual(root.fitid, root.invsell.invtran.fitid)
-        self.assertEqual(root.dttrade, root.invsell.invtran.dttrade)
-        self.assertEqual(root.memo, root.invsell.invtran.memo)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.uniqueid, instance.invsell.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.invsell.secid.uniqueidtype)
+        self.assertEqual(instance.units, instance.invsell.units)
+        self.assertEqual(instance.unitprice, instance.invsell.unitprice)
+        self.assertEqual(instance.total, instance.invsell.total)
+        self.assertEqual(instance.curtype, instance.invsell.curtype)
+        self.assertEqual(instance.cursym, instance.invsell.cursym)
+        self.assertEqual(instance.currate, instance.invsell.currate)
+        self.assertEqual(instance.subacctsec, instance.invsell.subacctsec)
+        self.assertEqual(instance.fitid, instance.invsell.invtran.fitid)
+        self.assertEqual(instance.dttrade, instance.invsell.invtran.dttrade)
+        self.assertEqual(instance.memo, instance.invsell.invtran.memo)
 
 
 class SellotherTestCase(unittest.TestCase, base.TestAggregate):
@@ -1382,24 +1373,24 @@ class SellotherTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SELLOTHER)
-        self.assertIsInstance(root.invsell, INVSELL)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, SELLOTHER)
+        self.assertIsInstance(instance.invsell, INVSELL)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.uniqueid, root.invsell.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.invsell.secid.uniqueidtype)
-        self.assertEqual(root.units, root.invsell.units)
-        self.assertEqual(root.unitprice, root.invsell.unitprice)
-        self.assertEqual(root.total, root.invsell.total)
-        self.assertEqual(root.curtype, root.invsell.curtype)
-        self.assertEqual(root.cursym, root.invsell.cursym)
-        self.assertEqual(root.currate, root.invsell.currate)
-        self.assertEqual(root.subacctsec, root.invsell.subacctsec)
-        self.assertEqual(root.fitid, root.invsell.invtran.fitid)
-        self.assertEqual(root.dttrade, root.invsell.invtran.dttrade)
-        self.assertEqual(root.memo, root.invsell.invtran.memo)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.uniqueid, instance.invsell.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.invsell.secid.uniqueidtype)
+        self.assertEqual(instance.units, instance.invsell.units)
+        self.assertEqual(instance.unitprice, instance.invsell.unitprice)
+        self.assertEqual(instance.total, instance.invsell.total)
+        self.assertEqual(instance.curtype, instance.invsell.curtype)
+        self.assertEqual(instance.cursym, instance.invsell.cursym)
+        self.assertEqual(instance.currate, instance.invsell.currate)
+        self.assertEqual(instance.subacctsec, instance.invsell.subacctsec)
+        self.assertEqual(instance.fitid, instance.invsell.invtran.fitid)
+        self.assertEqual(instance.dttrade, instance.invsell.invtran.dttrade)
+        self.assertEqual(instance.memo, instance.invsell.invtran.memo)
 
 
 class SellstockTestCase(unittest.TestCase, base.TestAggregate):
@@ -1418,28 +1409,28 @@ class SellstockTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SELLSTOCK)
-        self.assertIsInstance(root.invsell, INVSELL)
-        self.assertEqual(root.selltype, "SELLSHORT")
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, SELLSTOCK)
+        self.assertIsInstance(instance.invsell, INVSELL)
+        self.assertEqual(instance.selltype, "SELLSHORT")
 
     def testOneOf(self):
         self.oneOfTest("SELLTYPE", SELLTYPES)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.uniqueid, root.invsell.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.invsell.secid.uniqueidtype)
-        self.assertEqual(root.units, root.invsell.units)
-        self.assertEqual(root.unitprice, root.invsell.unitprice)
-        self.assertEqual(root.total, root.invsell.total)
-        self.assertEqual(root.curtype, root.invsell.curtype)
-        self.assertEqual(root.cursym, root.invsell.cursym)
-        self.assertEqual(root.currate, root.invsell.currate)
-        self.assertEqual(root.subacctsec, root.invsell.subacctsec)
-        self.assertEqual(root.fitid, root.invsell.invtran.fitid)
-        self.assertEqual(root.dttrade, root.invsell.invtran.dttrade)
-        self.assertEqual(root.memo, root.invsell.invtran.memo)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.uniqueid, instance.invsell.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.invsell.secid.uniqueidtype)
+        self.assertEqual(instance.units, instance.invsell.units)
+        self.assertEqual(instance.unitprice, instance.invsell.unitprice)
+        self.assertEqual(instance.total, instance.invsell.total)
+        self.assertEqual(instance.curtype, instance.invsell.curtype)
+        self.assertEqual(instance.cursym, instance.invsell.cursym)
+        self.assertEqual(instance.currate, instance.invsell.currate)
+        self.assertEqual(instance.subacctsec, instance.invsell.subacctsec)
+        self.assertEqual(instance.fitid, instance.invsell.invtran.fitid)
+        self.assertEqual(instance.dttrade, instance.invsell.invtran.dttrade)
+        self.assertEqual(instance.memo, instance.invsell.invtran.memo)
 
 
 class SplitTestCase(unittest.TestCase, base.TestAggregate):
@@ -1478,20 +1469,20 @@ class SplitTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SPLIT)
-        self.assertIsInstance(root.invtran, INVTRAN)
-        self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.subacctsec, "MARGIN")
-        self.assertEqual(root.oldunits, Decimal("200"))
-        self.assertEqual(root.newunits, Decimal("100"))
-        self.assertEqual(root.numerator, Decimal("1"))
-        self.assertEqual(root.denominator, Decimal("2"))
-        self.assertIsInstance(root.currency, CURRENCY)
-        self.assertEqual(root.fraccash, Decimal("0.50"))
-        self.assertEqual(root.subacctfund, "CASH")
-        self.assertEqual(root.inv401ksource, "PROFITSHARING")
-        return root
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, SPLIT)
+        self.assertIsInstance(instance.invtran, INVTRAN)
+        self.assertIsInstance(instance.secid, SECID)
+        self.assertEqual(instance.subacctsec, "MARGIN")
+        self.assertEqual(instance.oldunits, Decimal("200"))
+        self.assertEqual(instance.newunits, Decimal("100"))
+        self.assertEqual(instance.numerator, Decimal("1"))
+        self.assertEqual(instance.denominator, Decimal("2"))
+        self.assertIsInstance(instance.currency, CURRENCY)
+        self.assertEqual(instance.fraccash, Decimal("0.50"))
+        self.assertEqual(instance.subacctfund, "CASH")
+        self.assertEqual(instance.inv401ksource, "PROFITSHARING")
+        return instance
 
     def testOneOf(self):
         self.oneOfTest("SUBACCTSEC", INVSUBACCTS)
@@ -1499,15 +1490,15 @@ class SplitTestCase(unittest.TestCase, base.TestAggregate):
         self.oneOfTest("INV401KSOURCE", INV401KSOURCES)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.fitid, root.invtran.fitid)
-        self.assertEqual(root.dttrade, root.invtran.dttrade)
-        self.assertEqual(root.memo, root.invtran.memo)
-        self.assertEqual(root.uniqueid, root.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.secid.uniqueidtype)
-        self.assertEqual(root.curtype, "CURRENCY")
-        self.assertEqual(root.cursym, root.currency.cursym)
-        self.assertEqual(root.currate, root.currency.currate)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.fitid, instance.invtran.fitid)
+        self.assertEqual(instance.dttrade, instance.invtran.dttrade)
+        self.assertEqual(instance.memo, instance.invtran.memo)
+        self.assertEqual(instance.uniqueid, instance.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.secid.uniqueidtype)
+        self.assertEqual(instance.curtype, "CURRENCY")
+        self.assertEqual(instance.cursym, instance.currency.cursym)
+        self.assertEqual(instance.currate, instance.currency.currate)
 
 
 class TransferTestCase(unittest.TestCase, base.TestAggregate):
@@ -1551,20 +1542,20 @@ class TransferTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, TRANSFER)
-        self.assertIsInstance(root.invtran, INVTRAN)
-        self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.subacctsec, "MARGIN")
-        self.assertEqual(root.units, Decimal("100"))
-        self.assertEqual(root.tferaction, "OUT")
-        self.assertEqual(root.postype, "LONG")
-        self.assertIsInstance(root.invacctfrom, INVACCTFROM)
-        self.assertEqual(root.avgcostbasis, Decimal("22.22"))
-        self.assertEqual(root.unitprice, Decimal("23.01"))
-        self.assertEqual(root.dtpurchase, datetime(1999, 12, 31, tzinfo=UTC))
-        self.assertEqual(root.inv401ksource, "PROFITSHARING")
-        return root
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, TRANSFER)
+        self.assertIsInstance(instance.invtran, INVTRAN)
+        self.assertIsInstance(instance.secid, SECID)
+        self.assertEqual(instance.subacctsec, "MARGIN")
+        self.assertEqual(instance.units, Decimal("100"))
+        self.assertEqual(instance.tferaction, "OUT")
+        self.assertEqual(instance.postype, "LONG")
+        self.assertIsInstance(instance.invacctfrom, INVACCTFROM)
+        self.assertEqual(instance.avgcostbasis, Decimal("22.22"))
+        self.assertEqual(instance.unitprice, Decimal("23.01"))
+        self.assertEqual(instance.dtpurchase, datetime(1999, 12, 31, tzinfo=UTC))
+        self.assertEqual(instance.inv401ksource, "PROFITSHARING")
+        return instance
 
     def testOneOf(self):
         self.oneOfTest("SUBACCTSEC", INVSUBACCTS)
@@ -1573,12 +1564,12 @@ class TransferTestCase(unittest.TestCase, base.TestAggregate):
         self.oneOfTest("INV401KSOURCE", INV401KSOURCES)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.fitid, root.invtran.fitid)
-        self.assertEqual(root.dttrade, root.invtran.dttrade)
-        self.assertEqual(root.memo, root.invtran.memo)
-        self.assertEqual(root.uniqueid, root.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.secid.uniqueidtype)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.fitid, instance.invtran.fitid)
+        self.assertEqual(instance.dttrade, instance.invtran.dttrade)
+        self.assertEqual(instance.memo, instance.invtran.memo)
+        self.assertEqual(instance.uniqueid, instance.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.secid.uniqueidtype)
 
 
 class Inv401kbalTestCase(unittest.TestCase, base.TestAggregate):
@@ -1615,18 +1606,18 @@ class Inv401kbalTestCase(unittest.TestCase, base.TestAggregate):
     def testConvert(self):
         # Make sure Aggregate.from_etree() calls Element.convert() and sets
         # Aggregate instance attributes with the result
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INV401KBAL)
-        self.assertEqual(root.cashbal, Decimal("1"))
-        self.assertEqual(root.pretax, Decimal("2"))
-        self.assertEqual(root.aftertax, Decimal("3"))
-        self.assertEqual(root.match, Decimal("4"))
-        self.assertEqual(root.profitsharing, Decimal("5"))
-        self.assertEqual(root.rollover, Decimal("6"))
-        self.assertEqual(root.othervest, Decimal("7"))
-        self.assertEqual(root.othernonvest, Decimal("8"))
-        self.assertEqual(root.total, Decimal("36"))
-        self.assertIsInstance(root.ballist, BALLIST)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INV401KBAL)
+        self.assertEqual(instance.cashbal, Decimal("1"))
+        self.assertEqual(instance.pretax, Decimal("2"))
+        self.assertEqual(instance.aftertax, Decimal("3"))
+        self.assertEqual(instance.match, Decimal("4"))
+        self.assertEqual(instance.profitsharing, Decimal("5"))
+        self.assertEqual(instance.rollover, Decimal("6"))
+        self.assertEqual(instance.othervest, Decimal("7"))
+        self.assertEqual(instance.othernonvest, Decimal("8"))
+        self.assertEqual(instance.total, Decimal("36"))
+        self.assertIsInstance(instance.ballist, BALLIST)
 
 
 class InvposTestCase(unittest.TestCase, base.TestAggregate):
@@ -1664,17 +1655,17 @@ class InvposTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.heldinacct, "MARGIN")
-        self.assertEqual(root.postype, "LONG")
-        self.assertEqual(root.units, Decimal("100"))
-        self.assertEqual(root.unitprice, Decimal("90"))
-        self.assertEqual(root.mktval, Decimal("9000"))
-        self.assertEqual(root.avgcostbasis, Decimal("85"))
-        self.assertEqual(root.dtpriceasof, datetime(2013, 6, 30, tzinfo=UTC))
-        self.assertEqual(root.memo, "Marked to myth")
-        self.assertEqual(root.inv401ksource, "PROFITSHARING")
-        return root
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.heldinacct, "MARGIN")
+        self.assertEqual(instance.postype, "LONG")
+        self.assertEqual(instance.units, Decimal("100"))
+        self.assertEqual(instance.unitprice, Decimal("90"))
+        self.assertEqual(instance.mktval, Decimal("9000"))
+        self.assertEqual(instance.avgcostbasis, Decimal("85"))
+        self.assertEqual(instance.dtpriceasof, datetime(2013, 6, 30, tzinfo=UTC))
+        self.assertEqual(instance.memo, "Marked to myth")
+        self.assertEqual(instance.inv401ksource, "PROFITSHARING")
+        return instance
 
     def testOneOf(self):
         self.oneOfTest("HELDINACCT", INVSUBACCTS)
@@ -1697,27 +1688,25 @@ class PosdebtTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, POSDEBT)
-        self.assertIsInstance(root.invpos, INVPOS)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, POSDEBT)
+        self.assertIsInstance(instance.invpos, INVPOS)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.uniqueid, root.invpos.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.invpos.secid.uniqueidtype)
-        self.assertEqual(root.heldinacct, root.invpos.heldinacct)
-        self.assertEqual(root.postype, root.invpos.postype)
-        self.assertEqual(root.units, root.invpos.units)
-        self.assertEqual(root.unitprice, root.invpos.unitprice)
-        self.assertEqual(root.mktval, root.invpos.mktval)
-        self.assertEqual(root.dtpriceasof, root.invpos.dtpriceasof)
-        self.assertEqual(root.cursym, root.invpos.currency.cursym)
-        self.assertEqual(root.currate, root.invpos.currency.currate)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.uniqueid, instance.invpos.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.invpos.secid.uniqueidtype)
+        self.assertEqual(instance.heldinacct, instance.invpos.heldinacct)
+        self.assertEqual(instance.postype, instance.invpos.postype)
+        self.assertEqual(instance.units, instance.invpos.units)
+        self.assertEqual(instance.unitprice, instance.invpos.unitprice)
+        self.assertEqual(instance.mktval, instance.invpos.mktval)
+        self.assertEqual(instance.dtpriceasof, instance.invpos.dtpriceasof)
+        self.assertEqual(instance.cursym, instance.invpos.currency.cursym)
+        self.assertEqual(instance.currate, instance.invpos.currency.currate)
 
 
 class PosmfTestCase(unittest.TestCase, base.TestAggregate):
-    """ """
-
     __test__ = True
 
     requiredElements = ["INVPOS"]
@@ -1735,29 +1724,29 @@ class PosmfTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, POSMF)
-        self.assertIsInstance(root.invpos, INVPOS)
-        self.assertEqual(root.unitsstreet, Decimal("200"))
-        self.assertEqual(root.unitsuser, Decimal("300"))
-        self.assertEqual(root.reinvdiv, False)
-        self.assertEqual(root.reinvcg, True)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, POSMF)
+        self.assertIsInstance(instance.invpos, INVPOS)
+        self.assertEqual(instance.unitsstreet, Decimal("200"))
+        self.assertEqual(instance.unitsuser, Decimal("300"))
+        self.assertEqual(instance.reinvdiv, False)
+        self.assertEqual(instance.reinvcg, True)
 
     def testOneOf(self):
         self.oneOfTest("REINVDIV", ("Y", "N"))
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.uniqueid, root.invpos.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.invpos.secid.uniqueidtype)
-        self.assertEqual(root.heldinacct, root.invpos.heldinacct)
-        self.assertEqual(root.postype, root.invpos.postype)
-        self.assertEqual(root.units, root.invpos.units)
-        self.assertEqual(root.unitprice, root.invpos.unitprice)
-        self.assertEqual(root.mktval, root.invpos.mktval)
-        self.assertEqual(root.dtpriceasof, root.invpos.dtpriceasof)
-        self.assertEqual(root.cursym, root.invpos.currency.cursym)
-        self.assertEqual(root.currate, root.invpos.currency.currate)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.uniqueid, instance.invpos.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.invpos.secid.uniqueidtype)
+        self.assertEqual(instance.heldinacct, instance.invpos.heldinacct)
+        self.assertEqual(instance.postype, instance.invpos.postype)
+        self.assertEqual(instance.units, instance.invpos.units)
+        self.assertEqual(instance.unitprice, instance.invpos.unitprice)
+        self.assertEqual(instance.mktval, instance.invpos.mktval)
+        self.assertEqual(instance.dtpriceasof, instance.invpos.dtpriceasof)
+        self.assertEqual(instance.cursym, instance.invpos.currency.cursym)
+        self.assertEqual(instance.currate, instance.invpos.currency.currate)
 
 
 class PosoptTestCase(unittest.TestCase, base.TestAggregate):
@@ -1777,31 +1766,29 @@ class PosoptTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, POSOPT)
-        self.assertIsInstance(root.invpos, INVPOS)
-        self.assertEqual(root.secured, "COVERED")
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, POSOPT)
+        self.assertIsInstance(instance.invpos, INVPOS)
+        self.assertEqual(instance.secured, "COVERED")
 
     def testOneOf(self):
         self.oneOfTest("SECURED", ("NAKED", "COVERED"))
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.uniqueid, root.invpos.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.invpos.secid.uniqueidtype)
-        self.assertEqual(root.heldinacct, root.invpos.heldinacct)
-        self.assertEqual(root.postype, root.invpos.postype)
-        self.assertEqual(root.units, root.invpos.units)
-        self.assertEqual(root.unitprice, root.invpos.unitprice)
-        self.assertEqual(root.mktval, root.invpos.mktval)
-        self.assertEqual(root.dtpriceasof, root.invpos.dtpriceasof)
-        self.assertEqual(root.cursym, root.invpos.currency.cursym)
-        self.assertEqual(root.currate, root.invpos.currency.currate)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.uniqueid, instance.invpos.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.invpos.secid.uniqueidtype)
+        self.assertEqual(instance.heldinacct, instance.invpos.heldinacct)
+        self.assertEqual(instance.postype, instance.invpos.postype)
+        self.assertEqual(instance.units, instance.invpos.units)
+        self.assertEqual(instance.unitprice, instance.invpos.unitprice)
+        self.assertEqual(instance.mktval, instance.invpos.mktval)
+        self.assertEqual(instance.dtpriceasof, instance.invpos.dtpriceasof)
+        self.assertEqual(instance.cursym, instance.invpos.currency.cursym)
+        self.assertEqual(instance.currate, instance.invpos.currency.currate)
 
 
 class PosotherTestCase(unittest.TestCase, base.TestAggregate):
-    """ """
-
     __test__ = True
 
     requiredElements = ["INVPOS"]
@@ -1814,22 +1801,22 @@ class PosotherTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, POSOTHER)
-        self.assertIsInstance(root.invpos, INVPOS)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, POSOTHER)
+        self.assertIsInstance(instance.invpos, INVPOS)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.uniqueid, root.invpos.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.invpos.secid.uniqueidtype)
-        self.assertEqual(root.heldinacct, root.invpos.heldinacct)
-        self.assertEqual(root.postype, root.invpos.postype)
-        self.assertEqual(root.units, root.invpos.units)
-        self.assertEqual(root.unitprice, root.invpos.unitprice)
-        self.assertEqual(root.mktval, root.invpos.mktval)
-        self.assertEqual(root.dtpriceasof, root.invpos.dtpriceasof)
-        self.assertEqual(root.cursym, root.invpos.currency.cursym)
-        self.assertEqual(root.currate, root.invpos.currency.currate)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.uniqueid, instance.invpos.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.invpos.secid.uniqueidtype)
+        self.assertEqual(instance.heldinacct, instance.invpos.heldinacct)
+        self.assertEqual(instance.postype, instance.invpos.postype)
+        self.assertEqual(instance.units, instance.invpos.units)
+        self.assertEqual(instance.unitprice, instance.invpos.unitprice)
+        self.assertEqual(instance.mktval, instance.invpos.mktval)
+        self.assertEqual(instance.dtpriceasof, instance.invpos.dtpriceasof)
+        self.assertEqual(instance.cursym, instance.invpos.currency.cursym)
+        self.assertEqual(instance.currate, instance.invpos.currency.currate)
 
 
 class PosstockTestCase(unittest.TestCase, base.TestAggregate):
@@ -1851,28 +1838,28 @@ class PosstockTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, POSSTOCK)
-        self.assertIsInstance(root.invpos, INVPOS)
-        self.assertEqual(root.unitsstreet, Decimal("200"))
-        self.assertEqual(root.unitsuser, Decimal("300"))
-        self.assertEqual(root.reinvdiv, False)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, POSSTOCK)
+        self.assertIsInstance(instance.invpos, INVPOS)
+        self.assertEqual(instance.unitsstreet, Decimal("200"))
+        self.assertEqual(instance.unitsuser, Decimal("300"))
+        self.assertEqual(instance.reinvdiv, False)
 
     def testOneOf(self):
         self.oneOfTest("REINVDIV", ("Y", "N"))
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.uniqueid, root.invpos.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.invpos.secid.uniqueidtype)
-        self.assertEqual(root.heldinacct, root.invpos.heldinacct)
-        self.assertEqual(root.postype, root.invpos.postype)
-        self.assertEqual(root.units, root.invpos.units)
-        self.assertEqual(root.unitprice, root.invpos.unitprice)
-        self.assertEqual(root.mktval, root.invpos.mktval)
-        self.assertEqual(root.dtpriceasof, root.invpos.dtpriceasof)
-        self.assertEqual(root.cursym, root.invpos.currency.cursym)
-        self.assertEqual(root.currate, root.invpos.currency.currate)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.uniqueid, instance.invpos.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.invpos.secid.uniqueidtype)
+        self.assertEqual(instance.heldinacct, instance.invpos.heldinacct)
+        self.assertEqual(instance.postype, instance.invpos.postype)
+        self.assertEqual(instance.units, instance.invpos.units)
+        self.assertEqual(instance.unitprice, instance.invpos.unitprice)
+        self.assertEqual(instance.mktval, instance.invpos.mktval)
+        self.assertEqual(instance.dtpriceasof, instance.invpos.dtpriceasof)
+        self.assertEqual(instance.cursym, instance.invpos.currency.cursym)
+        self.assertEqual(instance.currate, instance.invpos.currency.currate)
 
 
 class OoTestCase(unittest.TestCase, base.TestAggregate):
@@ -1921,22 +1908,22 @@ class OoTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.fitid, "1001")
-        self.assertEqual(root.srvrtid, "2002")
-        self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.dtplaced, datetime(2004, 7, 1, tzinfo=UTC))
-        self.assertEqual(root.units, Decimal("150"))
-        self.assertEqual(root.subacct, "CASH")
-        self.assertEqual(root.duration, "GOODTILCANCEL")
-        self.assertEqual(root.restriction, "ALLORNONE")
-        self.assertEqual(root.minunits, Decimal("100"))
-        self.assertEqual(root.limitprice, Decimal("10.50"))
-        self.assertEqual(root.stopprice, Decimal("10.00"))
-        self.assertEqual(root.memo, "Open Order")
-        self.assertIsInstance(root.currency, CURRENCY)
-        self.assertEqual(root.inv401ksource, "PROFITSHARING")
-        return root
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.fitid, "1001")
+        self.assertEqual(instance.srvrtid, "2002")
+        self.assertIsInstance(instance.secid, SECID)
+        self.assertEqual(instance.dtplaced, datetime(2004, 7, 1, tzinfo=UTC))
+        self.assertEqual(instance.units, Decimal("150"))
+        self.assertEqual(instance.subacct, "CASH")
+        self.assertEqual(instance.duration, "GOODTILCANCEL")
+        self.assertEqual(instance.restriction, "ALLORNONE")
+        self.assertEqual(instance.minunits, Decimal("100"))
+        self.assertEqual(instance.limitprice, Decimal("10.50"))
+        self.assertEqual(instance.stopprice, Decimal("10.00"))
+        self.assertEqual(instance.memo, "Open Order")
+        self.assertIsInstance(instance.currency, CURRENCY)
+        self.assertEqual(instance.inv401ksource, "PROFITSHARING")
+        return instance
 
     def testOneOf(self):
         self.oneOfTest("SUBACCT", INVSUBACCTS)
@@ -1946,17 +1933,17 @@ class OoTestCase(unittest.TestCase, base.TestAggregate):
         self.oneOfTest("INV401KSOURCE", INV401KSOURCES)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.uniqueid, root.secid.uniqueid)
-        self.assertEqual(root.uniqueidtype, root.secid.uniqueidtype)
-        #  self.assertEqual(root.heldinacct, root.invpos.heldinacct)
-        #  self.assertEqual(root.postype, root.invpos.postype)
-        #  self.assertEqual(root.units, root.invpos.units)
-        #  self.assertEqual(root.unitprice, root.invpos.unitprice)
-        #  self.assertEqual(root.mktval, root.invpos.mktval)
-        #  self.assertEqual(root.dtpriceasof, root.invpos.dtpriceasof)
-        self.assertEqual(root.cursym, root.currency.cursym)
-        self.assertEqual(root.currate, root.currency.currate)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.uniqueid, instance.secid.uniqueid)
+        self.assertEqual(instance.uniqueidtype, instance.secid.uniqueidtype)
+        #  self.assertEqual(instance.heldinacct, instance.invpos.heldinacct)
+        #  self.assertEqual(instance.postype, instance.invpos.postype)
+        #  self.assertEqual(instance.units, instance.invpos.units)
+        #  self.assertEqual(instance.unitprice, instance.invpos.unitprice)
+        #  self.assertEqual(instance.mktval, instance.invpos.mktval)
+        #  self.assertEqual(instance.dtpriceasof, instance.invpos.dtpriceasof)
+        self.assertEqual(instance.cursym, instance.currency.cursym)
+        self.assertEqual(instance.currate, instance.currency.currate)
 
 
 class OobuydebtTestCase(unittest.TestCase, base.TestAggregate):
@@ -1977,10 +1964,10 @@ class OobuydebtTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root.oo, OO)
-        self.assertEqual(root.auction, False)
-        self.assertEqual(root.dtauction, datetime(2012, 1, 9, tzinfo=UTC))
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance.oo, OO)
+        self.assertEqual(instance.auction, False)
+        self.assertEqual(instance.dtauction, datetime(2012, 1, 9, tzinfo=UTC))
 
 
 class OobuymfTestCase(unittest.TestCase, base.TestAggregate):
@@ -2000,10 +1987,10 @@ class OobuymfTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root.oo, OO)
-        self.assertEqual(root.buytype, "BUY")
-        self.assertEqual(root.unittype, "SHARES")
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance.oo, OO)
+        self.assertEqual(instance.buytype, "BUY")
+        self.assertEqual(instance.unittype, "SHARES")
 
     def testOneOf(self):
         self.oneOfTest("BUYTYPE", BUYTYPES)
@@ -2011,8 +1998,6 @@ class OobuymfTestCase(unittest.TestCase, base.TestAggregate):
 
 
 class OobuyoptTestCase(unittest.TestCase, base.TestAggregate):
-    """ """
-
     __test__ = True
 
     requiredElements = ["OO", "OPTBUYTYPE"]
@@ -2026,17 +2011,15 @@ class OobuyoptTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root.oo, OO)
-        self.assertEqual(root.optbuytype, "BUYTOOPEN")
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance.oo, OO)
+        self.assertEqual(instance.optbuytype, "BUYTOOPEN")
 
     def testOneOf(self):
         self.oneOfTest("OPTBUYTYPE", OPTBUYTYPES)
 
 
 class OobuyotherTestCase(unittest.TestCase, base.TestAggregate):
-    """ """
-
     __test__ = True
 
     requiredElements = ["OO", "UNITTYPE"]
@@ -2050,9 +2033,9 @@ class OobuyotherTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root.oo, OO)
-        self.assertEqual(root.unittype, "SHARES")
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance.oo, OO)
+        self.assertEqual(instance.unittype, "SHARES")
 
     def testOneOf(self):
         self.oneOfTest("UNITTYPE", UNITTYPES)
@@ -2074,17 +2057,15 @@ class OobuystockTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root.oo, OO)
-        self.assertEqual(root.buytype, "BUYTOCOVER")
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance.oo, OO)
+        self.assertEqual(instance.buytype, "BUYTOCOVER")
 
     def testOneOf(self):
         self.oneOfTest("BUYTYPE", BUYTYPES)
 
 
 class OoselldebtTestCase(unittest.TestCase, base.TestAggregate):
-    """ """
-
     __test__ = True
 
     requiredElements = ["OO"]
@@ -2098,13 +2079,11 @@ class OoselldebtTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root.oo, OO)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance.oo, OO)
 
 
 class OosellmfTestCase(unittest.TestCase, base.TestAggregate):
-    """ """
-
     __test__ = True
 
     requiredElements = ["OO", "SELLTYPE", "UNITTYPE", "SELLALL"]
@@ -2121,11 +2100,11 @@ class OosellmfTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root.oo, OO)
-        self.assertEqual(root.selltype, "SELLSHORT")
-        self.assertEqual(root.unittype, "SHARES")
-        self.assertEqual(root.sellall, True)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance.oo, OO)
+        self.assertEqual(instance.selltype, "SELLSHORT")
+        self.assertEqual(instance.unittype, "SHARES")
+        self.assertEqual(instance.sellall, True)
 
     def testOneOf(self):
         self.oneOfTest("SELLTYPE", SELLTYPES)
@@ -2133,8 +2112,6 @@ class OosellmfTestCase(unittest.TestCase, base.TestAggregate):
 
 
 class OoselloptTestCase(unittest.TestCase, base.TestAggregate):
-    """ """
-
     __test__ = True
 
     requiredElements = ["OO", "OPTSELLTYPE"]
@@ -2149,17 +2126,15 @@ class OoselloptTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root.oo, OO)
-        self.assertEqual(root.optselltype, "SELLTOCLOSE")
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance.oo, OO)
+        self.assertEqual(instance.optselltype, "SELLTOCLOSE")
 
     def testOneOf(self):
         self.oneOfTest("OPTSELLTYPE", OPTSELLTYPES)
 
 
 class OosellotherTestCase(unittest.TestCase, base.TestAggregate):
-    """ """
-
     __test__ = True
 
     requiredElements = ["OO", "UNITTYPE"]
@@ -2174,17 +2149,15 @@ class OosellotherTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root.oo, OO)
-        self.assertEqual(root.unittype, "SHARES")
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance.oo, OO)
+        self.assertEqual(instance.unittype, "SHARES")
 
     def testOneOf(self):
         self.oneOfTest("UNITTYPE", UNITTYPES)
 
 
 class OosellstockTestCase(unittest.TestCase, base.TestAggregate):
-    """ """
-
     __test__ = True
 
     requiredElements = ["OO", "SELLTYPE"]
@@ -2199,17 +2172,15 @@ class OosellstockTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root.oo, OO)
-        self.assertEqual(root.selltype, "SELLSHORT")
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance.oo, OO)
+        self.assertEqual(instance.selltype, "SELLSHORT")
 
     def testOneOf(self):
         self.oneOfTest("SELLTYPE", SELLTYPES)
 
 
 class SwitchmfTestCase(unittest.TestCase, base.TestAggregate):
-    """ """
-
     __test__ = True
 
     requiredElements = ["OO", "SECID", "UNITTYPE", "SWITCHALL"]
@@ -2227,11 +2198,11 @@ class SwitchmfTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root.oo, OO)
-        self.assertIsInstance(root.secid, SECID)
-        self.assertEqual(root.unittype, "SHARES")
-        self.assertEqual(root.switchall, True)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance.oo, OO)
+        self.assertIsInstance(instance.secid, SECID)
+        self.assertEqual(instance.unittype, "SHARES")
+        self.assertEqual(instance.switchall, True)
 
     def testOneOf(self):
         self.oneOfTest("UNITTYPE", UNITTYPES)
@@ -2263,16 +2234,16 @@ class InvstmtrqTestCase(unittest.TestCase, base.TestAggregate):
     def testConvert(self):
         # Test *TRNRQ Aggregate and direct child Elements.
         # Everything below that is tested elsewhere.
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INVSTMTRQ)
-        self.assertIsInstance(root.invacctfrom, INVACCTFROM)
-        self.assertIsInstance(root.inctran, INCTRAN)
-        self.assertEqual(root.incoo, False)
-        self.assertIsInstance(root.incpos, INCPOS)
-        self.assertEqual(root.incbal, False)
-        self.assertEqual(root.inc401k, True)
-        self.assertEqual(root.inc401kbal, False)
-        self.assertEqual(root.inctranimg, True)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INVSTMTRQ)
+        self.assertIsInstance(instance.invacctfrom, INVACCTFROM)
+        self.assertIsInstance(instance.inctran, INCTRAN)
+        self.assertEqual(instance.incoo, False)
+        self.assertIsInstance(instance.incpos, INCPOS)
+        self.assertEqual(instance.incbal, False)
+        self.assertEqual(instance.inc401k, True)
+        self.assertEqual(instance.inc401kbal, False)
+        self.assertEqual(instance.inctranimg, True)
 
 
 class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -2317,17 +2288,17 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
     def testConvert(self):
         # Test **RS Aggregate and direct child Elements.
         # Everything below that is tested elsewhere.
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INVSTMTRS)
-        self.assertEqual(root.dtasof, datetime(2001, 5, 30, tzinfo=UTC))
-        self.assertEqual(root.curdef, "USD")
-        self.assertIsInstance(root.invacctfrom, INVACCTFROM)
-        self.assertIsInstance(root.invtranlist, INVTRANLIST)
-        self.assertIsInstance(root.invposlist, INVPOSLIST)
-        self.assertIsInstance(root.invbal, INVBAL)
-        self.assertIsInstance(root.invoolist, INVOOLIST)
-        self.assertEqual(root.mktginfo, "Get Free Stuff NOW!!")
-        self.assertIsInstance(root.inv401kbal, INV401KBAL)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INVSTMTRS)
+        self.assertEqual(instance.dtasof, datetime(2001, 5, 30, tzinfo=UTC))
+        self.assertEqual(instance.curdef, "USD")
+        self.assertIsInstance(instance.invacctfrom, INVACCTFROM)
+        self.assertIsInstance(instance.invtranlist, INVTRANLIST)
+        self.assertIsInstance(instance.invposlist, INVPOSLIST)
+        self.assertIsInstance(instance.invbal, INVBAL)
+        self.assertIsInstance(instance.invoolist, INVOOLIST)
+        self.assertEqual(instance.mktginfo, "Get Free Stuff NOW!!")
+        self.assertIsInstance(instance.inv401kbal, INV401KBAL)
 
     def testUnsupported(self):
         root = self.root
@@ -2335,11 +2306,11 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
             self.assertIsNone(getattr(root, tag, None))
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIs(root.account, root.invacctfrom)
-        self.assertIs(root.balances, root.invbal)
-        self.assertIs(root.transactions, root.invtranlist)
-        self.assertIs(root.positions, root.invposlist)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIs(instance.account, instance.invacctfrom)
+        self.assertIs(instance.balances, instance.invbal)
+        self.assertIs(instance.transactions, instance.invtranlist)
+        self.assertIs(instance.positions, instance.invposlist)
 
 
 class InvstmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
@@ -2352,6 +2323,11 @@ class InvstmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
 
     wraps = InvstmtrsTestCase
+
+    def testPropertyAliases(self):
+        instance = Aggregate.from_etree(self.root)
+        stmt = instance.statement
+        self.assertIsInstance(stmt, INVSTMTRS)
 
 
 class Invstmtmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
@@ -2377,10 +2353,10 @@ class Invstmtmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
             Aggregate.from_etree(root)
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INVSTMTMSGSRQV1)
-        self.assertEqual(len(root), 2)
-        for stmttrnrs in root:
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INVSTMTMSGSRQV1)
+        self.assertEqual(len(instance), 2)
+        for stmttrnrs in instance:
             self.assertIsInstance(stmttrnrs, INVSTMTTRNRQ)
 
 
@@ -2407,15 +2383,15 @@ class Invstmtmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
             Aggregate.from_etree(root)
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INVSTMTMSGSRSV1)
-        self.assertEqual(len(root), 2)
-        for stmttrnrs in root:
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INVSTMTMSGSRSV1)
+        self.assertEqual(len(instance), 2)
+        for stmttrnrs in instance:
             self.assertIsInstance(stmttrnrs, INVSTMTTRNRS)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIs(root.statements[0], root[0].invstmtrs)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIs(instance.statements[0], instance[0].invstmtrs)
 
 
 class Invstmtmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
@@ -2447,16 +2423,16 @@ class Invstmtmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INVSTMTMSGSETV1)
-        self.assertIsInstance(root.msgsetcore, MSGSETCORE)
-        self.assertEqual(root.trandnld, True)
-        self.assertEqual(root.oodnld, True)
-        self.assertEqual(root.posdnld, True)
-        self.assertEqual(root.baldnld, True)
-        self.assertEqual(root.canemail, False)
-        self.assertEqual(root.inv401kdnld, False)
-        self.assertEqual(root.closingavail, True)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INVSTMTMSGSETV1)
+        self.assertIsInstance(instance.msgsetcore, MSGSETCORE)
+        self.assertEqual(instance.trandnld, True)
+        self.assertEqual(instance.oodnld, True)
+        self.assertEqual(instance.posdnld, True)
+        self.assertEqual(instance.baldnld, True)
+        self.assertEqual(instance.canemail, False)
+        self.assertEqual(instance.inv401kdnld, False)
+        self.assertEqual(instance.closingavail, True)
 
 
 class InvstmtmsgsetTestCase(unittest.TestCase, base.TestAggregate):
@@ -2470,9 +2446,9 @@ class InvstmtmsgsetTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INVSTMTMSGSET)
-        self.assertIsInstance(root.invstmtmsgsetv1, INVSTMTMSGSETV1)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INVSTMTMSGSET)
+        self.assertIsInstance(instance.invstmtmsgsetv1, INVSTMTMSGSETV1)
 
 
 if __name__ == "__main__":

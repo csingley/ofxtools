@@ -36,7 +36,13 @@ class TESTAGGREGATE(Aggregate):
 
 
 class TESTLIST(List):
-    dataTags = ("TESTAGGREGATE",)
+    metadata = String(32)
+
+    dataTags = ["TESTAGGREGATE"]
+
+    def testRepr(self):
+        rep = repr(self.instance)
+        self.assertEqual(rep, "<TESTAGGREGATE(metadata='foo', req00=True, req11=False, testsubaggregate=<TESTSUBAGGREGATE(data='bar')>)>")
 
 
 class AggregateTestCase(unittest.TestCase):
@@ -67,20 +73,20 @@ class AggregateTestCase(unittest.TestCase):
     def testInitMissingRequired(self):
         subagg = TESTSUBAGGREGATE(data="bar")
         with self.assertRaises(ValueError):
-            TESTAGGREGATE(testsubaggregate=subagg, bogus=None)
+            TESTAGGREGATE(testsubaggregate=subagg, req00=True)
 
     def testInitWrongType(self):
         subagg = TESTSUBAGGREGATE(data="bar")
         with self.assertRaises(ValueError):
-            TESTAGGREGATE(metadata=subagg, testsubaggregate=subagg)
+            TESTAGGREGATE(metadata=subagg, testsubaggregate=subagg, req00=True, req11=False)
         with self.assertRaises(ValueError):
-            TESTAGGREGATE(metadata="foo", testsubaggregate="foo")
+            TESTAGGREGATE(metadata="foo", testsubaggregate="foo", req00=True, req11=False)
 
     def testInitWithTooManyArgs(self):
         # Pass extra args not in TESTAGGREGATE.spec
         subagg = TESTSUBAGGREGATE(data="bar")
         with self.assertRaises(ValueError):
-            TESTAGGREGATE(metadata="foo", testsubaggregate=subagg, bogus=None)
+            TESTAGGREGATE(metadata="foo", testsubaggregate=subagg, req00=True, req11=False, bogus=None)
 
     def testValidateKwargs(self):
         # optionalMutexes - either is OK, but both is not OK
@@ -427,7 +433,8 @@ class AggregateTestCase(unittest.TestCase):
         self.assertEqual(val, "<TESTSUBAGGREGATE(data='bar')>")
 
     def testRepr(self):
-        pass
+        rep = repr(self.instance_with_subagg)
+        self.assertEqual(rep, "<TESTAGGREGATE(metadata='foo', req00=True, req11=False, testsubaggregate=<TESTSUBAGGREGATE(data='bar')>)>")
 
     def testGetattr(self):
         pass
@@ -470,15 +477,24 @@ class ListTestCase(unittest.TestCase):
         agg1 = TESTAGGREGATE(
             metadata="bar", req00=False, req11=True, testsubaggregate=subagg1
         )
-        return TESTLIST(agg0, agg1)
+        return TESTLIST("foo", agg0, agg1)
+
+    def testInitNotEnoughArgs(self):
+        with self.assertRaises(ValueError):
+            TESTLIST()
 
     def testToEtree(self):
         root = self.instance.to_etree()
         self.assertIsInstance(root, ET.Element)
         self.assertEqual(root.tag, "TESTLIST")
         self.assertIsNone(root.text)
-        self.assertEqual(len(root), 2)
-        agg0, agg1 = root[:]
+        self.assertEqual(len(root), 3)
+        metadata, agg0, agg1 = root[:]
+
+        self.assertIsInstance(metadata, ET.Element)
+        self.assertEqual(metadata.tag, "METADATA")
+        self.assertEqual(metadata.text, "foo")
+        self.assertEqual(len(metadata), 0)
 
         self.assertIsInstance(agg0, ET.Element)
         self.assertEqual(agg0.tag, "TESTAGGREGATE")
