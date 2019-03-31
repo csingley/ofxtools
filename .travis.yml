@@ -6,10 +6,6 @@ python:
 install:
 - pip install -r requirements-development.txt
 - pip install .
-script:
-- make test
-after_success:
-- bash < (curl -s https://codecov.io/bash)
 deploy:
   provider: pypi
   user: csingley
