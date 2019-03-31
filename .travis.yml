@@ -6,6 +6,8 @@ python:
 install:
 - pip install -r requirements-development.txt
 - pip install .
+script:
+- make test
 deploy:
   provider: pypi
   user: csingley
