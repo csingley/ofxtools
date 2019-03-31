@@ -183,50 +183,16 @@ class CcstmtrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root.balance, LEDGERBAL)
 
 
-class CcstmttrnrqTestCase(unittest.TestCase, base.TestAggregate):
+class CcstmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     __test__ = True
 
-    requiredElements = ["TRNUID", "CCSTMTRQ"]
-
-    @property
-    def root(self):
-        root = Element("CCSTMTTRNRQ")
-        SubElement(root, "TRNUID").text = "1001"
-        stmtrq = CcstmtrqTestCase().root
-        root.append(stmtrq)
-
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, CCSTMTTRNRQ)
-        self.assertEqual(root.trnuid, "1001")
-        self.assertIsInstance(root.ccstmtrq, CCSTMTRQ)
+    wraps = CcstmtrqTestCase
 
 
-class CcstmttrnrsTestCase(unittest.TestCase, base.TestAggregate):
+class CcstmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
 
-    requiredElements = ("TRNUID", "STATUS")
-    optionalElements = ("CCSTMTRS",)
-
-    @property
-    def root(self):
-        root = Element("CCSTMTTRNRS")
-        SubElement(root, "TRNUID").text = "1001"
-        status = test_models_common.StatusTestCase().root
-        root.append(status)
-        stmtrs = CcstmtrsTestCase().root
-        root.append(stmtrs)
-
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, CCSTMTTRNRS)
-        self.assertEqual(root.trnuid, "1001")
-        self.assertIsInstance(root.status, STATUS)
-        self.assertIsInstance(root.ccstmtrs, CCSTMTRS)
+    wraps = CcstmtrsTestCase
 
 
 class CcclosingTestCase(unittest.TestCase, base.TestAggregate):
@@ -385,54 +351,16 @@ class CcstmtendrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(instance[1], CCCLOSING)
 
 
-class CcstmtendtrnrqTestCase(unittest.TestCase, base.TestAggregate):
+class CcstmtendtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     __test__ = True
 
-    requiredElements = ["TRNUID", "CCSTMTENDRQ"]
-
-    @property
-    def root(self):
-        root = Element("CCSTMTENDTRNRQ")
-        SubElement(root, "TRNUID").text = "1001"
-        ccstmtendrq = CcstmtendrqTestCase().root
-        root.append(ccstmtendrq)
-
-        return root
-
-    def testConvert(self):
-        # Test *TRNRQ and direct child elements.
-        # Everything below that is tested elsewhere.
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, CCSTMTENDTRNRQ)
-        self.assertEqual(root.trnuid, "1001")
-        self.assertIsInstance(root.ccstmtendrq, CCSTMTENDRQ)
+    wraps = CcstmtendrqTestCase
 
 
-class CcstmtendtrnrsTestCase(unittest.TestCase, base.TestAggregate):
+class CcstmtendtrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
 
-    requiredElements = ("TRNUID", "STATUS")
-    optionalElements = ("CCSTMTENDRS",)
-
-    @property
-    def root(self):
-        root = Element("CCSTMTENDTRNRS")
-        SubElement(root, "TRNUID").text = "1001"
-        status = test_models_common.StatusTestCase().root
-        root.append(status)
-        ccstmtendrs = CcstmtendrsTestCase().root
-        root.append(ccstmtendrs)
-
-        return root
-
-    def testConvert(self):
-        # Test *TRNRS and direct child elements.
-        # Everything below that is tested elsewhere.
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, CCSTMTENDTRNRS)
-        self.assertEqual(root.trnuid, "1001")
-        self.assertIsInstance(root.status, STATUS)
-        self.assertIsInstance(root.ccstmtendrs, CCSTMTENDRS)
+    wraps = CcstmtendrsTestCase
 
 
 class Creditcardmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):

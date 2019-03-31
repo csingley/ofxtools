@@ -18,7 +18,7 @@ import test_models_investment
 import test_models_seclist
 import test_models_tax1099
 
-from ofxtools.models.base import Aggregate
+from ofxtools.models.base import Aggregate, classproperty
 from ofxtools.models.common import STATUS, MSGSETCORE
 from ofxtools.models.profile import (
     PROFRQ,
@@ -63,22 +63,10 @@ class ProfrqTestCase(unittest.TestCase, base.TestAggregate):
         self.oneOfTest("CLIENTROUTING", ("NONE", "SERVICE", "MSGSET"))
 
 
-class ProftrnrqTestCase(unittest.TestCase, base.TestAggregate):
+class ProftrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     __test__ = True
 
-    @property
-    def root(self):
-        root = Element("PROFTRNRQ")
-        SubElement(root, "TRNUID").text = "efe1790a-2f45-47fa-b439-9ae7682dc2a4"
-        profrq = ProfrqTestCase().root
-        root.append(profrq)
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, PROFTRNRQ)
-        self.assertEqual(root.trnuid, "efe1790a-2f45-47fa-b439-9ae7682dc2a4")
-        self.assertIsInstance(root.profrq, PROFRQ)
+    wraps = ProfrqTestCase
 
 
 class MsgsetlistTestCase(unittest.TestCase, base.TestAggregate):
@@ -228,30 +216,10 @@ class ProfrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(profrs.email, "support@ameritrade.com")
 
 
-class ProftrnrsTestCase(unittest.TestCase, base.TestAggregate):
+class ProftrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
 
-    @property
-    def root(self):
-        root = Element("PROFTRNRS")
-        SubElement(root, "TRNUID").text = "efe1790a-2f45-47fa-b439-9ae7682dc2a4"
-        status = test_models_common.StatusTestCase().root
-        root.append(status)
-        profrs = ProfrsTestCase().root
-        root.append(profrs)
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, PROFTRNRS)
-        self.assertEqual(root.trnuid, "efe1790a-2f45-47fa-b439-9ae7682dc2a4")
-        self.assertIsInstance(root.status, STATUS)
-        self.assertIsInstance(root.profrs, PROFRS)
-
-    def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        profrs = root.profile
-        self.assertIsInstance(profrs, PROFRS)
+    wraps = ProfrsTestCase
 
 
 class Profmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):

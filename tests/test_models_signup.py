@@ -11,15 +11,46 @@ from copy import deepcopy
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import MSGSETCORE, STATUS, SVCSTATUSES
 from ofxtools.models.signup import (
-    CLIENTENROLL, WEBENROLL, OTHERENROLL, SIGNUPMSGSETV1, SIGNUPMSGSET,
-    ACCTINFORQ, ACCTINFORS, ACCTINFOTRNRQ, ACCTINFOTRNRS, SIGNUPMSGSRQV1,
-    SIGNUPMSGSRSV1, ACCTINFO, ENROLLRQ, ENROLLRS, ENROLLTRNRQ, ENROLLTRNRS,
-    SVCADD, SVCCHG, SVCDEL, ACCTRQ, ACCTRS, ACCTTRNRQ, ACCTTRNRS, ACCTSYNCRQ,
-    ACCTSYNCRS, CHGUSERINFORQ, CHGUSERINFORS, CHGUSERINFOTRNRQ,
-    CHGUSERINFOTRNRS, CHGUSERINFOSYNCRQ, CHGUSERINFOSYNCRS, SVCS,
+    CLIENTENROLL,
+    WEBENROLL,
+    OTHERENROLL,
+    SIGNUPMSGSETV1,
+    SIGNUPMSGSET,
+    ACCTINFORQ,
+    ACCTINFORS,
+    ACCTINFOTRNRQ,
+    ACCTINFOTRNRS,
+    SIGNUPMSGSRQV1,
+    SIGNUPMSGSRSV1,
+    ACCTINFO,
+    ENROLLRQ,
+    ENROLLRS,
+    ENROLLTRNRQ,
+    ENROLLTRNRS,
+    SVCADD,
+    SVCCHG,
+    SVCDEL,
+    ACCTRQ,
+    ACCTRS,
+    ACCTTRNRQ,
+    ACCTTRNRS,
+    ACCTSYNCRQ,
+    ACCTSYNCRS,
+    CHGUSERINFORQ,
+    CHGUSERINFORS,
+    CHGUSERINFOTRNRQ,
+    CHGUSERINFOTRNRS,
+    CHGUSERINFOSYNCRQ,
+    CHGUSERINFOSYNCRS,
+    SVCS,
 )
 from ofxtools.models.bank import (
-    BANKACCTFROM, BANKACCTTO, BANKACCTINFO, CCACCTFROM, CCACCTTO, CCACCTINFO,
+    BANKACCTFROM,
+    BANKACCTTO,
+    BANKACCTINFO,
+    CCACCTFROM,
+    CCACCTTO,
+    CCACCTINFO,
 )
 from ofxtools.models.investment import INVACCTFROM, INVACCTTO, INVACCTINFO
 from ofxtools.utils import UTC
@@ -238,48 +269,16 @@ class AcctinforsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(rep, "<ACCTINFORS dtacctup='2012-03-14 00:00:00+00:00' len=1>")
 
 
-class AcctinfotrnrqTestCase(unittest.TestCase, base.TestAggregate):
+class AcctinfotrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     __test__ = True
 
-    requiredElements = ["TRNUID", "ACCTINFORQ"]
-
-    @property
-    def root(self):
-        root = Element("ACCTINFOTRNRQ")
-        SubElement(root, "TRNUID").text = "DEADBEEF"
-        acctinforq = AcctinforqTestCase().root
-        root.append(acctinforq)
-        return root
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, ACCTINFOTRNRQ)
-        self.assertEqual(instance.trnuid, "DEADBEEF")
-        self.assertIsInstance(instance.acctinforq, ACCTINFORQ)
+    wraps = AcctinforqTestCase
 
 
-class AcctinfotrnrsTestCase(unittest.TestCase, base.TestAggregate):
+class AcctinfotrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
 
-    requiredElements = ["TRNUID", "STATUS"]
-    optionalElements = ["ACCTINFORS"]
-
-    @property
-    def root(self):
-        root = Element("ACCTINFOTRNRS")
-        SubElement(root, "TRNUID").text = "DEADBEEF"
-        status = test_models_common.StatusTestCase().root
-        root.append(status)
-        acctinfors = AcctinforsTestCase().root
-        root.append(acctinfors)
-        return root
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, ACCTINFOTRNRS)
-        self.assertEqual(instance.trnuid, "DEADBEEF")
-        self.assertIsInstance(instance.status, STATUS)
-        self.assertIsInstance(instance.acctinfors, ACCTINFORS)
+    wraps = AcctinforsTestCase
 
 
 class EnrollrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -458,46 +457,16 @@ class EnrollrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(instance.dtexpire, datetime(2016, 7, 5, tzinfo=UTC))
 
 
-class EnrolltrnrqTestCase(unittest.TestCase, base.TestAggregate):
+class EnrolltrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     __test__ = True
 
-    requiredElements = ["TRNUID", "ENROLLRQ"]
-
-    @property
-    def root(self):
-        root = Element("ENROLLTRNRQ")
-        SubElement(root, "TRNUID").text = "DEADBEEF"
-        root.append(EnrollrqTestCase().root)
-        return root
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, ENROLLTRNRQ)
-        self.assertEqual(instance.trnuid, "DEADBEEF")
-        self.assertIsInstance(instance.enrollrq, ENROLLRQ)
+    wraps = EnrollrqTestCase
 
 
-class EnrolltrnrsTestCase(unittest.TestCase, base.TestAggregate):
+class EnrolltrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
 
-    requiredElements = ["TRNUID", "STATUS"]
-    optionalElements = ["ENROLLRS"]
-
-    @property
-    def root(self):
-        root = Element("ENROLLTRNRS")
-        SubElement(root, "TRNUID").text = "DEADBEEF"
-        status = test_models_common.StatusTestCase().root
-        root.append(status)
-        root.append(EnrollrsTestCase().root)
-        return root
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, ENROLLTRNRS)
-        self.assertEqual(instance.trnuid, "DEADBEEF")
-        self.assertIsInstance(instance.status, STATUS)
-        self.assertIsInstance(instance.enrollrs, ENROLLRS)
+    wraps = EnrollrsTestCase
 
 
 class Signupmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
@@ -816,7 +785,9 @@ class SvcdelMalformedTestCase(unittest.TestCase):
             Aggregate.from_etree(root)
 
 
-class AcctrqSvcaddTestCase(unittest.TestCase, base.TestAggregate):
+class AcctrqTestCase(unittest.TestCase, base.TestAggregate):
+    """ ACCRQ with SVCADD """
+
     __test__ = True
 
     requiredElements = ["SVC"]
@@ -923,7 +894,9 @@ class AcctrqMalformedTestCase(unittest.TestCase):
             Aggregate.from_etree(root)
 
 
-class AcctrsSvcaddTestCase(unittest.TestCase, base.TestAggregate):
+class AcctrsTestCase(unittest.TestCase, base.TestAggregate):
+    """ ACCRS with SVCADD """
+
     __test__ = True
 
     requiredElements = ["SVC", "SVCSTATUS"]
@@ -1045,50 +1018,16 @@ class AcctrsMalformedTestCase(unittest.TestCase):
             Aggregate.from_etree(root)
 
 
-class AccttrnrqTestCase(unittest.TestCase, base.TestAggregate):
+class AccttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     __test__ = True
 
-    requiredElements = ["TRNUID", "ACCTRQ"]
-
-    @property
-    def root(self):
-        root = Element("ACCTTRNRQ")
-        SubElement(root, "TRNUID").text = "DEADBEEF"
-        acctrq = AcctrqSvcaddTestCase().root
-        root.append(acctrq)
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, ACCTTRNRQ)
-        self.assertEqual(root.trnuid, "DEADBEEF")
-        self.assertIsInstance(root.acctrq, ACCTRQ)
+    wraps = AcctrqTestCase
 
 
-class AccttrnrsTestCase(unittest.TestCase, base.TestAggregate):
+class AccttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
 
-    requiredElements = ["TRNUID", "STATUS"]
-    optionalElements = ["CLTCOOKIE", "ACCTRS"]
-
-    @property
-    def root(self):
-        root = Element("ACCTTRNRS")
-        SubElement(root, "TRNUID").text = "DEADBEEF"
-        status = test_models_common.StatusTestCase().root
-        root.append(status)
-        SubElement(root, "CLTCOOKIE").text = "B00B1E5"
-        acctrs = AcctrsSvcaddTestCase().root
-        root.append(acctrs)
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, ACCTTRNRS)
-        self.assertEqual(root.trnuid, "DEADBEEF")
-        self.assertIsInstance(root.status, STATUS)
-        self.assertEqual(root.cltcookie, "B00B1E5")
-        self.assertIsInstance(root.acctrs, ACCTRS)
+    wraps = AcctrsTestCase
 
 
 class AcctsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
@@ -1238,50 +1177,16 @@ class ChguserinforsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.dtinfochg, datetime(2014, 11, 22, tzinfo=UTC))
 
 
-class ChguserinfotrnrqTestCase(unittest.TestCase, base.TestAggregate):
+class ChguserinfotrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     __test__ = True
 
-    requiredElements = ["TRNUID", "CHGUSERINFORQ"]
-
-    @property
-    def root(self):
-        root = Element("CHGUSERINFOTRNRQ")
-        SubElement(root, "TRNUID").text = "DEADBEEF"
-        chguserinforq = ChguserinforqTestCase().root
-        root.append(chguserinforq)
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, CHGUSERINFOTRNRQ)
-        self.assertEqual(root.trnuid, "DEADBEEF")
-        self.assertIsInstance(root.chguserinforq, CHGUSERINFORQ)
+    wraps = ChguserinforqTestCase
 
 
-class ChguserinfotrnrsTestCase(unittest.TestCase, base.TestAggregate):
+class ChguserinfotrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
 
-    requiredElements = ["TRNUID", "STATUS"]
-    optionalElements = ["CLTCOOKIE", "CHGUSERINFORS"]
-
-    @property
-    def root(self):
-        root = Element("CHGUSERINFOTRNRS")
-        SubElement(root, "TRNUID").text = "DEADBEEF"
-        status = test_models_common.StatusTestCase().root
-        root.append(status)
-        SubElement(root, "CLTCOOKIE").text = "B00B1E5"
-        chguserinfors = ChguserinforsTestCase().root
-        root.append(chguserinfors)
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, CHGUSERINFOTRNRS)
-        self.assertEqual(root.trnuid, "DEADBEEF")
-        self.assertIsInstance(root.status, STATUS)
-        self.assertEqual(root.cltcookie, "B00B1E5")
-        self.assertIsInstance(root.chguserinfors, CHGUSERINFORS)
+    wraps = ChguserinforsTestCase
 
 
 class ChguserinfosyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):

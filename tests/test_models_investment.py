@@ -16,7 +16,7 @@ import test_models_bank
 import test_models_seclist
 import test_models_i18n
 
-from ofxtools.models.base import Aggregate
+from ofxtools.models.base import Aggregate, classproperty
 from ofxtools.models.common import STATUS, OFXEXTENSION, MSGSETCORE, SVCSTATUSES
 from ofxtools.models.bank import STMTTRN, BALLIST, INV401KSOURCES, TRNTYPES, INCTRAN
 from ofxtools.models.investment import (
@@ -316,100 +316,45 @@ class InvbalTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.buypower, Decimal("45678.90"))
 
 
-class InvtranlistTestCase(unittest.TestCase, base.TestAggregate):
-    """ """
-
+class InvtranlistTestCase(unittest.TestCase, base.TranlistTestCase):
     __test__ = True
 
-    requiredElements = ["DTSTART", "DTEND"]
-    optionalElements = []  # FIXME - how to handle INVTRAN subclasses?
-
     @property
-    def root(self):
-        root = Element("INVTRANLIST")
-        SubElement(root, "DTSTART").text = "20130601"
-        SubElement(root, "DTEND").text = "20130630"
-        for it in (
-            "Invbanktran",
-            "Buydebt",
-            "Buymf",
-            "Buyopt",
-            "Buyother",
-            "Buystock",
-            "Closureopt",
-            "Income",
-            "Invexpense",
-            "Jrnlfund",
-            "Jrnlsec",
-            "Margininterest",
-            "Reinvest",
-            "Retofcap",
-            "Selldebt",
-            "Sellmf",
-            "Sellopt",
-            "Sellother",
-            "Sellstock",
-            "Split",
-            "Transfer",
-        ):
-            testcase = "{}TestCase".format(it)
-            invtran = globals()[testcase]
-            root.append(invtran().root)
-        return root
-
-    def testdataTags(self):
-        # INVTRANLIST may only contain
-        # ('INVBANKTRAN', 'BUYDEBT', 'BUYMF', 'BUYOPT', 'BUYOTHER',
-        # 'BUYSTOCK', 'CLOSUREOPT', 'INCOME', 'INVEXPENSE', 'JRNLFUND',
-        # 'JRNLSEC', 'MARGININTEREST', 'REINVEST', 'RETOFCAP',
-        # 'SELLDEBT', 'SELLMF', 'SELLOPT', 'SELLOTHER', 'SELLSTOCK',
-        # 'SPLIT', 'TRANSFER', )
-        allowedTags = INVTRANLIST.dataTags
-        self.assertEqual(len(allowedTags), 21)
-        root = deepcopy(self.root)
-        root.append(test_models_bank.StmttrnTestCase().root)
-
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
-
-    def testConvert(self):
-        # Test *TRANLIST wrapper.  STMTTRN is tested elsewhere.
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INVTRANLIST)
-        self.assertEqual(root.dtstart, datetime(2013, 6, 1, tzinfo=UTC))
-        self.assertEqual(root.dtend, datetime(2013, 6, 30, tzinfo=UTC))
-        self.assertEqual(len(root), 21)
-        for i, it in enumerate(
-            (
-                INVBANKTRAN,
-                BUYDEBT,
-                BUYMF,
-                BUYOPT,
-                BUYOTHER,
-                BUYSTOCK,
-                CLOSUREOPT,
-                INCOME,
-                INVEXPENSE,
-                JRNLFUND,
-                JRNLSEC,
-                MARGININTEREST,
-                REINVEST,
-                RETOFCAP,
-                SELLDEBT,
-                SELLMF,
-                SELLOPT,
-                SELLOTHER,
-                SELLSTOCK,
-                SPLIT,
-                TRANSFER,
-            )
-        ):
-            self.assertIsInstance(root[i], it)
-
-    def testToEtree(self):
-        root = Aggregate.from_etree(self.root)
-        elem = root.to_etree()
-        # FIXME
+    def validSoup(self):
+        for root_ in super().validSoup:
+            root = deepcopy(root_)
+            # 0 contained aggregrates
+            yield root
+            # Multiple contained aggregates of different types
+            for tag in (
+                "Invbanktran",
+                "Buydebt",
+                "Buymf",
+                "Buyopt",
+                "Buyother",
+                "Buystock",
+                "Closureopt",
+                "Income",
+                "Invexpense",
+                "Jrnlfund",
+                "Jrnlsec",
+                "Margininterest",
+                "Reinvest",
+                "Retofcap",
+                "Selldebt",
+                "Sellmf",
+                "Sellopt",
+                "Sellother",
+                "Sellstock",
+                "Split",
+                "Transfer",
+            ):
+                testcase = "{}TestCase".format(tag)
+                invtran = globals()[testcase]
+                root.append(invtran().root)
+                yield root
+                root.append(invtran().root)
+                yield root
 
 
 class InvbanktranTestCase(unittest.TestCase, base.TestAggregate):
@@ -2397,76 +2342,16 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIs(root.positions, root.invposlist)
 
 
-class InvstmttrnrqTestCase(unittest.TestCase, base.TestAggregate):
+class InvstmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     __test__ = True
 
-    requiredElements = ["TRNUID", "INVSTMTRQ"]
-    optionalElements = ["CLTCOOKIE", "TAN", "OFXEXTENSION"]
-
-    @property
-    def root(self):
-        root = Element("INVSTMTTRNRQ")
-        SubElement(root, "TRNUID").text = "1001"
-        SubElement(root, "CLTCOOKIE").text = "DEADBEEF"
-        SubElement(root, "TAN").text = "B00B135"
-        ofxextension = test_models_common.OfxextensionTestCase().root
-        root.append(ofxextension)
-        stmtrq = InvstmtrqTestCase().root
-        root.append(stmtrq)
-
-        return root
-
-    def testConvert(self):
-        # Test *TRNRQ wrapper and direct child Elements.
-        # Everything below that is tested elsewhere.
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INVSTMTTRNRQ)
-        self.assertEqual(root.trnuid, "1001")
-        self.assertEqual(root.cltcookie, "DEADBEEF")
-        self.assertEqual(root.tan, "B00B135")
-        self.assertIsInstance(root.ofxextension, OFXEXTENSION)
-        self.assertIsInstance(root.invstmtrq, INVSTMTRQ)
+    wraps = InvstmtrqTestCase
 
 
-class InvstmttrnrsTestCase(unittest.TestCase, base.TestAggregate):
+class InvstmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
 
-    requiredElements = ["TRNUID", "STATUS"]
-    optionalElements = ["CLTCOOKIE", "OFXEXTENSION", "INVSTMTRS"]
-
-    @property
-    def root(self):
-        root = Element("INVSTMTTRNRS")
-        SubElement(root, "TRNUID").text = "1001"
-        status = test_models_common.StatusTestCase().root
-        root.append(status)
-        SubElement(root, "CLTCOOKIE").text = "DEADBEEF"
-        ofxextension = test_models_common.OfxextensionTestCase().root
-        root.append(ofxextension)
-        stmtrs = InvstmtrsTestCase().root
-        root.append(stmtrs)
-
-        return root
-
-    def testConvert(self):
-        # Test *TRNRS wrapper and direct child Elements.
-        # Everything below that is tested elsewhere.
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INVSTMTTRNRS)
-        self.assertEqual(root.trnuid, "1001")
-        self.assertIsInstance(root.status, STATUS)
-        self.assertEqual(root.cltcookie, "DEADBEEF")
-        self.assertIsInstance(root.ofxextension, OFXEXTENSION)
-        self.assertIsInstance(root.invstmtrs, INVSTMTRS)
-
-    def testUnsupported(self):
-        root = self.root
-        for tag in INVSTMTTRNRS.unsupported:
-            self.assertIsNone(getattr(root, tag, None))
-
-    def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIs(root.statement, root.invstmtrs)
+    wraps = InvstmtrsTestCase
 
 
 class Invstmtmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):

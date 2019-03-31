@@ -4,6 +4,7 @@
 import unittest
 from datetime import datetime
 from decimal import Decimal
+
 #  from xml.etree.ElementTree import Element, SubElement
 import xml.etree.ElementTree as ET
 
@@ -33,33 +34,6 @@ class TESTTRANLIST(TranList):
     dtend = DateTime(required=True)
 
     dataTags = ("TESTAGGREGATE",)
-
-
-class StatusTestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    requiredElements = ("CODE", "SEVERITY")
-    optionalElements = ("MESSAGE",)
-
-    @property
-    def root(self):
-        root = ET.Element("STATUS")
-        ET.SubElement(root, "CODE").text = "0"
-        ET.SubElement(root, "SEVERITY").text = "INFO"
-        ET.SubElement(root, "MESSAGE").text = "Do your laundry!"
-        return root
-
-    def testConvert(self):
-        # Make sure Aggregate.from_etree() calls Element.convert() and sets
-        # Aggregate instance attributes with the result
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, STATUS)
-        self.assertEqual(root.code, 0)
-        self.assertEqual(root.severity, "INFO")
-        self.assertEqual(root.message, "Do your laundry!")
-
-    def testOneOf(self):
-        self.oneOfTest("SEVERITY", ("INFO", "WARN", "ERROR"))
 
 
 class BalTestCase(unittest.TestCase, base.TestAggregate):
@@ -205,9 +179,13 @@ class TranListTestCase(unittest.TestCase):
     @property
     def instance(self):
         subagg0 = TESTSUBAGGREGATE(data="baz")
-        agg0 = TESTAGGREGATE(metadata="foo", req00=True, req11=False, testsubaggregate=subagg0)
+        agg0 = TESTAGGREGATE(
+            metadata="foo", req00=True, req11=False, testsubaggregate=subagg0
+        )
         subagg1 = TESTSUBAGGREGATE(data="quux")
-        agg1 = TESTAGGREGATE(metadata="bar", req01=False, req10=True, testsubaggregate=subagg1)
+        agg1 = TESTAGGREGATE(
+            metadata="bar", req01=False, req10=True, testsubaggregate=subagg1
+        )
         dtstart = datetime(2015, 1, 1, tzinfo=UTC)
         dtend = datetime(2015, 3, 31, tzinfo=UTC)
         return TESTTRANLIST(dtstart, dtend, agg0, agg1)

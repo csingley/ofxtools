@@ -31,8 +31,8 @@ class TESTAGGREGATE(Aggregate):
     testsubaggregate = SubAggregate(TESTSUBAGGREGATE)
     dontuse = Unsupported()
 
-    optionalMutexes = [('option00', 'option01'), ('option10', 'option11')]
-    requiredMutexes = [('req00', 'req01'), ('req10', 'req11')]
+    optionalMutexes = [("option00", "option01"), ("option10", "option11")]
+    requiredMutexes = [("req00", "req01"), ("req10", "req11")]
 
 
 class TESTLIST(List):
@@ -60,7 +60,9 @@ class AggregateTestCase(unittest.TestCase):
     @property
     def instance_with_subagg(self):
         subagg = TESTSUBAGGREGATE(data="bar")
-        return TESTAGGREGATE(metadata="foo", req00=True, req11=False, testsubaggregate=subagg)
+        return TESTAGGREGATE(
+            metadata="foo", req00=True, req11=False, testsubaggregate=subagg
+        )
 
     def testInitMissingRequired(self):
         subagg = TESTSUBAGGREGATE(data="bar")
@@ -85,12 +87,16 @@ class AggregateTestCase(unittest.TestCase):
         TESTAGGREGATE(metadata="foo", option00=True, req00=True, req11=False)
         TESTAGGREGATE(metadata="foo", option01=True, req00=True, req11=False)
         with self.assertRaises(ValueError):
-            TESTAGGREGATE(metadata="foo", option00=True, option01=False, req00=True, req11=False)
+            TESTAGGREGATE(
+                metadata="foo", option00=True, option01=False, req00=True, req11=False
+            )
 
         TESTAGGREGATE(metadata="foo", option10=True, req00=True, req11=False)
         TESTAGGREGATE(metadata="foo", option11=True, req00=True, req11=False)
         with self.assertRaises(ValueError):
-            TESTAGGREGATE(metadata="foo", option10=True, option11=False, req00=True, req11=False)
+            TESTAGGREGATE(
+                metadata="foo", option10=True, option11=False, req00=True, req11=False
+            )
 
         # requiredMutexes - 1 is OK, 0 or 2 is not OK
         TESTAGGREGATE(metadata="foo", req00=True, req11=False)
@@ -457,9 +463,13 @@ class ListTestCase(unittest.TestCase):
     @property
     def instance(self):
         subagg0 = TESTSUBAGGREGATE(data="quux")
-        agg0 = TESTAGGREGATE(metadata="foo", req00=True, req11=False, testsubaggregate=subagg0)
+        agg0 = TESTAGGREGATE(
+            metadata="foo", req00=True, req11=False, testsubaggregate=subagg0
+        )
         subagg1 = TESTSUBAGGREGATE(data="quuz")
-        agg1 = TESTAGGREGATE(metadata="bar", req00=False, req11=True, testsubaggregate=subagg1)
+        agg1 = TESTAGGREGATE(
+            metadata="bar", req00=False, req11=True, testsubaggregate=subagg1
+        )
         return TESTLIST(agg0, agg1)
 
     def testToEtree(self):

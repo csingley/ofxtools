@@ -123,7 +123,7 @@ class SonrsTestCase(unittest.TestCase, base.TestAggregate):
     @property
     def root(self):
         root = Element("SONRS")
-        status = test_models_common.StatusTestCase().root
+        status = base.StatusTestCase().root
         root.append(status)
         SubElement(root, "DTSERVER").text = "20051029101003"
         SubElement(root, "USERKEY").text = "DEADBEEF"
