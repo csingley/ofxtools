@@ -8,10 +8,10 @@ with open(os.path.join(__here__, 'README.rst'), 'r') as f:
 
 setup(
     name='ofxtools',
-    version='0.6.3',
+    version='0.7.0',
     # Note: change 'master' to the tag name when release a new verion
     download_url='https://github.com/csingley/ofxtools/tarball/master',
-    #  download_url='https://github.com/csingley/ofxtools/tarball/0.6.3',
+    #  download_url='https://github.com/csingley/ofxtools/tarball/0.7.0',
 
     description=('Library for working with Open Financial Exchange (OFX) '
                  'formatted data used by financial institutions'),
@@ -39,9 +39,6 @@ setup(
         'Natural Language :: English',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.1',
-        'Programming Language :: Python :: 3.2',
-        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
@@ -51,12 +48,6 @@ setup(
     keywords=['ofx', 'Open Financial Exchange'],
 
     packages=find_packages(),
-
-    install_requires=['requests'],
-
-    extras_require={
-        ":python_version < '3.3'": ['mock'],
-    },
 
     package_data={
         'ofxtools': ['README.rst', 'config/*.cfg', 'tests/*'],

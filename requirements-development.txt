@@ -4,10 +4,9 @@
 -e .
 
 # test running
-mock; python_version < '3.3'
 nose
 coverage
 pylint
 ipdb
 ipdbplugin
-sqlalchemy > '1.0'
+coveralls

@@ -1,13 +1,15 @@
 language: python
 python:
-- '3.4'
-- '3.5'
-- '3.6'
+  '3.4'
+  '3.5'
+  '3.6'
 install:
-- pip install -r requirements-development.txt
-- pip install .
+  pip install -r requirements-development.txt
+  pip install .
 script:
-- make test
+  make test
+after_success:
+  coveralls
 deploy:
   provider: pypi
   user: csingley
