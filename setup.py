@@ -16,6 +16,7 @@ setup(
     description=('Library for working with Open Financial Exchange (OFX) '
                  'formatted data used by financial institutions'),
     long_description=long_description,
+    long_description_content_type="text/x-rst",
 
     url='https://github.com/csingley/ofxtools',
 
