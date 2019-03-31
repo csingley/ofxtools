@@ -224,8 +224,8 @@ class STMTTRN(Aggregate, Origcurrency):
     inv401ksource = OneOf(*INV401KSOURCES)
 
     optionalMutexes = [
-        ("ccacctto", "bankacctto"),
         ("name", "payee"),
+        ("ccacctto", "bankacctto"),
         ("currency", "origcurrency"),
     ]
 

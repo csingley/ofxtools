@@ -69,6 +69,7 @@ from ofxtools.models.bank import (
     BANKMSGSET,
     EMAILPROF,
     ACCTTYPES,
+    INV401KSOURCES
 )
 from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, CURRENCY_CODES
 
@@ -324,16 +325,15 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
         "REFNUM",
         "SIC",
         "PAYEEID",
-        "NAME",
         "EXTDNAME",
         "MEMO",
-        "CURRENCY",
         "INV401KSOURCE",
     ]
     unsupported = ["imagedata"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def emptyBase(cls):
         root = Element("STMTTRN")
         SubElement(root, "TRNTYPE").text = "CHECK"
         SubElement(root, "DTPOSTED").text = "20130615"
@@ -348,39 +348,86 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "REFNUM").text = "5A6B"
         SubElement(root, "SIC").text = "171103"
         SubElement(root, "PAYEEID").text = "77810"
-        SubElement(root, "NAME").text = "Tweet E. Bird"
-        SubElement(root, "EXTDNAME").text = "Singing yellow canary"
-        SubElement(root, "MEMO").text = "Protection money"
-        currency = test_models_i18n.CurrencyTestCase().root
-        root.append(currency)
-        SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
+
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, STMTTRN)
-        self.assertEqual(root.trntype, "CHECK")
-        self.assertEqual(root.dtposted, datetime(2013, 6, 15, tzinfo=UTC))
-        self.assertEqual(root.dtuser, datetime(2013, 6, 14, tzinfo=UTC))
-        self.assertEqual(root.dtavail, datetime(2013, 6, 16, tzinfo=UTC))
-        self.assertEqual(root.trnamt, Decimal("-433.25"))
-        self.assertEqual(root.fitid, "DEADBEEF")
-        self.assertEqual(root.correctfitid, "B00B5")
-        self.assertEqual(root.correctaction, "REPLACE")
-        self.assertEqual(root.srvrtid, "101A2")
-        self.assertEqual(root.checknum, "101")
-        self.assertEqual(root.refnum, "5A6B")
-        self.assertEqual(root.sic, 171103)
-        self.assertEqual(root.payeeid, "77810")
-        self.assertEqual(root.name, "Tweet E. Bird")
-        self.assertEqual(root.extdname, "Singing yellow canary")
-        self.assertEqual(root.memo, "Protection money")
-        self.assertIsInstance(root.currency, CURRENCY)
-        self.assertEqual(root.inv401ksource, "PROFITSHARING")
-        return root
+    @classproperty
+    @classmethod
+    def validSoup(cls):
+        name = Element("NAME")
+        name.text = "Tweet E. Bird"
+        payee = PayeeTestCase().root
+        bankacctto = BankaccttoTestCase().root
+        ccacctto = CcaccttoTestCase().root
+        currency = test_models_i18n.CurrencyTestCase().root
+        origcurrency = test_models_i18n.OrigcurrencyTestCase().root
+        for payeeChoice in (None, name, payee):
+            for acctto in (None, bankacctto, ccacctto):
+                for currencyChoice in (None, currency, origcurrency):
+                    root = deepcopy(cls.emptyBase)
+                    yield root
+                    if payeeChoice is not None:
+                        root.append(payeeChoice)
+                        yield root
+                    SubElement(root, "EXTDNAME").text = "Singing yellow canary"
+                    yield root
+                    if acctto is not None:
+                        root.append(acctto)
+                        yield root
+                    SubElement(root, "MEMO").text = "Protection money"
+                    yield root
+                    if currencyChoice is not None:
+                        root.append(currencyChoice)
+                        yield root
+                    SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
+                    yield root
+
+    @property
+    def root(self):
+        return list(self.validSoup)[-1]
+
+    @classproperty
+    @classmethod
+    def invalidSoup(cls):
+        root_ = cls.emptyBase
+
+        name = Element("NAME")
+        name.text = "Tweet E. Bird"
+        payee = PayeeTestCase().root
+        bankacctto = BankaccttoTestCase().root
+        ccacctto = CcaccttoTestCase().root
+        currency = test_models_i18n.CurrencyTestCase().root
+        origcurrency = test_models_i18n.OrigcurrencyTestCase().root
+
+        #  optionalMutexes = [
+            #  ("name", "payee"),
+            #  ("ccacctto", "bankacctto"),
+            #  ("currency", "origcurrency"),
+        #  ]
+
+        # Both NAME & PAYEE
+        root = deepcopy(root_)
+        root.append(name)
+        root.append(payee)
+        yield root
+
+        # Both BANKACCTTO & CCACCTTO
+        root = deepcopy(root_)
+        root.append(bankacctto)
+        root.append(ccacctto)
+        yield root
+
+        # Both CURRENCY & ORIGCURRENCY
+        root = deepcopy(root_)
+        root.append(currency)
+        root.append(origcurrency)
+        yield root
+
+        # FIXME - add out-of-sequence errors
 
     def testOneOf(self):
         self.oneOfTest("TRNTYPE", TRNTYPES)
+        self.oneOfTest("INV401KSOURCE", INV401KSOURCES)
 
     def testUnsupported(self):
         root = Aggregate.from_etree(self.root)
@@ -390,253 +437,18 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.curtype, "CURRENCY")
-        self.assertEqual(root.cursym, root.currency.cursym)
-        self.assertEqual(root.currate, root.currency.currate)
-
-
-class StmttrnOrigcurrencyTestCase(unittest.TestCase, base.TestAggregate):
-    """ STMTTRN with ORIGCURRENCY """
-
-    __test__ = True
-
-    optionalElements = [
-        "DTUSER",
-        "DTAVAIL",
-        "CORRECTFITID",
-        "CORRECTACTION",
-        "SRVRTID",
-        "CHECKNUM",
-        "REFNUM",
-        "SIC",
-        "PAYEEID",
-        "NAME",
-        "EXTDNAME",
-        "MEMO",
-        "ORIGCURRENCY",
-        "INV401KSOURCE",
-    ]
-
-    @property
-    def root(self):
-        root = StmttrnTestCase().root
-        name = root.find("CURRENCY")
-        root.remove(name)
-        origcurrency = test_models_i18n.OrigcurrencyTestCase().root
-        root.insert(16, origcurrency)
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, STMTTRN)
-        self.assertEqual(root.trntype, "CHECK")
-        self.assertEqual(root.dtposted, datetime(2013, 6, 15, tzinfo=UTC))
-        self.assertEqual(root.dtuser, datetime(2013, 6, 14, tzinfo=UTC))
-        self.assertEqual(root.dtavail, datetime(2013, 6, 16, tzinfo=UTC))
-        self.assertEqual(root.trnamt, Decimal("-433.25"))
-        self.assertEqual(root.fitid, "DEADBEEF")
-        self.assertEqual(root.correctfitid, "B00B5")
-        self.assertEqual(root.correctaction, "REPLACE")
-        self.assertEqual(root.srvrtid, "101A2")
-        self.assertEqual(root.checknum, "101")
-        self.assertEqual(root.refnum, "5A6B")
-        self.assertEqual(root.sic, 171103)
-        self.assertEqual(root.payeeid, "77810")
-        self.assertEqual(root.name, "Tweet E. Bird")
-        self.assertEqual(root.extdname, "Singing yellow canary")
-        self.assertEqual(root.memo, "Protection money")
-        self.assertIsInstance(root.origcurrency, ORIGCURRENCY)
-        self.assertEqual(root.inv401ksource, "PROFITSHARING")
-        return root
-
-    def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
         self.assertEqual(root.curtype, "ORIGCURRENCY")
         self.assertEqual(root.cursym, root.origcurrency.cursym)
         self.assertEqual(root.currate, root.origcurrency.currate)
 
+    def testValidSoup(self):
+        for root in self.validSoup:
+            Aggregate.from_etree(root)
 
-class StmttrnPayeeTestCase(unittest.TestCase, base.TestAggregate):
-    """ STMTTRN with PAYEE """
-
-    __test__ = True
-
-    optionalElements = [
-        "DTUSER",
-        "DTAVAIL",
-        "CORRECTFITID",
-        "CORRECTACTION",
-        "SRVRTID",
-        "CHECKNUM",
-        "REFNUM",
-        "SIC",
-        "PAYEEID",
-        "PAYEE",
-        "EXTDNAME",
-        "MEMO",
-        "CURRENCY",
-        "INV401KSOURCE",
-    ]
-
-    @property
-    def root(self):
-        root = StmttrnTestCase().root
-        name = root.find("NAME")
-        root.remove(name)
-        payee = PayeeTestCase().root
-        root.insert(13, payee)
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, STMTTRN)
-        self.assertEqual(root.trntype, "CHECK")
-        self.assertEqual(root.dtposted, datetime(2013, 6, 15, tzinfo=UTC))
-        self.assertEqual(root.dtuser, datetime(2013, 6, 14, tzinfo=UTC))
-        self.assertEqual(root.dtavail, datetime(2013, 6, 16, tzinfo=UTC))
-        self.assertEqual(root.trnamt, Decimal("-433.25"))
-        self.assertEqual(root.fitid, "DEADBEEF")
-        self.assertEqual(root.correctfitid, "B00B5")
-        self.assertEqual(root.correctaction, "REPLACE")
-        self.assertEqual(root.srvrtid, "101A2")
-        self.assertEqual(root.checknum, "101")
-        self.assertEqual(root.refnum, "5A6B")
-        self.assertEqual(root.sic, 171103)
-        self.assertEqual(root.payeeid, "77810")
-        self.assertIsInstance(root.payee, PAYEE)
-        self.assertEqual(root.extdname, "Singing yellow canary")
-        self.assertEqual(root.memo, "Protection money")
-        self.assertIsInstance(root.currency, CURRENCY)
-        self.assertEqual(root.inv401ksource, "PROFITSHARING")
-        return root
-
-
-class StmttrnBankaccttoTestCase(unittest.TestCase, base.TestAggregate):
-    """ STMTTRN with BANKACCTTO """
-
-    __test__ = True
-
-    optionalElements = [
-        "DTUSER",
-        "DTAVAIL",
-        "CORRECTFITID",
-        "CORRECTACTION",
-        "SRVRTID",
-        "CHECKNUM",
-        "REFNUM",
-        "SIC",
-        "PAYEEID",
-        "NAME",
-        "EXTDNAME",
-        "BANKACCTTO",
-        "MEMO",
-        "CURRENCY",
-        "INV401KSOURCE",
-    ]
-
-    @property
-    def root(self):
-        root = StmttrnTestCase().root
-        bankacctto = BankaccttoTestCase().root
-        root.insert(-3, bankacctto)
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root.bankacctto, BANKACCTTO)
-
-
-class StmttrnCcaccttoTestCase(unittest.TestCase, base.TestAggregate):
-    """ STMTTRN with CCACCTTO """
-
-    __test__ = True
-
-    requiredElements = ["TRNTYPE", "DTPOSTED", "TRNAMT", "FITID"]
-    optionalElements = [
-        "DTUSER",
-        "DTAVAIL",
-        "CORRECTFITID",
-        "CORRECTACTION",
-        "SRVRTID",
-        "CHECKNUM",
-        "REFNUM",
-        "SIC",
-        "PAYEEID",
-        "NAME",
-        "EXTDNAME",
-        "CCACCTTO",
-        "MEMO",
-        "CURRENCY",
-        "INV401KSOURCE",
-    ]
-
-    @property
-    def root(self):
-        root = StmttrnTestCase().root
-        ccacctto = CcaccttoTestCase().root
-        root.insert(-3, ccacctto)
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root.ccacctto, CCACCTTO)
-
-
-class StmttrnBankaccttoCcaccttoTestCase(unittest.TestCase, base.TestAggregate):
-    """
-    STMTTRN with both BANKACCTTO and CCACCTTO - not allowed per OFX spec
-    """
-
-    __test__ = True
-
-    @property
-    def root(self):
-        root = StmttrnTestCase().root
-        bankacctto = BankaccttoTestCase().root
-        root.append(bankacctto)
-        ccacctto = CcaccttoTestCase().root
-        root.append(ccacctto)
-        return root
-
-    def testConvert(self):
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(self.root)
-
-
-class StmttrnNamePayeeTestCase(unittest.TestCase, base.TestAggregate):
-    """ STMTTRN with both NAME and PAYEE - not allowed per OFX spec """
-
-    __test__ = True
-
-    @property
-    def root(self):
-        root = StmttrnTestCase().root
-        payee = PayeeTestCase().root
-        root.append(payee)
-        return root
-
-    def testConvert(self):
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(self.root)
-
-
-class StmttrnCurrencyOrigCurrencyTestCase(unittest.TestCase, base.TestAggregate):
-    """
-    STMTTRN with both CURRENCY and ORIGCURRENCY - not allowed per OFX spec
-    """
-
-    __test__ = True
-
-    @property
-    def root(self):
-        root = StmttrnTestCase().root
-        origcurrency = test_models_i18n.OrigcurrencyTestCase().root
-        root.append(origcurrency)
-        return root
-
-    def testConvert(self):
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(self.root)
+    def testInvalidSoup(self):
+        for root in self.invalidSoup:
+            with self.assertRaises(ValueError):
+                Aggregate.from_etree(root)
 
 
 class BanktranlistTestCase(unittest.TestCase, base.TranlistTestCase):
@@ -804,9 +616,6 @@ class StmtrsTestCase(unittest.TestCase, base.TestAggregate):
 
 
 class StmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
-    """
-    """
-
     __test__ = True
 
     wraps = StmtrqTestCase
@@ -1051,10 +860,11 @@ class StpchknumTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["CHECKNUM", "CHKSTATUS"]
-    optionalElements = ["NAME", "DTUSER", "TRNAMT", "CHKERROR", "CURRENCY"]
+    optionalElements = ["NAME", "DTUSER", "TRNAMT", "CHKERROR"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def emptyBase(cls):
         root = Element("STPCHKNUM")
         SubElement(root, "CHECKNUM").text = "123"
         SubElement(root, "NAME").text = "Buckaroo Banzai"
@@ -1062,92 +872,47 @@ class StpchknumTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "TRNAMT").text = "4500"
         SubElement(root, "CHKSTATUS").text = "0"
         SubElement(root, "CHKERROR").text = "Stop check succeeded"
-        currency = test_models_i18n.CurrencyTestCase().root
-        root.append(currency)
 
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, STPCHKNUM)
-        self.assertEqual(instance.checknum, "123")
-        self.assertEqual(instance.name, "Buckaroo Banzai")
-        self.assertEqual(instance.dtuser, datetime(1776, 7, 4, tzinfo=UTC))
-        self.assertEqual(instance.trnamt, Decimal("4500"))
-        self.assertEqual(instance.chkstatus, "0")
-        self.assertEqual(instance.chkerror, "Stop check succeeded")
-        self.assertIsInstance(instance.currency, CURRENCY)
+    @classproperty
+    @classmethod
+    def validSoup(cls):
+        currency = test_models_i18n.CurrencyTestCase().root
+        origcurrency = test_models_i18n.OrigcurrencyTestCase().root
+        for currencyChoice in (None, currency, origcurrency):
+            root = deepcopy(cls.emptyBase)
+            if currencyChoice is not None:
+                root.append(currencyChoice)
+            yield root
 
-    def testChkstatusConvert(self):
-        """ CHKNUM.chkstatus validates enum """
-        root = deepcopy(self.root)
-        for code in ("0", "1", "100", "101"):
-            chkstatus = root.find("CHKSTATUS")
-            chkstatus.text = str(code)
+    @property
+    def root(self):
+        return next(self.validSoup)
+
+    @classproperty
+    @classmethod
+    def invalidSoup(cls):
+        #  optionalMutexes = [("currency", "origcurrency")]
+        currency = test_models_i18n.CurrencyTestCase().root
+        origcurrency = test_models_i18n.OrigcurrencyTestCase().root
+
+        root = deepcopy(cls.emptyBase)
+        root.append(currency)
+        root.append(origcurrency)
+        yield root
+
+    def testValidSoup(self):
+        for root in self.validSoup:
             Aggregate.from_etree(root)
 
-        chkstatus = root.find("CHKSTATUS")
-        chkstatus.text = "2"
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
+    def testInvalidSoup(self):
+        for root in self.invalidSoup:
+            with self.assertRaises(ValueError):
+                Aggregate.from_etree(root)
 
-
-class StpchknumOrigcurrencyTestCase(unittest.TestCase, base.TestAggregate):
-    """ STPCHKNUM with ORIGCURRENCY """
-
-    __test__ = True
-
-    requiredElements = ["CHECKNUM", "CHKSTATUS"]
-    optionalElements = ["NAME", "DTUSER", "TRNAMT", "CHKERROR", "ORIGCURRENCY"]
-
-    @property
-    def root(self):
-        root = Element("STPCHKNUM")
-        SubElement(root, "CHECKNUM").text = "123"
-        SubElement(root, "NAME").text = "Buckaroo Banzai"
-        SubElement(root, "DTUSER").text = "17760704"
-        SubElement(root, "TRNAMT").text = "4500"
-        SubElement(root, "CHKSTATUS").text = "0"
-        SubElement(root, "CHKERROR").text = "Stop check succeeded"
-        origcurrency = test_models_i18n.OrigcurrencyTestCase().root
-        root.append(origcurrency)
-
-        return root
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, STPCHKNUM)
-        self.assertEqual(instance.checknum, "123")
-        self.assertEqual(instance.name, "Buckaroo Banzai")
-        self.assertEqual(instance.dtuser, datetime(1776, 7, 4, tzinfo=UTC))
-        self.assertEqual(instance.trnamt, Decimal("4500"))
-        self.assertEqual(instance.chkstatus, "0")
-        self.assertEqual(instance.chkerror, "Stop check succeeded")
-        self.assertIsInstance(instance.origcurrency, ORIGCURRENCY)
-
-
-class StpchknumCurrencyOrigcurrencyTestCase(unittest.TestCase):
-    """ STPCHKNUM with both CURRENCY and ORIGCURRENCY - not allowed """
-
-    @property
-    def root(self):
-        root = Element("STPCHKNUM")
-        SubElement(root, "CHECKNUM").text = "123"
-        SubElement(root, "NAME").text = "Buckaroo Banzai"
-        SubElement(root, "DTUSER").text = "17760704"
-        SubElement(root, "TRNAMT").text = "4500"
-        SubElement(root, "CHKSTATUS").text = "0"
-        SubElement(root, "CHKERROR").text = "Stop check succeeded"
-        currency = test_models_i18n.CurrencyTestCase().root
-        root.append(currency)
-        origcurrency = test_models_i18n.OrigcurrencyTestCase().root
-        root.append(origcurrency)
-
-        return root
-
-    def testConvert(self):
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(self.root)
+    def testOneOf(self):
+        self.oneOfTest('CHKSTATUS', ["0", "1", "100", "101"])
 
 
 class StpchkrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -1186,8 +951,6 @@ class StpchktrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     __test__ = True
 
     wraps = StpchkrqTestCase
-
-    #  requiredElements = ["TRNUID", "STPCHKRQ"]
 
 
 class StpchktrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -1297,132 +1060,80 @@ class StpchksyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
 
 
 class XferinfoTestCase(unittest.TestCase, base.TestAggregate):
-    """ XFERINFO with BANKACCTFROM/BANKACCTTO """
-
     __test__ = True
 
     requiredElements = ["TRNAMT"]
     optionalElements = ["DTDUE"]
 
-    @property
-    def root(self):
-        root = Element("XFERINFO")
-        acctfrom = BankacctfromTestCase().root
-        root.append(acctfrom)
-        acctto = BankaccttoTestCase().root
-        root.append(acctto)
-        SubElement(root, "TRNAMT").text = "257.53"
-        SubElement(root, "DTDUE").text = "20080930000000"
+    @classproperty
+    @classmethod
+    def validSoup(cls):
+        bankacctfrom = BankacctfromTestCase().root
+        bankacctto = BankaccttoTestCase().root
+        ccacctfrom = CcacctfromTestCase().root
+        ccacctto = CcaccttoTestCase().root
 
-        return root
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, XFERINFO)
-        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
-        self.assertIsInstance(instance.bankacctto, BANKACCTTO)
-        self.assertEqual(instance.trnamt, Decimal("257.53"))
-        self.assertEqual(instance.dtdue, datetime(2008, 9, 30, tzinfo=UTC))
-
-
-class XferinfoCcacctfromBankaccttoTestCase(unittest.TestCase, base.TestAggregate):
-    """ XFERINFO with BANKACCTFROM/BANKACCTTO """
-
-    __test__ = True
+        for acctfrom in (bankacctfrom, ccacctfrom):
+            for acctto in (bankacctto, ccacctto):
+                root = Element('XFERINFO')
+                root.append(acctfrom)
+                root.append(acctto)
+                SubElement(root, "TRNAMT").text = "257.53"
+                SubElement(root, "DTDUE").text = "20080930000000"
+                yield root
 
     @property
     def root(self):
-        root = Element("XFERINFO")
-        acctfrom = CcacctfromTestCase().root
-        root.append(acctfrom)
-        acctto = BankaccttoTestCase().root
-        root.append(acctto)
-        SubElement(root, "TRNAMT").text = "257.53"
-        SubElement(root, "DTDUE").text = "20080930000000"
+        return next(self.validSoup)
 
-        return root
+    @classproperty
+    @classmethod
+    def invalidSoup(cls):
+        root_ = Element('XFERINFO')
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, XFERINFO)
-        self.assertIsInstance(instance.ccacctfrom, CCACCTFROM)
-        self.assertIsInstance(instance.bankacctto, BANKACCTTO)
-        self.assertEqual(instance.trnamt, Decimal("257.53"))
-        self.assertEqual(instance.dtdue, datetime(2008, 9, 30, tzinfo=UTC))
+        bankacctfrom = BankacctfromTestCase().root
+        bankacctto = BankaccttoTestCase().root
+        ccacctfrom = CcacctfromTestCase().root
+        ccacctto = CcaccttoTestCase().root
+        trnamt = Element("TRNAMT")
+        trnamt.text = "257.53"
 
+        # requiredMutexes = [("bankacctfrom", "ccacctfrom"), ("bankacctto", "ccacctto")]
+        # Missing BANKACCTFROM/CCACCTFROM
+        root = deepcopy(root_)
+        root.append(bankacctto)
+        root.append(trnamt)
+        yield root
 
-class XferinfoCcacctfromCcaccttoTestCase(unittest.TestCase, base.TestAggregate):
-    """ XFERINFO with BANKACCTFROM/BANKACCTTO """
+        root = deepcopy(root_)
+        root.append(bankacctfrom)
+        root.append(trnamt)
+        yield root
 
-    __test__ = True
+        # Both BANKACCTFROM & CCACCTFROM / BANKACCTTO & CCACCTTO
+        root = deepcopy(root_)
+        root.append(bankacctfrom)
+        root.append(ccacctfrom)
+        root.append(trnamt)
+        yield root
 
-    @property
-    def root(self):
-        root = Element("XFERINFO")
-        acctfrom = CcacctfromTestCase().root
-        root.append(acctfrom)
-        acctto = CcaccttoTestCase().root
-        root.append(acctto)
-        SubElement(root, "TRNAMT").text = "257.53"
-        SubElement(root, "DTDUE").text = "20080930000000"
+        root = deepcopy(root_)
+        root.append(bankacctto)
+        root.append(ccacctto)
+        root.append(trnamt)
+        yield root
 
-        return root
+        # FIXME
+        # test out-of-order errors
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, XFERINFO)
-        self.assertIsInstance(instance.ccacctfrom, CCACCTFROM)
-        self.assertIsInstance(instance.ccacctto, CCACCTTO)
-        self.assertEqual(instance.trnamt, Decimal("257.53"))
-        self.assertEqual(instance.dtdue, datetime(2008, 9, 30, tzinfo=UTC))
+    def testValidSoup(self):
+        for root in self.validSoup:
+            Aggregate.from_etree(root)
 
-
-class XferinfoBankacctfromCcacctfromTestCase(unittest.TestCase, base.TestAggregate):
-    """ XFERINFO with BANKACCTFROM/CCACCTFROM - invalid """
-
-    __test__ = True
-
-    @property
-    def root(self):
-        root = Element("XFERINFO")
-        acctfrom = BankacctfromTestCase().root
-        root.append(acctfrom)
-        acctfrom = CcacctfromTestCase().root
-        root.append(acctfrom)
-        acctto = BankaccttoTestCase().root
-        root.append(acctto)
-        SubElement(root, "TRNAMT").text = "257.53"
-        SubElement(root, "DTDUE").text = "20080930000000"
-
-        return root
-
-    def testConvert(self):
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(self.root)
-
-
-class XferinfoBankaccttoCcaccttoTestCase(unittest.TestCase, base.TestAggregate):
-    """ XFERINFO with BANKACCTTO/CCACCTTO - invalid """
-
-    __test__ = True
-
-    @property
-    def root(self):
-        root = Element("XFERINFO")
-        acctfrom = BankacctfromTestCase().root
-        root.append(acctfrom)
-        acctto = BankaccttoTestCase().root
-        root.append(acctto)
-        acctto = CcaccttoTestCase().root
-        root.append(acctto)
-        SubElement(root, "TRNAMT").text = "257.53"
-        SubElement(root, "DTDUE").text = "20080930000000"
-
-        return root
-
-    def testConvert(self):
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(self.root)
+    def testInvalidSoup(self):
+        for root in self.invalidSoup:
+            with self.assertRaises(ValueError):
+                Aggregate.from_etree(root)
 
 
 class XferprcstsTestCase(unittest.TestCase, base.TestAggregate):
@@ -1471,88 +1182,66 @@ class IntrarqTestCase(unittest.TestCase, base.TestAggregate):
 
 
 class IntrarsTestCase(unittest.TestCase, base.TestAggregate):
-    """ INTRARS with DTXFERPRJ """
-
     __test__ = True
 
     requiredElements = ["CURDEF", "SRVRTID", "XFERINFO"]
-    optionalElements = ["DTXFERPRJ", "RECSRVRTID", "XFERPRCSTS"]
+    optionalElements = ["RECSRVRTID", "XFERPRCSTS"]
+
+    @classproperty
+    @classmethod
+    def validSoup(cls):
+        dtxferprj = Element("DTXFERPRJ")
+        dtxferprj.text = "20150704000000"
+        dtposted = Element("DTPOSTED")
+        dtposted.text = "20150704000000"
+
+        for dtChoice in (None, dtxferprj, dtposted):
+            root = Element("INTRARS")
+            SubElement(root, "CURDEF").text = "EUR"
+            SubElement(root, "SRVRTID").text = "DEADBEEF"
+            xferinfo = XferinfoTestCase().root
+            root.append(xferinfo)
+            if dtChoice is not None:
+                root.append(dtChoice)
+            SubElement(root, "RECSRVRTID").text = "B16B00B5"
+            xferprcsts = XferprcstsTestCase().root
+            root.append(xferprcsts)
+            yield root
 
     @property
     def root(self):
+        return next(self.validSoup)
+
+    @classproperty
+    @classmethod
+    def invalidSoup(cls):
+        #  optionalMutexes = [("dtxferprj", "dtposted")]
+        dtxferprj = Element("DTXFERPRJ")
+        dtxferprj.text = "20150704000000"
+        dtposted = Element("DTPOSTED")
+        dtposted.text = "20150704000000"
+
         root = Element("INTRARS")
         SubElement(root, "CURDEF").text = "EUR"
         SubElement(root, "SRVRTID").text = "DEADBEEF"
         xferinfo = XferinfoTestCase().root
         root.append(xferinfo)
-        SubElement(root, "DTXFERPRJ").text = "20150704000000"
-        SubElement(root, "RECSRVRTID").text = "B16B00B5"
-        xferprcsts = XferprcstsTestCase().root
-        root.append(xferprcsts)
+        root.append(dtxferprj)
+        root.append(dtposted)
 
-        return root
+        yield root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, INTRARS)
-        self.assertEqual(instance.curdef, "EUR")
-        self.assertIsInstance(instance.xferinfo, XFERINFO)
-        self.assertEqual(instance.dtxferprj, datetime(2015, 7, 4, tzinfo=UTC))
-        self.assertEqual(instance.recsrvrtid, "B16B00B5")
-        self.assertIsInstance(instance.xferprcsts, XFERPRCSTS)
+    def testValidSoup(self):
+        for root in self.validSoup:
+            Aggregate.from_etree(root)
 
+    def testInvalidSoup(self):
+        for root in self.invalidSoup:
+            with self.assertRaises(ValueError):
+                Aggregate.from_etree(root)
 
-class IntrarsDtpostedTestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    requiredElements = ["CURDEF", "SRVRTID", "XFERINFO"]
-    optionalElements = ["DTPOSTED", "RECSRVRTID", "XFERPRCSTS"]
-
-    @property
-    def root(self):
-        root = Element("INTRARS")
-        SubElement(root, "CURDEF").text = "EUR"
-        SubElement(root, "SRVRTID").text = "DEADBEEF"
-        xferinfo = XferinfoTestCase().root
-        root.append(xferinfo)
-        SubElement(root, "DTPOSTED").text = "20150704000000"
-        SubElement(root, "RECSRVRTID").text = "B16B00B5"
-        xferprcsts = XferprcstsTestCase().root
-        root.append(xferprcsts)
-
-        return root
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, INTRARS)
-        self.assertEqual(instance.curdef, "EUR")
-        self.assertIsInstance(instance.xferinfo, XFERINFO)
-        self.assertEqual(instance.dtposted, datetime(2015, 7, 4, tzinfo=UTC))
-        self.assertEqual(instance.recsrvrtid, "B16B00B5")
-        self.assertIsInstance(instance.xferprcsts, XFERPRCSTS)
-
-
-class IntrarsDtxferprjDtpostedTestCase(unittest.TestCase):
-    """ INTRARS with both DTXFERPRJ and DTPOSTED - invalid """
-
-    @property
-    def root(self):
-        root = Element("INTRARS")
-        SubElement(root, "CURDEF").text = "EUR"
-        SubElement(root, "SRVRTID").text = "DEADBEEF"
-        xferinfo = XferinfoTestCase().root
-        root.append(xferinfo)
-        SubElement(root, "DTXFERPRJ").text = "20150704000000"
-        SubElement(root, "DTPOSTED").text = "20150704000000"
-        SubElement(root, "RECSRVRTID").text = "B16B00B5"
-        xferprcsts = XferprcstsTestCase().root
-        root.append(xferprcsts)
-
-        return root
-
-    def testConvert(self):
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(self.root)
+    def testOneOf(self):
+        self.oneOfTest('CURDEF', CURRENCY_CODES)
 
 
 class IntramodrqTestCase(unittest.TestCase, base.TestAggregate):
