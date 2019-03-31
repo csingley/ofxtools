@@ -58,12 +58,24 @@ Python dotted-attribute access, and standard slice notation for lists.
     In [11]: tx.trnamt
     Out[11]: Decimal('4.7')
 
-It's a real drag remembering all those tag names and crawling all the way to
-the bottom of deeply-nested SGML hierarchies to extract the data that you
-really want, so subclasses of ``ofxtools.models.base.Aggregate`` provide
-human-friendly aliases and shortcuts in the form of read-only instance
-properties that "bubble up" their descendants' attributes, virtually flattening
-the structure for quick access.
+While it's obvious that INTRANLIST is a list, it's perhaps less obvious that
+INVSTMTMSGSRSV1 is also a list, since OFX specifies that a single statement
+response wrapper can contain multiple statements.
+
+It can get to be a real drag crawling all the way to the bottom of
+deeply-nested SGML hierarchies to extract the data that you really want, so
+subclasses of ``ofxtools.models.base.Aggregate`` provide some navigational
+conveniences.
+
+First, each ``Aggregate`` provides proxy access to the attributes of its
+``SubAggregates`` (and its sub-subaggregates, and so on).  If the data you're
+looking for is located in ``a.b.c.d.e.f``, you can access it more simply
+as ``a.f``.  This won't work across lists, of course; you have to select
+an item from the list.  So in this example, if ``c`` is a list type, you could
+get your data from ``a.c[10].f``.
+
+Second, the upper-level ``Aggregates`` define some human-friendly aliases
+for the data structures you're really looking for.  Here's an example.
 
 .. code:: python
 
@@ -71,25 +83,27 @@ the structure for quick access.
     In [13]: txs = stmts[0].transactions  # The relevant ``*TRANLIST``
     In [14]: acct = stmts[0].account  # The relevant ``*ACCTFROM``
     In [15]: balances = stmts[0].balances  # ``INVBAL`` - use ``balance`` for bank statement ``LEDGERBAL``
-    In [16]: len(txs)
-    Out[16]: 6
-    In [17]: tx = txs[-1]
-    Out[18]: datetime.datetime(2015, 9, 16, 17, 9, 48, tzinfo=<UTC>)
-    In [19]: tx.trnamt
-    Out[19]: Decimal('4.7')
-    In [20]: tx = txs[1]
-    In [21]: type(tx)
-    Out[21]: ofxtools.models.investment.TRANSFER
-    In [22]: tx.invtran.dttrade  # Who wants to remember where to find the trade date?
-    Out[22]: datetime.datetime(2015, 9, 8, 17, 14, 8, tzinfo=<UTC>)
-    In [23]: tx.dttrade  # That's more like it
+    In [16]: securities = ofx.securities  # ``SECLIST``
+    In [17]: len(securities)
+    Out[17]: 5
+    In [18]: len(txs)
+    Out[18]: 6
+    In [19]: tx = txs[-1]
+    In [20]: tx.trnamt
+    Out[20]: Decimal('4.7')
+    In [21]: tx = txs[1]
+    In [22]: type(tx)
+    Out[22]: ofxtools.models.investment.TRANSFER
+    In [23]: tx.invtran.dttrade  # Who wants to remember where to find the trade date?
     Out[23]: datetime.datetime(2015, 9, 8, 17, 14, 8, tzinfo=<UTC>)
-    In [24]: tx.secid.uniqueid  # Yet more layers
-    Out[24]: '403829104'
-    In [25]: tx.uniqueid  # Flat access is less cognitively taxing
+    In [24]: tx.dttrade  # That's more like it
+    Out[24]: datetime.datetime(2015, 9, 8, 17, 14, 8, tzinfo=<UTC>)
+    In [25]: tx.secid.uniqueid  # Yet more layers
     Out[25]: '403829104'
-    In [26]: tx.uniqueidtype
-    Out[26]: 'CUSIP'
+    In [26]: tx.uniqueid  # Flat access is less cognitively taxing
+    Out[26]: '403829104'
+    In [27]: tx.uniqueidtype
+    Out[27]: 'CUSIP'
 
 The designers of the OFX spec did a good job avoiding name collisions.  However
 you will need to remember that ``<UNIQUEID>`` always refers to securities; if
