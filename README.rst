@@ -1,12 +1,10 @@
 Open Financial Exchange (OFX) Tools for Python
 ==============================================
-.. Travis CI badge
 .. image:: https://travis-ci.org/csingley/ofxtools.svg?branch=master
     :target: https://travis-ci.org/csingley/ofxtools
 
-.. Codecov badge
-.. image:: https://codecov.io/gh/csingley/ofxtools/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/csingley/ofxtools
+.. image:: https://coveralls.io/repos/github/csingley/ofxtools/badge.svg?branch=master
+    :target: https://coveralls.io/github/csingley/ofxtools?branch=master
 
 ``ofxtools`` is a Python library for working with Open Financial Exchange (OFX)
 data - the standard format for downloading financial information from banks
