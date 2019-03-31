@@ -803,60 +803,55 @@ class StpchkrqTestCase(unittest.TestCase, base.TestAggregate):
 
     __test__ = True
 
-    requiredElements = ["BANKACCTFROM", "CHKRANGE"]  # requiredMutex
+    requiredElements = ["BANKACCTFROM"]
+
+    @classproperty
+    @classmethod
+    def emptyBase(cls):
+        root = Element("STPCHKRQ")
+        root.append(BankacctfromTestCase().root)
+        return root
+
+    @classproperty
+    @classmethod
+    def validSoup(cls):
+        chkrange = ChkrangeTestCase().root
+        chkdesc = ChkdescTestCase().root
+        for choice in chkrange, chkdesc:
+            root = cls.emptyBase
+            root.append(choice)
+            yield root
 
     @property
     def root(self):
-        root = Element("STPCHKRQ")
-        root.append(BankacctfromTestCase().root)
-        root.append(ChkrangeTestCase().root)
+        return next(self.validSoup)
 
-        return root
+    @classproperty
+    @classmethod
+    def invalidSoup(cls):
+        chkrange = ChkrangeTestCase().root
+        chkdesc = ChkdescTestCase().root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, STPCHKRQ)
-        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
-        self.assertIsInstance(instance.chkrange, CHKRANGE)
+        #  requiredMutexes = [("chkrange", "chkdesc")]
+        #  Neither
+        root = cls.emptyBase
+        yield root
+        #  Both
+        root.append(chkrange)
+        root.append(chkdesc)
+        yield root
 
+        #  FIXME
+        #  Check out-of-order errors
 
-class StpchkrqChkdescTestCase(unittest.TestCase, base.TestAggregate):
-    """ STPCHKRQ with CHKDESC """
+    def testValidSoup(self):
+        for root in self.validSoup:
+            Aggregate.from_etree(root)
 
-    __test__ = True
-
-    requiredElements = ["BANKACCTFROM", "CHKDESC"]  # requiredMutex
-
-    @property
-    def root(self):
-        root = Element("STPCHKRQ")
-        root.append(BankacctfromTestCase().root)
-        root.append(ChkdescTestCase().root)
-
-        return root
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, STPCHKRQ)
-        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
-        self.assertIsInstance(instance.chkdesc, CHKDESC)
-
-
-class StpchkrqChkrangeChkdescTestCase(unittest.TestCase):
-    """ STPCHKRQ with both CHKRANGE and CHKDESC - not allowed """
-
-    @property
-    def root(self):
-        root = Element("STPCHKRQ")
-        root.append(BankacctfromTestCase().root)
-        root.append(ChkrangeTestCase().root)
-        root.append(ChkdescTestCase().root)
-
-        return root
-
-    def testConvert(self):
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(self.root)
+    def testInvalidSoup(self):
+        for root in self.invalidSoup:
+            with self.assertRaises(ValueError):
+                Aggregate.from_etree(root)
 
 
 class StpchknumTestCase(unittest.TestCase, base.TestAggregate):
