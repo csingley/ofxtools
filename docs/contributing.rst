@@ -303,10 +303,11 @@ number of transaction wrappers means that we can't use the ``Aggregate`` base
 class, where every child element corresponds to a class attribute.
 
 For this kind of structure, we instead inherit from ``ofxtools.models.base.List``.
-Subclasses of ``List`` define tag validators in the usual manner, but they also
-differentiate between ``metadaTags`` (i.e. unique children, which are accessed
-as instance attributes) and ``dataTags`` (i.e. possibly duplicated sub-aggregates,
-which are accessed via the Python sequence API).  Here's how it looks.
+Subclasses of ``List`` define tag validators in the usual manner for metadata
+(i.e. unique children, which are accessed as instance attributes), but the
+(possibly duplicated) sub-aggregates identified by the OFX spec as list
+members are defined using the ``dataTags`` class attribute and accessed via the
+Python sequence API.  Here's how it looks.
 
 .. code:: python
 
@@ -322,8 +323,6 @@ which are accessed via the Python sequence API).  Here's how it looks.
         bankacctfrom = SubAggregate(BANKACCTFROM)
         ccacctfrom = SubAggregate(CCACCTFROM)
 
-        metadataTags = ["TOKEN", "TOKENONLY", "REFRESH", "REJECTIFMISSING",
-                        "BANKACCTFROM", "CCACCTFROM"]
         dataTags = ["INTRATRNRQ"]
         requiredMutexes = [
             ("token", "tokenonly", "refresh"),
@@ -339,14 +338,13 @@ which are accessed via the Python sequence API).  Here's how it looks.
         bankacctfrom = SubAggregate(BANKACCTFROM)
         ccacctfrom = SubAggregate(CCACCTFROM)
 
-        metadataTags = ["TOKEN", "LOSTSYNC", "BANKACCTFROM", "CCACCTFROM"]
         dataTags = ["INTRATRNRS"]
         requiredMutexes = [ ("bankacctfrom", "ccacctfrom") ]
 
-Note that ``metadataTags`` and ``dataTags`` are specified as sequences of
-ALL CAPS strings, corresponding to the OFX tags that will appear in incoming
-aggregates.  Order is significant; these tags must be defined in the same order
-laid out in the spec.
+Note that `dataTags`` are specified as sequences of ALL CAPS strings,
+corresponding to the OFX tags that will appear in incoming aggregates.  Order
+is significant; these tags must be defined in the same order laid out in the
+spec.
 
 Finally, we just need to add our newly-defined models to the API published by
 the ``ofxtools.models.bank`` module, so the parser can find them.
