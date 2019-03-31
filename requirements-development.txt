@@ -7,6 +7,6 @@
 nose
 coverage
 pylint
-ipdb
+ipdb==0.12
 ipdbplugin
 coveralls
