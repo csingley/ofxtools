@@ -5,7 +5,7 @@
 
 # test running
 nose
-coverage
+coverage==4.5.3
 pylint
 ipdb
 ipdbplugin
