@@ -6,7 +6,7 @@
 # test running
 nose
 coverage
-pylint
+pylint==2.3.1
 ipdb
 ipdbplugin
 coveralls
