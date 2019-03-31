@@ -9,4 +9,4 @@ coverage
 pylint
 ipdb
 ipdbplugin
-coveralls
+coveralls==1.7.0
