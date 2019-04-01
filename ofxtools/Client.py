@@ -41,9 +41,9 @@ import uuid
 import xml.etree.ElementTree as ET
 from collections import namedtuple
 from os import path
-from getpass import getpass
+import getpass
 
-from configparser import SafeConfigParser
+from configparser import ConfigParser
 import ssl
 import urllib
 from io import BytesIO
@@ -201,7 +201,7 @@ class OFXClient:
                     ]
                 )
             else:
-                msg = "{}".format(clsName)  # FIXME
+                msg = "Not a *StmtRq: {}".format(clsName)
                 raise ValueError(msg)
 
         signon = self.signon(user, password, clientuid=clientuid)
@@ -239,7 +239,7 @@ class OFXClient:
                     *[self.ccstmtendtrnrq(**rq._asdict()) for rq in rqs]
                 )
             else:
-                msg = "{}".format(clsName)  # FIXME
+                msg = "Not a *StmtEndRq: {}".format(clsName)
                 raise ValueError(msg)
 
         signon = self.signon(user, password, clientuid=clientuid)
@@ -380,6 +380,7 @@ class OFXClient:
         )
         # By default, verify SSL certificate signatures
         # Cf. PEP 476
+        # TESTME
         if verify_ssl is False:
             ssl_context = ssl._create_unverified_context()
         else:
@@ -410,14 +411,14 @@ def indent(elem, level=0):
             elem.tail = i
 
 
-def tostring_unclosed_elements(node):
-    if len(node) == 0:
-        output = bytes("<{}>{}".format(node.tag, node.text), "utf_8")
+def tostring_unclosed_elements(elem):
+    if len(elem) == 0:
+        output = bytes("<{}>{}".format(elem.tag, elem.text or ""), "utf_8")
     else:
-        output = bytes("<{}>".format(node.tag), "utf_8")
-        for child in node:
+        output = bytes("<{}>".format(elem.tag), "utf_8")
+        for child in elem:
             output += tostring_unclosed_elements(child)
-        output += bytes("</{}>".format(node.tag), "utf_8")
+        output += bytes("</{}>".format(elem.tag), "utf_8")
     return output
 
 
@@ -495,7 +496,7 @@ def do_stmt(args):
     if args.dryrun:
         password = "{:0<32}".format("anonymous")
     else:
-        password = getpass()
+        password = getpass.getpass()
 
     with client.request_statements(args.user, password, *stmtrqs,
                                    clientuid=args.clientuid, dryrun=args.dryrun,
@@ -518,7 +519,7 @@ def do_profile(args):
     print(response.decode())
 
 
-class OFXConfigParser(SafeConfigParser):
+class OFXConfigParser(ConfigParser):
     """
     INI parser that loads default FI configs from oftools/config/fi.cfg and
     updates them from the user config file specified in its [global] section.
@@ -530,14 +531,15 @@ class OFXConfigParser(SafeConfigParser):
     fi_config = path.join(path.dirname(__file__), "config", "fi.cfg")
 
     def __init__(self):
-        SafeConfigParser.__init__(self)
+        ConfigParser.__init__(self)
 
     def read(self, filenames=None):
         # Load FI config
-        self.readfp(open(fixpath(self.fi_config)))
+        with open(fixpath(self.fi_config)) as fi_config:
+            self.read_file(fi_config)
         # Then load user configs (defaults to fi.cfg [global] config: value)
         filenames = filenames or fixpath(self.get("global", "config"))
-        return SafeConfigParser.read(self, filenames)
+        return ConfigParser.read(self, filenames)
 
     @property
     def fi_index(self):
@@ -547,20 +549,12 @@ class OFXConfigParser(SafeConfigParser):
         return sections
 
 
-def main():
-    """
-    Merge default FI configs with user configs from oftools.cfg and
-    CLI args, then pass to do_stmt() or do_profile()
-    """
-    # Read config first, so fi_index can be used in help
-    config = OFXConfigParser()
-    config.read()
-
+def make_argparser(fi_index):
     from argparse import ArgumentParser
 
     argparser = ArgumentParser(
         description="Download OFX financial data",
-        epilog="FIs configured: %s" % config.fi_index,
+        epilog="FIs configured: {}".format(fi_index)
     )
     argparser.add_argument("server", help="OFX server - URL or FI name from config")
     argparser.add_argument(
@@ -658,6 +652,50 @@ def main():
         help="Include open orders",
     )
 
+    return argparser
+
+
+def merge_config(config, args):
+    """
+    Merge default FI configs with user configs from oftools.cfg and CLI args
+    """
+    server = args.server
+    if server not in config.fi_index:
+        raise ValueError(
+            "Unknown FI '{}' not in {}".format(server, str(config.fi_index))
+        )
+    # List of nonempty argparse args set from command line
+    overrides = [k for k, v in vars(args).items() if v]
+    for cfg, value in config.items(server, raw=True):
+        # argparse settings override configparser settings
+        if cfg in overrides:
+            continue
+        if cfg in (
+            "checking",
+            "savings",
+            "moneymrkt",
+            "creditline",
+            "creditcard",
+            "investment",
+        ):
+            # Allow sequences of acct nos
+            values = [v.strip() for v in value.split(",")]
+            arg = getattr(args, cfg)
+            assert isinstance(arg, list)
+            arg.extend(values)
+        else:
+            setattr(args, cfg, value)
+
+    return args
+
+
+def main():
+    # Read config first, so fi_index can be used in help
+    config = OFXConfigParser()
+    config.read()
+
+    argparser = make_argparser(config.fi_index)
+
     args = argparser.parse_args()
 
     # If positional arg is FI name (not URL), then merge config
@@ -665,31 +703,7 @@ def main():
     if urllib.parse.urlparse(server).scheme:
         args.url = server
     else:
-        if server not in config.fi_index:
-            raise ValueError(
-                "Unknown FI '%s' not in %s" % (server, str(config.fi_index))
-            )
-        # List of nonempty argparse args set from command line
-        overrides = [k for k, v in vars(args).items() if v]
-        for cfg, value in config.items(server, raw=True):
-            # argparse settings override configparser settings
-            if cfg in overrides:
-                continue
-            if cfg in (
-                "checking",
-                "savings",
-                "moneymrkt",
-                "creditline",
-                "creditcard",
-                "investment",
-            ):
-                # Allow sequences of acct nos
-                values = [v.strip() for v in value.split(",")]
-                arg = getattr(args, cfg)
-                assert isinstance(arg, list)
-                arg.extend(values)
-            else:
-                setattr(args, cfg, value)
+        args = merge_config(config, args)
 
     # Pass the parsed args to the statement-request function
     if args.profile:
