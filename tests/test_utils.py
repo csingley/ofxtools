@@ -3,10 +3,16 @@
 # stdlib imports
 import unittest
 import os
+import sys
+import importlib
 import datetime
 
 
+# 3rd party imports
+import pytz
+
 # local imports
+import ofxtools.utils
 from ofxtools.utils import (
     fixpath,
     cusip_checksum,
@@ -16,8 +22,8 @@ from ofxtools.utils import (
     validate_isin,
     cusip2isin,
     sedol2isin,
-    settleDate,
-    NYSEcalendar,
+    #  settleDate,
+    #  NYSEcalendar,
 )
 
 
@@ -43,6 +49,14 @@ class CusipTestCase(unittest.TestCase):
 
     def test_cusip2isin(self):
         self.assertEqual(cusip2isin("084670108"), "US0846701086")
+
+    def test_cusip2isin_invalid_isin(self):
+        with self.assertRaises(ValueError):
+            cusip2isin("084670208")
+
+    def test_cusip2isin_invalid_nation(self):
+        with self.assertRaises(ValueError):
+            cusip2isin("084670108", nation="MOON")
 
 
 class IsinTestCase(unittest.TestCase):
@@ -70,6 +84,11 @@ class SettledateTestCase(unittest.TestCase):
 
 class NYSEcalendarTestCase(unittest.TestCase):
     pass
+
+
+class UtcTestCase(unittest.TestCase):
+    def testPytz(self):
+        self.assertIs(ofxtools.utils.UTC, pytz.UTC)
 
 
 if __name__ == "__main__":
