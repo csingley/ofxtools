@@ -72,7 +72,7 @@ Installation Dependencies
 ``ofxtools`` requires Python version 3.4+, and depends only on the standard
 libary (no external dependencies).
 
-**NOTE: As of version 0.6, ``ofxtools`` no longer supports Python version 2,
+**NOTE: As of version 0.6, ofxtools no longer supports Python version 2,
 which goes EOL 2020-01-01.**
 
 
