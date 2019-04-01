@@ -6,6 +6,9 @@ Open Financial Exchange (OFX) Tools for Python
 .. image:: https://coveralls.io/repos/github/csingley/ofxtools/badge.svg?branch=master
     :target: https://coveralls.io/github/csingley/ofxtools?branch=master
 
+.. image:: https://img.shields.io/badge/dependencies-None-green.svg
+    :target: https://github.com/csingley/ofxtools/blob/master/requirements.txt 
+
 .. image:: https://badge.fury.io/py/ofxtools.svg
     :target: https://badge.fury.io/py/ofxtools
 
