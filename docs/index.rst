@@ -44,10 +44,10 @@ or export your data in OFX format.
 It targets compliance with the `OFX specification`_, specifically OFX versions
 1.6 and 2.03.
 
-So far, ``ofxtools`` complies with nearly all of
-    * Section 7 (financial institution profile) up through 11.7
+``ofxtools`` Coverage of the OFX Specification
+    * Section 7 (financial institution profile)
     * Section 8 (service activation; account information)
-    * Section 11 (banking)
+    * Section 11 (banking) up through 11.7
     * Section 13 (investments)
 
 This should cover the great majority of real-world OFX use cases.  A particular
@@ -85,7 +85,7 @@ Installation Dependencies
 ``ofxtools`` requires Python version 3.4+, and depends only on the standard
 libary (no external dependencies).
 
-**NOTE: As of version 0.6, ``ofxtools`` no longer supports Python version 2,
+**NOTE: As of version 0.6, ofxtools no longer supports Python version 2,
 which goes EOL 2020-01-01.**
 
 

@@ -6,6 +6,9 @@ Open Financial Exchange (OFX) Tools for Python
 .. image:: https://coveralls.io/repos/github/csingley/ofxtools/badge.svg?branch=master
     :target: https://coveralls.io/github/csingley/ofxtools?branch=master
 
+.. image:: https://badge.fury.io/py/ofxtools.svg
+    :target: https://badge.fury.io/py/ofxtools
+
 ``ofxtools`` is a Python library for working with Open Financial Exchange (OFX)
 data - the standard format for downloading financial information from banks
 and stockbrokers.  OFX data is widely provided by financial institutions so
@@ -32,10 +35,10 @@ or export your data in OFX format.
 It targets compliance with the `OFX specification`_, specifically OFX versions
 1.6 and 2.03.
 
-So far, ``ofxtools`` complies with nearly all of
-    * Section 7 (financial institution profile) up through 11.7
+``ofxtools`` Coverage of the OFX Specification
+    * Section 7 (financial institution profile)
     * Section 8 (service activation; account information)
-    * Section 11 (banking)
+    * Section 11 (banking) up through 11.7
     * Section 13 (investments)
 
 This should cover the great majority of real-world OFX use cases.  A particular
