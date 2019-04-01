@@ -24,7 +24,7 @@ via the included setup file:
 
 .. code-block:: bash
 
-    pip install -r requirements.txt
+    pip install .
 
 You did remember to run this in a `virtual environment`_, didn't you?
 
@@ -36,6 +36,7 @@ If you want to hack on ``ofxtools``, here's the way to get started:
 .. code-block:: bash
 
     git clone https://github.com/csingley/ofxtools.git
+    pip install -e .
     pip install -r ofxtools/requirements-development.txt
 
 Of course, this belongs inside a `virtual environment`_ - you know the drill.

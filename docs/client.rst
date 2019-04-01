@@ -50,12 +50,19 @@ recent version of Quicken for Windows).
 Using the ofxget script
 -----------------------
 -  Copy ``~/.config/ofxtools/ofxget_example.cfg`` to
-   ``~/.config/ofxtools/ofxget.cfg`` and edit:
+   ``~/.config/ofxtools/ofxget.cfg`` and edit.
 -  Add a section for your financial institution, including URL, account
    information, login, etc.  See comments within the example file.
+-  Activate the virtual environment in which you installed ``ofxtools``, e.g.
+
+.. code-block:: bash
+    source ~/.venvs/ofxtools/bin/activate
+
 -  Execute ``ofxget`` with appropriate arguments, for example:
 
-``ofxget amex stmt -s 20140101 -e 20140630 > 2014-04_amex.ofx``
+.. code-block:: bash
+
+    ofxget amex stmt -s 20140101 -e 20140630 > 2014-04_amex.ofx
 
 Please note that the CLI accepts OFX-formatted dates (YYYYmmdd) rather than
 ISO-8601 (YYYY-mm-dd).
