@@ -6,20 +6,22 @@ __here__ = os.path.dirname(os.path.realpath(__file__))
 with open(os.path.join(__here__, 'README.rst'), 'r') as f:
     long_description = f.read()
 
+NAME = 'ofxtools'
+VERSION = '0.7.1'
+URL = 'https://github.com/csingley/ofxtools'
+
 setup(
-    name='ofxtools',
-    version='0.7.0',
+    name=NAME,
+    version=VERSION,
     # Note: change 'master' to the tag name when release a new verion
-    download_url='https://github.com/csingley/ofxtools/tarball/master',
-    #  download_url='https://github.com/csingley/ofxtools/tarball/0.7.0',
+    #  download_url='https://github.com/csingley/ofxtools/tarball/master',
+    download_url='{}/tarball/{}'.format(URL, VERSION),
 
     description=('Library for working with Open Financial Exchange (OFX) '
                  'formatted data used by financial institutions'),
     long_description=long_description,
     long_description_content_type="text/x-rst",
-
-    url='https://github.com/csingley/ofxtools',
-
+    url=URL,
     author='Christopher Singley',
     author_email='csingley@gmail.com',
 
