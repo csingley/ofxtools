@@ -681,7 +681,7 @@ class EXTBANKDESC(Aggregate):
 class WIREDESTBANK(Aggregate):
     """ OFX section 11.9.1.1.1 """
 
-    extbankbankdesc = SubAggregate(EXTBANKDESC, required=True)
+    extbankdesc = SubAggregate(EXTBANKDESC, required=True)
 
 
 class WIRERQ(Aggregate):
@@ -721,7 +721,7 @@ class WIRECANRQ(Aggregate):
 
 
 class WIRECANRS(Aggregate):
-    """ OFX section 11.9.2.d"""
+    """ OFX section 11.9.2.2"""
 
     srvrtid = String(10, required=True)
 
@@ -747,14 +747,14 @@ class WIRETRNRS(TrnRs):
 class WIRESYNCRQ(SyncRqList):
     """ OFX section 11.12.4.1 """
 
-    bankacctfrom = SubAggregate(BANKACCTFROM)
+    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     dataTags = ["WIRETRNRQ"]
 
 
 class WIRESYNCRS(SyncRsList):
     """ OFX section 11.12.4.2 """
 
-    bankacctfrom = SubAggregate(BANKACCTFROM)
+    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     dataTags = ["WIRETRNRS"]
 
 
@@ -773,8 +773,40 @@ class WIREXFERMSGSRSV1(List):
     dataTags = [
         "WIRETRNRS",
         "WIRESYNCRS",
-        "RECINTERSYNCRS",
     ]
+
+
+# FIXME
+# Need to define an Aggregate subclass that support multiple repeated
+# Elements (not just SubAggregates, like List) for PROCDAYSOFF.
+# Also need to define Types.Time() for PROCENDTM
+
+#  class XFERPROF(List):
+    #  """ OFX section 11.13.2.2 """
+
+    #  procdaysoff = Unsupported()
+    #  procendtm = Unsupported()
+    #  cansched = Bool(required=True)
+    #  canrecur = Bool(required=True)
+    #  canmodxfer = Bool(required=True)
+    #  canmodmdls = Bool(required=True)
+    #  modelwnd = Int(3, required=True)
+    #  dayswith = Int(3, required=True)
+    #  dfldaystopay = Int(3, required=True)
+
+    #  dataTags = ["PROCDAYSOFF"]
+
+
+#  class STPCHKPROF(List):
+    #  """ OFX section 11.13.2.3 """
+
+    #  procdaysoff = Unsupported()
+    #  procendtm = Unsupported()
+    #  canuserange = Bool(required=True)
+    #  canusedesc = Bool(required=True)
+    #  stpchkfee = Decimal(required=True)
+
+    #  dataTags = ["PROCDAYSOFF"]
 
 
 class EMAILPROF(Aggregate):
