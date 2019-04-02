@@ -14,8 +14,8 @@ setup(
     name=NAME,
     version=VERSION,
     # Note: change 'master' to the tag name when release a new verion
-    #  download_url='https://github.com/csingley/ofxtools/tarball/master',
-    download_url='{}/tarball/{}'.format(URL, VERSION),
+    download_url='{}/tarball/master'.format(URL),
+    #  download_url='{}/tarball/{}'.format(URL, VERSION),
 
     description=('Library for working with Open Financial Exchange (OFX) '
                  'formatted data used by financial institutions'),
