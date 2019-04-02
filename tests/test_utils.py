@@ -3,13 +3,7 @@
 # stdlib imports
 import unittest
 import os
-import sys
-import importlib
 import datetime
-
-
-# 3rd party imports
-import pytz
 
 # local imports
 import ofxtools.utils
@@ -87,8 +81,15 @@ class NYSEcalendarTestCase(unittest.TestCase):
 
 
 class UtcTestCase(unittest.TestCase):
-    def testPytz(self):
-        self.assertIs(ofxtools.utils.UTC, pytz.UTC)
+    @property
+    def datetime(self):
+        return datetime.datetime.now()
+
+    def testUTC(self):
+        self.assertEqual(ofxtools.utils.UTC.tzname(self.datetime), "UTC")
+        self.assertEqual(ofxtools.utils.UTC.utcoffset(self.datetime), datetime.timedelta(0))
+        self.assertEqual(ofxtools.utils.UTC.dst(self.datetime), datetime.timedelta(0))
+        self.assertEqual(repr(ofxtools.utils.UTC), "<UTC>")
 
 
 if __name__ == "__main__":

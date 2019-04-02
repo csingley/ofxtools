@@ -9,5 +9,4 @@ coverage
 pylint
 ipdb
 ipdbplugin
-pytz
 coveralls

@@ -120,60 +120,58 @@ class OFXClientV1TestCase(unittest.TestCase):
             self.assertIsNone(signon.clientuid)
 
     def testRequestStatementsDryrun(self):
-        with patch("uuid.uuid4") as mock_uuid:
-            with patch("ofxtools.Client.OFXClient.dtclient") as mock_dtclient:
-                mock_dtclient.return_value = datetime(2017, 4, 1, tzinfo=UTC)
-                mock_uuid.return_value = "DEADBEEF"
+        with patch.multiple("ofxtools.Client.OFXClient", dtclient=DEFAULT, uuid="DEADBEEF") as mock:
+            mock['dtclient'].return_value = datetime(2017, 4, 1, tzinfo=UTC)
 
-                dryrun = self.client.request_statements(
-                    "elmerfudd", "t0ps3kr1t", self.stmtRq0, dryrun=True
-                ).read().decode()
-                request = (
-                    "OFXHEADER:100\r\n"
-                    "DATA:OFXSGML\r\n"
-                    "VERSION:103\r\n"
-                    "SECURITY:NONE\r\n"
-                    "ENCODING:USASCII\r\n"
-                    "CHARSET:NONE\r\n"
-                    "COMPRESSION:NONE\r\n"
-                    "OLDFILEUID:NONE\r\n"
-                    "NEWFILEUID:DEADBEEF\r\n"
-                    "\r\n"
-                    "<OFX>"
-                    "<SIGNONMSGSRQV1>"
-                    "<SONRQ>"
-                    "<DTCLIENT>20170401000000</DTCLIENT>"
-                    "<USERID>elmerfudd</USERID>"
-                    "<USERPASS>t0ps3kr1t</USERPASS>"
-                    "<LANGUAGE>ENG</LANGUAGE>"
-                    "<FI>"
-                    "<ORG>FIORG</ORG>"
-                    "<FID>FID</FID>"
-                    "</FI>"
-                    "<APPID>QWIN</APPID>"
-                    "<APPVER>2300</APPVER>"
-                    "</SONRQ>"
-                    "</SIGNONMSGSRQV1>"
-                    "<BANKMSGSRQV1>"
-                    "<STMTTRNRQ>"
-                    "<TRNUID>DEADBEEF</TRNUID>"
-                    "<STMTRQ>"
-                    "<BANKACCTFROM>"
-                    "<BANKID>123456789</BANKID>"
-                    "<ACCTID>111111</ACCTID>"
-                    "<ACCTTYPE>CHECKING</ACCTTYPE>"
-                    "</BANKACCTFROM>"
-                    "<INCTRAN>"
-                    "<DTSTART>20170101000000</DTSTART>"
-                    "<DTEND>20170331000000</DTEND>"
-                    "<INCLUDE>Y</INCLUDE>"
-                    "</INCTRAN>"
-                    "</STMTRQ>"
-                    "</STMTTRNRQ>"
-                    "</BANKMSGSRQV1>"
-                    "</OFX>"
-                )
-                self.assertEqual(dryrun, request)
+            dryrun = self.client.request_statements(
+                "elmerfudd", "t0ps3kr1t", self.stmtRq0, dryrun=True
+            ).read().decode()
+            request = (
+                "OFXHEADER:100\r\n"
+                "DATA:OFXSGML\r\n"
+                "VERSION:103\r\n"
+                "SECURITY:NONE\r\n"
+                "ENCODING:USASCII\r\n"
+                "CHARSET:NONE\r\n"
+                "COMPRESSION:NONE\r\n"
+                "OLDFILEUID:NONE\r\n"
+                "NEWFILEUID:DEADBEEF\r\n"
+                "\r\n"
+                "<OFX>"
+                "<SIGNONMSGSRQV1>"
+                "<SONRQ>"
+                "<DTCLIENT>20170401000000</DTCLIENT>"
+                "<USERID>elmerfudd</USERID>"
+                "<USERPASS>t0ps3kr1t</USERPASS>"
+                "<LANGUAGE>ENG</LANGUAGE>"
+                "<FI>"
+                "<ORG>FIORG</ORG>"
+                "<FID>FID</FID>"
+                "</FI>"
+                "<APPID>QWIN</APPID>"
+                "<APPVER>2300</APPVER>"
+                "</SONRQ>"
+                "</SIGNONMSGSRQV1>"
+                "<BANKMSGSRQV1>"
+                "<STMTTRNRQ>"
+                "<TRNUID>DEADBEEF</TRNUID>"
+                "<STMTRQ>"
+                "<BANKACCTFROM>"
+                "<BANKID>123456789</BANKID>"
+                "<ACCTID>111111</ACCTID>"
+                "<ACCTTYPE>CHECKING</ACCTTYPE>"
+                "</BANKACCTFROM>"
+                "<INCTRAN>"
+                "<DTSTART>20170101000000</DTSTART>"
+                "<DTEND>20170331000000</DTEND>"
+                "<INCLUDE>Y</INCLUDE>"
+                "</INCTRAN>"
+                "</STMTRQ>"
+                "</STMTTRNRQ>"
+                "</BANKMSGSRQV1>"
+                "</OFX>"
+            )
+            self.assertEqual(dryrun, request)
 
     def _testRequest(self, fn, *args, **kwargs):
         with patch.multiple(

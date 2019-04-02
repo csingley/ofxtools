@@ -140,9 +140,15 @@ class OFXClient:
         self.brokerid = brokerid
 
     @property
+    def uuid(self):
+        """ Returns a new UUID each time called """
+        #  return str(uuid.uuid4())
+        return uuid.uuid4()
+
+    @property
     def ofxheader(self):
         """ Prepend to OFX markup. """
-        header = make_header(version=self.version, newfileuid=uuid.uuid4())
+        header = make_header(version=self.version, newfileuid=self.uuid)
         return bytes(str(header), "utf_8")
 
     @property
@@ -256,7 +262,7 @@ class OFXClient:
 
         dtprofup = datetime.datetime(1990, 1, 1, tzinfo=UTC)
         profrq = PROFRQ(clientrouting="NONE", dtprofup=dtprofup)
-        trnuid = uuid.uuid4()
+        trnuid = self.uuid
         proftrnrq = PROFTRNRQ(trnuid=trnuid, profrq=profrq)
         msgs = PROFMSGSRQV1(proftrnrq)
 
@@ -276,7 +282,7 @@ class OFXClient:
         """
         signonmsgs = self.signon(user, password, clientuid=clientuid)
         acctinforq = ACCTINFORQ(dtacctup=dtacctup)
-        acctinfotrnrq = ACCTINFOTRNRQ(trnuid=uuid.uuid4(), acctinforq=acctinforq)
+        acctinfotrnrq = ACCTINFOTRNRQ(trnuid=self.uuid, acctinforq=acctinforq)
         signupmsgs = SIGNUPMSGSRQV1(acctinfotrnrq)
 
         ofx = OFX(signonmsgsrqv1=signonmsgs, signupmsgsrqv1=signupmsgs)
@@ -309,14 +315,14 @@ class OFXClient:
         acct = BANKACCTFROM(bankid=bankid, acctid=acctid, accttype=accttype)
         inctran = INCTRAN(dtstart=dtstart, dtend=dtend, include=inctran)
         stmtrq = STMTRQ(bankacctfrom=acct, inctran=inctran)
-        trnuid = uuid.uuid4()
+        trnuid = self.uuid
         return STMTTRNRQ(trnuid=trnuid, stmtrq=stmtrq)
 
     def stmtendtrnrq(self, bankid, acctid, accttype, dtstart=None, dtend=None):
         """ Construct STMTENDRQ; package in STMTENDTRNRQ """
         acct = BANKACCTFROM(bankid=bankid, acctid=acctid, accttype=accttype)
         stmtrq = STMTENDRQ(bankacctfrom=acct, dtstart=dtstart, dtend=dtend)
-        trnuid = uuid.uuid4()
+        trnuid = self.uuid
         return STMTENDTRNRQ(trnuid=trnuid, stmtendrq=stmtrq)
 
     def ccstmttrnrq(self, acctid, dtstart=None, dtend=None, inctran=True):
@@ -324,14 +330,14 @@ class OFXClient:
         acct = CCACCTFROM(acctid=acctid)
         inctran = INCTRAN(dtstart=dtstart, dtend=dtend, include=inctran)
         stmtrq = CCSTMTRQ(ccacctfrom=acct, inctran=inctran)
-        trnuid = uuid.uuid4()
+        trnuid = self.uuid
         return CCSTMTTRNRQ(trnuid=trnuid, ccstmtrq=stmtrq)
 
     def ccstmtendtrnrq(self, acctid, dtstart=None, dtend=None):
         """ Construct CCSTMTENDRQ; package in CCSTMTENDTRNRQ """
         acct = CCACCTFROM(acctid=acctid)
         stmtrq = CCSTMTENDRQ(ccacctfrom=acct, dtstart=dtstart, dtend=dtend)
-        trnuid = uuid.uuid4()
+        trnuid = self.uuid
         return CCSTMTENDTRNRQ(trnuid=trnuid, ccstmtendrq=stmtrq)
 
     def invstmttrnrq(self, acctid, brokerid, dtstart=None, dtend=None, inctran=True,
@@ -344,7 +350,7 @@ class OFXClient:
         stmtrq = INVSTMTRQ(
             invacctfrom=acct, inctran=inctran, incoo=incoo, incpos=incpos, incbal=incbal
         )
-        trnuid = uuid.uuid4()
+        trnuid = self.uuid
         return INVSTMTTRNRQ(trnuid=trnuid, invstmtrq=stmtrq)
 
     def download(self, ofx, dryrun=False, prettyprint=False,
