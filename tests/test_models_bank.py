@@ -18,67 +18,15 @@ from ofxtools.utils import UTC
 import ofxtools.models
 from ofxtools.models.base import Aggregate, classproperty
 from ofxtools.models.common import STATUS, BAL, MSGSETCORE, SVCSTATUSES
-from ofxtools.models.bank import (
-    BANKACCTFROM,
-    BANKACCTTO,
-    BANKACCTINFO,
-    CCACCTTO,
-    CCACCTFROM,
-    CCACCTINFO,
-    INCTRAN,
-    PAYEE,
-    LEDGERBAL,
-    AVAILBAL,
-    BALLIST,
-    STMTTRN,
-    BANKTRANLIST,
-    STMTRS,
-    STMTTRNRS,
-    BANKMSGSRSV1,
-    STMTRQ,
-    STMTTRNRQ,
-    BANKMSGSRQV1,
-    TRNTYPES,
-    CLOSING,
-    STMTENDRQ,
-    STMTENDRS,
-    STMTENDTRNRQ,
-    STMTENDTRNRS,
-    CHKRANGE,
-    CHKDESC,
-    STPCHKNUM,
-    STPCHKRQ,
-    STPCHKRS,
-    STPCHKTRNRQ,
-    STPCHKTRNRS,
-    STPCHKSYNCRQ,
-    STPCHKSYNCRS,
-    XFERINFO,
-    XFERPRCSTS,
-    INTRARQ,
-    INTRARS,
-    INTRAMODRQ,
-    INTRAMODRS,
-    INTRACANRQ,
-    INTRACANRS,
-    INTRATRNRQ,
-    INTRATRNRS,
-    INTRASYNCRQ,
-    INTRASYNCRS,
-    BANKMSGSETV1,
-    BANKMSGSET,
-    EMAILPROF,
-    ACCTTYPES,
-    INV401KSOURCES
-)
+from ofxtools.models.bank import *
 from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, CURRENCY_CODES
 
 
 class BankacctfromTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("BANKID", "ACCTID", "ACCTTYPE")
-    optionalElements = ("BRANCHID", "ACCTKEY")
+    requiredElements = [ "BANKID", "ACCTID", "ACCTTYPE" ]
+    optionalElements = [ "BRANCHID", "ACCTKEY" ]
     tag = "BANKACCTFROM"
 
     @property
@@ -92,8 +40,6 @@ class BankacctfromTestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testConvert(self):
-        # Make sure Aggregate.from_etree() calls Element.convert() and sets
-        # Aggregate instance attributes with the result
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, getattr(ofxtools.models, self.tag))
         self.assertEqual(root.bankid, "111000614")
@@ -115,7 +61,7 @@ class BankaccttoTestCase(BankacctfromTestCase):
 class BankacctinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("BANKACCTFROM", "SUPTXDL", "XFERSRC", "XFERDEST", "SVCSTATUS")
+    requiredElements = [ "BANKACCTFROM", "SUPTXDL", "XFERSRC", "XFERDEST", "SVCSTATUS" ]
 
     @property
     def root(self):
@@ -144,8 +90,8 @@ class BankacctinfoTestCase(unittest.TestCase, base.TestAggregate):
 class CcacctfromTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("ACCTID",)
-    optionalElements = ("ACCTKEY",)
+    requiredElements = [ "ACCTID" ]
+    optionalElements = [ "ACCTKEY", ]
     tag = "CCACCTFROM"
 
     @property
@@ -170,7 +116,7 @@ class CcaccttoTestCase(CcacctfromTestCase):
 class CcacctinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("CCACCTFROM", "SUPTXDL", "XFERSRC", "XFERDEST", "SVCSTATUS")
+    requiredElements = [ "CCACCTFROM", "SUPTXDL", "XFERSRC", "XFERDEST", "SVCSTATUS" ]
 
     @property
     def root(self):
@@ -199,8 +145,8 @@ class CcacctinfoTestCase(unittest.TestCase, base.TestAggregate):
 class InctranTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("INCLUDE",)
-    optionalElements = ("DTSTART", "DTEND")
+    requiredElements = [ "INCLUDE", ]
+    optionalElements = [ "DTSTART", "DTEND" ]
 
     @property
     def root(self):
@@ -221,8 +167,8 @@ class InctranTestCase(unittest.TestCase, base.TestAggregate):
 class StmtrqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("BANKACCTFROM",)
-    optionalElements = ("INCTRAN", "INCLUDEPENDING", "INCTRANIMG")
+    requiredElements = [ "BANKACCTFROM", ]
+    optionalElements = [ "INCTRAN", "INCLUDEPENDING", "INCTRANIMG" ]
 
     @property
     def root(self):
@@ -248,8 +194,8 @@ class StmtrqTestCase(unittest.TestCase, base.TestAggregate):
 class PayeeTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("NAME", "ADDR1", "CITY", "STATE", "POSTALCODE", "PHONE")
-    optionalElements = ("ADDR2", "ADDR3", "COUNTRY")
+    requiredElements = [ "NAME", "ADDR1", "CITY", "STATE", "POSTALCODE", "PHONE" ]
+    optionalElements = [ "ADDR2", "ADDR3", "COUNTRY" ]
 
     @property
     def root(self):
@@ -471,7 +417,7 @@ class BanktranlistTestCase(unittest.TestCase, base.TranlistTestCase):
 class LedgerbalTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("BALAMT", "DTASOF")
+    requiredElements = [ "BALAMT", "DTASOF" ]
 
     @property
     def root(self):
@@ -492,7 +438,7 @@ class LedgerbalTestCase(unittest.TestCase, base.TestAggregate):
 class AvailbalTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("BALAMT", "DTASOF")
+    requiredElements = [ "BALAMT", "DTASOF" ]
 
     @property
     def root(self):
@@ -549,15 +495,14 @@ class BallistTestCase(unittest.TestCase, base.TestAggregate):
 class StmtrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("CURDEF", "BANKACCTFROM", "LEDGERBAL")
-    optionalElements = (
-        "BANKTRANLIST",
-        "AVAILBAL",
-        "CASHADVBALAMT",
-        "INTRATE",
-        "BALLIST",
-        "MKTGINFO",
-    )
+    requiredElements = [ "CURDEF", "BANKACCTFROM", "LEDGERBAL" ]
+    optionalElements = [ "BANKTRANLIST",
+                        "AVAILBAL",
+                        "CASHADVBALAMT",
+                        "INTRATE",
+                        "BALLIST",
+                        "MKTGINFO",
+                       ]
     unsupported = ["banktranlistp"]
 
     @property
@@ -1247,6 +1192,8 @@ class IntrarsTestCase(unittest.TestCase, base.TestAggregate):
 class IntramodrqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
+    requiredElements = ["SRVRTID", "XFERINFO"]
+
     @property
     def root(self):
         root = Element("INTRAMODRQ")
@@ -1266,6 +1213,8 @@ class IntramodrqTestCase(unittest.TestCase, base.TestAggregate):
 class IntracanrqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
+    requiredElements = ["SRVRTID"]
+
     @property
     def root(self):
         root = Element("INTRACANRQ")
@@ -1281,6 +1230,8 @@ class IntracanrqTestCase(unittest.TestCase, base.TestAggregate):
 
 class IntramodrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
+    requiredElements = ["SRVRTID", "XFERINFO"]
 
     @property
     def root(self):
@@ -1303,6 +1254,8 @@ class IntramodrsTestCase(unittest.TestCase, base.TestAggregate):
 
 class IntracanrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
+    requiredElements = ["SRVRTID"]
 
     @property
     def root(self):
@@ -1596,14 +1549,20 @@ class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     @property
     def root(self):
         root = Element("BANKMSGSRQV1")
-        for i in range(2):
-            stmttrnrq = StmttrnrqTestCase().root
-            root.append(stmttrnrq)
+        for rq in (
+            StmttrnrqTestCase, StmtendtrnrqTestCase, StpchktrnrqTestCase,
+            IntratrnrqTestCase,
+            # RecintratrnrqTestCase, BankmailtrnrqTestCase,
+            StpchksyncrqTestCase, IntrasyncrqTestCase,
+            # RecintrasyncrqTestCase, BankmailsyncrqTestCase,
+        ):
+            for i in range(2):
+                root.append(rq().root)
         return root
 
     def testdataTags(self):
-        # BANKMSGSRQV! may contain
-        # ["STMTTRNRQ", "STMTENDRQ", "STPCHKTRNRQ", "INTRATRNRQ",
+        # BANKMSGSRQV1 may contain
+        # ["STMTTRNRQ", "STMTENDTRNRQ", "STPCHKTRNRQ", "INTRATRNRQ",
         # "RECINTRATRNRQ", "BANKMAILTRNRQ", "STPCHKSYNCRQ", "INTRASYNCRQ",
         # "RECINTRASYNCRQ", "BANKMAILSYNCRQ"]
 
@@ -1616,11 +1575,21 @@ class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
             Aggregate.from_etree(root)
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, BANKMSGSRQV1)
-        self.assertEqual(len(root), 2)
-        for stmttrnrs in root:
-            self.assertIsInstance(stmttrnrs, STMTTRNRQ)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, BANKMSGSRQV1)
+        self.assertEqual(len(instance), 12)
+        self.assertIsInstance(instance[0], STMTTRNRQ)
+        self.assertIsInstance(instance[1], STMTTRNRQ)
+        self.assertIsInstance(instance[2], STMTENDTRNRQ)
+        self.assertIsInstance(instance[3], STMTENDTRNRQ)
+        self.assertIsInstance(instance[4], STPCHKTRNRQ)
+        self.assertIsInstance(instance[5], STPCHKTRNRQ)
+        self.assertIsInstance(instance[6], INTRATRNRQ)
+        self.assertIsInstance(instance[7], INTRATRNRQ)
+        self.assertIsInstance(instance[8], STPCHKSYNCRQ)
+        self.assertIsInstance(instance[9], STPCHKSYNCRQ)
+        self.assertIsInstance(instance[10], INTRASYNCRQ)
+        self.assertIsInstance(instance[11], INTRASYNCRQ)
 
 
 class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
@@ -1629,9 +1598,15 @@ class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     @property
     def root(self):
         root = Element("BANKMSGSRSV1")
-        stmttrnrs = StmttrnrsTestCase().root
-        for i in range(2):
-            root.append(deepcopy(stmttrnrs))
+        for rs in (
+            StmttrnrsTestCase, StmtendtrnrsTestCase, StpchktrnrsTestCase,
+            IntratrnrsTestCase,
+            # RecintratrnrsTestCase, BankmailtrnrsTestCase,
+            StpchksyncrsTestCase, IntrasyncrsTestCase,
+            # RecintrasyncrsTestCase, BankmailsyncrsTestCase,
+        ):
+            for i in range(2):
+                root.append(rs().root)
         return root
 
     def testdataTags(self):
@@ -1648,18 +1623,606 @@ class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
             Aggregate.from_etree(root)
 
     def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, BANKMSGSRSV1)
-        self.assertEqual(len(root), 2)
-        for stmttrnrs in root:
-            self.assertIsInstance(stmttrnrs, STMTTRNRS)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, BANKMSGSRSV1)
+        self.assertEqual(len(instance), 12)
+        self.assertIsInstance(instance[0], STMTTRNRS)
+        self.assertIsInstance(instance[1], STMTTRNRS)
+        self.assertIsInstance(instance[2], STMTENDTRNRS)
+        self.assertIsInstance(instance[3], STMTENDTRNRS)
+        self.assertIsInstance(instance[4], STPCHKTRNRS)
+        self.assertIsInstance(instance[5], STPCHKTRNRS)
+        self.assertIsInstance(instance[6], INTRATRNRS)
+        self.assertIsInstance(instance[7], INTRATRNRS)
+        self.assertIsInstance(instance[8], STPCHKSYNCRS)
+        self.assertIsInstance(instance[9], STPCHKSYNCRS)
+        self.assertIsInstance(instance[10], INTRASYNCRS)
+        self.assertIsInstance(instance[11], INTRASYNCRS)
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root.statements, list)
-        self.assertEqual(len(root.statements), 2)
-        self.assertIsInstance(root.statements[0], STMTRS)
-        self.assertIsInstance(root.statements[1], STMTRS)
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance.statements, list)
+        self.assertEqual(len(instance.statements), 2)
+        self.assertIsInstance(instance.statements[0], STMTRS)
+        self.assertIsInstance(instance.statements[1], STMTRS)
+
+
+class InterrqTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["XFERINFO"]
+
+    @property
+    def root(self):
+        root = Element("INTERRQ")
+        xferinfo = XferinfoTestCase().root
+        root.append(xferinfo)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INTERRQ)
+        self.assertIsInstance(instance.xferinfo, XFERINFO)
+
+
+class InterrsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["CURDEF", "SRVRTID", "XFERINFO"]
+    optionalElements = ["REFNUM", "RECSRVRTID", "XFERPRCSTS"]
+
+    @classproperty
+    @classmethod
+    def validSoup(cls):
+        dtxferprj = Element("DTXFERPRJ")
+        dtxferprj.text = "20150704000000"
+        dtposted = Element("DTPOSTED")
+        dtposted.text = "20150704000000"
+
+        for dtChoice in (None, dtxferprj, dtposted):
+            root = Element("INTERRS")
+            SubElement(root, "CURDEF").text = "EUR"
+            SubElement(root, "SRVRTID").text = "DEADBEEF"
+            xferinfo = XferinfoTestCase().root
+            root.append(xferinfo)
+            if dtChoice is not None:
+                root.append(dtChoice)
+            SubElement(root, "REFNUM").text = "B00B135"
+            SubElement(root, "RECSRVRTID").text = "B16B00B5"
+            xferprcsts = XferprcstsTestCase().root
+            root.append(xferprcsts)
+            yield root
+
+    @property
+    def root(self):
+        return next(self.validSoup)
+
+    @classproperty
+    @classmethod
+    def invalidSoup(cls):
+        #  optionalMutexes = [("dtxferprj", "dtposted")]
+        dtxferprj = Element("DTXFERPRJ")
+        dtxferprj.text = "20150704000000"
+        dtposted = Element("DTPOSTED")
+        dtposted.text = "20150704000000"
+
+        root = Element("INTERRS")
+        SubElement(root, "CURDEF").text = "EUR"
+        SubElement(root, "SRVRTID").text = "DEADBEEF"
+        xferinfo = XferinfoTestCase().root
+        root.append(xferinfo)
+        root.append(dtxferprj)
+        root.append(dtposted)
+
+        yield root
+
+    def testValidSoup(self):
+        for root in self.validSoup:
+            Aggregate.from_etree(root)
+
+    def testInvalidSoup(self):
+        for root in self.invalidSoup:
+            with self.assertRaises(ValueError):
+                Aggregate.from_etree(root)
+
+    def testOneOf(self):
+        self.oneOfTest('CURDEF', CURRENCY_CODES)
+
+
+class IntermodrqTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["SRVRTID", "XFERINFO"]
+
+    @property
+    def root(self):
+        root = Element("INTERMODRQ")
+        SubElement(root, "SRVRTID").text = "DEADBEEF"
+        xferinfo = XferinfoTestCase().root
+        root.append(xferinfo)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INTERMODRQ)
+        self.assertIsInstance(instance.xferinfo, XFERINFO)
+        self.assertEqual(instance.srvrtid, "DEADBEEF")
+
+
+class IntercanrqTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["SRVRTID"]
+
+    @property
+    def root(self):
+        root = Element("INTERCANRQ")
+        SubElement(root, "SRVRTID").text = "DEADBEEF"
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INTERCANRQ)
+        self.assertEqual(instance.srvrtid, "DEADBEEF")
+
+
+class IntermodrsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["SRVRTID", "XFERINFO"]
+
+    @property
+    def root(self):
+        root = Element("INTERMODRS")
+        SubElement(root, "SRVRTID").text = "DEADBEEF"
+        xferinfo = XferinfoTestCase().root
+        root.append(xferinfo)
+        xferprcsts = XferprcstsTestCase().root
+        root.append(xferprcsts)
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INTERMODRS)
+        self.assertEqual(instance.srvrtid, "DEADBEEF")
+        self.assertIsInstance(instance.xferinfo, XFERINFO)
+        self.assertIsInstance(instance.xferprcsts, XFERPRCSTS)
+
+
+class IntercanrsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["SRVRTID"]
+
+    @property
+    def root(self):
+        root = Element("INTERCANRS")
+        SubElement(root, "SRVRTID").text = "DEADBEEF"
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INTERCANRS)
+        self.assertEqual(instance.srvrtid, "DEADBEEF")
+
+
+class IntertrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
+    __test__ = True
+
+    wraps = InterrqTestCase
+
+    @classproperty
+    @classmethod
+    def validSoup(cls):
+        for Test in InterrqTestCase, IntermodrqTestCase, IntercanrqTestCase:
+            root = deepcopy(cls.emptyBase)
+            rq = Test().root
+            root.append(rq)
+            yield root
+
+    @classproperty
+    @classmethod
+    def invalidSoup(cls):
+        # Don't need to test missing TRNUID, since this case is
+        # tested by ``requiredElements``
+        tag = cls.__name__.replace("TestCase", "").upper()
+        root_ = Element(tag)
+
+        # TRNUID/COOKIE/TAN out of order
+        trnuid = Element("TRNUID")
+        trnuid.text = "DEADBEEF"
+        cltcookie = Element("CLTCOOKIE")
+        cltcookie.text = "B00B135"
+        tan = Element("TAN")
+        tan.text = "B16B00B5"
+
+        legal = [trnuid, cltcookie, tan]
+        for elements in itertools.permutations(legal):
+            if elements == legal:
+                continue
+            root = deepcopy(root_)
+            for element in elements:
+                root.append(element)
+            root.append(cls.wrapped)
+            yield root
+
+        #  requiredMutex= ("interrq", "intermodrq", "intercanrq")
+        root_ = deepcopy(cls.emptyBase)
+        # Missing INTERRQ/INTERMODRQ/INTERCANRQ
+        yield root
+
+        # Multiple INTERRQ/INTERMODRQ/INTERCANRQ
+        for Tests in [
+            (InterrqTestCase, IntermodrqTestCase),
+            (InterrqTestCase, IntercanrqTestCase),
+            (IntermodrqTestCase, IntercanrqTestCase),
+        ]:
+            root = deepcopy(cls.emptyBase)
+            for Test in Tests:
+                root.append(Test().root)
+            yield root
+
+        # Wrapped aggregate in the wrong place (should be right after TAN)
+
+        root_ = deepcopy(cls.emptyBase)
+        index = list(root_).index(root_.find("TAN"))
+        for n in range(index):
+            root = deepcopy(root_)
+            root.insert(n, cls.wrapped)
+            yield root
+
+
+class IntertrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
+    __test__ = True
+
+    wraps = InterrqTestCase
+
+    @classproperty
+    @classmethod
+    def validSoup(cls):
+        for Test in InterrsTestCase, IntermodrsTestCase, IntercanrsTestCase:
+            root = deepcopy(cls.emptyBase)
+            rs = Test().root
+            root.append(rs)
+            yield root
+
+    @classproperty
+    @classmethod
+    def invalidSoup(cls):
+        # Don't need to test missing TRNUID, since this case is
+        # tested by ``requiredElements``
+        tag = cls.__name__.replace("TestCase", "").upper()
+        root_ = Element(tag)
+
+        # TRNUID/STATUS/CLTCOOKIE out of order
+        trnuid = Element("TRNUID")
+        trnuid.text = "DEADBEEF"
+        status = base.StatusTestCase().root
+        cltcookie = Element("CLTCOOKIE")
+        cltcookie.text = "B00B135"
+
+        legal = [trnuid, status, cltcookie]
+        for elements in itertools.permutations(legal):
+            if elements == legal:
+                continue
+            root = deepcopy(root_)
+            for element in elements:
+                root.append(element)
+            root.append(cls.wrapped)
+            yield root
+
+        #  requiredMutex= ("interrs", "intermodrs", "intercanrs")
+        root_ = deepcopy(cls.emptyBase)
+        # Missing INTERRS/INTERMODRS/INTERCANRS
+        yield root
+
+        # Multiple INTERRS/INTERMODRS/INTERCANRS
+        for Tests in [
+            (InterrsTestCase, IntermodrsTestCase),
+            (InterrsTestCase, IntercanrsTestCase),
+            (IntermodrsTestCase, IntercanrsTestCase),
+        ]:
+            root = deepcopy(cls.emptyBase)
+            for Test in Tests:
+                root.append(Test().root)
+            yield root
+
+        # Wrapped aggregate in the wrong place (should be right after CLTCOOKIE)
+        root_ = deepcopy(cls.emptyBase)
+        index = list(root_).index(root_.find("CLTCOOKIE"))
+        for n in range(index):
+            root = deepcopy(root_)
+            root.insert(n, cls.wrapped)
+            yield root
+
+
+class IntersyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
+    __test__ = True
+
+    @property
+    def validSoup(self):
+        bankacctfrom = BankacctfromTestCase().root
+        ccacctfrom = CcacctfromTestCase().root
+        trnrq = IntertrnrqTestCase().root
+
+        for root_ in super().validSoup:
+            for acctfrom in (bankacctfrom, ccacctfrom):
+                root = deepcopy(root_)
+                root.append(deepcopy(acctfrom))
+                # 0 contained aggregrates
+                yield root
+                # 1 or more contained aggregates
+                for n in range(2):
+                    root.append(deepcopy(trnrq))
+                    yield root
+
+    @property
+    def invalidSoup(self):
+        bankacctfrom = BankacctfromTestCase().root
+        ccacctfrom = CcacctfromTestCase().root
+        trnrq = IntertrnrsTestCase().root
+
+        # SYNCRQ base malformed; INTER additions OK
+        for root_ in super().invalidSoup:
+            for acctfrom in (bankacctfrom, ccacctfrom):
+                root = deepcopy(root_)
+                root.append(deepcopy(acctfrom))
+                # 0 contained aggregrates
+                yield root
+                # 1 or more contained aggregates
+                for n in range(2):
+                    root.append(deepcopy(trnrq))
+                    yield root
+
+        # SYNCRQ base OK; INTER additions malformed
+        for root_ in super().validSoup:
+            # *ACCTFROM missing (required)
+            yield root_
+            # Both BANKACCTFROM and CCACCTFROM (mutex)
+            root = deepcopy(root_)
+            root.append(bankacctfrom)
+            root.append(ccacctfrom)
+            yield root
+
+            root = deepcopy(root_)
+            root.append(ccacctfrom)
+            root.append(bankacctfrom)
+            yield root
+
+            # *ACCTFROM in the wrong place
+            # (should be right after REJECTIFMISSING)
+            for acctfrom in (bankacctfrom, ccacctfrom):
+                index = list(root_).index(root_.find("REJECTIFMISSING"))
+                for n in range(index):
+                    root = deepcopy(root_)
+                    root.insert(n, acctfrom)
+                    yield root
+
+            #  *TRNRQ in the wrong place
+            #  (should be right after *ACCTFROM)
+            #
+            # FIXME
+            # Currently the ``List`` data model offers no way to verify that
+            # data appears in correct position relative to metadata, since
+            # ``dataTags`` doesn't appear in the ``cls.spec``.
+
+
+class IntersyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
+    __test__ = True
+
+    @property
+    def validSoup(self):
+        bankacctfrom = BankacctfromTestCase().root
+        ccacctfrom = CcacctfromTestCase().root
+        trnrs = IntertrnrsTestCase().root
+
+        for root_ in super().validSoup:
+            for acctfrom in (bankacctfrom, ccacctfrom):
+                root = deepcopy(root_)
+                root.append(deepcopy(acctfrom))
+                # 0 contained aggregrates
+                yield root
+                # 1 or more contained aggregates
+                for n in range(2):
+                    root.append(deepcopy(trnrs))
+                    yield root
+
+    @property
+    def invalidSoup(self):
+        bankacctfrom = BankacctfromTestCase().root
+        ccacctfrom = CcacctfromTestCase().root
+        trnrs = IntertrnrsTestCase().root
+
+        # SYNCRS base malformed; INTER additions OK
+        for root_ in super().invalidSoup:
+            for acctfrom in (bankacctfrom, ccacctfrom):
+                root = deepcopy(root_)
+                root.append(deepcopy(acctfrom))
+                # 0 contained aggregrates
+                yield root
+                # 1 or more contained aggregates
+                for n in range(2):
+                    root.append(deepcopy(trnrs))
+                    yield root
+
+        # SYNCRS base OK; INTER additions malformed
+        for root_ in super().validSoup:
+            # *ACCTFROM missing (required)
+            yield root_
+            # Both BANKACCTFROM and CCACCTFROM (mutex)
+            root = deepcopy(root_)
+            root.append(bankacctfrom)
+            root.append(ccacctfrom)
+            yield root
+
+            root = deepcopy(root_)
+            root.append(ccacctfrom)
+            root.append(bankacctfrom)
+            yield root
+
+            # *ACCTFROM in the wrong place
+            # (should be right after LOSTSYNC)
+            for acctfrom in (bankacctfrom, ccacctfrom):
+                index = list(root_).index(root_.find("LOSTSYNC"))
+                for n in range(index):
+                    root = deepcopy(root_)
+                    root.insert(n, acctfrom)
+                    yield root
+
+            #  *TRNRS in the wrong place
+            #  (should be right after *ACCTFROM)
+            #
+            # FIXME
+            # Currently the ``List`` data model offers no way to verify that
+            # data appears in correct position relative to metadata, since
+            # ``dataTags`` doesn't appear in the ``cls.spec``.
+
+
+class Interxfermsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("INTERXFERMSGSRQV1")
+        for rq in (
+            IntertrnrqTestCase,
+            #  RecintertrnrqTestCase,
+            IntersyncrqTestCase,
+            # RecintersyncrqTestCase,
+        ):
+            for i in range(2):
+                root.append(rq().root)
+        return root
+
+    def testdataTags(self):
+        # INTERXFERMSGSRQV1 may contain
+        # ["INTERTRNRQ", "RECINTERTRNRQ", "INTERSYNCRQ", "RECINTERSYNCRQ"]
+        allowedTags = INTERXFERMSGSRQV1.dataTags
+        self.assertEqual(len(allowedTags), 4)
+        root = deepcopy(self.root)
+        root.append(IntertrnrsTestCase().root)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INTERXFERMSGSRQV1)
+        self.assertEqual(len(instance), 4)
+        self.assertIsInstance(instance[0], INTERTRNRQ)
+        self.assertIsInstance(instance[1], INTERTRNRQ)
+        self.assertIsInstance(instance[2], INTERSYNCRQ)
+        self.assertIsInstance(instance[3], INTERSYNCRQ)
+
+
+class Interxfermsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("INTERXFERMSGSRSV1")
+        for rq in (
+            IntertrnrsTestCase,
+            #  RecintertrnrsTestCase,
+            IntersyncrsTestCase,
+            # RecintersyncrsTestCase,
+        ):
+            for i in range(2):
+                root.append(rq().root)
+        return root
+
+    def testdataTags(self):
+        # INTERXFERMSGSRSV1 may contain
+        # ["INTERTRNRS", "RECINTERTRNRS", "INTERSYNCRS", "RECINTERSYNCRS"]
+        allowedTags = INTERXFERMSGSRSV1.dataTags
+        self.assertEqual(len(allowedTags), 4)
+        root = deepcopy(self.root)
+        root.append(IntertrnrqTestCase().root)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INTERXFERMSGSRSV1)
+        self.assertEqual(len(instance), 4)
+        self.assertIsInstance(instance[0], INTERTRNRS)
+        self.assertIsInstance(instance[1], INTERTRNRS)
+        self.assertIsInstance(instance[2], INTERSYNCRS)
+        self.assertIsInstance(instance[3], INTERSYNCRS)
+
+
+class WirebeneficiaryTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["NAME", "BANKACCTTO"]
+    optionalElements = ["MEMO"]
+
+    @classproperty
+    @classmethod
+    def validSoup(cls):
+        root = Element('WIREBENEFICIARY')
+        SubElement(root, "NAME").text = "Elmer Fudd"
+        root.append(BankaccttoTestCase().root)
+        SubElement(root, "MEMO").text = "For hunting wabbits"
+        yield root
+
+    @property
+    def root(self):
+        return next(self.validSoup)
+
+    @classproperty
+    @classmethod
+    def invalidSoup(cls):
+        yield from ()
+
+    def testValidSoup(self):
+        for root in self.validSoup:
+            Aggregate.from_etree(root)
+
+    def testInvalidSoup(self):
+        for root in self.invalidSoup:
+            with self.assertRaises(ValueError):
+                Aggregate.from_etree(root)
+
+
+#  class ExtbankdescTestCase(unittest.TestCase, base.TestAggregate):
+    #  __test__ = True
+
+    #  requiredElements = ["NAME", "BANKACCTTO"]
+    #  optionalElements = ["MEMO"]
+
+    #  @classproperty
+    #  @classmethod
+    #  def validSoup(cls):
+        #  root = Element('WIREBENEFICIARY')
+        #  SubElement(root, "NAME").text = "Elmer Fudd"
+        #  root.append(BankaccttoTestCase().root)
+        #  SubElement(root, "MEMO").text = "For hunting wabbits"
+        #  yield root
+
+    #  @property
+    #  def root(self):
+        #  return next(self.validSoup)
+
+    #  @classproperty
+    #  @classmethod
+    #  def invalidSoup(cls):
+        #  yield from ()
+
+    #  def testValidSoup(self):
+        #  for root in self.validSoup:
+            #  Aggregate.from_etree(root)
+
+    #  def testInvalidSoup(self):
+        #  for root in self.invalidSoup:
+            #  with self.assertRaises(ValueError):
+                #  Aggregate.from_etree(root)
 
 
 class EmailprofTestCase(unittest.TestCase, base.TestAggregate):

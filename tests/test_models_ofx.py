@@ -29,10 +29,6 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     unsupported = [
-        "interxfermsgsrqv1",
-        "interxfermsgsrsv1",
-        "wirexfermsgsrqv1",
-        "wirexfermsgsrsv1",
         "billpaymsgsrqv1",
         "billpaymsgsrsv1",
         "emailmsgsrqv1",

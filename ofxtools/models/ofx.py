@@ -7,7 +7,7 @@ balances, and securities.
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
 from ofxtools.models.signon import SIGNONMSGSRQV1, SIGNONMSGSRSV1
 from ofxtools.models.signup import SIGNUPMSGSRQV1, SIGNUPMSGSRSV1
-from ofxtools.models.bank import BANKMSGSRQV1, BANKMSGSRSV1
+from ofxtools.models.bank import BANKMSGSRQV1, BANKMSGSRSV1, INTERXFERMSGSRQV1, INTERXFERMSGSRSV1, WIREXFERMSGSRQV1, WIREXFERMSGSRSV1
 from ofxtools.models.investment import INVSTMTMSGSRQV1, INVSTMTMSGSRSV1
 from ofxtools.models.creditcard import CREDITCARDMSGSRQV1, CREDITCARDMSGSRSV1
 from ofxtools.models.seclist import SECLISTMSGSRQV1, SECLISTMSGSRSV1
@@ -30,10 +30,10 @@ class OFX(Aggregate):
     creditcardmsgsrsv1 = SubAggregate(CREDITCARDMSGSRSV1)
     invstmtmsgsrqv1 = SubAggregate(INVSTMTMSGSRQV1)
     invstmtmsgsrsv1 = SubAggregate(INVSTMTMSGSRSV1)
-    interxfermsgsrqv1 = Unsupported()
-    interxfermsgsrsv1 = Unsupported()
-    wirexfermsgsrqv1 = Unsupported()
-    wirexfermsgsrsv1 = Unsupported()
+    interxfermsgsrqv1 = SubAggregate(INTERXFERMSGSRQV1)
+    interxfermsgsrsv1 = SubAggregate(INTERXFERMSGSRSV1)
+    wirexfermsgsrqv1 = SubAggregate(WIREXFERMSGSRQV1)
+    wirexfermsgsrsv1 = SubAggregate(WIREXFERMSGSRSV1)
     billpaymsgsrqv1 = Unsupported()
     billpaymsgsrsv1 = Unsupported()
     emailmsgsrqv1 = Unsupported()

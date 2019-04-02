@@ -24,87 +24,39 @@ from ofxtools.models.i18n import (
 
 
 __all__ = [
-    "BANKACCTFROM",
-    "CCACCTFROM",
-    "BANKACCTTO",
-    "CCACCTTO",
-    "BANKACCTINFO",
-    "CCACCTINFO",
-    "INCTRAN",
-    "PAYEE",
+    "INV401KSOURCES", "ACCTTYPES", "TRNTYPES",
+    "BANKACCTFROM", "BANKACCTTO", "BANKACCTINFO",
+    "CCACCTFROM", "CCACCTTO", "CCACCTINFO",
+    "INCTRAN", "PAYEE", "EMAILPROF", "LEDGERBAL", "AVAILBAL", "BALLIST",
+    "STMTTRN", "BANKTRANLIST", "STMTRQ", "STMTRS", "STMTTRNRQ", "STMTTRNRS",
+    "CLOSING", "STMTENDRQ", "STMTENDRS", "STMTENDTRNRQ", "STMTENDTRNRS",
+    "CHKRANGE", "CHKDESC", "STPCHKNUM", "STPCHKRQ", "STPCHKRS",
+    "STPCHKTRNRQ", "STPCHKTRNRS", "STPCHKSYNCRQ", "STPCHKSYNCRS",
+    "XFERINFO", "XFERPRCSTS",
+    "INTRARQ", "INTRARS", "INTRAMODRQ", "INTRACANRQ", "INTRAMODRS", "INTRACANRS",
+    "INTRATRNRQ", "INTRATRNRS", "INTRASYNCRQ", "INTRASYNCRS",
+    "BANKMSGSRQV1", "BANKMSGSRSV1",
+    "INTERRQ", "INTERRS", "INTERMODRQ", "INTERCANRQ", "INTERMODRS", "INTERCANRS",
+    "INTERTRNRQ", "INTERTRNRS", "INTERSYNCRQ", "INTERSYNCRS",
+    "INTERXFERMSGSRQV1", "INTERXFERMSGSRSV1",
+    "WIREBENEFICIARY", "EXTBANKDESC", "WIREDESTBANK",
+    "WIRERQ", "WIRERS", "WIRECANRQ", "WIRECANRS",
+    "WIRETRNRQ", "WIRETRNRS", "WIRESYNCRQ", "WIRESYNCRS",
+    "WIREXFERMSGSRQV1", "WIREXFERMSGSRSV1",
     "EMAILPROF",
-    "LEDGERBAL",
-    "AVAILBAL",
-    "BALLIST",
-    "STMTTRN",
-    "BANKTRANLIST",
-    "STMTRQ",
-    "STMTRS",
-    "STMTTRNRQ",
-    "STMTTRNRS",
-    "CLOSING",
-    "STMTENDRQ",
-    "STMTENDRS",
-    "STMTENDTRNRQ",
-    "STMTENDTRNRS",
-    "CHKRANGE",
-    "CHKDESC",
-    "STPCHKRQ",
-    "STPCHKRS",
-    "STPCHKNUM",
-    "STPCHKTRNRQ",
-    "STPCHKTRNRS",
-    "STPCHKSYNCRQ",
-    "STPCHKSYNCRS",
-    "XFERINFO",
-    "XFERPRCSTS",
-    "INTRARQ",
-    "INTRARS",
-    "INTRAMODRQ",
-    "INTRACANRQ",
-    "INTRAMODRS",
-    "INTRACANRS",
-    "INTRATRNRQ",
-    "INTRATRNRS",
-    "INTRASYNCRQ",
-    "INTRASYNCRS",
-    "BANKMSGSRQV1",
-    "BANKMSGSRSV1",
-    "BANKMSGSETV1",
-    "BANKMSGSET",
-    "EMAILPROF",
+    "BANKMSGSETV1", "BANKMSGSET",
 ]
 
 
 # Enums used in aggregate validation
 INV401KSOURCES = (
-    "PRETAX",
-    "AFTERTAX",
-    "MATCH",
-    "PROFITSHARING",
-    "ROLLOVER",
-    "OTHERVEST",
-    "OTHERNONVEST",
+    "PRETAX", "AFTERTAX", "MATCH", "PROFITSHARING", "ROLLOVER", "OTHERVEST", "OTHERNONVEST",
 )
 # OFX section 11.3.1.1
 ACCTTYPES = ("CHECKING", "SAVINGS", "MONEYMRKT", "CREDITLINE", "CD")
 TRNTYPES = (
-    "CREDIT",
-    "DEBIT",
-    "INT",
-    "DIV",
-    "FEE",
-    "SRVCHG",
-    "DEP",
-    "ATM",
-    "POS",
-    "XFER",
-    "CHECK",
-    "PAYMENT",
-    "CASH",
-    "DIRECTDEP",
-    "DIRECTDEBIT",
-    "REPEATPMT",
+    "CREDIT", "DEBIT", "INT", "DIV", "FEE", "SRVCHG", "DEP", "ATM", "POS",
+    "XFER", "CHECK", "PAYMENT", "CASH", "DIRECTDEP", "DIRECTDEBIT", "REPEATPMT",
     "OTHER",
 )
 
@@ -451,7 +403,7 @@ class BANKMSGSRSV1(List):
 
     dataTags = [
         "STMTTRNRS",
-        "STMTENDRS",
+        "STMTENDTRNRS",
         "STPCHKTRNRS",
         "INTRATRNRS",
         "RECINTRATRNRS",
@@ -471,13 +423,6 @@ class BANKMSGSRSV1(List):
                 if stmtrs is not None:
                     stmts.append(stmtrs)
         return stmts
-
-
-class EMAILPROF(Aggregate):
-    """ OFX section 11.13.2.4 """
-
-    canemail = Bool(required=True)
-    cannotify = Bool(required=True)
 
 
 class XFERINFO(Aggregate):
@@ -571,15 +516,7 @@ class INTRATRNRS(TrnRs):
     intramodrs = SubAggregate(INTRAMODRS)
     intracanrs = SubAggregate(INTRACANRS)
 
-    optionalMutexes = [
-        (
-            "intrars",
-            "intramodrs",
-            "intracanrs",
-            "intermodrs",
-            "intercanrs",
-        )
-    ]
+    optionalMutexes = [("intrars", "intramodrs", "intracanrs")]
 
 
 class INTRASYNCRQ(SyncRqList):
@@ -633,7 +570,7 @@ class INTERMODRQ(Aggregate):
 
 
 class INTERCANRQ(Aggregate):
-    """ OFX section 11.8.4444"""
+    """ OFX section 11.8.4.1"""
 
     srvrtid = String(10, required=True)
 
@@ -650,6 +587,201 @@ class INTERCANRS(Aggregate):
     """ OFX section 11.8.4.2 """
 
     srvrtid = String(10, required=True)
+
+
+class INTERTRNRQ(TrnRq):
+    """ OFX section 11.8.2.1 """
+
+    interrq = SubAggregate(INTERRQ)
+    intermodrq = SubAggregate(INTERMODRQ)
+    intercanrq = SubAggregate(INTERCANRQ)
+
+    requiredMutexes = [("interrq", "intermodrq", "intercanrq")]
+
+
+class INTERTRNRS(TrnRs):
+    """ OFX section 11.8.2.2 """
+
+    interrs = SubAggregate(INTERRS)
+    intermodrs = SubAggregate(INTERMODRS)
+    intercanrs = SubAggregate(INTERCANRS)
+
+    optionalMutexes = [
+        ("interrs", "intermodrs", "intercanrs")
+    ]
+
+
+class INTERSYNCRQ(SyncRqList):
+    """ OFX section 11.12.3.1 """
+
+    bankacctfrom = SubAggregate(BANKACCTFROM)
+    ccacctfrom = SubAggregate(CCACCTFROM)
+
+    metadataTags = SyncRqList.metadataTags + ["BANKACCTFROM", "CCACCTFROM"]
+    dataTags = ["INTERTRNRQ"]
+    requiredMutexes = SyncRqList.requiredMutexes + [("bankacctfrom", "ccacctfrom")]
+
+
+class INTERSYNCRS(SyncRsList):
+    """ OFX section 11.12.3.2 """
+
+    bankacctfrom = SubAggregate(BANKACCTFROM)
+    ccacctfrom = SubAggregate(CCACCTFROM)
+
+    metadataTags = SyncRsList.metadataTags + ["BANKACCTFROM", "CCACCTFROM"]
+    dataTags = ["INTERTRNRS"]
+    requiredMutexes = [("bankacctfrom", "ccacctfrom")]
+
+
+class INTERXFERMSGSRQV1(List):
+    """ OFX section 11.13.1.3.1 """
+
+    dataTags = [
+        "INTERTRNRQ",
+        "RECINTERTRNRQ",
+        "INTERSYNCRQ",
+        "RECINTERSYNCRQ",
+    ]
+
+
+class INTERXFERMSGSRSV1(List):
+    """ OFX section 11.13.1.3.2 """
+
+    dataTags = [
+        "INTERTRNRS",
+        "RECINTERTRNRS",
+        "INTERSYNCRS",
+        "RECINTERSYNCRS",
+    ]
+
+
+class WIREBENEFICIARY(Aggregate):
+    """ OFX section 11.9.1.1.1 """
+
+    name = String(32, required=True)
+    bankacctto = SubAggregate(BANKACCTTO, required=True)
+    memo = String(255)
+
+
+class EXTBANKDESC(Aggregate):
+    """ OFX section 11.9.1.1.2 """
+
+    name = String(32, required=True)
+    bankid = String(9, required=True)
+    addr1 = String(32, required=True)
+    addr2 = String(32)
+    addr3 = String(32)
+    city = String(32, required=True)
+    state = String(5, required=True)
+    postalcode = String(11, required=True)
+    country = OneOf(*COUNTRY_CODES)
+    phone = String(32)
+
+
+class WIREDESTBANK(Aggregate):
+    """ OFX section 11.9.1.1.1 """
+
+    extbankbankdesc = SubAggregate(EXTBANKDESC, required=True)
+
+
+class WIRERQ(Aggregate):
+    """ OFX section 11.9.1.1.1 """
+
+    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
+    wirebeneficiary = SubAggregate(WIREBENEFICIARY, required=True)
+    wiredestbank = SubAggregate(WIREDESTBANK)
+    trnamt = Decimal(required=True)
+    dtdue = DateTime()
+    payinstruct = String(255)
+
+
+class WIRERS(Aggregate):
+    """ OFX section 11.9.1.2 """
+
+    curdef = OneOf(*CURRENCY_CODES, required=True)
+    srvrtid = String(10, required=True)
+    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
+    wirebeneficiary = SubAggregate(WIREBENEFICIARY, required=True)
+    wiredestbank = SubAggregate(WIREDESTBANK)
+    trnamt = Decimal(required=True)
+    dtdue = DateTime()
+    payinstruct = String(255)
+    dtxferprj = DateTime()
+    dtposted = DateTime()
+    fee = Decimal()
+    confmsg = String(255)
+
+    optionalMutexes = [("dtxferprj", "dtposted")]
+
+
+class WIRECANRQ(Aggregate):
+    """ OFX section 11.9.2.1"""
+
+    srvrtid = String(10, required=True)
+
+
+class WIRECANRS(Aggregate):
+    """ OFX section 11.9.2.d"""
+
+    srvrtid = String(10, required=True)
+
+
+class WIRETRNRQ(TrnRq):
+    """ OFX section 11.9.2.1 """
+
+    wirerq = SubAggregate(WIRERQ)
+    wirecanrq = SubAggregate(WIRECANRQ)
+
+    requiredMutexes = [("wirerq", "wirecanrq")]
+
+
+class WIRETRNRS(TrnRs):
+    """ OFX section 11.9.2.2 """
+
+    wirers = SubAggregate(WIRERS)
+    wirecanrs = SubAggregate(WIRECANRS)
+
+    optionalMutexes = [("wirers", "wirecanrs")]
+
+
+class WIRESYNCRQ(SyncRqList):
+    """ OFX section 11.12.4.1 """
+
+    bankacctfrom = SubAggregate(BANKACCTFROM)
+    dataTags = ["WIRETRNRQ"]
+
+
+class WIRESYNCRS(SyncRsList):
+    """ OFX section 11.12.4.2 """
+
+    bankacctfrom = SubAggregate(BANKACCTFROM)
+    dataTags = ["WIRETRNRS"]
+
+
+class WIREXFERMSGSRQV1(List):
+    """ OFX section 11.13.1.4.1 """
+
+    dataTags = [
+        "WIRETRNRQ",
+        "WIRESYNCRQ",
+    ]
+
+
+class WIREXFERMSGSRSV1(List):
+    """ OFX section 11.13.1.4.2 """
+
+    dataTags = [
+        "WIRETRNRS",
+        "WIRESYNCRS",
+        "RECINTERSYNCRS",
+    ]
+
+
+class EMAILPROF(Aggregate):
+    """ OFX section 11.13.2.4 """
+
+    canemail = Bool(required=True)
+    cannotify = Bool(required=True)
 
 
 class BANKMSGSETV1(Aggregate):
