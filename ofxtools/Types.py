@@ -3,6 +3,7 @@
 
 # stdlib imports
 import itertools
+import functools
 import decimal
 import datetime
 import time
@@ -10,13 +11,14 @@ import re
 import warnings
 from collections import defaultdict
 from xml.sax import saxutils
+from copy import deepcopy
+
+# local imports
 from .utils import UTC
 
 
 class OFXTypeWarning(UserWarning):
     """ Base class for warnings in this module """
-
-    pass
 
 
 class InstanceCounterMixin:
@@ -45,7 +47,7 @@ class Element(InstanceCounterMixin):
     Python representation of an OFX 'element', i.e. SGML leaf node that
     contains text data.
 
-    Pass validation parameters (e.g. maximum string length, decimal precision,
+    Pass validation parameters (e.g. maximum string length, decimal scale,
     required vs. optional, etc.) as arguments to __init__() when defining
     an Aggregate subclass.
 
@@ -61,12 +63,33 @@ class Element(InstanceCounterMixin):
     (using the arguments passed to __init__()) and type conversion (using the
     logic implemented in convert()).
     """
+    type = NotImplemented  # define in subclass
 
     def __init__(self, *args, **kwargs):
         InstanceCounterMixin.__init__(self)
         self.data = defaultdict(None)
         self.required = kwargs.pop("required", False)
         self._init(*args, **kwargs)
+
+        # N.B. ``functools.singledispatch()`` dispatches on the type of the
+        # first argument of a function, so we can't use decorator syntax on
+        # a method (unless it's a staticmethod).  Instead we use it in
+        # functional form on a bound method.
+        self.convert = functools.singledispatch(self.convert)
+        self.convert.register(type(None), self._convert_none)
+        self.convert.register(str, self._convert_str)
+        self.convert.register(bool, self._convert_bool)
+        self.convert.register(int, self._convert_int)
+        self.convert.register(decimal.Decimal, self._convert_decimal)
+        self.convert.register(datetime.datetime, self._convert_datetime)
+
+        self.unconvert = functools.singledispatch(self.unconvert)
+        self.unconvert.register(type(None), self._unconvert_none)
+        self.unconvert.register(str, self._unconvert_str)
+        self.unconvert.register(bool, self._unconvert_bool)
+        self.unconvert.register(int, self._unconvert_int)
+        self.unconvert.register(decimal.Decimal, self._unconvert_decimal)
+        self.unconvert.register(datetime.datetime, self._unconvert_datetime)
 
     def _init(self, *args, **kwargs):
         """ Override in subclass """
@@ -88,22 +111,86 @@ class Element(InstanceCounterMixin):
         value = self.convert(value)
         self.data[parent] = value
 
-    def convert(self, value):
-        """ Extend in subclass """
+    def enforce_required(self, value):
         if value is None and self.required:
             msg = "{}: Value is required"
             raise ValueError(msg.format(self.__class__.__name__))
 
         return value
 
+    def convert(self, value):
+        """ Convert OFX to Python data type """
+        return self._convert_default(value)
+
+    def _convert_default(self, value):
+        """ Default dispatch convert() for unregistered type """
+        # None should be dispatched to _convert_none()
+        assert value is not None
+        # By default, attempt a naive conversion to subclass type
+        return self.type(value)
+
+    def _convert_none(self, value):
+        """ Dispatch convert() for type(None) """
+        # Pass through None, unless value is required
+        return self.enforce_required(value)
+
+    def _convert_str(self, value):
+        """ Dispatch convert() for str """
+        # Interpret empty string as None
+        if value == "":
+            value = None
+            return self._convert_none(value)
+        return self._convert_default(value)
+
+    def _convert_bool(self, value):
+        """ Dispatch convert() for bool """
+        return self._convert_default(value)
+
+    def _convert_int(self, value):
+        """ Dispatch convert() for int """
+        return self._convert_default(value)
+
+    def _convert_decimal(self, value):
+        """ Dispatch convert() for decimal.Decimal """
+        return self._convert_default(value)
+
+    def _convert_datetime(self, value):
+        """ Dispatch convert() for datetime.datetime """
+        return self._convert_default(value)
+
     def unconvert(self, value):
-        """ Extend in subclass """
-        if value is not None:
-            value = str(value)
-        elif self.required:
-            msg = "{}: Value is required"
-            raise ValueError(msg.format(self.__class__.__name__))
-        return value
+        """ Convert Python data type to OFX """
+        return self._unconvert_default(value)
+
+    def _unconvert_default(self, value):
+        # By default, any type not specifically dispatched raises an error
+        msg = "{} is not an instance of {}"
+        raise ValueError(msg.format(value, self.__class__.__name__))
+
+    def _unconvert_none(self, value):
+        """ Dispatch unconvert() for type(None) """
+        # Pass through None, unless value is required
+        return self.enforce_required(value)
+
+    def _unconvert_str(self, value):
+        """ Dispatch unconvert() for str """
+        return self._unconvert_default(value)
+
+    def _unconvert_bool(self, value):
+        """ Dispatch unconvert() for bool """
+        return self._unconvert_default(value)
+
+    def _unconvert_int(self, value):
+        """ Dispatch unconvert() for int """
+        return self._unconvert_default(value)
+
+    def _unconvert_decimal(self, value):
+        """ Dispatch unconvert() for decimal.Decimal """
+        return self._unconvert_default(value)
+
+    def _unconvert_datetime(self, value):
+        """ Dispatch unconvert() for datetime.datetime """
+        return self._unconvert_default(value)
 
     def __repr__(self):
         repr = "<{} required={}>"
@@ -111,77 +198,74 @@ class Element(InstanceCounterMixin):
 
 
 class Bool(Element):
+    type = bool
     mapping = {"Y": True, "N": False}
 
-    def convert(self, value):
-        if value is not None and not isinstance(value, bool):
-            try:
-                value = self.mapping[value]
-            except KeyError as e:
-                raise ValueError(
-                    "%s is not one of the allowed values %s"
-                    % (e.args[0], self.mapping.keys())
-                )
-        return super().convert(value)
+    def _convert_default(self, value):
+        # Better error message than superclass default
+        msg = "{} is not one of the allowed values {}"
+        raise ValueError(msg.format(value, self.mapping.keys()))
 
-    def unconvert(self, value):
-        if value is not None:
-            if not isinstance(value, bool):
-                msg = "{} is not a bool"
-                raise ValueError(msg.format(value))
-            value = {v: k for k, v in self.mapping.items()}[value]
+    def _convert_bool(self, value):
+        return value
 
-        return super().unconvert(value)
+    def _convert_str(self, value):
+        try:
+            value = self.mapping[value]
+        except KeyError:
+            msg = "{} is not one of the allowed values {}"
+            raise ValueError(msg.format(value, self.mapping.keys()))
+        return value
+
+    def _unconvert_default(self, value):
+        # Better error message than superclass default
+        msg = "{} is not one of the allowed values {}"
+        raise ValueError(msg.format(value, self.mapping.keys()))
+
+    def _unconvert_bool(self, value):
+        value = {v: k for k, v in self.mapping.items()}[value]
+        return value
 
 
 class String(Element):
+    type = str
     strict = True
 
     def _init(self, *args, **kwargs):
         length = None
         if args:
             length = args[0]
-            args = args[1:]
         self.length = length
-        super()._init(*args, **kwargs)
+        super()._init(*args[1:], **kwargs)
 
-    def convert(self, value):
+    def _convert_default(self, value):
+        msg = "'{}' is not a str"
+        raise ValueError(msg.format(value))
+
+    def enforce_length(self, value):
+        if self.length is not None and len(value) > self.length:
+            if self.strict:
+                msg = "'{}' is too long; max length={}"
+                raise ValueError(msg.format(value, self.length))
+            else:
+                msg = "Value '{}' exceeds length={}"
+                warnings.warn(msg.format(value, self.length),
+                              category=OFXTypeWarning)
+        return value
+
+    def _convert_str(self, value):
         if value == "":
             value = None
-        if value is not None:
-            if not isinstance(value, str):
-                msg = "'{}' is not a str"
-                raise ValueError(msg.format(value))
+            return self.enforce_required(value)
 
-            # Unescape '&amp;' '&lt;' '&gt;' '&nbsp;' per OFX section 2.3
-            # Also go ahead and unescape other XML control characters,
-            # because FIs tend to mix &amp; match...
-            value = saxutils.unescape(value, {"&nbsp;": " ", "&apos;": "'", "&quot;": '"'})
+        # Unescape '&amp;' '&lt;' '&gt;' '&nbsp;' per OFX section 2.3
+        # Also go ahead and unescape other XML control characters,
+        # because FIs tend to mix &amp; match...
+        value = saxutils.unescape(value, {"&nbsp;": " ", "&apos;": "'", "&quot;": '"'})
+        return self.enforce_length(value)
 
-            if self.length is not None and len(value) > self.length:
-                if self.strict:
-                    msg = "'{}' is too long; max length={}"
-                    raise ValueError(msg.format(value, self.length))
-                else:
-                    msg = "Value '{}' exceeds length={}"
-                    warnings.warn(msg.format(value, self.length),
-                                  category=OFXTypeWarning)
-
-        return super().convert(value)
-
-    def unconvert(self, value):
-        if value is not None:
-            value = str(value)
-            if self.length is not None and len(value) > self.length:
-                if self.strict:
-                    msg = "'{}' is too long; max length={}"
-                    raise ValueError(msg.format(value, self.length))
-                else:
-                    msg = "Value '{}' exceeds length={}"
-                    warnings.warn(msg.format(value, self.length),
-                                  category=OFXTypeWarning)
-
-        return super().unconvert(value)
+    def _unconvert_str(self, value):
+        return self.enforce_length(value)
 
 
 class NagString(String):
@@ -196,183 +280,195 @@ class NagString(String):
 
 
 class OneOf(Element):
+    type = str
+
     def _init(self, *args, **kwargs):
         self.valid = set(args)
         super()._init(**kwargs)
 
-    def convert(self, value):
+    def _convert_default(self, value):
+        value = self.enforce_required(value)
+        if value is not None and value not in self.valid:
+            raise ValueError("'{}' is not OneOf {}".format(value, self.valid))
+        return value
+
+    def _convert_str(self, value):
         if value == "":
             value = None
+        return self._convert_default(value)
+
+    def _unconvert_default(self, value):
+        value = self.enforce_required(value)
         if value is not None and value not in self.valid:
             raise ValueError("'{}' is not OneOf {}".format(value, self.valid))
+        return value
 
-        return super().convert(value)
-
-    def unconvert(self, value):
-        if value is not None and value not in self.valid:
-            raise ValueError("'{}' is not OneOf {}".format(value, self.valid))
-        return super().unconvert(value)
+    def _unconvert_str(self, value):
+        if value == "":
+            value = None
+        return self._unconvert_default(value)
 
 
 class Integer(Element):
+    type = int
+
     def _init(self, *args, **kwargs):
         length = None
         if args:
             length = args[0]
-            args = args[1:]
         self.length = length
-        super()._init(*args, **kwargs)
+        super()._init(*args[1:], **kwargs)
 
-    def convert(self, value):
-        if value is not None:
-            value = int(value)
-            if self.length is not None and value >= 10 ** self.length:
-                msg = "'{}' has too many digits; max digits={}"
-                raise ValueError(msg.format(value, self.length))
+    def enforce_length(self, value):
+        if self.length is not None and value >= 10 ** self.length:
+            msg = "'{}' has too many digits; max digits={}"
+            raise ValueError(msg.format(value, self.length))
+        return value
 
-        return super().convert(value)
+    def _convert_default(self, value):
+        value = int(value)
+        return self._convert_int(value)
 
-    def unconvert(self, value):
-        if value is not None:
-            if not isinstance(value, int):
-                msg = "'{}' is not an integer"
-                raise ValueError(msg.format(value))
-            if self.length is not None and value >= 10 ** self.length:
-                msg = "'{}' has too many digits; max digits={}"
-                raise ValueError(msg.format(value, self.length))
+    def _convert_int(self, value):
+        value = self.enforce_length(value)
+        return value
 
-        return super().unconvert(value)
+    def _unconvert_int(self, value):
+        value = self.enforce_length(value)
+        value = str(value)
+        return value
 
 
 class Decimal(Element):
+    type = decimal.Decimal
+    #  N.B. "scale" here means "decimal places"
+    #  i.e. Decimal(2).convert("12345.67890") is Decimal("12345.68")
+    scale = None
+
     def _init(self, *args, **kwargs):
-        self.precision = None
         if args:
-            precision = args[0]
-            args = args[1:]
-            self.precision = decimal.Decimal("0." + "0" * (precision - 1) + "1")
-        super()._init(*args, **kwargs)
+            scale = args[0]
+            self.scale = decimal.Decimal("0.{}1".format("0"*(scale-1)))
+        super()._init(*args[1:], **kwargs)
 
-    def convert(self, value):
-        if value is not None:
-            # Handle Euro-style decimal separators (comma)
-            try:
-                value = decimal.Decimal(value)
-            except decimal.InvalidOperation:
-                if isinstance(value, str):
-                    value = decimal.Decimal(value.replace(",", "."))
+    def _convert_decimal(self, value):
+        if self.scale is not None:
+            value = value.quantize(self.scale)
+        return value
 
-            if self.precision is not None:
-                value = value.quantize(self.precision)
+    def _convert_str(self, value):
+        # Handle Euro-style decimal separators (comma)
+        try:
+            value = decimal.Decimal(value)
+        except decimal.InvalidOperation:
+            value = decimal.Decimal(value.replace(",", "."))
 
-        return super().convert(value)
+        if self.scale is not None:
+            value = value.quantize(self.scale)
 
-    def unconvert(self, value):
-        if value is not None:
-            if not isinstance(value, decimal.Decimal):
-                msg = "'{}' is not a Decimal"
-                raise ValueError(msg.format(msg))
-            if self.precision is not None:
-                # FIXME - there must be a more efficient way
-                if value.quantize(self.precision) != value:
-                    msg = "'{}' exceeds precision={}"
-                    raise ValueError(msg.format(value, self.precision))
+        return value
 
-        return super().unconvert(value)
+    def _unconvert_decimal(self, value):
+        if self.scale is not None and not value.same_quantum(self.scale):
+            msg = "'{}' doesn't match scale={}"
+            raise ValueError(msg.format(value, self.scale))
+        return str(value)
 
 
 class DateTime(Element):
-    # Valid datetime formats given by OFX spec in section 3.2.8.2
-    tz_re = re.compile(r"\[([-+]?\d{0,2}\.?\d*):?(\w*)\]")
-    # strftime formats keyed by the length of the corresponding string
-    formats = {18: "%Y%m%d%H%M%S.%f", 14: "%Y%m%d%H%M%S", 12: "%Y%m%d%H%M", 8: "%Y%m%d"}
+    """ OFX Section 3.2.8.2 """
+    type = datetime.datetime
+    # Valid datetime formats given by OFX spec
+    regex = re.compile(r"""
+                       (?P<year>\d\d\d\d)
+                       (?P<month>\d\d)
+                       (?P<day>\d\d)
+                       (
+                            (?P<hour>\d\d)(?P<minute>\d\d)((?P<second>\d\d))?
+                            (
+                                \.(?P<millisecond>\d\d\d)
+                                (
+                                    \[(?P<gmt_offset_hours>[0-9-+]+)
+                                    (
+                                        (.(?P<gmt_offset_minutes>\d\d))?
+                                        (:(?P<tz_name>.*))?
+                                    )?
+                                    \]
+                                )?
+                            )?
+                       )?
+                       """, re.VERBOSE)
 
-    def convert(self, value):
-        if value is not None:
-            # If it's already a datetime, it needs to be timezone-aware
-            if isinstance(value, datetime.datetime):
-                if value.utcoffset() is None:
-                    msg = "{} is not timezone-aware".format(value)
-                    raise ValueError(msg)
+    def _convert_default(self, value):
+        msg = "'{}' is type '{}'; can't convert to datetime"
+        raise ValueError(msg.format(value, value.__class__.__name__))
 
-            # Otherwise it needs to be a string
-            else:
-                if not isinstance(value, str):
-                    msg = "'{}' is type '{}'; can't convert to datetime"
-                    raise ValueError(msg.format(value, value.__class__.__name__))
+    def _convert_datetime(self, value):
+        if value.utcoffset() is None:
+            msg = "{} is not timezone-aware".format(value)
+            raise ValueError(msg)
+        return value
 
-                # Pristine copy of input for error reporting purposes
-                orig_value = value
+    def _convert_str(self, value):
+        match = self.regex.match(value)
+        if match is None:
+            msg = "Datetime '{}' does not conform to OFX formats"
+            raise ValueError(msg.format(value))
 
-                # Strip out timezone, on which strptime() chokes
-                chunks = self.tz_re.split(value)
-                value = chunks.pop(0)
-                if chunks:
-                    gmt_offset, tz_name = chunks[:2]
-                    # Some FIs *cough* IBKR *cough* write crap for the TZ offset
-                    # FIXME
-                    if gmt_offset == "-":
-                        tz_kludge = {
-                            "EST": "-5",
-                            "EDT": "-4",
-                            "CST": "-6",
-                            "CDT": "-5",
-                            "MST": "-7",
-                            "MDT": "-6",
-                            "PST": "-8",
-                            "PDT": "-7",
-                        }
-                        try:
-                            gmt_offset = tz_kludge[tz_name]
-                        except KeyError:
-                            msg = "Can't parse timezone '{}' into a valid GMT offset"
-                            raise ValueError(msg.format(tz_name))
-                    # hours -> seconds
-                    gmt_offset = int(decimal.Decimal(gmt_offset) * 3600)
-                else:
-                    gmt_offset = 0
-                    #  tz_name = 'GMT'
+        matchdict = match.groupdict()
 
-                try:
-                    format = self.formats[len(value)]
+        gmt_offset_seconds = self.parse_gmt_offset(
+            matchdict.pop('gmt_offset_hours'),
+            matchdict.pop('gmt_offset_minutes'),
+            matchdict.pop('tz_name')
+        )
 
-                    # OFX spec gives fractional seconds as milliseconds; convert to
-                    # microseconds as required by strptime()
-                    if len(value) == 18:
-                        value = value.replace(".", ".000")
+        matchdict = {k: int(v or 0) for k, v in matchdict.items()}
 
-                    value = datetime.datetime.strptime(value, format)
-                except (KeyError, ValueError):
-                    raise ValueError(
-                        "Datetime '%s' does not match OFX formats %s"
-                        % (orig_value, self.formats.values())
-                    )
+        # OFX time formats give milliseconds, but datetime.datetime wants microseconds
+        matchdict['microsecond'] = 1000 * matchdict.pop('millisecond')
 
-                # Adjust timezone to GMT/UTC
-                value -= datetime.timedelta(seconds=gmt_offset)
-                value = value.replace(tzinfo=UTC)
+        value = datetime.datetime(**matchdict)
 
-        return super().convert(value)
+        # Adjust timezone to GMT/UTC
+        value -= datetime.timedelta(seconds=gmt_offset_seconds)
+        value = value.replace(tzinfo=UTC)
 
-    def unconvert(self, value):
-        """
-        Input timezone-aware datetime.datetime instance; output str in GMT.
-        """
-        if value is not None:
-            if not isinstance(value, datetime.datetime):
-                msg = "'{}' is not a datetime"
-                raise ValueError(msg.format(value))
-            if not hasattr(value, "utcoffset") or value.utcoffset() is None:
-                msg = (
-                    "'{}' isn't a timezone-aware datetime.datetime instance; "
-                    "can't convert to GMT"
-                ).format(value)
-                raise ValueError(msg)
+        return value
 
-            # Transform to GMT
-            gmt_value = value.utctimetuple()
+    def parse_gmt_offset(self, gmt_offset_hours, gmt_offset_minutes, tz_name):
+        "Returns GMT offset in seconds"
+        gmt_offset_hours = gmt_offset_hours or 0
+        gmt_offset_minutes = gmt_offset_minutes or 0
+        try:
+            gmt_offset_hours = int(gmt_offset_hours)
+        except ValueError:
+            tz_kludge = {"EST": -5, "EDT": -4, "CST": -6, "CDT": -5, "MST": -7, "MDT": -6, "PST": -8, "PDT": -7}
+            try:
+                gmt_offset_hours = tz_kludge[tz_name]
+            except KeyError:
+                msg = "Can't parse timezone '{}' into a valid GMT offset"
+                raise ValueError(msg.format(tz_name))
 
-            # timetuples don't have usec precision
-            value = time.strftime(self.formats[14], gmt_value)
+        gmt_offset = 60 * gmt_offset_hours
+        gmt_offset_minutes = int(gmt_offset_minutes or 0)
+        if gmt_offset < 0:
+            gmt_offset -= gmt_offset_minutes
+        else:
+            gmt_offset += gmt_offset_minutes
 
-        return super().convert(value)
+        return gmt_offset * 60
+
+    def _unconvert_datetime(self, value):
+        if not hasattr(value, "utcoffset") or value.utcoffset() is None:
+            msg = (
+                "'{}' isn't a timezone-aware datetime.datetime instance; "
+                "can't convert to GMT"
+            ).format(value)
+            raise ValueError(msg)
+
+        # Transform to GMT
+        value = value.astimezone(UTC)
+        milliseconds = "{0:03d}".format((value.microsecond + 500) // 1000)
+        fmt = "%Y%m%d%H%M%S.{}[0:GMT]".format(milliseconds)
+        return value.strftime(fmt)

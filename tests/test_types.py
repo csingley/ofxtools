@@ -311,12 +311,12 @@ class DecimalTestCase(unittest.TestCase, Base):
         self.assertEqual(1, t.convert("1"))
         self.assertEqual(1, t.convert(decimal.Decimal("1.00")))
 
-    def test_precision(self):
-        # By default (no precision specified), convert() doesn't quantize
+    def test_scale(self):
+        # By default (no scale specified), convert() doesn't quantize
         t = self.type_()
         cmp = decimal.Decimal("100.00").compare_total(t.convert("100"))
         self.assertNotEqual(cmp, 0)
-        # Test nondefault precision
+        # Test nondefault scale
         t = self.type_(4)
         cmp = decimal.Decimal("100.0000").compare_total(t.convert("100"))
         self.assertEqual(cmp, 0)
@@ -356,7 +356,7 @@ class DecimalTestCase(unittest.TestCase, Base):
         # allowed by ``__set__()`` in the first place)
         with self.assertRaises(ValueError):
             t.unconvert(None)
-        # value doesn't match precision constraint -> ValueError
+        # value doesn't match scale constraint -> ValueError
         # (never should have been allowed by ``__set__()`` in the first place)
         with self.assertRaises(ValueError):
             t.unconvert(decimal.Decimal("0.123"))
@@ -390,17 +390,17 @@ class DateTimeTestCase(unittest.TestCase, Base):
         check = datetime.datetime(2011, 11, 17, 3, 30, 45, 0, tzinfo=UTC)
         self.assertEqual(check, t.convert("20111117033045"))
         # Accept YYYYMMDDHHMMSS.XXX
-        check = datetime.datetime(2011, 11, 17, 3, 30, 45, 150, tzinfo=UTC)
+        check = datetime.datetime(2011, 11, 17, 3, 30, 45, 150000, tzinfo=UTC)
         self.assertEqual(check, t.convert("20111117033045.150"))
 
         # Accept YYYYMMDDHHMMSS.XXX[offset]
-        check = datetime.datetime(2011, 11, 17, 9, 30, 45, 150, tzinfo=UTC)
+        check = datetime.datetime(2011, 11, 17, 9, 30, 45, 150000, tzinfo=UTC)
         self.assertEqual(check, t.convert("20111117033045.150[-6]"))
         # Accept YYYYMMDDHHMMSS.XXX[offset:TZ]
-        check = datetime.datetime(2011, 11, 17, 9, 30, 45, 150, tzinfo=UTC)
+        check = datetime.datetime(2011, 11, 17, 9, 30, 45, 150000, tzinfo=UTC)
         self.assertEqual(check, t.convert("20111117033045.150[-6:CST]"))
         # Accept YYYYMMDDHHMMSS.XXX[-:TZ] for TZs defined in the kludge
-        check = datetime.datetime(2011, 11, 17, 9, 30, 45, 150, tzinfo=UTC)
+        check = datetime.datetime(2011, 11, 17, 9, 30, 45, 150000, tzinfo=UTC)
         self.assertEqual(check, t.convert("20111117033045.150[-:CST]"))
 
     def test_convert_illegal(self):
@@ -427,7 +427,7 @@ class DateTimeTestCase(unittest.TestCase, Base):
     def test_unconvert(self):
         t = self.type_()
         check = datetime.datetime(2007, 1, 1, tzinfo=UTC)
-        self.assertEqual(t.unconvert(check), "20070101000000")
+        self.assertEqual(t.unconvert(check), "20070101000000.000[0:GMT]")
 
     def test_unconvert_illegal(self):
         t = self.type_()
@@ -443,8 +443,8 @@ class DateTimeTestCase(unittest.TestCase, Base):
 
     def test_convert_roundtrip(self):
         t = self.type_()
-        original = "20070101"
-        result = "20070101000000"
+        original = "20070101122030.567[0:GMT]"
+        result = original
         self.assertEqual(t.unconvert(t.convert(original)), result)
 
     def test_unconvert_roundtrip(self):

@@ -340,12 +340,11 @@ class SubAggregate(Element):
         assert issubclass(self.type, Aggregate)
         super()._init(*args, **kwargs)
 
-    def convert(self, value):
-        if not isinstance(value, (self.type, type(None))):
+    def _convert_default(self, value):
+        if not isinstance(value, self.type):
             msg = "'{}' is not an instance of {}"
             raise ValueError(msg.format(value, self.type))
-
-        return super().convert(value)
+        return value
 
     #  This doesn't get used
     #  def __repr__(self):

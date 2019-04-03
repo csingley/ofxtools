@@ -142,8 +142,7 @@ class OFXClient:
     @property
     def uuid(self):
         """ Returns a new UUID each time called """
-        #  return str(uuid.uuid4())
-        return uuid.uuid4()
+        return str(uuid.uuid4())
 
     @property
     def ofxheader(self):

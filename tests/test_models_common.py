@@ -200,12 +200,12 @@ class TranListTestCase(unittest.TestCase):
 
         self.assertIsInstance(dtstart, ET.Element)
         self.assertEqual(dtstart.tag, "DTSTART")
-        self.assertEqual(dtstart.text, "20150101000000")
+        self.assertEqual(dtstart.text, "20150101000000.000[0:GMT]")
         self.assertEqual(len(dtstart), 0)
 
         self.assertIsInstance(dtend, ET.Element)
         self.assertEqual(dtend.tag, "DTEND")
-        self.assertEqual(dtend.text, "20150331000000")
+        self.assertEqual(dtend.text, "20150331000000.000[0:GMT]")
         self.assertEqual(len(dtend), 0)
 
         self.assertIsInstance(agg0, ET.Element)
