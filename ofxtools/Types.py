@@ -313,11 +313,6 @@ class OneOf(Element):
             raise ValueError("'{}' is not OneOf {}".format(value, self.valid))
         return value
 
-    def _unconvert_str(self, value):
-        if value == "":
-            value = None
-        return self._unconvert_default(value)
-
 
 class Integer(Element):
     type = int

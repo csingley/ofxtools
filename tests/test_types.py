@@ -73,6 +73,11 @@ class BoolTestCase(unittest.TestCase, Base):
         for illegal in (0, 1, "y", "n"):
             with self.assertRaises(ValueError):
                 t.convert(illegal)
+        for illegal in (
+            0, 1, "y", "n", 123, decimal.Decimal("1"),
+            datetime.datetime(1999, 9, 9), datetime.time(12, 12, 12)):
+            with self.assertRaises(ValueError):
+                t.convert(illegal)
 
     def test_unconvert(self):
         t = self.type_()
@@ -106,9 +111,16 @@ class StringTestCase(unittest.TestCase, Base):
         t = self.type_()
         # Pass string
         self.assertEqual("foo", t.convert("foo"))
+        # Pass None
+        self.assertEqual(None, t.convert(None))
+        # Interpret empty string as None
+        self.assertEqual(None, t.convert(""))
         # Don't pass non-string
-        with self.assertRaises(ValueError):
-            t.convert(123)
+        for illegal in (
+            True, 123, decimal.Decimal("1"), datetime.datetime(1999, 9, 9),
+            datetime.time(12, 12, 12)):
+            with self.assertRaises(ValueError):
+                t.convert(illegal)
 
     def test_unescape(self):
         # Issue # 28
@@ -159,6 +171,13 @@ class StringTestCase(unittest.TestCase, Base):
         # value > length constraint -> ValueError
         with self.assertRaises(ValueError):
             t.unconvert("My car is fast, my teeth are shiny")
+
+        # Don't pass non-string
+        for illegal in (
+            True, 123, decimal.Decimal("1"), datetime.datetime(1999, 9, 9),
+            datetime.time(12, 12, 12)):
+            with self.assertRaises(ValueError):
+                t.unconvert(illegal)
 
     def test_convert_roundtrip(self):
         t = self.type_()
@@ -252,21 +271,21 @@ class IntegerTestCase(unittest.TestCase, Base):
 
     def test_convert(self):
         t = self.type_()
+        self.assertEqual(None, t.convert(None))
+        self.assertEqual(None, t.convert(""))
         self.assertEqual(1, t.convert(1))
         self.assertEqual(1, t.convert("1"))
         self.assertEqual(1, t.convert(decimal.Decimal("1.00")))
+
+        # Don't accept strings that can't be converted to int
+        with self.assertRaises(ValueError):
+            t.convert("foobar")
 
     def test_max_length(self):
         t = self.type_(2)
         self.assertEqual(1, t.convert("1"))
         with self.assertRaises(ValueError):
             t.convert("100")
-
-    def test_illegal(self):
-        t = self.type_()
-        # Don't accept strings that can't be converted to int
-        with self.assertRaises(ValueError):
-            t.convert("foobar")
 
     def test_unconvert(self):
         t = self.type_()
@@ -319,6 +338,8 @@ class DecimalTestCase(unittest.TestCase, Base):
         # Test nondefault scale
         t = self.type_(4)
         cmp = decimal.Decimal("100.0000").compare_total(t.convert("100"))
+        self.assertEqual(cmp, 0)
+        cmp = decimal.Decimal("100.0000").compare_total(t.convert(decimal.Decimal("100")))
         self.assertEqual(cmp, 0)
 
     def test_euro_decimal_separator(self):
