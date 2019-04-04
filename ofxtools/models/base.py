@@ -202,14 +202,14 @@ class Aggregate:
                 continue
             elif isinstance(value, Aggregate):
                 child = value.to_etree()
-                # Hook to modify `ET.ElementTree` after conversion
-                child = value.ungroom(child)
+                #  child = value.ungroom(child)
                 root.append(child)
             else:
                 converter = cls._superdict[spec]
                 text = converter.unconvert(value)
                 ET.SubElement(root, spec.upper()).text = text
-        return root
+        # Hook to modify `ET.ElementTree` after conversion
+        return cls.ungroom(root)
 
     @classproperty
     @classmethod
