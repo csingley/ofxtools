@@ -40,10 +40,6 @@ class TESTLIST(List):
 
     dataTags = ["TESTAGGREGATE"]
 
-    def testRepr(self):
-        rep = repr(self.instance)
-        self.assertEqual(rep, "<TESTAGGREGATE(metadata='foo', req00=True, req11=False, testsubaggregate=<TESTSUBAGGREGATE(data='bar')>)>")
-
 
 class AggregateTestCase(unittest.TestCase):
     @classmethod
@@ -482,6 +478,47 @@ class ListTestCase(unittest.TestCase):
     def testInitNotEnoughArgs(self):
         with self.assertRaises(ValueError):
             TESTLIST()
+
+    def testInitInstancesDistinct(self):
+        # Test that separate List class instances contain separate data
+        instance0 = self.instance
+
+        subagg0 = TESTSUBAGGREGATE(data="read")
+        agg0 = TESTAGGREGATE(
+            metadata="orange", req00=True, req11=False, testsubaggregate=subagg0
+        )
+        subagg1 = TESTSUBAGGREGATE(data="yellow")
+        agg1 = TESTAGGREGATE(
+            metadata="green", req00=False, req11=True, testsubaggregate=subagg1
+        )
+        instance1 = TESTLIST("blue", agg0, agg1)
+
+        self.assertIsInstance(instance0, TESTLIST)
+        self.assertEqual(instance0.metadata, "foo")
+        self.assertEqual(len(instance0), 2)
+        ag0, ag1 = instance0[:]
+
+        self.assertIsInstance(ag0, TESTAGGREGATE)
+        self.assertEqual(ag0.metadata, "foo")
+        self.assertEqual(ag0.req00, True)
+        self.assertEqual(ag0.req11, False)
+        sub0 = ag0.testsubaggregate
+        self.assertIsInstance(sub0, TESTSUBAGGREGATE)
+        self.assertEqual(sub0.data, "quux")
+
+        self.assertIsInstance(ag1, TESTAGGREGATE)
+        self.assertEqual(ag1.metadata, "bar")
+        self.assertEqual(ag1.req00, False)
+        self.assertEqual(ag1.req11, True)
+        sub1 = ag1.testsubaggregate
+        self.assertIsInstance(sub1, TESTSUBAGGREGATE)
+        self.assertEqual(sub1.data, "quuz")
+
+        self.assertIsInstance(instance1, TESTLIST)
+        self.assertEqual(instance1.metadata, "blue")
+        self.assertEqual(len(instance1), 2)
+        self.assertEqual(instance1[0], agg0)
+        self.assertEqual(instance1[1], agg1)
 
     def testToEtree(self):
         root = self.instance.to_etree()

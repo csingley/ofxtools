@@ -454,5 +454,116 @@ class DateTimeTestCase(unittest.TestCase, Base):
         self.assertEqual(t.convert(t.unconvert(original)), result)
 
 
+class TimeTestCase(unittest.TestCase, Base):
+    type_ = ofxtools.Types.Time
+
+    def test_convert(self):
+        t = self.type_()
+        # Accept timezone-aware time
+        tm = datetime.time(3, 30, 45, 150, tzinfo=UTC)
+        self.assertEqual(tm, t.convert(tm))
+
+        # Accept HHMMSS
+        check = datetime.time(2, 4, 6, tzinfo=UTC)
+        self.assertEqual(check, t.convert("020406"))
+
+        # Accept HHMMSS.XXX
+        check = datetime.time(3, 30, 0, 20000, tzinfo=UTC)
+        self.assertEqual(check, t.convert("033000.020"))
+
+        # Accept HHMMSS.XXX[gmt offset]
+        check = datetime.time(4, 30, 45, 20000, tzinfo=UTC)
+        self.assertEqual(check, t.convert("033045.020[-1]"))
+
+        check = datetime.time(3, 30, 45, 20000, tzinfo=UTC)
+        self.assertEqual(check, t.convert("033045.020[0]"))
+
+        check = datetime.time(2, 30, 45, 20000, tzinfo=UTC)
+        self.assertEqual(check, t.convert("033045.020[1]"))
+
+        # Accept + prefixed GMT offsets
+        check = datetime.time(2, 30, 45, 20000, tzinfo=UTC)
+        self.assertEqual(check, t.convert("033045.020[+1]"))
+
+        # Accept HHMMSS.XXX[offset:TZ]
+        check = datetime.time(9, 30, 45, 150000, tzinfo=UTC)
+        self.assertEqual(check, t.convert("033045.150[-6:CST]"))
+
+        # Accept HHMMSS.XXX[-:TZ] for TZs defined in the kludge
+        check = datetime.time(9, 30, 45, 150000, tzinfo=UTC)
+        self.assertEqual(check, t.convert("033045.150[-:CST]"))
+
+    def test_convert_illegal(self):
+        t = self.type_()
+
+        # Don't accept timezone-naive time
+        with self.assertRaises(ValueError):
+            t.convert(datetime.time(3, 30, 45, 150))
+
+        # Don't accept datetime
+        with self.assertRaises(ValueError):
+            t.convert(datetime.datetime(2011, 11, 17, 3, 30, 45, 150, tzinfo=UTC))
+
+        # Don't accept strings of the wrong length
+        with self.assertRaises(ValueError):
+            t.convert("03304")
+
+        # Don't accept strings of the wrong format
+        with self.assertRaises(ValueError):
+            t.convert("033045,150[-:CST]")
+
+        with self.assertRaises(ValueError):
+            t.convert("033045.-150[-:CST]")
+
+        # Don't accept strings with values out of legal range
+        with self.assertRaises(ValueError):
+            t.convert("243045.150[-:CST]")
+
+        with self.assertRaises(ValueError):
+            t.convert("036045.150[-:CST]")
+
+        with self.assertRaises(ValueError):
+            t.convert("033060.150[-:CST]")
+
+        # Don't accept integer
+        with self.assertRaises(ValueError):
+            t.convert(123)
+
+        # Don't accept HHMMSS.XXX[-:TZ] for TZs not defined in kludge
+        with self.assertRaises(ValueError):
+            t.convert("033045.150[-:GMT]")
+
+    def test_unconvert(self):
+        t = self.type_()
+        check = datetime.time(1, 2, 3, tzinfo=UTC)
+        self.assertEqual(t.unconvert(check), "010203.000[0:GMT]")
+
+    def test_unconvert_illegal(self):
+        t = self.type_()
+        # Don't accept timezone-naive datetime
+        with self.assertRaises(ValueError):
+            t.unconvert(datetime.time(3, 30, 45, 150))
+
+        # Don't accept datetime
+        with self.assertRaises(ValueError):
+            t.unconvert(datetime.datetime(2011, 11, 17, 6, 8, 10, tzinfo=UTC))
+
+        # Don't accept string
+        with self.assertRaises(ValueError):
+            t.unconvert("033045")
+
+    def test_convert_roundtrip(self):
+        t = self.type_()
+        original = "122030.567[0:GMT]"
+        result = original
+        self.assertEqual(t.unconvert(t.convert(original)), result)
+
+    def test_unconvert_roundtrip(self):
+        t = self.type_()
+        original = datetime.time(23, 3, 1, tzinfo=UTC)
+        result = original
+        self.assertEqual(t.convert(t.unconvert(original)), result)
+
+
 if __name__ == "__main__":
     unittest.main()
