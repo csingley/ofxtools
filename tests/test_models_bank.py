@@ -2183,6 +2183,50 @@ class Interxfermsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(instance[7], RECINTERSYNCRS)
 
 
+class Interxfermsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("INTERXFERMSGSETV1")
+        msgsetcore = test_models_common.MsgsetcoreTestCase().root
+        root.append(msgsetcore)
+        xferprof = XferprofTestCase().root
+        root.append(xferprof)
+        SubElement(root, "CANBILLPAY").text = "Y"
+        SubElement(root, "CANCWND").text = "2"
+        SubElement(root, "DOMXFERFEE").text = "7.50"
+        SubElement(root, "INTLXFERFEE").text = "17.50"
+
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, INTERXFERMSGSETV1)
+        self.assertIsInstance(root.msgsetcore, MSGSETCORE)
+        self.assertIsInstance(root.xferprof, XFERPROF)
+        self.assertEqual(root.canbillpay, True)
+        self.assertEqual(root.cancwnd, 2)
+        self.assertEqual(root.domxferfee, Decimal("7.50"))
+        self.assertEqual(root.intlxferfee, Decimal("17.50"))
+
+
+class InterxfermsgsetTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("INTERXFERMSGSET")
+        msgsetv1 = Interxfermsgsetv1TestCase().root
+        root.append(msgsetv1)
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, INTERXFERMSGSET)
+        self.assertIsInstance(root.interxfermsgsetv1, INTERXFERMSGSETV1)
+
+
 class WirebeneficiaryTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
@@ -2593,6 +2637,49 @@ class Wirexfermsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(instance[1], WIRETRNRS)
         self.assertIsInstance(instance[2], WIRESYNCRS)
         self.assertIsInstance(instance[3], WIRESYNCRS)
+
+
+class Wirexfermsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("WIREXFERMSGSETV1")
+        msgsetcore = test_models_common.MsgsetcoreTestCase().root
+        root.append(msgsetcore)
+        SubElement(root, "PROCDAYSOFF").text = "SUNDAY"
+        SubElement(root, "PROCENDTM").text = "170000"
+        SubElement(root, "CANSCHED").text = "Y"
+        SubElement(root, "DOMXFERFEE").text = "7.50"
+        SubElement(root, "INTLXFERFEE").text = "17.50"
+
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, WIREXFERMSGSETV1)
+        self.assertIsInstance(root.msgsetcore, MSGSETCORE)
+        self.assertIsNone(root.procdaysoff)  # Unsupported
+        self.assertEqual(root.procendtm, time(17, 0, 0, tzinfo=UTC))
+        self.assertEqual(root.cansched, True)
+        self.assertEqual(root.domxferfee, Decimal("7.50"))
+        self.assertEqual(root.intlxferfee, Decimal("17.50"))
+
+
+class WirexfermsgsetTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("WIREXFERMSGSET")
+        msgsetv1 = Wirexfermsgsetv1TestCase().root
+        root.append(msgsetv1)
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, WIREXFERMSGSET)
+        self.assertIsInstance(root.wirexfermsgsetv1, WIREXFERMSGSETV1)
 
 
 class RecurrinstTestCase(unittest.TestCase, base.TestAggregate):

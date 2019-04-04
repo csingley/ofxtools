@@ -37,8 +37,13 @@ class MSGSETLIST(List):
         "PROFMSGSET",
         "BANKMSGSET",
         "CREDITCARDMSGSET",
+        "INTERXFERMSGSET",
+        "WIREXFERMSGSET",
         "INVSTMTMSGSET",
         "SECLISTMSGSET",
+        "BILLPAYMSGSET",
+        "PRESDIRMSGSET",
+        "PRESDLVMSGSET",
         "TAX1099MSGSET",
     ]
 

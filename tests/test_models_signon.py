@@ -14,6 +14,7 @@ from ofxtools.models.signon import (
     FI,
     SONRQ,
     SONRS,
+    SIGNONMSGSRQV1,
     SIGNONMSGSRSV1,
     SIGNONMSGSETV1,
     SIGNONMSGSET,
@@ -181,6 +182,22 @@ class SonrsTestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         self.assertEqual(root.org, "IBLLC-US")
         self.assertEqual(root.fid, "4705")
+
+
+class Signonmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("SIGNONMSGSRQV1")
+        sonrq = SonrqTestCase().root
+        root.append(sonrq)
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, SIGNONMSGSRQV1)
+        self.assertIsInstance(root.sonrq, SONRQ)
 
 
 class Signonmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):

@@ -95,11 +95,12 @@ class MsgsetlistTestCase(unittest.TestCase, base.TestAggregate):
 
     def testdataTags(self):
         # MSGSETLIST may only contain
-        # ['SIGNONMSGSET', 'SIGNUPMSGSET', 'PROFMSGSET',
-        # 'BANKMSGSET', 'CREDITCARDMSGSET', 'INVSTMTMSGSET',
-        # 'SECLISTMSGSET', 'TAX1099MSGSET', ]
+        # ["SIGNONMSGSET", "SIGNUPMSGSET", "PROFMSGSET", "BANKMSGSET",
+        # "CREDITCARDMSGSET", "INTERXFERMSGSET", "WIREXFERMSGSET",
+        # "INVSTMTMSGSET", "SECLISTMSGSET", "BILLPAYMSGSET", "PRESDIRMSGSET",
+        # "PRESDLVMSGSET", "TAX1099MSGSET"]
         allowedTags = MSGSETLIST.dataTags
-        self.assertEqual(len(allowedTags), 8)
+        self.assertEqual(len(allowedTags), 13)
         root = deepcopy(self.root)
         root.append(test_models_bank.StmttrnrsTestCase().root)
 

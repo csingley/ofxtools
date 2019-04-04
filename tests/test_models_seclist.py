@@ -15,25 +15,13 @@ import test_models_i18n
 import test_models_common
 
 from ofxtools.utils import UTC
-from ofxtools.models.base import Aggregate
+from ofxtools.models.base import Aggregate, classproperty
 from ofxtools.models.common import MSGSETCORE
 from ofxtools.models.seclist import (
-    SECID,
-    SECINFO,
-    DEBTINFO,
-    MFINFO,
-    OPTINFO,
-    OTHERINFO,
-    STOCKINFO,
-    PORTION,
-    FIPORTION,
-    MFASSETCLASS,
-    FIMFASSETCLASS,
-    ASSETCLASSES,
-    SECLIST,
-    SECLISTMSGSRSV1,
-    SECLISTMSGSETV1,
-    SECLISTMSGSET,
+    SECID, SECINFO, DEBTINFO, MFINFO, OPTINFO, OTHERINFO, STOCKINFO,
+    PORTION, FIPORTION, MFASSETCLASS, FIMFASSETCLASS, ASSETCLASSES,
+    SECLIST, SECRQ, SECLISTRQ, SECLISTRS,
+    SECLISTMSGSRQV1, SECLISTMSGSRSV1, SECLISTMSGSETV1, SECLISTMSGSET,
 )
 
 
@@ -528,11 +516,9 @@ class StockinfoTestCase(unittest.TestCase, base.TestAggregate):
 
 
 class SeclistTestCase(unittest.TestCase, base.TestAggregate):
-    """ """
-
     __test__ = True
 
-    optionalElements = ()  # FIXME - how to handle SECINFO subclasses?
+    optionalElements = []  # FIXME - how to handle SECINFO subclasses?
 
     @property
     def root(self):
@@ -559,6 +545,148 @@ class SeclistTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root[2], OPTINFO)
         self.assertIsInstance(root[3], OTHERINFO)
         self.assertIsInstance(root[4], STOCKINFO)
+
+
+class SecrqTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @classproperty
+    @classmethod
+    def emptyBase(cls):
+        return Element("SECRQ")
+
+    @classproperty
+    @classmethod
+    def validSoup(cls):
+        secid = SecidTestCase().root
+        ticker = Element("TICKER")
+        ticker.text = "ABCD"
+        fiid = Element("FIID")
+        fiid.text = "A1B2C3D4"
+
+        for choice in secid, ticker, fiid:
+            root = cls.emptyBase
+            root.append(choice)
+            yield root
+
+    @property
+    def root(self):
+        return next(self.validSoup)
+
+    @classproperty
+    @classmethod
+    def invalidSoup(cls):
+        #  requiredMutexes = [('secid', 'ticker', 'fiid')]
+        secid = SecidTestCase().root
+        ticker = Element("TICKER")
+        ticker.text = "ABCD"
+        fiid = Element("FIID")
+        fiid.text = "A1B2C3D4"
+
+        #  None
+        root = cls.emptyBase
+        yield root
+
+        #  Two
+        for (choice0, choice1) in [
+            (secid, ticker), (secid, fiid), (ticker, fiid),
+        ]:
+            root = cls.emptyBase
+            root.append(choice0)
+            root.append(choice1)
+            yield root
+
+        # All three
+        root = cls.emptyBase
+        root.append(secid)
+        root.append(ticker)
+        root.append(fiid)
+        yield root
+
+        #  FIXME
+        #  Check out-of-order errors
+
+    def testValidSoup(self):
+        for root in self.validSoup:
+            Aggregate.from_etree(root)
+
+    def testInvalidSoup(self):
+        for root in self.invalidSoup:
+            with self.assertRaises(ValueError):
+                Aggregate.from_etree(root)
+
+
+class SeclistrqTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("SECLISTRQ")
+        for i in range(2):
+            root.append(SecrqTestCase().root)
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, SECLISTRQ)
+        self.assertEqual(len(instance), 2)
+        self.assertIsInstance(instance[0], SECRQ)
+        self.assertIsInstance(instance[1], SECRQ)
+
+
+class SeclistrsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        return Element("SECLISTRS")
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, SECLISTRS)
+        self.assertEqual(len(instance.spec), 0)
+
+
+class SeclisttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
+    __test__ = True
+
+    wraps = SeclistrqTestCase
+
+
+class SeclisttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
+    __test__ = True
+
+    wraps = SeclistrsTestCase
+
+
+class Seclistmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("SECLISTMSGSRQV1")
+        for i in range(2):
+            root.append(SeclisttrnrqTestCase().root)
+        return root
+
+    def testdataTags(self):
+        # SECLISTMSGSRQV1 may contain
+        # ["STMTTRNRQ", "STMTENDTRNRQ", "STPCHKTRNRQ", "INTRATRNRQ",
+        # "RECINTRATRNRQ", "BANKMAILTRNRQ", "STPCHKSYNCRQ", "INTRASYNCRQ",
+        # "RECINTRASYNCRQ", "BANKMAILSYNCRQ"]
+
+        allowedTags = SECLISTMSGSRQV1.dataTags
+        self.assertEqual(len(allowedTags), 1)
+        root = deepcopy(self.root)
+        root.append(SeclisttrnrsTestCase().root)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, SECLISTMSGSRQV1)
+        self.assertEqual(len(instance), 2)
 
 
 class Seclistmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):

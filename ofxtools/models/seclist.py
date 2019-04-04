@@ -235,6 +235,8 @@ class SECRQ(Aggregate):
     ticker = String(32)
     fiid = String(32)
 
+    requiredMutexes = [('secid', 'ticker', 'fiid')]
+
 
 class SECLISTRQ(List):
     """ OFX section 13.8.2.2 """
@@ -245,7 +247,7 @@ class SECLISTRQ(List):
 class SECLISTTRNRQ(TrnRq):
     """ OFX section 13.8.2.1 """
 
-    seclisttrq = SubAggregate(SECLISTRQ)
+    seclistrq = SubAggregate(SECLISTRQ, required=True)
 
 
 class SECLISTRS(Aggregate):
@@ -259,7 +261,7 @@ class SECLISTRS(Aggregate):
 class SECLISTTRNRS(TrnRs):
     """ OFX section 13.8.2.1 """
 
-    seclisttrs = SubAggregate(SECLISTRS)
+    seclistrs = SubAggregate(SECLISTRS)
 
 
 class SECLISTMSGSRQV1(List):
@@ -270,7 +272,11 @@ class SECLISTMSGSRQV1(List):
 
 class SECLISTMSGSRSV1(List):
     """ OFX section 13.7.2.2.2 """
-
+    # N.B. this part of the spec is unusual in that SECLIST is a direct
+    # child of SECLISTMSGSRSV1, unwrapped.  SECLISTRS, wrapped in SECLISTTRNS,
+    # is an empty aggregate; including SECLISTTRNRS/SECLISTRS under
+    # SECLISTMSGSTSV1 merely indicates that the accompanying SECLIST was
+    # generated in response to a client SECLISTRQ.
     dataTags = ["SECLISTTRNRS", "SECLIST"]
 
     @property
