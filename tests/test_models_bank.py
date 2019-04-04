@@ -2109,9 +2109,9 @@ class Interxfermsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         root = Element("INTERXFERMSGSRQV1")
         for rq in (
             IntertrnrqTestCase,
-            #  RecintertrnrqTestCase,
+            RecintertrnrqTestCase,
             IntersyncrqTestCase,
-            # RecintersyncrqTestCase,
+            RecintersyncrqTestCase,
         ):
             for i in range(2):
                 root.append(rq().root)
@@ -2131,11 +2131,15 @@ class Interxfermsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     def testConvert(self):
         instance = Aggregate.from_etree(self.root)
         self.assertIsInstance(instance, INTERXFERMSGSRQV1)
-        self.assertEqual(len(instance), 4)
+        self.assertEqual(len(instance), 8)
         self.assertIsInstance(instance[0], INTERTRNRQ)
         self.assertIsInstance(instance[1], INTERTRNRQ)
-        self.assertIsInstance(instance[2], INTERSYNCRQ)
-        self.assertIsInstance(instance[3], INTERSYNCRQ)
+        self.assertIsInstance(instance[2], RECINTERTRNRQ)
+        self.assertIsInstance(instance[3], RECINTERTRNRQ)
+        self.assertIsInstance(instance[4], INTERSYNCRQ)
+        self.assertIsInstance(instance[5], INTERSYNCRQ)
+        self.assertIsInstance(instance[6], RECINTERSYNCRQ)
+        self.assertIsInstance(instance[7], RECINTERSYNCRQ)
 
 
 class Interxfermsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
@@ -2146,9 +2150,9 @@ class Interxfermsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         root = Element("INTERXFERMSGSRSV1")
         for rq in (
             IntertrnrsTestCase,
-            #  RecintertrnrsTestCase,
+            RecintertrnrsTestCase,
             IntersyncrsTestCase,
-            # RecintersyncrsTestCase,
+            RecintersyncrsTestCase,
         ):
             for i in range(2):
                 root.append(rq().root)
@@ -2168,11 +2172,15 @@ class Interxfermsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     def testConvert(self):
         instance = Aggregate.from_etree(self.root)
         self.assertIsInstance(instance, INTERXFERMSGSRSV1)
-        self.assertEqual(len(instance), 4)
+        self.assertEqual(len(instance), 8)
         self.assertIsInstance(instance[0], INTERTRNRS)
         self.assertIsInstance(instance[1], INTERTRNRS)
-        self.assertIsInstance(instance[2], INTERSYNCRS)
-        self.assertIsInstance(instance[3], INTERSYNCRS)
+        self.assertIsInstance(instance[2], RECINTERTRNRS)
+        self.assertIsInstance(instance[3], RECINTERTRNRS)
+        self.assertIsInstance(instance[4], INTERSYNCRS)
+        self.assertIsInstance(instance[5], INTERSYNCRS)
+        self.assertIsInstance(instance[6], RECINTERSYNCRS)
+        self.assertIsInstance(instance[7], RECINTERSYNCRS)
 
 
 class WirebeneficiaryTestCase(unittest.TestCase, base.TestAggregate):
