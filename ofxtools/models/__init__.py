@@ -6,6 +6,7 @@ from .signup import *
 from .signon import *
 from .bank import *
 from .creditcard import *
+from .email import *
 from .investment import *
 from .seclist import *
 from .tax1099 import *

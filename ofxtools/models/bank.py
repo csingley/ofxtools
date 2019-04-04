@@ -3,7 +3,7 @@
 Data structures for bank download - OFX Section 11
 """
 # local imports
-from ofxtools.Types import String, NagString, Decimal, Integer, OneOf, DateTime, Bool
+from ofxtools.Types import String, NagString, Decimal, Integer, OneOf, DateTime, Bool, Time
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List
 from ofxtools.models.common import (
     MSGSETCORE,
@@ -21,13 +21,14 @@ from ofxtools.models.i18n import (
     CURRENCY_CODES,
     COUNTRY_CODES,
 )
+from ofxtools.models.email import MAIL
 
 
 __all__ = [
     "INV401KSOURCES", "ACCTTYPES", "TRNTYPES", "FREQUENCIES",
     "BANKACCTFROM", "BANKACCTTO", "BANKACCTINFO",
     "CCACCTFROM", "CCACCTTO", "CCACCTINFO",
-    "INCTRAN", "PAYEE", "EMAILPROF", "LEDGERBAL", "AVAILBAL", "BALLIST",
+    "INCTRAN", "PAYEE","LEDGERBAL", "AVAILBAL", "BALLIST",
     "STMTTRN", "BANKTRANLIST", "STMTRQ", "STMTRS", "STMTTRNRQ", "STMTTRNRS",
     "CLOSING", "STMTENDRQ", "STMTENDRS", "STMTENDTRNRQ", "STMTENDTRNRS",
     "CHKRANGE", "CHKDESC", "STPCHKNUM", "STPCHKRQ", "STPCHKRS",
@@ -49,7 +50,9 @@ __all__ = [
     "RECINTERRQ", "RECINTERRS", "RECINTERMODRQ", "RECINTERMODRS",
     "RECINTERCANRQ", "RECINTERCANRS", "RECINTERTRNRQ", "RECINTERTRNRS",
     "RECINTERSYNCRQ", "RECINTERSYNCRS",
-    "EMAILPROF",
+    "BANKMAILRQ", "BANKMAILRS", "DEPMAILRS", "CHKMAILRS",
+    "BANKMAILTRNRQ", "BANKMAILTRNRS", "BANKMAILSYNCRQ", "BANKMAILSYNCRS",
+    "XFERPROF", "STPCHKPROF", "EMAILPROF",
     "BANKMSGSETV1", "BANKMSGSET",
 ]
 
@@ -971,37 +974,115 @@ class RECINTERSYNCRS(SyncRsList):
     requiredMutexes = [("bankacctfrom", "ccacctfrom")]
 
 
-# FIXME
-# Need to define an Aggregate subclass that support multiple repeated
-# Elements (not just SubAggregates, like List) for PROCDAYSOFF.
-# Also need to define Types.Time() for PROCENDTM
+class BANKMAILRQ(Aggregate):
+    """ OFX section 11.11.1.1 """
 
-#  class XFERPROF(List):
-    #  """ OFX section 11.13.2.2 """
+    bankacctfrom = SubAggregate(BANKACCTFROM)
+    ccacctfrom = SubAggregate(CCACCTFROM)
+    mail = SubAggregate(MAIL, required=True)
 
-    #  procdaysoff = Unsupported()
-    #  procendtm = Unsupported()
-    #  cansched = Bool(required=True)
-    #  canrecur = Bool(required=True)
-    #  canmodxfer = Bool(required=True)
-    #  canmodmdls = Bool(required=True)
-    #  modelwnd = Int(3, required=True)
-    #  dayswith = Int(3, required=True)
-    #  dfldaystopay = Int(3, required=True)
-
-    #  dataTags = ["PROCDAYSOFF"]
+    requiredMutexes = [("bankacctfrom", "ccacctfrom")]
 
 
-#  class STPCHKPROF(List):
-    #  """ OFX section 11.13.2.3 """
+class BANKMAILRS(Aggregate):
+    """ OFX section 11.11.1.2 """
 
-    #  procdaysoff = Unsupported()
-    #  procendtm = Unsupported()
-    #  canuserange = Bool(required=True)
-    #  canusedesc = Bool(required=True)
-    #  stpchkfee = Decimal(required=True)
+    bankacctfrom = SubAggregate(BANKACCTFROM)
+    ccacctfrom = SubAggregate(CCACCTFROM)
+    mail = SubAggregate(MAIL, required=True)
 
-    #  dataTags = ["PROCDAYSOFF"]
+    requiredMutexes = [("bankacctfrom", "ccacctfrom")]
+
+
+class CHKMAILRS(Aggregate):
+    """ OFX section 11.11.3.1 """
+
+    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
+    mail = SubAggregate(MAIL, required=True)
+    checknum = String(12, required=True)
+    trnamt = Decimal()
+    dtuser = DateTime()
+    fee = Decimal()
+
+
+class DEPMAILRS(Aggregate):
+    """ OFX section 11.11.3.2 """
+
+    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
+    mail = SubAggregate(MAIL, required=True)
+    trnamt = Decimal(required=True)
+    dtuser = DateTime()
+    fee = Decimal()
+
+
+class BANKMAILTRNRQ(TrnRq):
+    """ OFX section 11.11.1.1 """
+
+    bankmailrq = SubAggregate(BANKMAILRQ, required=True)
+
+
+class BANKMAILTRNRS(TrnRs):
+    """ OFX section 11.11.1.2 """
+
+    bankmailrs = SubAggregate(BANKMAILRS)
+    chkmailrs = SubAggregate(CHKMAILRS)
+    depmailrs = SubAggregate(DEPMAILRS)
+
+    optionalMutexes = [("bankmailrs", "chkmailrs", "depmailrs")]
+
+
+class BANKMAILSYNCRQ(SyncRqList):
+    """ OFX section 11.12.7.1 """
+
+    incimages = Bool(required=True)
+    usehtml = Bool(required=True)
+    bankacctfrom = SubAggregate(BANKACCTFROM)
+    ccacctfrom = SubAggregate(CCACCTFROM)
+
+    metadataTags = SyncRqList.metadataTags + ["INCIMAGES", "USEHTML", "BANKACCTFROM", "CCACCTFROM"]
+    dataTags = ["BANKMAILTRNRQ"]
+    requiredMutexes = SyncRqList.requiredMutexes + [("bankacctfrom", "ccacctfrom")]
+
+
+class BANKMAILSYNCRS(SyncRsList):
+    """ OFX section 11.12.7.2 """
+
+    bankacctfrom = SubAggregate(BANKACCTFROM)
+    ccacctfrom = SubAggregate(CCACCTFROM)
+
+    metadataTags = SyncRsList.metadataTags + ["BANKACCTFROM", "CCACCTFROM"]
+    dataTags = ["BANKMAILTRNRS"]
+    requiredMutexes = [("bankacctfrom", "ccacctfrom")]
+
+
+class XFERPROF(Aggregate):
+    """ OFX section 11.13.2.2 """
+
+    # FIXME
+    # Need to define an Aggregate subclass that support multiple repeated
+    # Elements (not just SubAggregates, like List) for PROCDAYSOFF.
+    procdaysoff = Unsupported()
+    procendtm = Time(required=True)
+    cansched = Bool(required=True)
+    canrecur = Bool(required=True)
+    canmodxfer = Bool(required=True)
+    canmodmdls = Bool(required=True)
+    modelwnd = Integer(3, required=True)
+    dayswith = Integer(3, required=True)
+    dfldaystopay = Integer(3, required=True)
+
+
+class STPCHKPROF(Aggregate):
+    """ OFX section 11.13.2.3 """
+
+    # FIXME
+    # Need to define an Aggregate subclass that support multiple repeated
+    # Elements (not just SubAggregates, like List) for PROCDAYSOFF.
+    procdaysoff = Unsupported()
+    procendtm = Time(required=True)
+    canuserange = Bool(required=True)
+    canusedesc = Bool(required=True)
+    stpchkfee = Decimal(required=True)
 
 
 class EMAILPROF(Aggregate):
@@ -1018,8 +1099,8 @@ class BANKMSGSETV1(Aggregate):
     invalidaccttype = OneOf(*ACCTTYPES)
     closingavail = Bool(required=True)
     pendingavail = Bool()
-    xferprof = Unsupported()
-    stopchkprof = Unsupported()
+    xferprof = SubAggregate(XFERPROF)
+    stpchkprof = SubAggregate(STPCHKPROF)
     emailprof = SubAggregate(EMAILPROF, required=True)
     imageprof = Unsupported()
 

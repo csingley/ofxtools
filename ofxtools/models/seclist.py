@@ -148,7 +148,7 @@ class MFINFO(Aggregate):
     @staticmethod
     def ungroom(elem):
         """
-        Rename YLD back to YLD
+        Rename YLD back to YIELD
         """
         # Keep input free of side effects
         elem = deepcopy(elem)

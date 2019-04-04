@@ -3,7 +3,7 @@
 # stdlib imports
 import unittest
 from xml.etree.ElementTree import Element, SubElement
-from datetime import datetime
+from datetime import datetime, time
 from decimal import Decimal
 from copy import deepcopy
 import itertools
@@ -13,13 +13,15 @@ import itertools
 import base
 import test_models_common
 import test_models_i18n
+import test_models_email
 
-from ofxtools.utils import UTC
-import ofxtools.models
 from ofxtools.models.base import Aggregate, classproperty
 from ofxtools.models.common import STATUS, BAL, MSGSETCORE, SVCSTATUSES
+import ofxtools.models
 from ofxtools.models.bank import *
 from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, CURRENCY_CODES, COUNTRY_CODES
+from ofxtools.models.email import MAIL
+from ofxtools.utils import UTC
 
 
 class BankacctfromTestCase(unittest.TestCase, base.TestAggregate):
@@ -61,7 +63,7 @@ class BankaccttoTestCase(BankacctfromTestCase):
 class BankacctinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "BANKACCTFROM", "SUPTXDL", "XFERSRC", "XFERDEST", "SVCSTATUS" ]
+    requiredElements = ["BANKACCTFROM", "SUPTXDL", "XFERSRC", "XFERDEST", "SVCSTATUS"]
 
     @property
     def root(self):
@@ -1552,9 +1554,9 @@ class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         for rq in (
             StmttrnrqTestCase, StmtendtrnrqTestCase, StpchktrnrqTestCase,
             IntratrnrqTestCase,
-            # RecintratrnrqTestCase, BankmailtrnrqTestCase,
+            RecintratrnrqTestCase, BankmailtrnrqTestCase,
             StpchksyncrqTestCase, IntrasyncrqTestCase,
-            # RecintrasyncrqTestCase, BankmailsyncrqTestCase,
+            RecintrasyncrqTestCase, BankmailsyncrqTestCase,
         ):
             for i in range(2):
                 root.append(rq().root)
@@ -1577,7 +1579,7 @@ class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     def testConvert(self):
         instance = Aggregate.from_etree(self.root)
         self.assertIsInstance(instance, BANKMSGSRQV1)
-        self.assertEqual(len(instance), 12)
+        self.assertEqual(len(instance), 20)
         self.assertIsInstance(instance[0], STMTTRNRQ)
         self.assertIsInstance(instance[1], STMTTRNRQ)
         self.assertIsInstance(instance[2], STMTENDTRNRQ)
@@ -1586,10 +1588,18 @@ class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(instance[5], STPCHKTRNRQ)
         self.assertIsInstance(instance[6], INTRATRNRQ)
         self.assertIsInstance(instance[7], INTRATRNRQ)
-        self.assertIsInstance(instance[8], STPCHKSYNCRQ)
-        self.assertIsInstance(instance[9], STPCHKSYNCRQ)
-        self.assertIsInstance(instance[10], INTRASYNCRQ)
-        self.assertIsInstance(instance[11], INTRASYNCRQ)
+        self.assertIsInstance(instance[8], RECINTRATRNRQ)
+        self.assertIsInstance(instance[9], RECINTRATRNRQ)
+        self.assertIsInstance(instance[10], BANKMAILTRNRQ)
+        self.assertIsInstance(instance[11], BANKMAILTRNRQ)
+        self.assertIsInstance(instance[12], STPCHKSYNCRQ)
+        self.assertIsInstance(instance[13], STPCHKSYNCRQ)
+        self.assertIsInstance(instance[14], INTRASYNCRQ)
+        self.assertIsInstance(instance[15], INTRASYNCRQ)
+        self.assertIsInstance(instance[16], RECINTRASYNCRQ)
+        self.assertIsInstance(instance[17], RECINTRASYNCRQ)
+        self.assertIsInstance(instance[18], BANKMAILSYNCRQ)
+        self.assertIsInstance(instance[19], BANKMAILSYNCRQ)
 
 
 class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
@@ -1601,9 +1611,9 @@ class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         for rs in (
             StmttrnrsTestCase, StmtendtrnrsTestCase, StpchktrnrsTestCase,
             IntratrnrsTestCase,
-            # RecintratrnrsTestCase, BankmailtrnrsTestCase,
+            RecintratrnrsTestCase, BankmailtrnrsTestCase,
             StpchksyncrsTestCase, IntrasyncrsTestCase,
-            # RecintrasyncrsTestCase, BankmailsyncrsTestCase,
+            RecintrasyncrsTestCase, BankmailsyncrsTestCase,
         ):
             for i in range(2):
                 root.append(rs().root)
@@ -1625,7 +1635,7 @@ class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     def testConvert(self):
         instance = Aggregate.from_etree(self.root)
         self.assertIsInstance(instance, BANKMSGSRSV1)
-        self.assertEqual(len(instance), 12)
+        self.assertEqual(len(instance), 20)
         self.assertIsInstance(instance[0], STMTTRNRS)
         self.assertIsInstance(instance[1], STMTTRNRS)
         self.assertIsInstance(instance[2], STMTENDTRNRS)
@@ -1634,10 +1644,18 @@ class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(instance[5], STPCHKTRNRS)
         self.assertIsInstance(instance[6], INTRATRNRS)
         self.assertIsInstance(instance[7], INTRATRNRS)
-        self.assertIsInstance(instance[8], STPCHKSYNCRS)
-        self.assertIsInstance(instance[9], STPCHKSYNCRS)
-        self.assertIsInstance(instance[10], INTRASYNCRS)
-        self.assertIsInstance(instance[11], INTRASYNCRS)
+        self.assertIsInstance(instance[8], RECINTRATRNRS)
+        self.assertIsInstance(instance[9], RECINTRATRNRS)
+        self.assertIsInstance(instance[10], BANKMAILTRNRS)
+        self.assertIsInstance(instance[11], BANKMAILTRNRS)
+        self.assertIsInstance(instance[12], STPCHKSYNCRS)
+        self.assertIsInstance(instance[13], STPCHKSYNCRS)
+        self.assertIsInstance(instance[14], INTRASYNCRS)
+        self.assertIsInstance(instance[15], INTRASYNCRS)
+        self.assertIsInstance(instance[16], RECINTRASYNCRS)
+        self.assertIsInstance(instance[17], RECINTRASYNCRS)
+        self.assertIsInstance(instance[18], BANKMAILSYNCRS)
+        self.assertIsInstance(instance[19], BANKMAILSYNCRS)
 
     def testPropertyAliases(self):
         instance = Aggregate.from_etree(self.root)
@@ -3211,7 +3229,7 @@ class RecintersyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
         acctfrom = BankacctfromTestCase().root
         trnrq = RecintertrnrqTestCase().root
 
-        # SYNCRQ base malformed; WIRE additions OK
+        # SYNCRQ base malformed; RECINTER additions OK
         for root in super().invalidSoup:
             root.append(acctfrom)
             # 0 contained aggregrates
@@ -3221,7 +3239,7 @@ class RecintersyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
                 root.append(trnrq)
                 yield root
 
-        # SYNCRQ base OK; WIRE additions malformed
+        # SYNCRQ base OK; RECINTER additions malformed
         for root in super().validSoup:
             # *ACCTFROM in the wrong place
             # (should be right after REJECTIFMISSING)
@@ -3261,6 +3279,298 @@ class RecintersyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
         acctfrom = BankacctfromTestCase().root
         trnrs = RecintertrnrsTestCase().root
 
+        # SYNCRS base malformed; RECINTER additions OK
+        for root in super().invalidSoup:
+            root.append(acctfrom)
+            # 0 contained aggregrates
+            yield root
+            # 1 or more contained aggregates
+            for n in range(2):
+                root.append(trnrs)
+                yield root
+
+        # SYNCRS base OK; RECINTER additions malformed
+        for root in super().validSoup:
+
+            # *ACCTFROM in the wrong place
+            # (should be right after LOSTSYNC)
+            index = list(root).index(root.find("LOSTSYNC"))
+            for n in range(index):
+                root.insert(n, acctfrom)
+                yield root
+
+            #  *TRNRS in the wrong place
+            #  (should be right after *ACCTFROM)
+            #
+            # FIXME
+            # Currently the ``List`` data model offers no way to verify that
+            # data appears in correct position relative to metadata, since
+            # ``dataTags`` doesn't appear in the ``cls.spec``.
+
+
+class BankmailrqTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["MAIL"]
+
+    @classproperty
+    @classmethod
+    def validSoup(self):
+        bankacctfrom = BankacctfromTestCase().root
+        ccacctfrom = CcacctfromTestCase().root
+        mail = test_models_email.MailTestCase().root
+        for acctfrom in bankacctfrom, ccacctfrom:
+            root = Element("BANKMAILRQ")
+            root.append(acctfrom)
+            root.append(mail)
+            yield root
+
+    @property
+    def root(self):
+        return next(self.validSoup)
+
+    @classproperty
+    @classmethod
+    def invalidSoup(self):
+        bankacctfrom = BankacctfromTestCase().root
+        ccacctfrom = CcacctfromTestCase().root
+        mail = test_models_email.MailTestCase().root
+
+        #  requiredMutexes = [("bankacctfrom", "ccacctfrom")]
+        #  Neither
+        root = Element("BANKMAILRQ")
+        root.append(mail)
+        yield root
+        #  Both
+        root = Element("BANKMAILRQ")
+        root.append(bankacctfrom)
+        root.append(ccacctfrom)
+        root.append(mail)
+        yield root
+
+        #  FIXME
+        #  Check out-of-order errors
+
+    def testValidSoup(self):
+        for root in self.validSoup:
+            Aggregate.from_etree(root)
+
+    def testInvalidSoup(self):
+        for root in self.invalidSoup:
+            with self.assertRaises(ValueError):
+                Aggregate.from_etree(root)
+
+
+class BankmailrsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["MAIL"]
+
+    @classproperty
+    @classmethod
+    def validSoup(self):
+        bankacctfrom = BankacctfromTestCase().root
+        ccacctfrom = CcacctfromTestCase().root
+        mail = test_models_email.MailTestCase().root
+        for acctfrom in bankacctfrom, ccacctfrom:
+            root = Element("BANKMAILRS")
+            root.append(acctfrom)
+            root.append(mail)
+            yield root
+
+    @property
+    def root(self):
+        return next(self.validSoup)
+
+    @classproperty
+    @classmethod
+    def invalidSoup(self):
+        bankacctfrom = BankacctfromTestCase().root
+        ccacctfrom = CcacctfromTestCase().root
+        mail = test_models_email.MailTestCase().root
+
+        #  requiredMutexes = [("bankacctfrom", "ccacctfrom")]
+        #  Neither
+        root = Element("BANKMAILRS")
+        root.append(mail)
+        yield root
+        #  Both
+        root = Element("BANKMAILRS")
+        root.append(bankacctfrom)
+        root.append(ccacctfrom)
+        root.append(mail)
+        yield root
+
+        #  FIXME
+        #  Check out-of-order errors
+
+    def testValidSoup(self):
+        for root in self.validSoup:
+            Aggregate.from_etree(root)
+
+    def testInvalidSoup(self):
+        for root in self.invalidSoup:
+            with self.assertRaises(ValueError):
+                Aggregate.from_etree(root)
+
+
+class ChkmailrsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["BANKACCTFROM", "MAIL", "CHECKNUM"]
+    optionalElements = ["TRNAMT", "DTUSER", "FEE"]
+
+    @property
+    def root(self):
+        bankacctfrom = BankacctfromTestCase().root
+        mail = test_models_email.MailTestCase().root
+
+        root = Element("CHKMAILRS")
+        root.append(bankacctfrom)
+        root.append(mail)
+        SubElement(root, "CHECKNUM").text = "1001"
+        SubElement(root, "TRNAMT").text = "321.45"
+        SubElement(root, "DTUSER").text = "21060930"
+        SubElement(root, "FEE").text = "21.50"
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, CHKMAILRS)
+        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
+        self.assertIsInstance(instance.mail, MAIL)
+        self.assertEqual(instance.checknum, "1001")
+        self.assertEqual(instance.trnamt, Decimal("321.45"))
+        self.assertEqual(instance.dtuser, datetime(2106, 9, 30, tzinfo=UTC))
+        self.assertEqual(instance.fee, Decimal("21.50"))
+
+
+class DepmailrsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["BANKACCTFROM", "MAIL", "TRNAMT"]
+    optionalElements = ["DTUSER", "FEE"]
+
+    @property
+    def root(self):
+        bankacctfrom = BankacctfromTestCase().root
+        mail = test_models_email.MailTestCase().root
+
+        root = Element("DEPMAILRS")
+        root.append(bankacctfrom)
+        root.append(mail)
+        SubElement(root, "TRNAMT").text = "321.45"
+        SubElement(root, "DTUSER").text = "21060930"
+        SubElement(root, "FEE").text = "21.50"
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, DEPMAILRS)
+        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
+        self.assertIsInstance(instance.mail, MAIL)
+        self.assertEqual(instance.trnamt, Decimal("321.45"))
+        self.assertEqual(instance.dtuser, datetime(2106, 9, 30, tzinfo=UTC))
+        self.assertEqual(instance.fee, Decimal("21.50"))
+
+
+class BankmailtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
+    __test__ = True
+
+    wraps = BankmailrqTestCase
+
+
+class BankmailtrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
+    __test__ = True
+
+    wraps = BankmailrsTestCase
+
+
+class BankmailsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
+    __test__ = True
+
+    requiredElements = base.SyncrqTestCase.requiredElements + ["INCIMAGES", "USEHTML", "BANKACCTFROM"]
+
+    @property
+    def validSoup(self):
+        acctfrom = BankacctfromTestCase().root
+        trnrq = BankmailtrnrqTestCase().root
+
+        for root in super().validSoup:
+            SubElement(root, "INCIMAGES").text = "N"
+            SubElement(root, "USEHTML").text = "N"
+            root.append(acctfrom)
+            root.append(trnrq)
+            yield root
+
+    @property
+    def invalidSoup(self):
+        acctfrom = BankacctfromTestCase().root
+        trnrq = IntratrnrsTestCase().root
+
+        # SYNCRQ base malformed; WIRE additions OK
+        for root in super().invalidSoup:
+            SubElement(root, "INCIMAGES").text = "N"
+            SubElement(root, "USEHTML").text = "N"
+            root.append(acctfrom)
+            # 0 contained aggregrates
+            yield root
+            # 1 or more contained aggregates
+            for n in range(2):
+                root.append(trnrq)
+                yield root
+
+        # SYNCRQ base OK; WIRE additions malformed
+        for root in super().validSoup:
+            # *ACCTFROM in the wrong place
+            # (should be right after REJECTIFMISSING)
+            index = list(root).index(root.find("REJECTIFMISSING"))
+            for n in range(index):
+                root.insert(n, acctfrom)
+                yield root
+
+            #  *TRNRQ in the wrong place
+            #  (should be right after *ACCTFROM)
+            #
+            # FIXME
+            # Currently the ``List`` data model offers no way to verify that
+            # data appears in correct position relative to metadata, since
+            # ``dataTags`` doesn't appear in the ``cls.spec``.
+
+    def testValidSoup(self):
+        for root in self.validSoup:
+            Aggregate.from_etree(root)
+
+    def testInvalidSoup(self):
+        for root in self.invalidSoup:
+            with self.assertRaises(ValueError):
+                Aggregate.from_etree(root)
+
+
+class BankmailsyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
+    __test__ = True
+
+    @property
+    def validSoup(self):
+        acctfrom = BankacctfromTestCase().root
+        trnrs = BankmailtrnrsTestCase().root
+
+        for root in super().validSoup:
+            root.append(acctfrom)
+            # 0 contained aggregrates
+            yield root
+            # 1 or more contained aggregates
+            for n in range(2):
+                root.append(deepcopy(trnrs))
+                yield root
+
+    @property
+    def invalidSoup(self):
+        acctfrom = BankacctfromTestCase().root
+        trnrs = BankmailtrnrsTestCase().root
+
         # SYNCRS base malformed; WIRE additions OK
         for root in super().invalidSoup:
             root.append(acctfrom)
@@ -3288,6 +3598,71 @@ class RecintersyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
             # Currently the ``List`` data model offers no way to verify that
             # data appears in correct position relative to metadata, since
             # ``dataTags`` doesn't appear in the ``cls.spec``.
+
+    def testValidSoup(self):
+        for root in self.validSoup:
+            Aggregate.from_etree(root)
+
+    def testInvalidSoup(self):
+        for root in self.invalidSoup:
+            with self.assertRaises(ValueError):
+                Aggregate.from_etree(root)
+
+
+class XferprofTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("XFERPROF")
+        SubElement(root, "PROCDAYSOFF").text = "SUNDAY"
+        SubElement(root, "PROCENDTM").text = "170000"
+        SubElement(root, "CANSCHED").text = "Y"
+        SubElement(root, "CANRECUR").text = "Y"
+        SubElement(root, "CANMODXFER").text = "N"
+        SubElement(root, "CANMODMDLS").text = "Y"
+        SubElement(root, "MODELWND").text = "3"
+        SubElement(root, "DAYSWITH").text = "2"
+        SubElement(root, "DFLDAYSTOPAY").text = "4"
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, XFERPROF)
+        self.assertEqual(instance.procdaysoff, None)  # Unsupported
+        self.assertEqual(instance.procendtm, time(17, 0, 0, tzinfo=UTC))
+        self.assertEqual(instance.cansched, True)
+        self.assertEqual(instance.canrecur, True)
+        self.assertEqual(instance.canmodxfer, False)
+        self.assertEqual(instance.canmodmdls, True)
+        self.assertEqual(instance.modelwnd, 3)
+        self.assertEqual(instance.dayswith, 2)
+        self.assertEqual(instance.dfldaystopay, 4)
+
+
+class StpchkprofTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("STPCHKPROF")
+        SubElement(root, "PROCDAYSOFF").text = "SUNDAY"
+        SubElement(root, "PROCENDTM").text = "170000"
+        SubElement(root, "CANUSERANGE").text = "Y"
+        SubElement(root, "CANUSEDESC").text = "Y"
+        SubElement(root, "STPCHKFEE").text = "30.1"
+
+        return root
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, STPCHKPROF)
+        self.assertEqual(instance.procdaysoff, None)  # Unsupported
+        self.assertEqual(instance.procendtm, time(17, 0, 0, tzinfo=UTC))
+        self.assertEqual(instance.canuserange, True)
+        self.assertEqual(instance.canusedesc, True)
+        self.assertEqual(instance.stpchkfee, Decimal("30.1"))
 
 
 class EmailprofTestCase(unittest.TestCase, base.TestAggregate):
@@ -3319,6 +3694,10 @@ class Bankmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "INVALIDACCTTYPE").text = "CHECKING"
         SubElement(root, "CLOSINGAVAIL").text = "Y"
         SubElement(root, "PENDINGAVAIL").text = "N"
+        xferprof = XferprofTestCase().root
+        root.append(xferprof)
+        stpchkprof = StpchkprofTestCase().root
+        root.append(stpchkprof)
         emailprof = EmailprofTestCase().root
         root.append(emailprof)
 
@@ -3331,6 +3710,8 @@ class Bankmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(root.invalidaccttype, "CHECKING")
         self.assertEqual(root.closingavail, True)
         self.assertEqual(root.pendingavail, False)
+        self.assertIsInstance(root.xferprof, XFERPROF)
+        self.assertIsInstance(root.stpchkprof, STPCHKPROF)
         self.assertIsInstance(root.emailprof, EMAILPROF)
 
     def testOneOf(self):
