@@ -119,8 +119,8 @@ which is not part of the OFX spec.  ``curtype`` yields ``'CURRENCY'`` if the
 money amounts have not been converted to the home currency, or yields
 ``'ORIGCURRENCY'`` if they have been converted.
 
-``YIELD`` elements are renamed ``yld`` to avoid name collision with the Python
-built-in.
+``YIELD`` elements are renamed ``yld``, and ``FROM`` elements are renamed ``frm``,
+in order to avoid name collision with Python reserved keywords.
 
 Proprietary OFX tags (e.g. ``<INTU.BANKID>``) are stripped and dropped.
 

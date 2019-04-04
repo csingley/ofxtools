@@ -47,7 +47,9 @@ It targets compliance with the `OFX specification`_, specifically OFX versions
 ``ofxtools`` Coverage of the OFX Specification
     * Section 7 (financial institution profile)
     * Section 8 (service activation; account information)
-    * Section 11 (banking) up through 11.7
+    * Section 9 (email over OFX)
+    * Section 10 (recurring bank transfers)
+    * Section 11 (banking)
     * Section 13 (investments)
 
 This should cover the great majority of real-world OFX use cases.  A particular
@@ -55,10 +57,9 @@ focus of ``ofxtools`` is full support of the OFX investment message set,
 which has been somewhat neglected by the Python community.
 
 The major items remaining on the ``ofxtools`` "to do" list are to implement
-interbank payments (OFX Sections 11.8 - 11.9, ACH and wire transfers) and
-bill pay (OFX Section 12).  Absent a compelling use case, I can't see
-implementing Section 9 (email in OFX) or 14 (bill presentment).  Section 10
-(recurring payments) is a low priority.
+bill pay (OFX Section 12) and the tax schemas.  It's currently a low priority
+to implement Section 14 (bill pay) or the extensions contained in OFX versions
+beyond 2.03, but you're welcome to contribute code if you need these.
 
 Some care has been taken with the data model to make it easily maintainable
 and extensible.  The ``ofxtools.models`` subpackage contains simple, direct
