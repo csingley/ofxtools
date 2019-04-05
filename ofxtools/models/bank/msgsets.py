@@ -5,7 +5,7 @@ Message sets and profile - OFX Section 11.13
 # local imports
 from ofxtools.Types import Decimal, Integer, OneOf, Bool, Time
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List
-from ofxtools.models.common import MSGSETCORE
+from ofxtools.models.profile import MSGSETCORE
 from ofxtools.models.bank.stmt import ACCTTYPES, STMTTRNRS
 
 

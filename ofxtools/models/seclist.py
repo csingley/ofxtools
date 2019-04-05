@@ -9,7 +9,8 @@ from copy import deepcopy
 # local imports
 from ofxtools.Types import String, NagString, Integer, Decimal, DateTime, OneOf, Bool
 from ofxtools.models.base import Aggregate, SubAggregate, List, Unsupported
-from ofxtools.models.common import MSGSETCORE, TrnRq, TrnRs
+from ofxtools.models.common import TrnRq, TrnRs
+from ofxtools.models.profile import MSGSETCORE
 from ofxtools.models.i18n import CURRENCY
 
 

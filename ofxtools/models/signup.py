@@ -9,13 +9,13 @@ from ofxtools.models.i18n import COUNTRY_CODES
 from ofxtools.models.bank import BANKACCTFROM, CCACCTFROM, BANKACCTTO, CCACCTTO
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List
 from ofxtools.models.common import (
-    MSGSETCORE,
     SVCSTATUSES,
     TrnRq,
     TrnRs,
     SyncRqList,
     SyncRsList,
 )
+from ofxtools.models.profile import MSGSETCORE
 from ofxtools.models.investment import INVACCTFROM, INVACCTTO
 
 

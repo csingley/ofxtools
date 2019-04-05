@@ -119,7 +119,11 @@ class TrnRs(Aggregate):
 
 
 class TranList(List):
-    """ Base class for OFX *TRANLIST """
+    """
+    Base class for OFX *TRANLIST
+
+    Cf. OFX section 3.2.7
+    """
 
     dtstart = DateTime(required=True)
     dtend = DateTime(required=True)

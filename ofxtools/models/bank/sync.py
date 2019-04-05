@@ -3,18 +3,36 @@
 Data synchronization for banking - OFX Section 11.12
 """
 # local imports
+from ofxtools.Types import Bool
 from ofxtools.models.base import SubAggregate
 from ofxtools.models.common import SyncRqList, SyncRsList
 from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM
 
 __all__ = [
+    "STPCHKSYNCRQ", "STPCHKSYNCRS",
     "INTRASYNCRQ", "INTRASYNCRS",
     "INTERSYNCRQ", "INTERSYNCRS",
     "WIRESYNCRQ", "WIRESYNCRS",
     "RECINTRASYNCRQ", "RECINTRASYNCRS",
     "RECINTERSYNCRQ", "RECINTERSYNCRS",
+    "BANKMAILSYNCRQ", "BANKMAILSYNCRS",
 ]
 
+
+class STPCHKSYNCRQ(SyncRqList):
+    """ OFX section 11.12.1.1 """
+
+    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
+
+    dataTags = ["STPCHKTRNRQ"]
+
+
+class STPCHKSYNCRS(SyncRsList):
+    """ OFX section 11.12.1.2 """
+
+    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
+
+    dataTags = ["STPCHKTRNRS"]
 
 class INTRASYNCRQ(SyncRqList):
     """ OFX section 11.12.2.1 """
@@ -118,3 +136,25 @@ class RECINTERSYNCRS(SyncRsList):
     requiredMutexes = [("bankacctfrom", "ccacctfrom")]
 
 
+class BANKMAILSYNCRQ(SyncRqList):
+    """ OFX section 11.12.7.1 """
+
+    incimages = Bool(required=True)
+    usehtml = Bool(required=True)
+    bankacctfrom = SubAggregate(BANKACCTFROM)
+    ccacctfrom = SubAggregate(CCACCTFROM)
+
+    metadataTags = SyncRqList.metadataTags + ["INCIMAGES", "USEHTML", "BANKACCTFROM", "CCACCTFROM"]
+    dataTags = ["BANKMAILTRNRQ"]
+    requiredMutexes = SyncRqList.requiredMutexes + [("bankacctfrom", "ccacctfrom")]
+
+
+class BANKMAILSYNCRS(SyncRsList):
+    """ OFX section 11.12.7.2 """
+
+    bankacctfrom = SubAggregate(BANKACCTFROM)
+    ccacctfrom = SubAggregate(CCACCTFROM)
+
+    metadataTags = SyncRsList.metadataTags + ["BANKACCTFROM", "CCACCTFROM"]
+    dataTags = ["BANKMAILTRNRS"]
+    requiredMutexes = [("bankacctfrom", "ccacctfrom")]

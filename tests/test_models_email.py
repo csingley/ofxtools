@@ -1,4 +1,5 @@
 # coding: utf-8
+""" Unit tests for models.email """
 # stdlib imports
 import unittest
 import xml.etree.ElementTree as ET
@@ -6,18 +7,16 @@ from xml.etree.ElementTree import Element, SubElement
 from datetime import datetime
 from copy import deepcopy
 
-# local imports
-import base
-import test_models_common
 
+# local imports
 from ofxtools.models.base import Aggregate
-from ofxtools.models.email import (MAIL, MAILRQ, MAILRS, MAILTRNRQ, MAILTRNRS,
-                                   GETMIMERQ, GETMIMERS, GETMIMETRNRQ, GETMIMETRNRS,
-                                   MAILSYNCRQ, MAILSYNCRS,
-                                   EMAILMSGSRQV1, EMAILMSGSRSV1,
-                                   EMAILMSGSETV1, EMAILMSGSET)
-from ofxtools.models.common import MSGSETCORE
+from ofxtools.models.email import (MAIL, MAILRQ, MAILRS,
+                                   GETMIMERQ, GETMIMERS)
 from ofxtools.utils import UTC
+
+
+# test imports
+import base
 
 
 class MailTestCase(unittest.TestCase, base.TestAggregate):
@@ -265,114 +264,6 @@ class GetmimetrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
 
     wraps = GetmimersTestCase
-
-
-class Emailmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    @property
-    def root(self):
-        root = Element("EMAILMSGSRQV1")
-        for rq in (MailtrnrqTestCase, GetmimetrnrqTestCase, MailsyncrqTestCase):
-            for i in range(2):
-                root.append(rq().root)
-        return root
-
-    def testdataTags(self):
-        # EMAILMSGSRQV1 may contain ["MAILTRNRQ", "GETMIMETRNRQ", "MAILSYNCRQ"]
-
-        allowedTags = EMAILMSGSRQV1.dataTags
-        self.assertEqual(len(allowedTags), 3)
-        root = deepcopy(self.root)
-        root.append(MailtrnrsTestCase().root)
-
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, EMAILMSGSRQV1)
-        self.assertEqual(len(instance), 6)
-        self.assertIsInstance(instance[0], MAILTRNRQ)
-        self.assertIsInstance(instance[1], MAILTRNRQ)
-        self.assertIsInstance(instance[2], GETMIMETRNRQ)
-        self.assertIsInstance(instance[3], GETMIMETRNRQ)
-        self.assertIsInstance(instance[4], MAILSYNCRQ)
-        self.assertIsInstance(instance[5], MAILSYNCRQ)
-
-
-class Emailmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    @property
-    def root(self):
-        root = Element("EMAILMSGSRSV1")
-        for rs in (MailtrnrsTestCase, GetmimetrnrsTestCase, MailsyncrsTestCase):
-            for i in range(2):
-                root.append(rs().root)
-        return root
-
-    def testdataTags(self):
-        # EMAILMSGSRSV1 may contain ["MAILTRNRS", "GETMIMETRNRS", "MAILSYNCRS"]
-
-        allowedTags = EMAILMSGSRSV1.dataTags
-        self.assertEqual(len(allowedTags), 3)
-        root = deepcopy(self.root)
-        root.append(MailtrnrqTestCase().root)
-
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, EMAILMSGSRSV1)
-        self.assertEqual(len(instance), 6)
-        self.assertIsInstance(instance[0], MAILTRNRS)
-        self.assertIsInstance(instance[1], MAILTRNRS)
-        self.assertIsInstance(instance[2], GETMIMETRNRS)
-        self.assertIsInstance(instance[3], GETMIMETRNRS)
-        self.assertIsInstance(instance[4], MAILSYNCRS)
-        self.assertIsInstance(instance[5], MAILSYNCRS)
-
-
-class Emailmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    @property
-    def root(self):
-        root = Element("EMAILMSGSETV1")
-        msgsetcore = test_models_common.MsgsetcoreTestCase().root
-        root.append(msgsetcore)
-        SubElement(root, "MAILSUP").text = "Y"
-        SubElement(root, "GETMIMESUP").text = "Y"
-
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, EMAILMSGSETV1)
-        self.assertIsInstance(root.msgsetcore, MSGSETCORE)
-        self.assertEqual(root.mailsup, True)
-        self.assertEqual(root.getmimesup, True)
-
-
-class EmailmsgsetTestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    @property
-    def root(self):
-        root = Element("EMAILMSGSET")
-        msgsetv1 = Emailmsgsetv1TestCase().root
-        root.append(msgsetv1)
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, EMAILMSGSET)
-        self.assertIsInstance(root.emailmsgsetv1, EMAILMSGSETV1)
-
-
-
 
 
 if __name__ == "__main__":

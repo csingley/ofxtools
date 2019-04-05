@@ -10,19 +10,19 @@ from copy import deepcopy
 
 
 # local imports
-import base
-import test_models_i18n
-import test_models_common
-
 from ofxtools.utils import UTC
 from ofxtools.models.base import Aggregate, classproperty
-from ofxtools.models.common import MSGSETCORE
 from ofxtools.models.seclist import (
     SECID, SECINFO, DEBTINFO, MFINFO, OPTINFO, OTHERINFO, STOCKINFO,
     PORTION, FIPORTION, MFASSETCLASS, FIMFASSETCLASS, ASSETCLASSES,
     SECLIST, SECRQ, SECLISTRQ, SECLISTRS,
-    SECLISTMSGSRQV1, SECLISTMSGSRSV1, SECLISTMSGSETV1, SECLISTMSGSET,
+    SECLISTMSGSRQV1, SECLISTMSGSRSV1,
 )
+
+
+# test imports
+import base
+from test_models_i18n import CurrencyTestCase
 
 
 class SecidTestCase(unittest.TestCase, base.TestAggregate):
@@ -63,7 +63,7 @@ class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "RATING").text = "Aa"
         SubElement(root, "UNITPRICE").text = "94.5"
         SubElement(root, "DTASOF").text = "20130615"
-        currency = test_models_i18n.CurrencyTestCase().root
+        currency = CurrencyTestCase().root
         root.append(currency)
         SubElement(root, "MEMO").text = "Foobar"
         return root
@@ -709,40 +709,6 @@ class Seclistmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(len(root), 2)
         self.assertIsInstance(root[0], SECLIST)
         self.assertIsInstance(root[1], SECLIST)
-
-
-class Seclistmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    @property
-    def root(self):
-        root = Element("SECLISTMSGSETV1")
-        msgsetcore = test_models_common.MsgsetcoreTestCase().root
-        root.append(msgsetcore)
-        SubElement(root, "SECLISTRQDNLD").text = "N"
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SECLISTMSGSETV1)
-        self.assertIsInstance(root.msgsetcore, MSGSETCORE)
-        self.assertEqual(root.seclistrqdnld, False)
-
-
-class SeclistmsgsetTestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    @property
-    def root(self):
-        root = Element("SECLISTMSGSET")
-        seclistmsgsetv1 = Seclistmsgsetv1TestCase().root
-        root.append(seclistmsgsetv1)
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SECLISTMSGSET)
-        self.assertIsInstance(root.seclistmsgsetv1, SECLISTMSGSETV1)
 
 
 if __name__ == "__main__":

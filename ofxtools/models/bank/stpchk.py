@@ -11,8 +11,8 @@ from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, Origcurrency, CURRENCY_
 
 
 __all__ = [
-    "CHKRANGE", "CHKDESC", "STPCHKNUM", "STPCHKRQ", "STPCHKRS",
-    "STPCHKTRNRQ", "STPCHKTRNRS", "STPCHKSYNCRQ", "STPCHKSYNCRS",
+    "CHKRANGE", "CHKDESC", "STPCHKNUM",
+    "STPCHKRQ", "STPCHKRS", "STPCHKTRNRQ", "STPCHKTRNRS",
 ]
 
 
@@ -78,19 +78,3 @@ class STPCHKTRNRS(TrnRs):
     """ OFX section 11.6.1.2 """
 
     stpchkrs = SubAggregate(STPCHKRS)
-
-
-class STPCHKSYNCRQ(SyncRqList):
-    """ OFX section 11.12.1.1 """
-
-    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
-
-    dataTags = ["STPCHKTRNRQ"]
-
-
-class STPCHKSYNCRS(SyncRsList):
-    """ OFX section 11.12.1.2 """
-
-    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
-
-    dataTags = ["STPCHKTRNRS"]

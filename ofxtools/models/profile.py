@@ -1,36 +1,26 @@
 # coding: utf-8
+""" FI Profile - OFX Section 7 """
 # stdlib imports
 from copy import deepcopy
 
 # local imports
-from ofxtools.Types import String, OneOf, DateTime
+from ofxtools.Types import Bool, String, OneOf, Integer, DateTime
 from ofxtools.models.base import Aggregate, SubAggregate, List
-from ofxtools.models.common import MSGSETCORE, TrnRq, TrnRs
-from ofxtools.models.i18n import COUNTRY_CODES
-from ofxtools.models.signon import SIGNONINFOLIST
+from ofxtools.models.common import OFXEXTENSION, TrnRq, TrnRs
+from ofxtools.models.i18n import LANG_CODES, COUNTRY_CODES
 
 
 __all__ = [
-    "PROFMSGSRQV1",
-    "PROFMSGSRSV1",
-    "PROFTRNRQ",
-    "PROFTRNRS",
-    "PROFRQ",
-    "PROFRS",
-    "MSGSETLIST",
-    "PROFMSGSETV1",
-    "PROFMSGSET",
+    "MSGSETLIST", "SIGNONINFOLIST",
+    "PROFRQ", "PROFRS",
+    "PROFTRNRQ", "PROFTRNRS",
+    "PROFMSGSRQV1", "PROFMSGSRSV1",
+    "MSGSETCORE", "PROFMSGSETV1", "PROFMSGSET",
 ]
 
 
-class PROFRQ(Aggregate):
-    """ OFX section 7.1.5 """
-
-    clientrouting = OneOf("NONE", "SERVICE", "MSGSET", required=True)
-    dtprofup = DateTime(required=True)
-
-
 class MSGSETLIST(List):
+    """ OFX section 7.2 """
     dataTags = [
         "SIGNONMSGSET",
         "SIGNUPMSGSET",
@@ -46,6 +36,19 @@ class MSGSETLIST(List):
         "PRESDLVMSGSET",
         "TAX1099MSGSET",
     ]
+
+
+class SIGNONINFOLIST(List):
+    """ OFX section 7.2 """
+
+    dataTags = ["SIGNONINFO"]
+
+
+class PROFRQ(Aggregate):
+    """ OFX section 7.1.5 """
+
+    clientrouting = OneOf("NONE", "SERVICE", "MSGSET", required=True)
+    dtprofup = DateTime(required=True)
 
 
 class PROFRS(Aggregate):
@@ -84,10 +87,12 @@ class PROFRS(Aggregate):
 
 
 class PROFTRNRQ(TrnRq):
+    """ OFX section 7.1.5 """
     profrq = SubAggregate(PROFRQ, required=True)
 
 
 class PROFTRNRS(TrnRs):
+    """ OFX section 7.2 """
     profrs = SubAggregate(PROFRS)
 
     @property
@@ -101,6 +106,36 @@ class PROFMSGSRQV1(List):
 
 class PROFMSGSRSV1(List):
     dataTags = ["PROFTRNRS"]
+
+
+class MSGSETCORE(Aggregate):
+    """ OFX section 7.2.1 """
+
+    ver = Integer(required=True)
+    url = String(255, required=True)
+    ofxsec = OneOf("NONE", "TYPE1", required=True)
+    transpsec = Bool(required=True)
+    signonrealm = String(32, required=True)
+    language = OneOf(*LANG_CODES, required=True)
+    syncmode = OneOf("FULL", "LITE", required=True)
+    refreshsupt = Bool()
+    respfileer = Bool(required=True)
+    spname = String(32)
+    ofxextension = SubAggregate(OFXEXTENSION)
+
+    @staticmethod
+    def groom(elem):
+        """
+        Remove proprietary tags e.g. INTU.XXX
+        """
+        # Keep input free of side effects
+        elem = deepcopy(elem)
+
+        for child in set(elem):
+            if "." in child.tag:
+                elem.remove(child)
+
+        return super(MSGSETCORE, MSGSETCORE).groom(elem)
 
 
 class PROFMSGSETV1(Aggregate):

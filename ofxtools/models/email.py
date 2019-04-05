@@ -9,13 +9,13 @@ from copy import deepcopy
 from ofxtools.Types import String, Decimal, Integer, OneOf, DateTime, Bool
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List
 from ofxtools.models.common import (
-    MSGSETCORE,
     TrnRq,
     TrnRs,
     TranList,
     SyncRqList,
     SyncRsList,
 )
+from ofxtools.models.profile import MSGSETCORE
 
 
 __all__ = [

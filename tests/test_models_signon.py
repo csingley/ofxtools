@@ -1,5 +1,5 @@
 # coding: utf-8
-
+""" Unit tests for models.signon """
 # stdlib imports
 import unittest
 from xml.etree.ElementTree import Element, SubElement
@@ -9,23 +9,19 @@ from copy import deepcopy
 
 # local imports
 from ofxtools.models.base import Aggregate
-from ofxtools.models.common import STATUS, MSGSETCORE
+from ofxtools.models.common import STATUS
+from ofxtools.models.profile import MSGSETCORE
 from ofxtools.models.signon import (
-    FI,
-    SONRQ,
-    SONRS,
-    SIGNONMSGSRQV1,
-    SIGNONMSGSRSV1,
-    SIGNONMSGSETV1,
-    SIGNONMSGSET,
-    SIGNONINFO,
-    SIGNONINFOLIST,
+    FI, SONRQ, SONRS,
+    SIGNONMSGSRQV1, SIGNONMSGSRSV1, SIGNONMSGSETV1,
 )
 from ofxtools.models.i18n import LANG_CODES
 from ofxtools.utils import UTC
 
+
+# test imports
 import base
-import test_models_common
+from test_models_profile import MsgsetcoreTestCase
 
 
 class FiTestCase(unittest.TestCase, base.TestAggregate):
@@ -218,104 +214,13 @@ class Signonmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root.sonrs, SONRS)
 
 
-class SignoninfoTestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    requiredElements = [
-        "SIGNONREALM",
-        "MIN",
-        "MAX",
-        "CHARTYPE",
-        "CASESEN",
-        "SPECIAL",
-        "SPACES",
-        "PINCH",
-    ]
-    # optionalElements = ['CHGPINFIRST', 'USERCRED1LABEL', 'USERCRED2LABEL',
-    # 'CLIENTUIDREQ', 'AUTHTOKENFIRST', 'AUTHTOKENLABEL',
-    # 'AUTHTOKENINFOURL', 'MFACHALLENGESUPT',
-    # 'MFACHALLENGEFIRST', 'ACCESSTOKENREQ', ]
-
-    @property
-    def root(self):
-        root = Element("SIGNONINFO")
-        SubElement(root, "SIGNONREALM").text = "AMERITRADE"
-        SubElement(root, "MIN").text = "4"
-        SubElement(root, "MAX").text = "32"
-        SubElement(root, "CHARTYPE").text = "ALPHAORNUMERIC"
-        SubElement(root, "CASESEN").text = "Y"
-        SubElement(root, "SPECIAL").text = "N"
-        SubElement(root, "SPACES").text = "N"
-        SubElement(root, "PINCH").text = "N"
-        SubElement(root, "CHGPINFIRST").text = "N"
-        # SubElement(root, 'USERCRED1LABEL').text = 'What is your name?'
-        # SubElement(root, 'USERCRED2LABEL').text = 'What is your favorite color?'
-        # SubElement(root, 'CLIENTUIDREQ').text = 'N'
-        # SubElement(root, 'AUTHTOKENFIRST').text = 'Y'
-        # SubElement(root, 'AUTHTOKENLABEL').text = 'Enigma'
-        # SubElement(root, 'AUTHTOKENINFOURL').text = 'http://www.google.com'
-        # SubElement(root, 'MFACHALLENGESUPT').text = 'N'
-        # SubElement(root, 'MFACHALLENGEFIRST').text = 'Y'
-        # SubElement(root, 'ACCESSTOKENREQ').text = 'N'
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SIGNONINFO)
-        self.assertEqual(root.signonrealm, "AMERITRADE")
-        self.assertEqual(root.min, 4)
-        self.assertEqual(root.max, 32)
-        self.assertEqual(root.chartype, "ALPHAORNUMERIC")
-        self.assertEqual(root.casesen, True)
-        self.assertEqual(root.special, False)
-        self.assertEqual(root.spaces, False)
-        self.assertEqual(root.pinch, False)
-        self.assertEqual(root.chgpinfirst, False)
-        # self.assertEqual(root.usercred1label, 'What is your name?')
-        # self.assertEqual(root.usercred2label, 'What is your favorite color?')
-        # self.assertEqual(root.clientuidreq, False)
-        # self.assertEqual(root.authtokenfirst, True)
-        # self.assertEqual(root.authtokenlabel, 'Enigma')
-        # self.assertEqual(root.authtokeninfourl, 'http://www.google.com')
-        # self.assertEqual(root.mfachallengesupt, False)
-        # self.assertEqual(root.mfachallengefirst, True)
-        # self.assertEqual(root.accesstokenreq, False)
-
-    def testOneOf(self):
-        self.oneOfTest(
-            "CHARTYPE",
-            ("ALPHAONLY", "NUMERICONLY", "ALPHAORNUMERIC", "ALPHAANDNUMERIC"),
-        )
-
-
-class SignoninfolistTestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    @property
-    def root(self):
-        root = Element("SIGNONINFOLIST")
-        # for i in range(2):
-        for i in range(1):
-            signoninfo = SignoninfoTestCase().root
-            root.append(signoninfo)
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SIGNONINFOLIST)
-        # self.assertEqual(len(root), 2)
-        self.assertEqual(len(root), 1)
-        for child in root:
-            self.assertIsInstance(child, SIGNONINFO)
-
-
 class Signonmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     @property
     def root(self):
         root = Element("SIGNONMSGSETV1")
-        msgsetcore = test_models_common.MsgsetcoreTestCase().root
+        msgsetcore = MsgsetcoreTestCase().root
         root.append(msgsetcore)
         return root
 
@@ -323,22 +228,6 @@ class Signonmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, SIGNONMSGSETV1)
         self.assertIsInstance(root.msgsetcore, MSGSETCORE)
-
-
-class SignonmsgsetTestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    @property
-    def root(self):
-        root = Element("SIGNONMSGSET")
-        signonmsgsetv1 = Signonmsgsetv1TestCase().root
-        root.append(signonmsgsetv1)
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SIGNONMSGSET)
-        self.assertIsInstance(root.signonmsgsetv1, SIGNONMSGSETV1)
 
 
 if __name__ == "__main__":

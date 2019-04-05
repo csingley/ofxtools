@@ -9,57 +9,33 @@ from copy import deepcopy
 
 # local imports
 from ofxtools.models.base import Aggregate
-from ofxtools.models.common import MSGSETCORE, STATUS, SVCSTATUSES
+from ofxtools.models.common import SVCSTATUSES
 from ofxtools.models.signup import (
-    CLIENTENROLL,
-    WEBENROLL,
-    OTHERENROLL,
-    SIGNUPMSGSETV1,
-    SIGNUPMSGSET,
-    ACCTINFORQ,
-    ACCTINFORS,
-    ACCTINFOTRNRQ,
-    ACCTINFOTRNRS,
-    SIGNUPMSGSRQV1,
-    SIGNUPMSGSRSV1,
-    ACCTINFO,
-    ENROLLRQ,
-    ENROLLRS,
-    ENROLLTRNRQ,
-    ENROLLTRNRS,
-    SVCADD,
-    SVCCHG,
-    SVCDEL,
-    ACCTRQ,
-    ACCTRS,
-    ACCTTRNRQ,
-    ACCTTRNRS,
-    ACCTSYNCRQ,
-    ACCTSYNCRS,
-    CHGUSERINFORQ,
-    CHGUSERINFORS,
-    CHGUSERINFOTRNRQ,
-    CHGUSERINFOTRNRS,
-    CHGUSERINFOSYNCRQ,
-    CHGUSERINFOSYNCRS,
-    SVCS,
+    ACCTINFO, ACCTINFORQ, ACCTINFORS,
+    CLIENTENROLL, WEBENROLL, OTHERENROLL,
+    ENROLLRQ, ENROLLRS, ENROLLTRNRQ, ENROLLTRNRS,
+    SVCADD, SVCCHG, SVCDEL, SVCS,
+    ACCTRQ, ACCTRS,
+    CHGUSERINFORQ, CHGUSERINFORS,
+    SIGNUPMSGSRQV1, SIGNUPMSGSRSV1,
 )
 from ofxtools.models.bank import (
-    BANKACCTFROM,
-    BANKACCTTO,
-    BANKACCTINFO,
-    CCACCTFROM,
-    CCACCTTO,
-    CCACCTINFO,
+    BANKACCTFROM, BANKACCTTO, BANKACCTINFO, CCACCTFROM, CCACCTTO, CCACCTINFO,
 )
 from ofxtools.models.investment import INVACCTFROM, INVACCTTO, INVACCTINFO
 from ofxtools.utils import UTC
 from ofxtools.models.i18n import COUNTRY_CODES
 
+
+# test imports
 import base
-import test_models_common
-import test_models_bank
-import test_models_investment
+from test_models_bank_stmt import (
+    BankacctfromTestCase, BankaccttoTestCase, BankacctinfoTestCase,
+    CcacctfromTestCase, CcaccttoTestCase, CcacctinfoTestCase,
+)
+from test_models_investment import (
+    InvacctfromTestCase, InvaccttoTestCase, InvacctinfoTestCase,
+)
 
 
 class ClientenrollTestCase(unittest.TestCase, base.TestAggregate):
@@ -113,51 +89,6 @@ class OtherenrollTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(instance.message, "Mail me $99.99")
 
 
-class Signupmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    requiredElements = ["MSGSETCORE", "CHGUSERINFO", "AVAILACCTS", "CLIENTACTREQ"]
-
-    @property
-    def root(self):
-        root = Element("SIGNUPMSGSETV1")
-        msgsetcore = test_models_common.MsgsetcoreTestCase().root
-        root.append(msgsetcore)
-        enroll = WebenrollTestCase().root
-        root.append(enroll)
-        SubElement(root, "CHGUSERINFO").text = "N"
-        SubElement(root, "AVAILACCTS").text = "Y"
-        SubElement(root, "CLIENTACTREQ").text = "N"
-        return root
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, SIGNUPMSGSETV1)
-        self.assertIsInstance(instance.msgsetcore, MSGSETCORE)
-        self.assertIsInstance(instance.webenroll, WEBENROLL)
-        self.assertEqual(instance.chguserinfo, False)
-        self.assertEqual(instance.availaccts, True)
-        self.assertEqual(instance.clientactreq, False)
-
-
-class SignupmsgsetTestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    requiredElements = ["SIGNUPMSGSETV1"]
-
-    @property
-    def root(self):
-        root = Element("SIGNUPMSGSET")
-        signup = Signupmsgsetv1TestCase().root
-        root.append(signup)
-        return root
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, SIGNUPMSGSET)
-        self.assertIsInstance(instance.signupmsgsetv1, SIGNUPMSGSETV1)
-
-
 class AcctinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
@@ -168,11 +99,11 @@ class AcctinfoTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("ACCTINFO")
         SubElement(root, "DESC").text = "All accounts"
         SubElement(root, "PHONE").text = "8675309"
-        bankacctinfo = test_models_bank.BankacctinfoTestCase().root
+        bankacctinfo = BankacctinfoTestCase().root
         root.append(bankacctinfo)
-        ccacctinfo = test_models_bank.CcacctinfoTestCase().root
+        ccacctinfo = CcacctinfoTestCase().root
         root.append(ccacctinfo)
-        invacctinfo = test_models_investment.InvacctinfoTestCase().root
+        invacctinfo = InvacctinfoTestCase().root
         root.append(invacctinfo)
         return root
 
@@ -200,7 +131,7 @@ class AcctinfoMalformedTestCase(unittest.TestCase):
 
     def testMultipleBankacctinfo(self):
         root = Element("ACCTINFO")
-        bankacctinfo = test_models_bank.BankacctinfoTestCase().root
+        bankacctinfo = BankacctinfoTestCase().root
         root.append(bankacctinfo)
         root.append(bankacctinfo)
 
@@ -209,7 +140,7 @@ class AcctinfoMalformedTestCase(unittest.TestCase):
 
     def testMultipleCcacctinfo(self):
         root = Element("ACCTINFO")
-        ccacctinfo = test_models_bank.CcacctinfoTestCase().root
+        ccacctinfo = CcacctinfoTestCase().root
         root.append(ccacctinfo)
         root.append(ccacctinfo)
 
@@ -218,7 +149,7 @@ class AcctinfoMalformedTestCase(unittest.TestCase):
 
     def testMultipleInvacctinfo(self):
         root = Element("ACCTINFO")
-        invacctinfo = test_models_investment.InvacctinfoTestCase().root
+        invacctinfo = InvacctinfoTestCase().root
         root.append(invacctinfo)
         root.append(invacctinfo)
 
@@ -359,7 +290,7 @@ class EnrollrqBankacctfromTestCase(EnrollrqTestCase):
     @property
     def root(self):
         r = super().root
-        acctfrom = test_models_bank.BankacctfromTestCase().root
+        acctfrom = BankacctfromTestCase().root
         r.append(acctfrom)
         return r
 
@@ -372,7 +303,7 @@ class EnrollrqCcacctfromTestCase(EnrollrqTestCase):
     @property
     def root(self):
         r = super().root
-        acctfrom = test_models_bank.CcacctfromTestCase().root
+        acctfrom = CcacctfromTestCase().root
         r.append(acctfrom)
         return r
 
@@ -385,7 +316,7 @@ class EnrollrqInvacctfromTestCase(EnrollrqTestCase):
     @property
     def root(self):
         r = super().root
-        acctfrom = test_models_investment.InvacctfromTestCase().root
+        acctfrom = InvacctfromTestCase().root
         r.append(acctfrom)
         return r
 
@@ -396,9 +327,9 @@ class EnrollrqInvacctfromTestCase(EnrollrqTestCase):
 
 class EnrollrqMalformedTestCase(EnrollrqTestCase):
     def testMultipleAcctfrom(self):
-        bankacctfrom = test_models_bank.BankacctfromTestCase().root
-        ccacctfrom = test_models_bank.CcacctfromTestCase().root
-        invacctfrom = test_models_investment.InvacctfromTestCase().root
+        bankacctfrom = BankacctfromTestCase().root
+        ccacctfrom = CcacctfromTestCase().root
+        invacctfrom = InvacctfromTestCase().root
 
         root = super().root
         root.append(bankacctfrom)
@@ -533,7 +464,7 @@ class SvcaddBankTestCase(unittest.TestCase):
     @property
     def root(self):
         root = Element("SVCADD")
-        acctto = test_models_bank.BankaccttoTestCase().root
+        acctto = BankaccttoTestCase().root
         root.append(acctto)
         return root
 
@@ -547,7 +478,7 @@ class SvcaddCcTestCase(unittest.TestCase):
     @property
     def root(self):
         root = Element("SVCADD")
-        acctto = test_models_bank.CcaccttoTestCase().root
+        acctto = CcaccttoTestCase().root
         root.append(acctto)
         return root
 
@@ -561,7 +492,7 @@ class SvcaddInvTestCase(unittest.TestCase):
     @property
     def root(self):
         root = Element("SVCADD")
-        acctto = test_models_investment.InvaccttoTestCase().root
+        acctto = InvaccttoTestCase().root
         root.append(acctto)
         return root
 
@@ -578,9 +509,9 @@ class SvcaddMalformedTestCase(unittest.TestCase):
             Aggregate.from_etree(root)
 
     def testMixedXxxacctto(self):
-        bankacctto = test_models_bank.BankaccttoTestCase().root
-        ccacctto = test_models_bank.CcaccttoTestCase().root
-        invacctto = test_models_investment.InvaccttoTestCase().root
+        bankacctto = BankaccttoTestCase().root
+        ccacctto = CcaccttoTestCase().root
+        invacctto = InvaccttoTestCase().root
 
         root = Element("SVCADD")
         root.append(bankacctto)
@@ -605,9 +536,9 @@ class SvcchgBankTestCase(unittest.TestCase):
     @property
     def root(self):
         root = Element("SVCCHG")
-        acctfrom = test_models_bank.BankacctfromTestCase().root
+        acctfrom = BankacctfromTestCase().root
         root.append(acctfrom)
-        acctto = test_models_bank.BankaccttoTestCase().root
+        acctto = BankaccttoTestCase().root
         root.append(acctto)
         return root
 
@@ -622,9 +553,9 @@ class SvcchgCcTestCase(unittest.TestCase):
     @property
     def root(self):
         root = Element("SVCCHG")
-        acctfrom = test_models_bank.CcacctfromTestCase().root
+        acctfrom = CcacctfromTestCase().root
         root.append(acctfrom)
-        acctto = test_models_bank.CcaccttoTestCase().root
+        acctto = CcaccttoTestCase().root
         root.append(acctto)
         return root
 
@@ -639,9 +570,9 @@ class SvcchgInvTestCase(unittest.TestCase):
     @property
     def root(self):
         root = Element("SVCCHG")
-        acctfrom = test_models_investment.InvacctfromTestCase().root
+        acctfrom = InvacctfromTestCase().root
         root.append(acctfrom)
-        acctto = test_models_investment.InvaccttoTestCase().root
+        acctto = InvaccttoTestCase().root
         root.append(acctto)
         return root
 
@@ -659,10 +590,10 @@ class SvcchgMalformedTestCase(unittest.TestCase):
             Aggregate.from_etree(root)
 
     def testMixedXxxacctfrom(self):
-        bankacctfrom = test_models_bank.BankacctfromTestCase().root
-        ccacctfrom = test_models_bank.CcacctfromTestCase().root
-        invacctfrom = test_models_investment.InvacctfromTestCase().root
-        bankacctto = test_models_bank.BankaccttoTestCase().root
+        bankacctfrom = BankacctfromTestCase().root
+        ccacctfrom = CcacctfromTestCase().root
+        invacctfrom = InvacctfromTestCase().root
+        bankacctto = BankaccttoTestCase().root
 
         root = Element("SVCADD")
         root.append(bankacctfrom)
@@ -686,10 +617,10 @@ class SvcchgMalformedTestCase(unittest.TestCase):
             Aggregate.from_etree(root)
 
     def testMixedXxxacctto(self):
-        bankacctfrom = test_models_bank.BankacctfromTestCase().root
-        bankacctto = test_models_bank.BankaccttoTestCase().root
-        ccacctto = test_models_bank.CcaccttoTestCase().root
-        invacctto = test_models_investment.InvaccttoTestCase().root
+        bankacctfrom = BankacctfromTestCase().root
+        bankacctto = BankaccttoTestCase().root
+        ccacctto = CcaccttoTestCase().root
+        invacctto = InvaccttoTestCase().root
 
         root = Element("SVCADD")
         root.append(bankacctfrom)
@@ -717,7 +648,7 @@ class SvcdelBankTestCase(unittest.TestCase):
     @property
     def root(self):
         root = Element("SVCDEL")
-        acctfrom = test_models_bank.BankacctfromTestCase().root
+        acctfrom = BankacctfromTestCase().root
         root.append(acctfrom)
         return root
 
@@ -731,7 +662,7 @@ class SvcdelCcTestCase(unittest.TestCase):
     @property
     def root(self):
         root = Element("SVCDEL")
-        acctfrom = test_models_bank.CcacctfromTestCase().root
+        acctfrom = CcacctfromTestCase().root
         root.append(acctfrom)
         return root
 
@@ -745,7 +676,7 @@ class SvcdelInvTestCase(unittest.TestCase):
     @property
     def root(self):
         root = Element("SVCDEL")
-        acctfrom = test_models_investment.InvacctfromTestCase().root
+        acctfrom = InvacctfromTestCase().root
         root.append(acctfrom)
         return root
 
@@ -762,9 +693,9 @@ class SvcdelMalformedTestCase(unittest.TestCase):
             Aggregate.from_etree(root)
 
     def testMixedXxxacctfrom(self):
-        bankacctfrom = test_models_bank.BankacctfromTestCase().root
-        ccacctfrom = test_models_bank.CcacctfromTestCase().root
-        invacctfrom = test_models_investment.InvacctfromTestCase().root
+        bankacctfrom = BankacctfromTestCase().root
+        ccacctfrom = CcacctfromTestCase().root
+        invacctfrom = InvacctfromTestCase().root
 
         root = Element("SVCDEL")
         root.append(bankacctfrom)

@@ -1,5 +1,5 @@
 # coding: utf-8
-""" Unit tests for models/messages.py """
+""" Unit tests for models.ofx """
 # stdlib imports
 import unittest
 from xml.etree.ElementTree import Element
@@ -7,18 +7,6 @@ from datetime import datetime
 
 
 # local imports
-import base
-from test_models_signon import Signonmsgsrqv1TestCase, Signonmsgsrsv1TestCase
-from test_models_signup import Signupmsgsrqv1TestCase, Signupmsgsrsv1TestCase
-from test_models_bank import (Bankmsgsrqv1TestCase, Bankmsgsrsv1TestCase)
-from test_models_creditcard import Creditcardmsgsrqv1TestCase, Creditcardmsgsrsv1TestCase
-from test_models_interxfer import Interxfermsgsrqv1TestCase, Interxfermsgsrsv1TestCase
-from test_models_wire import Wirexfermsgsrqv1TestCase, Wirexfermsgsrsv1TestCase
-from test_models_email import Emailmsgsrqv1TestCase, Emailmsgsrsv1TestCase
-from test_models_investment import Invstmtmsgsrqv1TestCase, Invstmtmsgsrsv1TestCase
-from test_models_seclist import Seclistmsgsrqv1TestCase, Seclistmsgsrsv1TestCase
-from test_models_profile import Profmsgsrqv1TestCase, Profmsgsrsv1TestCase
-
 from ofxtools.models.base import Aggregate, classproperty
 from ofxtools.models.ofx import OFX
 from ofxtools.models.signon import SIGNONMSGSRSV1, SONRS
@@ -27,8 +15,31 @@ from ofxtools.models.bank import (
 )
 from ofxtools.models.investment import INVSTMTMSGSRSV1, INVSTMTRS
 from ofxtools.models.seclist import SECLISTMSGSRSV1
-
 from ofxtools.utils import UTC
+
+
+# test imports
+import base
+from test_models_signon import (
+    Signonmsgsrqv1TestCase, Signonmsgsrsv1TestCase,
+)
+from test_models_signup import (
+    Signupmsgsrqv1TestCase, Signupmsgsrsv1TestCase,
+)
+from test_models_profile import (
+    Bankmsgsrqv1TestCase, Bankmsgsrsv1TestCase,
+    Creditcardmsgsrqv1TestCase, Creditcardmsgsrsv1TestCase,
+    Interxfermsgsrqv1TestCase, Interxfermsgsrsv1TestCase,
+    Wirexfermsgsrqv1TestCase, Wirexfermsgsrsv1TestCase,
+    Profmsgsrqv1TestCase, Profmsgsrsv1TestCase,
+    Emailmsgsrqv1TestCase, Emailmsgsrsv1TestCase,
+)
+from test_models_investment import (
+    Invstmtmsgsrqv1TestCase, Invstmtmsgsrsv1TestCase,
+)
+from test_models_seclist import (
+    Seclistmsgsrqv1TestCase, Seclistmsgsrsv1TestCase,
+)
 
 
 class OfxTestCase(unittest.TestCase, base.TestAggregate):
@@ -152,10 +163,10 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
         #  root = Element("OFX")
         #  for msg in (
             #  test_models_signon.Signonmsgsrsv1TestCase,
-            #  test_models_bank.Bankmsgsrsv1TestCase,
-            #  test_models_creditcard.Creditcardmsgsrsv1TestCase,
-            #  test_models_investment.Invstmtmsgsrsv1TestCase,
-            #  test_models_seclist.Seclistmsgsrsv1TestCase,
+            #  Bankmsgsrsv1TestCase,
+            #  Creditcardmsgsrsv1TestCase,
+            #  Invstmtmsgsrsv1TestCase,
+            #  Seclistmsgsrsv1TestCase,
         #  ):
             #  root.append(msg().root)
         #  return root

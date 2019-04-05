@@ -7,12 +7,12 @@ from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List
 from ofxtools.models.common import (
     STATUS,
     OFXEXTENSION,
-    MSGSETCORE,
     SVCSTATUSES,
     TrnRq,
     TrnRs,
     TranList,
 )
+from ofxtools.models.profile import MSGSETCORE
 from ofxtools.models.bank import STMTTRN, INCTRAN, BALLIST, INV401KSOURCES
 from ofxtools.models.seclist import SECID
 from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, Origcurrency, CURRENCY_CODES

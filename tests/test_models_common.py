@@ -1,32 +1,27 @@
 # coding: utf-8
-""" Unit tests for models/common.py """
+""" Unit tests for models.common """
 # stdlib imports
 import unittest
 from datetime import datetime
 from decimal import Decimal
 
-#  from xml.etree.ElementTree import Element, SubElement
 import xml.etree.ElementTree as ET
 
 
 # local imports
-import base
-import test_models_i18n
-from test_models_base import TESTAGGREGATE, TESTSUBAGGREGATE, TESTLIST
-
+from ofxtools.Types import DateTime
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import (
-    STATUS,
-    BAL,
-    CURRENCY,
-    OFXELEMENT,
-    OFXEXTENSION,
-    MSGSETCORE,
-    TranList,
+    BAL, OFXELEMENT, OFXEXTENSION, TranList,
 )
-from ofxtools.models.i18n import CURRENCY_CODES, LANG_CODES
+from ofxtools.models.i18n import CURRENCY, CURRENCY_CODES
 from ofxtools.utils import UTC
-from ofxtools.Types import DateTime
+
+
+# test imports
+import base
+from test_models_i18n import CurrencyTestCase
+from test_models_base import TESTAGGREGATE, TESTSUBAGGREGATE
 
 
 class TESTTRANLIST(TranList):
@@ -52,7 +47,7 @@ class BalTestCase(unittest.TestCase, base.TestAggregate):
         ET.SubElement(root, "BALTYPE").text = "DOLLAR"
         ET.SubElement(root, "VALUE").text = "111.22"
         ET.SubElement(root, "DTASOF").text = "20010630"
-        currency = test_models_i18n.CurrencyTestCase().root
+        currency = CurrencyTestCase().root
         root.append(currency)
         return root
 
@@ -119,60 +114,6 @@ class OfxextensionTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(len(root), 2)
         self.assertIsInstance(root[0], OFXELEMENT)
         self.assertIsInstance(root[1], OFXELEMENT)
-
-
-class MsgsetcoreTestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    requiredElements = [
-        "VER",
-        "URL",
-        "OFXSEC",
-        "TRANSPSEC",
-        "SIGNONREALM",
-        "LANGUAGE",
-        "SYNCMODE",
-        "RESPFILEER",
-    ]
-    # optionalElements = ['REFRESHSUPT', 'SPNAME', 'OFXEXTENSION']
-
-    @property
-    def root(self):
-        root = ET.Element("MSGSETCORE")
-        ET.SubElement(root, "VER").text = "1"
-        ET.SubElement(root, "URL").text = "https://ofxs.ameritrade.com/cgi-bin/apps/OFX"
-        ET.SubElement(root, "OFXSEC").text = "NONE"
-        ET.SubElement(root, "TRANSPSEC").text = "Y"
-        ET.SubElement(root, "SIGNONREALM").text = "AMERITRADE"
-        ET.SubElement(root, "LANGUAGE").text = "ENG"
-        ET.SubElement(root, "SYNCMODE").text = "FULL"
-        ET.SubElement(root, "REFRESHSUPT").text = "N"
-        ET.SubElement(root, "RESPFILEER").text = "N"
-        ET.SubElement(root, "INTU.TIMEOUT").text = "360"
-        ET.SubElement(root, "SPNAME").text = "Dewey Cheatham & Howe"
-        ofxextension = OfxextensionTestCase().root
-        root.append(ofxextension)
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, MSGSETCORE)
-        self.assertEqual(root.ver, 1)
-        self.assertEqual(root.url, "https://ofxs.ameritrade.com/cgi-bin/apps/OFX")
-        self.assertEqual(root.ofxsec, "NONE")
-        self.assertEqual(root.transpsec, True)
-        self.assertEqual(root.signonrealm, "AMERITRADE")
-        self.assertEqual(root.language, "ENG")
-        self.assertEqual(root.syncmode, "FULL")
-        self.assertEqual(root.refreshsupt, False)
-        self.assertEqual(root.respfileer, False)
-        self.assertEqual(root.spname, "Dewey Cheatham & Howe")
-        self.assertIsInstance(root.ofxextension, OFXEXTENSION)
-
-    def testOneOf(self):
-        self.oneOfTest("OFXSEC", ("NONE", "TYPE1"))
-        self.oneOfTest("LANGUAGE", LANG_CODES)
-        self.oneOfTest("SYNCMODE", ("FULL", "LITE"))
 
 
 class TranListTestCase(unittest.TestCase):

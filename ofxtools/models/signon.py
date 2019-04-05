@@ -4,8 +4,9 @@ from copy import deepcopy
 
 # local imports
 from ofxtools.Types import String, Integer, OneOf, DateTime, Bool
-from ofxtools.models.base import Aggregate, SubAggregate, List, Unsupported
-from ofxtools.models.common import STATUS, MSGSETCORE
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
+from ofxtools.models.common import STATUS
+from ofxtools.models.profile import MSGSETCORE
 from ofxtools.models.i18n import LANG_CODES
 
 
@@ -15,7 +16,6 @@ __all__ = [
     "SONRQ",
     "SONRS",
     "FI",
-    "SIGNONINFOLIST",
     "SIGNONINFO",
     "SIGNONMSGSETV1",
     "SIGNONMSGSET",
@@ -113,12 +113,6 @@ class SIGNONINFO(Aggregate):
     mfachallengesupt = Bool()
     mfachallengefirst = Bool()
     accesstokenreq = Bool()
-
-
-class SIGNONINFOLIST(List):
-    """ OFX section 7.2 """
-
-    dataTags = ["SIGNONINFO"]
 
 
 class SIGNONMSGSRQV1(Aggregate):

@@ -12,7 +12,7 @@ from ofxtools.models.email import MAIL
 
 __all__ = [
     "BANKMAILRQ", "BANKMAILRS", "DEPMAILRS", "CHKMAILRS",
-    "BANKMAILTRNRQ", "BANKMAILTRNRS", "BANKMAILSYNCRQ", "BANKMAILSYNCRS",
+    "BANKMAILTRNRQ", "BANKMAILTRNRS",
 ]
 
 
@@ -71,27 +71,3 @@ class BANKMAILTRNRS(TrnRs):
     depmailrs = SubAggregate(DEPMAILRS)
 
     optionalMutexes = [("bankmailrs", "chkmailrs", "depmailrs")]
-
-
-class BANKMAILSYNCRQ(SyncRqList):
-    """ OFX section 11.12.7.1 """
-
-    incimages = Bool(required=True)
-    usehtml = Bool(required=True)
-    bankacctfrom = SubAggregate(BANKACCTFROM)
-    ccacctfrom = SubAggregate(CCACCTFROM)
-
-    metadataTags = SyncRqList.metadataTags + ["INCIMAGES", "USEHTML", "BANKACCTFROM", "CCACCTFROM"]
-    dataTags = ["BANKMAILTRNRQ"]
-    requiredMutexes = SyncRqList.requiredMutexes + [("bankacctfrom", "ccacctfrom")]
-
-
-class BANKMAILSYNCRS(SyncRsList):
-    """ OFX section 11.12.7.2 """
-
-    bankacctfrom = SubAggregate(BANKACCTFROM)
-    ccacctfrom = SubAggregate(CCACCTFROM)
-
-    metadataTags = SyncRsList.metadataTags + ["BANKACCTFROM", "CCACCTFROM"]
-    dataTags = ["BANKMAILTRNRS"]
-    requiredMutexes = [("bankacctfrom", "ccacctfrom")]

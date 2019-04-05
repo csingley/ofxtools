@@ -2,7 +2,7 @@
 # local imports
 from ofxtools.Types import Integer, Bool
 from ofxtools.models.base import Aggregate, SubAggregate
-from ofxtools.models.common import MSGSETCORE
+from ofxtools.models.profile import MSGSETCORE
 
 
 __all__ = ["TAX1099MSGSETV1", "TAX1099MSGSET"]
