@@ -15,11 +15,15 @@ import test_models_bank
 
 from ofxtools.models.base import Aggregate, classproperty
 from ofxtools.models.common import MSGSETCORE
-from ofxtools.models.bank import BANKACCTFROM
-from ofxtools.models.wire import (
+from ofxtools.models.bank.stmt import BANKACCTFROM
+from ofxtools.models.bank.wire import (
     EXTBANKDESC, WIREDESTBANK, WIREBENEFICIARY, WIRERQ, WIRERS, WIRECANRQ,
-    WIRECANRS, WIRETRNRQ, WIRETRNRS, WIRESYNCRQ, WIRESYNCRS, WIREXFERMSGSRQV1,
-    WIREXFERMSGSRSV1, WIREXFERMSGSETV1, WIREXFERMSGSET)
+    WIRECANRS, WIRETRNRQ, WIRETRNRS,
+)
+from ofxtools.models.bank.sync import WIRESYNCRQ, WIRESYNCRS
+from ofxtools.models.bank.msgsets import (
+    WIREXFERMSGSRQV1, WIREXFERMSGSRSV1, WIREXFERMSGSETV1, WIREXFERMSGSET,
+)
 from ofxtools.models.i18n import COUNTRY_CODES
 from ofxtools.utils import UTC
 

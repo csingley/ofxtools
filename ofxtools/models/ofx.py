@@ -7,10 +7,12 @@ balances, and securities.
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
 from ofxtools.models.signon import SIGNONMSGSRQV1, SIGNONMSGSRSV1
 from ofxtools.models.signup import SIGNUPMSGSRQV1, SIGNUPMSGSRSV1
-from ofxtools.models.bank import BANKMSGSRQV1, BANKMSGSRSV1
-from ofxtools.models.interxfer import INTERXFERMSGSRQV1, INTERXFERMSGSRSV1
-from ofxtools.models.wire import WIREXFERMSGSRQV1, WIREXFERMSGSRSV1
-from ofxtools.models.creditcard import CREDITCARDMSGSRQV1, CREDITCARDMSGSRSV1
+from ofxtools.models.bank.msgsets import (
+    BANKMSGSRQV1, BANKMSGSRSV1,
+    CREDITCARDMSGSRQV1, CREDITCARDMSGSRSV1,
+    INTERXFERMSGSRQV1, INTERXFERMSGSRSV1,
+    WIREXFERMSGSRQV1, WIREXFERMSGSRSV1,
+)
 from ofxtools.models.investment import INVSTMTMSGSRQV1, INVSTMTMSGSRSV1
 from ofxtools.models.email import EMAILMSGSRQV1, EMAILMSGSRSV1
 from ofxtools.models.seclist import SECLISTMSGSRQV1, SECLISTMSGSRSV1

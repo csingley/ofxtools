@@ -18,7 +18,7 @@ import test_models_i18n
 
 from ofxtools.models.base import Aggregate, classproperty
 from ofxtools.models.common import STATUS, OFXEXTENSION, MSGSETCORE, SVCSTATUSES
-from ofxtools.models.bank import STMTTRN, BALLIST, INV401KSOURCES, TRNTYPES, INCTRAN
+from ofxtools.models.bank.stmt import STMTTRN, BALLIST, INV401KSOURCES, TRNTYPES, INCTRAN
 from ofxtools.models.investment import (
     INVTRAN, INVBUY, INVSELL, SECID, INVBANKTRAN,
     BUYDEBT, BUYMF, BUYOPT, BUYOTHER, BUYSTOCK,

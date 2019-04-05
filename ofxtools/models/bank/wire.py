@@ -1,25 +1,18 @@
 # coding: utf-8
 """
-Data structures for bank wire transfers - OFX Section 11.9
+Wire fund transfers - OFX Section 11.9
 """
 # local imports
-from ofxtools.Types import String, Decimal, OneOf, DateTime, Bool, Time
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List
-from ofxtools.models.common import (
-    MSGSETCORE,
-    TrnRq,
-    TrnRs,
-    SyncRqList,
-    SyncRsList,
-)
-from ofxtools.models.bank import (BANKACCTFROM, BANKACCTTO)
-from ofxtools.models.i18n import (CURRENCY_CODES, COUNTRY_CODES)
+from ofxtools.Types import String, Decimal, OneOf, DateTime
+from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.models.common import TrnRq, TrnRs
+from ofxtools.models.bank.stmt import BANKACCTFROM, BANKACCTTO
+from ofxtools.models.i18n import CURRENCY_CODES, COUNTRY_CODES
 
 __all__ = [
     "WIREBENEFICIARY", "EXTBANKDESC", "WIREDESTBANK",
     "WIRERQ", "WIRERS", "WIRECANRQ", "WIRECANRS",
-    "WIRETRNRQ", "WIRETRNRS", "WIRESYNCRQ", "WIRESYNCRS",
-    "WIREXFERMSGSRQV1", "WIREXFERMSGSRSV1", "WIREXFERMSGSETV1", "WIREXFERMSGSET",
+    "WIRETRNRQ", "WIRETRNRS",
 ]
 
 
@@ -110,49 +103,3 @@ class WIRETRNRS(TrnRs):
     wirecanrs = SubAggregate(WIRECANRS)
 
     optionalMutexes = [("wirers", "wirecanrs")]
-
-
-class WIRESYNCRQ(SyncRqList):
-    """ OFX section 11.12.4.1 """
-
-    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
-    dataTags = ["WIRETRNRQ"]
-
-
-class WIRESYNCRS(SyncRsList):
-    """ OFX section 11.12.4.2 """
-
-    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
-    dataTags = ["WIRETRNRS"]
-
-
-class WIREXFERMSGSRQV1(List):
-    """ OFX section 11.13.1.4.1 """
-
-    dataTags = ["WIRETRNRQ", "WIRESYNCRQ"]
-
-
-class WIREXFERMSGSRSV1(List):
-    """ OFX section 11.13.1.4.2 """
-
-    dataTags = ["WIRETRNRS", "WIRESYNCRS"]
-
-
-class WIREXFERMSGSETV1(Aggregate):
-    """ OFX section 11.13.5 """
-
-    msgsetcore = SubAggregate(MSGSETCORE, required=True)
-    # FIXME
-    # Need to define an Aggregate subclass that support multiple repeated
-    # Elements (not just SubAggregates, like List) for PROCDAYSOFF.
-    procdaysoff = Unsupported()
-    procendtm = Time(required=True)
-    cansched = Bool(required=True)
-    domxferfee = Decimal(required=True)
-    intlxferfee = Decimal(required=True)
-
-
-class WIREXFERMSGSET(Aggregate):
-    """ OFX section 11.13.5 """
-
-    wirexfermsgsetv1 = SubAggregate(WIREXFERMSGSETV1, required=True)

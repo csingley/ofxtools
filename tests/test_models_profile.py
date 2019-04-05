@@ -33,8 +33,7 @@ from ofxtools.models.profile import (
 )
 from ofxtools.models.signon import SIGNONMSGSET, SIGNONINFOLIST
 from ofxtools.models.signup import SIGNUPMSGSET
-from ofxtools.models.bank import BANKMSGSET
-from ofxtools.models.creditcard import CREDITCARDMSGSET
+from ofxtools.models.bank import (BANKMSGSET, CREDITCARDMSGSET)
 from ofxtools.models.investment import INVSTMTMSGSET
 from ofxtools.models.seclist import SECLISTMSGSET
 from ofxtools.models.tax1099 import TAX1099MSGSET

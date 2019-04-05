@@ -57,23 +57,15 @@ from ofxtools.models.ofx import OFX
 from ofxtools.models import ACCTINFORQ, ACCTINFOTRNRQ, SIGNUPMSGSRQV1
 from ofxtools.models.profile import PROFRQ, PROFTRNRQ, PROFMSGSRQV1
 from ofxtools.models.signon import SIGNONMSGSRQV1, SONRQ, FI
-from ofxtools.models.bank import (
-    BANKMSGSRQV1,
-    STMTTRNRQ,
-    STMTRQ,
-    STMTENDTRNRQ,
-    STMTENDRQ,
-    BANKACCTFROM,
-    CCACCTFROM,
-    INCTRAN,
+from ofxtools.models.bank.stmt import (
+    BANKACCTFROM, CCACCTFROM, INCTRAN,
+    STMTRQ, STMTTRNRQ,
+    CCSTMTRQ, CCSTMTTRNRQ,
 )
-from ofxtools.models.creditcard import (
-    CREDITCARDMSGSRQV1,
-    CCSTMTTRNRQ,
-    CCSTMTRQ,
-    CCSTMTENDTRNRQ,
-    CCSTMTENDRQ,
+from ofxtools.models.bank.stmtend import (
+    STMTENDRQ, STMTENDTRNRQ, CCSTMTENDRQ, CCSTMTENDTRNRQ,
 )
+from ofxtools.models.bank.msgsets import BANKMSGSRQV1, CREDITCARDMSGSRQV1
 from ofxtools.models.investment import (
     INVSTMTMSGSRQV1,
     INVSTMTTRNRQ,

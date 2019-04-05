@@ -5,9 +5,6 @@ from .profile import *
 from .signup import *
 from .signon import *
 from .bank import *
-from .interxfer import *
-from .wire import *
-from .creditcard import *
 from .email import *
 from .investment import *
 from .seclist import *

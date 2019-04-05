@@ -23,8 +23,6 @@ from ofxtools.models.bank import (
     BANKTRANLIST,
     STMTRS,
     INCTRAN,
-)
-from ofxtools.models.creditcard import (
     CCSTMTRQ,
     CCSTMTRS,
     CCSTMTTRNRQ,

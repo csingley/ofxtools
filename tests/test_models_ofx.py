@@ -10,10 +10,10 @@ from datetime import datetime
 import base
 from test_models_signon import Signonmsgsrqv1TestCase, Signonmsgsrsv1TestCase
 from test_models_signup import Signupmsgsrqv1TestCase, Signupmsgsrsv1TestCase
-from test_models_bank import Bankmsgsrqv1TestCase, Bankmsgsrsv1TestCase
+from test_models_bank import (Bankmsgsrqv1TestCase, Bankmsgsrsv1TestCase)
+from test_models_creditcard import Creditcardmsgsrqv1TestCase, Creditcardmsgsrsv1TestCase
 from test_models_interxfer import Interxfermsgsrqv1TestCase, Interxfermsgsrsv1TestCase
 from test_models_wire import Wirexfermsgsrqv1TestCase, Wirexfermsgsrsv1TestCase
-from test_models_creditcard import Creditcardmsgsrqv1TestCase, Creditcardmsgsrsv1TestCase
 from test_models_email import Emailmsgsrqv1TestCase, Emailmsgsrsv1TestCase
 from test_models_investment import Invstmtmsgsrqv1TestCase, Invstmtmsgsrsv1TestCase
 from test_models_seclist import Seclistmsgsrqv1TestCase, Seclistmsgsrsv1TestCase
@@ -22,8 +22,9 @@ from test_models_profile import Profmsgsrqv1TestCase, Profmsgsrsv1TestCase
 from ofxtools.models.base import Aggregate, classproperty
 from ofxtools.models.ofx import OFX
 from ofxtools.models.signon import SIGNONMSGSRSV1, SONRS
-from ofxtools.models.bank import BANKMSGSRSV1, STMTRS
-from ofxtools.models.creditcard import CREDITCARDMSGSRSV1, CCSTMTRS, CCSTMTENDRS
+from ofxtools.models.bank import (
+    BANKMSGSRSV1, STMTRS, CREDITCARDMSGSRSV1, CCSTMTRS, CCSTMTENDRS
+)
 from ofxtools.models.investment import INVSTMTMSGSRSV1, INVSTMTRS
 from ofxtools.models.seclist import SECLISTMSGSRSV1
 
