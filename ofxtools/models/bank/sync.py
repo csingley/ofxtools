@@ -9,13 +9,20 @@ from ofxtools.models.wrapperbases import SyncRqList, SyncRsList
 from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM
 
 __all__ = [
-    "STPCHKSYNCRQ", "STPCHKSYNCRS",
-    "INTRASYNCRQ", "INTRASYNCRS",
-    "INTERSYNCRQ", "INTERSYNCRS",
-    "WIRESYNCRQ", "WIRESYNCRS",
-    "RECINTRASYNCRQ", "RECINTRASYNCRS",
-    "RECINTERSYNCRQ", "RECINTERSYNCRS",
-    "BANKMAILSYNCRQ", "BANKMAILSYNCRS",
+    "STPCHKSYNCRQ",
+    "STPCHKSYNCRS",
+    "INTRASYNCRQ",
+    "INTRASYNCRS",
+    "INTERSYNCRQ",
+    "INTERSYNCRS",
+    "WIRESYNCRQ",
+    "WIRESYNCRS",
+    "RECINTRASYNCRQ",
+    "RECINTRASYNCRS",
+    "RECINTERSYNCRQ",
+    "RECINTERSYNCRS",
+    "BANKMAILSYNCRQ",
+    "BANKMAILSYNCRS",
 ]
 
 
@@ -33,6 +40,7 @@ class STPCHKSYNCRS(SyncRsList):
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
 
     dataTags = ["STPCHKTRNRS"]
+
 
 class INTRASYNCRQ(SyncRqList):
     """ OFX section 11.12.2.1 """

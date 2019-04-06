@@ -609,7 +609,11 @@ class RecintersyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
 class BankmailsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     __test__ = True
 
-    requiredElements = base.SyncrqTestCase.requiredElements + ["INCIMAGES", "USEHTML", "BANKACCTFROM"]
+    requiredElements = base.SyncrqTestCase.requiredElements + [
+        "INCIMAGES",
+        "USEHTML",
+        "BANKACCTFROM",
+    ]
 
     @property
     def validSoup(self):

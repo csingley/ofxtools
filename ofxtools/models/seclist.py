@@ -64,7 +64,7 @@ class SECRQ(Aggregate):
     ticker = String(32)
     fiid = String(32)
 
-    requiredMutexes = [('secid', 'ticker', 'fiid')]
+    requiredMutexes = [("secid", "ticker", "fiid")]
 
 
 class SECLISTRQ(List):
@@ -270,6 +270,7 @@ class SECLISTMSGSRQV1(List):
 
 class SECLISTMSGSRSV1(List):
     """ OFX section 13.7.2.2.2 """
+
     # N.B. this part of the spec is unusual in that SECLIST is a direct
     # child of SECLISTMSGSRSV1, unwrapped.  SECLISTRS, wrapped in SECLISTTRNS,
     # is an empty aggregate; including SECLISTTRNRS/SECLISTRS under

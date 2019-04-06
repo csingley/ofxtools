@@ -13,9 +13,16 @@ import itertools
 import base
 from ofxtools.models.base import Aggregate, classproperty
 from ofxtools.models.bank.interxfer import (
-    XFERINFO, XFERPRCSTS,
-    INTERRQ, INTERRS, INTERMODRQ, INTERMODRS, INTERCANRQ, INTERCANRS,
-    INTERTRNRQ, INTERTRNRS,
+    XFERINFO,
+    XFERPRCSTS,
+    INTERRQ,
+    INTERRS,
+    INTERMODRQ,
+    INTERMODRS,
+    INTERCANRQ,
+    INTERCANRS,
+    INTERTRNRQ,
+    INTERTRNRS,
 )
 from ofxtools.models.i18n import CURRENCY_CODES
 
@@ -104,7 +111,7 @@ class InterrsTestCase(unittest.TestCase, base.TestAggregate):
                 Aggregate.from_etree(root)
 
     def testOneOf(self):
-        self.oneOfTest('CURDEF', CURRENCY_CODES)
+        self.oneOfTest("CURDEF", CURRENCY_CODES)
 
 
 class IntermodrqTestCase(unittest.TestCase, base.TestAggregate):

@@ -120,12 +120,18 @@ class OFXClientV1TestCase(unittest.TestCase):
             self.assertIsNone(signon.clientuid)
 
     def testRequestStatementsDryrun(self):
-        with patch.multiple("ofxtools.Client.OFXClient", dtclient=DEFAULT, uuid="DEADBEEF") as mock:
-            mock['dtclient'].return_value = datetime(2017, 4, 1, tzinfo=UTC)
+        with patch.multiple(
+            "ofxtools.Client.OFXClient", dtclient=DEFAULT, uuid="DEADBEEF"
+        ) as mock:
+            mock["dtclient"].return_value = datetime(2017, 4, 1, tzinfo=UTC)
 
-            dryrun = self.client.request_statements(
-                "elmerfudd", "t0ps3kr1t", self.stmtRq0, dryrun=True
-            ).read().decode()
+            dryrun = (
+                self.client.request_statements(
+                    "elmerfudd", "t0ps3kr1t", self.stmtRq0, dryrun=True
+                )
+                .read()
+                .decode()
+            )
             request = (
                 "OFXHEADER:100\r\n"
                 "DATA:OFXSGML\r\n"
@@ -357,8 +363,8 @@ class OFXClientV1TestCase(unittest.TestCase):
             "<ACCTTYPE>SAVINGS</ACCTTYPE>"
             "</BANKACCTFROM>"
             "<INCTRAN>"
-        "<DTSTART>20170101000000.000[0:GMT]</DTSTART>"
-        "<DTEND>20170331000000.000[0:GMT]</DTEND>"
+            "<DTSTART>20170101000000.000[0:GMT]</DTSTART>"
+            "<DTEND>20170331000000.000[0:GMT]</DTEND>"
             "<INCLUDE>Y</INCLUDE>"
             "</INCTRAN>"
             "</STMTRQ>"
@@ -407,7 +413,11 @@ class OFXClientV1TestCase(unittest.TestCase):
 
     def testRequestStatementsPrettyprint(self):
         data = self._testRequest(
-            self.client.request_statements, "elmerfudd", "t0ps3kr1t", self.stmtRq0, prettyprint=True
+            self.client.request_statements,
+            "elmerfudd",
+            "t0ps3kr1t",
+            self.stmtRq0,
+            prettyprint=True,
         )
 
         request = (
@@ -581,7 +591,10 @@ class OFXClientV1TestCase(unittest.TestCase):
     def testRequestEndStatementsBadArgs(self):
         with self.assertRaises(ValueError):
             self._testRequest(
-                self.client.request_end_statements, "elmerfudd", "t0ps3kr1t", self.stmtRq0
+                self.client.request_end_statements,
+                "elmerfudd",
+                "t0ps3kr1t",
+                self.stmtRq0,
             )
 
     def testRequestEndStatementsMultipleMixed(self):
@@ -790,21 +803,24 @@ class UtilitiesTestCase(unittest.TestCase):
         root = self.root
         indent(root)
         result = ET.tostring(root).decode()
-        self.assertEqual(result, ("<ROOT>\n"
-                                  "  <LEVEL1>\n"
-                                  "    <LEVEL2>level2</LEVEL2>\n"
-                                  "  </LEVEL1>\n"
-                                  "  <LEVEL1 />\n"
-                                  "</ROOT>\n"))
+        self.assertEqual(
+            result,
+            (
+                "<ROOT>\n"
+                "  <LEVEL1>\n"
+                "    <LEVEL2>level2</LEVEL2>\n"
+                "  </LEVEL1>\n"
+                "  <LEVEL1 />\n"
+                "</ROOT>\n"
+            ),
+        )
 
     def testTostringUnclosedElements(self):
         result = tostring_unclosed_elements(self.root).decode()
-        self.assertEqual(result, ("<ROOT>"
-                                  "<LEVEL1>"
-                                  "<LEVEL2>level2"
-                                  "</LEVEL1>"
-                                  "<LEVEL1>"
-                                  "</ROOT>"))
+        self.assertEqual(
+            result,
+            ("<ROOT>" "<LEVEL1>" "<LEVEL2>level2" "</LEVEL1>" "<LEVEL1>" "</ROOT>"),
+        )
 
 
 class OFXConfigParserTestCase(unittest.TestCase):
@@ -857,24 +873,33 @@ class CliTestCase(unittest.TestCase):
             dryrun=True,
             user="porkypig",
             clientuid=None,
-            unclosedelements=False)
+            unclosedelements=False,
+        )
 
     def testInitClient(self):
         args = self.args
         client = init_client(args)
         self.assertIsInstance(client, OFXClient)
         self.assertEqual(str(client.version), args.version)
-        for arg in ['url', 'org', 'fid', 'appid', 'appver', 'language',
-                    'bankid', 'brokerid']:
+        for arg in [
+            "url",
+            "org",
+            "fid",
+            "appid",
+            "appver",
+            "language",
+            "bankid",
+            "brokerid",
+        ]:
             self.assertEqual(getattr(client, arg), getattr(args, arg))
 
     def testDoStmt(self):
         args = self.args
         args.dryrun = False
 
-        with patch('getpass.getpass') as fake_getpass:
+        with patch("getpass.getpass") as fake_getpass:
             fake_getpass.return_value = "t0ps3kr1t"
-            with patch('ofxtools.Client.OFXClient.request_statements') as fake_rq_stmt:
+            with patch("ofxtools.Client.OFXClient.request_statements") as fake_rq_stmt:
                 fake_rq_stmt.return_value = BytesIO(b"th-th-th-that's all folks!")
                 output = do_stmt(args)
 
@@ -884,24 +909,105 @@ class CliTestCase(unittest.TestCase):
                 user, password, *stmtrqs = args
                 self.assertEqual(user, "porkypig")
                 self.assertEqual(password, "t0ps3kr1t")
-                self.assertEqual(stmtrqs, [
-                    StmtRq(acctid="123", accttype="CHECKING", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), inctran=True),
-                    StmtRq(acctid="234", accttype="CHECKING", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), inctran=True),
-                    StmtRq(acctid="345", accttype="SAVINGS", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), inctran=True),
-                    StmtRq(acctid="456", accttype="SAVINGS", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), inctran=True),
-                    StmtRq(acctid="567", accttype="MONEYMRKT", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), inctran=True),
-                    StmtRq(acctid="678", accttype="MONEYMRKT", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), inctran=True),
-                    StmtRq(acctid="789", accttype="CREDITLINE", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), inctran=True),
-                    StmtRq(acctid="890", accttype="CREDITLINE", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), inctran=True),
-                    CcStmtRq(acctid="111", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), inctran=True),
-                    CcStmtRq(acctid="222", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), inctran=True),
-                    InvStmtRq(acctid="333", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), dtasof=datetime(2007, 12, 31, tzinfo=UTC), inctran=True, incoo=False, incpos=True, incbal=True),
-                    InvStmtRq(acctid="444", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), dtasof=datetime(2007, 12, 31, tzinfo=UTC), inctran=True, incoo=False, incpos=True, incbal=True),
-                ])
-                self.assertEqual(kwargs, {'clientuid': None, 'dryrun': False, 'close_elements': True})
+                self.assertEqual(
+                    stmtrqs,
+                    [
+                        StmtRq(
+                            acctid="123",
+                            accttype="CHECKING",
+                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                            inctran=True,
+                        ),
+                        StmtRq(
+                            acctid="234",
+                            accttype="CHECKING",
+                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                            inctran=True,
+                        ),
+                        StmtRq(
+                            acctid="345",
+                            accttype="SAVINGS",
+                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                            inctran=True,
+                        ),
+                        StmtRq(
+                            acctid="456",
+                            accttype="SAVINGS",
+                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                            inctran=True,
+                        ),
+                        StmtRq(
+                            acctid="567",
+                            accttype="MONEYMRKT",
+                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                            inctran=True,
+                        ),
+                        StmtRq(
+                            acctid="678",
+                            accttype="MONEYMRKT",
+                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                            inctran=True,
+                        ),
+                        StmtRq(
+                            acctid="789",
+                            accttype="CREDITLINE",
+                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                            inctran=True,
+                        ),
+                        StmtRq(
+                            acctid="890",
+                            accttype="CREDITLINE",
+                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                            inctran=True,
+                        ),
+                        CcStmtRq(
+                            acctid="111",
+                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                            inctran=True,
+                        ),
+                        CcStmtRq(
+                            acctid="222",
+                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                            inctran=True,
+                        ),
+                        InvStmtRq(
+                            acctid="333",
+                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                            dtasof=datetime(2007, 12, 31, tzinfo=UTC),
+                            inctran=True,
+                            incoo=False,
+                            incpos=True,
+                            incbal=True,
+                        ),
+                        InvStmtRq(
+                            acctid="444",
+                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                            dtasof=datetime(2007, 12, 31, tzinfo=UTC),
+                            inctran=True,
+                            incoo=False,
+                            incpos=True,
+                            incbal=True,
+                        ),
+                    ],
+                )
+                self.assertEqual(
+                    kwargs, {"clientuid": None, "dryrun": False, "close_elements": True}
+                )
 
     def testDoStmtDryrun(self):
-        with patch('ofxtools.Client.OFXClient.request_statements') as fake_rq_stmt:
+        with patch("ofxtools.Client.OFXClient.request_statements") as fake_rq_stmt:
             fake_rq_stmt.return_value = BytesIO(b"th-th-th-that's all folks!")
             output = do_stmt(self.args)
 
@@ -911,24 +1017,105 @@ class CliTestCase(unittest.TestCase):
             user, password, *stmtrqs = args
             self.assertEqual(user, "porkypig")
             self.assertEqual(password, "{:0<32}".format("anonymous"))
-            self.assertEqual(stmtrqs, [
-                StmtRq(acctid="123", accttype="CHECKING", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), inctran=True),
-                StmtRq(acctid="234", accttype="CHECKING", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), inctran=True),
-                StmtRq(acctid="345", accttype="SAVINGS", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), inctran=True),
-                StmtRq(acctid="456", accttype="SAVINGS", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), inctran=True),
-                StmtRq(acctid="567", accttype="MONEYMRKT", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), inctran=True),
-                StmtRq(acctid="678", accttype="MONEYMRKT", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), inctran=True),
-                StmtRq(acctid="789", accttype="CREDITLINE", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), inctran=True),
-                StmtRq(acctid="890", accttype="CREDITLINE", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), inctran=True),
-                CcStmtRq(acctid="111", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), inctran=True),
-                CcStmtRq(acctid="222", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), inctran=True),
-                InvStmtRq(acctid="333", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), dtasof=datetime(2007, 12, 31, tzinfo=UTC), inctran=True, incoo=False, incpos=True, incbal=True),
-                InvStmtRq(acctid="444", dtstart=datetime(2007, 1, 1, tzinfo=UTC), dtend=datetime(2007, 12, 31, tzinfo=UTC), dtasof=datetime(2007, 12, 31, tzinfo=UTC), inctran=True, incoo=False, incpos=True, incbal=True),
-            ])
-            self.assertEqual(kwargs, {'clientuid': None, 'dryrun': True, 'close_elements': True})
+            self.assertEqual(
+                stmtrqs,
+                [
+                    StmtRq(
+                        acctid="123",
+                        accttype="CHECKING",
+                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                        inctran=True,
+                    ),
+                    StmtRq(
+                        acctid="234",
+                        accttype="CHECKING",
+                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                        inctran=True,
+                    ),
+                    StmtRq(
+                        acctid="345",
+                        accttype="SAVINGS",
+                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                        inctran=True,
+                    ),
+                    StmtRq(
+                        acctid="456",
+                        accttype="SAVINGS",
+                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                        inctran=True,
+                    ),
+                    StmtRq(
+                        acctid="567",
+                        accttype="MONEYMRKT",
+                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                        inctran=True,
+                    ),
+                    StmtRq(
+                        acctid="678",
+                        accttype="MONEYMRKT",
+                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                        inctran=True,
+                    ),
+                    StmtRq(
+                        acctid="789",
+                        accttype="CREDITLINE",
+                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                        inctran=True,
+                    ),
+                    StmtRq(
+                        acctid="890",
+                        accttype="CREDITLINE",
+                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                        inctran=True,
+                    ),
+                    CcStmtRq(
+                        acctid="111",
+                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                        inctran=True,
+                    ),
+                    CcStmtRq(
+                        acctid="222",
+                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                        inctran=True,
+                    ),
+                    InvStmtRq(
+                        acctid="333",
+                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                        dtasof=datetime(2007, 12, 31, tzinfo=UTC),
+                        inctran=True,
+                        incoo=False,
+                        incpos=True,
+                        incbal=True,
+                    ),
+                    InvStmtRq(
+                        acctid="444",
+                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                        dtasof=datetime(2007, 12, 31, tzinfo=UTC),
+                        inctran=True,
+                        incoo=False,
+                        incpos=True,
+                        incbal=True,
+                    ),
+                ],
+            )
+            self.assertEqual(
+                kwargs, {"clientuid": None, "dryrun": True, "close_elements": True}
+            )
 
     def testDoProfile(self):
-        with patch('ofxtools.Client.OFXClient.request_profile') as fake_rq_prof:
+        with patch("ofxtools.Client.OFXClient.request_profile") as fake_rq_prof:
             fake_rq_prof.return_value = BytesIO(b"th-th-th-that's all folks!")
 
             output = do_profile(self.args)
@@ -937,7 +1124,7 @@ class CliTestCase(unittest.TestCase):
 
             args, kwargs = fake_rq_prof.call_args
             self.assertEqual(len(args), 0)
-            self.assertEqual(kwargs, {'dryrun': True, 'close_elements': True})
+            self.assertEqual(kwargs, {"dryrun": True, "close_elements": True})
 
 
 class MainTestCase(unittest.TestCase):
@@ -961,10 +1148,11 @@ class MainTestCase(unittest.TestCase):
             dryrun=True,
             user=None,
             clientuid=None,
-            unclosedelements=False)
+            unclosedelements=False,
+        )
 
     def testMakeArgparser(self):
-        fi_index = ['bank0', 'broker0']
+        fi_index = ["bank0", "broker0"]
         argparser = make_argparser(fi_index)
         self.assertEqual(len(argparser._actions), 28)
 
@@ -972,15 +1160,32 @@ class MainTestCase(unittest.TestCase):
         config = MagicMock()
         config.fi_index = ["2big2fail"]
         self.assertEqual(config.fi_index, ["2big2fail"])
-        config.items.return_value = [("user", "porkypig"), ("checking", "111"), ("creditcard", "222, 333")]
+        config.items.return_value = [
+            ("user", "porkypig"),
+            ("checking", "111"),
+            ("creditcard", "222, 333"),
+        ]
 
         args = merge_config(config, self.args)
         self.assertIsInstance(args, argparse.Namespace)
         # Only the args specified in config.items() have been updated
         for attr in (
-            "server", "dtstart", "dtend", "dtasof", "savings", "moneymrkt",
-            "creditline", "investment", "inctran", "incoo", "incpos", "incbal",
-            "dryrun", "clientuid", "unclosedelements"):
+            "server",
+            "dtstart",
+            "dtend",
+            "dtasof",
+            "savings",
+            "moneymrkt",
+            "creditline",
+            "investment",
+            "inctran",
+            "incoo",
+            "incpos",
+            "incbal",
+            "dryrun",
+            "clientuid",
+            "unclosedelements",
+        ):
             self.assertEqual(getattr(args, attr), getattr(self.args, attr))
         self.assertEqual(args.user, "porkypig")
         self.assertEqual(args.checking, ["111"])

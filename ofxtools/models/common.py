@@ -12,13 +12,7 @@ from ofxtools.models.base import Aggregate, List, SubAggregate, Unsupported
 from ofxtools.models.i18n import CURRENCY, LANG_CODES
 
 
-__all__ = [
-    "SVCSTATUSES",
-    "STATUS",
-    "BAL",
-    "OFXELEMENT",
-    "OFXEXTENSION",
-]
+__all__ = ["SVCSTATUSES", "STATUS", "BAL", "OFXELEMENT", "OFXEXTENSION"]
 
 
 SVCSTATUSES = ["AVAIL", "PEND", "ACTIVE"]

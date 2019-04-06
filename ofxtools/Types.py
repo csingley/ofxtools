@@ -68,6 +68,7 @@ class Element(InstanceCounterMixin):
     (using the arguments passed to __init__()) and type conversion (using the
     logic implemented in convert()).
     """
+
     type = NotImplemented  # define in subclass
 
     def __init__(self, *args, **kwargs):
@@ -264,8 +265,7 @@ class String(Element):
                 raise ValueError(msg.format(value, self.length))
             else:
                 msg = "Value '{}' exceeds length={}"
-                warnings.warn(msg.format(value, self.length),
-                              category=OFXTypeWarning)
+                warnings.warn(msg.format(value, self.length), category=OFXTypeWarning)
         return value
 
     def _convert_str(self, value):
@@ -358,7 +358,7 @@ class Decimal(Element):
     def _init(self, *args, **kwargs):
         if args:
             scale = args[0]
-            self.scale = decimal.Decimal("0.{}1".format("0"*(scale-1)))
+            self.scale = decimal.Decimal("0.{}1".format("0" * (scale - 1)))
         super()._init(*args[1:], **kwargs)
 
     def _convert_decimal(self, value):
@@ -387,9 +387,11 @@ class Decimal(Element):
 
 class DateTime(Element):
     """ OFX Section 3.2.8.2 """
+
     type = datetime.datetime
     # Valid datetime formats given by OFX spec
-    regex = re.compile(r"""
+    regex = re.compile(
+        r"""
                        ^
                        (?P<year>\d\d\d\d)
                        (?P<month>\d\d)
@@ -409,7 +411,9 @@ class DateTime(Element):
                             )?
                        )?
                        $
-                       """, re.VERBOSE)
+                       """,
+        re.VERBOSE,
+    )
 
     def _convert_default(self, value):
         msg = "'{}' is type '{}'; can't convert to {}"
@@ -430,15 +434,15 @@ class DateTime(Element):
         matchdict = match.groupdict()
 
         gmt_offset = self.parse_gmt_offset(
-            matchdict.pop('gmt_offset_hours'),
-            matchdict.pop('gmt_offset_minutes'),
-            matchdict.pop('tz_name')
+            matchdict.pop("gmt_offset_hours"),
+            matchdict.pop("gmt_offset_minutes"),
+            matchdict.pop("tz_name"),
         )
 
         matchdict = {k: int(v or 0) for k, v in matchdict.items()}
 
         # OFX time formats give milliseconds, but datetime.datetime wants microseconds
-        matchdict['microsecond'] = 1000 * matchdict.pop('millisecond')
+        matchdict["microsecond"] = 1000 * matchdict.pop("millisecond")
 
         value = self.type(**matchdict)
         return self.normalize_to_gmt(value, gmt_offset)
@@ -450,7 +454,16 @@ class DateTime(Element):
         try:
             gmt_offset_hours = int(gmt_offset_hours)
         except ValueError:
-            tz_kludge = {"EST": -5, "EDT": -4, "CST": -6, "CDT": -5, "MST": -7, "MDT": -6, "PST": -8, "PDT": -7}
+            tz_kludge = {
+                "EST": -5,
+                "EDT": -4,
+                "CST": -6,
+                "CDT": -5,
+                "MST": -7,
+                "MDT": -6,
+                "PST": -8,
+                "PDT": -7,
+            }
             try:
                 gmt_offset_hours = tz_kludge[tz_name]
             except KeyError:
@@ -472,9 +485,9 @@ class DateTime(Element):
 
     def _unconvert_datetime(self, value):
         if not hasattr(value, "utcoffset") or value.utcoffset() is None:
-            msg = (
-                "'{}' isn't a timezone-aware instance; can't convert to GMT"
-            ).format(value, self.type)
+            msg = ("'{}' isn't a timezone-aware instance; can't convert to GMT").format(
+                value, self.type
+            )
             raise ValueError(msg)
 
         # Transform to GMT
@@ -486,9 +499,11 @@ class DateTime(Element):
 
 class Time(DateTime):
     """ OFX Section 3.2.8.3 """
+
     type = datetime.time
     # Valid time formats given by OFX spec
-    regex = re.compile(r"""
+    regex = re.compile(
+        r"""
                        ^
                        (?P<hour>\d\d)(?P<minute>\d\d)(?P<second>\d\d)
                        (
@@ -503,14 +518,22 @@ class Time(DateTime):
                             )?
                        )?
                        $
-                       """, re.VERBOSE)
+                       """,
+        re.VERBOSE,
+    )
 
     def normalize_to_gmt(self, value, gmt_offset):
         # Adjust timezone to GMT/UTC
         # Can't directly add datetime.time and datetime.timedelta
         dt = datetime.datetime(
-            1999, 6, 8, value.hour, value.minute, value.second,
-            microsecond=value.microsecond)
+            1999,
+            6,
+            8,
+            value.hour,
+            value.minute,
+            value.second,
+            microsecond=value.microsecond,
+        )
         return (dt - gmt_offset).time().replace(tzinfo=UTC)
 
     def _convert_time(self, value):
@@ -531,8 +554,14 @@ class Time(DateTime):
 
         # Transform to GMT
         dt = datetime.datetime(
-            1999, 6, 8, value.hour, value.minute, value.second,
-            microsecond=value.microsecond)
+            1999,
+            6,
+            8,
+            value.hour,
+            value.minute,
+            value.second,
+            microsecond=value.microsecond,
+        )
         dt -= value.utcoffset()
         milliseconds = "{0:03d}".format((dt.microsecond + 500) // 1000)
         fmt = "%H%M%S.{}[0:GMT]".format(milliseconds)

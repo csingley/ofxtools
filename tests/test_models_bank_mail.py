@@ -11,6 +11,7 @@ from decimal import Decimal
 
 # local imports
 from ofxtools.models.base import Aggregate, classproperty
+
 #  from ofxtools.models.common import BAL, MSGSETCORE, SVCSTATUSES
 from ofxtools.models.email import MAIL
 from ofxtools.models.bank.stmt import BANKACCTFROM
@@ -20,9 +21,7 @@ from ofxtools.utils import UTC
 
 # test imports
 import base
-from test_models_email import (
-    MailTestCase,
-)
+from test_models_email import MailTestCase
 from test_models_bank_stmt import BankacctfromTestCase, CcacctfromTestCase
 
 

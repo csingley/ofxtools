@@ -74,15 +74,25 @@ class AggregateTestCase(unittest.TestCase):
     def testInitWrongType(self):
         subagg = TESTSUBAGGREGATE(data="bar")
         with self.assertRaises(ValueError):
-            TESTAGGREGATE(metadata=subagg, testsubaggregate=subagg, req00=True, req11=False)
+            TESTAGGREGATE(
+                metadata=subagg, testsubaggregate=subagg, req00=True, req11=False
+            )
         with self.assertRaises(ValueError):
-            TESTAGGREGATE(metadata="foo", testsubaggregate="foo", req00=True, req11=False)
+            TESTAGGREGATE(
+                metadata="foo", testsubaggregate="foo", req00=True, req11=False
+            )
 
     def testInitWithTooManyArgs(self):
         # Pass extra args not in TESTAGGREGATE.spec
         subagg = TESTSUBAGGREGATE(data="bar")
         with self.assertRaises(ValueError):
-            TESTAGGREGATE(metadata="foo", testsubaggregate=subagg, req00=True, req11=False, bogus=None)
+            TESTAGGREGATE(
+                metadata="foo",
+                testsubaggregate=subagg,
+                req00=True,
+                req11=False,
+                bogus=None,
+            )
 
     def testValidateKwargs(self):
         # optionalMutexes - either is OK, but both is not OK
@@ -430,7 +440,10 @@ class AggregateTestCase(unittest.TestCase):
 
     def testRepr(self):
         rep = repr(self.instance_with_subagg)
-        self.assertEqual(rep, "<TESTAGGREGATE(metadata='foo', req00=True, req11=False, testsubaggregate=<TESTSUBAGGREGATE(data='bar')>)>")
+        self.assertEqual(
+            rep,
+            "<TESTAGGREGATE(metadata='foo', req00=True, req11=False, testsubaggregate=<TESTSUBAGGREGATE(data='bar')>)>",
+        )
 
     def testGetattr(self):
         pass

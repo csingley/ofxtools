@@ -10,8 +10,7 @@ from copy import deepcopy
 
 # local imports
 from ofxtools.models.base import Aggregate
-from ofxtools.models.email import (MAIL, MAILRQ, MAILRS,
-                                   GETMIMERQ, GETMIMERS)
+from ofxtools.models.email import MAIL, MAILRQ, MAILRS, GETMIMERQ, GETMIMERS
 from ofxtools.utils import UTC
 
 
@@ -22,7 +21,16 @@ import base
 class MailTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ["USERID", "DTCREATED", "FROM", "TO", "SUBJECT", "MSGBODY", "INCIMAGES", "USEHTML"]
+    requiredElements = [
+        "USERID",
+        "DTCREATED",
+        "FROM",
+        "TO",
+        "SUBJECT",
+        "MSGBODY",
+        "INCIMAGES",
+        "USEHTML",
+    ]
 
     @property
     def root(self):
@@ -52,10 +60,16 @@ class MailTestCase(unittest.TestCase, base.TestAggregate):
 
     def testToEtree(self):
         # "frm" gets translated back to FROM in etree
-        root = MAIL(userid="somebody", dtcreated=datetime(1999, 9, 9, 11, tzinfo=UTC),
-                    frm="rolltide420@yahoo.com", to="support@ubs.com",
-                    subject="I've got a problem", msgbody="All my money is gone",
-                    incimages=False, usehtml=False)
+        root = MAIL(
+            userid="somebody",
+            dtcreated=datetime(1999, 9, 9, 11, tzinfo=UTC),
+            frm="rolltide420@yahoo.com",
+            to="support@ubs.com",
+            subject="I've got a problem",
+            msgbody="All my money is gone",
+            incimages=False,
+            usehtml=False,
+        )
         root = root.to_etree()
         #  frm = root.find("./FROM")
         #  self.assertIsNotNone(frm)
@@ -64,16 +78,21 @@ class MailTestCase(unittest.TestCase, base.TestAggregate):
         #  self.assertIsNone(frm)
         ofx = ET.tostring(root).decode()
         self.maxDiff = None
-        self.assertEqual(ofx, ("<MAIL>"
-                               "<USERID>somebody</USERID>"
-                               "<DTCREATED>19990909110000.000[0:GMT]</DTCREATED>"
-                               "<FROM>rolltide420@yahoo.com</FROM>"
-                               "<TO>support@ubs.com</TO>"
-                               "<SUBJECT>I've got a problem</SUBJECT>"
-                               "<MSGBODY>All my money is gone</MSGBODY>"
-                               "<INCIMAGES>N</INCIMAGES>"
-                               "<USEHTML>N</USEHTML>"
-                               "</MAIL>"))
+        self.assertEqual(
+            ofx,
+            (
+                "<MAIL>"
+                "<USERID>somebody</USERID>"
+                "<DTCREATED>19990909110000.000[0:GMT]</DTCREATED>"
+                "<FROM>rolltide420@yahoo.com</FROM>"
+                "<TO>support@ubs.com</TO>"
+                "<SUBJECT>I've got a problem</SUBJECT>"
+                "<MSGBODY>All my money is gone</MSGBODY>"
+                "<INCIMAGES>N</INCIMAGES>"
+                "<USEHTML>N</USEHTML>"
+                "</MAIL>"
+            ),
+        )
 
 
 class MailrqTestCase(unittest.TestCase, base.TestAggregate):

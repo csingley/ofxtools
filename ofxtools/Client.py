@@ -58,12 +58,19 @@ from ofxtools.models import ACCTINFORQ, ACCTINFOTRNRQ, SIGNUPMSGSRQV1
 from ofxtools.models.profile import PROFRQ, PROFTRNRQ, PROFMSGSRQV1
 from ofxtools.models.signon import SIGNONMSGSRQV1, SONRQ, FI
 from ofxtools.models.bank.stmt import (
-    BANKACCTFROM, CCACCTFROM, INCTRAN,
-    STMTRQ, STMTTRNRQ,
-    CCSTMTRQ, CCSTMTTRNRQ,
+    BANKACCTFROM,
+    CCACCTFROM,
+    INCTRAN,
+    STMTRQ,
+    STMTTRNRQ,
+    CCSTMTRQ,
+    CCSTMTTRNRQ,
 )
 from ofxtools.models.bank.stmtend import (
-    STMTENDRQ, STMTENDTRNRQ, CCSTMTENDRQ, CCSTMTENDTRNRQ,
+    STMTENDRQ,
+    STMTENDTRNRQ,
+    CCSTMTENDRQ,
+    CCSTMTENDTRNRQ,
 )
 from ofxtools.models.bank.msgsets import BANKMSGSRQV1, CREDITCARDMSGSRQV1
 from ofxtools.models.investment import (
@@ -117,8 +124,18 @@ class OFXClient:
     bankid = None
     brokerid = None
 
-    def __init__(self, url, org=None, fid=None, version=None, appid=None,
-                 appver=None, language=None, bankid=None, brokerid=None):
+    def __init__(
+        self,
+        url,
+        org=None,
+        fid=None,
+        version=None,
+        appid=None,
+        appver=None,
+        language=None,
+        bankid=None,
+        brokerid=None,
+    ):
         self.url = url
         self.org = org
         self.fid = fid
@@ -162,8 +179,16 @@ class OFXClient:
         """
         return datetime.datetime.now(UTC)
 
-    def request_statements(self, user, password, *requests, clientuid=None,
-                           dryrun=False, prettyprint=False, close_elements=True):
+    def request_statements(
+        self,
+        user,
+        password,
+        *requests,
+        clientuid=None,
+        dryrun=False,
+        prettyprint=False,
+        close_elements=True
+    ):
         """
         Package and send OFX statement requests (STMTRQ/CCSTMTRQ/INVSTMTRQ).
 
@@ -207,8 +232,16 @@ class OFXClient:
             ofx, dryrun=dryrun, prettyprint=prettyprint, close_elements=close_elements
         )
 
-    def request_end_statements(self, user, password, *requests, clientuid=None,
-                               dryrun=False, prettyprint=False, close_elements=True):
+    def request_end_statements(
+        self,
+        user,
+        password,
+        *requests,
+        clientuid=None,
+        dryrun=False,
+        prettyprint=False,
+        close_elements=True
+    ):
         """
         Package and send OFX end statement requests (STMTENDRQ, CCSTMTENDRQ).
 
@@ -245,8 +278,14 @@ class OFXClient:
             ofx, dryrun=dryrun, prettyprint=prettyprint, close_elements=close_elements
         )
 
-    def request_profile(self, user=None, password=None, dryrun=False,
-                        prettyprint=False, close_elements=True):
+    def request_profile(
+        self,
+        user=None,
+        password=None,
+        dryrun=False,
+        prettyprint=False,
+        close_elements=True,
+    ):
         """
         Package and send OFX profile requests (PROFRQ).
         """
@@ -266,8 +305,16 @@ class OFXClient:
             ofx, dryrun=dryrun, prettyprint=prettyprint, close_elements=close_elements
         )
 
-    def request_accounts(self, user, password, dtacctup, clientuid=None,
-                         dryrun=False, prettyprint=False, close_elements=True):
+    def request_accounts(
+        self,
+        user,
+        password,
+        dtacctup,
+        clientuid=None,
+        dryrun=False,
+        prettyprint=False,
+        close_elements=True,
+    ):
         """
         Package and send OFX account info requests (ACCTINFORQ)
         """
@@ -301,7 +348,9 @@ class OFXClient:
         )
         return SIGNONMSGSRQV1(sonrq=sonrq)
 
-    def stmttrnrq(self, bankid, acctid, accttype, dtstart=None, dtend=None, inctran=True):
+    def stmttrnrq(
+        self, bankid, acctid, accttype, dtstart=None, dtend=None, inctran=True
+    ):
         """ Construct STMTRQ; package in STMTTRNRQ """
         acct = BANKACCTFROM(bankid=bankid, acctid=acctid, accttype=accttype)
         inctran = INCTRAN(dtstart=dtstart, dtend=dtend, include=inctran)
@@ -331,8 +380,18 @@ class OFXClient:
         trnuid = self.uuid
         return CCSTMTENDTRNRQ(trnuid=trnuid, ccstmtendrq=stmtrq)
 
-    def invstmttrnrq(self, acctid, brokerid, dtstart=None, dtend=None, inctran=True,
-                     incoo=False, dtasof=None, incpos=True, incbal=True):
+    def invstmttrnrq(
+        self,
+        acctid,
+        brokerid,
+        dtstart=None,
+        dtend=None,
+        inctran=True,
+        incoo=False,
+        dtasof=None,
+        incpos=True,
+        incbal=True,
+    ):
         """ Construct INVSTMTRQ; package in INVSTMTTRNRQ """
         acct = INVACCTFROM(acctid=acctid, brokerid=brokerid)
         if inctran:
@@ -344,8 +403,9 @@ class OFXClient:
         trnuid = self.uuid
         return INVSTMTTRNRQ(trnuid=trnuid, invstmtrq=stmtrq)
 
-    def download(self, ofx, dryrun=False, prettyprint=False,
-                 close_elements=True, verify_ssl=True):
+    def download(
+        self, ofx, dryrun=False, prettyprint=False, close_elements=True, verify_ssl=True
+    ):
         """
         Package complete OFX tree and POST to server.
 
@@ -495,9 +555,14 @@ def do_stmt(args):
     else:
         password = getpass.getpass()
 
-    with client.request_statements(args.user, password, *stmtrqs,
-                                   clientuid=args.clientuid, dryrun=args.dryrun,
-                                   close_elements=not args.unclosedelements) as f:
+    with client.request_statements(
+        args.user,
+        password,
+        *stmtrqs,
+        clientuid=args.clientuid,
+        dryrun=args.dryrun,
+        close_elements=not args.unclosedelements
+    ) as f:
         response = f.read()
 
     print(response.decode())
@@ -551,7 +616,7 @@ def make_argparser(fi_index):
 
     argparser = ArgumentParser(
         description="Download OFX financial data",
-        epilog="FIs configured: {}".format(fi_index)
+        epilog="FIs configured: {}".format(fi_index),
     )
     argparser.add_argument("server", help="OFX server - URL or FI name from config")
     argparser.add_argument(

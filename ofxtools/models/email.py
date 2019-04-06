@@ -8,16 +8,26 @@ from copy import deepcopy
 # local imports
 from ofxtools.Types import String, Decimal, Integer, OneOf, DateTime, Bool
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List
-from ofxtools.models.wrapperbases import (
-    TrnRq, TrnRs, TranList, SyncRqList, SyncRsList,
-)
+from ofxtools.models.wrapperbases import TrnRq, TrnRs, TranList, SyncRqList, SyncRsList
 from ofxtools.models.profile import MSGSETCORE
 
 
 __all__ = [
-    "MAIL", "MAILRQ", "MAILRS", "MAILTRNRQ", "MAILTRNRS", "MAILSYNCRQ",
-    "MAILSYNCRS", "GETMIMERQ", "GETMIMERS", "GETMIMETRNRQ", "GETMIMETRNRS",
-    "EMAILMSGSRQV1", "EMAILMSGSRSV1", "EMAILMSGSETV1", "EMAILMSGSET"
+    "MAIL",
+    "MAILRQ",
+    "MAILRS",
+    "MAILTRNRQ",
+    "MAILTRNRS",
+    "MAILSYNCRQ",
+    "MAILSYNCRS",
+    "GETMIMERQ",
+    "GETMIMERS",
+    "GETMIMETRNRQ",
+    "GETMIMETRNRS",
+    "EMAILMSGSRQV1",
+    "EMAILMSGSRSV1",
+    "EMAILMSGSETV1",
+    "EMAILMSGSET",
 ]
 
 
@@ -128,21 +138,13 @@ class GETMIMETRNRS(TrnRs):
 class EMAILMSGSRQV1(List):
     """ OFX section 9.4.1.1 """
 
-    dataTags = [
-        "MAILTRNRQ",
-        "GETMIMETRNRQ",
-        "MAILSYNCRQ",
-    ]
+    dataTags = ["MAILTRNRQ", "GETMIMETRNRQ", "MAILSYNCRQ"]
 
 
 class EMAILMSGSRSV1(List):
     """ OFX section 9.4.1.2 """
 
-    dataTags = [
-        "MAILTRNRS",
-        "GETMIMETRNRS",
-        "MAILSYNCRS",
-    ]
+    dataTags = ["MAILTRNRS", "GETMIMETRNRS", "MAILSYNCRS"]
 
 
 class EMAILMSGSETV1(Aggregate):

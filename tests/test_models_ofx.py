@@ -11,7 +11,11 @@ from ofxtools.models.base import Aggregate, classproperty
 from ofxtools.models.ofx import OFX
 from ofxtools.models.signon import SIGNONMSGSRSV1, SONRS
 from ofxtools.models.bank import (
-    BANKMSGSRSV1, STMTRS, CREDITCARDMSGSRSV1, CCSTMTRS, CCSTMTENDRS
+    BANKMSGSRSV1,
+    STMTRS,
+    CREDITCARDMSGSRSV1,
+    CCSTMTRS,
+    CCSTMTENDRS,
 )
 from ofxtools.models.investment import INVSTMTMSGSRSV1, INVSTMTRS
 from ofxtools.models.seclist import SECLISTMSGSRSV1
@@ -20,26 +24,24 @@ from ofxtools.utils import UTC
 
 # test imports
 import base
-from test_models_signon import (
-    Signonmsgsrqv1TestCase, Signonmsgsrsv1TestCase,
-)
-from test_models_signup import (
-    Signupmsgsrqv1TestCase, Signupmsgsrsv1TestCase,
-)
+from test_models_signon import Signonmsgsrqv1TestCase, Signonmsgsrsv1TestCase
+from test_models_signup import Signupmsgsrqv1TestCase, Signupmsgsrsv1TestCase
 from test_models_profile import (
-    Bankmsgsrqv1TestCase, Bankmsgsrsv1TestCase,
-    Creditcardmsgsrqv1TestCase, Creditcardmsgsrsv1TestCase,
-    Interxfermsgsrqv1TestCase, Interxfermsgsrsv1TestCase,
-    Wirexfermsgsrqv1TestCase, Wirexfermsgsrsv1TestCase,
-    Profmsgsrqv1TestCase, Profmsgsrsv1TestCase,
-    Emailmsgsrqv1TestCase, Emailmsgsrsv1TestCase,
+    Bankmsgsrqv1TestCase,
+    Bankmsgsrsv1TestCase,
+    Creditcardmsgsrqv1TestCase,
+    Creditcardmsgsrsv1TestCase,
+    Interxfermsgsrqv1TestCase,
+    Interxfermsgsrsv1TestCase,
+    Wirexfermsgsrqv1TestCase,
+    Wirexfermsgsrsv1TestCase,
+    Profmsgsrqv1TestCase,
+    Profmsgsrsv1TestCase,
+    Emailmsgsrqv1TestCase,
+    Emailmsgsrsv1TestCase,
 )
-from test_models_investment import (
-    Invstmtmsgsrqv1TestCase, Invstmtmsgsrsv1TestCase,
-)
-from test_models_seclist import (
-    Seclistmsgsrqv1TestCase, Seclistmsgsrsv1TestCase,
-)
+from test_models_investment import Invstmtmsgsrqv1TestCase, Invstmtmsgsrsv1TestCase
+from test_models_seclist import Seclistmsgsrqv1TestCase, Seclistmsgsrsv1TestCase
 
 
 class OfxTestCase(unittest.TestCase, base.TestAggregate):
@@ -68,20 +70,34 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def validSoup(cls):
         for signonmsgs, optionalmsgs in [
-            (Signonmsgsrqv1TestCase, [
-                Signupmsgsrqv1TestCase, Bankmsgsrqv1TestCase,
-                Creditcardmsgsrqv1TestCase, Invstmtmsgsrqv1TestCase,
-                Interxfermsgsrqv1TestCase, Wirexfermsgsrqv1TestCase,
-                Emailmsgsrqv1TestCase, Seclistmsgsrqv1TestCase,
-                Profmsgsrqv1TestCase
-            ]),
-            (Signonmsgsrsv1TestCase, [
-                Signupmsgsrsv1TestCase, Bankmsgsrsv1TestCase,
-                Creditcardmsgsrsv1TestCase, Invstmtmsgsrsv1TestCase,
-                Interxfermsgsrsv1TestCase, Wirexfermsgsrsv1TestCase,
-                Emailmsgsrsv1TestCase, Seclistmsgsrsv1TestCase,
-                Profmsgsrsv1TestCase
-            ])
+            (
+                Signonmsgsrqv1TestCase,
+                [
+                    Signupmsgsrqv1TestCase,
+                    Bankmsgsrqv1TestCase,
+                    Creditcardmsgsrqv1TestCase,
+                    Invstmtmsgsrqv1TestCase,
+                    Interxfermsgsrqv1TestCase,
+                    Wirexfermsgsrqv1TestCase,
+                    Emailmsgsrqv1TestCase,
+                    Seclistmsgsrqv1TestCase,
+                    Profmsgsrqv1TestCase,
+                ],
+            ),
+            (
+                Signonmsgsrsv1TestCase,
+                [
+                    Signupmsgsrsv1TestCase,
+                    Bankmsgsrsv1TestCase,
+                    Creditcardmsgsrsv1TestCase,
+                    Invstmtmsgsrsv1TestCase,
+                    Interxfermsgsrsv1TestCase,
+                    Wirexfermsgsrsv1TestCase,
+                    Emailmsgsrsv1TestCase,
+                    Seclistmsgsrsv1TestCase,
+                    Profmsgsrsv1TestCase,
+                ],
+            ),
         ]:
             root = Element("OFX")
             root.append(signonmsgs().root)
@@ -95,56 +111,56 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
     def invalidSoup(cls):
         #  requiredMutexes = [("signonmsgsrqv1", "signonmsgsrsv1")]
         #  optionalMutexes = [
-            #  ("signupmsgsrqv1", "signupmsgsrsv1"),
-            #  ("bankmsgsrqv1", "bankmsgsrsv1"),
-            #  ("creditcardmsgsrqv1", "creditcardmsgsrsv1"),
-            #  ("invstmtmsgsrqv1", "invstmtmsgsrsv1"),
-            #  ("interxfermsgsrqv1", "interxfermsgsrsv1"),
-            #  ("wirexfermsgsrqv1", "wirexfermsgsrsv1"),
-            #  #  ("billpaymsgsrqv1", "billpaymsgsrsv1"),
-            #  ("emailmsgsrqv1", "emailmsgsrsv1"),
-            #  ("seclistmsgsrqv1", "seclistmsgsrsv1"),
-            #  #  ("presdirmsgsrqv1", "presdirmsgsrsv1"),
-            #  #  ("presdlmsgsrqv1", "presdlmsgsrsv1"),
-            #  ("profmsgsrqv1", "profmsgsrsv1"),
-            #  #  ("loanmsgsrqv1", "loanmsgsrsv1"),
-            #  #  ("tax1098msgsrqv1", "tax1098msgsrsv1"),
-            #  #  ("tax1099msgsrqv1", "tax1099msgsrsv1"),
-            #  #  ("taxw2msgsrqv1", "taxw2msgsrsv1"),
-            #  #  ("tax1095msgsrqv1", "tax1095msgsrsv1"),
-            #  # Don't allow mixed *RQ and *RS in the same OFX
-            #  ("signupmsgsrqv1", "bankmsgsrsv1"),
-            #  ("signupmsgsrqv1", "creditcardmsgsrsv1"),
-            #  ("signupmsgsrqv1", "invstmtmsgsrsv1"),
-            #  ("signupmsgsrqv1", "interxfermsgsrsv1"),
-            #  ("signupmsgsrqv1", "wirexfermsgsrsv1"),
-            #  ("signupmsgsrqv1", "billpaymsgsrsv1"),
-            #  ("signupmsgsrqv1", "emailmsgsrsv1"),
-            #  ("signupmsgsrqv1", "seclistmsgsrsv1"),
-            #  ("signupmsgsrqv1", "presdirmsgsrsv1"),
-            #  ("signupmsgsrqv1", "presdlmsgsrsv1"),
-            #  ("signupmsgsrqv1", "profmsgsrsv1"),
-            #  ("signupmsgsrqv1", "loanmsgsrsv1"),
-            #  ("signupmsgsrqv1", "tax1098msgsrsv1"),
-            #  ("signupmsgsrqv1", "tax1099msgsrsv1"),
-            #  ("signupmsgsrqv1", "taxw2msgsrsv1"),
-            #  ("signupmsgsrqv1", "tax1095msgsrsv1"),
-            #  ("signupmsgsrsv1", "bankmsgsrqv1"),
-            #  ("signupmsgsrsv1", "creditcardmsgsrqv1"),
-            #  ("signupmsgsrsv1", "invstmtmsgsrqv1"),
-            #  ("signupmsgsrsv1", "interxfermsgsrqv1"),
-            #  ("signupmsgsrsv1", "wirexfermsgsrqv1"),
-            #  ("signupmsgsrsv1", "billpaymsgsrqv1"),
-            #  ("signupmsgsrsv1", "emailmsgsrqv1"),
-            #  ("signupmsgsrsv1", "seclistmsgsrqv1"),
-            #  ("signupmsgsrsv1", "presdirmsgsrqv1"),
-            #  ("signupmsgsrsv1", "presdlmsgsrqv1"),
-            #  ("signupmsgsrsv1", "profmsgsrqv1"),
-            #  ("signupmsgsrsv1", "loanmsgsrqv1"),
-            #  ("signupmsgsrsv1", "tax1098msgsrqv1"),
-            #  ("signupmsgsrsv1", "tax1099msgsrqv1"),
-            #  ("signupmsgsrsv1", "taxw2msgsrqv1"),
-            #  ("signupmsgsrsv1", "tax1095msgsrqv1")
+        #  ("signupmsgsrqv1", "signupmsgsrsv1"),
+        #  ("bankmsgsrqv1", "bankmsgsrsv1"),
+        #  ("creditcardmsgsrqv1", "creditcardmsgsrsv1"),
+        #  ("invstmtmsgsrqv1", "invstmtmsgsrsv1"),
+        #  ("interxfermsgsrqv1", "interxfermsgsrsv1"),
+        #  ("wirexfermsgsrqv1", "wirexfermsgsrsv1"),
+        #  #  ("billpaymsgsrqv1", "billpaymsgsrsv1"),
+        #  ("emailmsgsrqv1", "emailmsgsrsv1"),
+        #  ("seclistmsgsrqv1", "seclistmsgsrsv1"),
+        #  #  ("presdirmsgsrqv1", "presdirmsgsrsv1"),
+        #  #  ("presdlmsgsrqv1", "presdlmsgsrsv1"),
+        #  ("profmsgsrqv1", "profmsgsrsv1"),
+        #  #  ("loanmsgsrqv1", "loanmsgsrsv1"),
+        #  #  ("tax1098msgsrqv1", "tax1098msgsrsv1"),
+        #  #  ("tax1099msgsrqv1", "tax1099msgsrsv1"),
+        #  #  ("taxw2msgsrqv1", "taxw2msgsrsv1"),
+        #  #  ("tax1095msgsrqv1", "tax1095msgsrsv1"),
+        #  # Don't allow mixed *RQ and *RS in the same OFX
+        #  ("signupmsgsrqv1", "bankmsgsrsv1"),
+        #  ("signupmsgsrqv1", "creditcardmsgsrsv1"),
+        #  ("signupmsgsrqv1", "invstmtmsgsrsv1"),
+        #  ("signupmsgsrqv1", "interxfermsgsrsv1"),
+        #  ("signupmsgsrqv1", "wirexfermsgsrsv1"),
+        #  ("signupmsgsrqv1", "billpaymsgsrsv1"),
+        #  ("signupmsgsrqv1", "emailmsgsrsv1"),
+        #  ("signupmsgsrqv1", "seclistmsgsrsv1"),
+        #  ("signupmsgsrqv1", "presdirmsgsrsv1"),
+        #  ("signupmsgsrqv1", "presdlmsgsrsv1"),
+        #  ("signupmsgsrqv1", "profmsgsrsv1"),
+        #  ("signupmsgsrqv1", "loanmsgsrsv1"),
+        #  ("signupmsgsrqv1", "tax1098msgsrsv1"),
+        #  ("signupmsgsrqv1", "tax1099msgsrsv1"),
+        #  ("signupmsgsrqv1", "taxw2msgsrsv1"),
+        #  ("signupmsgsrqv1", "tax1095msgsrsv1"),
+        #  ("signupmsgsrsv1", "bankmsgsrqv1"),
+        #  ("signupmsgsrsv1", "creditcardmsgsrqv1"),
+        #  ("signupmsgsrsv1", "invstmtmsgsrqv1"),
+        #  ("signupmsgsrsv1", "interxfermsgsrqv1"),
+        #  ("signupmsgsrsv1", "wirexfermsgsrqv1"),
+        #  ("signupmsgsrsv1", "billpaymsgsrqv1"),
+        #  ("signupmsgsrsv1", "emailmsgsrqv1"),
+        #  ("signupmsgsrsv1", "seclistmsgsrqv1"),
+        #  ("signupmsgsrsv1", "presdirmsgsrqv1"),
+        #  ("signupmsgsrsv1", "presdlmsgsrqv1"),
+        #  ("signupmsgsrsv1", "profmsgsrqv1"),
+        #  ("signupmsgsrsv1", "loanmsgsrqv1"),
+        #  ("signupmsgsrsv1", "tax1098msgsrqv1"),
+        #  ("signupmsgsrsv1", "tax1099msgsrqv1"),
+        #  ("signupmsgsrsv1", "taxw2msgsrqv1"),
+        #  ("signupmsgsrsv1", "tax1095msgsrqv1")
         #  ]
         # FIXME
         yield from ()
@@ -162,13 +178,13 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
     def root(self):
         #  root = Element("OFX")
         #  for msg in (
-            #  test_models_signon.Signonmsgsrsv1TestCase,
-            #  Bankmsgsrsv1TestCase,
-            #  Creditcardmsgsrsv1TestCase,
-            #  Invstmtmsgsrsv1TestCase,
-            #  Seclistmsgsrsv1TestCase,
+        #  test_models_signon.Signonmsgsrsv1TestCase,
+        #  Bankmsgsrsv1TestCase,
+        #  Creditcardmsgsrsv1TestCase,
+        #  Invstmtmsgsrsv1TestCase,
+        #  Seclistmsgsrsv1TestCase,
         #  ):
-            #  root.append(msg().root)
+        #  root.append(msg().root)
         #  return root
         return list(self.validSoup)[-1]
 

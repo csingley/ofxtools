@@ -11,8 +11,13 @@ from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, Origcurrency, CURRENCY_
 
 
 __all__ = [
-    "CHKRANGE", "CHKDESC", "STPCHKNUM",
-    "STPCHKRQ", "STPCHKRS", "STPCHKTRNRQ", "STPCHKTRNRS",
+    "CHKRANGE",
+    "CHKDESC",
+    "STPCHKNUM",
+    "STPCHKRQ",
+    "STPCHKRS",
+    "STPCHKTRNRQ",
+    "STPCHKTRNRS",
 ]
 
 

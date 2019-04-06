@@ -14,10 +14,20 @@ from ofxtools.models.base import Aggregate, classproperty
 from ofxtools.models.bank.intraxfer import INTRARQ, INTRARS
 from ofxtools.models.bank.interxfer import INTERRQ, INTERRS
 from ofxtools.models.bank.recur import (
-    FREQUENCIES, RECURRINST,
-    RECINTRARQ, RECINTRARS, RECINTERRQ, RECINTERRS,
-    RECINTRAMODRQ, RECINTRAMODRS, RECINTRACANRQ, RECINTRACANRS,
-    RECINTERMODRQ, RECINTERMODRS, RECINTERCANRQ, RECINTERCANRS,
+    FREQUENCIES,
+    RECURRINST,
+    RECINTRARQ,
+    RECINTRARS,
+    RECINTERRQ,
+    RECINTERRS,
+    RECINTRAMODRQ,
+    RECINTRAMODRS,
+    RECINTRACANRQ,
+    RECINTRACANRS,
+    RECINTERMODRQ,
+    RECINTERMODRS,
+    RECINTERCANRQ,
+    RECINTERCANRS,
 )
 
 
@@ -221,7 +231,7 @@ class RecintratrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
 
         # Multiple RECINTRARQ/RECINTRAMODRQ/RECINTRACANRQ
         for Tests in [
-            (RecintrarqTestCase, RecintramodrqTestCase, RecintracanrqTestCase),
+            (RecintrarqTestCase, RecintramodrqTestCase, RecintracanrqTestCase)
         ]:
             root = deepcopy(cls.emptyBase)
             for Test in Tests:
@@ -284,7 +294,7 @@ class RecintratrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
 
         # Multiple RECINTRARS/RECINTRAMODRS/RECINTRACANRS
         for Tests in [
-            (RecintrarsTestCase, RecintramodrsTestCase, RecintracanrsTestCase),
+            (RecintrarsTestCase, RecintramodrsTestCase, RecintracanrsTestCase)
         ]:
             root = deepcopy(cls.emptyBase)
             for Test in Tests:
@@ -472,7 +482,7 @@ class RecintertrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
 
         # Multiple RECINTERRQ/RECINTERMODRQ/RECINTERCANRQ
         for Tests in [
-            (RecinterrqTestCase, RecintermodrqTestCase, RecintercanrqTestCase),
+            (RecinterrqTestCase, RecintermodrqTestCase, RecintercanrqTestCase)
         ]:
             root = deepcopy(cls.emptyBase)
             for Test in Tests:
@@ -535,7 +545,7 @@ class RecintertrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
 
         # Multiple RECINTERRS/RECINTERMODRS/RECINTERCANRS
         for Tests in [
-            (RecinterrsTestCase, RecintermodrsTestCase, RecintercanrsTestCase),
+            (RecinterrsTestCase, RecintermodrsTestCase, RecintercanrsTestCase)
         ]:
             root = deepcopy(cls.emptyBase)
             for Test in Tests:

@@ -182,7 +182,7 @@ class StpchknumTestCase(unittest.TestCase, base.TestAggregate):
                 Aggregate.from_etree(root)
 
     def testOneOf(self):
-        self.oneOfTest('CHKSTATUS', ["0", "1", "100", "101"])
+        self.oneOfTest("CHKSTATUS", ["0", "1", "100", "101"])
 
 
 class StpchkrsTestCase(unittest.TestCase, base.TestAggregate):

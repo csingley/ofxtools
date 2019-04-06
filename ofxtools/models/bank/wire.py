@@ -10,9 +10,15 @@ from ofxtools.models.bank.stmt import BANKACCTFROM, BANKACCTTO
 from ofxtools.models.i18n import CURRENCY_CODES, COUNTRY_CODES
 
 __all__ = [
-    "WIREBENEFICIARY", "EXTBANKDESC", "WIREDESTBANK",
-    "WIRERQ", "WIRERS", "WIRECANRQ", "WIRECANRS",
-    "WIRETRNRQ", "WIRETRNRS",
+    "WIREBENEFICIARY",
+    "EXTBANKDESC",
+    "WIREDESTBANK",
+    "WIRERQ",
+    "WIRERS",
+    "WIRECANRQ",
+    "WIRECANRS",
+    "WIRETRNRQ",
+    "WIRETRNRS",
 ]
 
 

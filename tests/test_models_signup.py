@@ -11,16 +11,34 @@ from copy import deepcopy
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import SVCSTATUSES
 from ofxtools.models.signup import (
-    ACCTINFO, ACCTINFORQ, ACCTINFORS,
-    CLIENTENROLL, WEBENROLL, OTHERENROLL,
-    ENROLLRQ, ENROLLRS, ENROLLTRNRQ, ENROLLTRNRS,
-    SVCADD, SVCCHG, SVCDEL, SVCS,
-    ACCTRQ, ACCTRS,
-    CHGUSERINFORQ, CHGUSERINFORS,
-    SIGNUPMSGSRQV1, SIGNUPMSGSRSV1,
+    ACCTINFO,
+    ACCTINFORQ,
+    ACCTINFORS,
+    CLIENTENROLL,
+    WEBENROLL,
+    OTHERENROLL,
+    ENROLLRQ,
+    ENROLLRS,
+    ENROLLTRNRQ,
+    ENROLLTRNRS,
+    SVCADD,
+    SVCCHG,
+    SVCDEL,
+    SVCS,
+    ACCTRQ,
+    ACCTRS,
+    CHGUSERINFORQ,
+    CHGUSERINFORS,
+    SIGNUPMSGSRQV1,
+    SIGNUPMSGSRSV1,
 )
 from ofxtools.models.bank import (
-    BANKACCTFROM, BANKACCTTO, BANKACCTINFO, CCACCTFROM, CCACCTTO, CCACCTINFO,
+    BANKACCTFROM,
+    BANKACCTTO,
+    BANKACCTINFO,
+    CCACCTFROM,
+    CCACCTTO,
+    CCACCTINFO,
 )
 from ofxtools.models.investment import INVACCTFROM, INVACCTTO, INVACCTINFO
 from ofxtools.utils import UTC
@@ -30,11 +48,17 @@ from ofxtools.models.i18n import COUNTRY_CODES
 # test imports
 import base
 from test_models_bank_stmt import (
-    BankacctfromTestCase, BankaccttoTestCase, BankacctinfoTestCase,
-    CcacctfromTestCase, CcaccttoTestCase, CcacctinfoTestCase,
+    BankacctfromTestCase,
+    BankaccttoTestCase,
+    BankacctinfoTestCase,
+    CcacctfromTestCase,
+    CcaccttoTestCase,
+    CcacctinfoTestCase,
 )
 from test_models_investment import (
-    InvacctfromTestCase, InvaccttoTestCase, InvacctinfoTestCase,
+    InvacctfromTestCase,
+    InvaccttoTestCase,
+    InvacctinfoTestCase,
 )
 
 

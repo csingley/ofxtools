@@ -10,8 +10,14 @@ from ofxtools.models.bank.intraxfer import XFERINFO, XFERPRCSTS
 from ofxtools.models.i18n import CURRENCY_CODES
 
 __all__ = [
-    "INTERRQ", "INTERRS", "INTERMODRQ", "INTERCANRQ", "INTERMODRS", "INTERCANRS",
-    "INTERTRNRQ", "INTERTRNRS",
+    "INTERRQ",
+    "INTERRS",
+    "INTERMODRQ",
+    "INTERCANRQ",
+    "INTERMODRS",
+    "INTERCANRS",
+    "INTERTRNRQ",
+    "INTERTRNRS",
 ]
 
 
@@ -80,7 +86,4 @@ class INTERTRNRS(TrnRs):
     intermodrs = SubAggregate(INTERMODRS)
     intercanrs = SubAggregate(INTERCANRS)
 
-    optionalMutexes = [
-        ("interrs", "intermodrs", "intercanrs")
-    ]
-
+    optionalMutexes = [("interrs", "intermodrs", "intercanrs")]

@@ -14,8 +14,13 @@ from copy import deepcopy
 from ofxtools.models.base import Aggregate
 from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM, REWARDINFO
 from ofxtools.models.bank.stmtend import (
-    CLOSING, LASTPMTINFO, STMTENDRQ, STMTENDRS,
-    CCCLOSING, CCSTMTENDRQ, CCSTMTENDRS,
+    CLOSING,
+    LASTPMTINFO,
+    STMTENDRQ,
+    STMTENDRS,
+    CCCLOSING,
+    CCSTMTENDRQ,
+    CCSTMTENDRS,
 )
 from ofxtools.models.i18n import CURRENCY
 from ofxtools.utils import UTC
@@ -25,7 +30,9 @@ from ofxtools.utils import UTC
 import base
 from test_models_i18n import CurrencyTestCase
 from test_models_bank_stmt import (
-    BankacctfromTestCase, CcacctfromTestCase, RewardinfoTestCase,
+    BankacctfromTestCase,
+    CcacctfromTestCase,
+    RewardinfoTestCase,
 )
 
 

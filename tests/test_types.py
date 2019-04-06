@@ -74,8 +74,15 @@ class BoolTestCase(unittest.TestCase, Base):
             with self.assertRaises(ValueError):
                 t.convert(illegal)
         for illegal in (
-            0, 1, "y", "n", 123, decimal.Decimal("1"),
-            datetime.datetime(1999, 9, 9), datetime.time(12, 12, 12)):
+            0,
+            1,
+            "y",
+            "n",
+            123,
+            decimal.Decimal("1"),
+            datetime.datetime(1999, 9, 9),
+            datetime.time(12, 12, 12),
+        ):
             with self.assertRaises(ValueError):
                 t.convert(illegal)
 
@@ -117,8 +124,12 @@ class StringTestCase(unittest.TestCase, Base):
         self.assertEqual(None, t.convert(""))
         # Don't pass non-string
         for illegal in (
-            True, 123, decimal.Decimal("1"), datetime.datetime(1999, 9, 9),
-            datetime.time(12, 12, 12)):
+            True,
+            123,
+            decimal.Decimal("1"),
+            datetime.datetime(1999, 9, 9),
+            datetime.time(12, 12, 12),
+        ):
             with self.assertRaises(ValueError):
                 t.convert(illegal)
 
@@ -174,8 +185,12 @@ class StringTestCase(unittest.TestCase, Base):
 
         # Don't pass non-string
         for illegal in (
-            True, 123, decimal.Decimal("1"), datetime.datetime(1999, 9, 9),
-            datetime.time(12, 12, 12)):
+            True,
+            123,
+            decimal.Decimal("1"),
+            datetime.datetime(1999, 9, 9),
+            datetime.time(12, 12, 12),
+        ):
             with self.assertRaises(ValueError):
                 t.unconvert(illegal)
 
@@ -339,7 +354,9 @@ class DecimalTestCase(unittest.TestCase, Base):
         t = self.type_(4)
         cmp = decimal.Decimal("100.0000").compare_total(t.convert("100"))
         self.assertEqual(cmp, 0)
-        cmp = decimal.Decimal("100.0000").compare_total(t.convert(decimal.Decimal("100")))
+        cmp = decimal.Decimal("100.0000").compare_total(
+            t.convert(decimal.Decimal("100"))
+        )
         self.assertEqual(cmp, 0)
 
     def test_euro_decimal_separator(self):

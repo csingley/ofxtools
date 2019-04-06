@@ -11,8 +11,12 @@ from ofxtools.models.email import MAIL
 
 
 __all__ = [
-    "BANKMAILRQ", "BANKMAILRS", "DEPMAILRS", "CHKMAILRS",
-    "BANKMAILTRNRQ", "BANKMAILTRNRS",
+    "BANKMAILRQ",
+    "BANKMAILRS",
+    "DEPMAILRS",
+    "CHKMAILRS",
+    "BANKMAILTRNRQ",
+    "BANKMAILTRNRS",
 ]
 
 

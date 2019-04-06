@@ -12,47 +12,92 @@ from copy import deepcopy
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import OFXEXTENSION
 from ofxtools.models.email import (
-    EMAILMSGSRQV1, EMAILMSGSRSV1, EMAILMSGSETV1, EMAILMSGSET,
-    MAILTRNRQ, MAILTRNRS,
-    GETMIMETRNRQ, GETMIMETRNRS,
-    MAILSYNCRQ, MAILSYNCRS,
+    EMAILMSGSRQV1,
+    EMAILMSGSRSV1,
+    EMAILMSGSETV1,
+    EMAILMSGSET,
+    MAILTRNRQ,
+    MAILTRNRS,
+    GETMIMETRNRQ,
+    GETMIMETRNRS,
+    MAILSYNCRQ,
+    MAILSYNCRS,
 )
 from ofxtools.models.profile import (
-    PROFRQ, PROFRS, PROFTRNRQ, PROFTRNRS, MSGSETLIST, SIGNONINFOLIST,
-    PROFMSGSRQV1, PROFMSGSRSV1, PROFMSGSETV1, PROFMSGSET,
+    PROFRQ,
+    PROFRS,
+    PROFTRNRQ,
+    PROFTRNRS,
+    MSGSETLIST,
+    SIGNONINFOLIST,
+    PROFMSGSRQV1,
+    PROFMSGSRSV1,
+    PROFMSGSETV1,
+    PROFMSGSET,
 )
 from ofxtools.models.signon import SIGNONINFO, SIGNONMSGSETV1, SIGNONMSGSET
 from ofxtools.models.signup import SIGNUPMSGSETV1, SIGNUPMSGSET, WEBENROLL
 from ofxtools.models.bank.stmt import (
-    ACCTTYPES, STMTRS, STMTTRNRQ, STMTTRNRS, CCSTMTTRNRQ, CCSTMTTRNRS,
+    ACCTTYPES,
+    STMTRS,
+    STMTTRNRQ,
+    STMTTRNRS,
+    CCSTMTTRNRQ,
+    CCSTMTTRNRS,
 )
 from ofxtools.models.bank.stmtend import (
-    STMTENDTRNRQ, STMTENDTRNRS, CCSTMTENDTRNRQ, CCSTMTENDTRNRS,
+    STMTENDTRNRQ,
+    STMTENDTRNRS,
+    CCSTMTENDTRNRQ,
+    CCSTMTENDTRNRS,
 )
 from ofxtools.models.bank.stpchk import STPCHKTRNRQ, STPCHKTRNRS
 from ofxtools.models.bank.msgsets import (
-    XFERPROF, STPCHKPROF, EMAILPROF,
-    BANKMSGSRQV1, BANKMSGSRSV1, BANKMSGSETV1, BANKMSGSET,
-    CREDITCARDMSGSRQV1, CREDITCARDMSGSRSV1, CREDITCARDMSGSETV1, CREDITCARDMSGSET,
-    INTERXFERMSGSRQV1, INTERXFERMSGSRSV1, INTERXFERMSGSETV1, INTERXFERMSGSET,
-    WIREXFERMSGSRQV1, WIREXFERMSGSRSV1, WIREXFERMSGSETV1, WIREXFERMSGSET,
+    XFERPROF,
+    STPCHKPROF,
+    EMAILPROF,
+    BANKMSGSRQV1,
+    BANKMSGSRSV1,
+    BANKMSGSETV1,
+    BANKMSGSET,
+    CREDITCARDMSGSRQV1,
+    CREDITCARDMSGSRSV1,
+    CREDITCARDMSGSETV1,
+    CREDITCARDMSGSET,
+    INTERXFERMSGSRQV1,
+    INTERXFERMSGSRSV1,
+    INTERXFERMSGSETV1,
+    INTERXFERMSGSET,
+    WIREXFERMSGSRQV1,
+    WIREXFERMSGSRSV1,
+    WIREXFERMSGSETV1,
+    WIREXFERMSGSET,
 )
 from ofxtools.models.bank.intraxfer import INTRATRNRQ, INTRATRNRS
 from ofxtools.models.bank.interxfer import INTERTRNRQ, INTERTRNRS
 from ofxtools.models.bank.wire import WIRETRNRQ, WIRETRNRS
 from ofxtools.models.bank.recur import (
-    RECINTRATRNRQ, RECINTRATRNRS,
-    RECINTERTRNRQ, RECINTERTRNRS,
+    RECINTRATRNRQ,
+    RECINTRATRNRS,
+    RECINTERTRNRQ,
+    RECINTERTRNRS,
 )
 from ofxtools.models.bank.mail import BANKMAILTRNRQ, BANKMAILTRNRS
 from ofxtools.models.bank.sync import (
-    STPCHKSYNCRQ, STPCHKSYNCRS,
-    INTRASYNCRQ, INTRASYNCRS,
-    INTERSYNCRQ, INTERSYNCRS,
-    WIRESYNCRQ, WIRESYNCRS,
-    RECINTRASYNCRQ, RECINTRASYNCRS,
-    RECINTERSYNCRQ, RECINTERSYNCRS,
-    BANKMAILSYNCRQ, BANKMAILSYNCRS,
+    STPCHKSYNCRQ,
+    STPCHKSYNCRS,
+    INTRASYNCRQ,
+    INTRASYNCRS,
+    INTERSYNCRQ,
+    INTERSYNCRS,
+    WIRESYNCRQ,
+    WIRESYNCRS,
+    RECINTRASYNCRQ,
+    RECINTRASYNCRS,
+    RECINTERSYNCRQ,
+    RECINTERSYNCRS,
+    BANKMAILSYNCRQ,
+    BANKMAILSYNCRS,
 )
 from ofxtools.models.investment import INVSTMTMSGSETV1, INVSTMTMSGSET
 from ofxtools.models.seclist import SECLISTMSGSETV1, SECLISTMSGSET
@@ -66,9 +111,12 @@ from ofxtools.utils import UTC
 import base
 from test_models_common import OfxextensionTestCase
 from test_models_email import (
-    MailtrnrqTestCase, MailtrnrsTestCase,
-    GetmimetrnrqTestCase, GetmimetrnrsTestCase,
-    MailsyncrqTestCase, MailsyncrsTestCase,
+    MailtrnrqTestCase,
+    MailtrnrsTestCase,
+    GetmimetrnrqTestCase,
+    GetmimetrnrsTestCase,
+    MailsyncrqTestCase,
+    MailsyncrsTestCase,
 )
 from test_models_bank_stmt import (
     BankacctfromTestCase,
@@ -88,14 +136,25 @@ from test_models_bank_intraxfer import IntratrnrqTestCase, IntratrnrsTestCase
 from test_models_bank_interxfer import IntertrnrqTestCase, IntertrnrsTestCase
 from test_models_bank_wire import WiretrnrqTestCase, WiretrnrsTestCase
 from test_models_bank_recur import (
-    RecintratrnrqTestCase, RecintratrnrsTestCase, RecintertrnrqTestCase, RecintertrnrsTestCase,
+    RecintratrnrqTestCase,
+    RecintratrnrsTestCase,
+    RecintertrnrqTestCase,
+    RecintertrnrsTestCase,
 )
 from test_models_bank_mail import BankmailtrnrqTestCase, BankmailtrnrsTestCase
 from test_models_bank_sync import (
-    StpchksyncrqTestCase, StpchksyncrsTestCase,
-    IntrasyncrqTestCase, IntrasyncrsTestCase, IntersyncrqTestCase, IntersyncrsTestCase,
-    RecintrasyncrqTestCase, RecintrasyncrsTestCase, RecintersyncrqTestCase, RecintersyncrsTestCase,
-    BankmailsyncrqTestCase, BankmailsyncrsTestCase,
+    StpchksyncrqTestCase,
+    StpchksyncrsTestCase,
+    IntrasyncrqTestCase,
+    IntrasyncrsTestCase,
+    IntersyncrqTestCase,
+    IntersyncrsTestCase,
+    RecintrasyncrqTestCase,
+    RecintrasyncrsTestCase,
+    RecintersyncrqTestCase,
+    RecintersyncrsTestCase,
+    BankmailsyncrqTestCase,
+    BankmailsyncrsTestCase,
 )
 from test_models_signup import WebenrollTestCase
 
@@ -492,11 +551,16 @@ class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     def root(self):
         root = Element("BANKMSGSRQV1")
         for rq in (
-            StmttrnrqTestCase, StmtendtrnrqTestCase, StpchktrnrqTestCase,
+            StmttrnrqTestCase,
+            StmtendtrnrqTestCase,
+            StpchktrnrqTestCase,
             IntratrnrqTestCase,
-            RecintratrnrqTestCase, BankmailtrnrqTestCase,
-            StpchksyncrqTestCase, IntrasyncrqTestCase,
-            RecintrasyncrqTestCase, BankmailsyncrqTestCase,
+            RecintratrnrqTestCase,
+            BankmailtrnrqTestCase,
+            StpchksyncrqTestCase,
+            IntrasyncrqTestCase,
+            RecintrasyncrqTestCase,
+            BankmailsyncrqTestCase,
         ):
             for i in range(2):
                 root.append(rq().root)
@@ -549,11 +613,16 @@ class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     def root(self):
         root = Element("BANKMSGSRSV1")
         for rs in (
-            StmttrnrsTestCase, StmtendtrnrsTestCase, StpchktrnrsTestCase,
+            StmttrnrsTestCase,
+            StmtendtrnrsTestCase,
+            StpchktrnrsTestCase,
             IntratrnrsTestCase,
-            RecintratrnrsTestCase, BankmailtrnrsTestCase,
-            StpchksyncrsTestCase, IntrasyncrsTestCase,
-            RecintrasyncrsTestCase, BankmailsyncrsTestCase,
+            RecintratrnrsTestCase,
+            BankmailtrnrsTestCase,
+            StpchksyncrsTestCase,
+            IntrasyncrsTestCase,
+            RecintrasyncrsTestCase,
+            BankmailsyncrsTestCase,
         ):
             for i in range(2):
                 root.append(rs().root)
@@ -748,7 +817,6 @@ class Creditcardmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(len(root), 2)
         self.assertIsInstance(root[0], CCSTMTTRNRQ)
         self.assertIsInstance(root[1], CCSTMTENDTRNRQ)
-
 
 
 class Creditcardmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
@@ -1062,10 +1130,7 @@ class Wirexfermsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     @property
     def root(self):
         root = Element("WIREXFERMSGSRQV1")
-        for rq in (
-            WiretrnrqTestCase,
-            WiresyncrqTestCase,
-        ):
+        for rq in (WiretrnrqTestCase, WiresyncrqTestCase):
             for i in range(2):
                 root.append(rq().root)
         return root
@@ -1097,10 +1162,7 @@ class Wirexfermsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     @property
     def root(self):
         root = Element("WIREXFERMSGSRSV1")
-        for rq in (
-            WiretrnrsTestCase,
-            WiresyncrsTestCase,
-        ):
+        for rq in (WiretrnrsTestCase, WiresyncrsTestCase):
             for i in range(2):
                 root.append(rq().root)
         return root

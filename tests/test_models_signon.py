@@ -12,8 +12,12 @@ from ofxtools.models.base import Aggregate
 from ofxtools.models.common import STATUS
 from ofxtools.models.profile import MSGSETCORE
 from ofxtools.models.signon import (
-    FI, SONRQ, SONRS,
-    SIGNONMSGSRQV1, SIGNONMSGSRSV1, SIGNONMSGSETV1,
+    FI,
+    SONRQ,
+    SONRS,
+    SIGNONMSGSRQV1,
+    SIGNONMSGSRSV1,
+    SIGNONMSGSETV1,
 )
 from ofxtools.models.i18n import LANG_CODES
 from ofxtools.utils import UTC

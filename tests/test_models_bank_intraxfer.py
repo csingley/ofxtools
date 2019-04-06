@@ -13,9 +13,13 @@ import itertools
 # local imports
 from ofxtools.models.base import Aggregate, classproperty
 from ofxtools.models.bank.intraxfer import (
-    XFERINFO, XFERPRCSTS,
-    INTRARQ, INTRAMODRQ, INTRACANRQ,
-    INTRAMODRS, INTRACANRS,
+    XFERINFO,
+    XFERPRCSTS,
+    INTRARQ,
+    INTRAMODRQ,
+    INTRACANRQ,
+    INTRAMODRS,
+    INTRACANRS,
 )
 from ofxtools.models.i18n import CURRENCY_CODES
 from ofxtools.utils import UTC
@@ -24,8 +28,10 @@ from ofxtools.utils import UTC
 # test imports
 import base
 from test_models_bank_stmt import (
-    BankacctfromTestCase, BankaccttoTestCase,
-    CcacctfromTestCase, CcaccttoTestCase,
+    BankacctfromTestCase,
+    BankaccttoTestCase,
+    CcacctfromTestCase,
+    CcaccttoTestCase,
 )
 
 
@@ -45,7 +51,7 @@ class XferinfoTestCase(unittest.TestCase, base.TestAggregate):
 
         for acctfrom in (bankacctfrom, ccacctfrom):
             for acctto in (bankacctto, ccacctto):
-                root = Element('XFERINFO')
+                root = Element("XFERINFO")
                 root.append(acctfrom)
                 root.append(acctto)
                 SubElement(root, "TRNAMT").text = "257.53"
@@ -59,7 +65,7 @@ class XferinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def invalidSoup(cls):
-        root_ = Element('XFERINFO')
+        root_ = Element("XFERINFO")
 
         bankacctfrom = BankacctfromTestCase().root
         bankacctto = BankaccttoTestCase().root
@@ -211,7 +217,7 @@ class IntrarsTestCase(unittest.TestCase, base.TestAggregate):
                 Aggregate.from_etree(root)
 
     def testOneOf(self):
-        self.oneOfTest('CURDEF', CURRENCY_CODES)
+        self.oneOfTest("CURDEF", CURRENCY_CODES)
 
 
 class IntramodrqTestCase(unittest.TestCase, base.TestAggregate):

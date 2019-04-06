@@ -8,31 +8,72 @@ from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List
 from ofxtools.models.common import SVCSTATUSES
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, TranList
 from ofxtools.models.i18n import (
-    CURRENCY, ORIGCURRENCY, Origcurrency, CURRENCY_CODES, COUNTRY_CODES,
+    CURRENCY,
+    ORIGCURRENCY,
+    Origcurrency,
+    CURRENCY_CODES,
+    COUNTRY_CODES,
 )
 from ofxtools.models.payment.payee import PAYEE
 
 
 __all__ = [
-    "INV401KSOURCES", "ACCTTYPES", "TRNTYPES",
-    "BANKACCTFROM", "BANKACCTTO", "BANKACCTINFO",
-    "CCACCTFROM", "CCACCTTO", "CCACCTINFO",
+    "INV401KSOURCES",
+    "ACCTTYPES",
+    "TRNTYPES",
+    "BANKACCTFROM",
+    "BANKACCTTO",
+    "BANKACCTINFO",
+    "CCACCTFROM",
+    "CCACCTTO",
+    "CCACCTINFO",
     "INCTRAN",
-    "LEDGERBAL", "AVAILBAL", "BALLIST",
-    "STMTTRN", "BANKTRANLIST", "STMTRQ", "STMTRS", "STMTTRNRQ", "STMTTRNRS",
-    "REWARDINFO", "CCSTMTRQ", "CCSTMTRS", "CCSTMTTRNRQ", "CCSTMTTRNRS",
+    "LEDGERBAL",
+    "AVAILBAL",
+    "BALLIST",
+    "STMTTRN",
+    "BANKTRANLIST",
+    "STMTRQ",
+    "STMTRS",
+    "STMTTRNRQ",
+    "STMTTRNRS",
+    "REWARDINFO",
+    "CCSTMTRQ",
+    "CCSTMTRS",
+    "CCSTMTTRNRQ",
+    "CCSTMTTRNRS",
 ]
 
 
 # Enums used in aggregate validation
 INV401KSOURCES = (
-    "PRETAX", "AFTERTAX", "MATCH", "PROFITSHARING", "ROLLOVER", "OTHERVEST", "OTHERNONVEST",
+    "PRETAX",
+    "AFTERTAX",
+    "MATCH",
+    "PROFITSHARING",
+    "ROLLOVER",
+    "OTHERVEST",
+    "OTHERNONVEST",
 )
 # OFX section 11.3.1.1
 ACCTTYPES = ("CHECKING", "SAVINGS", "MONEYMRKT", "CREDITLINE", "CD")
 TRNTYPES = (
-    "CREDIT", "DEBIT", "INT", "DIV", "FEE", "SRVCHG", "DEP", "ATM", "POS",
-    "XFER", "CHECK", "PAYMENT", "CASH", "DIRECTDEP", "DIRECTDEBIT", "REPEATPMT",
+    "CREDIT",
+    "DEBIT",
+    "INT",
+    "DIV",
+    "FEE",
+    "SRVCHG",
+    "DEP",
+    "ATM",
+    "POS",
+    "XFER",
+    "CHECK",
+    "PAYMENT",
+    "CASH",
+    "DIRECTDEP",
+    "DIRECTDEBIT",
+    "REPEATPMT",
     "OTHER",
 )
 

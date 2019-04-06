@@ -12,16 +12,23 @@ from ofxtools.models.i18n import LANG_CODES, COUNTRY_CODES
 
 
 __all__ = [
-    "MSGSETLIST", "SIGNONINFOLIST",
-    "PROFRQ", "PROFRS",
-    "PROFTRNRQ", "PROFTRNRS",
-    "PROFMSGSRQV1", "PROFMSGSRSV1",
-    "MSGSETCORE", "PROFMSGSETV1", "PROFMSGSET",
+    "MSGSETLIST",
+    "SIGNONINFOLIST",
+    "PROFRQ",
+    "PROFRS",
+    "PROFTRNRQ",
+    "PROFTRNRS",
+    "PROFMSGSRQV1",
+    "PROFMSGSRSV1",
+    "MSGSETCORE",
+    "PROFMSGSETV1",
+    "PROFMSGSET",
 ]
 
 
 class MSGSETLIST(List):
     """ OFX section 7.2 """
+
     dataTags = [
         "SIGNONMSGSET",
         "SIGNUPMSGSET",
@@ -89,11 +96,13 @@ class PROFRS(Aggregate):
 
 class PROFTRNRQ(TrnRq):
     """ OFX section 7.1.5 """
+
     profrq = SubAggregate(PROFRQ, required=True)
 
 
 class PROFTRNRS(TrnRs):
     """ OFX section 7.2 """
+
     profrs = SubAggregate(PROFRS)
 
     @property

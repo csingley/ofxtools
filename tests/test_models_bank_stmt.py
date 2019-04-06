@@ -15,11 +15,22 @@ from ofxtools.models.base import Aggregate, classproperty
 from ofxtools.models.common import BAL, SVCSTATUSES
 import ofxtools.models
 from ofxtools.models.bank.stmt import (
-    TRNTYPES, INV401KSOURCES,
-    BANKACCTFROM, BANKACCTINFO, CCACCTFROM, CCACCTINFO,
-    LEDGERBAL, AVAILBAL, BALLIST,
-    INCTRAN, BANKTRANLIST, REWARDINFO,
-    STMTRQ, STMTRS, CCSTMTRQ, CCSTMTRS,
+    TRNTYPES,
+    INV401KSOURCES,
+    BANKACCTFROM,
+    BANKACCTINFO,
+    CCACCTFROM,
+    CCACCTINFO,
+    LEDGERBAL,
+    AVAILBAL,
+    BALLIST,
+    INCTRAN,
+    BANKTRANLIST,
+    REWARDINFO,
+    STMTRQ,
+    STMTRS,
+    CCSTMTRQ,
+    CCSTMTRS,
 )
 from ofxtools.models.payment.payee import PAYEE
 from ofxtools.models.i18n import CURRENCY_CODES
@@ -356,9 +367,9 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
         origcurrency = OrigcurrencyTestCase().root
 
         #  optionalMutexes = [
-            #  ("name", "payee"),
-            #  ("ccacctto", "bankacctto"),
-            #  ("currency", "origcurrency"),
+        #  ("name", "payee"),
+        #  ("ccacctto", "bankacctto"),
+        #  ("currency", "origcurrency"),
         #  ]
 
         # Both NAME & PAYEE
@@ -427,7 +438,7 @@ class BanktranlistTestCase(unittest.TestCase, base.TranlistTestCase):
 class LedgerbalTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "BALAMT", "DTASOF" ]
+    requiredElements = ["BALAMT", "DTASOF"]
 
     @property
     def root(self):
@@ -448,7 +459,7 @@ class LedgerbalTestCase(unittest.TestCase, base.TestAggregate):
 class AvailbalTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "BALAMT", "DTASOF" ]
+    requiredElements = ["BALAMT", "DTASOF"]
 
     @property
     def root(self):
@@ -505,14 +516,15 @@ class BallistTestCase(unittest.TestCase, base.TestAggregate):
 class StmtrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = [ "CURDEF", "BANKACCTFROM", "LEDGERBAL" ]
-    optionalElements = [ "BANKTRANLIST",
-                        "AVAILBAL",
-                        "CASHADVBALAMT",
-                        "INTRATE",
-                        "BALLIST",
-                        "MKTGINFO",
-                       ]
+    requiredElements = ["CURDEF", "BANKACCTFROM", "LEDGERBAL"]
+    optionalElements = [
+        "BANKTRANLIST",
+        "AVAILBAL",
+        "CASHADVBALAMT",
+        "INTRATE",
+        "BALLIST",
+        "MKTGINFO",
+    ]
     unsupported = ["banktranlistp"]
 
     @property

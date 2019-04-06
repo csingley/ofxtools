@@ -13,10 +13,24 @@ from copy import deepcopy
 from ofxtools.utils import UTC
 from ofxtools.models.base import Aggregate, classproperty
 from ofxtools.models.seclist import (
-    SECID, SECINFO, DEBTINFO, MFINFO, OPTINFO, OTHERINFO, STOCKINFO,
-    PORTION, FIPORTION, MFASSETCLASS, FIMFASSETCLASS, ASSETCLASSES,
-    SECLIST, SECRQ, SECLISTRQ, SECLISTRS,
-    SECLISTMSGSRQV1, SECLISTMSGSRSV1,
+    SECID,
+    SECINFO,
+    DEBTINFO,
+    MFINFO,
+    OPTINFO,
+    OTHERINFO,
+    STOCKINFO,
+    PORTION,
+    FIPORTION,
+    MFASSETCLASS,
+    FIMFASSETCLASS,
+    ASSETCLASSES,
+    SECLIST,
+    SECRQ,
+    SECLISTRQ,
+    SECLISTRS,
+    SECLISTMSGSRQV1,
+    SECLISTMSGSRSV1,
 )
 
 
@@ -588,9 +602,7 @@ class SecrqTestCase(unittest.TestCase, base.TestAggregate):
         yield root
 
         #  Two
-        for (choice0, choice1) in [
-            (secid, ticker), (secid, fiid), (ticker, fiid),
-        ]:
+        for (choice0, choice1) in [(secid, ticker), (secid, fiid), (ticker, fiid)]:
             root = cls.emptyBase
             root.append(choice0)
             root.append(choice1)

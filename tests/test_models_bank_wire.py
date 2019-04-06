@@ -13,8 +13,15 @@ from decimal import Decimal
 from ofxtools.models.base import Aggregate, classproperty
 from ofxtools.models.bank.stmt import BANKACCTFROM
 from ofxtools.models.bank.wire import (
-    EXTBANKDESC, WIREDESTBANK, WIREBENEFICIARY, WIRERQ, WIRERS, WIRECANRQ,
-    WIRECANRS, WIRETRNRQ, WIRETRNRS,
+    EXTBANKDESC,
+    WIREDESTBANK,
+    WIREBENEFICIARY,
+    WIRERQ,
+    WIRERS,
+    WIRECANRQ,
+    WIRECANRS,
+    WIRETRNRQ,
+    WIRETRNRS,
 )
 from ofxtools.models.i18n import COUNTRY_CODES
 from ofxtools.utils import UTC
@@ -34,7 +41,7 @@ class WirebeneficiaryTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def validSoup(cls):
-        root = Element('WIREBENEFICIARY')
+        root = Element("WIREBENEFICIARY")
         SubElement(root, "NAME").text = "Elmer Fudd"
         root.append(BankaccttoTestCase().root)
         SubElement(root, "MEMO").text = "For hunting wabbits"
@@ -153,7 +160,13 @@ class WirerqTestCase(unittest.TestCase, base.TestAggregate):
 class WirersTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ["CURDEF", "SRVRTID", "BANKACCTFROM", "WIREBENEFICIARY", "TRNAMT"]
+    requiredElements = [
+        "CURDEF",
+        "SRVRTID",
+        "BANKACCTFROM",
+        "WIREBENEFICIARY",
+        "TRNAMT",
+    ]
     optionalElements = ["WIREDESTBANK", "DTDUE", "PAYINSTRUCT", "FEE", "CONFMSG"]
 
     @classproperty
