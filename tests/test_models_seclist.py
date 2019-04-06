@@ -12,6 +12,10 @@ from copy import deepcopy
 # local imports
 from ofxtools.utils import UTC
 from ofxtools.models.base import Aggregate, classproperty
+from ofxtools.models.msgsets import (
+    SECLISTMSGSRQV1,
+    SECLISTMSGSRSV1,
+)
 from ofxtools.models.investment.seclist import (
     SECID,
     SECINFO,
@@ -29,8 +33,6 @@ from ofxtools.models.investment.seclist import (
     SECRQ,
     SECLISTRQ,
     SECLISTRS,
-    SECLISTMSGSRQV1,
-    SECLISTMSGSRSV1,
 )
 
 

@@ -11,6 +11,10 @@ from copy import deepcopy
 # local imports
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import SVCSTATUSES
+from ofxtools.models.msgsets import (
+    INVSTMTMSGSRQV1,
+    INVSTMTMSGSRSV1,
+)
 from ofxtools.models.bank.stmt import STMTTRN, BALLIST, INV401KSOURCES, INCTRAN
 from ofxtools.models.investment import (
     INVTRAN,
@@ -69,8 +73,6 @@ from ofxtools.models.investment import (
     INVSTMTRS,
     INVSTMTTRNRQ,
     INVSTMTTRNRS,
-    INVSTMTMSGSRQV1,
-    INVSTMTMSGSRSV1,
     BUYTYPES,
     SELLTYPES,
     OPTBUYTYPES,

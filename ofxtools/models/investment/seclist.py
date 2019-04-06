@@ -7,10 +7,9 @@ from copy import deepcopy
 
 
 # local imports
-from ofxtools.Types import String, NagString, Integer, Decimal, DateTime, OneOf, Bool
-from ofxtools.models.base import Aggregate, SubAggregate, List, Unsupported
+from ofxtools.Types import String, NagString, OneOf, Integer, Decimal, DateTime
+from ofxtools.models.base import Aggregate, SubAggregate, List
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
-from ofxtools.models.profile import MSGSETCORE
 from ofxtools.models.i18n import CURRENCY
 
 
@@ -32,10 +31,6 @@ __all__ = [
     "SECLISTRS",
     "SECLISTTRNRQ",
     "SECLISTTRNRS",
-    "SECLISTMSGSRQV1",
-    "SECLISTMSGSRSV1",
-    "SECLISTMSGSETV1",
-    "SECLISTMSGSET",
 ]
 
 
@@ -260,41 +255,3 @@ class SECLISTTRNRS(TrnRs):
     """ OFX section 13.8.2.1 """
 
     seclistrs = SubAggregate(SECLISTRS)
-
-
-class SECLISTMSGSRQV1(List):
-    """ OFX section 13.7.2.2.1 """
-
-    dataTags = ["SECLISTTRNRQ"]
-
-
-class SECLISTMSGSRSV1(List):
-    """ OFX section 13.7.2.2.2 """
-
-    # N.B. this part of the spec is unusual in that SECLIST is a direct
-    # child of SECLISTMSGSRSV1, unwrapped.  SECLISTRS, wrapped in SECLISTTRNS,
-    # is an empty aggregate; including SECLISTTRNRS/SECLISTRS under
-    # SECLISTMSGSTSV1 merely indicates that the accompanying SECLIST was
-    # generated in response to a client SECLISTRQ.
-    dataTags = ["SECLISTTRNRS", "SECLIST"]
-
-    @property
-    def securities(self):
-        securities = []
-        for child in self:
-            if isinstance(child, SECLIST):
-                securities.extend(child)
-        return securities
-
-
-class SECLISTMSGSETV1(Aggregate):
-    """ OFX section 13.7.2.1 """
-
-    msgsetcore = SubAggregate(MSGSETCORE, required=True)
-    seclistrqdnld = Bool(required=True)
-
-
-class SECLISTMSGSET(Aggregate):
-    """ OFX section 13.7.2.1 """
-
-    seclistmsgsetv1 = SubAggregate(SECLISTMSGSETV1, required=True)

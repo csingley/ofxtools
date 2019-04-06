@@ -7,13 +7,12 @@ import operator
 import itertools
 
 # local imports
-from ofxtools.Types import Bool, DateTime, String, OneOf
+from ofxtools.Types import String, OneOf, DateTime
 from ofxtools.models.i18n import COUNTRY_CODES
 from ofxtools.models.bank import BANKACCTFROM, CCACCTFROM, BANKACCTTO, CCACCTTO
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List
+from ofxtools.models.base import Aggregate, SubAggregate, List
 from ofxtools.models.common import SVCSTATUSES
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
-from ofxtools.models.profile import MSGSETCORE
 from ofxtools.models.investment import INVACCTFROM, INVACCTTO
 
 
@@ -42,13 +41,6 @@ __all__ = [
     "CHGUSERINFOTRNRS",
     "CHGUSERINFOSYNCRQ",
     "CHGUSERINFOSYNCRS",
-    "SIGNUPMSGSRQV1",
-    "SIGNUPMSGSRSV1",
-    "CLIENTENROLL",
-    "WEBENROLL",
-    "OTHERENROLL",
-    "SIGNUPMSGSETV1",
-    "SIGNUPMSGSET",
 ]
 
 
@@ -335,57 +327,3 @@ class CHGUSERINFOSYNCRS(SyncRsList):
     """ OFX section 8.7.4.2 """
 
     dataTags = ["CHGUSERINFOTRNRS"]
-
-
-class SIGNUPMSGSRQV1(List):
-    """ OFX section 8.1 """
-
-    dataTags = ["ENROLLTRNRQ", "ACCTINFOTRNRQ", "ACCTTRNRQ", "CHGUSERINFOTRNRQ"]
-
-
-class SIGNUPMSGSRSV1(List):
-    """ OFX section 8.1 """
-
-    dataTags = ["ENROLLTRNRS", "ACCTINFOTRNRS", "ACCTTRNRS", "CHGUSERINFOTRNRS"]
-
-
-class CLIENTENROLL(Aggregate):
-    """ OFX section 8.8 """
-
-    acctrequired = Bool(required=True)
-
-
-class WEBENROLL(Aggregate):
-    """ OFX section 8.8 """
-
-    url = String(255, required=True)
-
-
-class OTHERENROLL(Aggregate):
-    """ OFX section 8.8 """
-
-    message = String(80, required=True)
-
-
-class SIGNUPMSGSETV1(Aggregate):
-    """ OFX section 8.8 """
-
-    msgsetcore = SubAggregate(MSGSETCORE, required=True)
-    clientenroll = SubAggregate(CLIENTENROLL)
-    webenroll = SubAggregate(WEBENROLL)
-    otherenroll = SubAggregate(OTHERENROLL)
-    chguserinfo = Bool(required=True)
-    availaccts = Bool(required=True)
-    clientactreq = Bool(required=True)
-
-    optionalMutexes = [
-        ("clientenroll", "webenroll"),
-        ("clientenroll", "otherenroll"),
-        ("webenroll", "otherenroll"),
-    ]
-
-
-class SIGNUPMSGSET(Aggregate):
-    """ OFX section 8.8 """
-
-    signupmsgsetv1 = SubAggregate(SIGNUPMSGSETV1, required=True)

@@ -3,23 +3,13 @@
 from copy import deepcopy
 
 # local imports
-from ofxtools.Types import String, Integer, OneOf, DateTime, Bool
+from ofxtools.Types import String, OneOf, DateTime, Bool
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
 from ofxtools.models.common import STATUS
-from ofxtools.models.profile import MSGSETCORE
 from ofxtools.models.i18n import LANG_CODES
 
 
-__all__ = [
-    "SIGNONMSGSRQV1",
-    "SIGNONMSGSRSV1",
-    "SONRQ",
-    "SONRS",
-    "FI",
-    "SIGNONINFO",
-    "SIGNONMSGSETV1",
-    "SIGNONMSGSET",
-]
+__all__ = ["FI", "SONRQ", "SONRS"]
 
 
 class FI(Aggregate):
@@ -88,52 +78,3 @@ class SONRS(Aggregate):
     @property
     def fid(self):
         return self.fi.fid
-
-
-class SIGNONINFO(Aggregate):
-    """ OFX section 7.2.2 """
-
-    signonrealm = String(32, required=True)
-    min = Integer(required=True)
-    max = Integer(required=True)
-    chartype = OneOf(
-        "ALPHAONLY", "NUMERICONLY", "ALPHAORNUMERIC", "ALPHAANDNUMERIC", required=True
-    )
-    casesen = Bool(required=True)
-    special = Bool(required=True)
-    spaces = Bool(required=True)
-    pinch = Bool(required=True)
-    chgpinfirst = Bool()
-    usercred1label = String(64)
-    usercred2label = String(64)
-    clientuidreq = Bool()
-    authtokenfirst = Bool()
-    authtokenlabel = String(64)
-    authtokeninfourl = String(255)
-    mfachallengesupt = Bool()
-    mfachallengefirst = Bool()
-    accesstokenreq = Bool()
-
-
-class SIGNONMSGSRQV1(Aggregate):
-    """ """
-
-    sonrq = SubAggregate(SONRQ)
-
-
-class SIGNONMSGSRSV1(Aggregate):
-    """ """
-
-    sonrs = SubAggregate(SONRS)
-
-
-class SIGNONMSGSETV1(Aggregate):
-    """ OFX section 2.5.5 """
-
-    msgsetcore = SubAggregate(MSGSETCORE, required=True)
-
-
-class SIGNONMSGSET(Aggregate):
-    """ OFX section 2.5.5 """
-
-    signonmsgsetv1 = SubAggregate(SIGNONMSGSETV1, required=True)

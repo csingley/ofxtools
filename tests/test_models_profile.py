@@ -11,51 +11,21 @@ from copy import deepcopy
 # local imports
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import OFXEXTENSION
-from ofxtools.models.email import (
-    EMAILMSGSRQV1,
-    EMAILMSGSRSV1,
-    EMAILMSGSETV1,
-    EMAILMSGSET,
-    MAILTRNRQ,
-    MAILTRNRS,
-    GETMIMETRNRQ,
-    GETMIMETRNRS,
-    MAILSYNCRQ,
-    MAILSYNCRS,
-)
-from ofxtools.models.profile import (
-    PROFRQ,
-    PROFRS,
-    PROFTRNRQ,
-    PROFTRNRS,
-    MSGSETLIST,
-    SIGNONINFOLIST,
+from ofxtools.models.msgsets import (
+    MSGSETCORE,
+    SIGNONMSGSETV1, SIGNONMSGSET,
+    XFERPROF,
+    STPCHKPROF,
+    EMAILPROF,
     PROFMSGSRQV1,
     PROFMSGSRSV1,
     PROFMSGSETV1,
     PROFMSGSET,
-)
-from ofxtools.models.signon import SIGNONINFO, SIGNONMSGSETV1, SIGNONMSGSET
-from ofxtools.models.signup import SIGNUPMSGSETV1, SIGNUPMSGSET, WEBENROLL
-from ofxtools.models.bank.stmt import (
-    ACCTTYPES,
-    STMTRS,
-    STMTTRNRQ,
-    STMTTRNRS,
-    CCSTMTTRNRQ,
-    CCSTMTTRNRS,
-)
-from ofxtools.models.bank.stmtend import (
-    STMTENDTRNRQ,
-    STMTENDTRNRS,
-    CCSTMTENDTRNRQ,
-    CCSTMTENDTRNRS,
-)
-from ofxtools.models.bank.stpchk import STPCHKTRNRQ, STPCHKTRNRS
-from ofxtools.models.bank.msgsets import (
-    XFERPROF,
-    STPCHKPROF,
-    EMAILPROF,
+    SIGNUPMSGSETV1, SIGNUPMSGSET, WEBENROLL,
+    EMAILMSGSRQV1,
+    EMAILMSGSRSV1,
+    EMAILMSGSETV1,
+    EMAILMSGSET,
     BANKMSGSRQV1,
     BANKMSGSRSV1,
     BANKMSGSETV1,
@@ -72,7 +42,42 @@ from ofxtools.models.bank.msgsets import (
     WIREXFERMSGSRSV1,
     WIREXFERMSGSETV1,
     WIREXFERMSGSET,
+    INVSTMTMSGSETV1, INVSTMTMSGSET,
+    SECLISTMSGSETV1, SECLISTMSGSET,
+    TAX1099MSGSETV1, TAX1099MSGSET,
 )
+from ofxtools.models.email import (
+    MAILTRNRQ,
+    MAILTRNRS,
+    GETMIMETRNRQ,
+    GETMIMETRNRS,
+    MAILSYNCRQ,
+    MAILSYNCRS,
+)
+from ofxtools.models.profile import (
+    PROFRQ,
+    PROFRS,
+    PROFTRNRQ,
+    PROFTRNRS,
+    SIGNONINFO,
+    SIGNONINFOLIST,
+    MSGSETLIST,
+)
+from ofxtools.models.bank.stmt import (
+    ACCTTYPES,
+    STMTRS,
+    STMTTRNRQ,
+    STMTTRNRS,
+    CCSTMTTRNRQ,
+    CCSTMTTRNRS,
+)
+from ofxtools.models.bank.stmtend import (
+    STMTENDTRNRQ,
+    STMTENDTRNRS,
+    CCSTMTENDTRNRQ,
+    CCSTMTENDTRNRS,
+)
+from ofxtools.models.bank.stpchk import STPCHKTRNRQ, STPCHKTRNRS
 from ofxtools.models.bank.intraxfer import INTRATRNRQ, INTRATRNRS
 from ofxtools.models.bank.interxfer import INTERTRNRQ, INTERTRNRS
 from ofxtools.models.bank.wire import WIRETRNRQ, WIRETRNRS
@@ -99,11 +104,7 @@ from ofxtools.models.bank.sync import (
     BANKMAILSYNCRQ,
     BANKMAILSYNCRS,
 )
-from ofxtools.models.investment import INVSTMTMSGSETV1, INVSTMTMSGSET
-from ofxtools.models.investment.seclist import SECLISTMSGSETV1, SECLISTMSGSET
-from ofxtools.models.profile import MSGSETCORE
 from ofxtools.models.i18n import LANG_CODES
-from ofxtools.models.tax1099 import TAX1099MSGSETV1, TAX1099MSGSET
 from ofxtools.utils import UTC
 
 

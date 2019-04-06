@@ -54,9 +54,9 @@ from operator import attrgetter
 # local imports
 from ofxtools.header import make_header
 from ofxtools.models.ofx import OFX
-from ofxtools.models import ACCTINFORQ, ACCTINFOTRNRQ, SIGNUPMSGSRQV1
-from ofxtools.models.profile import PROFRQ, PROFTRNRQ, PROFMSGSRQV1
-from ofxtools.models.signon import SIGNONMSGSRQV1, SONRQ, FI
+from ofxtools.models import ACCTINFORQ, ACCTINFOTRNRQ
+from ofxtools.models.profile import PROFRQ, PROFTRNRQ
+from ofxtools.models.signon import SONRQ, FI
 from ofxtools.models.bank.stmt import (
     BANKACCTFROM,
     CCACCTFROM,
@@ -72,9 +72,12 @@ from ofxtools.models.bank.stmtend import (
     CCSTMTENDRQ,
     CCSTMTENDTRNRQ,
 )
-from ofxtools.models.bank.msgsets import BANKMSGSRQV1, CREDITCARDMSGSRQV1
-from ofxtools.models.investment import (
+from ofxtools.models.msgsets import (
+    SIGNONMSGSRQV1, PROFMSGSRQV1, SIGNUPMSGSRQV1,
+    BANKMSGSRQV1, CREDITCARDMSGSRQV1,
     INVSTMTMSGSRQV1,
+)
+from ofxtools.models.investment import (
     INVSTMTTRNRQ,
     INVSTMTRQ,
     INVACCTFROM,

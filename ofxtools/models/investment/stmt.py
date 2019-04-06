@@ -3,22 +3,19 @@
 Investments = OFX Section 13
 """
 from ofxtools.Types import Bool, String, OneOf, Decimal, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
-from ofxtools.models.investment.acct import INVACCTFROM, INVSUBACCTS
+from ofxtools.models.investment.acct import INVACCTFROM
 from ofxtools.models.investment.tranlist import INVTRANLIST
 from ofxtools.models.investment.poslist import INVPOSLIST
 from ofxtools.models.investment.oolist import INVOOLIST
 from ofxtools.models.bank.stmt import INCTRAN, BALLIST
-from ofxtools.models.profile import MSGSETCORE
 from ofxtools.models.i18n import CURRENCY_CODES
 
 
 __all__ = [
     "INCPOS", "INVSTMTRQ", "INVBAL", "INV401KBAL", "INVSTMTRS",
     "INVSTMTTRNRQ", "INVSTMTTRNRS",
-    "INVSTMTMSGSRQV1", "INVSTMTMSGSRSV1",
-    "INVSTMTMSGSETV1", "INVSTMTMSGSET",
 ]
 
 
@@ -114,45 +111,3 @@ class INVSTMTTRNRS(TrnRs):
     @property
     def statement(self):
         return self.invstmtrs
-
-
-class INVSTMTMSGSRQV1(List):
-    """ OFX section 13.7.1.2.1 """
-
-    dataTags = ["INVSTMTTRNRQ", "INVMAILTRNRQ", "INVMAILSYNCRQ"]
-
-
-class INVSTMTMSGSRSV1(List):
-    """ OFX section 13.7.1.2.2 """
-
-    dataTags = ["INVSTMTTRNRS", "INVMAILTRNRS", "INVMAILSYNCRS"]
-
-    @property
-    def statements(self):
-        stmts = []
-        for rs in self:
-            if isinstance(rs, INVSTMTTRNRS):
-                stmtrs = rs.invstmtrs
-                if stmtrs is not None:
-                    stmts.append(stmtrs)
-        return stmts
-
-
-class INVSTMTMSGSETV1(Aggregate):
-    """ OFX section 13.7.1.1 """
-
-    msgsetcore = SubAggregate(MSGSETCORE, required=True)
-    trandnld = Bool(required=True)
-    oodnld = Bool(required=True)
-    posdnld = Bool(required=True)
-    baldnld = Bool(required=True)
-    canemail = Bool(required=True)
-    inv401kdnld = Bool()
-    closingavail = Bool()
-    imageprof = Unsupported()
-
-
-class INVSTMTMSGSET(Aggregate):
-    """ OFX section 13.7.1.1 """
-
-    invstmtmsgsetv1 = SubAggregate(INVSTMTMSGSETV1, required=True)

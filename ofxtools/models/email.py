@@ -6,10 +6,9 @@ email - OFX Section 9
 from copy import deepcopy
 
 # local imports
-from ofxtools.Types import String, Decimal, Integer, OneOf, DateTime, Bool
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List
-from ofxtools.models.wrapperbases import TrnRq, TrnRs, TranList, SyncRqList, SyncRsList
-from ofxtools.models.profile import MSGSETCORE
+from ofxtools.Types import Bool, String, DateTime
+from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
 
 
 __all__ = [
@@ -24,10 +23,6 @@ __all__ = [
     "GETMIMERS",
     "GETMIMETRNRQ",
     "GETMIMETRNRS",
-    "EMAILMSGSRQV1",
-    "EMAILMSGSRSV1",
-    "EMAILMSGSETV1",
-    "EMAILMSGSET",
 ]
 
 
@@ -133,29 +128,3 @@ class GETMIMETRNRS(TrnRs):
     """ OFX section 9.3.2 """
 
     getmimers = SubAggregate(GETMIMERS)
-
-
-class EMAILMSGSRQV1(List):
-    """ OFX section 9.4.1.1 """
-
-    dataTags = ["MAILTRNRQ", "GETMIMETRNRQ", "MAILSYNCRQ"]
-
-
-class EMAILMSGSRSV1(List):
-    """ OFX section 9.4.1.2 """
-
-    dataTags = ["MAILTRNRS", "GETMIMETRNRS", "MAILSYNCRS"]
-
-
-class EMAILMSGSETV1(Aggregate):
-    """ OFX section 9.4.2 """
-
-    msgsetcore = SubAggregate(MSGSETCORE, required=True)
-    mailsup = Bool(required=True)
-    getmimesup = Bool(required=True)
-
-
-class EMAILMSGSET(Aggregate):
-    """ OFX section 9.4.2 """
-
-    emailmsgsetv1 = SubAggregate(EMAILMSGSETV1, required=True)

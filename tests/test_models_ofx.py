@@ -9,16 +9,16 @@ from datetime import datetime
 # local imports
 from ofxtools.models.base import Aggregate, classproperty
 from ofxtools.models.ofx import OFX
-from ofxtools.models.signon import SIGNONMSGSRSV1, SONRS
-from ofxtools.models.bank import (
+from ofxtools.models.msgsets import (
+    SIGNONMSGSRSV1,
     BANKMSGSRSV1,
-    STMTRS,
     CREDITCARDMSGSRSV1,
-    CCSTMTRS,
-    CCSTMTENDRS,
+    INVSTMTMSGSRSV1,
+    SECLISTMSGSRSV1,
 )
-from ofxtools.models.investment import INVSTMTMSGSRSV1, INVSTMTRS
-from ofxtools.models.investment.seclist import SECLISTMSGSRSV1
+from ofxtools.models.signon import SONRS
+from ofxtools.models.bank import STMTRS, CCSTMTRS, CCSTMTENDRS
+from ofxtools.models.investment import INVSTMTRS
 from ofxtools.utils import UTC
 
 

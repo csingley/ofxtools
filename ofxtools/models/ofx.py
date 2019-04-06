@@ -5,9 +5,11 @@ balances, and securities.
 """
 # local imports
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
-from ofxtools.models.signon import SIGNONMSGSRQV1, SIGNONMSGSRSV1
-from ofxtools.models.signup import SIGNUPMSGSRQV1, SIGNUPMSGSRSV1
-from ofxtools.models.bank.msgsets import (
+from ofxtools.models.msgsets import (
+    SIGNONMSGSRQV1, SIGNONMSGSRSV1,
+    PROFMSGSRQV1, PROFMSGSRSV1,
+    SIGNUPMSGSRQV1, SIGNUPMSGSRSV1,
+    EMAILMSGSRQV1, EMAILMSGSRSV1,
     BANKMSGSRQV1,
     BANKMSGSRSV1,
     CREDITCARDMSGSRQV1,
@@ -16,11 +18,9 @@ from ofxtools.models.bank.msgsets import (
     INTERXFERMSGSRSV1,
     WIREXFERMSGSRQV1,
     WIREXFERMSGSRSV1,
+    INVSTMTMSGSRQV1, INVSTMTMSGSRSV1,
+    SECLISTMSGSRQV1, SECLISTMSGSRSV1,
 )
-from ofxtools.models.investment import INVSTMTMSGSRQV1, INVSTMTMSGSRSV1
-from ofxtools.models.investment.seclist import SECLISTMSGSRQV1, SECLISTMSGSRSV1
-from ofxtools.models.email import EMAILMSGSRQV1, EMAILMSGSRSV1
-from ofxtools.models.profile import PROFMSGSRQV1, PROFMSGSRSV1
 
 
 __all__ = ["OFX"]

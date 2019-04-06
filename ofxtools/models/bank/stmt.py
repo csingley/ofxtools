@@ -3,18 +3,14 @@
 Bank statement download - OFX Section 11.4
 """
 # local imports
-from ofxtools.Types import String, NagString, Decimal, Integer, OneOf, DateTime, Bool
+from ofxtools.Types import Bool, String, OneOf, Integer, Decimal, DateTime
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List
 from ofxtools.models.common import SVCSTATUSES
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, TranList
 from ofxtools.models.i18n import (
-    CURRENCY,
-    ORIGCURRENCY,
-    Origcurrency,
-    CURRENCY_CODES,
-    COUNTRY_CODES,
+    CURRENCY, ORIGCURRENCY, Origcurrency, CURRENCY_CODES,
 )
-from ofxtools.models.payment.payee import PAYEE
+from ofxtools.models.billpay.payee import PAYEE
 
 
 __all__ = [

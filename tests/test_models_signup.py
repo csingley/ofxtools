@@ -10,13 +10,17 @@ from copy import deepcopy
 # local imports
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import SVCSTATUSES
+from ofxtools.models.msgsets import (
+    CLIENTENROLL,
+    WEBENROLL,
+    OTHERENROLL,
+    SIGNUPMSGSRQV1,
+    SIGNUPMSGSRSV1,
+)
 from ofxtools.models.signup import (
     ACCTINFO,
     ACCTINFORQ,
     ACCTINFORS,
-    CLIENTENROLL,
-    WEBENROLL,
-    OTHERENROLL,
     ENROLLRQ,
     ENROLLRS,
     ENROLLTRNRQ,
@@ -29,8 +33,6 @@ from ofxtools.models.signup import (
     ACCTRS,
     CHGUSERINFORQ,
     CHGUSERINFORS,
-    SIGNUPMSGSRQV1,
-    SIGNUPMSGSRSV1,
 )
 from ofxtools.models.bank import (
     BANKACCTFROM,
