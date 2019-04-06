@@ -18,7 +18,7 @@ from ofxtools.models.bank import (
     CCSTMTENDRS,
 )
 from ofxtools.models.investment import INVSTMTMSGSRSV1, INVSTMTRS
-from ofxtools.models.seclist import SECLISTMSGSRSV1
+from ofxtools.models.investment.seclist import SECLISTMSGSRSV1
 from ofxtools.utils import UTC
 
 

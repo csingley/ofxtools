@@ -18,8 +18,8 @@ from ofxtools.models.bank.msgsets import (
     WIREXFERMSGSRSV1,
 )
 from ofxtools.models.investment import INVSTMTMSGSRQV1, INVSTMTMSGSRSV1
+from ofxtools.models.investment.seclist import SECLISTMSGSRQV1, SECLISTMSGSRSV1
 from ofxtools.models.email import EMAILMSGSRQV1, EMAILMSGSRSV1
-from ofxtools.models.seclist import SECLISTMSGSRQV1, SECLISTMSGSRSV1
 from ofxtools.models.profile import PROFMSGSRQV1, PROFMSGSRSV1
 
 

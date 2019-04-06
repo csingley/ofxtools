@@ -100,7 +100,7 @@ from ofxtools.models.bank.sync import (
     BANKMAILSYNCRS,
 )
 from ofxtools.models.investment import INVSTMTMSGSETV1, INVSTMTMSGSET
-from ofxtools.models.seclist import SECLISTMSGSETV1, SECLISTMSGSET
+from ofxtools.models.investment.seclist import SECLISTMSGSETV1, SECLISTMSGSET
 from ofxtools.models.profile import MSGSETCORE
 from ofxtools.models.i18n import LANG_CODES
 from ofxtools.models.tax1099 import TAX1099MSGSETV1, TAX1099MSGSET

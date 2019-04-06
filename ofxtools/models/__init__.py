@@ -8,7 +8,6 @@ from .signup import *
 from .signon import *
 from .bank import *
 from .investment import *
-from .seclist import *
 from .payment import *
 from .email import *
 from .tax1099 import *

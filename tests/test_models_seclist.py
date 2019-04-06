@@ -12,7 +12,7 @@ from copy import deepcopy
 # local imports
 from ofxtools.utils import UTC
 from ofxtools.models.base import Aggregate, classproperty
-from ofxtools.models.seclist import (
+from ofxtools.models.investment.seclist import (
     SECID,
     SECINFO,
     DEBTINFO,
