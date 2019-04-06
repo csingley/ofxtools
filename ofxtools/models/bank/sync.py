@@ -40,7 +40,6 @@ class INTRASYNCRQ(SyncRqList):
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
 
-    metadataTags = SyncRqList.metadataTags + ["BANKACCTFROM", "CCACCTFROM"]
     dataTags = ["INTRATRNRQ"]
     requiredMutexes = SyncRqList.requiredMutexes + [("bankacctfrom", "ccacctfrom")]
 
@@ -51,7 +50,6 @@ class INTRASYNCRS(SyncRsList):
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
 
-    metadataTags = SyncRsList.metadataTags + ["BANKACCTFROM", "CCACCTFROM"]
     dataTags = ["INTRATRNRS"]
     requiredMutexes = [("bankacctfrom", "ccacctfrom")]
 
@@ -62,7 +60,6 @@ class INTERSYNCRQ(SyncRqList):
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
 
-    metadataTags = SyncRqList.metadataTags + ["BANKACCTFROM", "CCACCTFROM"]
     dataTags = ["INTERTRNRQ"]
     requiredMutexes = SyncRqList.requiredMutexes + [("bankacctfrom", "ccacctfrom")]
 
@@ -73,7 +70,6 @@ class INTERSYNCRS(SyncRsList):
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
 
-    metadataTags = SyncRsList.metadataTags + ["BANKACCTFROM", "CCACCTFROM"]
     dataTags = ["INTERTRNRS"]
     requiredMutexes = [("bankacctfrom", "ccacctfrom")]
 
@@ -98,7 +94,6 @@ class RECINTRASYNCRQ(SyncRqList):
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
 
-    metadataTags = SyncRqList.metadataTags + ["BANKACCTFROM", "CCACCTFROM"]
     dataTags = ["RECINTRATRNRQ"]
     requiredMutexes = SyncRqList.requiredMutexes + [("bankacctfrom", "ccacctfrom")]
 
@@ -109,7 +104,6 @@ class RECINTRASYNCRS(SyncRsList):
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
 
-    metadataTags = SyncRsList.metadataTags + ["BANKACCTFROM", "CCACCTFROM"]
     dataTags = ["RECINTRATRNRS"]
     requiredMutexes = [("bankacctfrom", "ccacctfrom")]
 
@@ -120,7 +114,6 @@ class RECINTERSYNCRQ(SyncRqList):
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
 
-    metadataTags = SyncRqList.metadataTags + ["BANKACCTFROM", "CCACCTFROM"]
     dataTags = ["RECINTERTRNRQ"]
     requiredMutexes = SyncRqList.requiredMutexes + [("bankacctfrom", "ccacctfrom")]
 
@@ -131,7 +124,6 @@ class RECINTERSYNCRS(SyncRsList):
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
 
-    metadataTags = SyncRsList.metadataTags + ["BANKACCTFROM", "CCACCTFROM"]
     dataTags = ["RECINTERTRNRS"]
     requiredMutexes = [("bankacctfrom", "ccacctfrom")]
 
@@ -144,7 +136,6 @@ class BANKMAILSYNCRQ(SyncRqList):
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
 
-    metadataTags = SyncRqList.metadataTags + ["INCIMAGES", "USEHTML", "BANKACCTFROM", "CCACCTFROM"]
     dataTags = ["BANKMAILTRNRQ"]
     requiredMutexes = SyncRqList.requiredMutexes + [("bankacctfrom", "ccacctfrom")]
 
@@ -155,6 +146,5 @@ class BANKMAILSYNCRS(SyncRsList):
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
 
-    metadataTags = SyncRsList.metadataTags + ["BANKACCTFROM", "CCACCTFROM"]
     dataTags = ["BANKMAILTRNRS"]
     requiredMutexes = [("bankacctfrom", "ccacctfrom")]
