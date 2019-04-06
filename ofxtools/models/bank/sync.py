@@ -5,7 +5,7 @@ Data synchronization for banking - OFX Section 11.12
 # local imports
 from ofxtools.Types import Bool
 from ofxtools.models.base import SubAggregate
-from ofxtools.models.common import SyncRqList, SyncRsList
+from ofxtools.models.wrapperbases import SyncRqList, SyncRsList
 from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM
 
 __all__ = [

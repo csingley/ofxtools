@@ -1,6 +1,6 @@
 # coding: utf-8
 """
-Data structures for international support - OFX Section 5
+International support - OFX Section 5
 """
 # local imports
 from ofxtools.Types import OneOf, Decimal

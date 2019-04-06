@@ -1,6 +1,6 @@
 # coding: utf-8
 """
-Message set response aggregates (i.e. *MSGSRSV1) - OFX section 2.4.5
+Security information - OFX section 13.7.2
 """
 # stdlib imports
 from copy import deepcopy
@@ -9,29 +9,26 @@ from copy import deepcopy
 # local imports
 from ofxtools.Types import String, NagString, Integer, Decimal, DateTime, OneOf, Bool
 from ofxtools.models.base import Aggregate, SubAggregate, List, Unsupported
-from ofxtools.models.common import TrnRq, TrnRs
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.profile import MSGSETCORE
 from ofxtools.models.i18n import CURRENCY
 
 
 __all__ = [
-    "SECLISTMSGSETV1",
-    "SECLISTMSGSET",
-    "SECLISTMSGSRSV1",
-    "SECLIST",
-    "MFASSETCLASS",
-    "PORTION",
-    "FIMFASSETCLASS",
-    "FIPORTION",
     "SECID",
+    "SECRQ",
+    "SECLISTRQ",
     "SECINFO",
     "DEBTINFO",
+    "PORTION",
+    "MFASSETCLASS",
+    "FIPORTION",
+    "FIMFASSETCLASS",
     "MFINFO",
     "OPTINFO",
     "OTHERINFO",
     "STOCKINFO",
-    "SECRQ",
-    "SECLISTRQ",
+    "SECLIST",
     "SECLISTRS",
     "SECLISTTRNRQ",
     "SECLISTTRNRS",
@@ -58,6 +55,22 @@ class SECID(Aggregate):
 
     uniqueid = String(32, required=True)
     uniqueidtype = String(10, required=True)
+
+
+class SECRQ(Aggregate):
+    """ OFX section 13.8.2.2 """
+
+    secid = SubAggregate(SECID)
+    ticker = String(32)
+    fiid = String(32)
+
+    requiredMutexes = [('secid', 'ticker', 'fiid')]
+
+
+class SECLISTRQ(List):
+    """ OFX section 13.8.2.2 """
+
+    dataTags = ["SECRQ"]
 
 
 class SECINFO(Aggregate):
@@ -227,22 +240,6 @@ class SECLIST(List):
     """ OFX section 13.8.4.4 """
 
     dataTags = ["DEBTINFO", "MFINFO", "OPTINFO", "OTHERINFO", "STOCKINFO"]
-
-
-class SECRQ(Aggregate):
-    """ OFX section 13.8.2.2 """
-
-    secid = SubAggregate(SECID)
-    ticker = String(32)
-    fiid = String(32)
-
-    requiredMutexes = [('secid', 'ticker', 'fiid')]
-
-
-class SECLISTRQ(List):
-    """ OFX section 13.8.2.2 """
-
-    dataTags = ["SECRQ"]
 
 
 class SECLISTTRNRQ(TrnRq):

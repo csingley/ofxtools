@@ -5,7 +5,7 @@ Bank email & customer notification - OFX Section 11.11
 # local imports
 from ofxtools.Types import String, Decimal, DateTime, Bool
 from ofxtools.models.base import Aggregate, SubAggregate
-from ofxtools.models.common import TrnRq, TrnRs, SyncRqList, SyncRsList
+from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
 from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM
 from ofxtools.models.email import MAIL
 

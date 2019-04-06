@@ -18,9 +18,10 @@ from ofxtools.models.bank.stmt import (
     TRNTYPES, INV401KSOURCES,
     BANKACCTFROM, BANKACCTINFO, CCACCTFROM, CCACCTINFO,
     LEDGERBAL, AVAILBAL, BALLIST,
-    INCTRAN, BANKTRANLIST, PAYEE, REWARDINFO,
+    INCTRAN, BANKTRANLIST, REWARDINFO,
     STMTRQ, STMTRS, CCSTMTRQ, CCSTMTRS,
 )
+from ofxtools.models.payment.payee import PAYEE
 from ofxtools.models.i18n import CURRENCY_CODES
 from ofxtools.utils import UTC
 

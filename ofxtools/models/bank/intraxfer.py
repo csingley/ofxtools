@@ -5,7 +5,7 @@ Intrabank funds transfer  - OFX Section 11.6
 # local imports
 from ofxtools.Types import String, Decimal, OneOf, DateTime
 from ofxtools.models.base import Aggregate, SubAggregate
-from ofxtools.models.common import TrnRq, TrnRs
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.bank.stmt import BANKACCTFROM, BANKACCTTO, CCACCTFROM, CCACCTTO
 from ofxtools.models.i18n import CURRENCY_CODES
 

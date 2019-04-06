@@ -1,17 +1,22 @@
 # coding: utf-8
-""" OFX element type converters / validators """
+"""
+Type converters / validators for OFX data content text.
+
+``ofxtools.Types`` classes correspond to OFX "elements" as defined in OFX
+section 1.3.8, i.e. leaf nodes in the SGML/XML hierarcy that bear textual
+data content.  The subclasses implement the data types described in OFX
+section 3.2.8.
+"""
 
 # stdlib imports
 import itertools
 import functools
 import decimal
 import datetime
-import time
 import re
 import warnings
 from collections import defaultdict
 from xml.sax import saxutils
-from copy import deepcopy
 
 # local imports
 from .utils import UTC
@@ -44,7 +49,7 @@ class InstanceCounterMixin:
 
 class Element(InstanceCounterMixin):
     """
-    Python representation of an OFX 'element', i.e. SGML leaf node that
+    Python representation of an OFX 'element', i.e. SGML/XML leaf node that
     contains text data.
 
     Pass validation parameters (e.g. maximum string length, decimal scale,

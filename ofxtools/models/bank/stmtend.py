@@ -5,13 +5,10 @@ Statement closing information - OFX Section 11.5
 # local imports
 from ofxtools.Types import Bool, String, Decimal, OneOf, DateTime
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List
-from ofxtools.models.common import TrnRq, TrnRs
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM, REWARDINFO
 from ofxtools.models.i18n import (
-    CURRENCY,
-    ORIGCURRENCY,
-    Origcurrency,
-    CURRENCY_CODES,
+    CURRENCY, ORIGCURRENCY, Origcurrency, CURRENCY_CODES,
 )
 
 

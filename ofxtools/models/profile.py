@@ -6,7 +6,8 @@ from copy import deepcopy
 # local imports
 from ofxtools.Types import Bool, String, OneOf, Integer, DateTime
 from ofxtools.models.base import Aggregate, SubAggregate, List
-from ofxtools.models.common import OFXEXTENSION, TrnRq, TrnRs
+from ofxtools.models.common import OFXEXTENSION
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.i18n import LANG_CODES, COUNTRY_CODES
 
 

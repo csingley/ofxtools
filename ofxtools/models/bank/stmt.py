@@ -5,21 +5,20 @@ Bank statement download - OFX Section 11.4
 # local imports
 from ofxtools.Types import String, NagString, Decimal, Integer, OneOf, DateTime, Bool
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List
-from ofxtools.models.common import SVCSTATUSES, TrnRq, TrnRs, TranList
+from ofxtools.models.common import SVCSTATUSES
+from ofxtools.models.wrapperbases import TrnRq, TrnRs, TranList
 from ofxtools.models.i18n import (
-    CURRENCY,
-    ORIGCURRENCY,
-    Origcurrency,
-    CURRENCY_CODES,
-    COUNTRY_CODES,
+    CURRENCY, ORIGCURRENCY, Origcurrency, CURRENCY_CODES, COUNTRY_CODES,
 )
+from ofxtools.models.payment.payee import PAYEE
 
 
 __all__ = [
     "INV401KSOURCES", "ACCTTYPES", "TRNTYPES",
     "BANKACCTFROM", "BANKACCTTO", "BANKACCTINFO",
     "CCACCTFROM", "CCACCTTO", "CCACCTINFO",
-    "INCTRAN", "PAYEE", "LEDGERBAL", "AVAILBAL", "BALLIST",
+    "INCTRAN",
+    "LEDGERBAL", "AVAILBAL", "BALLIST",
     "STMTTRN", "BANKTRANLIST", "STMTRQ", "STMTRS", "STMTTRNRQ", "STMTTRNRS",
     "REWARDINFO", "CCSTMTRQ", "CCSTMTRS", "CCSTMTTRNRQ", "CCSTMTTRNRS",
 ]
@@ -107,20 +106,6 @@ class STMTRQ(Aggregate):
     inctran = SubAggregate(INCTRAN)
     includepending = Bool()
     inctranimg = Bool()
-
-
-class PAYEE(Aggregate):
-    """ OFX section 12.5.2.1 """
-
-    name = NagString(32, required=True)
-    addr1 = String(32, required=True)
-    addr2 = String(32)
-    addr3 = String(32)
-    city = String(32, required=True)
-    state = String(5, required=True)
-    postalcode = String(11, required=True)
-    country = OneOf(*COUNTRY_CODES)
-    phone = String(32, required=True)
 
 
 class STMTTRN(Aggregate, Origcurrency):

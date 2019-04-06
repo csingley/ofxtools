@@ -1,17 +1,11 @@
-# vim: set fileencoding=utf-8
+# coding: utf-8
 """
-Python object model for transactions,
+Investments = OFX Section 13
 """
 # local imports
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List
-from ofxtools.models.common import (
-    STATUS,
-    OFXEXTENSION,
-    SVCSTATUSES,
-    TrnRq,
-    TrnRs,
-    TranList,
-)
+from ofxtools.models.common import SVCSTATUSES
+from ofxtools.models.wrapperbases import TrnRq, TrnRs, TranList
 from ofxtools.models.profile import MSGSETCORE
 from ofxtools.models.bank import STMTTRN, INCTRAN, BALLIST, INV401KSOURCES
 from ofxtools.models.seclist import SECID
@@ -70,6 +64,7 @@ __all__ = [
     "INVTRANLIST",
     "INVPOSLIST",
     "INVOOLIST",
+    "INCPOS",
     "INVSTMTRQ",
     "INVSTMTRS",
     "INVSTMTTRNRQ",
@@ -78,7 +73,6 @@ __all__ = [
     "INVSTMTMSGSRSV1",
     "INVSTMTMSGSETV1",
     "INVSTMTMSGSET",
-    "INCPOS",
 ]
 
 

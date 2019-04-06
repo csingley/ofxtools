@@ -1,4 +1,7 @@
 # coding: utf-8
+"""
+Activation and Account Information - OFX Section 8
+"""
 # stdlib imports
 import operator
 import itertools
@@ -8,113 +11,79 @@ from ofxtools.Types import Bool, DateTime, String, OneOf
 from ofxtools.models.i18n import COUNTRY_CODES
 from ofxtools.models.bank import BANKACCTFROM, CCACCTFROM, BANKACCTTO, CCACCTTO
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List
-from ofxtools.models.common import (
-    SVCSTATUSES,
-    TrnRq,
-    TrnRs,
-    SyncRqList,
-    SyncRsList,
-)
+from ofxtools.models.common import SVCSTATUSES
+from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
 from ofxtools.models.profile import MSGSETCORE
 from ofxtools.models.investment import INVACCTFROM, INVACCTTO
 
 
 __all__ = [
-    "SIGNUPMSGSET",
-    "SIGNUPMSGSETV1",
-    "SIGNUPMSGSRQV1",
-    "SIGNUPMSGSRSV1",
-    "ENROLLTRNRQ",
-    "ENROLLTRNRS",
-    "ENROLLRQ",
-    "ENROLLRS",
-    "CLIENTENROLL",
-    "WEBENROLL",
-    "OTHERENROLL",
-    "ACCTINFOTRNRQ",
-    "ACCTINFOTRNRS",
-    "ACCTINFORQ",
-    "ACCTINFORS",
-    "ACCTINFO",
-    "ACCTTRNRQ",
-    "ACCTTRNRS",
-    "ACCTRQ",
-    "ACCTRS",
-    "SVCADD",
-    "SVCCHG",
-    "SVCDEL",
-    "ACCTSYNCRQ",
-    "ACCTSYNCRS",
-    "CHGUSERINFOTRNRQ",
-    "CHGUSERINFOTRNRS",
-    "CHGUSERINFORQ",
-    "CHGUSERINFORS",
-    "CHGUSERINFOSYNCRQ",
-    "CHGUSERINFOSYNCRS",
+    "ENROLLRQ", "ENROLLRS", "ENROLLTRNRQ", "ENROLLTRNRS",
+    "ACCTINFO", "ACCTINFORQ", "ACCTINFORS", "ACCTINFOTRNRQ", "ACCTINFOTRNRS",
+    "SVCADD", "SVCCHG", "SVCDEL",
+    "ACCTRQ", "ACCTRS", "ACCTTRNRQ", "ACCTTRNRS",
+    "ACCTSYNCRQ", "ACCTSYNCRS",
+    "CHGUSERINFORQ", "CHGUSERINFORS", "CHGUSERINFOTRNRQ", "CHGUSERINFOTRNRS",
+    "CHGUSERINFOSYNCRQ", "CHGUSERINFOSYNCRS",
+    "SIGNUPMSGSRQV1", "SIGNUPMSGSRSV1",
+    "CLIENTENROLL", "WEBENROLL", "OTHERENROLL",
+    "SIGNUPMSGSETV1", "SIGNUPMSGSET",
 ]
+
 
 # Enums used in aggregate validation
 SVCS = ("BANKSVC", "BPSVC", "INVSVC", "PRESSVC")
 
 
-class CLIENTENROLL(Aggregate):
-    """ OFX section 8.8 """
+class ENROLLRQ(Aggregate):
+    """ OFX section 8.4.2 """
 
-    acctrequired = Bool(required=True)
-
-
-class WEBENROLL(Aggregate):
-    """ OFX section 8.8 """
-
-    url = String(255, required=True)
-
-
-class OTHERENROLL(Aggregate):
-    """ OFX section 8.8 """
-
-    message = String(80, required=True)
-
-
-class SIGNUPMSGSETV1(Aggregate):
-    """ OFX section 8.8 """
-
-    msgsetcore = SubAggregate(MSGSETCORE, required=True)
-    clientenroll = SubAggregate(CLIENTENROLL)
-    webenroll = SubAggregate(WEBENROLL)
-    otherenroll = SubAggregate(OTHERENROLL)
-    chguserinfo = Bool(required=True)
-    availaccts = Bool(required=True)
-    clientactreq = Bool(required=True)
+    firstname = String(32, required=True)
+    middlename = String(32)
+    lastname = String(32, required=True)
+    addr1 = String(32, required=True)
+    addr2 = String(32)
+    addr3 = String(32)
+    city = String(32, required=True)
+    state = String(5, required=True)
+    postalcode = String(11, required=True)
+    country = OneOf(*COUNTRY_CODES)
+    dayphone = String(32)
+    evephone = String(32)
+    email = String(80, required=True)
+    userid = String(32)
+    taxid = String(32)
+    securityname = String(32)
+    datebirth = DateTime()
+    bankacctfrom = SubAggregate(BANKACCTFROM)
+    ccacctfrom = SubAggregate(CCACCTFROM)
+    invacctfrom = SubAggregate(INVACCTFROM)
 
     optionalMutexes = [
-        ("clientenroll", "webenroll"),
-        ("clientenroll", "otherenroll"),
-        ("webenroll", "otherenroll"),
+        ("bankacctfrom", "ccacctfrom"),
+        ("bankacctfrom", "invacctfrom"),
+        ("ccacctfrom", "invacctfrom"),
     ]
 
 
-class SIGNUPMSGSET(Aggregate):
-    """ OFX section 8.8 """
+class ENROLLRS(Aggregate):
+    """ OFX section 8.4.3 """
 
-    signupmsgsetv1 = SubAggregate(SIGNUPMSGSETV1, required=True)
-
-
-class ACCTINFORQ(Aggregate):
-    """ OFX section 8.5.1 """
-
-    dtacctup = DateTime(required=True)
+    temppass = String(32)
+    userid = String(32)
+    dtexpire = DateTime()
 
 
-class ACCTINFOTRNRQ(TrnRq):
-    """ OFX section 8.5"""
+class ENROLLTRNRQ(TrnRq):
+    """ OFX section 8.4.2 """
 
-    acctinforq = SubAggregate(ACCTINFORQ, required=True)
+    enrollrq = SubAggregate(ENROLLRQ, required=True)
 
 
-class SIGNUPMSGSRQV1(List):
-    """ OFX section 8.1 """
+class ENROLLTRNRS(TrnRs):
+    """ OFX section 8.4.3 """
 
-    dataTags = ["ENROLLTRNRQ", "ACCTINFOTRNRQ", "ACCTTRNRQ", "CHGUSERINFOTRNRQ"]
+    enrollrs = SubAggregate(ENROLLRS)
 
 
 class ACCTINFO(List):
@@ -172,6 +141,12 @@ class ACCTINFO(List):
         )
 
 
+class ACCTINFORQ(Aggregate):
+    """ OFX section 8.5.1 """
+
+    dtacctup = DateTime(required=True)
+
+
 class ACCTINFORS(List):
     """ OFX section 8.5.2 """
 
@@ -185,67 +160,16 @@ class ACCTINFORS(List):
         )
 
 
+class ACCTINFOTRNRQ(TrnRq):
+    """ OFX section 8.5"""
+
+    acctinforq = SubAggregate(ACCTINFORQ, required=True)
+
+
 class ACCTINFOTRNRS(TrnRs):
     """ OFX section 8.5.2 """
 
     acctinfors = SubAggregate(ACCTINFORS)
-
-
-class SIGNUPMSGSRSV1(List):
-    """ OFX section 8.1 """
-
-    dataTags = ["ENROLLTRNRS", "ACCTINFOTRNRS", "ACCTTRNRS", "CHGUSERINFOTRNRS"]
-
-
-class ENROLLRQ(Aggregate):
-    """ OFX section 8.4.2 """
-
-    firstname = String(32, required=True)
-    middlename = String(32)
-    lastname = String(32, required=True)
-    addr1 = String(32, required=True)
-    addr2 = String(32)
-    addr3 = String(32)
-    city = String(32, required=True)
-    state = String(5, required=True)
-    postalcode = String(11, required=True)
-    country = OneOf(*COUNTRY_CODES)
-    dayphone = String(32)
-    evephone = String(32)
-    email = String(80, required=True)
-    userid = String(32)
-    taxid = String(32)
-    securityname = String(32)
-    datebirth = DateTime()
-    bankacctfrom = SubAggregate(BANKACCTFROM)
-    ccacctfrom = SubAggregate(CCACCTFROM)
-    invacctfrom = SubAggregate(INVACCTFROM)
-
-    optionalMutexes = [
-        ("bankacctfrom", "ccacctfrom"),
-        ("bankacctfrom", "invacctfrom"),
-        ("ccacctfrom", "invacctfrom"),
-    ]
-
-
-class ENROLLTRNRQ(TrnRq):
-    """ OFX section 8.4.2 """
-
-    enrollrq = SubAggregate(ENROLLRQ, required=True)
-
-
-class ENROLLRS(Aggregate):
-    """ OFX section 8.4.3 """
-
-    temppass = String(32)
-    userid = String(32)
-    dtexpire = DateTime()
-
-
-class ENROLLTRNRS(TrnRs):
-    """ OFX section 8.4.3 """
-
-    enrollrs = SubAggregate(ENROLLRS)
 
 
 class SVCADD(Aggregate):
@@ -390,3 +314,57 @@ class CHGUSERINFOSYNCRS(SyncRsList):
     """ OFX section 8.7.4.2 """
 
     dataTags = ["CHGUSERINFOTRNRS"]
+
+
+class SIGNUPMSGSRQV1(List):
+    """ OFX section 8.1 """
+
+    dataTags = ["ENROLLTRNRQ", "ACCTINFOTRNRQ", "ACCTTRNRQ", "CHGUSERINFOTRNRQ"]
+
+
+class SIGNUPMSGSRSV1(List):
+    """ OFX section 8.1 """
+
+    dataTags = ["ENROLLTRNRS", "ACCTINFOTRNRS", "ACCTTRNRS", "CHGUSERINFOTRNRS"]
+
+
+class CLIENTENROLL(Aggregate):
+    """ OFX section 8.8 """
+
+    acctrequired = Bool(required=True)
+
+
+class WEBENROLL(Aggregate):
+    """ OFX section 8.8 """
+
+    url = String(255, required=True)
+
+
+class OTHERENROLL(Aggregate):
+    """ OFX section 8.8 """
+
+    message = String(80, required=True)
+
+
+class SIGNUPMSGSETV1(Aggregate):
+    """ OFX section 8.8 """
+
+    msgsetcore = SubAggregate(MSGSETCORE, required=True)
+    clientenroll = SubAggregate(CLIENTENROLL)
+    webenroll = SubAggregate(WEBENROLL)
+    otherenroll = SubAggregate(OTHERENROLL)
+    chguserinfo = Bool(required=True)
+    availaccts = Bool(required=True)
+    clientactreq = Bool(required=True)
+
+    optionalMutexes = [
+        ("clientenroll", "webenroll"),
+        ("clientenroll", "otherenroll"),
+        ("webenroll", "otherenroll"),
+    ]
+
+
+class SIGNUPMSGSET(Aggregate):
+    """ OFX section 8.8 """
+
+    signupmsgsetv1 = SubAggregate(SIGNUPMSGSETV1, required=True)

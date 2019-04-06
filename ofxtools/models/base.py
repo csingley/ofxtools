@@ -1,7 +1,20 @@
 # coding: utf-8
 """
-Python object model for fundamental data aggregates such as transactions,
-balances, and securities.
+Bases for OFX model classes to inherit.
+
+``ofxtools.models`` classes correspond to OFX "Aggregates", as defined in
+OFX section 1.3.9 - SGML/XML hierarchy nodes that organize data "Elements" ,
+but do not themselves contain data.  In XML terminology, OFX "Aggregates" are
+XML elements whose only content is other elements; they don't themselves
+have text content.
+
+Aggregates may contain other aggregates (which relationship is implemented
+by the ``SubAggregate`` and ``List`` classes) and/or data-bearing
+"Elements", i.e. leaf nodes, which are defined in ``ofxtools.Types``.
+
+Names of all Aggregate classes must be ALL CAPS, following the convention of
+the OFX spec, to be found in the package namespace by ``Aggregate.from_etree()``
+which is called by the ``ofxtools.Parser``.
 """
 # stdlib imports
 import xml.etree.ElementTree as ET
@@ -114,6 +127,9 @@ class Aggregate:
         Look up `Aggregate`` subclass corresponding to ``Element.tag``;
         parse the Element structure into (args, kwargs) and pass those
         to the subclass __init__().
+
+        N.B. this is a recursive function; ``from_etree()`` calls
+        ``_etree2args()``, which calls ``from_etree()`` on children.
         """
         if not isinstance(elem, ET.Element):
             msg = "Bad type {} - should be xml.etree.ElementTree.Element"

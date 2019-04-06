@@ -1,6 +1,6 @@
 # coding: utf-8
 """
-Data structures for email - OFX Section 9
+email - OFX Section 9
 """
 # stdlib imports
 from copy import deepcopy
@@ -8,12 +8,8 @@ from copy import deepcopy
 # local imports
 from ofxtools.Types import String, Decimal, Integer, OneOf, DateTime, Bool
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List
-from ofxtools.models.common import (
-    TrnRq,
-    TrnRs,
-    TranList,
-    SyncRqList,
-    SyncRsList,
+from ofxtools.models.wrapperbases import (
+    TrnRq, TrnRs, TranList, SyncRqList, SyncRsList,
 )
 from ofxtools.models.profile import MSGSETCORE
 

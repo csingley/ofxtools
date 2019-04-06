@@ -5,7 +5,7 @@ Interbank fund transfers - OFX Section 11.8
 # local imports
 from ofxtools.Types import String, OneOf, DateTime
 from ofxtools.models.base import Aggregate, SubAggregate
-from ofxtools.models.common import TrnRq, TrnRs
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.bank.intraxfer import XFERINFO, XFERPRCSTS
 from ofxtools.models.i18n import CURRENCY_CODES
 
