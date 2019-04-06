@@ -38,8 +38,8 @@ messages (``INTRARQ`` / ``INTRARS``).
 
 Download a copy of the `OFXv2.03`_ spec.  The messages we want to implement
 are located in Section 11.7.  Since these messages appear in the hierarchy
-under ``BANKMSGSRQV1`` / ``BANKMSGSRSV1``, they belong in
-``ofxtools.models.bank``.
+under ``BANKMSGSRQV1`` / ``BANKMSGSRSV1``, they belong under
+``ofxtools.models.bank``, in ``ofxtools.models.bank.interxfer``.
 
 First we need to create classes for any new aggregates appearing in the
 basic ``*RQ`` / ``*RS`` - in this case, ``XFERINFO``.
@@ -52,6 +52,9 @@ Here's how we translate the spec info Python.
 
     from ofxtools.models.base import Aggregate, SubAggregate
     from ofxtools.Types import String, Decimal, DateTime, OneOf
+    from ofxtools.models.bank.stmt import (
+        BANKACCTFROM, BANKACCTFROM, CCACCTFROM, CCACCTTO,
+    )
 
     class XFERINFO(Aggregate):
         """ OFX section 11.3.5 """
@@ -226,8 +229,9 @@ The structure of ``*TRNRQ`` and ``*TRNRS`` wrappers are defined in Section
 
 .. image:: trnrq_trnrs.png
 
-This commonly-repeated pattern is factored out in ``ofxtools.models.common``
-as base classes for the various ``*TRNRQ`` / ``*TRNRS`` classes to inherit.
+This commonly-repeated pattern is factored out in 
+``ofxtools.models.wrapperbases`` as base classes for the various
+``*TRNRQ`` / ``*TRNRS`` classes to inherit.
 
 .. code:: python
 
@@ -263,7 +267,7 @@ allows empty ``*TRNRS`` wrappers, so we set ``requiredMutexes`` and
 
 .. code:: python
 
-    from ofxtools.models.common import TrnRq, TrnRs
+    from ofxtools.models.wrapperbases import TrnRq, TrnRs
 
     class INTRATRNRQ(TrnRq):
         """ OFX section 11.7.1.1 """
@@ -293,10 +297,107 @@ allows empty ``*TRNRS`` wrappers, so we set ``requiredMutexes`` and
             )
         ]
 
+A bit further down, the spec details the messages for recurring funds transfer
+instructions.  These are more of the same.
+
+.. image:: recintrarq.png
+
+.. code:: python
+
+    class RECINTRARQ(Aggregate):
+        """ OFX section 11.10.1.1 """
+
+        recurrinst = SubAggregate(RECURRINST, required=True)
+        intrarq = SubAggregate(INTRARQ, required=True)
+
+.. image:: recintrars.png
+
+.. code:: python
+
+    class RECINTRARS(Aggregate):
+        """ OFX section 11.10.1.2 """
+
+        recsrvrtid = String(10, required=True)
+        recurrinst = SubAggregate(RECURRINST, required=True)
+        intrars = SubAggregate(INTRARS, required=True)
+
+.. image:: recintramodrq.png
+
+.. code:: python
+
+    class RECINTRAMODRQ(Aggregate):
+        """ OFX section 11.10.2.1 """
+
+        recsrvrtid = String(10, required=True)
+        recurrinst = SubAggregate(RECURRINST, required=True)
+        intrarq = SubAggregate(INTRARQ, required=True)
+        modpending = Bool(required=True)
+
+.. image:: recintramodrs.png
+
+.. code:: python
+
+    class RECINTRAMODRS(Aggregate):
+        """ OFX section 11.10.2.2 """
+
+        recsrvrtid = String(10, required=True)
+        recurrinst = SubAggregate(RECURRINST, required=True)
+        intrars = SubAggregate(INTRARS, required=True)
+        modpending = Bool(required=True)
+
+.. image:: recintracanrq.png
+
+.. code:: python
+
+    class RECINTRACANRQ(Aggregate):
+        """ OFX section 11.10.3.1 """
+
+        recsrvrtid = String(10, required=True)
+        canpending = Bool(required=True)
+
+.. image:: recintracanrs.png
+
+.. code:: python
+
+    class RECINTRACANRS(Aggregate):
+        """ OFX section 11.10.3.2 """
+
+        recsrvrtid = String(10, required=True)
+        canpending = Bool(required=True)
+
+.. image:: recintratrnrq.png
+
+.. code:: python
+
+    class RECINTRATRNRQ(TrnRq):
+        """ OFX section 11.10.1.1 """
+
+        recintrarq = SubAggregate(RECINTRARQ)
+        recintramodrq = SubAggregate(RECINTRAMODRQ)
+        recintracanrq = SubAggregate(RECINTRACANRQ)
+
+        requiredMutexes = [("recintrarq", "recintramodrq", "recintracanrq")]
+
+.. image:: recintratrnrs.png
+
+.. code:: python
+
+    class RECINTRATRNRS(TrnRs):
+        """ OFX section 11.10.1.2 """
+
+        recintrars = SubAggregate(RECINTRARS)
+        recintramodrs = SubAggregate(RECINTRAMODRS)
+        recintracanrs = SubAggregate(RECINTRACANRS)
+
+        optionalMutexes = [("recintrars", "recintramodrs", "recintracanrs")]
+
 But wait, there's more!  Notices peppering OFX Section 11.7 alert us to the
 application of the synchronization protocol, which directs us to Section 11.12.2.
 
-.. image:: trnrq_trnrs.png
+.. image:: intrasyncrq.png
+
+
+.. image:: intrasyncrs.png
 
 The requirement that each ``*SYNCRQ`` / ``*SYNCRS`` may contain a variable
 number of transaction wrappers means that we can't use the ``Aggregate`` base
@@ -307,12 +408,12 @@ Subclasses of ``List`` define tag validators in the usual manner for metadata
 (i.e. unique children, which are accessed as instance attributes), but the
 (possibly duplicated) sub-aggregates identified by the OFX spec as list
 members are defined using the ``dataTags`` class attribute and accessed via the
-Python sequence API.  Here's how it looks.
+Python sequence API.  Here's how it looks in ``ofxtools.models.bank.sync``.
 
 .. code:: python
 
     from ofxtools.models.base import List
-    from ofxtools.models.bank import BANKACCTFROM, CCACCTFROM
+    from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM
     from ofxtools.Types import Bool
 
     class INTRASYNCRQ(List):
@@ -346,10 +447,13 @@ corresponding to the OFX tags that will appear in incoming aggregates.  Order
 is significant; these tags must be defined in the same order laid out in the
 spec.
 
-Finally, we just need to add our newly-defined models to the API published by
-the ``ofxtools.models.bank`` module, so the parser can find them.
+Finally, we just need to add our newly-defined models to the APIs published by
+the modules, so the parser can find them.
+and ofxtools.models.bank.modules,
 
 .. code:: python
+
+    ofxtools.models.bank.interxfer
 
     __all__ = [
         ...
@@ -363,6 +467,28 @@ the ``ofxtools.models.bank`` module, so the parser can find them.
         "INTRACANRS",
         "INTRATRNRQ",
         "INTRATRNRS",
+        ...
+    ]
+
+    ofxtools.models.bank.recur
+
+    __all__ = [
+        ...
+        "RECINTRARQ",
+        "RECINTRARS",
+        "RECINTRAMODRQ",
+        "RECINTRAMODRS",
+        "RECINTRACANRQ",
+        "RECINTRACANRS",
+        "RECINTRATRNRQ",
+        "RECINTRATRNRS",
+        ...
+    ]
+
+    ofxtools.models.bank.sync
+
+    __all__ = [
+        ...
         "INTRASYNCRQ",
         "INTRASYNCRS",
         ...
