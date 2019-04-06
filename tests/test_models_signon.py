@@ -10,12 +10,6 @@ from copy import deepcopy
 # local imports
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import STATUS
-from ofxtools.models.msgsets import (
-    MSGSETCORE,
-    SIGNONMSGSRQV1,
-    SIGNONMSGSRSV1,
-    SIGNONMSGSETV1,
-)
 from ofxtools.models.signon import (
     FI,
     SONRQ,
@@ -27,7 +21,6 @@ from ofxtools.utils import UTC
 
 # test imports
 import base
-from test_models_profile import MsgsetcoreTestCase
 
 
 class FiTestCase(unittest.TestCase, base.TestAggregate):
@@ -184,56 +177,6 @@ class SonrsTestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         self.assertEqual(root.org, "IBLLC-US")
         self.assertEqual(root.fid, "4705")
-
-
-class Signonmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    @property
-    def root(self):
-        root = Element("SIGNONMSGSRQV1")
-        sonrq = SonrqTestCase().root
-        root.append(sonrq)
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SIGNONMSGSRQV1)
-        self.assertIsInstance(root.sonrq, SONRQ)
-
-
-class Signonmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    @property
-    def root(self):
-        root = Element("SIGNONMSGSRSV1")
-        sonrs = SonrsTestCase().root
-        root.append(sonrs)
-        return root
-
-    def testConvert(self):
-        # Make sure Aggregate.from_etree() calls Element.convert() and sets
-        # Aggregate instance attributes with the result
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SIGNONMSGSRSV1)
-        self.assertIsInstance(root.sonrs, SONRS)
-
-
-class Signonmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    @property
-    def root(self):
-        root = Element("SIGNONMSGSETV1")
-        msgsetcore = MsgsetcoreTestCase().root
-        root.append(msgsetcore)
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SIGNONMSGSETV1)
-        self.assertIsInstance(root.msgsetcore, MSGSETCORE)
 
 
 if __name__ == "__main__":

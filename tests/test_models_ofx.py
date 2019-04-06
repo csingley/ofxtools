@@ -24,9 +24,13 @@ from ofxtools.utils import UTC
 
 # test imports
 import base
-from test_models_signon import Signonmsgsrqv1TestCase, Signonmsgsrsv1TestCase
-from test_models_signup import Signupmsgsrqv1TestCase, Signupmsgsrsv1TestCase
-from test_models_profile import (
+
+
+from test_models_signup import (
+    Signupmsgsrqv1TestCase, Signupmsgsrsv1TestCase,
+)
+from test_models_msgsets import (
+    Signonmsgsrqv1TestCase, Signonmsgsrsv1TestCase,
     Bankmsgsrqv1TestCase,
     Bankmsgsrsv1TestCase,
     Creditcardmsgsrqv1TestCase,

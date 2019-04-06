@@ -21,6 +21,8 @@ __all__ = [
 ]
 
 
+# FIXME
+# Per OFX spec, MSGSETLIST must contain one or more message set aggregates
 class MSGSETLIST(List):
     """ OFX section 7.2 """
 

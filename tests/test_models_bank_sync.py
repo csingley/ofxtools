@@ -19,6 +19,7 @@ from test_models_bank_stmt import BankacctfromTestCase, CcacctfromTestCase
 from test_models_bank_stpchk import StpchktrnrqTestCase, StpchktrnrsTestCase
 from test_models_bank_intraxfer import IntratrnrqTestCase, IntratrnrsTestCase
 from test_models_bank_interxfer import IntertrnrqTestCase, IntertrnrsTestCase
+from test_models_bank_wire import WiretrnrqTestCase, WiretrnrsTestCase
 from test_models_bank_recur import RecintratrnrqTestCase, RecintratrnrsTestCase
 from test_models_bank_recur import RecintertrnrqTestCase, RecintertrnrsTestCase
 from test_models_bank_mail import BankmailtrnrqTestCase, BankmailtrnrsTestCase
@@ -408,6 +409,105 @@ class IntersyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
             # ``dataTags`` doesn't appear in the ``cls.spec``.
 
 
+class WiresyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
+    __test__ = True
+
+    requiredElements = ["REJECTIFMISSING", "BANKACCTFROM"]
+
+    @property
+    def validSoup(self):
+        acctfrom = BankacctfromTestCase().root
+        trnrq = WiretrnrqTestCase().root
+
+        for root in super().validSoup:
+            root.append(acctfrom)
+            root.append(trnrq)
+            yield root
+
+    @property
+    def invalidSoup(self):
+        acctfrom = BankacctfromTestCase().root
+        trnrq = IntratrnrsTestCase().root
+
+        # SYNCRQ base malformed; WIRE additions OK
+        for root in super().invalidSoup:
+            root.append(acctfrom)
+            # 0 contained aggregrates
+            yield root
+            # 1 or more contained aggregates
+            for n in range(2):
+                root.append(trnrq)
+                yield root
+
+        # SYNCRQ base OK; WIRE additions malformed
+        for root in super().validSoup:
+            # *ACCTFROM in the wrong place
+            # (should be right after REJECTIFMISSING)
+            index = list(root).index(root.find("REJECTIFMISSING"))
+            for n in range(index):
+                root.insert(n, acctfrom)
+                yield root
+
+            #  *TRNRQ in the wrong place
+            #  (should be right after *ACCTFROM)
+            #
+            # FIXME
+            # Currently the ``List`` data model offers no way to verify that
+            # data appears in correct position relative to metadata, since
+            # ``dataTags`` doesn't appear in the ``cls.spec``.
+
+
+class WiresyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
+    __test__ = True
+
+    @property
+    def validSoup(self):
+        acctfrom = BankacctfromTestCase().root
+        trnrs = WiretrnrsTestCase().root
+
+        for root in super().validSoup:
+            root.append(acctfrom)
+            # 0 contained aggregrates
+            yield root
+            # 1 or more contained aggregates
+            for n in range(2):
+                root.append(deepcopy(trnrs))
+                yield root
+
+    @property
+    def invalidSoup(self):
+        acctfrom = BankacctfromTestCase().root
+        trnrs = WiretrnrsTestCase().root
+
+        # SYNCRS base malformed; WIRE additions OK
+        for root in super().invalidSoup:
+            root.append(acctfrom)
+            # 0 contained aggregrates
+            yield root
+            # 1 or more contained aggregates
+            for n in range(2):
+                root.append(trnrs)
+                yield root
+
+        # SYNCRS base OK; WIRE additions malformed
+        for root in super().validSoup:
+
+            # *ACCTFROM in the wrong place
+            # (should be right after LOSTSYNC)
+            index = list(root).index(root.find("LOSTSYNC"))
+            for n in range(index):
+                root.insert(n, acctfrom)
+                yield root
+
+            #  *TRNRS in the wrong place
+            #  (should be right after *ACCTFROM)
+            #
+            # FIXME
+            # Currently the ``List`` data model offers no way to verify that
+            # data appears in correct position relative to metadata, since
+            # ``dataTags`` doesn't appear in the ``cls.spec``.
+
+
 class RecintrasyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     __test__ = True
 
@@ -428,7 +528,7 @@ class RecintrasyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
         acctfrom = BankacctfromTestCase().root
         trnrq = RecintratrnrqTestCase().root
 
-        # SYNCRQ base malformed; WIRE additions OK
+        # SYNCRQ base malformed; RECINTRA additions OK
         for root in super().invalidSoup:
             root.append(acctfrom)
             # 0 contained aggregrates
@@ -438,7 +538,7 @@ class RecintrasyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
                 root.append(trnrq)
                 yield root
 
-        # SYNCRQ base OK; WIRE additions malformed
+        # SYNCRQ base OK; RECINTRA additions malformed
         for root in super().validSoup:
             # *ACCTFROM in the wrong place
             # (should be right after REJECTIFMISSING)
