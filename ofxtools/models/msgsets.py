@@ -56,6 +56,10 @@ __all__ = [
     "WIREXFERMSGSRSV1",
     "WIREXFERMSGSETV1",
     "WIREXFERMSGSET",
+    "BILLPAYMSGSRQV1",
+    "BILLPAYMSGSRSV1",
+    "BILLPAYMSGSETV1",
+    "BILLPAYMSGSET",
     "INVSTMTMSGSRQV1",
     "INVSTMTMSGSRSV1",
     "INVSTMTMSGSETV1",
@@ -411,6 +415,67 @@ class WIREXFERMSGSET(Aggregate):
     """ OFX section 11.13.5 """
 
     wirexfermsgsetv1 = SubAggregate(WIREXFERMSGSETV1, required=True)
+
+
+class BILLPAYMSGSRQV1(List):
+    """ OFX section 12.11.1.1 """
+
+    dataTags = [
+        "PMTTRNRQ",
+        "RECPMTTRNRQ",
+        "PAYEETRNRQ",
+        "PMTINQTRNRQ",
+        "PMTMAILTRNRQ",
+        "PMTSYNCRQ",
+        "RECPMTSYNCRQ",
+    ]
+
+
+class BILLPAYMSGSRSV1(List):
+    """ OFX section 12.11.1.2 """
+
+    dataTags = [
+        "PMTTRNRS",
+        "RECPMTTRNRS",
+        "PAYEETRNRS",
+        "PMTINQTRNRS",
+        "PMTMAILTRNRS",
+        "PMTSYNCRS",
+        "RECPMTSYNCRS",
+    ]
+
+
+class BILLPAYMSGSETV1(Aggregate):
+    """ OFX section 12.11.2 """
+
+    msgsetcore = SubAggregate(MSGSETCORE, required=True)
+    dayswith = Integer(3, required=True)
+    dfldaystopay = Integer(3, required=True)
+    xferdayswith = Integer(3, required=True)
+    xferdfldaystopay = Integer(3, required=True)
+    # Need to define an Aggregate subclass that support multiple repeated
+    # Elements (not just SubAggregates, like List) for PROCDAYSOFF.
+    procdaysoff = Unsupported()
+    procendtm = Time(required=True)
+    modelwnd = Integer(3, required=True)
+    postprocwnd = Integer(3, required=True)
+    stsviamods = Bool(required=True)
+    pmtbyaddr = Bool(required=True)
+    pmtbyxfer = Bool(required=True)
+    pmtbypayeeid = Bool(required=True)
+    canaddpayee = Bool(required=True)
+    hasextdpmt = Bool(required=True)
+    canmodpmts = Bool(required=True)
+    canmodmdls = Bool(required=True)
+    difffirstpmt = Bool(required=True)
+    difflastpmt = Bool(required=True)
+    billpubcontext = Bool()
+
+
+class BILLPAYMSGSET(Aggregate):
+    """ OFX section 12.11.2 """
+
+    billpaymsgsetv1 = SubAggregate(BILLPAYMSGSETV1, required=True)
 
 
 class INVSTMTMSGSRQV1(List):
