@@ -1,14 +1,14 @@
 # coding: utf-8
 """
-Investments = OFX Section 13
+Investments - OFX Section 13
 """
 from ofxtools.Types import Bool, String, OneOf, Decimal, DateTime
 from ofxtools.models.base import Aggregate, SubAggregate, List
-from ofxtools.models.investment.acct import INVSUBACCTS
-from ofxtools.models.investment.tranlist import (
+from ofxtools.models.invest.acct import INVSUBACCTS
+from ofxtools.models.invest.transactions import (
     BUYTYPES, SELLTYPES, OPTBUYTYPES, OPTSELLTYPES
 )
-from ofxtools.models.investment.seclist import SECID
+from ofxtools.models.invest.securities import SECID
 from ofxtools.models.bank import INV401KSOURCES
 from ofxtools.models.i18n import CURRENCY
 

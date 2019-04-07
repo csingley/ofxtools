@@ -11,41 +11,6 @@ from copy import deepcopy
 # local imports
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import OFXEXTENSION
-#  from ofxtools.models.msgsets import (
-    #  MSGSETCORE,
-    #  SIGNONMSGSETV1, SIGNONMSGSET,
-    #  XFERPROF,
-    #  STPCHKPROF,
-    #  EMAILPROF,
-    #  PROFMSGSRQV1,
-    #  PROFMSGSRSV1,
-    #  PROFMSGSETV1,
-    #  PROFMSGSET,
-    #  SIGNUPMSGSETV1, SIGNUPMSGSET, WEBENROLL,
-    #  EMAILMSGSRQV1,
-    #  EMAILMSGSRSV1,
-    #  EMAILMSGSETV1,
-    #  EMAILMSGSET,
-    #  BANKMSGSRQV1,
-    #  BANKMSGSRSV1,
-    #  BANKMSGSETV1,
-    #  BANKMSGSET,
-    #  CREDITCARDMSGSRQV1,
-    #  CREDITCARDMSGSRSV1,
-    #  CREDITCARDMSGSETV1,
-    #  CREDITCARDMSGSET,
-    #  INTERXFERMSGSRQV1,
-    #  INTERXFERMSGSRSV1,
-    #  INTERXFERMSGSETV1,
-    #  INTERXFERMSGSET,
-    #  WIREXFERMSGSRQV1,
-    #  WIREXFERMSGSRSV1,
-    #  WIREXFERMSGSETV1,
-    #  WIREXFERMSGSET,
-    #  INVSTMTMSGSETV1, INVSTMTMSGSET,
-    #  SECLISTMSGSETV1, SECLISTMSGSET,
-    #  TAX1099MSGSETV1, TAX1099MSGSET,
-#  )
 from ofxtools.models.email import (
     MAILTRNRQ,
     MAILTRNRS,
@@ -78,7 +43,7 @@ from ofxtools.models.bank.stmtend import (
     CCSTMTENDTRNRS,
 )
 from ofxtools.models.bank.stpchk import STPCHKTRNRQ, STPCHKTRNRS
-from ofxtools.models.bank.intraxfer import INTRATRNRQ, INTRATRNRS
+from ofxtools.models.bank.xfer import INTRATRNRQ, INTRATRNRS
 from ofxtools.models.bank.interxfer import INTERTRNRQ, INTERTRNRS
 from ofxtools.models.bank.wire import WIRETRNRQ, WIRETRNRS
 from ofxtools.models.bank.recur import (
@@ -134,7 +99,7 @@ from test_models_bank_stmtend import (
     CcstmtendtrnrsTestCase,
 )
 from test_models_bank_stpchk import StpchktrnrqTestCase, StpchktrnrsTestCase
-from test_models_bank_intraxfer import IntratrnrqTestCase, IntratrnrsTestCase
+from test_models_bank_xfer import IntratrnrqTestCase, IntratrnrsTestCase
 from test_models_bank_interxfer import IntertrnrqTestCase, IntertrnrsTestCase
 from test_models_bank_wire import WiretrnrqTestCase, WiretrnrsTestCase
 from test_models_bank_recur import (

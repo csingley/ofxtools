@@ -10,4 +10,4 @@ from .signup import *
 from .email import *
 from .bank import *
 from .billpay import *
-from .investment import *
+from .invest import *

@@ -5,8 +5,8 @@ Investments - OFX Section 13
 from ofxtools.Types import Bool, String, OneOf, Integer, Decimal, DateTime
 from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TranList
-from ofxtools.models.investment.acct import INVSUBACCTS, INVACCTFROM
-from ofxtools.models.investment.seclist import SECID
+from ofxtools.models.invest.acct import INVSUBACCTS, INVACCTFROM
+from ofxtools.models.invest.securities import SECID
 from ofxtools.models.bank import STMTTRN, INV401KSOURCES
 from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, Origcurrency
 

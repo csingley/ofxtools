@@ -77,7 +77,7 @@ from ofxtools.models.msgsets import (
     BANKMSGSRQV1, CREDITCARDMSGSRQV1,
     INVSTMTMSGSRQV1,
 )
-from ofxtools.models.investment import (
+from ofxtools.models.invest import (
     INVSTMTTRNRQ,
     INVSTMTRQ,
     INVACCTFROM,

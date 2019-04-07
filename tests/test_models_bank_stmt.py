@@ -21,6 +21,7 @@ from ofxtools.models.bank.stmt import (
     BANKACCTINFO,
     CCACCTFROM,
     CCACCTINFO,
+    PAYEE,
     LEDGERBAL,
     AVAILBAL,
     BALLIST,
@@ -32,7 +33,6 @@ from ofxtools.models.bank.stmt import (
     CCSTMTRQ,
     CCSTMTRS,
 )
-from ofxtools.models.billpay.payee import PAYEE
 from ofxtools.models.i18n import CURRENCY_CODES
 from ofxtools.utils import UTC
 

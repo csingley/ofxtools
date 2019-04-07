@@ -13,7 +13,7 @@ from ofxtools.models.bank import BANKACCTFROM, CCACCTFROM, BANKACCTTO, CCACCTTO
 from ofxtools.models.base import Aggregate, SubAggregate, List
 from ofxtools.models.common import SVCSTATUSES
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
-from ofxtools.models.investment import INVACCTFROM, INVACCTTO
+from ofxtools.models.invest import INVACCTFROM, INVACCTTO
 
 
 __all__ = [

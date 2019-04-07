@@ -11,7 +11,7 @@ import itertools
 
 # local imports
 from ofxtools.models.base import Aggregate, classproperty
-from ofxtools.models.bank.intraxfer import INTRARQ, INTRARS
+from ofxtools.models.bank.xfer import INTRARQ, INTRARS
 from ofxtools.models.bank.interxfer import INTERRQ, INTERRS
 from ofxtools.models.bank.recur import (
     FREQUENCIES,
@@ -33,7 +33,7 @@ from ofxtools.models.bank.recur import (
 
 # test imports
 import base
-from test_models_bank_intraxfer import IntrarqTestCase, IntrarsTestCase
+from test_models_bank_xfer import IntrarqTestCase, IntrarsTestCase
 from test_models_bank_interxfer import InterrqTestCase, InterrsTestCase
 
 

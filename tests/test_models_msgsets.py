@@ -76,7 +76,7 @@ from ofxtools.models.bank.stmtend import (
     CCSTMTENDTRNRS,
 )
 from ofxtools.models.bank.stpchk import STPCHKTRNRQ, STPCHKTRNRS
-from ofxtools.models.bank.intraxfer import INTRATRNRQ, INTRATRNRS
+from ofxtools.models.bank.xfer import INTRATRNRQ, INTRATRNRS
 from ofxtools.models.bank.interxfer import INTERTRNRQ, INTERTRNRS
 from ofxtools.models.bank.wire import WIRETRNRQ, WIRETRNRS
 from ofxtools.models.bank.recur import (
@@ -138,7 +138,7 @@ from test_models_bank_stmtend import (
     CcstmtendtrnrsTestCase,
 )
 from test_models_bank_stpchk import StpchktrnrqTestCase, StpchktrnrsTestCase
-from test_models_bank_intraxfer import IntratrnrqTestCase, IntratrnrsTestCase
+from test_models_bank_xfer import IntratrnrqTestCase, IntratrnrsTestCase
 from test_models_bank_interxfer import IntertrnrqTestCase, IntertrnrsTestCase
 from test_models_bank_wire import WiretrnrqTestCase, WiretrnrsTestCase
 from test_models_bank_recur import (

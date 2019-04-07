@@ -1,6 +1,6 @@
 # coding: utf-8
 """
-Unit tests for models.bank.intraxfer
+Unit tests for models.bank.xfer
 """
 # stdlib imports
 import unittest
@@ -12,7 +12,7 @@ import itertools
 
 # local imports
 from ofxtools.models.base import Aggregate, classproperty
-from ofxtools.models.bank.intraxfer import (
+from ofxtools.models.bank.xfer import (
     XFERINFO,
     XFERPRCSTS,
     INTRARQ,

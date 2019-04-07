@@ -28,7 +28,7 @@ from ofxtools.models.i18n import CURRENCY_CODES
 
 
 # test imports
-from test_models_bank_intraxfer import XferinfoTestCase, XferprcstsTestCase
+from test_models_bank_xfer import XferinfoTestCase, XferprcstsTestCase
 
 
 class InterrqTestCase(unittest.TestCase, base.TestAggregate):

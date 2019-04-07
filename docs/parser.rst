@@ -93,7 +93,7 @@ for the data structures you're really looking for.  Here's an example.
     Out[20]: Decimal('4.7')
     In [21]: tx = txs[1]
     In [22]: type(tx)
-    Out[22]: ofxtools.models.investment.TRANSFER
+    Out[22]: ofxtools.models.invest.transactions.TRANSFER
     In [23]: tx.invtran.dttrade  # Who wants to remember where to find the trade date?
     Out[23]: datetime.datetime(2015, 9, 8, 17, 14, 8, tzinfo=<UTC>)
     In [24]: tx.dttrade  # That's more like it

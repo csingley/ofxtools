@@ -18,7 +18,7 @@ from ofxtools.models.msgsets import (
 )
 from ofxtools.models.signon import SONRS
 from ofxtools.models.bank import STMTRS, CCSTMTRS, CCSTMTENDRS
-from ofxtools.models.investment import INVSTMTRS
+from ofxtools.models.invest import INVSTMTRS
 from ofxtools.utils import UTC
 
 
@@ -44,8 +44,8 @@ from test_models_msgsets import (
     Emailmsgsrqv1TestCase,
     Emailmsgsrsv1TestCase,
 )
-from test_models_investment import Invstmtmsgsrqv1TestCase, Invstmtmsgsrsv1TestCase
-from test_models_seclist import Seclistmsgsrqv1TestCase, Seclistmsgsrsv1TestCase
+from test_models_invest import Invstmtmsgsrqv1TestCase, Invstmtmsgsrsv1TestCase
+from test_models_securities import Seclistmsgsrqv1TestCase, Seclistmsgsrsv1TestCase
 
 
 class OfxTestCase(unittest.TestCase, base.TestAggregate):

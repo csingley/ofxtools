@@ -3,14 +3,13 @@
 Bank statement download - OFX Section 11.4
 """
 # local imports
-from ofxtools.Types import Bool, String, OneOf, Integer, Decimal, DateTime
+from ofxtools.Types import Bool, String, NagString, OneOf, Integer, Decimal, DateTime
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List
 from ofxtools.models.common import SVCSTATUSES
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, TranList
 from ofxtools.models.i18n import (
-    CURRENCY, ORIGCURRENCY, Origcurrency, CURRENCY_CODES,
+    CURRENCY, ORIGCURRENCY, Origcurrency, CURRENCY_CODES, COUNTRY_CODES
 )
-from ofxtools.models.billpay.payee import PAYEE
 
 
 __all__ = [
@@ -27,6 +26,7 @@ __all__ = [
     "LEDGERBAL",
     "AVAILBAL",
     "BALLIST",
+    "PAYEE",
     "STMTTRN",
     "BANKTRANLIST",
     "STMTRQ",
@@ -143,6 +143,22 @@ class STMTRQ(Aggregate):
     inctran = SubAggregate(INCTRAN)
     includepending = Bool()
     inctranimg = Bool()
+
+
+#  This class is defined here, rather than models.billpay, in order to avoid
+#  circular imports.
+class PAYEE(Aggregate):
+    """ OFX section 12.5.2.1 """
+
+    name = NagString(32, required=True)
+    addr1 = String(32, required=True)
+    addr2 = String(32)
+    addr3 = String(32)
+    city = String(32, required=True)
+    state = String(5, required=True)
+    postalcode = String(11, required=True)
+    country = OneOf(*COUNTRY_CODES)
+    phone = String(32, required=True)
 
 
 class STMTTRN(Aggregate, Origcurrency):

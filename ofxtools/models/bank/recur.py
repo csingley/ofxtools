@@ -6,7 +6,7 @@ Recurring funds transfer - OFX Section 11.10
 from ofxtools.Types import String, Integer, OneOf, Bool
 from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
-from ofxtools.models.bank.intraxfer import INTRARQ, INTRARS
+from ofxtools.models.bank.xfer import INTRARQ, INTRARS
 from ofxtools.models.bank.interxfer import INTERRQ, INTERRS
 
 

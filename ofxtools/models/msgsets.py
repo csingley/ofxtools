@@ -12,8 +12,8 @@ from ofxtools.models.common import OFXEXTENSION
 from ofxtools.models.i18n import LANG_CODES
 from ofxtools.models.signon import SONRQ, SONRS
 from ofxtools.models.bank.stmt import ACCTTYPES, STMTTRNRS
-from ofxtools.models.investment.stmt import INVSTMTTRNRS
-from ofxtools.models.investment.seclist import SECLIST
+from ofxtools.models.invest.stmt import INVSTMTTRNRS
+from ofxtools.models.invest.securities import SECLIST
 
 
 __all__ = [

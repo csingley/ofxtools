@@ -1,5 +1,5 @@
 # coding: utf-8
-""" Unit tests for models.investment """
+""" Unit tests for models.invest """
 # stdlib imports
 import unittest
 from xml.etree.ElementTree import Element, SubElement
@@ -16,7 +16,7 @@ from ofxtools.models.msgsets import (
     INVSTMTMSGSRSV1,
 )
 from ofxtools.models.bank.stmt import STMTTRN, BALLIST, INV401KSOURCES, INCTRAN
-from ofxtools.models.investment import (
+from ofxtools.models.invest import (
     INVTRAN,
     INVBUY,
     INVSELL,
@@ -90,7 +90,7 @@ from ofxtools.utils import UTC
 # test imports
 import base
 from test_models_bank_stmt import InctranTestCase, BallistTestCase, StmttrnTestCase
-from test_models_seclist import SecidTestCase
+from test_models_securities import SecidTestCase
 from test_models_i18n import CurrencyTestCase
 
 

@@ -17,7 +17,7 @@ from ofxtools.models.base import Aggregate
 import base
 from test_models_bank_stmt import BankacctfromTestCase, CcacctfromTestCase
 from test_models_bank_stpchk import StpchktrnrqTestCase, StpchktrnrsTestCase
-from test_models_bank_intraxfer import IntratrnrqTestCase, IntratrnrsTestCase
+from test_models_bank_xfer import IntratrnrqTestCase, IntratrnrsTestCase
 from test_models_bank_interxfer import IntertrnrqTestCase, IntertrnrsTestCase
 from test_models_bank_wire import WiretrnrqTestCase, WiretrnrsTestCase
 from test_models_bank_recur import RecintratrnrqTestCase, RecintratrnrsTestCase

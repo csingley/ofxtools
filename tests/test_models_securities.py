@@ -16,7 +16,7 @@ from ofxtools.models.msgsets import (
     SECLISTMSGSRQV1,
     SECLISTMSGSRSV1,
 )
-from ofxtools.models.investment.seclist import (
+from ofxtools.models.invest.securities import (
     SECID,
     SECINFO,
     DEBTINFO,

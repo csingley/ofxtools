@@ -42,7 +42,7 @@ from ofxtools.models.bank import (
     CCACCTTO,
     CCACCTINFO,
 )
-from ofxtools.models.investment import INVACCTFROM, INVACCTTO, INVACCTINFO
+from ofxtools.models.invest import INVACCTFROM, INVACCTTO, INVACCTINFO
 from ofxtools.utils import UTC
 from ofxtools.models.i18n import COUNTRY_CODES
 
@@ -57,7 +57,7 @@ from test_models_bank_stmt import (
     CcaccttoTestCase,
     CcacctinfoTestCase,
 )
-from test_models_investment import (
+from test_models_invest import (
     InvacctfromTestCase,
     InvaccttoTestCase,
     InvacctinfoTestCase,
