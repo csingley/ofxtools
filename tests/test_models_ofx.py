@@ -30,7 +30,12 @@ from test_models_signup import (
     Signupmsgsrqv1TestCase, Signupmsgsrsv1TestCase,
 )
 from test_models_msgsets import (
-    Signonmsgsrqv1TestCase, Signonmsgsrsv1TestCase,
+    Signonmsgsrqv1TestCase,
+    Signonmsgsrsv1TestCase,
+    Profmsgsrqv1TestCase,
+    Profmsgsrsv1TestCase,
+    Emailmsgsrqv1TestCase,
+    Emailmsgsrsv1TestCase,
     Bankmsgsrqv1TestCase,
     Bankmsgsrsv1TestCase,
     Creditcardmsgsrqv1TestCase,
@@ -39,13 +44,11 @@ from test_models_msgsets import (
     Interxfermsgsrsv1TestCase,
     Wirexfermsgsrqv1TestCase,
     Wirexfermsgsrsv1TestCase,
-    Profmsgsrqv1TestCase,
-    Profmsgsrsv1TestCase,
-    Emailmsgsrqv1TestCase,
-    Emailmsgsrsv1TestCase,
+    Invstmtmsgsrqv1TestCase,
+    Invstmtmsgsrsv1TestCase,
+    Seclistmsgsrqv1TestCase,
+    Seclistmsgsrsv1TestCase,
 )
-from test_models_invest import Invstmtmsgsrqv1TestCase, Invstmtmsgsrsv1TestCase
-from test_models_securities import Seclistmsgsrqv1TestCase, Seclistmsgsrsv1TestCase
 
 
 class OfxTestCase(unittest.TestCase, base.TestAggregate):
@@ -221,7 +224,7 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
         # SIGNON values from test_models_signon.FiTestCase
         # DTSERVER from test_models_signon.SonrsTestCase
         # 2 *STMTs each from bank/cc/invstmt (6 total)
-        # 5 securitites each from 2 SECLISTs in test_models_seclist.SeclistTestCase
+        # 5 securitites each from 2 SECLISTs in test_models_securities.SeclistTestCase
         rep_values = {
             "fid": "4705",
             "org": "IBLLC-US",

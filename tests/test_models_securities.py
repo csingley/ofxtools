@@ -12,10 +12,6 @@ from copy import deepcopy
 # local imports
 from ofxtools.utils import UTC
 from ofxtools.models.base import Aggregate, classproperty
-from ofxtools.models.msgsets import (
-    SECLISTMSGSRQV1,
-    SECLISTMSGSRSV1,
-)
 from ofxtools.models.invest.securities import (
     SECID,
     SECINFO,
@@ -671,58 +667,6 @@ class SeclisttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
 
     wraps = SeclistrsTestCase
-
-
-class Seclistmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    @property
-    def root(self):
-        root = Element("SECLISTMSGSRQV1")
-        for i in range(2):
-            root.append(SeclisttrnrqTestCase().root)
-        return root
-
-    def testdataTags(self):
-        # SECLISTMSGSRQV1 may contain
-        # ["STMTTRNRQ", "STMTENDTRNRQ", "STPCHKTRNRQ", "INTRATRNRQ",
-        # "RECINTRATRNRQ", "BANKMAILTRNRQ", "STPCHKSYNCRQ", "INTRASYNCRQ",
-        # "RECINTRASYNCRQ", "BANKMAILSYNCRQ"]
-
-        allowedTags = SECLISTMSGSRQV1.dataTags
-        self.assertEqual(len(allowedTags), 1)
-        root = deepcopy(self.root)
-        root.append(SeclisttrnrsTestCase().root)
-
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, SECLISTMSGSRQV1)
-        self.assertEqual(len(instance), 2)
-
-
-class Seclistmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    # FIXME
-    # requiredElements = ('SECLIST',)
-
-    @property
-    def root(self):
-        root = Element("SECLISTMSGSRSV1")
-        seclist = SeclistTestCase().root
-        root.append(seclist)
-        root.append(deepcopy(seclist))
-        return root
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SECLISTMSGSRSV1)
-        self.assertEqual(len(root), 2)
-        self.assertIsInstance(root[0], SECLIST)
-        self.assertIsInstance(root[1], SECLIST)
 
 
 if __name__ == "__main__":

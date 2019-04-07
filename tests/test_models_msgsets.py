@@ -16,40 +16,20 @@ from ofxtools.models.base import Aggregate
 from ofxtools.models.common import OFXEXTENSION
 from ofxtools.models.msgsets import (
     MSGSETCORE,
-    SIGNONMSGSRQV1,
-    SIGNONMSGSRSV1,
-    SIGNONMSGSETV1, SIGNONMSGSET,
+    SIGNONMSGSRQV1, SIGNONMSGSRSV1, SIGNONMSGSETV1, SIGNONMSGSET,
     XFERPROF,
     STPCHKPROF,
     EMAILPROF,
-    PROFMSGSRQV1,
-    PROFMSGSRSV1,
-    PROFMSGSETV1,
-    PROFMSGSET,
-    SIGNUPMSGSETV1, SIGNUPMSGSET, WEBENROLL,
-    EMAILMSGSRQV1,
-    EMAILMSGSRSV1,
-    EMAILMSGSETV1,
-    EMAILMSGSET,
-    BANKMSGSRQV1,
-    BANKMSGSRSV1,
-    BANKMSGSETV1,
-    BANKMSGSET,
-    CREDITCARDMSGSRQV1,
-    CREDITCARDMSGSRSV1,
-    CREDITCARDMSGSETV1,
-    CREDITCARDMSGSET,
-    INTERXFERMSGSRQV1,
-    INTERXFERMSGSRSV1,
-    INTERXFERMSGSETV1,
-    INTERXFERMSGSET,
-    WIREXFERMSGSRQV1,
-    WIREXFERMSGSRSV1,
-    WIREXFERMSGSETV1,
-    WIREXFERMSGSET,
-    INVSTMTMSGSRQV1, INVSTMTMSGSRSV1,
-    INVSTMTMSGSETV1, INVSTMTMSGSET,
-    SECLISTMSGSETV1, SECLISTMSGSET,
+    PROFMSGSRQV1, PROFMSGSRSV1, PROFMSGSETV1, PROFMSGSET,
+    SIGNUPMSGSETV1, SIGNUPMSGSET,
+    WEBENROLL,
+    EMAILMSGSRQV1, EMAILMSGSRSV1, EMAILMSGSETV1, EMAILMSGSET,
+    BANKMSGSRQV1, BANKMSGSRSV1, BANKMSGSETV1, BANKMSGSET,
+    CREDITCARDMSGSRQV1, CREDITCARDMSGSRSV1, CREDITCARDMSGSETV1, CREDITCARDMSGSET,
+    INTERXFERMSGSRQV1, INTERXFERMSGSRSV1, INTERXFERMSGSETV1, INTERXFERMSGSET,
+    WIREXFERMSGSRQV1, WIREXFERMSGSRSV1, WIREXFERMSGSETV1, WIREXFERMSGSET,
+    INVSTMTMSGSRQV1, INVSTMTMSGSRSV1, INVSTMTMSGSETV1, INVSTMTMSGSET,
+    SECLISTMSGSRQV1, SECLISTMSGSRSV1, SECLISTMSGSETV1, SECLISTMSGSET,
     TAX1099MSGSETV1, TAX1099MSGSET,
 )
 from ofxtools.models.signon import SONRQ, SONRS
@@ -104,6 +84,7 @@ from ofxtools.models.bank.sync import (
     BANKMAILSYNCRS,
 )
 from ofxtools.models.invest.stmt import INVSTMTTRNRQ, INVSTMTTRNRS
+from ofxtools.models.invest import SECLIST
 from ofxtools.models.i18n import LANG_CODES
 from ofxtools.utils import UTC
 
@@ -167,6 +148,7 @@ from test_models_bank_sync import (
     BankmailsyncrsTestCase,
 )
 from test_models_invest import InvstmttrnrqTestCase, InvstmttrnrsTestCase
+from test_models_securities import SeclisttrnrqTestCase, SeclisttrnrsTestCase, SeclistTestCase
 from test_models_signup import WebenrollTestCase
 
 
@@ -1166,6 +1148,58 @@ class InvstmtmsgsetTestCase(unittest.TestCase, base.TestAggregate):
         instance = Aggregate.from_etree(self.root)
         self.assertIsInstance(instance, INVSTMTMSGSET)
         self.assertIsInstance(instance.invstmtmsgsetv1, INVSTMTMSGSETV1)
+
+
+class Seclistmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("SECLISTMSGSRQV1")
+        for i in range(2):
+            root.append(SeclisttrnrqTestCase().root)
+        return root
+
+    def testdataTags(self):
+        # SECLISTMSGSRQV1 may contain
+        # ["STMTTRNRQ", "STMTENDTRNRQ", "STPCHKTRNRQ", "INTRATRNRQ",
+        # "RECINTRATRNRQ", "BANKMAILTRNRQ", "STPCHKSYNCRQ", "INTRASYNCRQ",
+        # "RECINTRASYNCRQ", "BANKMAILSYNCRQ"]
+
+        allowedTags = SECLISTMSGSRQV1.dataTags
+        self.assertEqual(len(allowedTags), 1)
+        root = deepcopy(self.root)
+        root.append(SeclisttrnrsTestCase().root)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, SECLISTMSGSRQV1)
+        self.assertEqual(len(instance), 2)
+
+
+class Seclistmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    # FIXME
+    # requiredElements = ('SECLIST',)
+
+    @property
+    def root(self):
+        root = Element("SECLISTMSGSRSV1")
+        seclist = SeclistTestCase().root
+        root.append(seclist)
+        root.append(deepcopy(seclist))
+        return root
+
+    def testConvert(self):
+        root = Aggregate.from_etree(self.root)
+        self.assertIsInstance(root, SECLISTMSGSRSV1)
+        self.assertEqual(len(root), 2)
+        self.assertIsInstance(root[0], SECLIST)
+        self.assertIsInstance(root[1], SECLIST)
 
 
 class Seclistmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
