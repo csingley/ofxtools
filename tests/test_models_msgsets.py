@@ -47,6 +47,7 @@ from ofxtools.models.msgsets import (
     WIREXFERMSGSRSV1,
     WIREXFERMSGSETV1,
     WIREXFERMSGSET,
+    INVSTMTMSGSRQV1, INVSTMTMSGSRSV1,
     INVSTMTMSGSETV1, INVSTMTMSGSET,
     SECLISTMSGSETV1, SECLISTMSGSET,
     TAX1099MSGSETV1, TAX1099MSGSET,
@@ -102,6 +103,7 @@ from ofxtools.models.bank.sync import (
     BANKMAILSYNCRQ,
     BANKMAILSYNCRS,
 )
+from ofxtools.models.invest.stmt import INVSTMTTRNRQ, INVSTMTTRNRS
 from ofxtools.models.i18n import LANG_CODES
 from ofxtools.utils import UTC
 
@@ -164,6 +166,7 @@ from test_models_bank_sync import (
     BankmailsyncrqTestCase,
     BankmailsyncrsTestCase,
 )
+from test_models_invest import InvstmttrnrqTestCase, InvstmttrnrsTestCase
 from test_models_signup import WebenrollTestCase
 
 
@@ -1042,6 +1045,70 @@ class WirexfermsgsetTestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, WIREXFERMSGSET)
         self.assertIsInstance(root.wirexfermsgsetv1, WIREXFERMSGSETV1)
+
+
+class Invstmtmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("INVSTMTMSGSRQV1")
+        for i in range(2):
+            stmttrnrq = InvstmttrnrqTestCase().root
+            root.append(stmttrnrq)
+        return root
+
+    def testdataTags(self):
+        # INVSTMTMSGSRQV1 may only contain
+        # ["INVSTMTTRNRQ", "INVMAILTRNRQ", "INVMAILSYNCRQ"]
+        allowedTags = INVSTMTMSGSRQV1.dataTags
+        self.assertEqual(len(allowedTags), 3)
+        root = deepcopy(self.root)
+        root.append(InvstmttrnrsTestCase().root)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INVSTMTMSGSRQV1)
+        self.assertEqual(len(instance), 2)
+        for stmttrnrs in instance:
+            self.assertIsInstance(stmttrnrs, INVSTMTTRNRQ)
+
+
+class Invstmtmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("INVSTMTMSGSRSV1")
+        for i in range(2):
+            stmttrnrs = InvstmttrnrsTestCase().root
+            root.append(stmttrnrs)
+        return root
+
+    def testdataTags(self):
+        # INVSTMTMSGSRSV1 may only contain
+        # ["INVSTMTTRNRS", "INVMAILTRNRS", "INVMAILSYNCRS"]
+        allowedTags = INVSTMTMSGSRSV1.dataTags
+        self.assertEqual(len(allowedTags), 3)
+        root = deepcopy(self.root)
+        root.append(InvstmttrnrqTestCase().root)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, INVSTMTMSGSRSV1)
+        self.assertEqual(len(instance), 2)
+        for stmttrnrs in instance:
+            self.assertIsInstance(stmttrnrs, INVSTMTTRNRS)
+
+    def testPropertyAliases(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIs(instance.statements[0], instance[0].invstmtrs)
 
 
 class Invstmtmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
