@@ -38,9 +38,6 @@ class Aggregate:
     """
     Base class for Python representation of OFX 'aggregate', i.e. SGML/XML
     parent node that is empty of data text.
-
-    The alternate ``from_etree()`` instance constructor takes an instance of
-    ``xml.etree.ElementTree.Element``.
     """
 
     # Validation constraints used by ``validate_args()``.
@@ -52,18 +49,18 @@ class Aggregate:
     requiredMutexes = []
 
     def __init__(self, *args, **kwargs):
+        """
+        Positional args interepreted as list items (of variable #).
+        kwargs interpreted as singular sub-elements.
+        """
         self.validate_args(*args, **kwargs)
 
-        # Set instance attributes for all SubAggregates and Elements defined in
-        # ``Aggregate.spec`` (i.e. class attributes), defaulting to None if not
-        # given by kwargs
         for attr in self.spec:
             value = kwargs.pop(attr, None)
             try:
                 # If attr is an element (i.e. its class is defined in
                 # ``ofxtools.Types``, not defined below as ``Subaggregate``,
                 # ``List``, etc.) then its value is type-converted here.
-                # ``Types.Element.__set__()`` calls ``convert()``
                 setattr(self, attr, value)
             except ValueError as e:
                 msg = "Can't set {}.{} to {}: {}".format(
@@ -71,8 +68,8 @@ class Aggregate:
                 )
                 raise ValueError(msg)
 
-        # Handle anything left (i.e. not in self.spec)
-        self.process_residuum(*args, **kwargs)
+        self._apply_args(*args)
+        self._apply_residual_kwargs(**kwargs)
 
     @classmethod
     def validate_args(cls, *args, **kwargs):
@@ -112,13 +109,15 @@ class Aggregate:
             errMsg="{cls}({args}): must contain exactly 1 of [{mutex}] (not {count})",
         )
 
-    def process_residuum(self, *args, **kwargs):
-        # Check that all args have been consumed, i.e. we haven't been passed
-        # any args that aren't in ``self.spec()``.
+    def _apply_args(self, *args):
         if args:
             msg = "Aggregate {} does not define {} in spec {}"
             attrs = [arg.__class__.__name__ for arg in args]
             raise ValueError(msg.format(self.__class__.__name__, attrs, self.spec))
+
+    def _apply_residual_kwargs(self, **kwargs):
+        # Check that all kwargs have been consumed, i.e. we haven't been passed
+        # any args that aren't in ``self.spec()``.
         if kwargs:
             msg = "Aggregate {} does not define {} (spec={})".format(
                 self.__class__.__name__,
@@ -130,14 +129,11 @@ class Aggregate:
     @classmethod
     def from_etree(cls, elem):
         """
-        Instantiate from ``xml.etree.ElementTree.Element`` instead of kwargs.
+        Instantiate from ``xml.etree.ElementTree.Element``.
 
         Look up `Aggregate`` subclass corresponding to ``Element.tag``;
         parse the Element structure into (args, kwargs) and pass those
         to the subclass __init__().
-
-        N.B. this is a recursive function; ``from_etree()`` calls
-        ``_etree2args()``, which calls ``from_etree()`` on children.
         """
         if not isinstance(elem, ET.Element):
             msg = "Bad type {} - should be xml.etree.ElementTree.Element"
@@ -151,30 +147,7 @@ class Aggregate:
         # Hook to modify incoming ``ET.Element`` before conversion
         elem = SubClass.groom(elem)
 
-        args, kwargs = SubClass._etree2args(elem)
-        instance = SubClass(*args, **kwargs)
-        return instance
-
-    @staticmethod
-    def groom(elem):
-        """
-        Modify incoming ``ET.Element`` to play nice with our Python schema.
-
-        Override in subclass.
-
-        N.B. make sure to perform modifications on a copy.deepcopy(), in order
-        to keep the input free of side effects!
-        """
-        return elem
-
-    @classmethod
-    def _etree2args(cls, elem):
-        """
-        Extract args from ``ET.Element`` to pass to __init__().
-
-        Generic ``Aggregate`` subclass __init__() accepts only keyword args.
-        """
-        spec = list(cls.spec)
+        spec = list(SubClass.spec)
 
         args = []
         kwargs = {}
@@ -183,16 +156,13 @@ class Aggregate:
         for subelem in elem:
             key = subelem.tag.lower()
 
-            # In OFX, child tags may not be repeated (except for list-type
-            # Aggregates - see subclass ``List._etree2args()`` below).
             if key in kwargs:
                 msg = "{} contains multiple {}"
-                raise ValueError(msg.format(cls.__name__, key))
+                raise ValueError(msg.format(SubClass.__name__, key))
 
-            # If the child contains text data, the metadata is an Element;
-            # return the text data.  Otherwise it's an Aggregate - perform
-            # type conversion.
-            if key in cls.unsupported:
+            # If child contains text data, it's an Element; return text data.
+            # Otherwise it's an Aggregate - perform type conversion
+            if key in SubClass.unsupported:
                 value = None
             elif subelem.text:
                 value = subelem.text
@@ -209,9 +179,22 @@ class Aggregate:
         # Verify that SubElements appear in the order defined by the ``spec``.
         if specIndices != sorted(specIndices):
             msg = "{} SubElements out of order: {}"
-            raise ValueError(msg.format(cls.__name__, [el.tag for el in elem]))
+            raise ValueError(msg.format(SubClass.__name__, [el.tag for el in elem]))
 
-        return args, kwargs
+        instance = SubClass(*args, **kwargs)
+        return instance
+
+    @staticmethod
+    def groom(elem):
+        """
+        Modify incoming ``ET.Element`` to play nice with our Python schema.
+
+        Override in subclass.
+
+        N.B. make sure to perform modifications on a copy.deepcopy(), in order
+        to keep the input free of side effects!
+        """
+        return elem
 
     def to_etree(self):
         """
@@ -399,29 +382,18 @@ class List(Aggregate, list):
     # Used by ``__init__()`` to validate args.
     dataTags = []
 
-    # ``List.metadataTags`` means fixed child entities (in the OFX spec)
-    # other than the variable-length sequence of contained ``Aggregates``.
-    # Used by ``_etree2args()`` to parse args.
-    @classproperty
-    @classmethod
-    def metadataTags(cls):
-        return [attr.upper() for attr in cls.spec.keys()]
-
     def __init__(self, *args, **kwargs):
         list.__init__(self)
         super().__init__(*args, **kwargs)
 
-    def process_residuum(self, *args, **kwargs):
-        # Remaining args as variable-length contained data.
+    def _apply_args(self, *args):
+        # Interpret positional args as contained list items (of variable #)
         for member in args:
             cls_name = member.__class__.__name__
             if cls_name not in self.dataTags:
                 msg = "{} can't contain {} as List data: {}"
-                #  raise ValueError(msg.format(self.__class__.__name__, cls_name, member))
-                raise ValueError(msg.format(self.__class__.__name__, cls_name, args))
+                raise ValueError(msg.format(self.__class__.__name__, cls_name, member))
             self.append(member)
-
-        super().process_residuum(**kwargs)
 
     def to_etree(self):
         """
