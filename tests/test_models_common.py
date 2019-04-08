@@ -128,7 +128,8 @@ class TranListTestCase(unittest.TestCase):
         )
         dtstart = datetime(2015, 1, 1, tzinfo=UTC)
         dtend = datetime(2015, 3, 31, tzinfo=UTC)
-        return TESTTRANLIST(dtstart, dtend, agg0, agg1)
+        #  return TESTTRANLIST(dtstart, dtend, agg0, agg1)
+        return TESTTRANLIST(agg0, agg1, dtstart=dtstart, dtend=dtend)
 
     def testToEtree(self):
         root = self.instance.to_etree()

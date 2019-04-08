@@ -486,11 +486,7 @@ class ListTestCase(unittest.TestCase):
         agg1 = TESTAGGREGATE(
             metadata="bar", req00=False, req11=True, testsubaggregate=subagg1
         )
-        return TESTLIST("foo", agg0, agg1)
-
-    def testInitNotEnoughArgs(self):
-        with self.assertRaises(ValueError):
-            TESTLIST()
+        return TESTLIST(agg0, agg1, metadata="foo")
 
     def testInitInstancesDistinct(self):
         # Test that separate List class instances contain separate data
@@ -504,7 +500,7 @@ class ListTestCase(unittest.TestCase):
         agg1 = TESTAGGREGATE(
             metadata="green", req00=False, req11=True, testsubaggregate=subagg1
         )
-        instance1 = TESTLIST("blue", agg0, agg1)
+        instance1 = TESTLIST(agg0, agg1, metadata="blue")
 
         self.assertIsInstance(instance0, TESTLIST)
         self.assertEqual(instance0.metadata, "foo")

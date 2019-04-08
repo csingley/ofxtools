@@ -43,7 +43,7 @@ class Aggregate:
     ``xml.etree.ElementTree.Element``.
     """
 
-    # Validation constraints used by ``validate_kwargs()``.
+    # Validation constraints used by ``validate_args()``.
     # Sequences of tuples (type str) defining mutually exclusive child tags.
 
     # Aggregate MAY have at most child from  `optionalMutexes``
@@ -51,8 +51,8 @@ class Aggregate:
     # Aggregate MUST contain exactly one child from ``requiredMutexes``
     requiredMutexes = []
 
-    def __init__(self, **kwargs):
-        self.validate_kwargs(kwargs)
+    def __init__(self, *args, **kwargs):
+        self.validate_args(*args, **kwargs)
 
         # Set instance attributes for all SubAggregates and Elements defined in
         # ``Aggregate.spec`` (i.e. class attributes), defaulting to None if not
@@ -71,18 +71,11 @@ class Aggregate:
                 )
                 raise ValueError(msg)
 
-        # Check that all args have been consumed, i.e. we haven't been passed
-        # any args that aren't in ``self.spec()``.
-        if kwargs:
-            msg = "Aggregate {} does not define {} (spec={})".format(
-                self.__class__.__name__,
-                str(list(kwargs.keys())),
-                str(list(self.spec.keys())),
-            )
-            raise ValueError(msg)
+        # Handle anything left (i.e. not in self.spec)
+        self.process_residuum(*args, **kwargs)
 
     @classmethod
-    def validate_kwargs(cls, kwargs):
+    def validate_args(cls, *args, **kwargs):
         """
         Extra class-level validation constraints from the OFX spec not captured
         by class attribute validators.
@@ -119,6 +112,21 @@ class Aggregate:
             errMsg="{cls}({args}): must contain exactly 1 of [{mutex}] (not {count})",
         )
 
+    def process_residuum(self, *args, **kwargs):
+        # Check that all args have been consumed, i.e. we haven't been passed
+        # any args that aren't in ``self.spec()``.
+        if args:
+            msg = "Aggregate {} does not define {} in spec {}"
+            attrs = [arg.__class__.__name__ for arg in args]
+            raise ValueError(msg.format(self.__class__.__name__, attrs, self.spec))
+        if kwargs:
+            msg = "Aggregate {} does not define {} (spec={})".format(
+                self.__class__.__name__,
+                str(list(kwargs.keys())),
+                str(list(self.spec.keys())),
+            )
+            raise ValueError(msg)
+
     @classmethod
     def from_etree(cls, elem):
         """
@@ -144,7 +152,6 @@ class Aggregate:
         elem = SubClass.groom(elem)
 
         args, kwargs = SubClass._etree2args(elem)
-
         instance = SubClass(*args, **kwargs)
         return instance
 
@@ -169,18 +176,19 @@ class Aggregate:
         """
         spec = list(cls.spec)
 
-        def indexOrRaise(attr):
-            try:
-                return spec.index(attr)
-            except ValueError:
-                msg = "Aggregate {} does not define {} in spec {}"
-                raise ValueError(msg.format(cls.__name__, attr, spec))
-
+        args = []
         kwargs = {}
         specIndices = []
 
         for subelem in elem:
             key = subelem.tag.lower()
+
+            # In OFX, child tags may not be repeated (except for list-type
+            # Aggregates - see subclass ``List._etree2args()`` below).
+            if key in kwargs:
+                msg = "{} contains multiple {}"
+                raise ValueError(msg.format(cls.__name__, key))
+
             # If the child contains text data, the metadata is an Element;
             # return the text data.  Otherwise it's an Aggregate - perform
             # type conversion.
@@ -191,20 +199,19 @@ class Aggregate:
             else:
                 value = Aggregate.from_etree(subelem)
 
-            specIndices.append(indexOrRaise(key))
-            # In OFX, child tags may not be repeated (except for list-type
-            # Aggregates - see subclass ``List._etree2args()`` below).
-            if key in kwargs:
-                msg = "{} contains multiple {}"
-                raise ValueError(msg.format(cls.__name__, key))
-            kwargs[key] = value
+            try:
+                idx = spec.index(key)
+                kwargs[key] = value
+                specIndices.append(idx)
+            except ValueError:
+                args.append(value)
 
         # Verify that SubElements appear in the order defined by the ``spec``.
         if specIndices != sorted(specIndices):
             msg = "{} SubElements out of order: {}"
             raise ValueError(msg.format(cls.__name__, [el.tag for el in elem]))
 
-        return [], kwargs
+        return args, kwargs
 
     def to_etree(self):
         """
@@ -400,91 +407,21 @@ class List(Aggregate, list):
     def metadataTags(cls):
         return [attr.upper() for attr in cls.spec.keys()]
 
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         list.__init__(self)
+        super().__init__(*args, **kwargs)
 
-        # ``List.__init__()`` only accepts positional args, not kwargs.
-        # Parse the first n args as fixed-position metadata (with position
-        # corresponding to the order they appear in ``metadataTags``.
-        metadataTags = self.metadataTags
-        metadataLen = len(metadataTags)
-        if len(args) < metadataLen:
-            msg = "{}.__init__() needs positional args for each of {}"
-            raise ValueError(msg.format(self.__class__.__name__, self.metadataTags))
-
-        for i, tag in enumerate(metadataTags):
-            setattr(self, tag.lower(), args[i])
-
-        # In the base ``Aggregate`` class, ``requiredMutexes`` are validated
-        # by ``validate_kwargs()``.  ``List`` subclasses don't accept kwargs,
-        # so pack up our args in a dict and reuse the function.
-        fake_kwargs = {}
-        for mutexes in self.requiredMutexes:
-            fake_kwargs.update(({mx: getattr(self, mx) for mx in mutexes}))
-        self.validate_kwargs(fake_kwargs)
-
+    def process_residuum(self, *args, **kwargs):
         # Remaining args as variable-length contained data.
-        for member in args[metadataLen:]:
+        for member in args:
             cls_name = member.__class__.__name__
             if cls_name not in self.dataTags:
                 msg = "{} can't contain {} as List data: {}"
-                raise ValueError(msg.format(self.__class__.__name__, cls_name, member))
+                #  raise ValueError(msg.format(self.__class__.__name__, cls_name, member))
+                raise ValueError(msg.format(self.__class__.__name__, cls_name, args))
             self.append(member)
 
-    @classmethod
-    def _etree2args(cls, elem):
-        """
-        Extract args to pass to __init__() from ``ET.Element``.
-
-        ``List.__init__()`` accepts only positional args
-        (unlike ``Aggregate.__init__()``)
-        """
-        # Keep input free of side effects
-        elem = deepcopy(elem)
-
-        metadata = []
-        metadataIndices = []
-
-        elem_ = list(elem)  # indexable
-
-        for metadataTag in cls.metadataTags:
-            children = elem.findall(metadataTag)
-            if len(children) > 1:
-                msg = "In {}, found duplicate metadata tag '{}'"
-                raise ValueError(msg.format(elem.tag, metadataTag))
-            if len(children) == 0:
-                child = None
-            else:
-                child = children.pop()
-                metadataIndices.append(elem_.index(child))
-            metadata.append(child)
-
-        # Verify that metadata appear in the order defined by the ``spec``.
-        if metadataIndices != sorted(metadataIndices):
-            msg = "{} SubElements out of order: {}"
-            raise ValueError(msg.format(cls.__name__, [el.tag for el in elem]))
-
-        # FIXME
-        # Currently the ``List`` data model offers no way to verify that
-        # data appears in correct position relative to metadata, since
-        # ``dataTags`` doesn't appear in the ``cls.spec``.
-
-        data = []
-        for i, child in enumerate(elem_):
-            if child not in metadata:
-                data.append(Aggregate.from_etree(child))
-
-        def convert_metadata(el):
-            if el is None:
-                return None
-            if el.text:
-                return el.text
-            return Aggregate.from_etree(el)
-
-        args = [convert_metadata(el) for el in metadata]
-        args.extend(data)
-        kwargs = {}
-        return args, kwargs
+        super().process_residuum(**kwargs)
 
     def to_etree(self):
         """
