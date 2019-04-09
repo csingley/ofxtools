@@ -98,7 +98,6 @@ class SIGNONINFOLIST(List):
     """ OFX section 7.2 """
 
     signoninfo = ListItem(SIGNONINFO)
-    #  dataTags = ["SIGNONINFO"]
 
 
 class PROFRQ(Aggregate):
@@ -161,9 +160,7 @@ class PROFTRNRS(TrnRs):
 
 class PROFMSGSRQV1(List):
     proftrnrq = ListItem(PROFTRNRQ)
-    #  dataTags = ["PROFTRNRQ"]
 
 
 class PROFMSGSRSV1(List):
     proftrnrs = ListItem(PROFTRNRS)
-    #  dataTags = ["PROFTRNRS"]

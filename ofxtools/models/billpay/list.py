@@ -2,11 +2,15 @@
 """
 Payee lists - OFX Section 12.9
 """
-from ofxtools.Types import Bool, String, Decimal
-from ofxtools.models.base import Aggregate, SubAggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
+from ofxtools.Types import String
+from ofxtools.models.base import Aggregate, SubAggregate, ListItem
+from ofxtools.models.wrapperbases import SyncRqList, SyncRsList
 from ofxtools.models.bank.stmt import PAYEE, BANKACCTTO
-from ofxtools.models.billpay.common import EXTDPAYEE
+from ofxtools.models.billpay import (
+    EXTDPAYEE,
+    #  PAYEETRNRQ,
+    #  PAYEETRNRS,
+)
 
 
 __all__ = [
@@ -16,8 +20,8 @@ __all__ = [
     "PAYEEMODRS",
     "PAYEEDELRQ",
     "PAYEEDELRS",
-    "PAYEESYNCRQ",
-    "PAYEESYNCRS",
+    #  "PAYEESYNCRQ",
+    #  "PAYEESYNCRS",
 ]
 
 
@@ -67,13 +71,11 @@ class PAYEEDELRS(Aggregate):
     payeelstid = String(12, required=True)
 
 
-class PAYEESYNCRQ(SyncRqList):
-    """ OFX Section 12.9.4.1 """
+#  class PAYEESYNCRQ(SyncRqList):
+    #  """ OFX Section 12.9.4.1 """
+    #  payeetrnrq = ListItem(PAYEETRNRQ)
 
-    dataTags = ["PAYEETRNRQ"]
 
-
-class PAYEESYNCRS(SyncRsList):
-    """ OFX Section 12.9.4.2 """
-
-    dataTags = ["PAYEETRNRS"]
+#  class PAYEESYNCRS(SyncRsList):
+    #  """ OFX Section 12.9.4.2 """
+    #  payeetrnrs = ListItem(PAYEETRNRS)

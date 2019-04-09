@@ -410,12 +410,6 @@ class List(Aggregate, list):
     """
     Base class for OFX *LIST
     """
-
-    # Sequence of OFX tags (type str) allowed to occur as contained
-    # ``Aggregates``.
-    # Used by ``__init__()`` to validate args.
-    dataTags = []
-
     def __init__(self, *args, **kwargs):
         list.__init__(self)
         super().__init__(*args, **kwargs)
@@ -425,7 +419,7 @@ class List(Aggregate, list):
         for member in args:
             cls_name = member.__class__.__name__.lower()
             if cls_name not in self.listitems:
-                msg = "{} can't contain {} as List item: {}"
+                msg = "{} can't contain {} as list item: {}"
                 raise ValueError(msg.format(self.__class__.__name__, cls_name, member))
             self.append(member)
 

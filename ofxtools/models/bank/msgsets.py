@@ -194,7 +194,6 @@ class INTERXFERMSGSRQV1(List):
     recintertrnrq = ListItem(RECINTERTRNRQ)
     intersyncrq = ListItem(INTERSYNCRQ)
     recintersyncrq = ListItem(RECINTERSYNCRQ)
-    #  dataTags = ["INTERTRNRQ", "RECINTERTRNRQ", "INTERSYNCRQ", "RECINTERSYNCRQ"]
 
 
 class INTERXFERMSGSRSV1(List):
@@ -204,7 +203,6 @@ class INTERXFERMSGSRSV1(List):
     recintertrnrs = ListItem(RECINTERTRNRS)
     intersyncrs = ListItem(INTERSYNCRS)
     recintersyncrs = ListItem(RECINTERSYNCRS)
-    #  dataTags = ["INTERTRNRS", "RECINTERTRNRS", "INTERSYNCRS", "RECINTERSYNCRS"]
 
 
 class INTERXFERMSGSETV1(Aggregate):
@@ -229,7 +227,6 @@ class WIREXFERMSGSRQV1(List):
 
     wiretrnrq = ListItem(WIRETRNRQ)
     wiresyncrq = ListItem(WIRESYNCRQ)
-    #  dataTags = ["WIRETRNRQ", "WIRESYNCRQ"]
 
 
 class WIREXFERMSGSRSV1(List):
@@ -237,7 +234,6 @@ class WIREXFERMSGSRSV1(List):
 
     wiretrnrs = ListItem(WIRETRNRS)
     wiresyncrs = ListItem(WIRESYNCRS)
-    #  dataTags = ["WIRETRNRS", "WIRESYNCRS"]
 
 
 class WIREXFERMSGSETV1(Aggregate):

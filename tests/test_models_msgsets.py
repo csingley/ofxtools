@@ -1105,8 +1105,7 @@ class Invstmtmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         # INVSTMTMSGSRQV1 may only contain
         # ["INVSTMTTRNRQ", "INVMAILTRNRQ", "INVMAILSYNCRQ"]
         listitems = INVSTMTMSGSRQV1.listitems
-        #  self.assertEqual(len(listitems), 3)
-        self.assertEqual(len(listitems), 1)
+        self.assertEqual(len(listitems), 3)
         root = deepcopy(self.root)
         root.append(InvstmttrnrsTestCase().root)
 
@@ -1136,8 +1135,7 @@ class Invstmtmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         # INVSTMTMSGSRSV1 may only contain
         # ["INVSTMTTRNRS", "INVMAILTRNRS", "INVMAILSYNCRS"]
         listitems = INVSTMTMSGSRSV1.listitems
-        #  self.assertEqual(len(listitems), 3)
-        self.assertEqual(len(listitems), 1)
+        self.assertEqual(len(listitems), 3)
         root = deepcopy(self.root)
         root.append(InvstmttrnrqTestCase().root)
 
@@ -1224,10 +1222,7 @@ class Seclistmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         return root
 
     def testListItems(self):
-        # SECLISTMSGSRQV1 may contain
-        # ["STMTTRNRQ", "STMTENDTRNRQ", "STPCHKTRNRQ", "INTRATRNRQ",
-        # "RECINTRATRNRQ", "BANKMAILTRNRQ", "STPCHKSYNCRQ", "INTRASYNCRQ",
-        # "RECINTRASYNCRQ", "BANKMAILSYNCRQ"]
+        # SECLISTMSGSRQV1 may only contain SECLISTTRNRQ
 
         listitems = SECLISTMSGSRQV1.listitems
         self.assertEqual(len(listitems), 1)
@@ -1256,6 +1251,17 @@ class Seclistmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         root.append(seclist)
         root.append(deepcopy(seclist))
         return root
+
+    def testListItems(self):
+        # SECLISTMSGSRSV1 may only contain SECLISTTRNRS, SECLIST
+
+        listitems = SECLISTMSGSRSV1.listitems
+        self.assertEqual(len(listitems), 2)
+        root = deepcopy(self.root)
+        root.append(SeclisttrnrqTestCase().root)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
 
     def testConvert(self):
         root = Aggregate.from_etree(self.root)

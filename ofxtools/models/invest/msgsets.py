@@ -10,12 +10,12 @@ from ofxtools.models.invest.stmt import (
     INVSTMTTRNRQ,
     INVSTMTTRNRS,
 )
-#  from ofxtools.models.invest.mail import (
-    #  INVMAILTRNRQ,
-    #  INVMAILTRNRS,
-    #  INVMAILSYNCRQ,
-    #  INVMAILSYNCRS,
-#  )
+from ofxtools.models.invest.mail import (
+    INVMAILTRNRQ,
+    INVMAILTRNRS,
+    INVMAILSYNCRQ,
+    INVMAILSYNCRS,
+)
 from ofxtools.models.invest.securities import (
     SECLIST,
     SECLISTTRNRQ,
@@ -33,20 +33,16 @@ class INVSTMTMSGSRQV1(List):
     """ OFX section 13.7.1.2.1 """
 
     invstmttrnrq = ListItem(INVSTMTTRNRQ)
-    #  invmailtrnrq = ListItem(INVMAILTRNRQ)
-    invmailtrnrq = Unsupported()
-    #  invmailsyncrq = ListItem(INVMAILSYNCRQ)
-    invmailsyncrq = Unsupported()
+    invmailtrnrq = ListItem(INVMAILTRNRQ)
+    invmailsyncrq = ListItem(INVMAILSYNCRQ)
 
 
 class INVSTMTMSGSRSV1(List):
     """ OFX section 13.7.1.2.2 """
 
     invstmttrnrs = ListItem(INVSTMTTRNRS)
-    #  invmailtrnrs = ListItem(INVMAILTRNRS)
-    invmailtrnrs = Unsupported()
-    #  invmailsyncrs = ListItem(INVMAILSYNCRS)
-    invmailsyncrs = Unsupported()
+    invmailtrnrs = ListItem(INVMAILTRNRS)
+    invmailsyncrs = ListItem(INVMAILSYNCRS)
 
     @property
     def statements(self):
