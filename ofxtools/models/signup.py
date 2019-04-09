@@ -137,23 +137,22 @@ class ACCTINFO(List):
     invacctinfo = ListItem(INVACCTINFO)
     #  presacctinfo = ListItem(PRESACCTINFO)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
+    @classmethod
+    def validate_args(cls, *args, **kwargs):
         # Must contain at least one <xxxACCTINFO>
-        if len(self) == 0:
+        if len(args) == 0:
             msg = "{} must contain at least one of {}"
-            raise ValueError(msg.format(self.__class__.__name__, self.listitems.keys()))
+            raise ValueError(msg.format(cls.__name__, cls.listitems.keys()))
 
         #  For a given service xxx, there can be at most one <xxxACCTINFO>
         #  returned. For example, you cannot return two <BANKACCTINFO>
         #  aggregates.
         sortKey = operator.attrgetter("__class__.__name__")
-        members_copy = sorted(self, key=sortKey)
-        for tag, group in itertools.groupby(members_copy, key=sortKey):
+        args_copy = sorted(args, key=sortKey)
+        for tag, group in itertools.groupby(args_copy, key=sortKey):
             if len(list(group)) > 1:
                 msg = "{} contains multiple {} aggregates"
-                raise ValueError(msg.format(self.__class__, tag))
+                raise ValueError(msg.format(cls.__name__, tag))
 
     def __repr__(self):
         return "<{} desc='{}' phone='{}' len={}>".format(

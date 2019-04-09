@@ -46,8 +46,6 @@ class PROFMSGSET(Aggregate):
     profmsgsetv1 = SubAggregate(PROFMSGSETV1, required=True)
 
 
-# FIXME
-# Per OFX spec, MSGSETLIST must contain one or more message set aggregates
 class MSGSETLIST(List):
     """ OFX section 7.2 """
 
@@ -67,6 +65,13 @@ class MSGSETLIST(List):
     presdlvmsgset = Unsupported()
     tax1099msgset = ListItem(TAX1099MSGSET)
     #  tax1099msgset = Unsupported()
+
+    @classmethod
+    def validate_args(cls, *args, **kwargs):
+        #  "[MSGSETLIST contents] One or more message set aggregates"
+        if len(args) == 0:
+            msg = "{} must contain at least one item"
+            raise ValueError(msg.format(cls.__name__))
 
 
 class SIGNONINFO(Aggregate):

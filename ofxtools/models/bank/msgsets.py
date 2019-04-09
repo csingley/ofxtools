@@ -113,7 +113,7 @@ class XFERPROF(Aggregate):
     canmodmdls = Bool(required=True)
     modelwnd = Integer(3, required=True)
     dayswith = Integer(3, required=True)
-    dfldaystopay = Integer(3, required=True)
+    dfltdaystopay = Integer(3, required=True)
 
 
 class STPCHKPROF(Aggregate):

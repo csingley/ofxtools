@@ -79,16 +79,22 @@ class EXTDPMTINV(List):
     invoice = ListItem(INVOICE)
 
 
-class EXTDPMT(Aggregate):
+class EXTDPMT(List):
     """ OFX Section 12.5.2.2 """
     extdpmtfor = OneOf("INDIVIDUAL", "BUSINESS")
     extdpmtchk = Integer(10)
-    # FIXME
-    # "At least one of the following"
     extdpmtdsc = String(255)
-    extdpmtinv = SubAggregate(EXTDPMTINV)
+    extdpmtinv = ListItem(EXTDPMTINV)
 
-    requiredMutexes = [("extdpmtdsc", "extdpmtinv")]
+    @classmethod
+    def validate_args(cls, *args, **kwargs):
+        # "At least one of the following: <EXTDPMTDSC>, or <EXTDPMTINV>"
+        listitems = [arg.__class__.__name__ for arg in args]
+        if "EXTDPMTINV" not in listitems and "extdpmtdsc" not in kwargs:
+            msg = "{} must contain at least one of [EXTDPMTDSC, EXTPMTINV]"
+            raise ValueError(msg.format(cls.__name__))
+
+        super().validate_args(*args, **kwargs)
 
 
 class PMTINFO(List):
@@ -111,12 +117,22 @@ class PMTINFO(List):
 
 class EXTDPAYEE(Aggregate):
     """ OFX Section 12.5.2.6 """
-    # FIXME
-    # "If <PAYEEID> is present, <IDSCOPE> and <NAME> are required."
     payeeid = String(12)
     idscope = OneOf("GLOBAL", "USER")  # Required if <PAYEEID> is present.
     name = String(32)  # Required if <PAYEEID> is present.
     daystopay = Integer(3, required=True)
+
+    @classmethod
+    def validate_args(cls, *args, **kwargs):
+        # "If <PAYEEID> is present, <IDSCOPE> and <NAME> are required."
+        payeeid = kwargs.get("payeeid", None)
+        if payeeid:
+            requiredGroup = ("idscope", "name")
+            if not all(kwargs.get(attr, None) for attr in requiredGroup):
+                msg = "{}(payeeid={}) must contain all of {}"
+                raise ValueError(msg.format(cls.__name__, payeeid, requiredGroup))
+
+        super().validate_args(*args, **kwargs)
 
 
 class PMTPRCSTS(Aggregate):

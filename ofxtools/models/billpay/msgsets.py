@@ -41,9 +41,11 @@ class BILLPAYMSGSRQV1(List):
     #  payeetrnrq = ListItem(PAYEETRNRQ)
     payeetrnrq = Unsupported()
     pmtinqtrnrq = ListItem(PMTINQTRNRQ)
-    pmtmailtrnq = ListItem(PMTMAILTRNRQ)
+    pmtmailtrnrq = ListItem(PMTMAILTRNRQ)
     pmtsyncrq = ListItem(PMTSYNCRQ)
     recpmtsyncrq = ListItem(RECPMTSYNCRQ)
+    #  payeesyncrq = ListItem(PAYEESYNCRQ)
+    #  pmtmailsyncrq = ListItem(PMTMAILSYNCRQ)
 
 
 class BILLPAYMSGSRSV1(List):
@@ -57,6 +59,8 @@ class BILLPAYMSGSRSV1(List):
     pmtmailtrns = ListItem(PMTMAILTRNRS)
     pmtsyncrs = ListItem(PMTSYNCRS)
     recpmtsyncrs = ListItem(RECPMTSYNCRS)
+    #  payeesyncrs = ListItem(PAYEESYNCRS)
+    #  pmtmailsyncrs = ListItem(PMTMAILSYNCRS)
 
 
 class BILLPAYMSGSETV1(Aggregate):
@@ -64,9 +68,9 @@ class BILLPAYMSGSETV1(Aggregate):
 
     msgsetcore = SubAggregate(MSGSETCORE, required=True)
     dayswith = Integer(3, required=True)
-    dfldaystopay = Integer(3, required=True)
+    dfltdaystopay = Integer(3, required=True)
     xferdayswith = Integer(3, required=True)
-    xferdfldaystopay = Integer(3, required=True)
+    xferdfltdaystopay = Integer(3, required=True)
     # FIXME
     # Need to define an Aggregate subclass that support multiple repeated
     # Elements (not just SubAggregates, like List) for PROCDAYSOFF.

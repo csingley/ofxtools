@@ -79,36 +79,31 @@ class Aggregate:
         by class attribute validators.
         """
 
-        def enforce_count(attr, predicate, errMsg):
-            """
-            Raise error if the # of non-empty elements of each subsequence
-            of ``attr`` doesn't conform to ``predicate``
-            """
-            for mutex in attr:
+        def enforce_count(cls, args, kwargs, errMsg, **extra_kwargs):
+            assert "mutexes" in extra_kwargs
+            assert "predicate" in extra_kwargs
+
+            for mutex in extra_kwargs["mutexes"]:
                 count = sum([kwargs.get(i, None) is not None for i in mutex])
-                if not predicate(count):
-                    args = ", ".join(
+                if not extra_kwargs["predicate"](count):
+                    kwargs = ", ".join(
                         ["{}={}".format(i, kwargs.get(i, None)) for i in mutex]
                     )
                     errFields = {
                         "cls": cls.__name__,
-                        "args": args,
+                        "kwargs": kwargs,
                         "mutex": mutex,
                         "count": count,
                     }
                     raise ValueError(errMsg.format(**errFields))
 
-        enforce_count(
-            cls.optionalMutexes,
-            lambda x: x <= 1,
-            errMsg="{cls}({args}): must contain at most 1 of [{mutex}] (not {count})",
-        )
+        enforce_count(cls, args, kwargs,
+                      errMsg="{cls}({kwargs}): must contain at most 1 of [{mutex}] (not {count})",
+                      mutexes=cls.optionalMutexes, predicate=lambda x: x <= 1)
 
-        enforce_count(
-            cls.requiredMutexes,
-            lambda x: x == 1,
-            errMsg="{cls}({args}): must contain exactly 1 of [{mutex}] (not {count})",
-        )
+        enforce_count(cls, args, kwargs,
+                      errMsg="{cls}({kwargs}): must contain exactly 1 of [{mutex}] (not {count})",
+                      mutexes=cls.requiredMutexes, predicate=lambda x: x == 1)
 
     def _apply_args(self, *args):
         if args:
