@@ -28,7 +28,7 @@ from ofxtools.Client import (
     do_stmt,
     do_profile,
 )
-from ofxtools.models.msgsets import SIGNONMSGSRQV1
+from ofxtools.models.signon import SIGNONMSGSRQV1
 from ofxtools.utils import UTC
 from ofxtools.models.signon import SONRQ
 

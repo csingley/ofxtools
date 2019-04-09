@@ -4,6 +4,7 @@
 # stdlib imports
 import datetime
 import os
+import itertools
 
 #  import calendar
 #  import itertools
@@ -19,6 +20,17 @@ def fixpath(path):
     path = os.path.normcase(path)
     path = os.path.abspath(path)
     return path
+
+
+def pairwise(iterable):
+    """
+    s -> (s0,s1), (s1,s2), (s2, s3), ...
+
+    https://docs.python.org/2/library/itertools.html#recipes
+    """
+    a, b = itertools.tee(iterable)
+    next(b, None)
+    return zip(a, b)
 
 
 def cusip_checksum(base):

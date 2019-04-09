@@ -416,13 +416,13 @@ class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
             root.append(elem)
         return root
 
-    def testdataTags(self):
+    def testListItems(self):
         # INVOOLIST may only contain
         # ['OOBUYDEBT', 'OOBUYMF', 'OOBUYOPT', 'OOBUYOTHER',
         # 'OOBUYSTOCK', 'OOSELLDEBT', 'OOSELLMF', 'OOSELLOPT',
         # 'OOSELLOTHER', 'OOSELLSTOCK', 'SWITCHMF', ]
-        allowedTags = INVOOLIST.dataTags
-        self.assertEqual(len(allowedTags), 11)
+        listitems = INVOOLIST.listitems
+        self.assertEqual(len(listitems), 11)
         root = deepcopy(self.root)
         root.append(StmttrnTestCase().root)
 

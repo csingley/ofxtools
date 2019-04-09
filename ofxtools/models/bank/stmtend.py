@@ -4,7 +4,7 @@ Statement closing information - OFX Section 11.5
 """
 # local imports
 from ofxtools.Types import Bool, String, Decimal, OneOf, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, ListItem, List
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM, REWARDINFO
 from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, Origcurrency, CURRENCY_CODES
@@ -59,8 +59,7 @@ class STMTENDRS(List):
 
     curdef = OneOf(*CURRENCY_CODES, required=True)
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
-
-    dataTags = ["CLOSING"]
+    closing = ListItem(CLOSING)
 
 
 class STMTENDTRNRQ(TrnRq):
@@ -130,8 +129,7 @@ class CCSTMTENDRS(List):
 
     curdef = OneOf(*CURRENCY_CODES, required=True)
     ccacctfrom = SubAggregate(CCACCTFROM, required=True)
-
-    dataTags = ["CCCLOSING"]
+    ccclosing = ListItem(CCCLOSING)
 
 
 class CCSTMTENDTRNRQ(TrnRq):

@@ -8,7 +8,7 @@ from copy import deepcopy
 
 # local imports
 from ofxtools.Types import String, NagString, OneOf, Integer, Decimal, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate, List
+from ofxtools.models.base import Aggregate, SubAggregate, ListItem, List
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.i18n import CURRENCY
 
@@ -64,8 +64,7 @@ class SECRQ(Aggregate):
 
 class SECLISTRQ(List):
     """ OFX section 13.8.2.2 """
-
-    dataTags = ["SECRQ"]
+    secrq = ListItem(SECRQ)
 
 
 class SECINFO(Aggregate):
@@ -113,8 +112,7 @@ class PORTION(Aggregate):
 
 class MFASSETCLASS(List):  # pylint: disable=too-many-ancestors
     """ OFX section 13.8.5.3 """
-
-    dataTags = ["PORTION"]
+    portion = ListItem(PORTION)
 
 
 class FIPORTION(Aggregate):
@@ -127,7 +125,7 @@ class FIPORTION(Aggregate):
 class FIMFASSETCLASS(List):  # pylint: disable=too-many-ancestors
     """ OFX section 13.8.5.3 """
 
-    dataTags = ["FIPORTION"]
+    fiportion = ListItem(FIPORTION)
 
 
 class MFINFO(Aggregate):
@@ -234,7 +232,11 @@ class STOCKINFO(Aggregate):
 class SECLIST(List):
     """ OFX section 13.8.4.4 """
 
-    dataTags = ["DEBTINFO", "MFINFO", "OPTINFO", "OTHERINFO", "STOCKINFO"]
+    debtinfo = ListItem(DEBTINFO)
+    mfinfo = ListItem(MFINFO)
+    optinfo = ListItem(OPTINFO)
+    otherinfo = ListItem(OTHERINFO)
+    stockinfo = ListItem(STOCKINFO)
 
 
 class SECLISTTRNRQ(TrnRq):

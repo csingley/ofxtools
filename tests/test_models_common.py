@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 
 # local imports
 from ofxtools.Types import DateTime
-from ofxtools.models.base import Aggregate
+from ofxtools.models.base import Aggregate, ListItem
 from ofxtools.models.common import BAL, OFXELEMENT, OFXEXTENSION
 from ofxtools.models.wrapperbases import TranList
 from ofxtools.models.i18n import CURRENCY, CURRENCY_CODES
@@ -26,8 +26,7 @@ from test_models_base import TESTAGGREGATE, TESTSUBAGGREGATE
 class TESTTRANLIST(TranList):
     dtstart = DateTime(required=True)
     dtend = DateTime(required=True)
-
-    dataTags = ("TESTAGGREGATE",)
+    testaggregate = ListItem(TESTAGGREGATE)
 
 
 class BalTestCase(unittest.TestCase, base.TestAggregate):

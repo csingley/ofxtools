@@ -4,9 +4,17 @@ Data synchronization for banking - OFX Section 11.12
 """
 # local imports
 from ofxtools.Types import Bool
-from ofxtools.models.base import SubAggregate
+from ofxtools.models.base import SubAggregate, ListItem
 from ofxtools.models.wrapperbases import SyncRqList, SyncRsList
 from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM
+from ofxtools.models.bank.xfer import INTRATRNRQ, INTRATRNRS
+from ofxtools.models.bank.interxfer import INTERTRNRQ, INTERTRNRS
+from ofxtools.models.bank.wire import WIRETRNRQ, WIRETRNRS
+from ofxtools.models.bank.recur import (
+    RECINTRATRNRQ, RECINTRATRNRS, RECINTERTRNRQ, RECINTERTRNRS,
+)
+from ofxtools.models.bank.mail import BANKMAILTRNRQ, BANKMAILTRNRS
+from ofxtools.models.bank.stpchk import STPCHKTRNRQ, STPCHKTRNRS
 
 __all__ = [
     "STPCHKSYNCRQ",
@@ -30,16 +38,14 @@ class STPCHKSYNCRQ(SyncRqList):
     """ OFX section 11.12.1.1 """
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
-
-    dataTags = ["STPCHKTRNRQ"]
+    stpchktrnrq = ListItem(STPCHKTRNRQ)
 
 
 class STPCHKSYNCRS(SyncRsList):
     """ OFX section 11.12.1.2 """
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
-
-    dataTags = ["STPCHKTRNRS"]
+    stpchktrnrs = ListItem(STPCHKTRNRS)
 
 
 class INTRASYNCRQ(SyncRqList):
@@ -47,8 +53,8 @@ class INTRASYNCRQ(SyncRqList):
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
+    intratrnrq = ListItem(INTRATRNRQ)
 
-    dataTags = ["INTRATRNRQ"]
     requiredMutexes = SyncRqList.requiredMutexes + [("bankacctfrom", "ccacctfrom")]
 
 
@@ -57,8 +63,8 @@ class INTRASYNCRS(SyncRsList):
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
+    intratrnrs = ListItem(INTRATRNRS)
 
-    dataTags = ["INTRATRNRS"]
     requiredMutexes = [("bankacctfrom", "ccacctfrom")]
 
 
@@ -67,8 +73,8 @@ class INTERSYNCRQ(SyncRqList):
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
+    intertrnrq = ListItem(INTERTRNRQ)
 
-    dataTags = ["INTERTRNRQ"]
     requiredMutexes = SyncRqList.requiredMutexes + [("bankacctfrom", "ccacctfrom")]
 
 
@@ -77,8 +83,8 @@ class INTERSYNCRS(SyncRsList):
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
+    intertrnrs = ListItem(INTERTRNRS)
 
-    dataTags = ["INTERTRNRS"]
     requiredMutexes = [("bankacctfrom", "ccacctfrom")]
 
 
@@ -86,14 +92,14 @@ class WIRESYNCRQ(SyncRqList):
     """ OFX section 11.12.4.1 """
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
-    dataTags = ["WIRETRNRQ"]
+    wiretrnrq = ListItem(WIRETRNRQ)
 
 
 class WIRESYNCRS(SyncRsList):
     """ OFX section 11.12.4.2 """
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
-    dataTags = ["WIRETRNRS"]
+    wiretrnrs = ListItem(WIRETRNRS)
 
 
 class RECINTRASYNCRQ(SyncRqList):
@@ -101,8 +107,8 @@ class RECINTRASYNCRQ(SyncRqList):
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
+    recintratrnrq = ListItem(RECINTRATRNRQ)
 
-    dataTags = ["RECINTRATRNRQ"]
     requiredMutexes = SyncRqList.requiredMutexes + [("bankacctfrom", "ccacctfrom")]
 
 
@@ -111,8 +117,8 @@ class RECINTRASYNCRS(SyncRsList):
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
+    recintratrnrs = ListItem(RECINTRATRNRS)
 
-    dataTags = ["RECINTRATRNRS"]
     requiredMutexes = [("bankacctfrom", "ccacctfrom")]
 
 
@@ -121,8 +127,8 @@ class RECINTERSYNCRQ(SyncRqList):
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
+    recintertrnrq = ListItem(RECINTERTRNRQ)
 
-    dataTags = ["RECINTERTRNRQ"]
     requiredMutexes = SyncRqList.requiredMutexes + [("bankacctfrom", "ccacctfrom")]
 
 
@@ -131,8 +137,8 @@ class RECINTERSYNCRS(SyncRsList):
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
+    recintertrnrs = ListItem(RECINTERTRNRS)
 
-    dataTags = ["RECINTERTRNRS"]
     requiredMutexes = [("bankacctfrom", "ccacctfrom")]
 
 
@@ -143,8 +149,8 @@ class BANKMAILSYNCRQ(SyncRqList):
     usehtml = Bool(required=True)
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
+    bankmailtrnrq = ListItem(BANKMAILTRNRQ)
 
-    dataTags = ["BANKMAILTRNRQ"]
     requiredMutexes = SyncRqList.requiredMutexes + [("bankacctfrom", "ccacctfrom")]
 
 
@@ -153,6 +159,6 @@ class BANKMAILSYNCRS(SyncRsList):
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
+    bankmailtrnrs = ListItem(BANKMAILTRNRS)
 
-    dataTags = ["BANKMAILTRNRS"]
     requiredMutexes = [("bankacctfrom", "ccacctfrom")]

@@ -4,8 +4,7 @@ Payments Functions - OFX Section 12.6
 """
 from ofxtools.Types import String, OneOf
 from ofxtools.models.base import Aggregate, SubAggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
-from ofxtools.models.bank.stmt import BANKACCTFROM
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.i18n import CURRENCY_CODES
 from ofxtools.models.billpay.common import PMTINFO, EXTDPAYEE, PMTPRCSTS
 

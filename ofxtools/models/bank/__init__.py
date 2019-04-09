@@ -7,3 +7,4 @@ from .wire import *
 from .recur import *
 from .mail import *
 from .sync import *
+from .msgsets import *

@@ -3,7 +3,7 @@
 Investments - OFX Section 13
 """
 from ofxtools.Types import Bool, String, OneOf, Integer, Decimal, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.models.base import Aggregate, SubAggregate, ListItem
 from ofxtools.models.wrapperbases import TranList
 from ofxtools.models.invest.acct import INVSUBACCTS, INVACCTFROM
 from ofxtools.models.invest.securities import SECID
@@ -315,28 +315,24 @@ class TRANSFER(Aggregate):
 class INVTRANLIST(TranList):
     """ OFX section 13.9.2.2 """
 
-    dataTags = [
-        "INVBANKTRAN",
-        "BUYDEBT",
-        "BUYMF",
-        "BUYOPT",
-        "BUYOTHER",
-        "BUYSTOCK",
-        "CLOSUREOPT",
-        "INCOME",
-        "INVEXPENSE",
-        "JRNLFUND",
-        "JRNLSEC",
-        "MARGININTEREST",
-        "REINVEST",
-        "RETOFCAP",
-        "SELLDEBT",
-        "SELLMF",
-        "SELLOPT",
-        "SELLOTHER",
-        "SELLSTOCK",
-        "SPLIT",
-        "TRANSFER",
-    ]
-
-
+    invbanktran = ListItem(INVBANKTRAN)
+    buydebt = ListItem(BUYDEBT)
+    buymf = ListItem(BUYMF)
+    buyopt = ListItem(BUYOPT)
+    buyother = ListItem(BUYOTHER)
+    buystock = ListItem(BUYSTOCK)
+    closureopt = ListItem(CLOSUREOPT)
+    income = ListItem(INCOME)
+    invexpense = ListItem(INVEXPENSE)
+    jrnlfund = ListItem(JRNLFUND)
+    jrnlsec = ListItem(JRNLSEC)
+    margininterest = ListItem(MARGININTEREST)
+    reinvest = ListItem(REINVEST)
+    retofcap = ListItem(RETOFCAP)
+    selldebt = ListItem(SELLDEBT)
+    sellmf = ListItem(SELLMF)
+    sellopt = ListItem(SELLOPT)
+    sellother = ListItem(SELLOTHER)
+    sellstock = ListItem(SELLSTOCK)
+    split = ListItem(SPLIT)
+    transfer = ListItem(TRANSFER)

@@ -3,7 +3,7 @@
 Investment positions - OFX Section 13.9.2.6
 """
 from ofxtools.Types import Bool, String, OneOf, Decimal, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate, List
+from ofxtools.models.base import Aggregate, SubAggregate, ListItem, List
 from ofxtools.models.invest import INVSUBACCTS
 from ofxtools.models.invest.securities import SECID
 from ofxtools.models.bank import INV401KSOURCES
@@ -70,4 +70,8 @@ class POSSTOCK(Aggregate):
 class INVPOSLIST(List):
     """ OFX section 13.9.2.2 """
 
-    dataTags = ["POSDEBT", "POSMF", "POSOPT", "POSOTHER", "POSSTOCK"]
+    posdebt = ListItem(POSDEBT)
+    posmf = ListItem(POSMF)
+    posopt = ListItem(POSOPT)
+    posother = ListItem(POSOTHER)
+    posstock = ListItem(POSSTOCK)

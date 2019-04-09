@@ -4,7 +4,7 @@ Bank stop check - OFX Section 11.6
 """
 # local imports
 from ofxtools.Types import String, Decimal, OneOf, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate, List
+from ofxtools.models.base import Aggregate, SubAggregate, ListItem, List
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.bank.stmt import BANKACCTFROM
 from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, Origcurrency, CURRENCY_CODES
@@ -67,10 +67,9 @@ class STPCHKRS(List):
 
     curdef = OneOf(*CURRENCY_CODES, required=True)
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
+    stpchknum = ListItem(STPCHKNUM)
     fee = Decimal(required=True)
     feemsg = String(80, required=True)
-
-    dataTags = ["STPCHKNUM"]
 
 
 class STPCHKTRNRQ(TrnRq):

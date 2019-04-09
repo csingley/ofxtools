@@ -10,13 +10,6 @@ from copy import deepcopy
 # local imports
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import SVCSTATUSES
-from ofxtools.models.msgsets import (
-    CLIENTENROLL,
-    WEBENROLL,
-    OTHERENROLL,
-    SIGNUPMSGSRQV1,
-    SIGNUPMSGSRSV1,
-)
 from ofxtools.models.signup import (
     ACCTINFO,
     ACCTINFORQ,
@@ -33,6 +26,11 @@ from ofxtools.models.signup import (
     ACCTRS,
     CHGUSERINFORQ,
     CHGUSERINFORS,
+    CLIENTENROLL,
+    WEBENROLL,
+    OTHERENROLL,
+    SIGNUPMSGSRQV1,
+    SIGNUPMSGSRSV1,
 )
 from ofxtools.models.bank import (
     BANKACCTFROM,
@@ -424,66 +422,6 @@ class EnrolltrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
 
     wraps = EnrollrsTestCase
-
-
-class Signupmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    @property
-    def root(self):
-        root = Element("SIGNUPMSGSRQV1")
-        for i in range(2):
-            enrolltrnrq = EnrolltrnrqTestCase().root
-            root.append(enrolltrnrq)
-        return root
-
-    def testdataTags(self):
-        # SIGNUPMSGSRQV1 may contain
-        # ["ENROLLTRNRQ", "ACCTINFOTRNRQ", "ACCTTRNRQ", "CHGUSERINFOTRNRQ"]
-        allowedTags = SIGNUPMSGSRQV1.dataTags
-        self.assertEqual(len(allowedTags), 4)
-        root = deepcopy(self.root)
-        root.append(EnrolltrnrsTestCase().root)
-
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, SIGNUPMSGSRQV1)
-        self.assertEqual(len(instance), 2)
-        for stmttrnrs in instance:
-            self.assertIsInstance(stmttrnrs, ENROLLTRNRQ)
-
-
-class Signupmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
-    __test__ = True
-
-    @property
-    def root(self):
-        root = Element("SIGNUPMSGSRSV1")
-        for i in range(2):
-            enrolltrnrs = EnrolltrnrsTestCase().root
-            root.append(enrolltrnrs)
-        return root
-
-    def testdataTags(self):
-        # SIGNUPMSGSRSV1 may contain
-        # ["ENROLLTRNRS", "ACCTINFOTRNRS", "ACCTTRNRS", "CHGUSERINFOTRNRS"]
-        allowedTags = SIGNUPMSGSRSV1.dataTags
-        self.assertEqual(len(allowedTags), 4)
-        root = deepcopy(self.root)
-        root.append(EnrolltrnrqTestCase().root)
-
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, SIGNUPMSGSRSV1)
-        self.assertEqual(len(instance), 2)
-        for stmttrnrs in instance:
-            self.assertIsInstance(stmttrnrs, ENROLLTRNRS)
 
 
 class SvcaddBankTestCase(unittest.TestCase):

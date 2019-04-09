@@ -1,15 +1,26 @@
 # coding: utf-8
+"""
+Client signon - OFX Section 2.5
+"""
 # stdlib imports
 from copy import deepcopy
 
 # local imports
 from ofxtools.Types import String, OneOf, DateTime, Bool
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
-from ofxtools.models.common import STATUS
+from ofxtools.models.common import STATUS, MSGSETCORE
 from ofxtools.models.i18n import LANG_CODES
 
 
-__all__ = ["FI", "SONRQ", "SONRS"]
+__all__ = [
+    "FI",
+    "SONRQ",
+    "SONRS",
+    "SIGNONMSGSRQV1",
+    "SIGNONMSGSRSV1",
+    "SIGNONMSGSETV1",
+    "SIGNONMSGSET",
+]
 
 
 class FI(Aggregate):
@@ -78,3 +89,23 @@ class SONRS(Aggregate):
     @property
     def fid(self):
         return self.fi.fid
+
+
+class SIGNONMSGSRQV1(Aggregate):
+    sonrq = SubAggregate(SONRQ)
+
+
+class SIGNONMSGSRSV1(Aggregate):
+    sonrs = SubAggregate(SONRS)
+
+
+class SIGNONMSGSETV1(Aggregate):
+    """ OFX section 2.5.5 """
+
+    msgsetcore = SubAggregate(MSGSETCORE, required=True)
+
+
+class SIGNONMSGSET(Aggregate):
+    """ OFX section 2.5.5 """
+
+    signonmsgsetv1 = SubAggregate(SIGNONMSGSETV1, required=True)

@@ -53,11 +53,13 @@ from operator import attrgetter
 
 # local imports
 from ofxtools.header import make_header
+from ofxtools.Types import DateTime
 from ofxtools.models.ofx import OFX
 from ofxtools.models import ACCTINFORQ, ACCTINFOTRNRQ
-from ofxtools.models.profile import PROFRQ, PROFTRNRQ
-from ofxtools.models.signon import SONRQ, FI
-from ofxtools.models.bank.stmt import (
+from ofxtools.models.profile import PROFRQ, PROFTRNRQ, PROFMSGSRQV1
+from ofxtools.models.signon import SONRQ, FI, SIGNONMSGSRQV1
+from ofxtools.models.signup import SIGNUPMSGSRQV1
+from ofxtools.models.bank import (
     BANKACCTFROM,
     CCACCTFROM,
     INCTRAN,
@@ -65,25 +67,20 @@ from ofxtools.models.bank.stmt import (
     STMTTRNRQ,
     CCSTMTRQ,
     CCSTMTTRNRQ,
-)
-from ofxtools.models.bank.stmtend import (
     STMTENDRQ,
     STMTENDTRNRQ,
     CCSTMTENDRQ,
     CCSTMTENDTRNRQ,
-)
-from ofxtools.models.msgsets import (
-    SIGNONMSGSRQV1, PROFMSGSRQV1, SIGNUPMSGSRQV1,
-    BANKMSGSRQV1, CREDITCARDMSGSRQV1,
-    INVSTMTMSGSRQV1,
+    BANKMSGSRQV1,
+    CREDITCARDMSGSRQV1,
 )
 from ofxtools.models.invest import (
     INVSTMTTRNRQ,
     INVSTMTRQ,
     INVACCTFROM,
     INCPOS,
+    INVSTMTMSGSRQV1,
 )
-from ofxtools.Types import DateTime
 from ofxtools.utils import fixpath, UTC
 
 

@@ -4,8 +4,8 @@ Bank statement download - OFX Section 11.4
 """
 # local imports
 from ofxtools.Types import Bool, String, NagString, OneOf, Integer, Decimal, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, List
-from ofxtools.models.common import SVCSTATUSES
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, ListItem, List
+from ofxtools.models.common import SVCSTATUSES, BAL
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, TranList
 from ofxtools.models.i18n import (
     CURRENCY, ORIGCURRENCY, Origcurrency, CURRENCY_CODES, COUNTRY_CODES
@@ -198,7 +198,7 @@ class STMTTRN(Aggregate, Origcurrency):
 class BANKTRANLIST(TranList):
     """ OFX section 11.4.2.2 """
 
-    dataTags = ["STMTTRN"]
+    stmttrn = ListItem(STMTTRN)
 
 
 class LEDGERBAL(Aggregate):
@@ -218,7 +218,7 @@ class AVAILBAL(Aggregate):
 class BALLIST(List):
     """ OFX section 11.4.2.2 & 13.9.2.7 """
 
-    dataTags = ["BAL"]
+    bal = ListItem(BAL)
 
 
 class STMTRS(Aggregate):

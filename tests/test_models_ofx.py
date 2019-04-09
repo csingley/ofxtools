@@ -9,13 +9,9 @@ from datetime import datetime
 # local imports
 from ofxtools.models.base import Aggregate, classproperty
 from ofxtools.models.ofx import OFX
-from ofxtools.models.msgsets import (
-    SIGNONMSGSRSV1,
-    BANKMSGSRSV1,
-    CREDITCARDMSGSRSV1,
-    INVSTMTMSGSRSV1,
-    SECLISTMSGSRSV1,
-)
+from ofxtools.models.signon import SIGNONMSGSRSV1
+from ofxtools.models.bank import BANKMSGSRSV1, CREDITCARDMSGSRSV1
+from ofxtools.models.invest import INVSTMTMSGSRSV1, SECLISTMSGSRSV1
 from ofxtools.models.signon import SONRS
 from ofxtools.models.bank import STMTRS, CCSTMTRS, CCSTMTENDRS
 from ofxtools.models.invest import INVSTMTRS
@@ -26,14 +22,13 @@ from ofxtools.utils import UTC
 import base
 
 
-from test_models_signup import (
-    Signupmsgsrqv1TestCase, Signupmsgsrsv1TestCase,
-)
 from test_models_msgsets import (
     Signonmsgsrqv1TestCase,
     Signonmsgsrsv1TestCase,
     Profmsgsrqv1TestCase,
     Profmsgsrsv1TestCase,
+    Signupmsgsrqv1TestCase,
+    Signupmsgsrsv1TestCase,
     Emailmsgsrqv1TestCase,
     Emailmsgsrsv1TestCase,
     Bankmsgsrqv1TestCase,

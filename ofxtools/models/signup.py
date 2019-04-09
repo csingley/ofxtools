@@ -7,13 +7,16 @@ import operator
 import itertools
 
 # local imports
-from ofxtools.Types import String, OneOf, DateTime
-from ofxtools.models.i18n import COUNTRY_CODES
-from ofxtools.models.bank import BANKACCTFROM, CCACCTFROM, BANKACCTTO, CCACCTTO
-from ofxtools.models.base import Aggregate, SubAggregate, List
-from ofxtools.models.common import SVCSTATUSES
+from ofxtools.Types import Bool, String, OneOf, DateTime
+from ofxtools.models.base import Aggregate, SubAggregate, ListItem, List
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
-from ofxtools.models.invest import INVACCTFROM, INVACCTTO
+from ofxtools.models.common import SVCSTATUSES, MSGSETCORE
+from ofxtools.models.i18n import COUNTRY_CODES
+from ofxtools.models.bank import (
+    BANKACCTFROM, BANKACCTTO, BANKACCTINFO, CCACCTFROM, CCACCTTO, CCACCTINFO,
+)
+from ofxtools.models.billpay import BPACCTINFO
+from ofxtools.models.invest import INVACCTFROM, INVACCTTO, INVACCTINFO
 
 
 __all__ = [
@@ -41,6 +44,13 @@ __all__ = [
     "CHGUSERINFOTRNRS",
     "CHGUSERINFOSYNCRQ",
     "CHGUSERINFOSYNCRS",
+    "SIGNUPMSGSRQV1",
+    "SIGNUPMSGSRSV1",
+    "CLIENTENROLL",
+    "WEBENROLL",
+    "OTHERENROLL",
+    "SIGNUPMSGSETV1",
+    "SIGNUPMSGSET",
 ]
 
 
@@ -121,14 +131,11 @@ class ACCTINFO(List):
 
     desc = String(80)
     phone = String(32)
-
-    dataTags = [
-        "BANKACCTINFO",
-        "CCACCTINFO",
-        "BPACCTINFO",
-        "INVACCTINFO",
-        "PRESACCTINFO",
-    ]
+    bankacctinfo = ListItem(BANKACCTINFO)
+    ccacctinfo = ListItem(CCACCTINFO)
+    bpacctinfo = ListItem(BPACCTINFO)
+    invacctinfo = ListItem(INVACCTINFO)
+    #  presacctinfo = ListItem(PRESACCTINFO)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -136,7 +143,7 @@ class ACCTINFO(List):
         # Must contain at least one <xxxACCTINFO>
         if len(self) == 0:
             msg = "{} must contain at least one of {}"
-            raise ValueError(msg.format(self.__class__.__name__, self.dataTags))
+            raise ValueError(msg.format(self.__class__.__name__, self.listitems.keys()))
 
         #  For a given service xxx, there can be at most one <xxxACCTINFO>
         #  returned. For example, you cannot return two <BANKACCTINFO>
@@ -164,8 +171,7 @@ class ACCTINFORS(List):
     """ OFX section 8.5.2 """
 
     dtacctup = DateTime(required=True)
-
-    dataTags = ["ACCTINFO"]
+    acctinfo = ListItem(ACCTINFO)
 
     def __repr__(self):
         return "<{} dtacctup='{}' len={}>".format(
@@ -259,13 +265,13 @@ class ACCTTRNRS(TrnRs):
 class ACCTSYNCRQ(SyncRqList):
     """ OFX section 8.6.4.1 """
 
-    dataTags = ["ACCTTRNRQ"]
+    accttrnrq = ListItem(ACCTTRNRQ)
 
 
 class ACCTSYNCRS(SyncRsList):
     """ OFX section 8.6.4.2 """
 
-    dataTags = ["ACCTTRNRS"]
+    accttrnrs = ListItem(ACCTTRNRS)
 
 
 class CHGUSERINFORQ(Aggregate):
@@ -320,10 +326,70 @@ class CHGUSERINFOTRNRS(TrnRs):
 class CHGUSERINFOSYNCRQ(SyncRqList):
     """ OFX section 8.7.4.1 """
 
-    dataTags = ["CHGUSERINFOTRNRQ"]
+    chguserinfotrnrq = ListItem(CHGUSERINFOTRNRQ)
 
 
 class CHGUSERINFOSYNCRS(SyncRsList):
     """ OFX section 8.7.4.2 """
 
-    dataTags = ["CHGUSERINFOTRNRS"]
+    chguserinfotrnrs = ListItem(CHGUSERINFOTRNRS)
+
+
+class SIGNUPMSGSRQV1(List):
+    """ OFX section 8.1 """
+
+    enrolltrnrq = ListItem(ENROLLTRNRQ)
+    acctinfotrnrq = ListItem(ACCTINFOTRNRQ)
+    accttrnrq = ListItem(ACCTTRNRQ)
+    chguserinfotrnrq = ListItem(CHGUSERINFOTRNRQ)
+
+
+class SIGNUPMSGSRSV1(List):
+    """ OFX section 8.1 """
+
+    enrolltrnrs = ListItem(ENROLLTRNRS)
+    acctinfotrnrs = ListItem(ACCTINFOTRNRS)
+    accttrnrs = ListItem(ACCTTRNRS)
+    chguserinfotrnrs = ListItem(CHGUSERINFOTRNRS)
+
+
+class CLIENTENROLL(Aggregate):
+    """ OFX section 8.8 """
+
+    acctrequired = Bool(required=True)
+
+
+class WEBENROLL(Aggregate):
+    """ OFX section 8.8 """
+
+    url = String(255, required=True)
+
+
+class OTHERENROLL(Aggregate):
+    """ OFX section 8.8 """
+
+    message = String(80, required=True)
+
+
+class SIGNUPMSGSETV1(Aggregate):
+    """ OFX section 8.8 """
+
+    msgsetcore = SubAggregate(MSGSETCORE, required=True)
+    clientenroll = SubAggregate(CLIENTENROLL)
+    webenroll = SubAggregate(WEBENROLL)
+    otherenroll = SubAggregate(OTHERENROLL)
+    chguserinfo = Bool(required=True)
+    availaccts = Bool(required=True)
+    clientactreq = Bool(required=True)
+
+    optionalMutexes = [
+        ("clientenroll", "webenroll"),
+        ("clientenroll", "otherenroll"),
+        ("webenroll", "otherenroll"),
+    ]
+
+
+class SIGNUPMSGSET(Aggregate):
+    """ OFX section 8.8 """
+
+    signupmsgsetv1 = SubAggregate(SIGNUPMSGSETV1, required=True)

@@ -3,7 +3,7 @@
 Investments - OFX Section 13
 """
 from ofxtools.Types import Bool, String, OneOf, Decimal, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate, List
+from ofxtools.models.base import Aggregate, SubAggregate, ListItem, List
 from ofxtools.models.invest.acct import INVSUBACCTS
 from ofxtools.models.invest.transactions import (
     BUYTYPES, SELLTYPES, OPTBUYTYPES, OPTSELLTYPES
@@ -130,16 +130,14 @@ class SWITCHMF(Aggregate):
 class INVOOLIST(List):
     """ OFX section 13.9.2.2 """
 
-    dataTags = [
-        "OOBUYDEBT",
-        "OOBUYMF",
-        "OOBUYOPT",
-        "OOBUYOTHER",
-        "OOBUYSTOCK",
-        "OOSELLDEBT",
-        "OOSELLMF",
-        "OOSELLOPT",
-        "OOSELLOTHER",
-        "OOSELLSTOCK",
-        "SWITCHMF",
-    ]
+    oobuydebt = ListItem(OOBUYDEBT)
+    oobuymf = ListItem(OOBUYMF)
+    oobuyopt = ListItem(OOBUYOPT)
+    oobuyother = ListItem(OOBUYOTHER)
+    oobuystock = ListItem(OOBUYSTOCK)
+    ooselldebt = ListItem(OOSELLDEBT)
+    oosellmf = ListItem(OOSELLMF)
+    oosellopt = ListItem(OOSELLOPT)
+    oosellother = ListItem(OOSELLOTHER)
+    oosellstock = ListItem(OOSELLSTOCK)
+    switchmf = ListItem(SWITCHMF)

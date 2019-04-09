@@ -4,3 +4,4 @@ from .recur import *
 from .mail import *
 from .list import *
 from .sync import *
+from .msgsets import *

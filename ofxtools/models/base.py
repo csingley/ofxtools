@@ -23,8 +23,9 @@ from copy import deepcopy
 
 
 # local imports
-import ofxtools.models
 from ofxtools.Types import Element, DateTime, String, Bool, InstanceCounterMixin
+import ofxtools.models
+from ofxtools.utils import pairwise
 
 
 class classproperty(property):
@@ -148,6 +149,7 @@ class Aggregate:
         elem = SubClass.groom(elem)
 
         spec = list(SubClass.spec)
+        listitems = SubClass.listitems
 
         args = []
         kwargs = {}
@@ -171,15 +173,23 @@ class Aggregate:
 
             try:
                 idx = spec.index(key)
-                kwargs[key] = value
-                specIndices.append(idx)
+                specIndices.append((idx, spec[idx]))
+                if key in listitems:
+                    args.append(value)
+                else:
+                    kwargs[key] = value
             except ValueError:
-                args.append(value)
+                msg = "{} is not in {}".format(key, spec)  # FIXME
+                raise ValueError(msg)
 
-        # Verify that SubElements appear in the order defined by the ``spec``.
-        if specIndices != sorted(specIndices):
-            msg = "{} SubElements out of order: {}"
-            raise ValueError(msg.format(SubClass.__name__, [el.tag for el in elem]))
+        # Verify that SubElements appear in the order defined by self.spec
+        for (idx0, attr0), (idx1, attr1) in pairwise(specIndices):
+            # Relative order of ListItems doesn't matter, but position of
+            # ListItems relative to non-ListItems (and that of non-ListItems
+            # relative to other non-ListItems) does matter.
+            if idx1 <= idx0 and (attr0 not in listitems or attr1 not in listitems):
+                msg = "{} SubElements out of order: {}"
+                raise ValueError(msg.format(SubClass.__name__, [el.tag for el in elem]))
 
         instance = SubClass(*args, **kwargs)
         return instance
@@ -296,6 +306,14 @@ class Aggregate:
         """
         return cls._ordered_attrs(lambda v: isinstance(v, Unsupported))
 
+    @classproperty
+    @classmethod
+    def listitems(cls):
+        """
+        OrderedDict of all class attributes that are ListItems.
+        """
+        return cls._ordered_attrs(lambda v: isinstance(v, ListItem))
+
     @property
     def _spec_repr(self):
         """
@@ -372,6 +390,22 @@ class Unsupported(InstanceCounterMixin):
         return "<Unsupported>"
 
 
+class ListItem(Element):
+    """ """
+
+    def _init(self, *args, **kwargs):
+        args = list(args)
+        self.type = args.pop(0)
+        assert issubclass(self.type, Aggregate)
+        super()._init(*args, **kwargs)
+
+    def _convert_default(self, value):
+        if not isinstance(value, self.type):
+            msg = "'{}' is not an instance of {}"
+            raise ValueError(msg.format(value, self.type))
+        return value
+
+
 class List(Aggregate, list):
     """
     Base class for OFX *LIST
@@ -389,9 +423,9 @@ class List(Aggregate, list):
     def _apply_args(self, *args):
         # Interpret positional args as contained list items (of variable #)
         for member in args:
-            cls_name = member.__class__.__name__
-            if cls_name not in self.dataTags:
-                msg = "{} can't contain {} as List data: {}"
+            cls_name = member.__class__.__name__.lower()
+            if cls_name not in self.listitems:
+                msg = "{} can't contain {} as List item: {}"
                 raise ValueError(msg.format(self.__class__.__name__, cls_name, member))
             self.append(member)
 

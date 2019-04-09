@@ -9,7 +9,7 @@ from datetime import datetime
 
 # local imports
 from ofxtools import models
-from ofxtools.models.base import Aggregate, List, SubAggregate, Unsupported
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, ListItem, List
 from ofxtools.Types import String, DateTime, Bool
 from ofxtools.utils import UTC
 
@@ -37,8 +37,7 @@ class TESTAGGREGATE(Aggregate):
 
 class TESTLIST(List):
     metadata = String(32)
-
-    dataTags = ["TESTAGGREGATE"]
+    testaggregate = ListItem(TESTAGGREGATE)
 
 
 class AggregateTestCase(unittest.TestCase):

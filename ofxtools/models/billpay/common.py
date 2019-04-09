@@ -5,7 +5,7 @@ Common payments aggregates - OFX Section 12.5
 PAYEE is defined in ``ofxtools.models.bank.stmt`` to avoid circular imports.
 """
 from ofxtools.Types import String, OneOf, Integer, Decimal, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate, List
+from ofxtools.models.base import Aggregate, SubAggregate, ListItem, List
 from ofxtools.models.common import SVCSTATUSES
 from ofxtools.models.bank.stmt import BANKACCTFROM, BANKACCTTO, PAYEE
 
@@ -40,25 +40,8 @@ class BILLPUBINFO(Aggregate):
     billid = String(32, required=True)
 
 
-class PMTINFO(List):
-    """ OFX Section 12.5.2 """
-    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
-    trnamt = Decimal(required=True)
-    payeeid = String(12)
-    payee = SubAggregate(PAYEE)
-    payeelstid = String(12)
-    bankacctto = SubAggregate(BANKACCTTO)
-    payacct = String(32, required=True)
-    dtdue = DateTime(required=True)
-    memo = String(255)
-    billrefinfo = String(80)
-    billpubinfo = SubAggregate(BILLPUBINFO)
-
-    requiredMutexes = [("payeeid", "payee")]
-    dataTags = ["EXTDPMT"]
-
-
 class DISCOUNT(Aggregate):
+    """ OFX Section 12.5.2.3 """
     dscrate = Decimal(required=True)
     dscamt = Decimal(required=True)
     dscdate = DateTime()
@@ -66,6 +49,7 @@ class DISCOUNT(Aggregate):
 
 
 class ADJUSTMENT(Aggregate):
+    """ OFX Section 12.5.2.4 """
     adjno = String(32)
     adjdesc = String(80, required=True)
     adjamt = Decimal(required=True)
@@ -73,11 +57,13 @@ class ADJUSTMENT(Aggregate):
 
 
 class LINEITEM(Aggregate):
+    """ OFX Section 12.5.2.5 """
     litmamt = Decimal(required=True)
     litmdesc = String(80, required=True)
 
 
 class INVOICE(List):
+    """ OFX Section 12.5.2.3 """
     invno = String(32, required=True)
     invtotalamt = Decimal(required=True)
     invpaidamt = Decimal(required=True)
@@ -85,14 +71,12 @@ class INVOICE(List):
     invdesc = String(80, required=True)
     discount = SubAggregate(DISCOUNT)
     adjustment = SubAggregate(ADJUSTMENT)
-
-    dataTags = ["LINEITEM"]
+    lineitem = ListItem(LINEITEM)
 
 
 class EXTDPMTINV(List):
     """ OFX Section 12.5.2.2 """
-
-    dataTags = ["INVOICE"]
+    invoice = ListItem(INVOICE)
 
 
 class EXTDPMT(Aggregate):
@@ -105,6 +89,24 @@ class EXTDPMT(Aggregate):
     extdpmtinv = SubAggregate(EXTDPMTINV)
 
     requiredMutexes = [("extdpmtdsc", "extdpmtinv")]
+
+
+class PMTINFO(List):
+    """ OFX Section 12.5.2 """
+    bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
+    trnamt = Decimal(required=True)
+    payeeid = String(12)
+    payee = SubAggregate(PAYEE)
+    payeelstid = String(12)
+    bankacctto = SubAggregate(BANKACCTTO)
+    extdpmt = ListItem(EXTDPMT)
+    payacct = String(32, required=True)
+    dtdue = DateTime(required=True)
+    memo = String(255)
+    billrefinfo = String(80)
+    billpubinfo = SubAggregate(BILLPUBINFO)
+
+    requiredMutexes = [("payeeid", "payee")]
 
 
 class EXTDPAYEE(Aggregate):

@@ -5,11 +5,11 @@ balances, and securities.
 """
 # local imports
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
-from ofxtools.models.msgsets import (
-    SIGNONMSGSRQV1, SIGNONMSGSRSV1,
-    PROFMSGSRQV1, PROFMSGSRSV1,
-    SIGNUPMSGSRQV1, SIGNUPMSGSRSV1,
-    EMAILMSGSRQV1, EMAILMSGSRSV1,
+from ofxtools.models.signon import SIGNONMSGSRQV1, SIGNONMSGSRSV1
+from ofxtools.models.profile import PROFMSGSRQV1, PROFMSGSRSV1
+from ofxtools.models.signup import SIGNUPMSGSRQV1, SIGNUPMSGSRSV1
+from ofxtools.models.email import EMAILMSGSRQV1, EMAILMSGSRSV1
+from ofxtools.models.bank.msgsets import (
     BANKMSGSRQV1,
     BANKMSGSRSV1,
     CREDITCARDMSGSRQV1,
@@ -18,8 +18,10 @@ from ofxtools.models.msgsets import (
     INTERXFERMSGSRSV1,
     WIREXFERMSGSRQV1,
     WIREXFERMSGSRSV1,
-    INVSTMTMSGSRQV1, INVSTMTMSGSRSV1,
-    SECLISTMSGSRQV1, SECLISTMSGSRSV1,
+)
+from ofxtools.models.billpay.msgsets import BILLPAYMSGSRQV1, BILLPAYMSGSRSV1
+from ofxtools.models.invest.msgsets import (
+    INVSTMTMSGSRQV1, INVSTMTMSGSRSV1, SECLISTMSGSRQV1, SECLISTMSGSRSV1,
 )
 
 
@@ -68,7 +70,9 @@ class OFX(Aggregate):
     tax1095msgsrsv1 = Unsupported()
 
     requiredMutexes = [("signonmsgsrqv1", "signonmsgsrsv1")]
+    # FIXME
     optionalMutexes = [
+        # Don't allow mixed *RQ and *RS in the same OFX
         ("signupmsgsrqv1", "signupmsgsrsv1"),
         ("bankmsgsrqv1", "bankmsgsrsv1"),
         ("creditcardmsgsrqv1", "creditcardmsgsrsv1"),
@@ -86,7 +90,6 @@ class OFX(Aggregate):
         #  ("tax1099msgsrqv1", "tax1099msgsrsv1"),
         #  ("taxw2msgsrqv1", "taxw2msgsrsv1"),
         #  ("tax1095msgsrqv1", "tax1095msgsrsv1"),
-        # Don't allow mixed *RQ and *RS in the same OFX
         ("signupmsgsrqv1", "bankmsgsrsv1"),
         ("signupmsgsrqv1", "creditcardmsgsrsv1"),
         ("signupmsgsrqv1", "invstmtmsgsrsv1"),

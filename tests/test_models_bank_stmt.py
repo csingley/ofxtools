@@ -494,10 +494,10 @@ class BallistTestCase(unittest.TestCase, base.TestAggregate):
 
         return root
 
-    def testdataTags(self):
+    def testListItems(self):
         # BALLLIST may only contain BAL
-        allowedTags = BALLIST.dataTags
-        self.assertEqual(len(allowedTags), 1)
+        listitems = BALLIST.listitems
+        self.assertEqual(len(listitems), 1)
         root = deepcopy(self.root)
         root.append(StmttrnTestCase().root)
 

@@ -5,20 +5,45 @@ from copy import deepcopy
 
 # local imports
 from ofxtools.Types import Bool, String, OneOf, Integer, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate, List
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, ListItem, List
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.models.common import MSGSETCORE
 from ofxtools.models.i18n import COUNTRY_CODES
+from ofxtools.models.signon import SIGNONMSGSET
+from ofxtools.models.signup import SIGNUPMSGSET
+from ofxtools.models.bank.msgsets import (
+    BANKMSGSET, CREDITCARDMSGSET, INTERXFERMSGSET, WIREXFERMSGSET,
+)
+from ofxtools.models.billpay.msgsets import BILLPAYMSGSET
+from ofxtools.models.invest.msgsets import INVSTMTMSGSET, SECLISTMSGSET
+from ofxtools.models.tax1099 import TAX1099MSGSETV1, TAX1099MSGSET
 
 
 __all__ = [
-    "MSGSETLIST",
     "SIGNONINFO",
     "SIGNONINFOLIST",
     "PROFRQ",
     "PROFRS",
     "PROFTRNRQ",
     "PROFTRNRS",
+    "PROFMSGSRQV1",
+    "PROFMSGSRSV1",
+    "PROFMSGSETV1",
+    "PROFMSGSET",
+    "MSGSETLIST",
 ]
+
+
+class PROFMSGSETV1(Aggregate):
+    """ OFX section 7.3 """
+
+    msgsetcore = SubAggregate(MSGSETCORE, required=True)
+
+
+class PROFMSGSET(Aggregate):
+    """ OFX section 7.3 """
+
+    profmsgsetv1 = SubAggregate(PROFMSGSETV1, required=True)
 
 
 # FIXME
@@ -26,21 +51,22 @@ __all__ = [
 class MSGSETLIST(List):
     """ OFX section 7.2 """
 
-    dataTags = [
-        "SIGNONMSGSET",
-        "SIGNUPMSGSET",
-        "PROFMSGSET",
-        "BANKMSGSET",
-        "CREDITCARDMSGSET",
-        "INTERXFERMSGSET",
-        "WIREXFERMSGSET",
-        "INVSTMTMSGSET",
-        "SECLISTMSGSET",
-        "BILLPAYMSGSET",
-        "PRESDIRMSGSET",
-        "PRESDLVMSGSET",
-        "TAX1099MSGSET",
-    ]
+    signonmsgset = ListItem(SIGNONMSGSET)
+    signupmsgset = ListItem(SIGNUPMSGSET)
+    profmsgset = ListItem(PROFMSGSET)
+    bankmsgset = ListItem(BANKMSGSET)
+    creditcardmsgset = ListItem(CREDITCARDMSGSET)
+    interxfermsgset = ListItem(INTERXFERMSGSET)
+    wirexfermsgset = ListItem(WIREXFERMSGSET)
+    invstmtmsgset = ListItem(INVSTMTMSGSET)
+    seclistmsgset = ListItem(SECLISTMSGSET)
+    billpaymsgset = ListItem(BILLPAYMSGSET)
+    #  presdirmsgset = ListItem(PRESDIRMSGSET)
+    presdirmsgset = Unsupported()
+    #  presdlvmsgset = ListItem(PRESDLVMSGSET)
+    presdlvmsgset = Unsupported()
+    tax1099msgset = ListItem(TAX1099MSGSET)
+    #  tax1099msgset = Unsupported()
 
 
 class SIGNONINFO(Aggregate):
@@ -71,7 +97,8 @@ class SIGNONINFO(Aggregate):
 class SIGNONINFOLIST(List):
     """ OFX section 7.2 """
 
-    dataTags = ["SIGNONINFO"]
+    signoninfo = ListItem(SIGNONINFO)
+    #  dataTags = ["SIGNONINFO"]
 
 
 class PROFRQ(Aggregate):
@@ -130,3 +157,13 @@ class PROFTRNRS(TrnRs):
     @property
     def profile(self):
         return self.profrs
+
+
+class PROFMSGSRQV1(List):
+    proftrnrq = ListItem(PROFTRNRQ)
+    #  dataTags = ["PROFTRNRQ"]
+
+
+class PROFMSGSRSV1(List):
+    proftrnrs = ListItem(PROFTRNRS)
+    #  dataTags = ["PROFTRNRS"]

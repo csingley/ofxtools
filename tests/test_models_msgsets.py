@@ -14,14 +14,14 @@ from copy import deepcopy
 # local imports
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import OFXEXTENSION
-from ofxtools.models.msgsets import (
+from ofxtools.models import (
     MSGSETCORE,
     SIGNONMSGSRQV1, SIGNONMSGSRSV1, SIGNONMSGSETV1, SIGNONMSGSET,
     XFERPROF,
     STPCHKPROF,
     EMAILPROF,
     PROFMSGSRQV1, PROFMSGSRSV1, PROFMSGSETV1, PROFMSGSET,
-    SIGNUPMSGSETV1, SIGNUPMSGSET,
+    SIGNUPMSGSRQV1, SIGNUPMSGSRSV1, SIGNUPMSGSETV1, SIGNUPMSGSET,
     WEBENROLL,
     EMAILMSGSRQV1, EMAILMSGSRSV1, EMAILMSGSETV1, EMAILMSGSET,
     BANKMSGSRQV1, BANKMSGSRSV1, BANKMSGSETV1, BANKMSGSET,
@@ -34,6 +34,7 @@ from ofxtools.models.msgsets import (
 )
 from ofxtools.models.signon import SONRQ, SONRS
 from ofxtools.models.profile import PROFTRNRQ, PROFTRNRS, MSGSETLIST
+from ofxtools.models.signup import ENROLLTRNRQ, ENROLLTRNRS
 from ofxtools.models.email import (
     MAILTRNRQ,
     MAILTRNRS,
@@ -149,7 +150,7 @@ from test_models_bank_sync import (
 )
 from test_models_invest import InvstmttrnrqTestCase, InvstmttrnrsTestCase
 from test_models_securities import SeclisttrnrqTestCase, SeclisttrnrsTestCase, SeclistTestCase
-from test_models_signup import WebenrollTestCase
+from test_models_signup import WebenrollTestCase, EnrolltrnrqTestCase, EnrolltrnrsTestCase
 
 
 class Signonmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
@@ -229,10 +230,10 @@ class Profmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
             root.append(proftrnrq)
         return root
 
-    def testdataTags(self):
+    def testListItem(self):
         # PROFMSGSRQV1 may only contain PROFTRNRQ
-        allowedTags = PROFMSGSRQV1.dataTags
-        self.assertEqual(len(allowedTags), 1)
+        listitems = PROFMSGSRQV1.listitems
+        self.assertEqual(len(listitems), 1)
         root = deepcopy(self.root)
         root.append(ProftrnrsTestCase().root)
 
@@ -258,10 +259,10 @@ class Profmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
             root.append(proftrnrs)
         return root
 
-    def testdataTags(self):
+    def testListItems(self):
         # PROFMSGSRSV1 may only contain PROFTRNRS
-        allowedTags = PROFMSGSRSV1.dataTags
-        self.assertEqual(len(allowedTags), 1)
+        listitems = PROFMSGSRSV1.listitems
+        self.assertEqual(len(listitems), 1)
         root = deepcopy(self.root)
         root.append(ProftrnrqTestCase().root)
 
@@ -308,6 +309,66 @@ class ProfmsgsetTestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(self.root)
         self.assertIsInstance(root, PROFMSGSET)
         self.assertIsInstance(root.profmsgsetv1, PROFMSGSETV1)
+
+
+class Signupmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("SIGNUPMSGSRQV1")
+        for i in range(2):
+            enrolltrnrq = EnrolltrnrqTestCase().root
+            root.append(enrolltrnrq)
+        return root
+
+    def testListItems(self):
+        # SIGNUPMSGSRQV1 may contain
+        # ["ENROLLTRNRQ", "ACCTINFOTRNRQ", "ACCTTRNRQ", "CHGUSERINFOTRNRQ"]
+        listitems = SIGNUPMSGSRQV1.listitems
+        self.assertEqual(len(listitems), 4)
+        root = deepcopy(self.root)
+        root.append(EnrolltrnrsTestCase().root)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, SIGNUPMSGSRQV1)
+        self.assertEqual(len(instance), 2)
+        for stmttrnrs in instance:
+            self.assertIsInstance(stmttrnrs, ENROLLTRNRQ)
+
+
+class Signupmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @property
+    def root(self):
+        root = Element("SIGNUPMSGSRSV1")
+        for i in range(2):
+            enrolltrnrs = EnrolltrnrsTestCase().root
+            root.append(enrolltrnrs)
+        return root
+
+    def testListItems(self):
+        # SIGNUPMSGSRSV1 may contain
+        # ["ENROLLTRNRS", "ACCTINFOTRNRS", "ACCTTRNRS", "CHGUSERINFOTRNRS"]
+        listitems = SIGNUPMSGSRSV1.listitems
+        self.assertEqual(len(listitems), 4)
+        root = deepcopy(self.root)
+        root.append(EnrolltrnrqTestCase().root)
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, SIGNUPMSGSRSV1)
+        self.assertEqual(len(instance), 2)
+        for stmttrnrs in instance:
+            self.assertIsInstance(stmttrnrs, ENROLLTRNRS)
 
 
 class Signupmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
@@ -366,11 +427,11 @@ class Emailmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
                 root.append(rq().root)
         return root
 
-    def testdataTags(self):
+    def testListItems(self):
         # EMAILMSGSRQV1 may contain ["MAILTRNRQ", "GETMIMETRNRQ", "MAILSYNCRQ"]
 
-        allowedTags = EMAILMSGSRQV1.dataTags
-        self.assertEqual(len(allowedTags), 3)
+        listitems = EMAILMSGSRQV1.listitems
+        self.assertEqual(len(listitems), 3)
         root = deepcopy(self.root)
         root.append(MailtrnrsTestCase().root)
 
@@ -400,11 +461,11 @@ class Emailmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
                 root.append(rs().root)
         return root
 
-    def testdataTags(self):
+    def testListItems(self):
         # EMAILMSGSRSV1 may contain ["MAILTRNRS", "GETMIMETRNRS", "MAILSYNCRS"]
 
-        allowedTags = EMAILMSGSRSV1.dataTags
-        self.assertEqual(len(allowedTags), 3)
+        listitems = EMAILMSGSRSV1.listitems
+        self.assertEqual(len(listitems), 3)
         root = deepcopy(self.root)
         root.append(MailtrnrqTestCase().root)
 
@@ -482,14 +543,14 @@ class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
                 root.append(rq().root)
         return root
 
-    def testdataTags(self):
+    def testListItems(self):
         # BANKMSGSRQV1 may contain
         # ["STMTTRNRQ", "STMTENDTRNRQ", "STPCHKTRNRQ", "INTRATRNRQ",
         # "RECINTRATRNRQ", "BANKMAILTRNRQ", "STPCHKSYNCRQ", "INTRASYNCRQ",
         # "RECINTRASYNCRQ", "BANKMAILSYNCRQ"]
 
-        allowedTags = BANKMSGSRQV1.dataTags
-        self.assertEqual(len(allowedTags), 10)
+        listitems = BANKMSGSRQV1.listitems
+        self.assertEqual(len(listitems), 10)
         root = deepcopy(self.root)
         root.append(StmttrnrsTestCase().root)
 
@@ -544,13 +605,13 @@ class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
                 root.append(rs().root)
         return root
 
-    def testdataTags(self):
+    def testListItems(self):
         # BANKMSGSRSV! may contain
-        # dataTags = ["STMTTRNRS", "STMTENDRS", "STPCHKTRNRS", "INTRATRNRS",
+        # ["STMTTRNRS", "STMTENDRS", "STPCHKTRNRS", "INTRATRNRS",
         # "RECINTRATRNRS", "BANKMAILTRNRS", "STPCHKSYNCRS", "INTRASYNCRS",
         # "RECINTRASYNCRS", "BANKMAILSYNCRS"]
-        allowedTags = BANKMSGSRSV1.dataTags
-        self.assertEqual(len(allowedTags), 10)
+        listitems = BANKMSGSRSV1.listitems
+        self.assertEqual(len(listitems), 10)
         root = deepcopy(self.root)
         root.append(StmttrnrqTestCase().root)
 
@@ -811,11 +872,11 @@ class Interxfermsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
                 root.append(rq().root)
         return root
 
-    def testdataTags(self):
+    def testListItems(self):
         # INTERXFERMSGSRQV1 may contain
         # ["INTERTRNRQ", "RECINTERTRNRQ", "INTERSYNCRQ", "RECINTERSYNCRQ"]
-        allowedTags = INTERXFERMSGSRQV1.dataTags
-        self.assertEqual(len(allowedTags), 4)
+        listitems = INTERXFERMSGSRQV1.listitems
+        self.assertEqual(len(listitems), 4)
         root = deepcopy(self.root)
         root.append(IntertrnrsTestCase().root)
 
@@ -852,11 +913,11 @@ class Interxfermsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
                 root.append(rq().root)
         return root
 
-    def testdataTags(self):
+    def testListItems(self):
         # INTERXFERMSGSRSV1 may contain
         # ["INTERTRNRS", "RECINTERTRNRS", "INTERSYNCRS", "RECINTERSYNCRS"]
-        allowedTags = INTERXFERMSGSRSV1.dataTags
-        self.assertEqual(len(allowedTags), 4)
+        listitems = INTERXFERMSGSRSV1.listitems
+        self.assertEqual(len(listitems), 4)
         root = deepcopy(self.root)
         root.append(IntertrnrqTestCase().root)
 
@@ -933,11 +994,11 @@ class Wirexfermsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
                 root.append(rq().root)
         return root
 
-    def testdataTags(self):
+    def testListItems(self):
         # WIREXFERMSGSRQV1 may contain
         # ["WIRETRNRQ", "WIREERSYNCRQ"]
-        allowedTags = WIREXFERMSGSRQV1.dataTags
-        self.assertEqual(len(allowedTags), 2)
+        listitems = WIREXFERMSGSRQV1.listitems
+        self.assertEqual(len(listitems), 2)
         root = deepcopy(self.root)
         root.append(WiretrnrsTestCase().root)
 
@@ -965,11 +1026,11 @@ class Wirexfermsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
                 root.append(rq().root)
         return root
 
-    def testdataTags(self):
+    def testListItems(self):
         # WIRERXFERMSGSRSV1 may contain
         # ["WIRETRNRS", "WIRESYNCRS"]
-        allowedTags = WIREXFERMSGSRSV1.dataTags
-        self.assertEqual(len(allowedTags), 2)
+        listitems = WIREXFERMSGSRSV1.listitems
+        self.assertEqual(len(listitems), 2)
         root = deepcopy(self.root)
         root.append(WiretrnrqTestCase().root)
 
@@ -1040,11 +1101,12 @@ class Invstmtmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
             root.append(stmttrnrq)
         return root
 
-    def testdataTags(self):
+    def testListItems(self):
         # INVSTMTMSGSRQV1 may only contain
         # ["INVSTMTTRNRQ", "INVMAILTRNRQ", "INVMAILSYNCRQ"]
-        allowedTags = INVSTMTMSGSRQV1.dataTags
-        self.assertEqual(len(allowedTags), 3)
+        listitems = INVSTMTMSGSRQV1.listitems
+        #  self.assertEqual(len(listitems), 3)
+        self.assertEqual(len(listitems), 1)
         root = deepcopy(self.root)
         root.append(InvstmttrnrsTestCase().root)
 
@@ -1070,11 +1132,12 @@ class Invstmtmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
             root.append(stmttrnrs)
         return root
 
-    def testdataTags(self):
+    def testListItems(self):
         # INVSTMTMSGSRSV1 may only contain
         # ["INVSTMTTRNRS", "INVMAILTRNRS", "INVMAILSYNCRS"]
-        allowedTags = INVSTMTMSGSRSV1.dataTags
-        self.assertEqual(len(allowedTags), 3)
+        listitems = INVSTMTMSGSRSV1.listitems
+        #  self.assertEqual(len(listitems), 3)
+        self.assertEqual(len(listitems), 1)
         root = deepcopy(self.root)
         root.append(InvstmttrnrqTestCase().root)
 
@@ -1160,14 +1223,14 @@ class Seclistmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
             root.append(SeclisttrnrqTestCase().root)
         return root
 
-    def testdataTags(self):
+    def testListItems(self):
         # SECLISTMSGSRQV1 may contain
         # ["STMTTRNRQ", "STMTENDTRNRQ", "STPCHKTRNRQ", "INTRATRNRQ",
         # "RECINTRATRNRQ", "BANKMAILTRNRQ", "STPCHKSYNCRQ", "INTRASYNCRQ",
         # "RECINTRASYNCRQ", "BANKMAILSYNCRQ"]
 
-        allowedTags = SECLISTMSGSRQV1.dataTags
-        self.assertEqual(len(allowedTags), 1)
+        listitems = SECLISTMSGSRQV1.listitems
+        self.assertEqual(len(listitems), 1)
         root = deepcopy(self.root)
         root.append(SeclisttrnrsTestCase().root)
 
@@ -1237,8 +1300,6 @@ class SeclistmsgsetTestCase(unittest.TestCase, base.TestAggregate):
 
 
 class Tax1099msgsetv1TestCase(unittest.TestCase, base.TestAggregate):
-    """ """
-
     __test__ = True
 
     requiredElements = ["MSGSETCORE", "TAX1099DNLD", "EXTD1099B", "TAXYEARSUPPORTED"]
@@ -1357,14 +1418,15 @@ class MsgsetlistTestCase(unittest.TestCase, base.TestAggregate):
         root.append(tax1099msgset)
         return root
 
-    def testdataTags(self):
+    def testListItems(self):
         # MSGSETLIST may only contain
         # ["SIGNONMSGSET", "SIGNUPMSGSET", "PROFMSGSET", "BANKMSGSET",
         # "CREDITCARDMSGSET", "INTERXFERMSGSET", "WIREXFERMSGSET",
         # "INVSTMTMSGSET", "SECLISTMSGSET", "BILLPAYMSGSET", "PRESDIRMSGSET",
         # "PRESDLVMSGSET", "TAX1099MSGSET"]
-        allowedTags = MSGSETLIST.dataTags
-        self.assertEqual(len(allowedTags), 13)
+        listitems = MSGSETLIST.listitems
+        #  self.assertEqual(len(listitems), 13)
+        self.assertEqual(len(listitems), 11)
         root = deepcopy(self.root)
         root.append(StmttrnrsTestCase().root)
 

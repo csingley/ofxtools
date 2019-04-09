@@ -11,10 +11,6 @@ from copy import deepcopy
 # local imports
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import SVCSTATUSES
-from ofxtools.models.msgsets import (
-    INVSTMTMSGSRQV1,
-    INVSTMTMSGSRSV1,
-)
 from ofxtools.models.bank.stmt import BALLIST, INV401KSOURCES, INCTRAN
 from ofxtools.models.invest import (
     INVPOS,
@@ -38,6 +34,8 @@ from ofxtools.models.invest import (
     USPRODUCTTYPES,
     INVACCTTYPES,
     INVSUBACCTS,
+    INVSTMTMSGSRQV1,
+    INVSTMTMSGSRSV1,
 )
 from ofxtools.models.invest.securities import SECID
 from ofxtools.models.i18n import CURRENCY, CURRENCY_CODES
@@ -157,11 +155,11 @@ class InvposlistTestCase(unittest.TestCase, base.TestAggregate):
             root.append(elem)
         return root
 
-    def testdataTags(self):
+    def testListItems(self):
         # INVPOSLIST may only contain
         # ['POSDEBT', 'POSMF', 'POSOPT', 'POSOTHER', 'POSSTOCK', ]
-        allowedTags = INVPOSLIST.dataTags
-        self.assertEqual(len(allowedTags), 5)
+        listitems = INVPOSLIST.listitems
+        self.assertEqual(len(listitems), 5)
         root = deepcopy(self.root)
         root.append(StmttrnTestCase().root)
 
