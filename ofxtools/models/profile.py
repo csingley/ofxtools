@@ -73,6 +73,8 @@ class MSGSETLIST(List):
             msg = "{} must contain at least one item"
             raise ValueError(msg.format(cls.__name__))
 
+        super().validate_args(*args, **kwargs)
+
 
 class SIGNONINFO(Aggregate):
     """ OFX section 7.2.2 """

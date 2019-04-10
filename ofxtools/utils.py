@@ -33,6 +33,16 @@ def pairwise(iterable):
     return zip(a, b)
 
 
+def all_equal(iterable):
+    """
+    Returns True if all the elements are equal to each other
+
+    https://docs.python.org/2/library/itertools.html#recipes
+    """
+    g = itertools.groupby(iterable)
+    return next(g, True) and not next(g, False)
+
+
 def cusip_checksum(base):
     """
     Compute the check digit for a base Committee on Uniform Security

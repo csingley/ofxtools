@@ -154,6 +154,8 @@ class ACCTINFO(List):
                 msg = "{} contains multiple {} aggregates"
                 raise ValueError(msg.format(cls.__name__, tag))
 
+        super().validate_args(*args, **kwargs)
+
     def __repr__(self):
         return "<{} desc='{}' phone='{}' len={}>".format(
             self.__class__.__name__, self.desc, self.phone, len(self)

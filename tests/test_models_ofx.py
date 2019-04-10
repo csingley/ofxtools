@@ -111,61 +111,31 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def invalidSoup(cls):
-        #  requiredMutexes = [("signonmsgsrqv1", "signonmsgsrsv1")]
-        #  optionalMutexes = [
-        #  ("signupmsgsrqv1", "signupmsgsrsv1"),
-        #  ("bankmsgsrqv1", "bankmsgsrsv1"),
-        #  ("creditcardmsgsrqv1", "creditcardmsgsrsv1"),
-        #  ("invstmtmsgsrqv1", "invstmtmsgsrsv1"),
-        #  ("interxfermsgsrqv1", "interxfermsgsrsv1"),
-        #  ("wirexfermsgsrqv1", "wirexfermsgsrsv1"),
-        #  #  ("billpaymsgsrqv1", "billpaymsgsrsv1"),
-        #  ("emailmsgsrqv1", "emailmsgsrsv1"),
-        #  ("seclistmsgsrqv1", "seclistmsgsrsv1"),
-        #  #  ("presdirmsgsrqv1", "presdirmsgsrsv1"),
-        #  #  ("presdlmsgsrqv1", "presdlmsgsrsv1"),
-        #  ("profmsgsrqv1", "profmsgsrsv1"),
-        #  #  ("loanmsgsrqv1", "loanmsgsrsv1"),
-        #  #  ("tax1098msgsrqv1", "tax1098msgsrsv1"),
-        #  #  ("tax1099msgsrqv1", "tax1099msgsrsv1"),
-        #  #  ("taxw2msgsrqv1", "taxw2msgsrsv1"),
-        #  #  ("tax1095msgsrqv1", "tax1095msgsrsv1"),
-        #  # Don't allow mixed *RQ and *RS in the same OFX
-        #  ("signupmsgsrqv1", "bankmsgsrsv1"),
-        #  ("signupmsgsrqv1", "creditcardmsgsrsv1"),
-        #  ("signupmsgsrqv1", "invstmtmsgsrsv1"),
-        #  ("signupmsgsrqv1", "interxfermsgsrsv1"),
-        #  ("signupmsgsrqv1", "wirexfermsgsrsv1"),
-        #  ("signupmsgsrqv1", "billpaymsgsrsv1"),
-        #  ("signupmsgsrqv1", "emailmsgsrsv1"),
-        #  ("signupmsgsrqv1", "seclistmsgsrsv1"),
-        #  ("signupmsgsrqv1", "presdirmsgsrsv1"),
-        #  ("signupmsgsrqv1", "presdlmsgsrsv1"),
-        #  ("signupmsgsrqv1", "profmsgsrsv1"),
-        #  ("signupmsgsrqv1", "loanmsgsrsv1"),
-        #  ("signupmsgsrqv1", "tax1098msgsrsv1"),
-        #  ("signupmsgsrqv1", "tax1099msgsrsv1"),
-        #  ("signupmsgsrqv1", "taxw2msgsrsv1"),
-        #  ("signupmsgsrqv1", "tax1095msgsrsv1"),
-        #  ("signupmsgsrsv1", "bankmsgsrqv1"),
-        #  ("signupmsgsrsv1", "creditcardmsgsrqv1"),
-        #  ("signupmsgsrsv1", "invstmtmsgsrqv1"),
-        #  ("signupmsgsrsv1", "interxfermsgsrqv1"),
-        #  ("signupmsgsrsv1", "wirexfermsgsrqv1"),
-        #  ("signupmsgsrsv1", "billpaymsgsrqv1"),
-        #  ("signupmsgsrsv1", "emailmsgsrqv1"),
-        #  ("signupmsgsrsv1", "seclistmsgsrqv1"),
-        #  ("signupmsgsrsv1", "presdirmsgsrqv1"),
-        #  ("signupmsgsrsv1", "presdlmsgsrqv1"),
-        #  ("signupmsgsrsv1", "profmsgsrqv1"),
-        #  ("signupmsgsrsv1", "loanmsgsrqv1"),
-        #  ("signupmsgsrsv1", "tax1098msgsrqv1"),
-        #  ("signupmsgsrsv1", "tax1099msgsrqv1"),
-        #  ("signupmsgsrsv1", "taxw2msgsrqv1"),
-        #  ("signupmsgsrsv1", "tax1095msgsrqv1")
-        #  ]
-        # FIXME
-        yield from ()
+        signonmsgsrqv1 = Signonmsgsrqv1TestCase().root
+        signonmsgsrsv1 = Signonmsgsrsv1TestCase().root
+        signupmsgsrqv1 = Signupmsgsrqv1TestCase().root
+        signupmsgsrsv1 = Signupmsgsrsv1TestCase().root
+
+        # Neither SIGNONMSGSRQV1 nor SIGNONMSGSRSV1
+        root = Element("OFX")
+        yield root
+
+        # Both SIGNONMSGSRQV1 and SIGNONMSGSRSV1
+        root = Element("OFX")
+        root.append(signonmsgsrqv1)
+        root.append(signonmsgsrsv1)
+        yield root
+
+        # Mixed *MSGSRQV1 and *MSGSRSV1
+        root = Element("OFX")
+        root.append(signonmsgsrqv1)
+        root.append(signupmsgsrsv1)
+        yield root
+
+        root = Element("OFX")
+        root.append(signonmsgsrsv1)
+        root.append(signupmsgsrqv1)
+        yield root
 
     def testValidSoup(self):
         for root in self.validSoup:
@@ -178,28 +148,7 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
 
     @property
     def root(self):
-        #  root = Element("OFX")
-        #  for msg in (
-        #  test_models_signon.Signonmsgsrsv1TestCase,
-        #  Bankmsgsrsv1TestCase,
-        #  Creditcardmsgsrsv1TestCase,
-        #  Invstmtmsgsrsv1TestCase,
-        #  Seclistmsgsrsv1TestCase,
-        #  ):
-        #  root.append(msg().root)
-        #  return root
         return list(self.validSoup)[-1]
-
-    def testConvert(self):
-        # Make sure Aggregate.from_etree() calls Element.convert() and sets
-        # Aggregate instance attributes with the result
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, OFX)
-        self.assertIsInstance(instance.signonmsgsrsv1, SIGNONMSGSRSV1)
-        self.assertIsInstance(instance.bankmsgsrsv1, BANKMSGSRSV1)
-        self.assertIsInstance(instance.creditcardmsgsrsv1, CREDITCARDMSGSRSV1)
-        self.assertIsInstance(instance.invstmtmsgsrsv1, INVSTMTMSGSRSV1)
-        self.assertIsInstance(instance.seclistmsgsrsv1, SECLISTMSGSRSV1)
 
     def testUnsupported(self):
         instance = Aggregate.from_etree(self.root)
