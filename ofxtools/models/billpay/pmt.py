@@ -14,6 +14,8 @@ __all__ = [
     "PMTMODRQ", "PMTMODRS",
     "PMTCANRQ", "PMTCANRS",
     "PMTTRNRQ", "PMTTRNRS",
+    "PMTINQRQ", "PMTINQRS",
+    "PMTINQTRNRQ", "PMTINQTRNRS",
 ]
 
 
@@ -26,7 +28,7 @@ class PMTRS(Aggregate):
     """ OFX section 12.6.1.2 """
     srvrtid = String(10, required=True)
     payeelstid = String(12, required=True)
-    curdef = OneOf(*CURRENCY_CODES)
+    curdef = OneOf(*CURRENCY_CODES, required=True)
     pmtinfo = SubAggregate(PMTINFO, required=True)
     extdpayee = SubAggregate(EXTDPAYEE)
     checknum = String(12)
@@ -70,7 +72,7 @@ class PMTTRNRS(TrnRs):
     pmtmodrs = SubAggregate(PMTMODRS)
     pmtcanrs = SubAggregate(PMTCANRS)
 
-    requiredMutexes = [('pmtrs', 'pmtmodrs', 'pmtcanrs')]
+    optionalMutexes = [('pmtrs', 'pmtmodrs', 'pmtcanrs')]
 
 
 class PMTINQRQ(Aggregate):
@@ -86,7 +88,7 @@ class PMTINQRS(Aggregate):
 
 
 class PMTINQTRNRQ(TrnRq):
-    pmtinqrq = SubAggregate(PMTINQRQ)
+    pmtinqrq = SubAggregate(PMTINQRQ, required=True)
 
 
 class PMTINQTRNRS(TrnRs):

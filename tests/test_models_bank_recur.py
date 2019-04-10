@@ -215,8 +215,9 @@ class RecintratrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
         tan.text = "B16B00B5"
 
         legal = [trnuid, cltcookie, tan]
+        legal_tags = [el.tag for el in legal]
         for elements in itertools.permutations(legal):
-            if elements == legal:
+            if [el.tag for el in elements] == legal_tags:
                 continue
             root = deepcopy(root_)
             for element in elements:
@@ -278,8 +279,9 @@ class RecintratrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
         cltcookie.text = "B00B135"
 
         legal = [trnuid, status, cltcookie]
+        legal_tags = [el.tag for el in legal]
         for elements in itertools.permutations(legal):
-            if elements == legal:
+            if [el.tag for el in elements] == legal_tags:
                 continue
             root = deepcopy(root_)
             for element in elements:
@@ -466,8 +468,9 @@ class RecintertrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
         tan.text = "B16B00B5"
 
         legal = [trnuid, cltcookie, tan]
+        legal_tags = [el.tag for el in legal]
         for elements in itertools.permutations(legal):
-            if elements == legal:
+            if [el.tag for el in elements] == legal_tags:
                 continue
             root = deepcopy(root_)
             for element in elements:
@@ -529,8 +532,9 @@ class RecintertrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
         cltcookie.text = "B00B135"
 
         legal = [trnuid, status, cltcookie]
+        legal_tags = [el.tag for el in legal]
         for elements in itertools.permutations(legal):
-            if elements == legal:
+            if [el.tag for el in elements] == legal_tags:
                 continue
             root = deepcopy(root_)
             for element in elements:

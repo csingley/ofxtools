@@ -140,8 +140,6 @@ class PmtinfoTestCase(unittest.TestCase, base.TestAggregate):
                 Aggregate.from_etree(root)
 
 
-###############################################################################
-
 class DiscountTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
@@ -264,9 +262,7 @@ class ExtdpmtinvTestCase(unittest.TestCase, base.TestAggregate):
 
 
 class ExtdpmtTestCase(unittest.TestCase, base.TestAggregate):
-    # FIXME
-    # "At least one of the following: <EXTDPMTDESC> or <EXTDPMTINV>"
-   #  __test__ = True
+    __test__ = True
 
     @classproperty
     @classmethod
@@ -336,11 +332,9 @@ class ExtdpmtTestCase(unittest.TestCase, base.TestAggregate):
 
 
 class ExtdpayeeTestCase(unittest.TestCase, base.TestAggregate):
-    # FIXME
-    # "If <PAYEEID> is present, <IDSCOPE> and <NAME> are required."
-    #  __test__ = True
-    __test__ = False
+    __test__ = True
 
+    optionalElements = ["PAYEEID"]
     requiredElements = ["DAYSTOPAY"]
 
     @classproperty
@@ -348,77 +342,78 @@ class ExtdpayeeTestCase(unittest.TestCase, base.TestAggregate):
     def validSoup(cls):
         root_ = ET.Element("EXTDPAYEE")
         payeeid = ET.Element("PAYEEID")
-        payeeid.text = "payee1"
+        payeeid.text = "DEADBEEF"
         idscope = ET.Element("IDSCOPE")
         idscope.text = "GLOBAL"
         name = ET.Element("NAME")
-        name.text = "PAYEE"
+        name.text = "Porky Pig"
         daystopay = ET.Element("DAYSTOPAY")
-        daystopay.text = "7"
+        daystopay.text = "30"
 
-        # No PAYEEID, no IDSCOPE, no NAME
+        # Everything
         root = deepcopy(root_)
-        root.append(daystopay)
+        for child in (payeeid, idscope, name, daystopay):
+            root.append(child)
         yield root
 
-        # No PAYEEID; one of IDSCOPE/NAME
-        for choice in idscope, name:
+        # No PAYEEID; IDSCOPE and NAME
+        root = deepcopy(root_)
+        for child in (idscope, name, daystopay):
+            root.append(child)
+        yield root
+
+        # No PAYEEID; either IDSCOPE or NAME
+        for child in (idscope, name):
             root = deepcopy(root_)
-            root.append(choice)
+            root.append(child)
             root.append(daystopay)
             yield root
 
-        # No PAYEEID, both IDSCOPE & NAME
+        # Only DAYSTOPLAY
         root = deepcopy(root_)
-        root.append(idscope)
-        root.append(name)
         root.append(daystopay)
         yield root
 
-        # PAYEEID, both IDSCOPE & NAME
+    @classproperty
+    @classmethod
+    def invalidSoup(cls):
+        root_ = ET.Element("EXTDPAYEE")
+        payeeid = ET.Element("IDSCOPE")
+        payeeid.text = "DEADBEEF"
+        idscope = ET.Element("IDSCOPE")
+        idscope.text = "GLOBAL"
+        name = ET.Element("NAME")
+        name.text = "Porky Pig"
+        daystopay = ET.Element("DAYSTOPAY")
+        daystopay.text = "30"
+
+        # PAYEEID with neither IDSCOPE nor NAME
+        root = deepcopy(root_)
+        root.append(payeeid)
+        root.append(daystopay)
+        yield root
+
+        # PAYEEID with IDSCOPE without NAME
         root = deepcopy(root_)
         root.append(payeeid)
         root.append(idscope)
+        root.append(daystopay)
+        yield root
+
+        # PAYEEID with NAME without IDSCOPE
+        root = deepcopy(root_)
+        root.append(payeeid)
         root.append(name)
         root.append(daystopay)
         yield root
 
     @property
     def root(self):
-        return list(self.validSoup)[-1]
+        return next(self.validSoup)
 
     def testValidSoup(self):
         for root in self.validSoup:
             Aggregate.from_etree(root)
-
-    @classproperty
-    @classmethod
-    def invalidSoup(cls):
-        yield from ()
-        # FIXME
-        #  root_ = ET.Element("EXTDPAYEE")
-        #  payeeid = ET.Element("PAYEEID")
-        #  payeeid.text = "payee1"
-        #  idscope = ET.Element("IDSCOPE")
-        #  idscope.text = "GLOBAL"
-        #  name = ET.Element("NAME")
-        #  name.text = "PAYEE"
-        #  daystopay = ET.Element("DAYSTOPAY")
-        #  daystopay.text = "7"
-
-        #  # PAYEEID, IDSCOPE without NAME
-        #  root = deepcopy(root_)
-        #  root.append(payeeid)
-        #  root.append(idscope)
-        #  root.append(daystopay)
-        #  yield root
-
-        #  # PAYEEID, NAME without IDSCOPE
-        #  root = deepcopy(root_)
-        #  root.append(payeeid)
-        #  root.append(name)
-        #  root.append(daystopay)
-        #  yield root
 
     def testInvalidSoup(self):
         for root in self.invalidSoup:
@@ -426,7 +421,7 @@ class ExtdpayeeTestCase(unittest.TestCase, base.TestAggregate):
                 Aggregate.from_etree(root)
 
     def testOneOf(self):
-        self.oneOfTest("IDSCOPE", ("GLOBAL", "USER"))
+        self.oneOfTest("IDSCOPE", ["GLOBAL", "USER"])
 
 
 class PmtprcstsTestCase(unittest.TestCase, base.TestAggregate):

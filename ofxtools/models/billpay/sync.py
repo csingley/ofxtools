@@ -11,7 +11,7 @@ from ofxtools.models.base import Aggregate, SubAggregate, ListItem
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
 from ofxtools.models.bank.stmt import BANKACCTFROM
 from ofxtools.models.billpay import (
-    PMTTRNRQ, PMTTRNRS, RECPMTTRNRQ, RECPMTTRNRS,
+    PMTTRNRQ, PMTTRNRS, RECPMTTRNRQ, RECPMTTRNRS, PAYEETRNRQ, PAYEETRNRS,
 )
 
 
@@ -44,3 +44,13 @@ class RECPMTSYNCRS(SyncRsList):
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     recpmttrnrs = ListItem(RECPMTTRNRS)
+
+
+class PAYEESYNCRQ(SyncRqList):
+    """ OFX Section 12.9.4.1 """
+    payeetrnrq = ListItem(PAYEETRNRQ)
+
+
+class PAYEESYNCRS(SyncRsList):
+    """ OFX Section 12.9.4.2 """
+    payeetrnrs = ListItem(PAYEETRNRS)

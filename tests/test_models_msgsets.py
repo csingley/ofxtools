@@ -9,10 +9,11 @@ from xml.etree.ElementTree import Element, SubElement
 from datetime import time
 from decimal import Decimal
 from copy import deepcopy
+import itertools
 
 
 # local imports
-from ofxtools.models.base import Aggregate
+from ofxtools.models.base import Aggregate, classproperty
 from ofxtools.models.common import OFXEXTENSION
 from ofxtools.models import (
     MSGSETCORE,
@@ -28,6 +29,7 @@ from ofxtools.models import (
     CREDITCARDMSGSRQV1, CREDITCARDMSGSRSV1, CREDITCARDMSGSETV1, CREDITCARDMSGSET,
     INTERXFERMSGSRQV1, INTERXFERMSGSRSV1, INTERXFERMSGSETV1, INTERXFERMSGSET,
     WIREXFERMSGSRQV1, WIREXFERMSGSRSV1, WIREXFERMSGSETV1, WIREXFERMSGSET,
+    BILLPAYMSGSRQV1, BILLPAYMSGSRSV1, BILLPAYMSGSETV1, BILLPAYMSGSET,
     INVSTMTMSGSRQV1, INVSTMTMSGSRSV1, INVSTMTMSGSETV1, INVSTMTMSGSET,
     SECLISTMSGSRQV1, SECLISTMSGSRSV1, SECLISTMSGSETV1, SECLISTMSGSET,
     TAX1099MSGSETV1, TAX1099MSGSET,
@@ -84,6 +86,26 @@ from ofxtools.models.bank.sync import (
     BANKMAILSYNCRQ,
     BANKMAILSYNCRS,
 )
+#  from ofxtools.models.billpay import (
+    #  PMTTRNRQ,
+    #  RECPMTTRNRQ,
+    #  PAYEETRNRQ,
+    #  PMTINQTRNRQ,
+    #  PMTMAILTRNRQ,
+    #  PMTSYNCRQ,
+    #  RECPMTSYNCRQ,
+    #  PAYEESYNCRQ,
+    #  PMTMAILSYNCRQ,
+    #  PMTTRNRS,
+    #  RECPMTTRNRS,
+    #  PAYEETRNRS,
+    #  PMTINQTRNRS,
+    #  PMTMAILTRNRS,
+    #  PMTSYNCRS,
+    #  RECPMTSYNCRS,
+    #  PAYEESYNCRS,
+    #  PMTMAILSYNCRS,
+#  )
 from ofxtools.models.invest.stmt import INVSTMTTRNRQ, INVSTMTTRNRS
 from ofxtools.models.invest import SECLIST
 from ofxtools.models.i18n import LANG_CODES
@@ -148,6 +170,22 @@ from test_models_bank_sync import (
     BankmailsyncrqTestCase,
     BankmailsyncrsTestCase,
 )
+#  from test_models_billpay_pmt import (
+    #  PmttrnrqTestCase, PayeetrnrqTestCase, PmtinqtrnrqTestCase,
+    #  PmttrnrsTestCase, PayeetrnrsTestCase, PmtinqtrnrsTestCase,
+#  )
+#  from test_models_billpay_recur import RecpmttrnrqTestCase, RecpmttrnrsTestCase
+#  from test_models_billpay_mail import PmtmailtrnrqTestCase, PmtmailtrnrsTestCase
+#  from test_models_billpay_sync import (
+    #  PmtsyncRqTestCase,
+    #  RecpmtsyncrqTestCase,
+    #  PayeesyncrqTestCase,
+    #  PmtmailsyncrqTestCase,
+    #  PmtsyncRsTestCase,
+    #  RecpmtsyncrsTestCase,
+    #  PayeesyncrsTestCase,
+    #  PmtmailsyncrsTestCase,
+#  )
 from test_models_invest import InvstmttrnrqTestCase, InvstmttrnrsTestCase
 from test_models_securities import SeclisttrnrqTestCase, SeclisttrnrsTestCase, SeclistTestCase
 from test_models_signup import WebenrollTestCase, EnrolltrnrqTestCase, EnrolltrnrsTestCase
@@ -665,7 +703,7 @@ class XferprofTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "CANMODMDLS").text = "Y"
         SubElement(root, "MODELWND").text = "3"
         SubElement(root, "DAYSWITH").text = "2"
-        SubElement(root, "DFLDAYSTOPAY").text = "4"
+        SubElement(root, "DFLTDAYSTOPAY").text = "4"
 
         return root
 
@@ -680,7 +718,7 @@ class XferprofTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(instance.canmodmdls, True)
         self.assertEqual(instance.modelwnd, 3)
         self.assertEqual(instance.dayswith, 2)
-        self.assertEqual(instance.dfldaystopay, 4)
+        self.assertEqual(instance.dfltdaystopay, 4)
 
 
 class StpchkprofTestCase(unittest.TestCase, base.TestAggregate):
@@ -1090,6 +1128,182 @@ class WirexfermsgsetTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(root.wirexfermsgsetv1, WIREXFERMSGSETV1)
 
 
+#  class Billpaymsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
+    #  __test__ = True
+
+    #  @property
+    #  def root(self):
+        #  root = Element("BILLPAYMSGSRQV1")
+        #  for rq in (
+            #  PmttrnrqTestCase, RecpmttrnrqTestCase, PayeetrnrqTestCase,
+            #  PmtinqtrnrqTestCase, PmtmailtrnrqTestCase, PmtsyncRqTestCase,
+            #  RecpmtsyncrqTestCase, PayeesyncrqTestCase, PmtmailsyncrqTestCase):
+            #  for i in range(2):
+                #  root.append(rq().root)
+        #  return root
+
+    #  def testListItems(self):
+        #  # BILLPAYMSGSRQV1 may contain
+        #  # [PMTTRNRQ, RECPMTTRNRQ, PAYEETRNRQ, PMTINQTRNRQ, PMTMAILTRNRQ,
+        #  # PMTSYNCRQ, RECPMTSYNCRQ, PAYEESYNCRQ, PMTMAILSYNCRQ]
+        #  listitems = BILLPAYMSGSRQV1.listitems
+        #  self.assertEqual(len(listitems), 9)
+        #  root = deepcopy(self.root)
+        #  root.append(BillpaytrnrsTestCase().root)
+
+        #  with self.assertRaises(ValueError):
+            #  Aggregate.from_etree(root)
+
+    #  def testConvert(self):
+        #  instance = Aggregate.from_etree(self.root)
+        #  self.assertIsInstance(instance, BILLPAYMSGSRQV1)
+        #  self.assertEqual(len(instance), 4)
+        #  self.assertIsInstance(instance[0], PMTTRNRQ)
+        #  self.assertIsInstance(instance[1], PMTTRNRQ)
+        #  self.assertIsInstance(instance[2], RECPMTTRNRQ)
+        #  self.assertIsInstance(instance[3], RECPMTTRNRQ)
+        #  self.assertIsInstance(instance[4], PAYEETRNRQ)
+        #  self.assertIsInstance(instance[5], PAYEETRNRQ)
+        #  self.assertIsInstance(instance[6], PMTINQTRNRQ)
+        #  self.assertIsInstance(instance[7], PMTINQTRNRQ)
+        #  self.assertIsInstance(instance[8], PMTMAILTRNRQ)
+        #  self.assertIsInstance(instance[9], PMTMAILTRNRQ)
+        #  self.assertIsInstance(instance[10], PMTSYNCRQ)
+        #  self.assertIsInstance(instance[11], PMTSYNCRQ)
+        #  self.assertIsInstance(instance[12], RECPMTSYNCRQ)
+        #  self.assertIsInstance(instance[13], RECPMTSYNCRQ)
+        #  self.assertIsInstance(instance[14], PAYEESYNCRQ)
+        #  self.assertIsInstance(instance[15], PAYEESYNCRQ)
+        #  self.assertIsInstance(instance[16], PMTMAILSYNCRQ)
+        #  self.assertIsInstance(instance[17], PMTMAILSYNCRQ)
+
+
+#  class Billpaymsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
+    #  __test__ = True
+
+    #  @property
+    #  def root(self):
+        #  root = Element("BILLPAYMSGSRSV1")
+        #  for rq in (
+            #  PmttrnrsTestCase, RecpmttrnrsTestCase, PayeetrnrsTestCase,
+            #  PmtinqtrnrsTestCase, PmtmailtrnrsTestCase, PmtsyncRsTestCase,
+            #  RecpmtsyncrsTestCase, PayeesyncrsTestCase, PmtmailsyncrsTestCase):
+            #  for i in range(2):
+                #  root.append(rq().root)
+        #  return root
+
+    #  def testListItems(self):
+        #  # BILLPAYMSGSRQV1 may contain
+        #  # [PMTTRNRS, RECPMTTRNRS, PAYEETRNRS, PMTINQTRNRS, PMTMAILTRNRS,
+        #  # PMTSYNCRS, RECPMTSYNCRS, PAYEESYNCRS, PMTMAILSYNCRS]
+        #  listitems = BILLPAYMSGSRSV1.listitems
+        #  self.assertEqual(len(listitems), 9)
+        #  root = deepcopy(self.root)
+        #  root.append(BillpaytrnrsTestCase().root)
+
+        #  with self.assertRaises(ValueError):
+            #  Aggregate.from_etree(root)
+
+    #  def testConvert(self):
+        #  instance = Aggregate.from_etree(self.root)
+        #  self.assertIsInstance(instance, BILLPAYMSGSRSV1)
+        #  self.assertEqual(len(instance), 4)
+        #  self.assertIsInstance(instance[0], PMTTRNRS)
+        #  self.assertIsInstance(instance[1], PMTTRNRS)
+        #  self.assertIsInstance(instance[2], RECPMTTRNRS)
+        #  self.assertIsInstance(instance[3], RECPMTTRNRS)
+        #  self.assertIsInstance(instance[4], PAYEETRNRS)
+        #  self.assertIsInstance(instance[5], PAYEETRNRS)
+        #  self.assertIsInstance(instance[6], PMTINQTRNRS)
+        #  self.assertIsInstance(instance[7], PMTINQTRNRS)
+        #  self.assertIsInstance(instance[8], PMTMAILTRNRS)
+        #  self.assertIsInstance(instance[9], PMTMAILTRNRS)
+        #  self.assertIsInstance(instance[10], PMTSYNCRS)
+        #  self.assertIsInstance(instance[11], PMTSYNCRS)
+        #  self.assertIsInstance(instance[12], RECPMTSYNCRS)
+        #  self.assertIsInstance(instance[13], RECPMTSYNCRS)
+        #  self.assertIsInstance(instance[14], PAYEESYNCRS)
+        #  self.assertIsInstance(instance[15], PAYEESYNCRS)
+        #  self.assertIsInstance(instance[16], PMTMAILSYNCRS)
+        #  self.assertIsInstance(instance[17], PMTMAILSYNCRS)
+
+
+#  class Billpaymsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
+    #  __test__ = True
+
+    #  @property
+    #  def root(self):
+        #  root = Element("BILLPAYMSGSETV1")
+        #  msgsetcore = MsgsetcoreTestCase().root
+        #  root.append(msgsetcore)
+        #  SubElement(root, "DAYSWITH").text = "2"
+        #  SubElement(root, "DFLTDAYSTOPAY").text = "4"
+        #  SubElement(root, "XFERDAYSWITH").text = "3"
+        #  SubElement(root, "XFERDFLTDAYSTOPAY").text = "5"
+        #  SubElement(root, "PROCDAYSOFF").text = "SUNDAY"
+        #  SubElement(root, "PROCENDTM").text = "170000"
+        #  SubElement(root, "MODELWND").text = "3"
+        #  SubElement(root, "POSTPROCWND").text = "6"
+        #  SubElement(root, "STSVIAMODS").text = "N"
+        #  SubElement(root, "PMTBYADDR").text = "Y"
+        #  SubElement(root, "PMTBYXFER").text = "Y"
+        #  SubElement(root, "PMTBYPAYEEID").text = "N"
+        #  SubElement(root, "CANADDPAYEE").text = "Y"
+        #  SubElement(root, "HASEXTDPMT").text = "N"
+        #  SubElement(root, "CANMODPMTS").text = "N"
+        #  SubElement(root, "CANMODMDLS").text = "Y"
+        #  SubElement(root, "DIFFFIRSTPMT").text = "N"
+        #  SubElement(root, "DIFFLASTPMT").text = "N"
+        #  SubElement(root, "BILLPUBCONTEXT").text = "Y"
+
+        #  return root
+
+    #  def testConvert(self):
+        #  root = Aggregate.from_etree(self.root)
+        #  self.assertIsInstance(root, BILLPAYMSGSETV1)
+        #  self.assertIsInstance(root.msgsetcore, MSGSETCORE)
+        #  self.assertEqual(root.dayswith, 2)
+        #  self.assertEqual(root.dfltdaystopay, 4)
+        #  self.assertEqual(root.xferdayswith, 3)
+        #  self.assertEqual(root.xferdfltdaystopay, 5)
+        #  self.assertIsNone(root.procdaysoff)  # Unsupported
+        #  self.assertEqual(root.procendtm, time(17, 0, 0, tzinfo=UTC))
+        #  self.assertEqual(root.modelwnd, 3)
+        #  self.assertEqual(root.postprocwnd, 6)
+        #  self.assertEqual(root.stsviamods, False)
+        #  self.assertEqual(root.pmtbyaddr, True)
+        #  self.assertEqual(root.pmtbyxfer, True)
+        #  self.assertEqual(root.pmtbypayeeid, False)
+        #  self.assertEqual(root.canaddpayee, True)
+        #  self.assertEqual(root.hasextdpmt, False)
+        #  self.assertEqual(root.canmodpmts, False)
+        #  self.assertEqual(root.canmodmdls, True)
+        #  self.assertEqual(root.difffirstpmt, False)
+        #  self.assertEqual(root.difflastpmt, False)
+        #  self.assertEqual(root.billpubcontent, True)
+
+        #  self.assertEqual(root.cansched, True)
+        #  self.assertEqual(root.domxferfee, Decimal("7.50"))
+        #  self.assertEqual(root.intlxferfee, Decimal("17.50"))
+
+
+
+#  class BillpaymsgsetTestCase(unittest.TestCase, base.TestAggregate):
+    #  __test__ = True
+
+    #  @property
+    #  def root(self):
+        #  root = Element("WIREXFERMSGSET")
+        #  msgsetv1 = Billpaymsgsetv1TestCase().root
+        #  root.append(msgsetv1)
+        #  return root
+
+    #  def testConvert(self):
+        #  root = Aggregate.from_etree(self.root)
+        #  self.assertIsInstance(root, BILLPAYMSGSET)
+        #  self.assertIsInstance(root.billpaymsgsetv1, BILLPAYMSGSETV1)
+
+
 class Invstmtmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
@@ -1403,26 +1617,37 @@ class MsgsetcoreTestCase(unittest.TestCase, base.TestAggregate):
 class MsgsetlistTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
+    @classproperty
+    @classmethod
+    def validSoup(cls):
+        msgsets = [
+            SignonmsgsetTestCase().root,
+            SignupmsgsetTestCase().root,
+            ProfmsgsetTestCase().root,
+            BankmsgsetTestCase().root,
+            CreditcardmsgsetTestCase().root,
+            InterxfermsgsetTestCase().root,
+            WirexfermsgsetTestCase().root,
+            InvstmtmsgsetTestCase().root,
+            SeclistmsgsetTestCase().root,
+            #  BillpaymsgsetTestCase().root,
+            Tax1099msgsetTestCase().root,
+        ]
+        root = Element("MSGSETLIST")
+        for msgset in msgsets:
+            root.append(msgset)
+            yield root
+
+    @classproperty
+    @classmethod
+    def invalidSoup(cls):
+        # Empty MSGSETLIST
+        root = Element("MSGSETLIST")
+        yield root
+
     @property
     def root(self):
-        root = Element("MSGSETLIST")
-        signon = SignonmsgsetTestCase().root
-        root.append(signon)
-        signup = SignupmsgsetTestCase().root
-        root.append(signup)
-        bankmsgset = ProfmsgsetTestCase().root
-        root.append(bankmsgset)
-        bankmsgset = BankmsgsetTestCase().root
-        root.append(bankmsgset)
-        creditcardmsgset = CreditcardmsgsetTestCase().root
-        root.append(creditcardmsgset)
-        invstmtmsgset = InvstmtmsgsetTestCase().root
-        root.append(invstmtmsgset)
-        seclistmsgset = SeclistmsgsetTestCase().root
-        root.append(seclistmsgset)
-        tax1099msgset = Tax1099msgsetTestCase().root
-        root.append(tax1099msgset)
-        return root
+        return next(self.validSoup)
 
     def testListItems(self):
         # MSGSETLIST may only contain
@@ -1439,19 +1664,14 @@ class MsgsetlistTestCase(unittest.TestCase, base.TestAggregate):
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
 
-    def testConvert(self):
-        # Test MSGSETLIST wrapper.  *MSGSET members are tested elsewhere.
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, MSGSETLIST)
-        self.assertEqual(len(root), 8)
-        self.assertIsInstance(root[0], SIGNONMSGSET)
-        self.assertIsInstance(root[1], SIGNUPMSGSET)
-        self.assertIsInstance(root[2], PROFMSGSET)
-        self.assertIsInstance(root[3], BANKMSGSET)
-        self.assertIsInstance(root[4], CREDITCARDMSGSET)
-        self.assertIsInstance(root[5], INVSTMTMSGSET)
-        self.assertIsInstance(root[6], SECLISTMSGSET)
-        self.assertIsInstance(root[7], TAX1099MSGSET)
+    def testValidSoup(self):
+        for root in self.validSoup:
+            Aggregate.from_etree(root)
+
+    def testInvalidSoup(self):
+        for root in self.invalidSoup:
+            with self.assertRaises(ValueError):
+                Aggregate.from_etree(root)
 
 
 if __name__ == "__main__":
