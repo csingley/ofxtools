@@ -35,9 +35,14 @@ class TESTAGGREGATE(Aggregate):
     requiredMutexes = [("req00", "req01"), ("req10", "req11")]
 
 
+class TESTAGGREGATE2(Aggregate):
+    metadata = String(32, required=True)
+
+
 class TESTLIST(List):
     metadata = String(32)
     testaggregate = ListItem(TESTAGGREGATE)
+    testaggregate2 = ListItem(TESTAGGREGATE2)
 
 
 class AggregateTestCase(unittest.TestCase):
@@ -475,6 +480,23 @@ class UnsupportedTestCase(unittest.TestCase):
 
 
 class ListTestCase(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # monkey-patch ofxtools.models so Aggregate.from_etree() picks up
+        # our fake OFX aggregates/elements
+        models.TESTSUBAGGREGATE = TESTSUBAGGREGATE
+        models.TESTAGGREGATE = TESTAGGREGATE
+        models.TESTAGGREGATE2 = TESTAGGREGATE2
+        models.TESTLIST = TESTLIST
+
+    @classmethod
+    def tearDownClass(cls):
+        # Remove monkey patch
+        del models.TESTSUBAGGREGATE
+        del models.TESTAGGREGATE
+        del models.TESTAGGREGATE2
+        del models.TESTLIST
+
     @property
     def instance(self):
         subagg0 = TESTSUBAGGREGATE(data="quux")
@@ -485,7 +507,52 @@ class ListTestCase(unittest.TestCase):
         agg1 = TESTAGGREGATE(
             metadata="bar", req00=False, req11=True, testsubaggregate=subagg1
         )
-        return TESTLIST(agg0, agg1, metadata="foo")
+        agg2 = TESTAGGREGATE2(metadata="dumbo")
+        return TESTLIST(agg0, agg1, agg2, metadata="foo")
+
+    @property
+    def root(self):
+        root = ET.Element("TESTLIST")
+        ET.SubElement(root, "METADATA").text = "foo"
+        agg0 = ET.SubElement(root, "TESTAGGREGATE")
+        agg1 = ET.SubElement(root, "TESTAGGREGATE")
+        agg2 = ET.SubElement(root, "TESTAGGREGATE2")
+
+        ET.SubElement(agg0, "METADATA").text = "foo"
+        ET.SubElement(agg0, "REQ00").text = "Y"
+        ET.SubElement(agg0, "REQ11").text = "N"
+        subagg0 = ET.SubElement(agg0, "TESTSUBAGGREGATE")
+        ET.SubElement(subagg0, "DATA").text = "quux"
+
+        ET.SubElement(agg1, "METADATA").text = "bar"
+        ET.SubElement(agg1, "REQ00").text = "N"
+        ET.SubElement(agg1, "REQ11").text = "Y"
+        subagg1 = ET.SubElement(agg1, "TESTSUBAGGREGATE")
+        ET.SubElement(subagg1, "DATA").text = "quuz"
+
+        ET.SubElement(agg2, "METADATA").text = "dumbo"
+
+        return root
+
+    def testFromEtree(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, TESTLIST)
+        self.assertEqual(instance.metadata, "foo")
+        self.assertEqual(len(instance), 3)
+        agg0, agg1, agg2 = instance[:]
+
+        self.assertIsInstance(agg0, TESTAGGREGATE)
+        self.assertIsInstance(agg1, TESTAGGREGATE)
+        self.assertIsInstance(agg2, TESTAGGREGATE2)
+
+    def testFromEtreeWrongOrder(self):
+        root = ET.Element("TESTLIST")
+        agg = ET.SubElement(root, "TESTAGGREGATE2")
+        ET.SubElement(agg, "METADATA").text = "dumbo"
+        ET.SubElement(root, "METADATA").text = "foo"
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
 
     def testInitInstancesDistinct(self):
         # Test that separate List class instances contain separate data
@@ -503,8 +570,8 @@ class ListTestCase(unittest.TestCase):
 
         self.assertIsInstance(instance0, TESTLIST)
         self.assertEqual(instance0.metadata, "foo")
-        self.assertEqual(len(instance0), 2)
-        ag0, ag1 = instance0[:]
+        self.assertEqual(len(instance0), 3)
+        ag0, ag1, ag2 = instance0[:]
 
         self.assertIsInstance(ag0, TESTAGGREGATE)
         self.assertEqual(ag0.metadata, "foo")
@@ -522,6 +589,9 @@ class ListTestCase(unittest.TestCase):
         self.assertIsInstance(sub1, TESTSUBAGGREGATE)
         self.assertEqual(sub1.data, "quuz")
 
+        self.assertIsInstance(ag2, TESTAGGREGATE2)
+        self.assertEqual(ag2.metadata, "dumbo")
+
         self.assertIsInstance(instance1, TESTLIST)
         self.assertEqual(instance1.metadata, "blue")
         self.assertEqual(len(instance1), 2)
@@ -533,8 +603,8 @@ class ListTestCase(unittest.TestCase):
         self.assertIsInstance(root, ET.Element)
         self.assertEqual(root.tag, "TESTLIST")
         self.assertIsNone(root.text)
-        self.assertEqual(len(root), 3)
-        metadata, agg0, agg1 = root[:]
+        self.assertEqual(len(root), 4)
+        metadata, agg0, agg1, agg2 = root[:]
 
         self.assertIsInstance(metadata, ET.Element)
         self.assertEqual(metadata.tag, "METADATA")
@@ -603,9 +673,19 @@ class ListTestCase(unittest.TestCase):
         self.assertEqual(elem.text, "quuz")
         self.assertEqual(len(elem), 0)
 
+        self.assertIsInstance(agg2, ET.Element)
+        self.assertEqual(agg2.tag, "TESTAGGREGATE2")
+        self.assertIsNone(agg2.text)
+        self.assertEqual(len(agg2), 1)
+
+        metadata = agg2[0]
+        self.assertIsInstance(metadata, ET.Element)
+        self.assertEqual(metadata.tag, "METADATA")
+        self.assertEqual(metadata.text, "dumbo")
+
     def testRepr(self):
         rep = repr(self.instance)
-        self.assertEqual(rep, "<TESTLIST len=2>")
+        self.assertEqual(rep, "<TESTLIST len=3>")
 
 
 if __name__ == "__main__":
