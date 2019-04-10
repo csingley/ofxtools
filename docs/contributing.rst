@@ -384,10 +384,10 @@ number of transaction wrappers is problematic for the ``Aggregate`` base
 class, where every child element maps to a single class attribute.
 
 For this kind of structure, we instead inherit from ``ofxtools.models.base.List``.
-Subclasses of ``List`` define tag validators in the usual manner for metadata
-(i.e. unique children, which are accessed as instance attributes), but the
-sub-aggregates identified by the OFX spec as list members are defined using the
-``dataTags`` class attribute and accessed via the Python sequence API.
+Contained aggregates that are allowed to appear more than once are defined with
+a validator of type ``ListItem``, and accessed via the Python list API.  Unique
+children are defined in the usual manner, and accessed as instance attributes.
+
 Here's how it looks in ``ofxtools.models.bank.sync``.
 
 .. code:: python
@@ -398,13 +398,14 @@ Here's how it looks in ``ofxtools.models.bank.sync``.
 
     class INTRASYNCRQ(List):
         """ OFX section 11.12.2.1 """
+        token = String(10)
         tokenonly = Bool()
         refresh = Bool()
         rejectifmissing = Bool(required=True)
         bankacctfrom = SubAggregate(BANKACCTFROM)
         ccacctfrom = SubAggregate(CCACCTFROM)
+        intratrnrq = ListItem(INTRATRNRQ)
 
-        dataTags = ["INTRATRNRQ"]
         requiredMutexes = [
             ("token", "tokenonly", "refresh"),
             ("bankacctfrom", "ccacctfrom")
@@ -415,17 +416,40 @@ Here's how it looks in ``ofxtools.models.bank.sync``.
         """ OFX section 11.12.2.2 """
         token = String(10, required=True)
         lostsync = Bool()
-
         bankacctfrom = SubAggregate(BANKACCTFROM)
         ccacctfrom = SubAggregate(CCACCTFROM)
+        intratrnrs = ListItem(INTRATRNRS)
 
-        dataTags = ["INTRATRNRS"]
         requiredMutexes = [ ("bankacctfrom", "ccacctfrom") ]
 
-Note that ``dataTags`` are specified as sequences of ALL CAPS strings,
-corresponding to the OFX tags that will appear in incoming aggregates.  Order
-is significant; these tags must be defined in the same order laid out in the
-spec.
+
+    class RECINTRASYNCRQ(SyncRqList):
+        """ OFX section 11.12.5.1 """
+
+        token = String(10)
+        tokenonly = Bool()
+        refresh = Bool()
+        rejectifmissing = Bool(required=True)
+        bankacctfrom = SubAggregate(BANKACCTFROM)
+        ccacctfrom = SubAggregate(CCACCTFROM)
+        recintratrnrq = ListItem(RECINTRATRNRQ)
+
+        requiredMutexes = [
+            ("token", "tokenonly", "refresh"),
+            ("bankacctfrom", "ccacctfrom")
+        ]
+
+
+    class RECINTRASYNCRS(SyncRsList):
+        """ OFX section 11.12.5.2 """
+
+        token = String(10, required=True)
+        lostsync = Bool()
+        bankacctfrom = SubAggregate(BANKACCTFROM)
+        ccacctfrom = SubAggregate(CCACCTFROM)
+        recintratrnrs = ListItem(RECINTRATRNRS)
+
+        requiredMutexes = [("bankacctfrom", "ccacctfrom")]
 
 Extending the Message Set
 -------------------------
@@ -438,27 +462,25 @@ relevant classes in ``ofxtools.models.msgsets``.
     class BANKMSGSRQV1(List):
         """ OFX section 11.13.1.1.1 """
 
-        dataTags = [
-            ...
-            "INTRATRNRQ",
-            "INTRASYNCRQ",
-            ...
-        ]
+        ...
+        intratrnrq = ListItem(INTRATRNRQ)
+        recintratrnrq = ListItem(RECINTRATRNRQ)
+        intrasyncrq = ListItem(INTRASYNCRQ)
+        recintrasyncrq = ListItem(RECINTRASYNCRQ)
+        ...
 
 
     class BANKMSGSRSV1(List):
         """ OFX section 11.13.1.1.2 """
 
-        dataTags = [
-            ...
-            "INTRATRNRS",
-            "INTRASYNCRS",
-            ...
-        ]
+        ...
+        intratrnrs = ListItem(INTRATRNRS)
+        recintratrnrs = ListItem(RECINTRATRNRS)
+        intrasyncrs = ListItem(INTRASYNCRS)
+        recintrasyncrs = ListItem(RECINTRASYNCRS)
+        ...
 
-This will allow us to generate and parse valid OFX messages for funds transfers,
-which is probably all we need.  The last remaining task is to update
-``BANKMSGSET.XFERPROF``; this is a work in progress.
+All done!
 
 
 .. _create pull requests: https://help.github.com/articles/using-pull-requests/
