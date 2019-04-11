@@ -558,3 +558,24 @@ class ListItem(Element):
             msg = "'{}' is not an instance of {}"
             raise ValueError(msg.format(value, self.type))
         return value
+
+    def _unconvert_default(self, value):
+        if not isinstance(value, self.type):
+            msg = "'{}' is not an instance of {}"
+            raise ValueError(msg.format(value, self.type))
+        return value
+
+
+class ListElement(Element):
+    """ """
+
+    def _init(self, *args, **kwargs):
+        args = list(args)
+        self.converter = args.pop(0)
+        super()._init(*args, **kwargs)
+
+    def _convert_default(self, value):
+        return self.converter.convert(value)
+
+    def _unconvert_default(self, value):
+        return self.converter.unconvert(value)

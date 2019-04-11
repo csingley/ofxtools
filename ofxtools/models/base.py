@@ -23,7 +23,7 @@ from copy import deepcopy
 
 
 # local imports
-from ofxtools.Types import Element, DateTime, String, Bool, InstanceCounterMixin, ListItem
+from ofxtools.Types import Element, DateTime, String, Bool, InstanceCounterMixin, ListItem, ListElement
 import ofxtools.models
 from ofxtools.utils import classproperty, pairwise
 
@@ -140,51 +140,57 @@ class Aggregate(list):
         # Hook to modify incoming ``ET.Element`` before conversion
         elem = SubClass.groom(elem)
 
-        spec = list(SubClass.spec)
-        listitems = SubClass.listitems
+        instance = SubClass._convert(elem)
+        return instance
 
+    @classmethod
+    def _convert(cls, elem):
+        if len(elem) == 0:
+            return cls()
         args = []
         kwargs = {}
         specIndices = []
 
         for subelem in elem:
-            key = subelem.tag.lower()
+            cls._mapArgs(subelem, args, kwargs, specIndices)
 
-            if key in kwargs:
-                msg = "{} contains multiple {}"
-                raise ValueError(msg.format(SubClass.__name__, key))
-
-            # If child contains text data, it's an Element; return text data.
-            # Otherwise it's an Aggregate - perform type conversion
-            if key in SubClass.unsupported:
-                value = None
-            elif subelem.text:
-                value = subelem.text
-            else:
-                value = Aggregate.from_etree(subelem)
-
-            try:
-                idx = spec.index(key)
-                specIndices.append((idx, spec[idx]))
-                if key in listitems:
-                    args.append(value)
-                else:
-                    kwargs[key] = value
-            except ValueError:
-                msg = "{} is not in {}".format(key, spec)  # FIXME
-                raise ValueError(msg)
-
-        # Verify that SubElements appear in the order defined by self.spec
+        listitems = cls.listitems
+        # Verify that SubElements appear in the order defined by SubClass.spec
         for (idx0, attr0), (idx1, attr1) in pairwise(specIndices):
             # Relative order of ListItems doesn't matter, but position of
             # ListItems relative to non-ListItems (and that of non-ListItems
             # relative to other non-ListItems) does matter.
             if idx1 <= idx0 and (attr0 not in listitems or attr1 not in listitems):
                 msg = "{} SubElements out of order: {}"
-                raise ValueError(msg.format(SubClass.__name__, [el.tag for el in elem]))
+                raise ValueError(msg.format(cls.__name__, [el.tag for el in elem]))
+        return cls(*args, **kwargs)
 
-        instance = SubClass(*args, **kwargs)
-        return instance
+    @classmethod
+    def _mapArgs(cls, elem, args, kwargs, specIndices):
+        spec = list(cls.spec)
+
+        key = elem.tag.lower()
+        try:
+            idx = spec.index(key)
+        except ValueError:
+            msg = "{}.spec = {}; does not contain {}"
+            raise ValueError(msg.format(cls.__name__, spec, key))
+
+        # If child contains text data, it's an Element; return text data.
+        # Otherwise it's an Aggregate - perform type conversion
+        if key in cls.unsupported:
+            value = None
+        elif elem.text:
+            value = elem.text
+        else:
+            value = Aggregate.from_etree(elem)
+
+        if key in cls.listitems:
+            args.append(value)
+        else:
+            kwargs[key] = value
+
+        specIndices.append((idx, spec[idx]))
 
     @staticmethod
     def groom(elem):
@@ -197,27 +203,6 @@ class Aggregate(list):
         to keep the input free of side effects!
         """
         return elem
-
-    #  def to_etree(self):
-        #  """
-        #  Convert self and children to `ElementTree.Element` hierarchy
-        #  """
-        #  cls = self.__class__
-        #  root = ET.Element(cls.__name__)
-        #  for spec in self.spec:
-            #  value = getattr(self, spec)
-            #  if value is None:
-                #  continue
-            #  elif isinstance(value, Aggregate):
-                #  child = value.to_etree()
-                #  #  child = value.ungroom(child)
-                #  root.append(child)
-            #  else:
-                #  converter = cls._superdict[spec]
-                #  text = converter.unconvert(value)
-                #  ET.SubElement(root, spec.upper()).text = text
-        #  # Hook to modify `ET.ElementTree` after conversion
-        #  return cls.ungroom(root)
 
     def to_etree(self):
         """
@@ -241,12 +226,16 @@ class Aggregate(list):
                 text = converter.unconvert(value)
                 ET.SubElement(root, spec.upper()).text = text
 
+        # FIXME - ordering!
+        #
         # Append list items
         for member in self:
-            root.append(member.to_etree())
-        #  return root
+            self._listAppend(root, member)
         # Hook to modify `ET.ElementTree` after conversion
         return cls.ungroom(root)
+
+    def _listAppend(self, root, member):
+        root.append(member.to_etree())
 
     @classproperty
     @classmethod
@@ -420,3 +409,31 @@ class Unsupported(InstanceCounterMixin):
 
     def __repr__(self):
         return "<Unsupported>"
+
+
+class ElementList(Aggregate):
+    """
+    Aggregate whose sequence contents are ListElements instead of ListItems
+    """
+    @classproperty
+    @classmethod
+    def listitems(cls):
+        """
+        ElementList.listitems returns ListElemeents instead of ListItems
+        """
+        return cls._ordered_attrs(lambda v: isinstance(v, ListElement))
+
+    def _apply_args(self, *args):
+        # Interpret positional args as contained list items (of variable #)
+        assert len(self.listitems) == 1
+        converter = list(self.listitems.values())[0]
+        for member in args:
+            self.append(converter.convert(member))
+
+    def _listAppend(self, root, member):
+        assert len(self.listitems) == 1
+        spec = list(self.listitems.items())[0]
+        attr, converter = spec
+
+        text = converter.unconvert(member)
+        ET.SubElement(root, attr.upper()).text = text
