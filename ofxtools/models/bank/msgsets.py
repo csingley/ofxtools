@@ -3,8 +3,8 @@
 Banking message sets
 """
 # local imports
-from ofxtools.Types import Bool, OneOf, Integer, Decimal, Time, ListItem
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
+from ofxtools.Types import Bool, OneOf, Integer, Decimal, Time, ListItem, ListElement
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, ElementList
 from ofxtools.models.common import MSGSETCORE
 from ofxtools.models.bank.stmt import (
     ACCTTYPES, STMTTRNRQ, STMTTRNRS, CCSTMTTRNRQ, CCSTMTTRNRS,
@@ -59,6 +59,9 @@ __all__ = [
 ]
 
 
+DAYS = ("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY")
+
+
 class BANKMSGSRQV1(Aggregate):
     """ OFX section 11.13.1.1.1 """
 
@@ -99,13 +102,10 @@ class BANKMSGSRSV1(Aggregate):
         return stmts
 
 
-class XFERPROF(Aggregate):
+class XFERPROF(ElementList):
     """ OFX section 11.13.2.2 """
 
-    # FIXME
-    # Need to define an Aggregate subclass that support multiple repeated
-    # Elements (not just SubAggregates, like List) for PROCDAYSOFF.
-    procdaysoff = Unsupported()
+    procdaysoff = ListElement(OneOf(*DAYS))
     procendtm = Time(required=True)
     cansched = Bool(required=True)
     canrecur = Bool(required=True)
@@ -116,13 +116,10 @@ class XFERPROF(Aggregate):
     dfltdaystopay = Integer(3, required=True)
 
 
-class STPCHKPROF(Aggregate):
+class STPCHKPROF(ElementList):
     """ OFX section 11.13.2.3 """
 
-    # FIXME
-    # Need to define an Aggregate subclass that support multiple repeated
-    # Elements (not just SubAggregates, like List) for PROCDAYSOFF.
-    procdaysoff = Unsupported()
+    procdaysoff = ListElement(OneOf(*DAYS))
     procendtm = Time(required=True)
     canuserange = Bool(required=True)
     canusedesc = Bool(required=True)
@@ -236,14 +233,11 @@ class WIREXFERMSGSRSV1(Aggregate):
     wiresyncrs = ListItem(WIRESYNCRS)
 
 
-class WIREXFERMSGSETV1(Aggregate):
+class WIREXFERMSGSETV1(ElementList):
     """ OFX section 11.13.5 """
 
     msgsetcore = SubAggregate(MSGSETCORE, required=True)
-    # FIXME
-    # Need to define an Aggregate subclass that support multiple repeated
-    # Elements (not just SubAggregates, like List) for PROCDAYSOFF.
-    procdaysoff = Unsupported()
+    procdaysoff = ListElement(OneOf(*DAYS))
     procendtm = Time(required=True)
     cansched = Bool(required=True)
     domxferfee = Decimal(required=True)

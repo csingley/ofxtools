@@ -2,8 +2,8 @@
 """
 Payee lists - OFX Section 12.9
 """
-from ofxtools.Types import String, ListItem
-from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.Types import String, ListItem, ListElement
+from ofxtools.models.base import Aggregate, SubAggregate, ElementList
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
 from ofxtools.models.bank.stmt import PAYEE, BANKACCTTO
 from ofxtools.models.billpay import (
@@ -27,51 +27,39 @@ __all__ = [
 ]
 
 
-class PAYEERQ(Aggregate):
+class PAYEERQ(ElementList):
     """ OFX Section 12.9.1.1 """
     payeeid = String(12)
     payee = SubAggregate(PAYEE)
     bankacctto = SubAggregate(BANKACCTTO)
-    # FIXME - "O or more"
-    # Need to define an Aggregate subclass that support multiple repeated
-    # Elements (not just SubAggregates, like List) for PAYACCT.
-    payacct = String(32)
+    payacct = ListElement(String(32))
 
     requiredMutexes = [("payeeid", "payee")]
 
 
-class PAYEERS(Aggregate):
+class PAYEERS(ElementList):
     """ OFX Section 12.9.1.2 """
     payeelstid = String(12, required=True)
     payee = SubAggregate(PAYEE)
     bankacctto = SubAggregate(BANKACCTTO)
     extdpayee = SubAggregate(EXTDPAYEE)
-    # FIXME - "O or more"
-    # Need to define an Aggregate subclass that support multiple repeated
-    # Elements (not just SubAggregates, like List) for PAYACCT.
-    payacct = String(32)
+    payacct = ListElement(String(32))
 
 
-class PAYEEMODRQ(Aggregate):
+class PAYEEMODRQ(ElementList):
     """ OFX Section 12.9.2.1 """
     payeelstid = String(12, required=True)
     payee = SubAggregate(PAYEE)
     bankacctto = SubAggregate(BANKACCTTO)
-    # FIXME - "O or more"
-    # Need to define an Aggregate subclass that support multiple repeated
-    # Elements (not just SubAggregates, like List) for PAYACCT.
-    payacct = String(32)
+    payacct = ListElement(String(32))
 
 
-class PAYEEMODRS(Aggregate):
+class PAYEEMODRS(ElementList):
     """ OFX Section 12.9.2.2 """
     payeelstid = String(12, required=True)
     payee = SubAggregate(PAYEE)
     bankacctto = SubAggregate(BANKACCTTO)
-    # FIXME - "O or more"
-    # Need to define an Aggregate subclass that support multiple repeated
-    # Elements (not just SubAggregates, like List) for PAYACCT.
-    payacct = String(32)
+    payacct = ListElement(String(32))
     extdpayee = SubAggregate(EXTDPAYEE)
 
 

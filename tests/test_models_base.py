@@ -9,8 +9,8 @@ from datetime import datetime
 
 # local imports
 from ofxtools import models
-from ofxtools.Types import String, DateTime, Bool, ListItem
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
+from ofxtools.Types import String, DateTime, Bool, ListItem, ListElement
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, ElementList
 from ofxtools.utils import UTC
 
 
@@ -43,6 +43,11 @@ class TESTLIST(Aggregate):
     metadata = String(32)
     testaggregate = ListItem(TESTAGGREGATE)
     testaggregate2 = ListItem(TESTAGGREGATE2)
+
+
+class TESTELEMENTLIST(ElementList):
+    metadata = String(32)
+    tag = ListElement(Bool())
 
 
 class AggregateTestCase(unittest.TestCase):
@@ -686,6 +691,104 @@ class ListTestCase(unittest.TestCase):
     def testRepr(self):
         rep = repr(self.instance)
         self.assertEqual(rep, "<TESTLIST(metadata='foo'), len=3>")
+
+
+class ElementListTestCase(unittest.TestCase):
+    __test__ = True
+
+    @classmethod
+    def setUpClass(cls):
+        # monkey-patch ofxtools.models so Aggregate.from_etree() picks up
+        # our fake OFX aggregates/elements
+        models.TESTELEMENTLIST = TESTELEMENTLIST
+
+    @classmethod
+    def tearDownClass(cls):
+        # Remove monkey patch
+        del models.TESTELEMENTLIST
+
+    @property
+    def root(self):
+        root = ET.Element("TESTELEMENTLIST")
+        ET.SubElement(root, "METADATA").text = "something"
+        ET.SubElement(root, "TAG").text = "N"
+        ET.SubElement(root, "TAG").text = "Y"
+        return root
+
+    @property
+    def instance(self):
+        return TESTELEMENTLIST(False, True, metadata="something")
+
+    def testInit(self):
+        # Single element
+        lst = TESTELEMENTLIST(True, metadata="something")
+        self.assertEqual(lst.metadata, "something")
+        self.assertEqual(len(lst), 1)
+        self.assertEqual(lst[0], True)
+
+        # Multiple elements
+        lst = TESTELEMENTLIST(False, True, metadata="something")
+        self.assertEqual(lst.metadata, "something")
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst[0], False)
+        self.assertEqual(lst[1], True)
+
+        # Validators apply
+        with self.assertRaises(ValueError):
+            TESTELEMENTLIST("123", metadata="something")
+
+        # Only one ListElement may be defined on the class
+        class BADELEMENTLIST(ElementList):
+            metadata = String(32)
+            tag = ListElement(Bool)
+            tag2 = ListElement(Bool)
+
+        with self.assertRaises(AssertionError):
+            BADELEMENTLIST(True, metadata="something")
+
+    def testFromEtree(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, TESTELEMENTLIST)
+        self.assertEqual(instance.metadata, "something")
+        self.assertEqual(len(instance), 2)
+        self.assertEqual(instance[0], False)
+        self.assertEqual(instance[1], True)
+
+        # Out of order - invalid
+        root = ET.Element("TESTELEMENTLIST")
+        ET.SubElement(root, "TAG").text = "N"
+        ET.SubElement(root, "TAG").text = "Y"
+        ET.SubElement(root, "METADATA").text = "something"
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+        root = ET.Element("TESTELEMENTLIST")
+        ET.SubElement(root, "TAG").text = "N"
+        ET.SubElement(root, "METADATA").text = "something"
+        ET.SubElement(root, "TAG").text = "Y"
+
+        with self.assertRaises(ValueError):
+            Aggregate.from_etree(root)
+
+    def testToEtree(self):
+        root = self.instance.to_etree()
+        self.assertIsInstance(root, ET.Element)
+        self.assertEqual(len(root), 3)
+        metadata, tag0, tag1 = root[:]
+
+        self.assertIsInstance(metadata, ET.Element)
+        self.assertEqual(metadata.tag, "METADATA")
+        self.assertEqual(metadata.text, "something")
+
+        self.assertIsInstance(tag0, ET.Element)
+        self.assertEqual(tag0.tag, "TAG")
+        self.assertEqual(tag0.text, "N")
+
+        self.assertIsInstance(tag1, ET.Element)
+        self.assertEqual(tag1.tag, "TAG")
+        self.assertEqual(tag1.text, "Y")
+
 
 
 if __name__ == "__main__":

@@ -3,8 +3,8 @@
 Bill pay message sets
 """
 # local imports
-from ofxtools.Types import Bool, Integer, Time, ListItem
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
+from ofxtools.Types import Bool, Integer, Time, OneOf, ListItem, ListElement
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, ElementList
 from ofxtools.models.common import MSGSETCORE
 from ofxtools.models.billpay.pmt import (
     PMTTRNRQ,
@@ -31,6 +31,9 @@ from ofxtools.models.billpay.mail import (
 __all__ = [
     "BILLPAYMSGSRQV1", "BILLPAYMSGSRSV1", "BILLPAYMSGSETV1", "BILLPAYMSGSET",
 ]
+
+
+DAYS = ("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY")
 
 
 class BILLPAYMSGSRQV1(Aggregate):
@@ -63,7 +66,7 @@ class BILLPAYMSGSRSV1(Aggregate):
     #  pmtmailsyncrs = ListItem(PMTMAILSYNCRS)
 
 
-class BILLPAYMSGSETV1(Aggregate):
+class BILLPAYMSGSETV1(ElementList):
     """ OFX section 12.11.2 """
 
     msgsetcore = SubAggregate(MSGSETCORE, required=True)
@@ -71,10 +74,7 @@ class BILLPAYMSGSETV1(Aggregate):
     dfltdaystopay = Integer(3, required=True)
     xferdayswith = Integer(3, required=True)
     xferdfltdaystopay = Integer(3, required=True)
-    # FIXME
-    # Need to define an Aggregate subclass that support multiple repeated
-    # Elements (not just SubAggregates, like List) for PROCDAYSOFF.
-    procdaysoff = Unsupported()
+    procdaysoff = ListElement(OneOf(*DAYS))
     procendtm = Time(required=True)
     modelwnd = Integer(3, required=True)
     postprocwnd = Integer(3, required=True)

@@ -20,6 +20,7 @@ from ofxtools.models.billpay.common import (
     EXTDPAYEE,
 )
 from ofxtools.models.billpay.list import (
+    PAYEERQ,
     PAYEERS,
     PAYEEMODRQ,
     PAYEEMODRS,
@@ -57,11 +58,10 @@ class PayeerqTestCase(unittest.TestCase, base.TestAggregate):
             root = Element("PAYEERQ")
             root.append(choice)
             root.append(bankacctto)
-            root.append(payacct)
             yield root
-
-        # FIXME
-        # Multiple PAYACCT is valid
+            for i in range(2):
+                root.append(payacct)
+                yield root
 
     @classproperty
     @classmethod
@@ -89,7 +89,17 @@ class PayeerqTestCase(unittest.TestCase, base.TestAggregate):
 
     @property
     def root(self):
-        return next(self.validSoup)
+        #  return next(self.validSoup)
+        return list(self.validSoup)[-1]
+
+    def testConvert(self):
+        instance = Aggregate.from_etree(self.root)
+        self.assertIsInstance(instance, PAYEERQ)
+        self.assertEqual(instance.payacct, None)
+        self.assertEqual(len(instance), 2)
+        payacct0, payacct1 = instance[:]
+        self.assertEqual(payacct0, "123")
+        self.assertEqual(payacct1, "123")
 
     def testValidSoup(self):
         for root in self.validSoup:
@@ -107,18 +117,37 @@ class PayeersTestCase(unittest.TestCase, base.TestAggregate):
     requiredElements = ["PAYEELSTID"]
     optionalElements = ["PAYEE", "BANKACCTTO", "EXTDPAYEE", "PAYACCT"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def validSoup(cls):
         root = Element("PAYEERS")
         SubElement(root, "PAYEELSTID").text = "B16B00B5"
         root.append(PayeeTestCase().root)
         root.append(BankaccttoTestCase().root)
         root.append(ExtdpayeeTestCase().root)
-        SubElement(root, "PAYACCT").text = "12345"
-        return root
+        yield root
+        for i in range(2):
+            SubElement(root, "PAYACCT").text = "12345"
+            yield root
 
+    @classproperty
+    @classmethod
+    def invalidSoup(cls):
         # FIXME
-        # Multiple PAYACCT is valid
+        yield from ()
+
+    def testValidSoup(self):
+        for root in self.validSoup:
+            Aggregate.from_etree(root)
+
+    def testInvalidSoup(self):
+        for root in self.invalidSoup:
+            with self.assertRaises(ValueError):
+                Aggregate.from_etree(root)
+
+    @property
+    def root(self):
+        return list(self.validSoup)[-1]
 
     def testConvert(self):
         instance = Aggregate.from_etree(self.root)
@@ -127,7 +156,9 @@ class PayeersTestCase(unittest.TestCase, base.TestAggregate):
         self.assertIsInstance(instance.payee, PAYEE)
         self.assertIsInstance(instance.bankacctto, BANKACCTTO)
         self.assertIsInstance(instance.extdpayee, EXTDPAYEE)
-        self.assertEqual(instance.payacct, "12345")
+        self.assertEqual(len(instance), 2)
+        self.assertEqual(instance[0], "12345")
+        self.assertEqual(instance[1], "12345")
 
 
 class PayeemodrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -136,17 +167,27 @@ class PayeemodrqTestCase(unittest.TestCase, base.TestAggregate):
     requiredElements = ["PAYEELSTID"]
     optionalElements = ["PAYEE", "BANKACCTTO", "PAYACCT"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def validSoup(cls):
         root = Element("PAYEEMODRQ")
         SubElement(root, "PAYEELSTID").text = "DEADBEEF"
         root.append(PayeeTestCase().root)
         root.append(BankaccttoTestCase().root)
-        SubElement(root, "PAYACCT").text = "12345"
-        return root
+        yield root
+        for i in range(2):
+            SubElement(root, "PAYACCT").text = "12345"
+            yield root
 
+    @classproperty
+    @classmethod
+    def invalidSoup(cls):
         # FIXME
-        # Multiple PAYACCT is valid
+        yield from ()
+
+    @property
+    def root(self):
+        return list(self.validSoup)[-1]
 
     def testConvert(self):
         instance = Aggregate.from_etree(self.root)
@@ -154,7 +195,18 @@ class PayeemodrqTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(instance.payeelstid, "DEADBEEF")
         self.assertIsInstance(instance.payee, PAYEE)
         self.assertIsInstance(instance.bankacctto, BANKACCTTO)
-        self.assertEqual(instance.payacct, "12345")
+        self.assertEqual(len(instance), 2)
+        self.assertEqual(instance[0], "12345")
+        self.assertEqual(instance[1], "12345")
+
+    def testValidSoup(self):
+        for root in self.validSoup:
+            Aggregate.from_etree(root)
+
+    def testInvalidSoup(self):
+        for root in self.invalidSoup:
+            with self.assertRaises(ValueError):
+                Aggregate.from_etree(root)
 
 
 class PayeemodrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -163,17 +215,37 @@ class PayeemodrsTestCase(unittest.TestCase, base.TestAggregate):
     requiredElements = ["PAYEELSTID"]
     optionalElements = ["PAYEE", "BANKACCTTO", "PAYACCT", "EXTDPAYEE"]
 
+    @classproperty
+    @classmethod
+    def validSoup(cls):
+        for i in range(3):
+            root = Element("PAYEEMODRS")
+            SubElement(root, "PAYEELSTID").text = "DEADBEEF"
+            root.append(PayeeTestCase().root)
+            root.append(BankaccttoTestCase().root)
+            for n in range(i):
+                SubElement(root, "PAYACCT").text = "12345"
+            root.append(ExtdpayeeTestCase().root)
+            yield root
+
+    @classproperty
+    @classmethod
+    def invalidSoup(cls):
+        # FIXME
+        yield from ()
+
+    def testValidSoup(self):
+        for root in self.validSoup:
+            Aggregate.from_etree(root)
+
+    def testInvalidSoup(self):
+        for root in self.invalidSoup:
+            with self.assertRaises(ValueError):
+                Aggregate.from_etree(root)
+
     @property
     def root(self):
-        root = Element("PAYEEMODRS")
-        SubElement(root, "PAYEELSTID").text = "DEADBEEF"
-        root.append(PayeeTestCase().root)
-        root.append(BankaccttoTestCase().root)
-        # FIXME
-        # Multiple PAYACCT is valid
-        SubElement(root, "PAYACCT").text = "12345"
-        root.append(ExtdpayeeTestCase().root)
-        return root
+        return list(self.validSoup)[-1]
 
     def testConvert(self):
         instance = Aggregate.from_etree(self.root)
@@ -181,7 +253,9 @@ class PayeemodrsTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(instance.payeelstid, "DEADBEEF")
         self.assertIsInstance(instance.payee, PAYEE)
         self.assertIsInstance(instance.bankacctto, BANKACCTTO)
-        self.assertEqual(instance.payacct, "12345")
+        self.assertEqual(len(instance), 2)
+        self.assertEqual(instance[0], "12345")
+        self.assertEqual(instance[1], "12345")
 
 
 class PayeedelrqTestCase(unittest.TestCase, base.TestAggregate):
