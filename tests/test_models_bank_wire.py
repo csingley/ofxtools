@@ -10,7 +10,7 @@ from decimal import Decimal
 
 
 # local imports
-from ofxtools.models.base import Aggregate, classproperty
+from ofxtools.models.base import Aggregate
 from ofxtools.models.bank.stmt import BANKACCTFROM
 from ofxtools.models.bank.wire import (
     EXTBANKDESC,
@@ -24,7 +24,7 @@ from ofxtools.models.bank.wire import (
     WIRETRNRS,
 )
 from ofxtools.models.i18n import COUNTRY_CODES
-from ofxtools.utils import UTC
+from ofxtools.utils import UTC, classproperty
 
 
 # test imports

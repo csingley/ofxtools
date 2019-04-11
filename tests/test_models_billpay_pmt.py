@@ -11,7 +11,7 @@ import itertools
 
 # local imports
 from ofxtools.Types import DateTime
-from ofxtools.models.base import Aggregate, classproperty
+from ofxtools.models.base import Aggregate
 from ofxtools.models.wrapperbases import TranList
 from ofxtools.models.billpay.common import (
     PMTINFO,
@@ -29,7 +29,7 @@ from ofxtools.models.billpay.pmt import (
     PMTINQRS,
 )
 from ofxtools.models.i18n import CURRENCY_CODES
-from ofxtools.utils import UTC
+from ofxtools.utils import UTC, classproperty
 
 
 # test imports

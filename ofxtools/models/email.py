@@ -6,8 +6,8 @@ email - OFX Section 9
 from copy import deepcopy
 
 # local imports
-from ofxtools.Types import Bool, String, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate, ListItem, List
+from ofxtools.Types import Bool, String, DateTime, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
 from ofxtools.models.common import MSGSETCORE
 
@@ -133,7 +133,7 @@ class GETMIMETRNRS(TrnRs):
     getmimers = SubAggregate(GETMIMERS)
 
 
-class EMAILMSGSRQV1(List):
+class EMAILMSGSRQV1(Aggregate):
     """ OFX section 9.4.1.1 """
 
     mailtrnrq = ListItem(MAILTRNRQ)
@@ -141,7 +141,7 @@ class EMAILMSGSRQV1(List):
     mailsyncrq = ListItem(MAILSYNCRQ)
 
 
-class EMAILMSGSRSV1(List):
+class EMAILMSGSRSV1(Aggregate):
     """ OFX section 9.4.1.2 """
 
     mailtrnrs = ListItem(MAILTRNRS)

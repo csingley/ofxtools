@@ -3,8 +3,8 @@
 Bank statement download - OFX Section 11.4
 """
 # local imports
-from ofxtools.Types import Bool, String, NagString, OneOf, Integer, Decimal, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, ListItem, List
+from ofxtools.Types import Bool, String, NagString, OneOf, Integer, Decimal, DateTime, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
 from ofxtools.models.common import SVCSTATUSES, BAL
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, TranList
 from ofxtools.models.i18n import (
@@ -215,7 +215,7 @@ class AVAILBAL(Aggregate):
     dtasof = DateTime(required=True)
 
 
-class BALLIST(List):
+class BALLIST(Aggregate):
     """ OFX section 11.4.2.2 & 13.9.2.7 """
 
     bal = ListItem(BAL)

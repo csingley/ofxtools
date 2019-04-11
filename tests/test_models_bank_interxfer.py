@@ -11,7 +11,7 @@ import itertools
 
 # local imports
 import base
-from ofxtools.models.base import Aggregate, classproperty
+from ofxtools.models.base import Aggregate
 from ofxtools.models.bank.interxfer import (
     XFERINFO,
     XFERPRCSTS,
@@ -25,6 +25,7 @@ from ofxtools.models.bank.interxfer import (
     INTERTRNRS,
 )
 from ofxtools.models.i18n import CURRENCY_CODES
+from ofxtools.utils import classproperty
 
 
 # test imports

@@ -3,8 +3,8 @@
 Bank stop check - OFX Section 11.6
 """
 # local imports
-from ofxtools.Types import String, Decimal, OneOf, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate, ListItem, List
+from ofxtools.Types import String, Decimal, OneOf, DateTime, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.bank.stmt import BANKACCTFROM
 from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, Origcurrency, CURRENCY_CODES
@@ -62,7 +62,7 @@ class STPCHKNUM(Aggregate, Origcurrency):
     optionalMutexes = [("currency", "origcurrency")]
 
 
-class STPCHKRS(List):
+class STPCHKRS(Aggregate):
     """ OFX section 11.6.1.1 """
 
     curdef = OneOf(*CURRENCY_CODES, required=True)

@@ -11,10 +11,10 @@ from copy import deepcopy
 
 
 # local imports
-from ofxtools.models.base import Aggregate, classproperty
+from ofxtools.models.base import Aggregate
 from ofxtools.models.bank.stmt import BANKACCTFROM
 from ofxtools.models.bank.stpchk import CHKRANGE, CHKDESC, STPCHKNUM, STPCHKRS
-from ofxtools.utils import UTC
+from ofxtools.utils import UTC, classproperty
 
 
 # test imports

@@ -2,8 +2,8 @@
 """
 Investments - OFX Section 13
 """
-from ofxtools.Types import Bool, String, OneOf, Integer, Decimal, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate, ListItem
+from ofxtools.Types import Bool, String, OneOf, Integer, Decimal, DateTime, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TranList
 from ofxtools.models.invest.acct import INVSUBACCTS, INVACCTFROM
 from ofxtools.models.invest.securities import SECID

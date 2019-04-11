@@ -3,8 +3,8 @@
 Data synchronization for banking - OFX Section 11.12
 """
 # local imports
-from ofxtools.Types import Bool
-from ofxtools.models.base import SubAggregate, ListItem
+from ofxtools.Types import Bool, ListItem
+from ofxtools.models.base import SubAggregate
 from ofxtools.models.wrapperbases import SyncRqList, SyncRsList
 from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM
 from ofxtools.models.bank.xfer import INTRATRNRQ, INTRATRNRS

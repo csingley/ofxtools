@@ -3,8 +3,8 @@
 Bill pay message sets
 """
 # local imports
-from ofxtools.Types import Bool, Integer, Time
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, ListItem, List
+from ofxtools.Types import Bool, Integer, Time, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
 from ofxtools.models.common import MSGSETCORE
 from ofxtools.models.billpay.pmt import (
     PMTTRNRQ,
@@ -33,7 +33,7 @@ __all__ = [
 ]
 
 
-class BILLPAYMSGSRQV1(List):
+class BILLPAYMSGSRQV1(Aggregate):
     """ OFX section 12.11.1.1 """
 
     pmttrnrq = ListItem(PMTTRNRQ)
@@ -48,7 +48,7 @@ class BILLPAYMSGSRQV1(List):
     #  pmtmailsyncrq = ListItem(PMTMAILSYNCRQ)
 
 
-class BILLPAYMSGSRSV1(List):
+class BILLPAYMSGSRSV1(Aggregate):
     """ OFX section 12.11.1.2 """
 
     pmttrnrs = ListItem(PMTTRNRS)

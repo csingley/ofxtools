@@ -2,8 +2,8 @@
 """
 Investments - OFX Section 13
 """
-from ofxtools.Types import Bool, String, OneOf, Decimal, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate, ListItem, List
+from ofxtools.Types import Bool, String, OneOf, Decimal, DateTime, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.invest.acct import INVSUBACCTS
 from ofxtools.models.invest.transactions import (
     BUYTYPES, SELLTYPES, OPTBUYTYPES, OPTSELLTYPES
@@ -127,7 +127,7 @@ class SWITCHMF(Aggregate):
     switchall = Bool(required=True)
 
 
-class INVOOLIST(List):
+class INVOOLIST(Aggregate):
     """ OFX section 13.9.2.2 """
 
     oobuydebt = ListItem(OOBUYDEBT)

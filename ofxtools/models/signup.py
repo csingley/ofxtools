@@ -7,8 +7,8 @@ import operator
 import itertools
 
 # local imports
-from ofxtools.Types import Bool, String, OneOf, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate, ListItem, List
+from ofxtools.Types import Bool, String, OneOf, DateTime, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
 from ofxtools.models.common import SVCSTATUSES, MSGSETCORE
 from ofxtools.models.i18n import COUNTRY_CODES
@@ -109,7 +109,7 @@ class ENROLLTRNRS(TrnRs):
     enrollrs = SubAggregate(ENROLLRS)
 
 
-class ACCTINFO(List):
+class ACCTINFO(Aggregate):
     """
     OFX section 8.5.3
 
@@ -168,7 +168,7 @@ class ACCTINFORQ(Aggregate):
     dtacctup = DateTime(required=True)
 
 
-class ACCTINFORS(List):
+class ACCTINFORS(Aggregate):
     """ OFX section 8.5.2 """
 
     dtacctup = DateTime(required=True)
@@ -336,7 +336,7 @@ class CHGUSERINFOSYNCRS(SyncRsList):
     chguserinfotrnrs = ListItem(CHGUSERINFOTRNRS)
 
 
-class SIGNUPMSGSRQV1(List):
+class SIGNUPMSGSRQV1(Aggregate):
     """ OFX section 8.1 """
 
     enrolltrnrq = ListItem(ENROLLTRNRQ)
@@ -345,7 +345,7 @@ class SIGNUPMSGSRQV1(List):
     chguserinfotrnrq = ListItem(CHGUSERINFOTRNRQ)
 
 
-class SIGNUPMSGSRSV1(List):
+class SIGNUPMSGSRSV1(Aggregate):
     """ OFX section 8.1 """
 
     enrolltrnrs = ListItem(ENROLLTRNRS)

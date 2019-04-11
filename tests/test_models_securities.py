@@ -10,8 +10,7 @@ from copy import deepcopy
 
 
 # local imports
-from ofxtools.utils import UTC
-from ofxtools.models.base import Aggregate, classproperty
+from ofxtools.models.base import Aggregate
 from ofxtools.models.invest.securities import (
     SECID,
     SECINFO,
@@ -30,6 +29,7 @@ from ofxtools.models.invest.securities import (
     SECLISTRQ,
     SECLISTRS,
 )
+from ofxtools.utils import UTC, classproperty
 
 
 # test imports

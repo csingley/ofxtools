@@ -1201,18 +1201,24 @@ class Origcurrency:
 
     @property
     def curtype(self):
-        cur = self.currency or self.origcurrency
-        if cur:
-            return (cur).__class__.__name__
+        cur = self.currency
+        if cur is None:
+            cur = self.origcurrency
+        if cur is not None:
+            return cur.__class__.__name__
 
     @property
     def cursym(self):
-        cur = self.currency or self.origcurrency
-        if cur:
+        cur = self.currency
+        if cur is None:
+            cur = self.origcurrency
+        if cur is not None:
             return cur.cursym
 
     @property
     def currate(self):
-        cur = self.currency or self.origcurrency
-        if cur:
+        cur = self.currency
+        if cur is None:
+            cur = self.origcurrency
+        if cur is not None:
             return cur.currate

@@ -4,8 +4,8 @@ Common payments aggregates - OFX Section 12.5
 
 PAYEE is defined in ``ofxtools.models.bank.stmt`` to avoid circular imports.
 """
-from ofxtools.Types import String, OneOf, Integer, Decimal, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate, ListItem, List
+from ofxtools.Types import String, OneOf, Integer, Decimal, DateTime, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.common import SVCSTATUSES
 from ofxtools.models.bank.stmt import BANKACCTFROM, BANKACCTTO, PAYEE
 
@@ -62,7 +62,7 @@ class LINEITEM(Aggregate):
     litmdesc = String(80, required=True)
 
 
-class INVOICE(List):
+class INVOICE(Aggregate):
     """ OFX Section 12.5.2.3 """
     invno = String(32, required=True)
     invtotalamt = Decimal(required=True)
@@ -74,12 +74,12 @@ class INVOICE(List):
     lineitem = ListItem(LINEITEM)
 
 
-class EXTDPMTINV(List):
+class EXTDPMTINV(Aggregate):
     """ OFX Section 12.5.2.2 """
     invoice = ListItem(INVOICE)
 
 
-class EXTDPMT(List):
+class EXTDPMT(Aggregate):
     """ OFX Section 12.5.2.2 """
     extdpmtfor = OneOf("INDIVIDUAL", "BUSINESS")
     extdpmtchk = Integer(10)
@@ -97,7 +97,7 @@ class EXTDPMT(List):
         super().validate_args(*args, **kwargs)
 
 
-class PMTINFO(List):
+class PMTINFO(Aggregate):
     """ OFX Section 12.5.2 """
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     trnamt = Decimal(required=True)

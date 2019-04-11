@@ -3,8 +3,8 @@
 Bill pay message sets
 """
 # local imports
-from ofxtools.Types import Bool
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, ListItem, List
+from ofxtools.Types import Bool, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
 from ofxtools.models.common import MSGSETCORE
 from ofxtools.models.invest.stmt import (
     INVSTMTTRNRQ,
@@ -29,7 +29,7 @@ __all__ = [
 ]
 
 
-class INVSTMTMSGSRQV1(List):
+class INVSTMTMSGSRQV1(Aggregate):
     """ OFX section 13.7.1.2.1 """
 
     invstmttrnrq = ListItem(INVSTMTTRNRQ)
@@ -37,7 +37,7 @@ class INVSTMTMSGSRQV1(List):
     invmailsyncrq = ListItem(INVMAILSYNCRQ)
 
 
-class INVSTMTMSGSRSV1(List):
+class INVSTMTMSGSRSV1(Aggregate):
     """ OFX section 13.7.1.2.2 """
 
     invstmttrnrs = ListItem(INVSTMTTRNRS)
@@ -75,13 +75,13 @@ class INVSTMTMSGSET(Aggregate):
     invstmtmsgsetv1 = SubAggregate(INVSTMTMSGSETV1, required=True)
 
 
-class SECLISTMSGSRQV1(List):
+class SECLISTMSGSRQV1(Aggregate):
     """ OFX section 13.7.2.2.1 """
 
     seclisttrnrq = ListItem(SECLISTTRNRQ)
 
 
-class SECLISTMSGSRSV1(List):
+class SECLISTMSGSRSV1(Aggregate):
     """ OFX section 13.7.2.2.2 """
 
     # N.B. this part of the spec is unusual in that SECLIST is a direct

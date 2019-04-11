@@ -2,8 +2,8 @@
 """
 Payee lists - OFX Section 12.9
 """
-from ofxtools.Types import String
-from ofxtools.models.base import Aggregate, SubAggregate, ListItem
+from ofxtools.Types import String, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
 from ofxtools.models.bank.stmt import PAYEE, BANKACCTTO
 from ofxtools.models.billpay import (

@@ -9,8 +9,8 @@ from datetime import datetime
 
 # local imports
 from ofxtools import models
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, ListItem, List
-from ofxtools.Types import String, DateTime, Bool
+from ofxtools.Types import String, DateTime, Bool, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
 from ofxtools.utils import UTC
 
 
@@ -39,7 +39,7 @@ class TESTAGGREGATE2(Aggregate):
     metadata = String(32, required=True)
 
 
-class TESTLIST(List):
+class TESTLIST(Aggregate):
     metadata = String(32)
     testaggregate = ListItem(TESTAGGREGATE)
     testaggregate2 = ListItem(TESTAGGREGATE2)
@@ -685,7 +685,7 @@ class ListTestCase(unittest.TestCase):
 
     def testRepr(self):
         rep = repr(self.instance)
-        self.assertEqual(rep, "<TESTLIST len=3>")
+        self.assertEqual(rep, "<TESTLIST(metadata='foo'), len=3>")
 
 
 if __name__ == "__main__":

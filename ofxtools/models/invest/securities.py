@@ -7,8 +7,8 @@ from copy import deepcopy
 
 
 # local imports
-from ofxtools.Types import String, NagString, OneOf, Integer, Decimal, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate, ListItem, List
+from ofxtools.Types import String, NagString, OneOf, Integer, Decimal, DateTime, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.i18n import CURRENCY
 
@@ -62,7 +62,7 @@ class SECRQ(Aggregate):
     requiredMutexes = [("secid", "ticker", "fiid")]
 
 
-class SECLISTRQ(List):
+class SECLISTRQ(Aggregate):
     """ OFX section 13.8.2.2 """
     secrq = ListItem(SECRQ)
 
@@ -110,7 +110,7 @@ class PORTION(Aggregate):
     percent = Decimal(required=True)
 
 
-class MFASSETCLASS(List):  # pylint: disable=too-many-ancestors
+class MFASSETCLASS(Aggregate):  # pylint: disable=too-many-ancestors
     """ OFX section 13.8.5.3 """
     portion = ListItem(PORTION)
 
@@ -122,7 +122,7 @@ class FIPORTION(Aggregate):
     percent = Decimal(required=True)
 
 
-class FIMFASSETCLASS(List):  # pylint: disable=too-many-ancestors
+class FIMFASSETCLASS(Aggregate):  # pylint: disable=too-many-ancestors
     """ OFX section 13.8.5.3 """
 
     fiportion = ListItem(FIPORTION)
@@ -229,7 +229,7 @@ class STOCKINFO(Aggregate):
         return super(STOCKINFO, STOCKINFO).ungroom(elem)
 
 
-class SECLIST(List):
+class SECLIST(Aggregate):
     """ OFX section 13.8.4.4 """
 
     debtinfo = ListItem(DEBTINFO)

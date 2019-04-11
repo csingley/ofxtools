@@ -11,7 +11,7 @@ from copy import deepcopy
 
 
 # local imports
-from ofxtools.models.base import Aggregate, classproperty
+from ofxtools.models.base import Aggregate
 from ofxtools.models.common import BAL, SVCSTATUSES
 import ofxtools.models
 from ofxtools.models.bank.stmt import (
@@ -33,8 +33,8 @@ from ofxtools.models.bank.stmt import (
     CCSTMTRQ,
     CCSTMTRS,
 )
-from ofxtools.models.i18n import CURRENCY_CODES
-from ofxtools.utils import UTC
+from ofxtools.models.i18n import CURRENCY_CODES, ORIGCURRENCY
+from ofxtools.utils import UTC, classproperty
 
 
 # test imports
@@ -403,10 +403,10 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
             self.assertIsNone(getattr(root, unsupp))
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.curtype, "ORIGCURRENCY")
-        self.assertEqual(root.cursym, root.origcurrency.cursym)
-        self.assertEqual(root.currate, root.origcurrency.currate)
+        instance = Aggregate.from_etree(self.root)
+        self.assertEqual(instance.curtype, "ORIGCURRENCY")
+        self.assertEqual(instance.cursym, instance.origcurrency.cursym)
+        self.assertEqual(instance.currate, instance.origcurrency.currate)
 
     def testValidSoup(self):
         for root in self.validSoup:

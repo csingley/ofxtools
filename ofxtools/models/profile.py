@@ -4,8 +4,8 @@
 from copy import deepcopy
 
 # local imports
-from ofxtools.Types import Bool, String, OneOf, Integer, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, ListItem, List
+from ofxtools.Types import Bool, String, OneOf, Integer, DateTime, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.common import MSGSETCORE
 from ofxtools.models.i18n import COUNTRY_CODES
@@ -46,7 +46,7 @@ class PROFMSGSET(Aggregate):
     profmsgsetv1 = SubAggregate(PROFMSGSETV1, required=True)
 
 
-class MSGSETLIST(List):
+class MSGSETLIST(Aggregate):
     """ OFX section 7.2 """
 
     signonmsgset = ListItem(SIGNONMSGSET)
@@ -101,7 +101,7 @@ class SIGNONINFO(Aggregate):
     accesstokenreq = Bool()
 
 
-class SIGNONINFOLIST(List):
+class SIGNONINFOLIST(Aggregate):
     """ OFX section 7.2 """
 
     signoninfo = ListItem(SIGNONINFO)
@@ -165,9 +165,9 @@ class PROFTRNRS(TrnRs):
         return self.profrs
 
 
-class PROFMSGSRQV1(List):
+class PROFMSGSRQV1(Aggregate):
     proftrnrq = ListItem(PROFTRNRQ)
 
 
-class PROFMSGSRSV1(List):
+class PROFMSGSRSV1(Aggregate):
     proftrnrs = ListItem(PROFTRNRS)

@@ -7,7 +7,7 @@ create circular imports.
 """
 # local imports
 from ofxtools.Types import Bool, String, DateTime
-from ofxtools.models.base import Aggregate, List, SubAggregate
+from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.common import STATUS, OFXEXTENSION
 
 
@@ -40,7 +40,7 @@ class TrnRs(Aggregate):
     ofxextension = SubAggregate(OFXEXTENSION)
 
 
-class TranList(List):
+class TranList(Aggregate):
     """
     Base class for OFX *TRANLIST
 
@@ -56,7 +56,7 @@ class TranList(List):
         )
 
 
-class SyncRqList(List):
+class SyncRqList(Aggregate):
     """ Base class for *SYNCRQ """
 
     token = String(10)
@@ -67,7 +67,7 @@ class SyncRqList(List):
     requiredMutexes = [("token", "tokenonly", "refresh")]
 
 
-class SyncRsList(List):
+class SyncRsList(Aggregate):
     """ Base class for *SYNCRS """
 
     token = String(10, required=True)

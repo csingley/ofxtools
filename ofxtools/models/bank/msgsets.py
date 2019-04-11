@@ -3,8 +3,8 @@
 Banking message sets
 """
 # local imports
-from ofxtools.Types import Bool, OneOf, Integer, Decimal, Time
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, ListItem, List
+from ofxtools.Types import Bool, OneOf, Integer, Decimal, Time, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
 from ofxtools.models.common import MSGSETCORE
 from ofxtools.models.bank.stmt import (
     ACCTTYPES, STMTTRNRQ, STMTTRNRS, CCSTMTTRNRQ, CCSTMTTRNRS,
@@ -59,7 +59,7 @@ __all__ = [
 ]
 
 
-class BANKMSGSRQV1(List):
+class BANKMSGSRQV1(Aggregate):
     """ OFX section 11.13.1.1.1 """
 
     stmttrnrq = ListItem(STMTTRNRQ)
@@ -74,7 +74,7 @@ class BANKMSGSRQV1(List):
     bankmailsyncrq = ListItem(BANKMAILSYNCRQ)
 
 
-class BANKMSGSRSV1(List):
+class BANKMSGSRSV1(Aggregate):
     """ OFX section 11.13.1.1.2 """
 
     stmttrnrs = ListItem(STMTTRNRS)
@@ -155,14 +155,14 @@ class BANKMSGSET(Aggregate):
     bankmsgsetv1 = SubAggregate(BANKMSGSETV1, required=True)
 
 
-class CREDITCARDMSGSRQV1(List):
+class CREDITCARDMSGSRQV1(Aggregate):
     """ OFX section 11.13.1.1.1 """
 
     ccstmttrnrq = ListItem(CCSTMTTRNRQ)
     ccstmtendtrnrq = ListItem(CCSTMTTRNRQ)
 
 
-class CREDITCARDMSGSRSV1(List):
+class CREDITCARDMSGSRSV1(Aggregate):
     """ OFX section 11.13.1.1.2 """
 
     ccstmttrnrs = ListItem(CCSTMTTRNRS)
@@ -188,7 +188,7 @@ class CREDITCARDMSGSET(Aggregate):
     creditcardmsgsetv1 = SubAggregate(CREDITCARDMSGSETV1, required=True)
 
 
-class INTERXFERMSGSRQV1(List):
+class INTERXFERMSGSRQV1(Aggregate):
     """ OFX section 11.13.1.3.1 """
     intertrnrq = ListItem(INTERTRNRQ)
     recintertrnrq = ListItem(RECINTERTRNRQ)
@@ -196,7 +196,7 @@ class INTERXFERMSGSRQV1(List):
     recintersyncrq = ListItem(RECINTERSYNCRQ)
 
 
-class INTERXFERMSGSRSV1(List):
+class INTERXFERMSGSRSV1(Aggregate):
     """ OFX section 11.13.1.3.2 """
 
     intertrnrs = ListItem(INTERTRNRS)
@@ -222,14 +222,14 @@ class INTERXFERMSGSET(Aggregate):
     interxfermsgsetv1 = SubAggregate(INTERXFERMSGSETV1, required=True)
 
 
-class WIREXFERMSGSRQV1(List):
+class WIREXFERMSGSRQV1(Aggregate):
     """ OFX section 11.13.1.4.1 """
 
     wiretrnrq = ListItem(WIRETRNRQ)
     wiresyncrq = ListItem(WIRESYNCRQ)
 
 
-class WIREXFERMSGSRSV1(List):
+class WIREXFERMSGSRSV1(Aggregate):
     """ OFX section 11.13.1.4.2 """
 
     wiretrnrs = ListItem(WIRETRNRS)

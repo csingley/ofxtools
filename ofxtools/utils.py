@@ -13,6 +13,13 @@ import itertools
 from ofxtools.lib import NUMBERING_AGENCIES
 
 
+class classproperty(property):
+    """ Decorator that turns a classmethod into a property """
+
+    def __get__(self, cls, owner):
+        return self.fget.__get__(None, owner)()
+
+
 def fixpath(path):
     """Makes paths do the right thing."""
     path = os.path.expanduser(path)

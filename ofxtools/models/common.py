@@ -7,8 +7,8 @@ from copy import deepcopy
 
 
 # local imports
-from ofxtools.Types import String, OneOf, Integer, Decimal, DateTime, Bool
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, ListItem, List
+from ofxtools.Types import String, OneOf, Integer, Decimal, DateTime, Bool, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
 from ofxtools.models.i18n import CURRENCY, LANG_CODES
 
 
@@ -46,7 +46,7 @@ class OFXELEMENT(Aggregate):
     tagvalue = String(1000, required=True)
 
 
-class OFXEXTENSION(List):
+class OFXEXTENSION(Aggregate):
     """ OFX section 2.7.2 """
     ofxelement = ListItem(OFXELEMENT)
 

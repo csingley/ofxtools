@@ -13,7 +13,7 @@ import itertools
 
 
 # local imports
-from ofxtools.models.base import Aggregate, classproperty
+from ofxtools.models.base import Aggregate
 from ofxtools.models.common import OFXEXTENSION
 from ofxtools.models import (
     MSGSETCORE,
@@ -109,7 +109,7 @@ from ofxtools.models.bank.sync import (
 from ofxtools.models.invest.stmt import INVSTMTTRNRQ, INVSTMTTRNRS
 from ofxtools.models.invest import SECLIST
 from ofxtools.models.i18n import LANG_CODES
-from ofxtools.utils import UTC
+from ofxtools.utils import UTC, classproperty
 
 
 # test imports

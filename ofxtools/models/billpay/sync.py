@@ -6,8 +6,8 @@ email - OFX Section 9
 from copy import deepcopy
 
 # local imports
-from ofxtools.Types import Bool, String, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate, ListItem
+from ofxtools.Types import Bool, String, DateTime, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
 from ofxtools.models.bank.stmt import BANKACCTFROM
 from ofxtools.models.billpay import (

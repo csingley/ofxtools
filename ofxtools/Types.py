@@ -199,7 +199,7 @@ class String(Element):
     strict = True
 
     def _init(self, *args, **kwargs):
-        super()._init(*args[1:], **kwargs)
+        self.unconvert.register(str, self._unconvert_str)
 
         length = None
         if args:
@@ -543,3 +543,18 @@ class Time(DateTime):
 
     def _unconvert_datetime(self, value):
         return self._unconvert_default(value)
+
+
+class ListItem(Element):
+    """ """
+
+    def _init(self, *args, **kwargs):
+        args = list(args)
+        self.type = args.pop(0)
+        super()._init(*args, **kwargs)
+
+    def _convert_default(self, value):
+        if not isinstance(value, self.type):
+            msg = "'{}' is not an instance of {}"
+            raise ValueError(msg.format(value, self.type))
+        return value

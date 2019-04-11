@@ -8,8 +8,9 @@ from copy import deepcopy
 import itertools
 
 # local imports
-from ofxtools.models.base import Aggregate, classproperty
+from ofxtools.models.base import Aggregate
 from ofxtools.models.common import STATUS
+from ofxtools.utils import classproperty
 
 
 class TestAggregate:

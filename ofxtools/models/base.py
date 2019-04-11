@@ -23,19 +23,12 @@ from copy import deepcopy
 
 
 # local imports
-from ofxtools.Types import Element, DateTime, String, Bool, InstanceCounterMixin
+from ofxtools.Types import Element, DateTime, String, Bool, InstanceCounterMixin, ListItem
 import ofxtools.models
-from ofxtools.utils import pairwise
+from ofxtools.utils import classproperty, pairwise
 
 
-class classproperty(property):
-    """ Decorator that turns a classmethod into a property """
-
-    def __get__(self, cls, owner):
-        return self.fget.__get__(None, owner)()
-
-
-class Aggregate:
+class Aggregate(list):
     """
     Base class for Python representation of OFX 'aggregate', i.e. SGML/XML
     parent node that is empty of data text.
@@ -54,6 +47,7 @@ class Aggregate:
         Positional args interepreted as list items (of variable #).
         kwargs interpreted as singular sub-elements.
         """
+        list.__init__(self)
         self.validate_args(*args, **kwargs)
 
         for attr in self.spec:
@@ -106,10 +100,13 @@ class Aggregate:
                       mutexes=cls.requiredMutexes, predicate=lambda x: x == 1)
 
     def _apply_args(self, *args):
-        if args:
-            msg = "Aggregate {} does not define {} in spec {}"
-            attrs = [arg.__class__.__name__ for arg in args]
-            raise ValueError(msg.format(self.__class__.__name__, attrs, self.spec))
+        # Interpret positional args as contained list items (of variable #)
+        for member in args:
+            cls_name = member.__class__.__name__.lower()
+            if cls_name not in self.listitems:
+                msg = "{} can't contain {} as list item: {}"
+                raise ValueError(msg.format(self.__class__.__name__, cls_name, member))
+            self.append(member)
 
     def _apply_residual_kwargs(self, **kwargs):
         # Check that all kwargs have been consumed, i.e. we haven't been passed
@@ -201,12 +198,36 @@ class Aggregate:
         """
         return elem
 
+    #  def to_etree(self):
+        #  """
+        #  Convert self and children to `ElementTree.Element` hierarchy
+        #  """
+        #  cls = self.__class__
+        #  root = ET.Element(cls.__name__)
+        #  for spec in self.spec:
+            #  value = getattr(self, spec)
+            #  if value is None:
+                #  continue
+            #  elif isinstance(value, Aggregate):
+                #  child = value.to_etree()
+                #  #  child = value.ungroom(child)
+                #  root.append(child)
+            #  else:
+                #  converter = cls._superdict[spec]
+                #  text = converter.unconvert(value)
+                #  ET.SubElement(root, spec.upper()).text = text
+        #  # Hook to modify `ET.ElementTree` after conversion
+        #  return cls.ungroom(root)
+
     def to_etree(self):
         """
         Convert self and children to `ElementTree.Element` hierarchy
         """
         cls = self.__class__
         root = ET.Element(cls.__name__)
+        # Append items enumerated in the class definition
+        # (i.e. direct child Elements of the *LIST defined in the OFX spec)
+        # - this is used by subclasses (e.g. Tranlist), not directly by List
         for spec in self.spec:
             value = getattr(self, spec)
             if value is None:
@@ -219,6 +240,11 @@ class Aggregate:
                 converter = cls._superdict[spec]
                 text = converter.unconvert(value)
                 ET.SubElement(root, spec.upper()).text = text
+
+        # Append list items
+        for member in self:
+            root.append(member.to_etree())
+        #  return root
         # Hook to modify `ET.ElementTree` after conversion
         return cls.ungroom(root)
 
@@ -324,9 +350,20 @@ class Aggregate:
         ]
         return attrs
 
+    def __hash__(self):
+        """
+        HACK - as a subclass of list, List is unhashable, but we need to
+        use it as a dict key in Type.Element.{__get__, __set__}
+        """
+        return object.__hash__(self)
+
     def __repr__(self):
         attrs = ["{}={}".format(*attr) for attr in self._spec_repr]
-        return "<{}({})>".format(self.__class__.__name__, ", ".join(attrs))
+        instance_repr = "{}({})".format(self.__class__.__name__, ", ".join(attrs))
+        num_list_elements = len(self)
+        if num_list_elements != 0:
+            instance_repr += ", len={}".format(num_list_elements)
+        return "<{}>".format(instance_repr)
 
     def __getattr__(self, attr):
         """ Proxy access to attributes of SubAggregates """
@@ -383,68 +420,3 @@ class Unsupported(InstanceCounterMixin):
 
     def __repr__(self):
         return "<Unsupported>"
-
-
-class ListItem(Element):
-    """ """
-
-    def _init(self, *args, **kwargs):
-        args = list(args)
-        self.type = args.pop(0)
-        assert issubclass(self.type, Aggregate)
-        super()._init(*args, **kwargs)
-
-    def _convert_default(self, value):
-        if not isinstance(value, self.type):
-            msg = "'{}' is not an instance of {}"
-            raise ValueError(msg.format(value, self.type))
-        return value
-
-
-class List(Aggregate, list):
-    """
-    Base class for OFX *LIST
-    """
-    def __init__(self, *args, **kwargs):
-        list.__init__(self)
-        super().__init__(*args, **kwargs)
-
-    def _apply_args(self, *args):
-        # Interpret positional args as contained list items (of variable #)
-        for member in args:
-            cls_name = member.__class__.__name__.lower()
-            if cls_name not in self.listitems:
-                msg = "{} can't contain {} as list item: {}"
-                raise ValueError(msg.format(self.__class__.__name__, cls_name, member))
-            self.append(member)
-
-    def to_etree(self):
-        """
-        Convert self and children to `ElementTree.Element` hierarchy
-        """
-        cls = self.__class__
-        root = ET.Element(cls.__name__)
-        # Append items enumerated in the class definition
-        # (i.e. direct child Elements of the *LIST defined in the OFX spec)
-        # - this is used by subclasses (e.g. Tranlist), not directly by List
-        for spec in self.spec:
-            value = getattr(self, spec)
-            if value is not None:
-                converter = cls._superdict[spec]
-                text = converter.unconvert(value)
-                ET.SubElement(root, spec.upper()).text = text
-
-        # Append list items
-        for member in self:
-            root.append(member.to_etree())
-        return root
-
-    def __hash__(self):
-        """
-        HACK - as a subclass of list, List is unhashable, but we need to
-        use it as a dict key in Type.Element.{__get__, __set__}
-        """
-        return object.__hash__(self)
-
-    def __repr__(self):
-        return "<{} len={}>".format(self.__class__.__name__, len(self))

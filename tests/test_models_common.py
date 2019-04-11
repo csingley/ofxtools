@@ -9,8 +9,8 @@ import xml.etree.ElementTree as ET
 
 
 # local imports
-from ofxtools.Types import DateTime
-from ofxtools.models.base import Aggregate, ListItem
+from ofxtools.Types import DateTime, ListItem
+from ofxtools.models.base import Aggregate
 from ofxtools.models.common import BAL, OFXELEMENT, OFXEXTENSION
 from ofxtools.models.wrapperbases import TranList
 from ofxtools.models.i18n import CURRENCY, CURRENCY_CODES
