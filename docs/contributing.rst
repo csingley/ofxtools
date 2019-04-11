@@ -380,23 +380,23 @@ its messages are detailed in a different chapter of the spec - Section 11.12.2.
 .. image:: intrasyncrs.png
 
 The requirement that each ``*SYNCRQ`` / ``*SYNCRS`` may contain a variable
-number of transaction wrappers is problematic for the ``Aggregate`` base
-class, where every child element maps to a single class attribute.
+number of transaction wrappers means that we can't define these wrappers with
+``SubAggregate``, which maps every child element to a single class attribute.
 
-For this kind of structure, we instead inherit from ``ofxtools.models.base.List``.
-Contained aggregates that are allowed to appear more than once are defined with
-a validator of type ``ListItem``, and accessed via the Python list API.  Unique
-children are defined in the usual manner, and accessed as instance attributes.
+Contained aggregates that are allowed to appear more than once are instead
+defined with a validator of type ``ListItem``, and accessed via the Python list
+API.  Unique children are defined in the usual manner, and accessed as instance
+attributes.
 
 Here's how it looks in ``ofxtools.models.bank.sync``.
 
 .. code:: python
 
-    from ofxtools.models.base import List
+    from ofxtools.Type import ListItem
     from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM
     from ofxtools.Types import Bool
 
-    class INTRASYNCRQ(List):
+    class INTRASYNCRQ(Aggregate):
         """ OFX section 11.12.2.1 """
         token = String(10)
         tokenonly = Bool()
@@ -412,7 +412,7 @@ Here's how it looks in ``ofxtools.models.bank.sync``.
         ]
 
 
-    class INTRASYNCRS(List):
+    class INTRASYNCRS(Aggregate):
         """ OFX section 11.12.2.2 """
         token = String(10, required=True)
         lostsync = Bool()
@@ -423,7 +423,7 @@ Here's how it looks in ``ofxtools.models.bank.sync``.
         requiredMutexes = [ ("bankacctfrom", "ccacctfrom") ]
 
 
-    class RECINTRASYNCRQ(SyncRqList):
+    class RECINTRASYNCRQ(Aggregate):
         """ OFX section 11.12.5.1 """
 
         token = String(10)
@@ -440,7 +440,7 @@ Here's how it looks in ``ofxtools.models.bank.sync``.
         ]
 
 
-    class RECINTRASYNCRS(SyncRsList):
+    class RECINTRASYNCRS(Aggregate):
         """ OFX section 11.12.5.2 """
 
         token = String(10, required=True)
@@ -478,6 +478,36 @@ relevant classes in ``ofxtools.models.msgsets``.
         recintratrnrs = ListItem(RECINTRATRNRS)
         intrasyncrs = ListItem(INTRASYNCRS)
         recintrasyncrs = ListItem(RECINTRASYNCRS)
+        ...
+
+Then we need to define the funds transfer profile.
+
+.. image:: intrasyncrs.png
+
+.. code:: python
+
+    class XFERPROF(ElementList):
+        """ OFX section 11.13.2.2 """
+
+        procdaysoff = ListElement(OneOf(*DAYS))
+        procendtm = Time(required=True)
+        cansched = Bool(required=True)
+        canrecur = Bool(required=True)
+        canmodxfer = Bool(required=True)
+        canmodmdls = Bool(required=True)
+        modelwnd = Integer(3, required=True)
+        dayswith = Integer(3, required=True)
+        dfltdaystopay = Integer(3, required=True)
+
+Finally, we add the funds transfer profile to the message set.
+
+.. code:: python
+
+    class BANKMSGSETV1(Aggregate):
+        """ OFX section 11.13.2.1 """
+
+        ...
+        xferprof = SubAggregate(XFERPROF)
         ...
 
 All done!
