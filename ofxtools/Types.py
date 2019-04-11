@@ -75,7 +75,6 @@ class Element(InstanceCounterMixin):
         InstanceCounterMixin.__init__(self)
         self.data = defaultdict(None)
         self.required = kwargs.pop("required", False)
-        self._init(*args, **kwargs)
 
         # N.B. ``functools.singledispatch()`` dispatches on the type of the
         # first argument of a function, so we can't use decorator syntax on
@@ -84,23 +83,14 @@ class Element(InstanceCounterMixin):
         self.convert = functools.singledispatch(self.convert)
         self.convert.register(type(None), self._convert_none)
         self.convert.register(str, self._convert_str)
-        self.convert.register(bool, self._convert_bool)
-        self.convert.register(int, self._convert_int)
-        self.convert.register(decimal.Decimal, self._convert_decimal)
-        self.convert.register(datetime.datetime, self._convert_datetime)
-        self.convert.register(datetime.time, self._convert_time)
 
         self.unconvert = functools.singledispatch(self.unconvert)
         self.unconvert.register(type(None), self._unconvert_none)
-        self.unconvert.register(str, self._unconvert_str)
-        self.unconvert.register(bool, self._unconvert_bool)
-        self.unconvert.register(int, self._unconvert_int)
-        self.unconvert.register(decimal.Decimal, self._unconvert_decimal)
-        self.unconvert.register(datetime.datetime, self._unconvert_datetime)
-        self.unconvert.register(datetime.time, self._unconvert_time)
+
+        self._init(*args, **kwargs)
 
     def _init(self, *args, **kwargs):
-        """ Override in subclass """
+        """ Extend in subclass """
         if args or kwargs:
             raise ValueError(
                 "Unknown args for '%s'- args: %r; kwargs: %r"
@@ -150,26 +140,6 @@ class Element(InstanceCounterMixin):
             return self._convert_none(value)
         return self._convert_default(value)
 
-    def _convert_bool(self, value):
-        """ Dispatch convert() for bool """
-        return self._convert_default(value)
-
-    def _convert_int(self, value):
-        """ Dispatch convert() for int """
-        return self._convert_default(value)
-
-    def _convert_decimal(self, value):
-        """ Dispatch convert() for decimal.Decimal """
-        return self._convert_default(value)
-
-    def _convert_datetime(self, value):
-        """ Dispatch convert() for datetime.datetime """
-        return self._convert_default(value)
-
-    def _convert_time(self, value):
-        """ Dispatch convert() for datetime.time """
-        return self._convert_default(value)
-
     def unconvert(self, value):
         """ Convert Python data type to OFX """
         return self._unconvert_default(value)
@@ -184,30 +154,6 @@ class Element(InstanceCounterMixin):
         # Pass through None, unless value is required
         return self.enforce_required(value)
 
-    def _unconvert_str(self, value):
-        """ Dispatch unconvert() for str """
-        return self._unconvert_default(value)
-
-    def _unconvert_bool(self, value):
-        """ Dispatch unconvert() for bool """
-        return self._unconvert_default(value)
-
-    def _unconvert_int(self, value):
-        """ Dispatch unconvert() for int """
-        return self._unconvert_default(value)
-
-    def _unconvert_decimal(self, value):
-        """ Dispatch unconvert() for decimal.Decimal """
-        return self._unconvert_default(value)
-
-    def _unconvert_datetime(self, value):
-        """ Dispatch unconvert() for datetime.datetime """
-        return self._unconvert_default(value)
-
-    def _unconvert_time(self, value):
-        """ Dispatch unconvert() for datetime.time """
-        return self._unconvert_default(value)
-
     def __repr__(self):
         repr = "<{} required={}>"
         return repr.format(self.__class__.__name__, self.required)
@@ -216,6 +162,11 @@ class Element(InstanceCounterMixin):
 class Bool(Element):
     type = bool
     mapping = {"Y": True, "N": False}
+
+    def _init(self, *args, **kwargs):
+        self.convert.register(bool, self._convert_bool)
+        self.unconvert.register(bool, self._unconvert_bool)
+        super()._init(*args, **kwargs)
 
     def _convert_default(self, value):
         # Better error message than superclass default
@@ -248,6 +199,8 @@ class String(Element):
     strict = True
 
     def _init(self, *args, **kwargs):
+        super()._init(*args[1:], **kwargs)
+
         length = None
         if args:
             length = args[0]
@@ -255,6 +208,7 @@ class String(Element):
         super()._init(*args[1:], **kwargs)
 
     def _convert_default(self, value):
+        # Better error message than superclass default
         msg = "'{}' is not a str"
         raise ValueError(msg.format(value))
 
@@ -323,10 +277,14 @@ class Integer(Element):
     type = int
 
     def _init(self, *args, **kwargs):
+        self.convert.register(int, self._convert_int)
+        self.unconvert.register(int, self._unconvert_int)
+
         length = None
         if args:
             length = args[0]
         self.length = length
+
         super()._init(*args[1:], **kwargs)
 
     def enforce_length(self, value):
@@ -356,6 +314,9 @@ class Decimal(Element):
     scale = None
 
     def _init(self, *args, **kwargs):
+        self.convert.register(decimal.Decimal, self._convert_decimal)
+        self.unconvert.register(decimal.Decimal, self._unconvert_decimal)
+
         if args:
             scale = args[0]
             self.scale = decimal.Decimal("0.{}1".format("0" * (scale - 1)))
@@ -414,6 +375,11 @@ class DateTime(Element):
                        """,
         re.VERBOSE,
     )
+
+    def _init(self, *args, **kwargs):
+        self.convert.register(datetime.datetime, self._convert_datetime)
+        self.unconvert.register(datetime.datetime, self._unconvert_datetime)
+        super()._init(*args, **kwargs)
 
     def _convert_default(self, value):
         msg = "'{}' is type '{}'; can't convert to {}"
@@ -521,6 +487,14 @@ class Time(DateTime):
                        """,
         re.VERBOSE,
     )
+
+    def _init(self, *args, **kwargs):
+        self.convert.register(datetime.datetime, self._convert_datetime)
+        self.convert.register(datetime.time, self._convert_time)
+        self.unconvert.register(datetime.datetime, self._unconvert_datetime)
+        self.unconvert.register(datetime.time, self._unconvert_time)
+
+        super()._init(*args, **kwargs)
 
     def normalize_to_gmt(self, value, gmt_offset):
         # Adjust timezone to GMT/UTC
