@@ -657,6 +657,11 @@ class ElementListTestCase(unittest.TestCase):
         # Remove monkey patch
         del models.TESTELEMENTLIST
 
+    def assertElement(self, elem, tag, text, len):
+        self.assertIsInstance(elem, ET.Element)
+        self.assertEqual(elem.tag, tag)
+        self.assertEqual(elem.text, text)
+
     @property
     def root(self):
         root = ET.Element("TESTELEMENTLIST")
@@ -723,22 +728,12 @@ class ElementListTestCase(unittest.TestCase):
 
     def testToEtree(self):
         root = self.instance.to_etree()
-        self.assertIsInstance(root, ET.Element)
-        self.assertEqual(len(root), 3)
+        self.assertElement(root, tag="TESTELEMENTLIST", text=None, len=3)
         metadata, tag0, tag1 = root[:]
 
-        self.assertIsInstance(metadata, ET.Element)
-        self.assertEqual(metadata.tag, "METADATA")
-        self.assertEqual(metadata.text, "something")
-
-        self.assertIsInstance(tag0, ET.Element)
-        self.assertEqual(tag0.tag, "TAG")
-        self.assertEqual(tag0.text, "N")
-
-        self.assertIsInstance(tag1, ET.Element)
-        self.assertEqual(tag1.tag, "TAG")
-        self.assertEqual(tag1.text, "Y")
-
+        self.assertElement(metadata, tag="METADATA", text="something", len=0)
+        self.assertElement(tag0, tag="TAG", text="N", len=0)
+        self.assertElement(tag1, tag="TAG", text="Y", len=0)
 
 
 if __name__ == "__main__":

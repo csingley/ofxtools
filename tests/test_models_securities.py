@@ -5,7 +5,7 @@
 import unittest
 from datetime import datetime
 from decimal import Decimal
-from xml.etree.ElementTree import Element, SubElement
+from xml.etree.ElementTree import Element, SubElement, tostring
 from copy import deepcopy
 
 
@@ -358,15 +358,15 @@ class MfinfoTestCase(unittest.TestCase, base.TestAggregate):
     def testGroom(self):
         root = deepcopy(self.root)
         root = MFINFO.groom(root)
-        self.assertIsInstance(root, Element)
-        self.assertEqual(len(root), len(self.root))
+        self.assertElement(root, tag="MFINFO", text=None, length=len(self.root))
         secinfo, mftype, yld, dtyieldasof, mfassetclass, fimfassetclass = root[:]
 
-        # FIXME - test the other children too
-        self.assertIsInstance(yld, Element)
-        self.assertEqual(len(yld), 0)
-        self.assertEqual(yld.tag, "YLD")
-        self.assertEqual(yld.text, "5.0")
+        self.assertEqual(tostring(secinfo), tostring(self.root.find("SECINFO")))
+        self.assertElement(mftype, tag="MFTYPE", text="OPENEND", length=0)
+        self.assertElement(yld, tag="YLD", text="5.0", length=0)
+        self.assertElement(dtyieldasof, tag="DTYIELDASOF", text="20030501", length=0)
+        self.assertEqual(tostring(mfassetclass), tostring(self.root.find("MFASSETCLASS")))
+        self.assertEqual(tostring(fimfassetclass), tostring(self.root.find("FIMFASSETCLASS")))
 
     def testUngroom(self):
         root = self.root
@@ -504,11 +504,12 @@ class StockinfoTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(len(root), len(self.root))
         secinfo, stocktype, yld, dtyieldasof, assetclass, fiassetclass = root[:]
 
-        # FIXME - test the other children too
-        self.assertIsInstance(yld, Element)
-        self.assertEqual(len(yld), 0)
-        self.assertEqual(yld.tag, "YLD")
-        self.assertEqual(yld.text, "5.0")
+        self.assertEqual(tostring(secinfo), tostring(self.root.find("SECINFO")))
+        self.assertElement(stocktype, tag="STOCKTYPE", text="CONVERTIBLE", length=0)
+        self.assertElement(yld, tag="YLD", text="5.0", length=0)
+        self.assertElement(dtyieldasof, tag="DTYIELDASOF", text="20030501", length=0)
+        self.assertEqual(tostring(assetclass), tostring(self.root.find("ASSETCLASS")))
+        self.assertEqual(tostring(fiassetclass), tostring(self.root.find("FIASSETCLASS")))
 
     def testUngroom(self):
         root = self.root
