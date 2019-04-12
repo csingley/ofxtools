@@ -130,15 +130,6 @@ class PmtinfoTestCase(unittest.TestCase, base.TestAggregate):
     def root(self):
         return next(self.validSoup)
 
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
-
 
 class DiscountTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
@@ -312,20 +303,11 @@ class ExtdpmtTestCase(unittest.TestCase, base.TestAggregate):
     def root(self):
         return list(self.validSoup)[-1]
 
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
     @classproperty
     @classmethod
     def invalidSoup(cls):
         # Neither EXTDPMTDSC nor EXTDPMTINV
         yield cls.emptyBase
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
 
     def testOneOf(self):
         self.oneOfTest("EXTDPMTFOR", ("INDIVIDUAL", "BUSINESS"))
@@ -410,15 +392,6 @@ class ExtdpayeeTestCase(unittest.TestCase, base.TestAggregate):
     @property
     def root(self):
         return next(self.validSoup)
-
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
 
     def testOneOf(self):
         self.oneOfTest("IDSCOPE", ["GLOBAL", "USER"])

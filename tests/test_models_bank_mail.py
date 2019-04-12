@@ -67,15 +67,6 @@ class BankmailrqTestCase(unittest.TestCase, base.TestAggregate):
         #  FIXME
         #  Check out-of-order errors
 
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
-
 
 class BankmailrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
@@ -119,15 +110,6 @@ class BankmailrsTestCase(unittest.TestCase, base.TestAggregate):
 
         #  FIXME
         #  Check out-of-order errors
-
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
 
 
 class ChkmailrsTestCase(unittest.TestCase, base.TestAggregate):

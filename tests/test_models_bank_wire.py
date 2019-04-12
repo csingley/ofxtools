@@ -56,15 +56,6 @@ class WirebeneficiaryTestCase(unittest.TestCase, base.TestAggregate):
     def invalidSoup(cls):
         yield from ()
 
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
-
 
 class ExtbankdescTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
@@ -96,15 +87,6 @@ class ExtbankdescTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def invalidSoup(cls):
         yield from ()
-
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
 
     def testOneOf(self):
         self.oneOfTest("COUNTRY", COUNTRY_CODES)
@@ -222,15 +204,6 @@ class WirersTestCase(unittest.TestCase, base.TestAggregate):
         root.append(dtxferprj)
         root.append(dtposted)
         yield from ()
-
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
 
 
 class WirecanrqTestCase(unittest.TestCase, base.TestAggregate):

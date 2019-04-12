@@ -233,15 +233,6 @@ class PmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
             root.insert(n, cls.wrapped)
             yield root
 
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
-
 
 class PmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
@@ -308,15 +299,6 @@ class PmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
             root = deepcopy(root_)
             root.insert(n, cls.wrapped)
             yield root
-
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
 
 
 class PmtinqrqTestCase(unittest.TestCase, base.TestAggregate):

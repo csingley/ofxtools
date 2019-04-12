@@ -114,15 +114,6 @@ class StpchkrqTestCase(unittest.TestCase, base.TestAggregate):
         #  FIXME
         #  Check out-of-order errors
 
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
-
 
 class StpchknumTestCase(unittest.TestCase, base.TestAggregate):
     """ STPCHKNUM with CURRENCY """
@@ -171,15 +162,6 @@ class StpchknumTestCase(unittest.TestCase, base.TestAggregate):
         root.append(currency)
         root.append(origcurrency)
         yield root
-
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
 
     def testOneOf(self):
         self.oneOfTest("CHKSTATUS", ["0", "1", "100", "101"])

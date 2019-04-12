@@ -101,15 +101,6 @@ class PayeerqTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(payacct0, "123")
         self.assertEqual(payacct1, "123")
 
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
-
 
 class PayeersTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
@@ -135,15 +126,6 @@ class PayeersTestCase(unittest.TestCase, base.TestAggregate):
     def invalidSoup(cls):
         # FIXME
         yield from ()
-
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
 
     @property
     def root(self):
@@ -199,15 +181,6 @@ class PayeemodrqTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(instance[0], "12345")
         self.assertEqual(instance[1], "12345")
 
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
-
 
 class PayeemodrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
@@ -233,15 +206,6 @@ class PayeemodrsTestCase(unittest.TestCase, base.TestAggregate):
     def invalidSoup(cls):
         # FIXME
         yield from ()
-
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
 
     @property
     def root(self):
@@ -379,7 +343,6 @@ class PayeetrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
         # Don't need to test missing TRNUID, since this case is
         # tested by ``requiredElements``
         tag = cls.__name__.replace("TestCase", "").upper()
-        root_ = Element(tag)
 
         # TRNUID/STATUS/CLTCOOKIE out of order
         trnuid = Element("TRNUID")
@@ -393,7 +356,7 @@ class PayeetrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
         for elements in itertools.permutations(legal):
             if [el.tag for el in elements] == legal_tags:
                 continue
-            root = deepcopy(root_)
+            root = Element(tag)
             for element in elements:
                 root.append(element)
             root.append(cls.wrapped)

@@ -21,10 +21,31 @@ class TestAggregate:
     requiredElements = []
     optionalElements = []
 
+    @classproperty
+    @classmethod
+    def validSoup(cls):
+        """ Define in subclass """
+        yield from ()
+
+    @classproperty
+    @classmethod
+    def invalidSoup(cls):
+        """ Define in subclass """
+        yield ET.Element("NOTAREALOFXTAG")
+
+    def testValidSoup(self):
+        for root in self.validSoup:
+            Aggregate.from_etree(root)
+
+    def testInvalidSoup(self):
+        for root in self.invalidSoup:
+            with self.assertRaises(ValueError):
+                Aggregate.from_etree(root)
+
     @property
     def root(self):
-        """Define in subclass"""
-        raise NotImplementedError
+        # Use the last return value for TestAggregate test methods
+        return list(self.validSoup)[-1]
 
     def testRequired(self):
         if self.requiredElements:
@@ -155,8 +176,9 @@ class TrnrqTestCase(TestAggregate):
         tan.text = "B16B00B5"
 
         legal = [trnuid, cltcookie, tan]
+        legal_tags = [el.tag for el in legal]
         for elements in itertools.permutations(legal):
-            if elements == legal:
+            if [el.tag for el in elements] == legal_tags:
                 continue
             root = deepcopy(root_)
             for element in elements:
@@ -228,8 +250,9 @@ class TrnrsTestCase(TestAggregate):
         cltcookie.text = "B00B135"
 
         legal = [trnuid, status, cltcookie]
+        legal_tags = [el.tag for el in legal]
         for elements in itertools.permutations(legal):
-            if elements == legal:
+            if [el.tag for el in elements] == legal_tags:
                 continue
             root = deepcopy(root_)
             for element in elements:

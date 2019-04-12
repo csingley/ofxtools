@@ -408,15 +408,6 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(instance.cursym, instance.origcurrency.cursym)
         self.assertEqual(instance.currate, instance.origcurrency.currate)
 
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
-
 
 class BanktranlistTestCase(unittest.TestCase, base.TranlistTestCase):
     __test__ = True

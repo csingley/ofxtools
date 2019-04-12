@@ -102,15 +102,6 @@ class InterrsTestCase(unittest.TestCase, base.TestAggregate):
 
         yield root
 
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
-
     def testOneOf(self):
         self.oneOfTest("CURDEF", CURRENCY_CODES)
 

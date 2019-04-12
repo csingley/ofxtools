@@ -137,15 +137,6 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
         root.append(signupmsgsrqv1)
         yield root
 
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
-
     @property
     def root(self):
         return list(self.validSoup)[-1]

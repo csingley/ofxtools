@@ -761,15 +761,6 @@ class BankmailsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
             # data appears in correct position relative to metadata, since
             # ``dataTags`` doesn't appear in the ``cls.spec``.
 
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
-
 
 class BankmailsyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     __test__ = True
@@ -820,15 +811,6 @@ class BankmailsyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
             # Currently the ``List`` data model offers no way to verify that
             # data appears in correct position relative to metadata, since
             # ``dataTags`` doesn't appear in the ``cls.spec``.
-
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
 
 
 if __name__ == "__main__":

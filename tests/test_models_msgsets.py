@@ -1664,15 +1664,6 @@ class MsgsetlistTestCase(unittest.TestCase, base.TestAggregate):
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
 
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
-
 
 if __name__ == "__main__":
     unittest.main()

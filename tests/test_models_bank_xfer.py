@@ -102,15 +102,6 @@ class XferinfoTestCase(unittest.TestCase, base.TestAggregate):
         # FIXME
         # test out-of-order errors
 
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
-
 
 class XferprcstsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
@@ -206,15 +197,6 @@ class IntrarsTestCase(unittest.TestCase, base.TestAggregate):
         root.append(dtposted)
 
         yield root
-
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
 
     def testOneOf(self):
         self.oneOfTest("CURDEF", CURRENCY_CODES)

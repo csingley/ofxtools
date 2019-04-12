@@ -47,6 +47,7 @@ import base
 from test_models_bank_stmt import InctranTestCase, BallistTestCase, StmttrnTestCase
 from test_models_securities import SecidTestCase
 from test_models_i18n import CurrencyTestCase
+#  from test_models_invest_transactions import InvbanktranTestCase
 
 
 class InvacctfromTestCase(unittest.TestCase, base.TestAggregate):
@@ -622,6 +623,30 @@ class InvtranlistTestCase(unittest.TestCase, base.TranlistTestCase):
 
     @property
     def validSoup(self):
+        # Avoid circular inmports in the global scope
+        from test_models_invest_transactions import (
+            InvbanktranTestCase,
+            BuydebtTestCase,
+            BuymfTestCase,
+            BuyoptTestCase,
+            BuyotherTestCase,
+            BuystockTestCase,
+            ClosureoptTestCase,
+            IncomeTestCase,
+            InvexpenseTestCase,
+            JrnlfundTestCase,
+            JrnlsecTestCase,
+            MargininterestTestCase,
+            ReinvestTestCase,
+            RetofcapTestCase,
+            SelldebtTestCase,
+            SellmfTestCase,
+            SelloptTestCase,
+            SellotherTestCase,
+            SellstockTestCase,
+            SplitTestCase,
+            TransferTestCase,
+        )
         for root_ in super().validSoup:
             root = deepcopy(root_)
             # 0 contained aggregrates
@@ -651,7 +676,8 @@ class InvtranlistTestCase(unittest.TestCase, base.TranlistTestCase):
                 "Transfer",
             ):
                 testcase = "{}TestCase".format(tag)
-                invtran = globals()[testcase]
+                #  invtran = globals()[testcase]
+                invtran = locals()[testcase]
                 root.append(invtran().root)
                 yield root
                 root.append(invtran().root)
