@@ -93,6 +93,12 @@ class TestAggregate:
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
 
+    def assertElement(self, elem, tag, text, len):
+        self.assertIsInstance(elem, ET.Element)
+        self.assertEqual(elem.tag, tag)
+        self.assertEqual(elem.text, text)
+        self.assertEqual(len(elem), len)
+
 
 # StatusTestCase needs to be defined here (rather than test_models_common)
 # in order to avoid circular imports

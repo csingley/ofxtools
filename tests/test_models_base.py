@@ -502,6 +502,11 @@ class ListTestCase(unittest.TestCase):
         del models.TESTAGGREGATE2
         del models.TESTLIST
 
+    def assertElement(self, elem, tag, text, len):
+        self.assertIsInstance(elem, ET.Element)
+        self.assertEqual(elem.tag, tag)
+        self.assertEqual(elem.text, text)
+
     @property
     def instance(self):
         subagg0 = TESTSUBAGGREGATE(data="quux")
@@ -605,88 +610,33 @@ class ListTestCase(unittest.TestCase):
 
     def testToEtree(self):
         root = self.instance.to_etree()
-        self.assertIsInstance(root, ET.Element)
-        self.assertEqual(root.tag, "TESTLIST")
-        self.assertIsNone(root.text)
-        self.assertEqual(len(root), 4)
+        self.assertElement(root, tag="TESTLIST", text=None, len=4)
         metadata, agg0, agg1, agg2 = root[:]
 
-        self.assertIsInstance(metadata, ET.Element)
-        self.assertEqual(metadata.tag, "METADATA")
-        self.assertEqual(metadata.text, "foo")
-        self.assertEqual(len(metadata), 0)
+        self.assertElement(metadata, tag="METADATA", text="foo", len=0)
 
-        self.assertIsInstance(agg0, ET.Element)
-        self.assertEqual(agg0.tag, "TESTAGGREGATE")
-        self.assertIsNone(agg0.text)
-        self.assertEqual(len(agg0), 4)
-
+        self.assertElement(agg0, tag="TESTAGGREGATE", text=None, len=4)
         metadata, req00, req11, subagg = agg0[:]
 
-        self.assertIsInstance(metadata, ET.Element)
-        self.assertEqual(metadata.tag, "METADATA")
-        self.assertEqual(metadata.text, "foo")
-
-        self.assertIsInstance(req00, ET.Element)
-        self.assertEqual(req00.tag, "REQ00")
-        self.assertEqual(req00.text, "Y")
-
-        self.assertIsInstance(req11, ET.Element)
-        self.assertEqual(req11.tag, "REQ11")
-        self.assertEqual(req11.text, "N")
-
-        self.assertIsInstance(subagg, ET.Element)
-        self.assertEqual(subagg.tag, "TESTSUBAGGREGATE")
-        self.assertIsNone(subagg.text)
-        self.assertEqual(len(subagg), 1)
-
-        self.assertEqual(len(subagg), 1)
+        self.assertElement(metadata, tag="METADATA", text="foo", len=0)
+        self.assertElement(req00, tag="REQ00", text="Y", len=0)
+        self.assertElement(req11, tag="REQ11", text="N", len=0)
+        self.assertElement(subagg, tag="TESTSUBAGGREGATE", text=None, len=1)
         elem = subagg[0]
-        self.assertIsInstance(elem, ET.Element)
-        self.assertEqual(elem.tag, "DATA")
-        self.assertEqual(elem.text, "quux")
-        self.assertEqual(len(elem), 0)
+        self.assertElement(elem, tag="DATA", text="quux", len=0)
 
-        self.assertIsInstance(agg1, ET.Element)
-        self.assertEqual(agg1.tag, "TESTAGGREGATE")
-        self.assertIsNone(agg1.text)
-        self.assertEqual(len(agg1), 4)
-
+        self.assertElement(agg1, tag="TESTAGGREGATE", text=None, len=4)
         metadata, req00, req11, subagg = agg1[:]
-
-        self.assertIsInstance(metadata, ET.Element)
-        self.assertEqual(metadata.tag, "METADATA")
-        self.assertEqual(metadata.text, "bar")
-
-        self.assertIsInstance(req00, ET.Element)
-        self.assertEqual(req00.tag, "REQ00")
-        self.assertEqual(req00.text, "N")
-
-        self.assertIsInstance(req11, ET.Element)
-        self.assertEqual(req11.tag, "REQ11")
-        self.assertEqual(req11.text, "Y")
-
-        self.assertIsInstance(subagg, ET.Element)
-        self.assertEqual(subagg.tag, "TESTSUBAGGREGATE")
-        self.assertIsNone(subagg.text)
-        self.assertEqual(len(subagg), 1)
-
-        self.assertEqual(len(subagg), 1)
+        self.assertElement(metadata, tag="METADATA", text="bar", len=0)
+        self.assertElement(req00, tag="REQ00", text="N", len=0)
+        self.assertElement(req11, tag="REQ11", text="Y", len=0)
+        self.assertElement(subagg, tag="TESTSUBAGGREGATE", text=None, len=1)
         elem = subagg[0]
-        self.assertIsInstance(elem, ET.Element)
-        self.assertEqual(elem.tag, "DATA")
-        self.assertEqual(elem.text, "quuz")
-        self.assertEqual(len(elem), 0)
+        self.assertElement(elem, tag="DATA", text="quuz", len=0)
 
-        self.assertIsInstance(agg2, ET.Element)
-        self.assertEqual(agg2.tag, "TESTAGGREGATE2")
-        self.assertIsNone(agg2.text)
-        self.assertEqual(len(agg2), 1)
-
+        self.assertElement(agg2, tag="TESTAGGREGATE2", text=None, len=1)
         metadata = agg2[0]
-        self.assertIsInstance(metadata, ET.Element)
-        self.assertEqual(metadata.tag, "METADATA")
-        self.assertEqual(metadata.text, "dumbo")
+        self.assertElement(metadata, tag="METADATA", text="dumbo", len=0)
 
     def testRepr(self):
         rep = repr(self.instance)
