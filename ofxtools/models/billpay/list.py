@@ -86,4 +86,4 @@ class PAYEETRNRS(TrnRs):
     payeemodrs = SubAggregate(PAYEEMODRS)
     payeedelrs = SubAggregate(PAYEEDELRS)
 
-    optionalMutexes = [('payeerq', 'payeemodrq', 'payeedelrq')]
+    optionalMutexes = [('payeers', 'payeemodrs', 'payeedelrs')]
