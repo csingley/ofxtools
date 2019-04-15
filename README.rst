@@ -42,7 +42,8 @@ It targets compliance with the `OFX specification`_, specifically OFX versions
     * Section 7 (financial institution profile)
     * Section 8 (service activation; account information)
     * Section 9 (email over OFX)
-    * Section 11 (banking) up through 11.7
+    * Section 10 (recurring bank transfers)
+    * Section 11 (banking)
     * Section 13 (investments)
 
 This should cover the great majority of real-world OFX use cases.  A particular
