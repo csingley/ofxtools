@@ -210,27 +210,32 @@ class Aggregate(list):
         """
         cls = self.__class__
         root = ET.Element(cls.__name__)
-        # Append items enumerated in the class definition
-        # (i.e. direct child Elements of the *LIST defined in the OFX spec)
-        # - this is used by subclasses (e.g. Tranlist), not directly by List
-        for spec in self.spec:
-            value = getattr(self, spec)
-            if value is None:
-                continue
-            elif isinstance(value, Aggregate):
-                child = value.to_etree()
-                #  child = value.ungroom(child)
-                root.append(child)
-            else:
-                converter = cls._superdict[spec]
-                text = converter.unconvert(value)
-                ET.SubElement(root, spec.upper()).text = text
+        do_list = True  # HACK
 
-        # FIXME - ordering!
-        #
-        # Append list items
-        for member in self:
-            self._listAppend(root, member)
+        for attr, type_ in self.spec.items():
+            if isinstance(type_, (ListItem, ListElement)):
+                # HACK - the assumption here is that all ListItems/ListElements
+                # occur immediately adjacent to each other in the class
+                # definition.  So when you encounter the first one, process
+                # all Aggregate contained sequence items, then don't do them
+                # again for subsequent ListItems/ListElements.
+                if do_list:
+                    for member in self:
+                        self._listAppend(root, member)
+                    do_list = False
+            else:
+                value = getattr(self, attr)
+                if value is None:
+                    continue
+                elif isinstance(value, Aggregate):
+                    child = value.to_etree()
+                    #  child = value.ungroom(child)
+                    root.append(child)
+                else:
+                    converter = cls._superdict[attr]
+                    text = converter.unconvert(value)
+                    ET.SubElement(root, attr.upper()).text = text
+
         # Hook to modify `ET.ElementTree` after conversion
         return cls.ungroom(root)
 

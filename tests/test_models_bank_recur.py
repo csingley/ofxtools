@@ -18,6 +18,8 @@ from ofxtools.models.bank.recur import (
     RECURRINST,
     RECINTRARQ,
     RECINTRARS,
+    RECINTRATRNRQ,
+    RECINTRATRNRS,
     RECINTERRQ,
     RECINTERRS,
     RECINTRAMODRQ,
@@ -28,6 +30,8 @@ from ofxtools.models.bank.recur import (
     RECINTERMODRS,
     RECINTERCANRQ,
     RECINTERCANRS,
+    RECINTERTRNRQ,
+    RECINTERTRNRS,
 )
 from ofxtools.utils import classproperty
 
@@ -43,22 +47,20 @@ class RecurrinstTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["FREQ"]
     optionalElements = ["NINSTS"]
+    oneOfs = {"FREQ": FREQUENCIES}
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("RECURRINST")
         SubElement(root, "NINSTS").text = "3"
         SubElement(root, "FREQ").text = "MONTHLY"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, RECURRINST)
-        self.assertEqual(instance.ninsts, 3)
-        self.assertEqual(instance.freq, "MONTHLY")
-
-    def testOneOf(self):
-        self.oneOfTest("FREQ", FREQUENCIES)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return RECURRINST(ninsts=3, freq="MONTHLY")
 
 
 class RecintrarqTestCase(unittest.TestCase, base.TestAggregate):
@@ -66,18 +68,19 @@ class RecintrarqTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["RECURRINST", "INTRARQ"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("RECINTRARQ")
-        root.append(RecurrinstTestCase().root)
-        root.append(IntrarqTestCase().root)
+        root.append(RecurrinstTestCase.etree)
+        root.append(IntrarqTestCase.etree)
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, RECINTRARQ)
-        self.assertIsInstance(instance.recurrinst, RECURRINST)
-        self.assertIsInstance(instance.intrarq, INTRARQ)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return RECINTRARQ(recurrinst=RecurrinstTestCase.aggregate,
+                          intrarq=IntrarqTestCase.aggregate)
 
 
 class RecintrarsTestCase(unittest.TestCase, base.TestAggregate):
@@ -85,20 +88,21 @@ class RecintrarsTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["RECSRVRTID", "RECURRINST", "INTRARS"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("RECINTRARS")
         SubElement(root, "RECSRVRTID").text = "DEADBEEF"
-        root.append(RecurrinstTestCase().root)
-        root.append(IntrarsTestCase().root)
+        root.append(RecurrinstTestCase.etree)
+        root.append(IntrarsTestCase.etree)
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, RECINTRARS)
-        self.assertEqual(instance.recsrvrtid, "DEADBEEF")
-        self.assertIsInstance(instance.recurrinst, RECURRINST)
-        self.assertIsInstance(instance.intrars, INTRARS)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return RECINTRARS(recsrvrtid="DEADBEEF",
+                          recurrinst=RecurrinstTestCase.aggregate,
+                          intrars=IntrarsTestCase.aggregate)
 
 
 class RecintramodrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -106,22 +110,23 @@ class RecintramodrqTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["RECSRVRTID", "RECURRINST", "INTRARQ", "MODPENDING"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("RECINTRAMODRQ")
         SubElement(root, "RECSRVRTID").text = "DEADBEEF"
-        root.append(RecurrinstTestCase().root)
-        root.append(IntrarqTestCase().root)
+        root.append(RecurrinstTestCase.etree)
+        root.append(IntrarqTestCase.etree)
         SubElement(root, "MODPENDING").text = "N"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, RECINTRAMODRQ)
-        self.assertEqual(instance.recsrvrtid, "DEADBEEF")
-        self.assertIsInstance(instance.recurrinst, RECURRINST)
-        self.assertIsInstance(instance.intrarq, INTRARQ)
-        self.assertEqual(instance.modpending, False)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return RECINTRAMODRQ(recsrvrtid="DEADBEEF",
+                             recurrinst=RecurrinstTestCase.aggregate,
+                             intrarq=IntrarqTestCase.aggregate,
+                             modpending=False)
 
 
 class RecintramodrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -129,22 +134,23 @@ class RecintramodrsTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["RECSRVRTID", "RECURRINST", "INTRARS", "MODPENDING"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("RECINTRAMODRS")
         SubElement(root, "RECSRVRTID").text = "DEADBEEF"
-        root.append(RecurrinstTestCase().root)
-        root.append(IntrarsTestCase().root)
+        root.append(RecurrinstTestCase.etree)
+        root.append(IntrarsTestCase.etree)
         SubElement(root, "MODPENDING").text = "N"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, RECINTRAMODRS)
-        self.assertEqual(instance.recsrvrtid, "DEADBEEF")
-        self.assertIsInstance(instance.recurrinst, RECURRINST)
-        self.assertIsInstance(instance.intrars, INTRARS)
-        self.assertEqual(instance.modpending, False)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return RECINTRAMODRS(recsrvrtid="DEADBEEF",
+                             recurrinst=RecurrinstTestCase.aggregate,
+                             intrars=IntrarsTestCase.aggregate,
+                             modpending=False)
 
 
 class RecintracanrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -152,18 +158,18 @@ class RecintracanrqTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["RECSRVRTID", "CANPENDING"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("RECINTRACANRQ")
         SubElement(root, "RECSRVRTID").text = "DEADBEEF"
         SubElement(root, "CANPENDING").text = "N"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, RECINTRACANRQ)
-        self.assertEqual(instance.recsrvrtid, "DEADBEEF")
-        self.assertEqual(instance.canpending, False)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return RECINTRACANRQ(recsrvrtid="DEADBEEF", canpending=False)
 
 
 class RecintracanrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -171,18 +177,18 @@ class RecintracanrsTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["RECSRVRTID", "CANPENDING"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("RECINTRACANRS")
         SubElement(root, "RECSRVRTID").text = "DEADBEEF"
         SubElement(root, "CANPENDING").text = "N"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, RECINTRACANRS)
-        self.assertEqual(instance.recsrvrtid, "DEADBEEF")
-        self.assertEqual(instance.canpending, False)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return RECINTRACANRS(recsrvrtid="DEADBEEF", canpending=False)
 
 
 class RecintratrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
@@ -190,12 +196,19 @@ class RecintratrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
 
     wraps = RecintrarqTestCase
 
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return RECINTRATRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
+                             recintrarq=RecintrarqTestCase.aggregate)
+
     @classproperty
     @classmethod
     def validSoup(cls):
         for Test in RecintrarqTestCase, RecintramodrqTestCase, RecintracanrqTestCase:
             root = cls.emptyBase
-            rq = Test().root
+            rq = Test.etree
             root.append(rq)
             yield root
 
@@ -237,7 +250,7 @@ class RecintratrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
         ]:
             root = deepcopy(cls.emptyBase)
             for Test in Tests:
-                root.append(Test().root)
+                root.append(Test.etree)
             yield root
 
         # Wrapped aggregate in the wrong place (should be right after TAN)
@@ -257,10 +270,18 @@ class RecintratrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
 
     @classproperty
     @classmethod
+    def aggregate(cls):
+        return RECINTRATRNRS(trnuid="DEADBEEF",
+                             status=base.StatusTestCase.aggregate,
+                             cltcookie="B00B135",
+                             recintrars=RecintrarsTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(cls):
         for Test in RecintrarsTestCase, RecintramodrsTestCase, RecintracanrsTestCase:
             root = deepcopy(cls.emptyBase)
-            rs = Test().root
+            rs = Test.etree
             root.append(rs)
             yield root
 
@@ -275,7 +296,7 @@ class RecintratrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
         # TRNUID/STATUS/CLTCOOKIE out of order
         trnuid = Element("TRNUID")
         trnuid.text = "DEADBEEF"
-        status = base.StatusTestCase().root
+        status = base.StatusTestCase.etree
         cltcookie = Element("CLTCOOKIE")
         cltcookie.text = "B00B135"
 
@@ -301,7 +322,7 @@ class RecintratrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
         ]:
             root = deepcopy(cls.emptyBase)
             for Test in Tests:
-                root.append(Test().root)
+                root.append(Test.etree)
             yield root
 
         # Wrapped aggregate in the wrong place (should be right after CLTCOOKIE)
@@ -318,18 +339,19 @@ class RecinterrqTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["RECURRINST", "INTERRQ"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("RECINTERRQ")
-        root.append(RecurrinstTestCase().root)
-        root.append(InterrqTestCase().root)
+        root.append(RecurrinstTestCase.etree)
+        root.append(InterrqTestCase.etree)
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, RECINTERRQ)
-        self.assertIsInstance(instance.recurrinst, RECURRINST)
-        self.assertIsInstance(instance.interrq, INTERRQ)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return RECINTERRQ(recurrinst=RecurrinstTestCase.aggregate,
+                          interrq=InterrqTestCase.aggregate)
 
 
 class RecinterrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -338,20 +360,21 @@ class RecinterrsTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["RECSRVRTID", "RECURRINST", "INTERRS"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("RECINTERRS")
         SubElement(root, "RECSRVRTID").text = "DEADBEEF"
-        root.append(RecurrinstTestCase().root)
-        root.append(InterrsTestCase().root)
+        root.append(RecurrinstTestCase.etree)
+        root.append(InterrsTestCase.etree)
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, RECINTERRS)
-        self.assertEqual(instance.recsrvrtid, "DEADBEEF")
-        self.assertIsInstance(instance.recurrinst, RECURRINST)
-        self.assertIsInstance(instance.interrs, INTERRS)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return RECINTERRS(recsrvrtid="DEADBEEF",
+                          recurrinst=RecurrinstTestCase.aggregate,
+                          interrs=InterrsTestCase.aggregate)
 
 
 class RecintermodrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -359,22 +382,23 @@ class RecintermodrqTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["RECSRVRTID", "RECURRINST", "INTERRQ", "MODPENDING"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("RECINTERMODRQ")
         SubElement(root, "RECSRVRTID").text = "DEADBEEF"
-        root.append(RecurrinstTestCase().root)
-        root.append(InterrqTestCase().root)
+        root.append(RecurrinstTestCase.etree)
+        root.append(InterrqTestCase.etree)
         SubElement(root, "MODPENDING").text = "N"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, RECINTERMODRQ)
-        self.assertEqual(instance.recsrvrtid, "DEADBEEF")
-        self.assertIsInstance(instance.recurrinst, RECURRINST)
-        self.assertIsInstance(instance.interrq, INTERRQ)
-        self.assertEqual(instance.modpending, False)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return RECINTERMODRQ(recsrvrtid="DEADBEEF",
+                             recurrinst=RecurrinstTestCase.aggregate,
+                             interrq=InterrqTestCase.aggregate,
+                             modpending=False)
 
 
 class RecintermodrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -382,22 +406,23 @@ class RecintermodrsTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["RECSRVRTID", "RECURRINST", "INTERRS", "MODPENDING"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("RECINTERMODRS")
         SubElement(root, "RECSRVRTID").text = "DEADBEEF"
-        root.append(RecurrinstTestCase().root)
-        root.append(InterrsTestCase().root)
+        root.append(RecurrinstTestCase.etree)
+        root.append(InterrsTestCase.etree)
         SubElement(root, "MODPENDING").text = "N"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, RECINTERMODRS)
-        self.assertEqual(instance.recsrvrtid, "DEADBEEF")
-        self.assertIsInstance(instance.recurrinst, RECURRINST)
-        self.assertIsInstance(instance.interrs, INTERRS)
-        self.assertEqual(instance.modpending, False)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return RECINTERMODRS(recsrvrtid="DEADBEEF",
+                             recurrinst=RecurrinstTestCase.aggregate,
+                             interrs=InterrsTestCase.aggregate,
+                             modpending=False)
 
 
 class RecintercanrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -405,18 +430,18 @@ class RecintercanrqTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["RECSRVRTID", "CANPENDING"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("RECINTERCANRQ")
         SubElement(root, "RECSRVRTID").text = "DEADBEEF"
         SubElement(root, "CANPENDING").text = "N"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, RECINTERCANRQ)
-        self.assertEqual(instance.recsrvrtid, "DEADBEEF")
-        self.assertEqual(instance.canpending, False)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return RECINTERCANRQ(recsrvrtid="DEADBEEF", canpending=False)
 
 
 class RecintercanrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -424,18 +449,18 @@ class RecintercanrsTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["RECSRVRTID", "CANPENDING"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("RECINTERCANRS")
         SubElement(root, "RECSRVRTID").text = "DEADBEEF"
         SubElement(root, "CANPENDING").text = "N"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, RECINTERCANRS)
-        self.assertEqual(instance.recsrvrtid, "DEADBEEF")
-        self.assertEqual(instance.canpending, False)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return RECINTERCANRS(recsrvrtid="DEADBEEF", canpending=False)
 
 
 class RecintertrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
@@ -445,10 +470,16 @@ class RecintertrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
 
     @classproperty
     @classmethod
+    def aggregate(cls):
+        return RECINTERTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
+                             recinterrq=RecinterrqTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(cls):
         for Test in RecinterrqTestCase, RecintermodrqTestCase, RecintercanrqTestCase:
             root = cls.emptyBase
-            rq = Test().root
+            rq = Test.etree
             root.append(rq)
             yield root
 
@@ -490,7 +521,7 @@ class RecintertrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
         ]:
             root = deepcopy(cls.emptyBase)
             for Test in Tests:
-                root.append(Test().root)
+                root.append(Test.etree)
             yield root
 
         # Wrapped aggregate in the wrong place (should be right after TAN)
@@ -510,10 +541,18 @@ class RecintertrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
 
     @classproperty
     @classmethod
+    def aggregate(cls):
+        return RECINTERTRNRS(trnuid="DEADBEEF",
+                             status=base.StatusTestCase.aggregate,
+                             cltcookie="B00B135",
+                             recinterrs=RecinterrsTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(cls):
         for Test in RecinterrsTestCase, RecintermodrsTestCase, RecintercanrsTestCase:
             root = deepcopy(cls.emptyBase)
-            rs = Test().root
+            rs = Test.etree
             root.append(rs)
             yield root
 
@@ -528,7 +567,7 @@ class RecintertrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
         # TRNUID/STATUS/CLTCOOKIE out of order
         trnuid = Element("TRNUID")
         trnuid.text = "DEADBEEF"
-        status = base.StatusTestCase().root
+        status = base.StatusTestCase.etree
         cltcookie = Element("CLTCOOKIE")
         cltcookie.text = "B00B135"
 
@@ -554,7 +593,7 @@ class RecintertrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
         ]:
             root = deepcopy(cls.emptyBase)
             for Test in Tests:
-                root.append(Test().root)
+                root.append(Test.etree)
             yield root
 
         # Wrapped aggregate in the wrong place (should be right after CLTCOOKIE)

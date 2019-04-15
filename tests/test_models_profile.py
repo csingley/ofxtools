@@ -70,7 +70,7 @@ from ofxtools.models.bank.sync import (
     BANKMAILSYNCRS,
 )
 from ofxtools.models.i18n import LANG_CODES
-from ofxtools.utils import UTC
+from ofxtools.utils import UTC, classproperty
 
 
 # test imports
@@ -129,22 +129,21 @@ class ProfrqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["CLIENTROUTING", "DTPROFUP"]
+    oneOfs = {"CLIENTROUTING": ("NONE", "SERVICE", "MSGSET")}
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("PROFRQ")
         SubElement(root, "CLIENTROUTING").text = "SERVICE"
-        SubElement(root, "DTPROFUP").text = "20010401"
+        SubElement(root, "DTPROFUP").text = "20010401000000.000[0:GMT]"
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, PROFRQ)
-        self.assertEqual(root.clientrouting, "SERVICE")
-        self.assertEqual(root.dtprofup, datetime(2001, 4, 1, tzinfo=UTC))
-
-    def testOneOf(self):
-        self.oneOfTest("CLIENTROUTING", ("NONE", "SERVICE", "MSGSET"))
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PROFRQ(clientrouting="SERVICE",
+                      dtprofup=datetime(2001, 4, 1, tzinfo=UTC))
 
 
 class SignoninfoTestCase(unittest.TestCase, base.TestAggregate):
@@ -165,8 +164,11 @@ class SignoninfoTestCase(unittest.TestCase, base.TestAggregate):
     # 'AUTHTOKENINFOURL', 'MFACHALLENGESUPT',
     # 'MFACHALLENGEFIRST', 'ACCESSTOKENREQ', ]
 
-    @property
-    def root(self):
+    oneOfs = {"CHARTYPE": ("ALPHAONLY", "NUMERICONLY", "ALPHAORNUMERIC", "ALPHAANDNUMERIC")}
+
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("SIGNONINFO")
         SubElement(root, "SIGNONREALM").text = "AMERITRADE"
         SubElement(root, "MIN").text = "4"
@@ -188,54 +190,42 @@ class SignoninfoTestCase(unittest.TestCase, base.TestAggregate):
         # SubElement(root, 'ACCESSTOKENREQ').text = 'N'
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SIGNONINFO)
-        self.assertEqual(root.signonrealm, "AMERITRADE")
-        self.assertEqual(root.min, 4)
-        self.assertEqual(root.max, 32)
-        self.assertEqual(root.chartype, "ALPHAORNUMERIC")
-        self.assertEqual(root.casesen, True)
-        self.assertEqual(root.special, False)
-        self.assertEqual(root.spaces, False)
-        self.assertEqual(root.pinch, False)
-        self.assertEqual(root.chgpinfirst, False)
-        # self.assertEqual(root.usercred1label, 'What is your name?')
-        # self.assertEqual(root.usercred2label, 'What is your favorite color?')
-        # self.assertEqual(root.clientuidreq, False)
-        # self.assertEqual(root.authtokenfirst, True)
-        # self.assertEqual(root.authtokenlabel, 'Enigma')
-        # self.assertEqual(root.authtokeninfourl, 'http://www.google.com')
-        # self.assertEqual(root.mfachallengesupt, False)
-        # self.assertEqual(root.mfachallengefirst, True)
-        # self.assertEqual(root.accesstokenreq, False)
-
-    def testOneOf(self):
-        self.oneOfTest(
-            "CHARTYPE",
-            ("ALPHAONLY", "NUMERICONLY", "ALPHAORNUMERIC", "ALPHAANDNUMERIC"),
-        )
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return SIGNONINFO(signonrealm="AMERITRADE", min=4, max=32,
+                          chartype="ALPHAORNUMERIC", casesen=True,
+                          special=False, spaces=False, pinch=False,
+                          chgpinfirst=False)
+        #  usercred1label='What is your name?',
+        #  usercred2label='What is your favorite color?',
+        #  clientuidreq=False,
+        #  authtokenfirst=True,
+        #  authtokenlabel='Enigma',
+        #  authtokeninfourl='http://www.google.com',
+        #  mfachallengesupt=False,
+        #  mfachallengefirst=True,
+        #  accesstokenreq=False,
 
 
 class SignoninfolistTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("SIGNONINFOLIST")
-        # for i in range(2):
-        for i in range(1):
-            signoninfo = SignoninfoTestCase().root
+        for i in range(2):
+        #  for i in range(1):
+            signoninfo = SignoninfoTestCase.etree
             root.append(signoninfo)
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SIGNONINFOLIST)
-        # self.assertEqual(len(root), 2)
-        self.assertEqual(len(root), 1)
-        for child in root:
-            self.assertIsInstance(child, SIGNONINFO)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return SIGNONINFOLIST(SignoninfoTestCase.aggregate,
+                              SignoninfoTestCase.aggregate)
 
 
 class ProfrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -262,14 +252,15 @@ class ProfrsTestCase(unittest.TestCase, base.TestAggregate):
         "EMAIL",
     ]
 
-    @property
-    def msgsetlist(self):
+    @classproperty
+    @classmethod
+    def msgsetlist(cls):
         # Manually define MSGSETLIST here, to avoid circular import
         # from test_models_msgsets
         root = Element("MSGSETLIST")
-        signonmsgset = Element("SIGNONMSGSET")
-        signonmsgsetv1 = Element("SIGNONMSGSETV1")
-        msgsetcore = Element("MSGSETCORE")
+        signonmsgset = SubElement(root, "SIGNONMSGSET")
+        signonmsgsetv1 = SubElement(signonmsgset, "SIGNONMSGSETV1")
+        msgsetcore = SubElement(signonmsgsetv1, "MSGSETCORE")
         SubElement(msgsetcore, "VER").text = "1"
         SubElement(msgsetcore, "URL").text = "https://ofxs.ameritrade.com/cgi-bin/apps/OFX"
         SubElement(msgsetcore, "OFXSEC").text = "NONE"
@@ -279,22 +270,17 @@ class ProfrsTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(msgsetcore, "SYNCMODE").text = "FULL"
         SubElement(msgsetcore, "REFRESHSUPT").text = "N"
         SubElement(msgsetcore, "RESPFILEER").text = "N"
-        SubElement(msgsetcore, "INTU.TIMEOUT").text = "360"
+        #  SubElement(msgsetcore, "INTU.TIMEOUT").text = "360"
         SubElement(msgsetcore, "SPNAME").text = "Dewey Cheatham & Howe"
-        signonmsgsetv1.append(msgsetcore)
-        signonmsgset.append(signonmsgsetv1)
-        root.append(signonmsgset)
-
         return root
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("PROFRS")
-        msgsetlist = self.msgsetlist
-        root.append(msgsetlist)
-        signoninfolist = SignoninfolistTestCase().root
-        root.append(signoninfolist)
-        SubElement(root, "DTPROFUP").text = "20010401"
+        root.append(cls.msgsetlist)
+        root.append(SignoninfolistTestCase.etree)
+        SubElement(root, "DTPROFUP").text = "20010401000000.000[0:GMT]"
         SubElement(root, "FINAME").text = "Dewey Cheatham & Howe"
         SubElement(root, "ADDR1").text = "3717 N Clark St"
         SubElement(root, "ADDR2").text = "Dugout Box, Aisle 19"
@@ -310,29 +296,23 @@ class ProfrsTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "EMAIL").text = "support@ameritrade.com"
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, PROFRS)
-        self.assertIsInstance(root.msgsetlist, MSGSETLIST)
-        self.assertIsInstance(root.signoninfolist, SIGNONINFOLIST)
-        self.assertEqual(root.dtprofup, datetime(2001, 4, 1, tzinfo=UTC))
-        self.assertEqual(root.finame, "Dewey Cheatham & Howe")
-        self.assertEqual(root.addr1, "3717 N Clark St")
-        self.assertEqual(root.addr2, "Dugout Box, Aisle 19")
-        self.assertEqual(root.addr3, "Seat A1")
-        self.assertEqual(root.city, "Chicago")
-        self.assertEqual(root.state, "IL")
-        self.assertEqual(root.postalcode, "60613")
-        self.assertEqual(root.country, "USA")
-        self.assertEqual(root.csphone, "(773) 309-1027")
-        self.assertEqual(root.tsphone, "(773) 309-1028")
-        self.assertEqual(root.faxphone, "(773) 309-1029")
-        self.assertEqual(root.url, "http://www.ameritrade.com")
-        self.assertEqual(root.email, "support@ameritrade.com")
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PROFRS(msgsetlist=Aggregate.from_etree(cls.msgsetlist),
+                      signoninfolist=SignoninfolistTestCase.aggregate,
+                      dtprofup=datetime(2001, 4, 1, tzinfo=UTC),
+                      finame="Dewey Cheatham & Howe", addr1="3717 N Clark St",
+                      addr2="Dugout Box, Aisle 19", addr3="Seat A1",
+                      city="Chicago", state="IL", postalcode="60613",
+                      country="USA", csphone="(773) 309-1027",
+                      tsphone="(773) 309-1028", faxphone="(773) 309-1029",
+                      url="http://www.ameritrade.com",
+                      email="support@ameritrade.com")
 
     def testConvertRemoveProprietaryTag(self):
         # Make sure SONRS.from_etree() removes proprietary tags
-        root = deepcopy(self.root)
+        root = self.etree
         SubElement(root, "INTU.BANKID").text = "12345678"
 
         profrs = Aggregate.from_etree(root)
@@ -363,14 +343,28 @@ class ProftrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
 
     wraps = ProfrqTestCase
 
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PROFTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
+                         profrq=ProfrqTestCase.aggregate)
+
 
 class ProftrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
 
     wraps = ProfrsTestCase
 
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PROFTRNRS(trnuid="DEADBEEF",
+                         status=base.StatusTestCase.aggregate,
+                         cltcookie="B00B135",
+                         profrs=ProfrsTestCase.aggregate)
+
     def testPropertyAliases(self):
-        instance = Aggregate.from_etree(self.root)
+        instance = Aggregate.from_etree(self.etree)
         profile = instance.profile
         self.assertIsInstance(profile, PROFRS)
 

@@ -70,6 +70,36 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
 
     @classproperty
     @classmethod
+    def etree(cls):
+        root = Element("OFX")
+        root.append(Signonmsgsrqv1TestCase.etree)
+        root.append(Signupmsgsrqv1TestCase.etree)
+        root.append(Bankmsgsrqv1TestCase.etree)
+        root.append(Creditcardmsgsrqv1TestCase.etree)
+        root.append(Invstmtmsgsrqv1TestCase.etree)
+        root.append(Interxfermsgsrqv1TestCase.etree)
+        root.append(Wirexfermsgsrqv1TestCase.etree)
+        root.append(Emailmsgsrqv1TestCase.etree)
+        root.append(Seclistmsgsrqv1TestCase.etree)
+        root.append(Profmsgsrqv1TestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return OFX(signonmsgsrqv1=Signonmsgsrqv1TestCase.aggregate,
+                   signupmsgsrqv1=Signupmsgsrqv1TestCase.aggregate,
+                   bankmsgsrqv1=Bankmsgsrqv1TestCase.aggregate,
+                   creditcardmsgsrqv1=Creditcardmsgsrqv1TestCase.aggregate,
+                   invstmtmsgsrqv1=Invstmtmsgsrqv1TestCase.aggregate,
+                   interxfermsgsrqv1=Interxfermsgsrqv1TestCase.aggregate,
+                   wirexfermsgsrqv1=Wirexfermsgsrqv1TestCase.aggregate,
+                   emailmsgsrqv1=Emailmsgsrqv1TestCase.aggregate,
+                   seclistmsgsrqv1=Seclistmsgsrqv1TestCase.aggregate,
+                   profmsgsrqv1=Profmsgsrqv1TestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(cls):
         for signonmsgs, optionalmsgs in [
             (
@@ -102,19 +132,19 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
             ),
         ]:
             root = Element("OFX")
-            root.append(signonmsgs().root)
+            root.append(signonmsgs.etree)
             yield root
             for msgs in optionalmsgs:
-                root.append(msgs().root)
+                root.append(msgs.etree)
                 yield root
 
     @classproperty
     @classmethod
     def invalidSoup(cls):
-        signonmsgsrqv1 = Signonmsgsrqv1TestCase().root
-        signonmsgsrsv1 = Signonmsgsrsv1TestCase().root
-        signupmsgsrqv1 = Signupmsgsrqv1TestCase().root
-        signupmsgsrsv1 = Signupmsgsrsv1TestCase().root
+        signonmsgsrqv1 = Signonmsgsrqv1TestCase.etree
+        signonmsgsrsv1 = Signonmsgsrsv1TestCase.etree
+        signupmsgsrqv1 = Signupmsgsrqv1TestCase.etree
+        signupmsgsrsv1 = Signupmsgsrsv1TestCase.etree
 
         # Neither SIGNONMSGSRQV1 nor SIGNONMSGSRSV1
         root = Element("OFX")

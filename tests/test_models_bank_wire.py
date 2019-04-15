@@ -40,16 +40,24 @@ class WirebeneficiaryTestCase(unittest.TestCase, base.TestAggregate):
 
     @classproperty
     @classmethod
+    def etree(cls):
+        return next(cls.validSoup)
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return WIREBENEFICIARY(name="Elmer Fudd",
+                               bankacctto=BankaccttoTestCase.aggregate,
+                               memo="For hunting wabbits")
+
+    @classproperty
+    @classmethod
     def validSoup(cls):
         root = Element("WIREBENEFICIARY")
         SubElement(root, "NAME").text = "Elmer Fudd"
-        root.append(BankaccttoTestCase().root)
+        root.append(BankaccttoTestCase.etree)
         SubElement(root, "MEMO").text = "For hunting wabbits"
         yield root
-
-    @property
-    def root(self):
-        return next(self.validSoup)
 
     @classproperty
     @classmethod
@@ -62,6 +70,21 @@ class ExtbankdescTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["NAME", "BANKID", "ADDR1", "CITY", "STATE", "POSTALCODE"]
     optionalElements = ["ADDR2", "ADDR3", "COUNTRY", "PHONE"]
+    oneOfs = {"COUNTRY": COUNTRY_CODES}
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        return next(cls.validSoup)
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return EXTBANKDESC(name="Lakov Trust", bankid="123456789",
+                           addr1="123 Main St", addr2="Suite 200",
+                           addr3="Attn: Transfer Dept", city="Dime Box",
+                           state="TX", postalcode="77853", country="USA",
+                           phone="8675309")
 
     @classproperty
     @classmethod
@@ -79,17 +102,10 @@ class ExtbankdescTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "PHONE").text = "8675309"
         yield root
 
-    @property
-    def root(self):
-        return next(self.validSoup)
-
     @classproperty
     @classmethod
     def invalidSoup(cls):
         yield from ()
-
-    def testOneOf(self):
-        self.oneOfTest("COUNTRY", COUNTRY_CODES)
 
 
 class WiredestbankTestCase(unittest.TestCase, base.TestAggregate):
@@ -97,17 +113,18 @@ class WiredestbankTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["EXTBANKDESC"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("WIREDESTBANK")
-        root.append(ExtbankdescTestCase().root)
+        root.append(ExtbankdescTestCase.etree)
 
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, WIREDESTBANK)
-        self.assertIsInstance(instance.extbankdesc, EXTBANKDESC)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return WIREDESTBANK(extbankdesc=ExtbankdescTestCase.aggregate)
 
 
 class WirerqTestCase(unittest.TestCase, base.TestAggregate):
@@ -116,27 +133,28 @@ class WirerqTestCase(unittest.TestCase, base.TestAggregate):
     requiredElements = ["BANKACCTFROM", "WIREBENEFICIARY", "TRNAMT"]
     optionalElements = ["WIREDESTBANK", "DTDUE", "PAYINSTRUCT"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("WIRERQ")
-        root.append(BankacctfromTestCase().root)
-        root.append(WirebeneficiaryTestCase().root)
-        root.append(WiredestbankTestCase().root)
+        root.append(BankacctfromTestCase.etree)
+        root.append(WirebeneficiaryTestCase.etree)
+        root.append(WiredestbankTestCase.etree)
         SubElement(root, "TRNAMT").text = "123.45"
-        SubElement(root, "DTDUE").text = "17760704"
+        SubElement(root, "DTDUE").text = "17760704000000.000[0:GMT]"
         SubElement(root, "PAYINSTRUCT").text = "Fold until all sharp corners"
 
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, WIRERQ)
-        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
-        self.assertIsInstance(instance.wirebeneficiary, WIREBENEFICIARY)
-        self.assertIsInstance(instance.wiredestbank, WIREDESTBANK)
-        self.assertEqual(instance.trnamt, Decimal("123.45"))
-        self.assertEqual(instance.dtdue, datetime(1776, 7, 4, tzinfo=UTC))
-        self.assertEqual(instance.payinstruct, "Fold until all sharp corners")
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return WIRERQ(bankacctfrom=BankacctfromTestCase.aggregate,
+                      wirebeneficiary=WirebeneficiaryTestCase.aggregate,
+                      wiredestbank=WiredestbankTestCase.aggregate,
+                      trnamt=Decimal("123.45"),
+                      dtdue=datetime(1776, 7, 4, tzinfo=UTC),
+                      payinstruct="Fold until all sharp corners")
 
 
 class WirersTestCase(unittest.TestCase, base.TestAggregate):
@@ -153,15 +171,33 @@ class WirersTestCase(unittest.TestCase, base.TestAggregate):
 
     @classproperty
     @classmethod
+    def etree(cls):
+        return next(cls.validSoup)
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return WIRERS(curdef="USD", srvrtid="DEADBEEF",
+                      bankacctfrom=BankacctfromTestCase.aggregate,
+                      wirebeneficiary=WirebeneficiaryTestCase.aggregate,
+                      wiredestbank=WiredestbankTestCase.aggregate,
+                      trnamt=Decimal("123.45"),
+                      dtdue=datetime(1776, 7, 4, tzinfo=UTC),
+                      payinstruct="Fold until all sharp corners",
+                      dtxferprj=datetime(1776, 7, 4, tzinfo=UTC),
+                      fee=Decimal("123.45"), confmsg="You're good!")
+
+    @classproperty
+    @classmethod
     def emptyBase(cls):
         root = Element("WIRERS")
         SubElement(root, "CURDEF").text = "USD"
         SubElement(root, "SRVRTID").text = "DEADBEEF"
-        root.append(BankacctfromTestCase().root)
-        root.append(WirebeneficiaryTestCase().root)
-        root.append(WiredestbankTestCase().root)
+        root.append(BankacctfromTestCase.etree)
+        root.append(WirebeneficiaryTestCase.etree)
+        root.append(WiredestbankTestCase.etree)
         SubElement(root, "TRNAMT").text = "123.45"
-        SubElement(root, "DTDUE").text = "17760704"
+        SubElement(root, "DTDUE").text = "17760704000000.000[0:GMT]"
         SubElement(root, "PAYINSTRUCT").text = "Fold until all sharp corners"
 
         return root
@@ -170,10 +206,10 @@ class WirersTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def validSoup(cls):
         dtxferprj = Element("DTXFERPRJ")
-        dtxferprj.text = "17760704"
+        dtxferprj.text = "17760704000000.000[0:GMT]"
 
         dtposted = Element("DTPOSTED")
-        dtposted.text = "17760704"
+        dtposted.text = "17760704000000.000[0:GMT]"
 
         for dtChoice in dtxferprj, dtposted:
             root = cls.emptyBase
@@ -186,18 +222,13 @@ class WirersTestCase(unittest.TestCase, base.TestAggregate):
         # Opional mutex
         yield cls.emptyBase
 
-    @property
-    def root(self):
-        return next(self.validSoup)
-
     @classproperty
     @classmethod
     def invalidSoup(cls):
         dtxferprj = Element("DTXFERPRJ")
-        dtxferprj.text = "17760704"
-
+        dtxferprj.text = "17760704000000.000[0:GMT]"
         dtposted = Element("DTPOSTED")
-        dtposted.text = "17760704"
+        dtposted.text = "17760704000000.000[0:GMT]"
 
         # Mutex
         root = cls.emptyBase
@@ -211,17 +242,18 @@ class WirecanrqTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["SRVRTID"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("WIRECANRQ")
         SubElement(root, "SRVRTID").text = "DEADBEEF"
 
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, WIRECANRQ)
-        self.assertEqual(instance.srvrtid, "DEADBEEF")
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return WIRECANRQ(srvrtid="DEADBEEF")
 
 
 class WirecanrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -229,17 +261,18 @@ class WirecanrsTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["SRVRTID"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("WIRECANRS")
         SubElement(root, "SRVRTID").text = "DEADBEEF"
 
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, WIRECANRS)
-        self.assertEqual(instance.srvrtid, "DEADBEEF")
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return WIRECANRS(srvrtid="DEADBEEF")
 
 
 class WiretrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
@@ -247,11 +280,25 @@ class WiretrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
 
     wraps = WirerqTestCase
 
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return WIRETRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
+                         wirerq=WirerqTestCase.aggregate)
+
 
 class WiretrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
 
     wraps = WirersTestCase
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return WIRETRNRS(trnuid="DEADBEEF",
+                         status=base.StatusTestCase.aggregate,
+                         cltcookie="B00B135",
+                         wirers=WirersTestCase.aggregate)
 
 
 if __name__ == "__main__":

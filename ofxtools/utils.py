@@ -6,8 +6,6 @@ import datetime
 import os
 import itertools
 
-#  import calendar
-#  import itertools
 
 # local imports
 from ofxtools.lib import NUMBERING_AGENCIES

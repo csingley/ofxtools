@@ -194,125 +194,120 @@ from test_models_signup import WebenrollTestCase, EnrolltrnrqTestCase, Enrolltrn
 class Signonmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("SIGNONMSGSRQV1")
-        sonrq = SonrqTestCase().root
-        root.append(sonrq)
+        root.append(SonrqTestCase.etree)
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SIGNONMSGSRQV1)
-        self.assertIsInstance(root.sonrq, SONRQ)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return SIGNONMSGSRQV1(sonrq=SonrqTestCase.aggregate)
 
 
 class Signonmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("SIGNONMSGSRSV1")
-        sonrs = SonrsTestCase().root
-        root.append(sonrs)
+        root.append(SonrsTestCase.etree)
         return root
 
-    def testConvert(self):
-        # Make sure Aggregate.from_etree() calls Element.convert() and sets
-        # Aggregate instance attributes with the result
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SIGNONMSGSRSV1)
-        self.assertIsInstance(root.sonrs, SONRS)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return SIGNONMSGSRSV1(sonrs=SonrsTestCase.aggregate)
 
 
 class Signonmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("SIGNONMSGSETV1")
-        msgsetcore = MsgsetcoreTestCase().root
-        root.append(msgsetcore)
+        root.append(MsgsetcoreTestCase.etree)
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SIGNONMSGSETV1)
-        self.assertIsInstance(root.msgsetcore, MSGSETCORE)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return SIGNONMSGSETV1(msgsetcore=MsgsetcoreTestCase.aggregate)
 
 
 class SignonmsgsetTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("SIGNONMSGSET")
-        signonmsgsetv1 = Signonmsgsetv1TestCase().root
-        root.append(signonmsgsetv1)
+        root.append(Signonmsgsetv1TestCase.etree)
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SIGNONMSGSET)
-        self.assertIsInstance(root.signonmsgsetv1, SIGNONMSGSETV1)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return SIGNONMSGSET(signonmsgsetv1=Signonmsgsetv1TestCase.aggregate)
 
 
 class Profmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("PROFMSGSRQV1")
         for i in range(2):
-            proftrnrq = ProftrnrqTestCase().root
-            root.append(proftrnrq)
+            root.append(ProftrnrqTestCase.etree)
         return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PROFMSGSRQV1(ProftrnrqTestCase.aggregate,
+                            ProftrnrqTestCase.aggregate)
 
     def testListItem(self):
         # PROFMSGSRQV1 may only contain PROFTRNRQ
         listitems = PROFMSGSRQV1.listitems
         self.assertEqual(len(listitems), 1)
-        root = deepcopy(self.root)
-        root.append(ProftrnrsTestCase().root)
+        root = self.etree
+        root.append(ProftrnrsTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, PROFMSGSRQV1)
-        self.assertEqual(len(root), 2)
-        for stmttrnrs in root:
-            self.assertIsInstance(stmttrnrs, PROFTRNRQ)
 
 
 class Profmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("PROFMSGSRSV1")
         for i in range(2):
-            proftrnrs = ProftrnrsTestCase().root
-            root.append(proftrnrs)
+            root.append(ProftrnrsTestCase.etree)
         return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PROFMSGSRSV1(ProftrnrsTestCase.aggregate, ProftrnrsTestCase.aggregate)
 
     def testListItems(self):
         # PROFMSGSRSV1 may only contain PROFTRNRS
         listitems = PROFMSGSRSV1.listitems
         self.assertEqual(len(listitems), 1)
-        root = deepcopy(self.root)
-        root.append(ProftrnrqTestCase().root)
+        root = self.etree
+        root.append(ProftrnrqTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, PROFMSGSRSV1)
-        self.assertEqual(len(root), 2)
-        for stmttrnrs in root:
-            self.assertIsInstance(stmttrnrs, PROFTRNRS)
 
 
 class Profmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
@@ -320,93 +315,90 @@ class Profmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["MSGSETCORE"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("PROFMSGSETV1")
-        msgsetcore = MsgsetcoreTestCase().root
-        root.append(msgsetcore)
+        root.append(MsgsetcoreTestCase.etree)
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, PROFMSGSETV1)
-        self.assertIsInstance(root.msgsetcore, MSGSETCORE)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PROFMSGSETV1(msgsetcore=MsgsetcoreTestCase.aggregate)
 
 
 class ProfmsgsetTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("PROFMSGSET")
-        msgsetv1 = Profmsgsetv1TestCase().root
-        root.append(msgsetv1)
+        root.append(Profmsgsetv1TestCase.etree)
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, PROFMSGSET)
-        self.assertIsInstance(root.profmsgsetv1, PROFMSGSETV1)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PROFMSGSET(profmsgsetv1=Profmsgsetv1TestCase.aggregate)
 
 
 class Signupmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("SIGNUPMSGSRQV1")
         for i in range(2):
-            enrolltrnrq = EnrolltrnrqTestCase().root
-            root.append(enrolltrnrq)
+            root.append(EnrolltrnrqTestCase.etree)
         return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return SIGNUPMSGSRQV1(EnrolltrnrqTestCase.aggregate,
+                              EnrolltrnrqTestCase.aggregate)
 
     def testListItems(self):
         # SIGNUPMSGSRQV1 may contain
         # ["ENROLLTRNRQ", "ACCTINFOTRNRQ", "ACCTTRNRQ", "CHGUSERINFOTRNRQ"]
         listitems = SIGNUPMSGSRQV1.listitems
         self.assertEqual(len(listitems), 4)
-        root = deepcopy(self.root)
-        root.append(EnrolltrnrsTestCase().root)
+        root = self.etree
+        root.append(EnrolltrnrsTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, SIGNUPMSGSRQV1)
-        self.assertEqual(len(instance), 2)
-        for stmttrnrs in instance:
-            self.assertIsInstance(stmttrnrs, ENROLLTRNRQ)
 
 
 class Signupmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("SIGNUPMSGSRSV1")
         for i in range(2):
-            enrolltrnrs = EnrolltrnrsTestCase().root
-            root.append(enrolltrnrs)
+            root.append(EnrolltrnrsTestCase.etree)
         return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return SIGNUPMSGSRSV1(EnrolltrnrsTestCase.aggregate, EnrolltrnrsTestCase.aggregate)
 
     def testListItems(self):
         # SIGNUPMSGSRSV1 may contain
         # ["ENROLLTRNRS", "ACCTINFOTRNRS", "ACCTTRNRS", "CHGUSERINFOTRNRS"]
         listitems = SIGNUPMSGSRSV1.listitems
         self.assertEqual(len(listitems), 4)
-        root = deepcopy(self.root)
-        root.append(EnrolltrnrqTestCase().root)
+        root = self.etree
+        root.append(EnrolltrnrqTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, SIGNUPMSGSRSV1)
-        self.assertEqual(len(instance), 2)
-        for stmttrnrs in instance:
-            self.assertIsInstance(stmttrnrs, ENROLLTRNRS)
 
 
 class Signupmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
@@ -414,26 +406,25 @@ class Signupmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["MSGSETCORE", "CHGUSERINFO", "AVAILACCTS", "CLIENTACTREQ"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("SIGNUPMSGSETV1")
-        msgsetcore = MsgsetcoreTestCase().root
-        root.append(msgsetcore)
-        enroll = WebenrollTestCase().root
-        root.append(enroll)
+        root.append(MsgsetcoreTestCase.etree)
+        root.append(WebenrollTestCase.etree)
         SubElement(root, "CHGUSERINFO").text = "N"
         SubElement(root, "AVAILACCTS").text = "Y"
         SubElement(root, "CLIENTACTREQ").text = "N"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, SIGNUPMSGSETV1)
-        self.assertIsInstance(instance.msgsetcore, MSGSETCORE)
-        self.assertIsInstance(instance.webenroll, WEBENROLL)
-        self.assertEqual(instance.chguserinfo, False)
-        self.assertEqual(instance.availaccts, True)
-        self.assertEqual(instance.clientactreq, False)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return SIGNUPMSGSETV1(msgsetcore=MsgsetcoreTestCase.aggregate,
+                              webenroll=WebenrollTestCase.aggregate,
+                              chguserinfo=False,
+                              availaccts=True,
+                              clientactreq=False)
 
 
 class SignupmsgsetTestCase(unittest.TestCase, base.TestAggregate):
@@ -441,129 +432,124 @@ class SignupmsgsetTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["SIGNUPMSGSETV1"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("SIGNUPMSGSET")
-        signup = Signupmsgsetv1TestCase().root
-        root.append(signup)
+        root.append(Signupmsgsetv1TestCase.etree)
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, SIGNUPMSGSET)
-        self.assertIsInstance(instance.signupmsgsetv1, SIGNUPMSGSETV1)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return SIGNUPMSGSET(signupmsgsetv1=Signupmsgsetv1TestCase.aggregate)
 
 
 class Emailmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("EMAILMSGSRQV1")
         for rq in (MailtrnrqTestCase, GetmimetrnrqTestCase, MailsyncrqTestCase):
             for i in range(2):
-                root.append(rq().root)
+                root.append(rq.etree)
         return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return EMAILMSGSRQV1(
+            MailtrnrqTestCase.aggregate, MailtrnrqTestCase.aggregate,
+            GetmimetrnrqTestCase.aggregate, GetmimetrnrqTestCase.aggregate,
+            MailsyncrqTestCase.aggregate, MailsyncrqTestCase.aggregate)
 
     def testListItems(self):
         # EMAILMSGSRQV1 may contain ["MAILTRNRQ", "GETMIMETRNRQ", "MAILSYNCRQ"]
-
         listitems = EMAILMSGSRQV1.listitems
         self.assertEqual(len(listitems), 3)
-        root = deepcopy(self.root)
-        root.append(MailtrnrsTestCase().root)
+        root = self.etree
+        root.append(MailtrnrsTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, EMAILMSGSRQV1)
-        self.assertEqual(len(instance), 6)
-        self.assertIsInstance(instance[0], MAILTRNRQ)
-        self.assertIsInstance(instance[1], MAILTRNRQ)
-        self.assertIsInstance(instance[2], GETMIMETRNRQ)
-        self.assertIsInstance(instance[3], GETMIMETRNRQ)
-        self.assertIsInstance(instance[4], MAILSYNCRQ)
-        self.assertIsInstance(instance[5], MAILSYNCRQ)
 
 
 class Emailmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("EMAILMSGSRSV1")
         for rs in (MailtrnrsTestCase, GetmimetrnrsTestCase, MailsyncrsTestCase):
             for i in range(2):
-                root.append(rs().root)
+                root.append(rs.etree)
         return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return EMAILMSGSRSV1(MailtrnrsTestCase.aggregate,
+                             MailtrnrsTestCase.aggregate,
+                             GetmimetrnrsTestCase.aggregate,
+                             GetmimetrnrsTestCase.aggregate,
+                             
+                             MailsyncrsTestCase.aggregate, MailsyncrsTestCase.aggregate)
 
     def testListItems(self):
         # EMAILMSGSRSV1 may contain ["MAILTRNRS", "GETMIMETRNRS", "MAILSYNCRS"]
-
         listitems = EMAILMSGSRSV1.listitems
         self.assertEqual(len(listitems), 3)
-        root = deepcopy(self.root)
-        root.append(MailtrnrqTestCase().root)
+        root = self.etree
+        root.append(MailtrnrqTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, EMAILMSGSRSV1)
-        self.assertEqual(len(instance), 6)
-        self.assertIsInstance(instance[0], MAILTRNRS)
-        self.assertIsInstance(instance[1], MAILTRNRS)
-        self.assertIsInstance(instance[2], GETMIMETRNRS)
-        self.assertIsInstance(instance[3], GETMIMETRNRS)
-        self.assertIsInstance(instance[4], MAILSYNCRS)
-        self.assertIsInstance(instance[5], MAILSYNCRS)
 
 
 class Emailmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("EMAILMSGSETV1")
-        msgsetcore = MsgsetcoreTestCase().root
-        root.append(msgsetcore)
+        root.append(MsgsetcoreTestCase.etree)
         SubElement(root, "MAILSUP").text = "Y"
         SubElement(root, "GETMIMESUP").text = "Y"
-
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, EMAILMSGSETV1)
-        self.assertIsInstance(root.msgsetcore, MSGSETCORE)
-        self.assertEqual(root.mailsup, True)
-        self.assertEqual(root.getmimesup, True)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return EMAILMSGSETV1(msgsetcore=MsgsetcoreTestCase.aggregate,
+                             mailsup=True, getmimesup=True)
 
 
 class EmailmsgsetTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("EMAILMSGSET")
-        msgsetv1 = Emailmsgsetv1TestCase().root
-        root.append(msgsetv1)
+        root.append(Emailmsgsetv1TestCase.etree)
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, EMAILMSGSET)
-        self.assertIsInstance(root.emailmsgsetv1, EMAILMSGSETV1)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return EMAILMSGSET(emailmsgsetv1=Emailmsgsetv1TestCase.aggregate)
 
 
 class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("BANKMSGSRQV1")
         for rq in (
             StmttrnrqTestCase,
@@ -578,8 +564,32 @@ class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
             BankmailsyncrqTestCase,
         ):
             for i in range(2):
-                root.append(rq().root)
+                root.append(rq.etree)
         return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return BANKMSGSRQV1(StmttrnrqTestCase.aggregate,
+                            StmttrnrqTestCase.aggregate,
+                            StmtendtrnrqTestCase.aggregate,
+                            StmtendtrnrqTestCase.aggregate,
+                            StpchktrnrqTestCase.aggregate,
+                            StpchktrnrqTestCase.aggregate,
+                            IntratrnrqTestCase.aggregate,
+                            IntratrnrqTestCase.aggregate,
+                            RecintratrnrqTestCase.aggregate,
+                            RecintratrnrqTestCase.aggregate,
+                            BankmailtrnrqTestCase.aggregate,
+                            BankmailtrnrqTestCase.aggregate,
+                            StpchksyncrqTestCase.aggregate,
+                            StpchksyncrqTestCase.aggregate,
+                            IntrasyncrqTestCase.aggregate,
+                            IntrasyncrqTestCase.aggregate,
+                            RecintrasyncrqTestCase.aggregate,
+                            RecintrasyncrqTestCase.aggregate,
+                            BankmailsyncrqTestCase.aggregate,
+                            BankmailsyncrqTestCase.aggregate)
 
     def testListItems(self):
         # BANKMSGSRQV1 may contain
@@ -589,43 +599,19 @@ class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
 
         listitems = BANKMSGSRQV1.listitems
         self.assertEqual(len(listitems), 10)
-        root = deepcopy(self.root)
-        root.append(StmttrnrsTestCase().root)
+        root = self.etree
+        root.append(StmttrnrsTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, BANKMSGSRQV1)
-        self.assertEqual(len(instance), 20)
-        self.assertIsInstance(instance[0], STMTTRNRQ)
-        self.assertIsInstance(instance[1], STMTTRNRQ)
-        self.assertIsInstance(instance[2], STMTENDTRNRQ)
-        self.assertIsInstance(instance[3], STMTENDTRNRQ)
-        self.assertIsInstance(instance[4], STPCHKTRNRQ)
-        self.assertIsInstance(instance[5], STPCHKTRNRQ)
-        self.assertIsInstance(instance[6], INTRATRNRQ)
-        self.assertIsInstance(instance[7], INTRATRNRQ)
-        self.assertIsInstance(instance[8], RECINTRATRNRQ)
-        self.assertIsInstance(instance[9], RECINTRATRNRQ)
-        self.assertIsInstance(instance[10], BANKMAILTRNRQ)
-        self.assertIsInstance(instance[11], BANKMAILTRNRQ)
-        self.assertIsInstance(instance[12], STPCHKSYNCRQ)
-        self.assertIsInstance(instance[13], STPCHKSYNCRQ)
-        self.assertIsInstance(instance[14], INTRASYNCRQ)
-        self.assertIsInstance(instance[15], INTRASYNCRQ)
-        self.assertIsInstance(instance[16], RECINTRASYNCRQ)
-        self.assertIsInstance(instance[17], RECINTRASYNCRQ)
-        self.assertIsInstance(instance[18], BANKMAILSYNCRQ)
-        self.assertIsInstance(instance[19], BANKMAILSYNCRQ)
 
 
 class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("BANKMSGSRSV1")
         for rs in (
             StmttrnrsTestCase,
@@ -640,8 +626,32 @@ class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
             BankmailsyncrsTestCase,
         ):
             for i in range(2):
-                root.append(rs().root)
+                root.append(rs.etree)
         return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return BANKMSGSRSV1(StmttrnrsTestCase.aggregate,
+                            StmttrnrsTestCase.aggregate,
+                            StmtendtrnrsTestCase.aggregate,
+                            StmtendtrnrsTestCase.aggregate,
+                            StpchktrnrsTestCase.aggregate,
+                            StpchktrnrsTestCase.aggregate,
+                            IntratrnrsTestCase.aggregate,
+                            IntratrnrsTestCase.aggregate,
+                            RecintratrnrsTestCase.aggregate,
+                            RecintratrnrsTestCase.aggregate,
+                            BankmailtrnrsTestCase.aggregate,
+                            BankmailtrnrsTestCase.aggregate,
+                            StpchksyncrsTestCase.aggregate,
+                            StpchksyncrsTestCase.aggregate,
+                            IntrasyncrsTestCase.aggregate,
+                            IntrasyncrsTestCase.aggregate,
+                            RecintrasyncrsTestCase.aggregate,
+                            RecintrasyncrsTestCase.aggregate,
+                            BankmailsyncrsTestCase.aggregate,
+                            BankmailsyncrsTestCase.aggregate)
 
     def testListItems(self):
         # BANKMSGSRSV! may contain
@@ -650,39 +660,14 @@ class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         # "RECINTRASYNCRS", "BANKMAILSYNCRS"]
         listitems = BANKMSGSRSV1.listitems
         self.assertEqual(len(listitems), 10)
-        root = deepcopy(self.root)
-        root.append(StmttrnrqTestCase().root)
+        root = self.etree
+        root.append(StmttrnrqTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, BANKMSGSRSV1)
-        self.assertEqual(len(instance), 20)
-        self.assertIsInstance(instance[0], STMTTRNRS)
-        self.assertIsInstance(instance[1], STMTTRNRS)
-        self.assertIsInstance(instance[2], STMTENDTRNRS)
-        self.assertIsInstance(instance[3], STMTENDTRNRS)
-        self.assertIsInstance(instance[4], STPCHKTRNRS)
-        self.assertIsInstance(instance[5], STPCHKTRNRS)
-        self.assertIsInstance(instance[6], INTRATRNRS)
-        self.assertIsInstance(instance[7], INTRATRNRS)
-        self.assertIsInstance(instance[8], RECINTRATRNRS)
-        self.assertIsInstance(instance[9], RECINTRATRNRS)
-        self.assertIsInstance(instance[10], BANKMAILTRNRS)
-        self.assertIsInstance(instance[11], BANKMAILTRNRS)
-        self.assertIsInstance(instance[12], STPCHKSYNCRS)
-        self.assertIsInstance(instance[13], STPCHKSYNCRS)
-        self.assertIsInstance(instance[14], INTRASYNCRS)
-        self.assertIsInstance(instance[15], INTRASYNCRS)
-        self.assertIsInstance(instance[16], RECINTRASYNCRS)
-        self.assertIsInstance(instance[17], RECINTRASYNCRS)
-        self.assertIsInstance(instance[18], BANKMAILSYNCRS)
-        self.assertIsInstance(instance[19], BANKMAILSYNCRS)
-
     def testPropertyAliases(self):
-        instance = Aggregate.from_etree(self.root)
+        instance = Aggregate.from_etree(self.etree)
         self.assertIsInstance(instance.statements, list)
         self.assertEqual(len(instance.statements), 2)
         self.assertIsInstance(instance.statements[0], STMTRS)
@@ -692,11 +677,12 @@ class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
 class XferprofTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("XFERPROF")
         SubElement(root, "PROCDAYSOFF").text = "SUNDAY"
-        SubElement(root, "PROCENDTM").text = "170000"
+        SubElement(root, "PROCENDTM").text = "170000.000[0:GMT]"
         SubElement(root, "CANSCHED").text = "Y"
         SubElement(root, "CANRECUR").text = "Y"
         SubElement(root, "CANMODXFER").text = "N"
@@ -704,154 +690,137 @@ class XferprofTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "MODELWND").text = "3"
         SubElement(root, "DAYSWITH").text = "2"
         SubElement(root, "DFLTDAYSTOPAY").text = "4"
-
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, XFERPROF)
-        self.assertEqual(instance.procdaysoff, None)  # Unsupported
-        self.assertEqual(instance.procendtm, time(17, 0, 0, tzinfo=UTC))
-        self.assertEqual(instance.cansched, True)
-        self.assertEqual(instance.canrecur, True)
-        self.assertEqual(instance.canmodxfer, False)
-        self.assertEqual(instance.canmodmdls, True)
-        self.assertEqual(instance.modelwnd, 3)
-        self.assertEqual(instance.dayswith, 2)
-        self.assertEqual(instance.dfltdaystopay, 4)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return XFERPROF("SUNDAY",
+                        procendtm=time(17, 0, 0, tzinfo=UTC), cansched=True,
+                        canrecur=True, canmodxfer=False, canmodmdls=True,
+                        modelwnd=3, dayswith=2, dfltdaystopay=4)
 
 
 class StpchkprofTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("STPCHKPROF")
         SubElement(root, "PROCDAYSOFF").text = "SUNDAY"
-        SubElement(root, "PROCENDTM").text = "170000"
+        SubElement(root, "PROCENDTM").text = "170000.000[0:GMT]"
         SubElement(root, "CANUSERANGE").text = "Y"
         SubElement(root, "CANUSEDESC").text = "Y"
         SubElement(root, "STPCHKFEE").text = "30.1"
 
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, STPCHKPROF)
-        self.assertEqual(instance.procdaysoff, None)  # Unsupported
-        self.assertEqual(instance.procendtm, time(17, 0, 0, tzinfo=UTC))
-        self.assertEqual(instance.canuserange, True)
-        self.assertEqual(instance.canusedesc, True)
-        self.assertEqual(instance.stpchkfee, Decimal("30.1"))
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return STPCHKPROF("SUNDAY",
+                          procendtm=time(17, 0, 0, tzinfo=UTC),
+                          canuserange=True, canusedesc=True,
+                          stpchkfee=Decimal("30.1"))
 
 
 class EmailprofTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("EMAILPROF")
         SubElement(root, "CANEMAIL").text = "Y"
         SubElement(root, "CANNOTIFY").text = "N"
-
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, EMAILPROF)
-        self.assertEqual(instance.canemail, True)
-        self.assertEqual(instance.cannotify, False)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return EMAILPROF(canemail=True, cannotify=False)
 
 
 class Bankmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    oneOfs = {"INVALIDACCTTYPE": ACCTTYPES}
+
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("BANKMSGSETV1")
-        msgsetcore = MsgsetcoreTestCase().root
-        root.append(msgsetcore)
+        root.append(MsgsetcoreTestCase.etree)
         SubElement(root, "INVALIDACCTTYPE").text = "CHECKING"
         SubElement(root, "CLOSINGAVAIL").text = "Y"
         SubElement(root, "PENDINGAVAIL").text = "N"
-        xferprof = XferprofTestCase().root
-        root.append(xferprof)
-        stpchkprof = StpchkprofTestCase().root
-        root.append(stpchkprof)
-        emailprof = EmailprofTestCase().root
-        root.append(emailprof)
-
+        root.append(XferprofTestCase.etree)
+        root.append(StpchkprofTestCase.etree)
+        root.append(EmailprofTestCase.etree)
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, BANKMSGSETV1)
-        self.assertIsInstance(root.msgsetcore, MSGSETCORE)
-        self.assertEqual(root.invalidaccttype, "CHECKING")
-        self.assertEqual(root.closingavail, True)
-        self.assertEqual(root.pendingavail, False)
-        self.assertIsInstance(root.xferprof, XFERPROF)
-        self.assertIsInstance(root.stpchkprof, STPCHKPROF)
-        self.assertIsInstance(root.emailprof, EMAILPROF)
-
-    def testOneOf(self):
-        self.oneOfTest("INVALIDACCTTYPE", ACCTTYPES)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return BANKMSGSETV1(msgsetcore=MsgsetcoreTestCase.aggregate,
+                            invalidaccttype="CHECKING",
+                            closingavail=True, pendingavail=False,
+                            xferprof=XferprofTestCase.aggregate,
+                            stpchkprof=StpchkprofTestCase.aggregate,
+                            emailprof=EmailprofTestCase.aggregate)
 
 
 class BankmsgsetTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("BANKMSGSET")
-        bankmsgsetv1 = Bankmsgsetv1TestCase().root
-        root.append(bankmsgsetv1)
+        root.append(Bankmsgsetv1TestCase.etree)
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, BANKMSGSET)
-        self.assertIsInstance(root.bankmsgsetv1, BANKMSGSETV1)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return BANKMSGSET(bankmsgsetv1=Bankmsgsetv1TestCase.aggregate)
 
 
 class Creditcardmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("CREDITCARDMSGSRQV1")
-        ccstmttrnrq = CcstmttrnrqTestCase().root
-        root.append(ccstmttrnrq)
-        ccstmtendtrnrq = CcstmtendtrnrqTestCase().root
-        root.append(ccstmtendtrnrq)
+        root.append(CcstmttrnrqTestCase.etree)
+        root.append(CcstmtendtrnrqTestCase.etree)
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, CREDITCARDMSGSRQV1)
-        self.assertEqual(len(root), 2)
-        self.assertIsInstance(root[0], CCSTMTTRNRQ)
-        self.assertIsInstance(root[1], CCSTMTENDTRNRQ)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CREDITCARDMSGSRQV1(CcstmttrnrqTestCase.aggregate,
+                                  CcstmtendtrnrqTestCase.aggregate)
 
 
 class Creditcardmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("CREDITCARDMSGSRSV1")
-        ccstmttrnrs = CcstmttrnrsTestCase().root
-        root.append(ccstmttrnrs)
-        ccstmtendtrnrs = CcstmtendtrnrsTestCase().root
-        root.append(ccstmtendtrnrs)
+        root.append(CcstmttrnrsTestCase.etree)
+        root.append(CcstmtendtrnrsTestCase.etree)
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, CREDITCARDMSGSRSV1)
-        self.assertEqual(len(root), 2)
-        self.assertIsInstance(root[0], CCSTMTTRNRS)
-        self.assertIsInstance(root[1], CCSTMTENDTRNRS)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CREDITCARDMSGSRSV1(CcstmttrnrsTestCase.aggregate,
+                                  CcstmtendtrnrsTestCase.aggregate)
 
 
 class Creditcardmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
@@ -860,45 +829,44 @@ class Creditcardmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
     requiredElements = ["MSGSETCORE", "CLOSINGAVAIL"]
     optionalElements = ["PENDINGAVAIL"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("CREDITCARDMSGSETV1")
-        msgsetcore = MsgsetcoreTestCase().root
-        root.append(msgsetcore)
+        root.append(MsgsetcoreTestCase.etree)
         SubElement(root, "CLOSINGAVAIL").text = "Y"
         SubElement(root, "PENDINGAVAIL").text = "N"
-
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, CREDITCARDMSGSETV1)
-        self.assertIsInstance(root.msgsetcore, MSGSETCORE)
-        self.assertEqual(root.closingavail, True)
-        self.assertEqual(root.pendingavail, False)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CREDITCARDMSGSETV1(msgsetcore=MsgsetcoreTestCase.aggregate,
+                                  closingavail=True, pendingavail=False)
 
 
 class CreditcardmsgsetTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("CREDITCARDMSGSET")
-        bankstmtmsgsetv1 = Creditcardmsgsetv1TestCase().root
-        root.append(bankstmtmsgsetv1)
+        root.append(Creditcardmsgsetv1TestCase.etree)
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, CREDITCARDMSGSET)
-        self.assertIsInstance(root.creditcardmsgsetv1, CREDITCARDMSGSETV1)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CREDITCARDMSGSET(creditcardmsgsetv1=Creditcardmsgsetv1TestCase.aggregate)
 
 
 class Interxfermsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("INTERXFERMSGSRQV1")
         for rq in (
             IntertrnrqTestCase,
@@ -907,39 +875,39 @@ class Interxfermsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
             RecintersyncrqTestCase,
         ):
             for i in range(2):
-                root.append(rq().root)
+                root.append(rq.etree)
         return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return INTERXFERMSGSRQV1(IntertrnrqTestCase.aggregate,
+                                 IntertrnrqTestCase.aggregate,
+                                 RecintertrnrqTestCase.aggregate,
+                                 RecintertrnrqTestCase.aggregate,
+                                 IntersyncrqTestCase.aggregate,
+                                 IntersyncrqTestCase.aggregate,
+                                 RecintersyncrqTestCase.aggregate,
+                                 RecintersyncrqTestCase.aggregate)
 
     def testListItems(self):
         # INTERXFERMSGSRQV1 may contain
         # ["INTERTRNRQ", "RECINTERTRNRQ", "INTERSYNCRQ", "RECINTERSYNCRQ"]
         listitems = INTERXFERMSGSRQV1.listitems
         self.assertEqual(len(listitems), 4)
-        root = deepcopy(self.root)
-        root.append(IntertrnrsTestCase().root)
+        root = self.etree
+        root.append(IntertrnrsTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, INTERXFERMSGSRQV1)
-        self.assertEqual(len(instance), 8)
-        self.assertIsInstance(instance[0], INTERTRNRQ)
-        self.assertIsInstance(instance[1], INTERTRNRQ)
-        self.assertIsInstance(instance[2], RECINTERTRNRQ)
-        self.assertIsInstance(instance[3], RECINTERTRNRQ)
-        self.assertIsInstance(instance[4], INTERSYNCRQ)
-        self.assertIsInstance(instance[5], INTERSYNCRQ)
-        self.assertIsInstance(instance[6], RECINTERSYNCRQ)
-        self.assertIsInstance(instance[7], RECINTERSYNCRQ)
 
 
 class Interxfermsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("INTERXFERMSGSRSV1")
         for rq in (
             IntertrnrsTestCase,
@@ -948,199 +916,216 @@ class Interxfermsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
             RecintersyncrsTestCase,
         ):
             for i in range(2):
-                root.append(rq().root)
+                root.append(rq.etree)
         return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return INTERXFERMSGSRSV1(IntertrnrsTestCase.aggregate,
+                                 IntertrnrsTestCase.aggregate,
+                                 RecintertrnrsTestCase.aggregate,
+                                 RecintertrnrsTestCase.aggregate,
+                                 IntersyncrsTestCase.aggregate,
+                                 IntersyncrsTestCase.aggregate,
+                                 RecintersyncrsTestCase.aggregate,
+                                 RecintersyncrsTestCase.aggregate)
 
     def testListItems(self):
         # INTERXFERMSGSRSV1 may contain
         # ["INTERTRNRS", "RECINTERTRNRS", "INTERSYNCRS", "RECINTERSYNCRS"]
         listitems = INTERXFERMSGSRSV1.listitems
         self.assertEqual(len(listitems), 4)
-        root = deepcopy(self.root)
-        root.append(IntertrnrqTestCase().root)
+        root = self.etree
+        root.append(IntertrnrqTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, INTERXFERMSGSRSV1)
-        self.assertEqual(len(instance), 8)
-        self.assertIsInstance(instance[0], INTERTRNRS)
-        self.assertIsInstance(instance[1], INTERTRNRS)
-        self.assertIsInstance(instance[2], RECINTERTRNRS)
-        self.assertIsInstance(instance[3], RECINTERTRNRS)
-        self.assertIsInstance(instance[4], INTERSYNCRS)
-        self.assertIsInstance(instance[5], INTERSYNCRS)
-        self.assertIsInstance(instance[6], RECINTERSYNCRS)
-        self.assertIsInstance(instance[7], RECINTERSYNCRS)
 
 
 class Interxfermsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("INTERXFERMSGSETV1")
-        msgsetcore = MsgsetcoreTestCase().root
-        root.append(msgsetcore)
-        xferprof = XferprofTestCase().root
-        root.append(xferprof)
+        root.append(MsgsetcoreTestCase.etree)
+        root.append(XferprofTestCase.etree)
         SubElement(root, "CANBILLPAY").text = "Y"
         SubElement(root, "CANCWND").text = "2"
         SubElement(root, "DOMXFERFEE").text = "7.50"
         SubElement(root, "INTLXFERFEE").text = "17.50"
-
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INTERXFERMSGSETV1)
-        self.assertIsInstance(root.msgsetcore, MSGSETCORE)
-        self.assertIsInstance(root.xferprof, XFERPROF)
-        self.assertEqual(root.canbillpay, True)
-        self.assertEqual(root.cancwnd, 2)
-        self.assertEqual(root.domxferfee, Decimal("7.50"))
-        self.assertEqual(root.intlxferfee, Decimal("17.50"))
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return INTERXFERMSGSETV1(msgsetcore=MsgsetcoreTestCase.aggregate,
+                                 xferprof=XferprofTestCase.aggregate,
+                                 canbillpay=True, cancwnd=2,
+                                 domxferfee=Decimal("7.50"),
+                                 intlxferfee=Decimal("17.50"))
 
 
 class InterxfermsgsetTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("INTERXFERMSGSET")
-        msgsetv1 = Interxfermsgsetv1TestCase().root
-        root.append(msgsetv1)
+        root.append(Interxfermsgsetv1TestCase.etree)
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INTERXFERMSGSET)
-        self.assertIsInstance(root.interxfermsgsetv1, INTERXFERMSGSETV1)
-
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return INTERXFERMSGSET(interxfermsgsetv1=Interxfermsgsetv1TestCase.aggregate)
 
 
 class Wirexfermsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("WIREXFERMSGSRQV1")
         for rq in (WiretrnrqTestCase, WiresyncrqTestCase):
             for i in range(2):
-                root.append(rq().root)
+                root.append(rq.etree)
         return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return WIREXFERMSGSRQV1(WiretrnrqTestCase.aggregate,
+                                WiretrnrqTestCase.aggregate,
+                                WiresyncrqTestCase.aggregate,
+                                WiresyncrqTestCase.aggregate)
 
     def testListItems(self):
         # WIREXFERMSGSRQV1 may contain
         # ["WIRETRNRQ", "WIREERSYNCRQ"]
         listitems = WIREXFERMSGSRQV1.listitems
         self.assertEqual(len(listitems), 2)
-        root = deepcopy(self.root)
-        root.append(WiretrnrsTestCase().root)
+        root = self.etree
+        root.append(WiretrnrsTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, WIREXFERMSGSRQV1)
-        self.assertEqual(len(instance), 4)
-        self.assertIsInstance(instance[0], WIRETRNRQ)
-        self.assertIsInstance(instance[1], WIRETRNRQ)
-        self.assertIsInstance(instance[2], WIRESYNCRQ)
-        self.assertIsInstance(instance[3], WIRESYNCRQ)
 
 
 class Wirexfermsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("WIREXFERMSGSRSV1")
         for rq in (WiretrnrsTestCase, WiresyncrsTestCase):
             for i in range(2):
-                root.append(rq().root)
+                root.append(rq.etree)
         return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return WIREXFERMSGSRSV1(WiretrnrsTestCase.aggregate,
+                                WiretrnrsTestCase.aggregate,
+                                WiresyncrsTestCase.aggregate,
+                                WiresyncrsTestCase.aggregate)
 
     def testListItems(self):
         # WIRERXFERMSGSRSV1 may contain
         # ["WIRETRNRS", "WIRESYNCRS"]
         listitems = WIREXFERMSGSRSV1.listitems
         self.assertEqual(len(listitems), 2)
-        root = deepcopy(self.root)
-        root.append(WiretrnrqTestCase().root)
+        root = self.etree
+        root.append(WiretrnrqTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, WIREXFERMSGSRSV1)
-        self.assertEqual(len(instance), 4)
-        self.assertIsInstance(instance[0], WIRETRNRS)
-        self.assertIsInstance(instance[1], WIRETRNRS)
-        self.assertIsInstance(instance[2], WIRESYNCRS)
-        self.assertIsInstance(instance[3], WIRESYNCRS)
 
 
 class Wirexfermsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("WIREXFERMSGSETV1")
-        msgsetcore = MsgsetcoreTestCase().root
-        root.append(msgsetcore)
+        root.append(MsgsetcoreTestCase.etree)
         SubElement(root, "PROCDAYSOFF").text = "SUNDAY"
-        SubElement(root, "PROCENDTM").text = "170000"
+        SubElement(root, "PROCENDTM").text = "170000.000[0:GMT]"
         SubElement(root, "CANSCHED").text = "Y"
         SubElement(root, "DOMXFERFEE").text = "7.50"
         SubElement(root, "INTLXFERFEE").text = "17.50"
-
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, WIREXFERMSGSETV1)
-        self.assertIsInstance(root.msgsetcore, MSGSETCORE)
-        self.assertIsNone(root.procdaysoff)  # Unsupported
-        self.assertEqual(root.procendtm, time(17, 0, 0, tzinfo=UTC))
-        self.assertEqual(root.cansched, True)
-        self.assertEqual(root.domxferfee, Decimal("7.50"))
-        self.assertEqual(root.intlxferfee, Decimal("17.50"))
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return WIREXFERMSGSETV1("SUNDAY",
+                                msgsetcore=MsgsetcoreTestCase.aggregate,
+                                procendtm=time(17, 0, 0, tzinfo=UTC),
+                                cansched=True,
+                                domxferfee=Decimal("7.50"),
+                                intlxferfee=Decimal("17.50"))
 
 
 class WirexfermsgsetTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("WIREXFERMSGSET")
-        msgsetv1 = Wirexfermsgsetv1TestCase().root
-        root.append(msgsetv1)
+        root.append(Wirexfermsgsetv1TestCase.etree)
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, WIREXFERMSGSET)
-        self.assertIsInstance(root.wirexfermsgsetv1, WIREXFERMSGSETV1)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return WIREXFERMSGSET(wirexfermsgsetv1=Wirexfermsgsetv1TestCase.aggregate)
 
 
 #  class Billpaymsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     #  __test__ = True
 
-    #  @property
-    #  def root(self):
+    #  @classproperty
+    #  @classmethod
+    #  def etree(cls):
         #  root = Element("BILLPAYMSGSRQV1")
         #  for rq in (
             #  PmttrnrqTestCase, RecpmttrnrqTestCase, PayeetrnrqTestCase,
             #  PmtinqtrnrqTestCase, PmtmailtrnrqTestCase, PmtsyncRqTestCase,
             #  RecpmtsyncrqTestCase, PayeesyncrqTestCase, PmtmailsyncrqTestCase):
             #  for i in range(2):
-                #  root.append(rq().root)
+                #  root.append(rq.etree)
         #  return root
+
+    #  @classproperty
+    #  @classmethod
+    #  def aggregate(cls):
+        #  return BILLPAYMSGSRQV1(PmttrnrqTestCase.aggregate,
+                               #  PmttrnrqTestCase.aggregate,
+                               #  RecpmttrnrqTestCase.aggregate,
+                               #  RecpmttrnrqTestCase.aggregate,
+                               #  PayeetrnrqTestCase.aggregate,
+                               #  PayeetrnrqTestCase.aggregate,
+                               #  PmtinqtrnrqTestCase.aggregate,
+                               #  PmtinqtrnrqTestCase.aggregate,
+                               #  PmtmailtrnrqTestCase.aggregate,
+                               #  PmtmailtrnrqTestCase.aggregate,
+                               #  PmtsyncrqTestCase.aggregate,
+                               #  PmtsyncrqTestCase.aggregate,
+                               #  RecpmtsyncrqTestCase.aggregate,
+                               #  RecpmtsyncrqTestCase.aggregate,
+                               #  PayeesyncrqTestCase.aggregate,
+                               #  PayeesyncrqTestCase.aggregate,
+                               #  PmtmailsyncrqTestCase.aggregate,
+                               #  PmtmailsyncrqTestCase.aggregate)
 
     #  def testListItems(self):
         #  # BILLPAYMSGSRQV1 may contain
@@ -1148,49 +1133,49 @@ class WirexfermsgsetTestCase(unittest.TestCase, base.TestAggregate):
         #  # PMTSYNCRQ, RECPMTSYNCRQ, PAYEESYNCRQ, PMTMAILSYNCRQ]
         #  listitems = BILLPAYMSGSRQV1.listitems
         #  self.assertEqual(len(listitems), 9)
-        #  root = deepcopy(self.root)
-        #  root.append(BillpaytrnrsTestCase().root)
+        #  root = self.etree
+        #  root.append(BillpaytrnrsTestCase.etree)
 
         #  with self.assertRaises(ValueError):
             #  Aggregate.from_etree(root)
-
-    #  def testConvert(self):
-        #  instance = Aggregate.from_etree(self.root)
-        #  self.assertIsInstance(instance, BILLPAYMSGSRQV1)
-        #  self.assertEqual(len(instance), 4)
-        #  self.assertIsInstance(instance[0], PMTTRNRQ)
-        #  self.assertIsInstance(instance[1], PMTTRNRQ)
-        #  self.assertIsInstance(instance[2], RECPMTTRNRQ)
-        #  self.assertIsInstance(instance[3], RECPMTTRNRQ)
-        #  self.assertIsInstance(instance[4], PAYEETRNRQ)
-        #  self.assertIsInstance(instance[5], PAYEETRNRQ)
-        #  self.assertIsInstance(instance[6], PMTINQTRNRQ)
-        #  self.assertIsInstance(instance[7], PMTINQTRNRQ)
-        #  self.assertIsInstance(instance[8], PMTMAILTRNRQ)
-        #  self.assertIsInstance(instance[9], PMTMAILTRNRQ)
-        #  self.assertIsInstance(instance[10], PMTSYNCRQ)
-        #  self.assertIsInstance(instance[11], PMTSYNCRQ)
-        #  self.assertIsInstance(instance[12], RECPMTSYNCRQ)
-        #  self.assertIsInstance(instance[13], RECPMTSYNCRQ)
-        #  self.assertIsInstance(instance[14], PAYEESYNCRQ)
-        #  self.assertIsInstance(instance[15], PAYEESYNCRQ)
-        #  self.assertIsInstance(instance[16], PMTMAILSYNCRQ)
-        #  self.assertIsInstance(instance[17], PMTMAILSYNCRQ)
 
 
 #  class Billpaymsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     #  __test__ = True
 
-    #  @property
-    #  def root(self):
+    #  @classproperty
+    #  @classmethod
+    #  def etree(cls):
         #  root = Element("BILLPAYMSGSRSV1")
         #  for rq in (
             #  PmttrnrsTestCase, RecpmttrnrsTestCase, PayeetrnrsTestCase,
             #  PmtinqtrnrsTestCase, PmtmailtrnrsTestCase, PmtsyncRsTestCase,
             #  RecpmtsyncrsTestCase, PayeesyncrsTestCase, PmtmailsyncrsTestCase):
             #  for i in range(2):
-                #  root.append(rq().root)
+                #  root.append(rq.etree)
         #  return root
+
+    #  @classproperty
+    #  @classmethod
+    #  def aggregate(cls):
+        #  return BILLPAYMSGSRSV1(PmttrnrsTestCase.aggregate,
+                               #  PmttrnrsTestCase.aggregate,
+                               #  RecpmttrnrsTestCase.aggregate,
+                               #  RecpmttrnrsTestCase.aggregate,
+                               #  PayeetrnrsTestCase.aggregate,
+                               #  PayeetrnrsTestCase.aggregate,
+                               #  PmtinqtrnrsTestCase.aggregate,
+                               #  PmtinqtrnrsTestCase.aggregate,
+                               #  PmtmailtrnrsTestCase.aggregate,
+                               #  PmtmailtrnrsTestCase.aggregate,
+                               #  PmtsyncrsTestCase.aggregate,
+                               #  PmtsyncrsTestCase.aggregate,
+                               #  RecpmtsyncrsTestCase.aggregate,
+                               #  RecpmtsyncrsTestCase.aggregate,
+                               #  PayeesyncrsTestCase.aggregate,
+                               #  PayeesyncrsTestCase.aggregate,
+                               #  PmtmailsyncrsTestCase.aggregate,
+                               #  PmtmailsyncrsTestCase.aggregate)
 
     #  def testListItems(self):
         #  # BILLPAYMSGSRQV1 may contain
@@ -1198,50 +1183,27 @@ class WirexfermsgsetTestCase(unittest.TestCase, base.TestAggregate):
         #  # PMTSYNCRS, RECPMTSYNCRS, PAYEESYNCRS, PMTMAILSYNCRS]
         #  listitems = BILLPAYMSGSRSV1.listitems
         #  self.assertEqual(len(listitems), 9)
-        #  root = deepcopy(self.root)
-        #  root.append(BillpaytrnrsTestCase().root)
+        #  root = self.etree
+        #  root.append(BillpaytrnrsTestCase.etree)
 
         #  with self.assertRaises(ValueError):
             #  Aggregate.from_etree(root)
-
-    #  def testConvert(self):
-        #  instance = Aggregate.from_etree(self.root)
-        #  self.assertIsInstance(instance, BILLPAYMSGSRSV1)
-        #  self.assertEqual(len(instance), 4)
-        #  self.assertIsInstance(instance[0], PMTTRNRS)
-        #  self.assertIsInstance(instance[1], PMTTRNRS)
-        #  self.assertIsInstance(instance[2], RECPMTTRNRS)
-        #  self.assertIsInstance(instance[3], RECPMTTRNRS)
-        #  self.assertIsInstance(instance[4], PAYEETRNRS)
-        #  self.assertIsInstance(instance[5], PAYEETRNRS)
-        #  self.assertIsInstance(instance[6], PMTINQTRNRS)
-        #  self.assertIsInstance(instance[7], PMTINQTRNRS)
-        #  self.assertIsInstance(instance[8], PMTMAILTRNRS)
-        #  self.assertIsInstance(instance[9], PMTMAILTRNRS)
-        #  self.assertIsInstance(instance[10], PMTSYNCRS)
-        #  self.assertIsInstance(instance[11], PMTSYNCRS)
-        #  self.assertIsInstance(instance[12], RECPMTSYNCRS)
-        #  self.assertIsInstance(instance[13], RECPMTSYNCRS)
-        #  self.assertIsInstance(instance[14], PAYEESYNCRS)
-        #  self.assertIsInstance(instance[15], PAYEESYNCRS)
-        #  self.assertIsInstance(instance[16], PMTMAILSYNCRS)
-        #  self.assertIsInstance(instance[17], PMTMAILSYNCRS)
 
 
 #  class Billpaymsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
     #  __test__ = True
 
-    #  @property
-    #  def root(self):
+    #  @classproperty
+    #  @classmethod
+    #  def etree(cls):
         #  root = Element("BILLPAYMSGSETV1")
-        #  msgsetcore = MsgsetcoreTestCase().root
-        #  root.append(msgsetcore)
+        #  root.append(MsgsetcoreTestCase.etree)
         #  SubElement(root, "DAYSWITH").text = "2"
         #  SubElement(root, "DFLTDAYSTOPAY").text = "4"
         #  SubElement(root, "XFERDAYSWITH").text = "3"
         #  SubElement(root, "XFERDFLTDAYSTOPAY").text = "5"
         #  SubElement(root, "PROCDAYSOFF").text = "SUNDAY"
-        #  SubElement(root, "PROCENDTM").text = "170000"
+        #  SubElement(root, "PROCENDTM").text = "170000.000[0:GMT]"
         #  SubElement(root, "MODELWND").text = "3"
         #  SubElement(root, "POSTPROCWND").text = "6"
         #  SubElement(root, "STSVIAMODS").text = "N"
@@ -1255,116 +1217,101 @@ class WirexfermsgsetTestCase(unittest.TestCase, base.TestAggregate):
         #  SubElement(root, "DIFFFIRSTPMT").text = "N"
         #  SubElement(root, "DIFFLASTPMT").text = "N"
         #  SubElement(root, "BILLPUBCONTEXT").text = "Y"
-
         #  return root
 
-    #  def testConvert(self):
-        #  root = Aggregate.from_etree(self.root)
-        #  self.assertIsInstance(root, BILLPAYMSGSETV1)
-        #  self.assertIsInstance(root.msgsetcore, MSGSETCORE)
-        #  self.assertEqual(root.dayswith, 2)
-        #  self.assertEqual(root.dfltdaystopay, 4)
-        #  self.assertEqual(root.xferdayswith, 3)
-        #  self.assertEqual(root.xferdfltdaystopay, 5)
-        #  self.assertIsNone(root.procdaysoff)  # Unsupported
-        #  self.assertEqual(root.procendtm, time(17, 0, 0, tzinfo=UTC))
-        #  self.assertEqual(root.modelwnd, 3)
-        #  self.assertEqual(root.postprocwnd, 6)
-        #  self.assertEqual(root.stsviamods, False)
-        #  self.assertEqual(root.pmtbyaddr, True)
-        #  self.assertEqual(root.pmtbyxfer, True)
-        #  self.assertEqual(root.pmtbypayeeid, False)
-        #  self.assertEqual(root.canaddpayee, True)
-        #  self.assertEqual(root.hasextdpmt, False)
-        #  self.assertEqual(root.canmodpmts, False)
-        #  self.assertEqual(root.canmodmdls, True)
-        #  self.assertEqual(root.difffirstpmt, False)
-        #  self.assertEqual(root.difflastpmt, False)
-        #  self.assertEqual(root.billpubcontent, True)
-
-        #  self.assertEqual(root.cansched, True)
-        #  self.assertEqual(root.domxferfee, Decimal("7.50"))
-        #  self.assertEqual(root.intlxferfee, Decimal("17.50"))
-
+    #  @classproperty
+    #  @classmethod
+    #  def aggregate(cls):
+        #  return BILLPAYMSGSETV1(msgsetcore=MsgsetcoreTestCase.aggregate,
+                               #  dayswith=2, dfltdaystopay=4, xferdayswith=3,
+                               #  xferdfltdaystopay=5, procdaysoff=None,  # Unsupported
+                               #  procendtm=time(17, 0, 0, tzinfo=UTC),
+                               #  modelwnd=3, postprocwnd=6, stsviamods=False,
+                               #  pmtbyaddr=True, pmtbyxfer=True,
+                               #  pmtbypayeeid=False, canaddpayee=True,
+                               #  hasextdpmt=False, canmodpmts=False,
+                               #  canmodmdls=True, difffirstpmt=False,
+                               #  difflastpmt=False, billpubcontent=True,
+                               #  cansched=True, domxferfee=Decimal("7.50"),
+                               #  intlxferfee=Decimal("17.50"))
 
 
 #  class BillpaymsgsetTestCase(unittest.TestCase, base.TestAggregate):
     #  __test__ = True
 
-    #  @property
-    #  def root(self):
+    #  @classproperty
+    #  @classmethod
+    #  def etree(cls):
         #  root = Element("WIREXFERMSGSET")
-        #  msgsetv1 = Billpaymsgsetv1TestCase().root
-        #  root.append(msgsetv1)
+        #  root.append(Billpaymsgsetv1TestCase.etree)
         #  return root
 
-    #  def testConvert(self):
-        #  root = Aggregate.from_etree(self.root)
-        #  self.assertIsInstance(root, BILLPAYMSGSET)
-        #  self.assertIsInstance(root.billpaymsgsetv1, BILLPAYMSGSETV1)
+    #  @classproperty
+    #  @classmethod
+    #  def aggregate(cls):
+        #  return BILLPAYMSGSET(billpaymsgsetv1=Billpaymsgsetv1TestCase.aggregate)
 
 
 class Invstmtmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("INVSTMTMSGSRQV1")
         for i in range(2):
-            stmttrnrq = InvstmttrnrqTestCase().root
+            stmttrnrq = InvstmttrnrqTestCase.etree
             root.append(stmttrnrq)
         return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return INVSTMTMSGSRQV1(InvstmttrnrqTestCase.aggregate,
+                               InvstmttrnrqTestCase.aggregate)
 
     def testListItems(self):
         # INVSTMTMSGSRQV1 may only contain
         # ["INVSTMTTRNRQ", "INVMAILTRNRQ", "INVMAILSYNCRQ"]
         listitems = INVSTMTMSGSRQV1.listitems
         self.assertEqual(len(listitems), 3)
-        root = deepcopy(self.root)
-        root.append(InvstmttrnrsTestCase().root)
+        root = self.etree
+        root.append(InvstmttrnrsTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, INVSTMTMSGSRQV1)
-        self.assertEqual(len(instance), 2)
-        for stmttrnrs in instance:
-            self.assertIsInstance(stmttrnrs, INVSTMTTRNRQ)
 
 
 class Invstmtmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("INVSTMTMSGSRSV1")
         for i in range(2):
-            stmttrnrs = InvstmttrnrsTestCase().root
+            stmttrnrs = InvstmttrnrsTestCase.etree
             root.append(stmttrnrs)
         return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return INVSTMTMSGSRSV1(InvstmttrnrsTestCase.aggregate, InvstmttrnrsTestCase.aggregate)
 
     def testListItems(self):
         # INVSTMTMSGSRSV1 may only contain
         # ["INVSTMTTRNRS", "INVMAILTRNRS", "INVMAILSYNCRS"]
         listitems = INVSTMTMSGSRSV1.listitems
         self.assertEqual(len(listitems), 3)
-        root = deepcopy(self.root)
-        root.append(InvstmttrnrqTestCase().root)
+        root = self.etree
+        root.append(InvstmttrnrqTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, INVSTMTMSGSRSV1)
-        self.assertEqual(len(instance), 2)
-        for stmttrnrs in instance:
-            self.assertIsInstance(stmttrnrs, INVSTMTTRNRS)
-
     def testPropertyAliases(self):
-        instance = Aggregate.from_etree(self.root)
+        instance = Aggregate.from_etree(self.etree)
         self.assertIs(instance.statements[0], instance[0].invstmtrs)
 
 
@@ -1381,11 +1328,11 @@ class Invstmtmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
     ]
     optionalElements = ["INV401KDNLD", "CLOSINGAVAIL"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("INVSTMTMSGSETV1")
-        msgsetcore = MsgsetcoreTestCase().root
-        root.append(msgsetcore)
+        root.append(MsgsetcoreTestCase.etree)
         SubElement(root, "TRANDNLD").text = "Y"
         SubElement(root, "OODNLD").text = "Y"
         SubElement(root, "POSDNLD").text = "Y"
@@ -1393,63 +1340,60 @@ class Invstmtmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "CANEMAIL").text = "N"
         SubElement(root, "INV401KDNLD").text = "N"
         SubElement(root, "CLOSINGAVAIL").text = "Y"
-
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, INVSTMTMSGSETV1)
-        self.assertIsInstance(instance.msgsetcore, MSGSETCORE)
-        self.assertEqual(instance.trandnld, True)
-        self.assertEqual(instance.oodnld, True)
-        self.assertEqual(instance.posdnld, True)
-        self.assertEqual(instance.baldnld, True)
-        self.assertEqual(instance.canemail, False)
-        self.assertEqual(instance.inv401kdnld, False)
-        self.assertEqual(instance.closingavail, True)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return INVSTMTMSGSETV1(msgsetcore=MsgsetcoreTestCase.aggregate,
+                               trandnld=True, oodnld=True, posdnld=True,
+                               baldnld=True, canemail=False, inv401kdnld=False,
+                               closingavail=True)
 
 
 class InvstmtmsgsetTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("INVSTMTMSGSET")
-        invstmtmsgsetv1 = Invstmtmsgsetv1TestCase().root
-        root.append(invstmtmsgsetv1)
+        root.append(Invstmtmsgsetv1TestCase.etree)
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, INVSTMTMSGSET)
-        self.assertIsInstance(instance.invstmtmsgsetv1, INVSTMTMSGSETV1)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return INVSTMTMSGSET(invstmtmsgsetv1=Invstmtmsgsetv1TestCase.aggregate)
 
 
 class Seclistmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("SECLISTMSGSRQV1")
         for i in range(2):
-            root.append(SeclisttrnrqTestCase().root)
+            root.append(SeclisttrnrqTestCase.etree)
         return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return SECLISTMSGSRQV1(SeclisttrnrqTestCase.aggregate,
+                               SeclisttrnrqTestCase.aggregate)
 
     def testListItems(self):
         # SECLISTMSGSRQV1 may only contain SECLISTTRNRQ
 
         listitems = SECLISTMSGSRQV1.listitems
         self.assertEqual(len(listitems), 1)
-        root = deepcopy(self.root)
-        root.append(SeclisttrnrsTestCase().root)
+        root = self.etree
+        root.append(SeclisttrnrsTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, SECLISTMSGSRQV1)
-        self.assertEqual(len(instance), 2)
 
 
 class Seclistmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
@@ -1458,65 +1402,64 @@ class Seclistmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     # FIXME
     # requiredElements = ('SECLIST',)
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("SECLISTMSGSRSV1")
-        seclist = SeclistTestCase().root
-        root.append(seclist)
-        root.append(deepcopy(seclist))
+        root.append(SeclistTestCase.etree)
+        root.append(SeclistTestCase.etree)
         return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return SECLISTMSGSRSV1(SeclistTestCase.aggregate,
+                               SeclistTestCase.aggregate)
 
     def testListItems(self):
         # SECLISTMSGSRSV1 may only contain SECLISTTRNRS, SECLIST
 
         listitems = SECLISTMSGSRSV1.listitems
         self.assertEqual(len(listitems), 2)
-        root = deepcopy(self.root)
-        root.append(SeclisttrnrqTestCase().root)
+        root = self.etree
+        root.append(SeclisttrnrqTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
-
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SECLISTMSGSRSV1)
-        self.assertEqual(len(root), 2)
-        self.assertIsInstance(root[0], SECLIST)
-        self.assertIsInstance(root[1], SECLIST)
 
 
 class Seclistmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("SECLISTMSGSETV1")
-        msgsetcore = MsgsetcoreTestCase().root
-        root.append(msgsetcore)
+        root.append(MsgsetcoreTestCase.etree)
         SubElement(root, "SECLISTRQDNLD").text = "N"
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SECLISTMSGSETV1)
-        self.assertIsInstance(root.msgsetcore, MSGSETCORE)
-        self.assertEqual(root.seclistrqdnld, False)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return SECLISTMSGSETV1(msgsetcore=MsgsetcoreTestCase.aggregate,
+                               seclistrqdnld=False)
 
 
 class SeclistmsgsetTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("SECLISTMSGSET")
-        seclistmsgsetv1 = Seclistmsgsetv1TestCase().root
-        root.append(seclistmsgsetv1)
+        root.append(Seclistmsgsetv1TestCase.etree)
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SECLISTMSGSET)
-        self.assertIsInstance(root.seclistmsgsetv1, SECLISTMSGSETV1)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return SECLISTMSGSET(seclistmsgsetv1=Seclistmsgsetv1TestCase.aggregate)
 
 
 class Tax1099msgsetv1TestCase(unittest.TestCase, base.TestAggregate):
@@ -1524,43 +1467,45 @@ class Tax1099msgsetv1TestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["MSGSETCORE", "TAX1099DNLD", "EXTD1099B", "TAXYEARSUPPORTED"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("TAX1099MSGSETV1")
-        msgsetcore = MsgsetcoreTestCase().root
-        root.append(msgsetcore)
+        root.append(MsgsetcoreTestCase.etree)
         SubElement(root, "TAX1099DNLD").text = "Y"
         SubElement(root, "EXTD1099B").text = "Y"
         SubElement(root, "TAXYEARSUPPORTED").text = "2005"
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, TAX1099MSGSETV1)
-        self.assertIsInstance(root.msgsetcore, MSGSETCORE)
-        self.assertEqual(root.tax1099dnld, True)
-        self.assertEqual(root.extd1099b, True)
-        self.assertEqual(root.taxyearsupported, 2005)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return TAX1099MSGSETV1(msgsetcore=MsgsetcoreTestCase.aggregate,
+                               tax1099dnld=True, extd1099b=True,
+                               taxyearsupported=2005)
 
 
 class Tax1099msgsetTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("TAX1099MSGSET")
-        msgsetv1 = Tax1099msgsetv1TestCase().root
-        root.append(msgsetv1)
+        root.append(Tax1099msgsetv1TestCase.etree)
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, TAX1099MSGSET)
-        self.assertIsInstance(root.tax1099msgsetv1, TAX1099MSGSETV1)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return TAX1099MSGSET(tax1099msgsetv1=Tax1099msgsetv1TestCase.aggregate)
 
 
 class MsgsetcoreTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
+    oneOfs = {"OFXSEC": ("NONE", "TYPE1"), "LANGUAGE": LANG_CODES,
+              "SYNCMODE": ("FULL", "LITE")}
 
     requiredElements = [
         "VER",
@@ -1574,8 +1519,9 @@ class MsgsetcoreTestCase(unittest.TestCase, base.TestAggregate):
     ]
     # optionalElements = ['REFRESHSUPT', 'SPNAME', 'OFXEXTENSION']
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("MSGSETCORE")
         SubElement(root, "VER").text = "1"
         SubElement(root, "URL").text = "https://ofxs.ameritrade.com/cgi-bin/apps/OFX"
@@ -1586,31 +1532,20 @@ class MsgsetcoreTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "SYNCMODE").text = "FULL"
         SubElement(root, "REFRESHSUPT").text = "N"
         SubElement(root, "RESPFILEER").text = "N"
-        SubElement(root, "INTU.TIMEOUT").text = "360"
         SubElement(root, "SPNAME").text = "Dewey Cheatham & Howe"
-        ofxextension = OfxextensionTestCase().root
-        root.append(ofxextension)
+        root.append(OfxextensionTestCase.etree)
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, MSGSETCORE)
-        self.assertEqual(root.ver, 1)
-        self.assertEqual(root.url, "https://ofxs.ameritrade.com/cgi-bin/apps/OFX")
-        self.assertEqual(root.ofxsec, "NONE")
-        self.assertEqual(root.transpsec, True)
-        self.assertEqual(root.signonrealm, "AMERITRADE")
-        self.assertEqual(root.language, "ENG")
-        self.assertEqual(root.syncmode, "FULL")
-        self.assertEqual(root.refreshsupt, False)
-        self.assertEqual(root.respfileer, False)
-        self.assertEqual(root.spname, "Dewey Cheatham & Howe")
-        self.assertIsInstance(root.ofxextension, OFXEXTENSION)
-
-    def testOneOf(self):
-        self.oneOfTest("OFXSEC", ("NONE", "TYPE1"))
-        self.oneOfTest("LANGUAGE", LANG_CODES)
-        self.oneOfTest("SYNCMODE", ("FULL", "LITE"))
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return MSGSETCORE(ver=1,
+                          url="https://ofxs.ameritrade.com/cgi-bin/apps/OFX",
+                          ofxsec="NONE", transpsec=True,
+                          signonrealm="AMERITRADE", language="ENG",
+                          syncmode="FULL", refreshsupt=False, respfileer=False,
+                          spname="Dewey Cheatham & Howe",
+                          ofxextension=OfxextensionTestCase.aggregate)
 
 
 #  Test models.profile.MSGSETLIST here to avoid circular imports
@@ -1619,19 +1554,29 @@ class MsgsetlistTestCase(unittest.TestCase, base.TestAggregate):
 
     @classproperty
     @classmethod
+    def etree(cls):
+        return next(cls.validSoup)
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return MSGSETLIST(SignonmsgsetTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(cls):
         msgsets = [
-            SignonmsgsetTestCase().root,
-            SignupmsgsetTestCase().root,
-            ProfmsgsetTestCase().root,
-            BankmsgsetTestCase().root,
-            CreditcardmsgsetTestCase().root,
-            InterxfermsgsetTestCase().root,
-            WirexfermsgsetTestCase().root,
-            InvstmtmsgsetTestCase().root,
-            SeclistmsgsetTestCase().root,
-            #  BillpaymsgsetTestCase().root,
-            Tax1099msgsetTestCase().root,
+            SignonmsgsetTestCase.etree,
+            SignupmsgsetTestCase.etree,
+            ProfmsgsetTestCase.etree,
+            BankmsgsetTestCase.etree,
+            CreditcardmsgsetTestCase.etree,
+            InterxfermsgsetTestCase.etree,
+            WirexfermsgsetTestCase.etree,
+            InvstmtmsgsetTestCase.etree,
+            SeclistmsgsetTestCase.etree,
+            #  BillpaymsgsetTestCase.etree,
+            Tax1099msgsetTestCase.etree,
         ]
         root = Element("MSGSETLIST")
         for msgset in msgsets:
@@ -1645,10 +1590,6 @@ class MsgsetlistTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("MSGSETLIST")
         yield root
 
-    @property
-    def root(self):
-        return next(self.validSoup)
-
     def testListItems(self):
         # MSGSETLIST may only contain
         # ["SIGNONMSGSET", "SIGNUPMSGSET", "PROFMSGSET", "BANKMSGSET",
@@ -1656,10 +1597,10 @@ class MsgsetlistTestCase(unittest.TestCase, base.TestAggregate):
         # "INVSTMTMSGSET", "SECLISTMSGSET", "BILLPAYMSGSET", "PRESDIRMSGSET",
         # "PRESDLVMSGSET", "TAX1099MSGSET"]
         listitems = MSGSETLIST.listitems
-        #  self.assertEqual(len(listitems), 13)
+        #  cls.assertEqual(len(listitems), 13)
         self.assertEqual(len(listitems), 11)
-        root = deepcopy(self.root)
-        root.append(StmttrnrsTestCase().root)
+        root = self.etree
+        root.append(StmttrnrsTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)

@@ -6,6 +6,7 @@ Unit tests for models.bank.xfer
 import unittest
 from xml.etree.ElementTree import Element, SubElement
 from datetime import datetime
+from decimal import Decimal
 from copy import deepcopy
 import itertools
 
@@ -16,10 +17,13 @@ from ofxtools.models.bank.xfer import (
     XFERINFO,
     XFERPRCSTS,
     INTRARQ,
+    INTRARS,
     INTRAMODRQ,
     INTRACANRQ,
     INTRAMODRS,
     INTRACANRS,
+    INTRATRNRQ,
+    INTRATRNRS,
 )
 from ofxtools.models.i18n import CURRENCY_CODES
 from ofxtools.utils import UTC, classproperty
@@ -43,11 +47,24 @@ class XferinfoTestCase(unittest.TestCase, base.TestAggregate):
 
     @classproperty
     @classmethod
+    def etree(cls):
+        return next(cls.validSoup)
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return XFERINFO(bankacctfrom=BankacctfromTestCase.aggregate,
+                        bankacctto=BankaccttoTestCase.aggregate,
+                        trnamt=Decimal("257.53"),
+                        dtdue=datetime(2008, 9, 30, tzinfo=UTC))
+
+    @classproperty
+    @classmethod
     def validSoup(cls):
-        bankacctfrom = BankacctfromTestCase().root
-        bankacctto = BankaccttoTestCase().root
-        ccacctfrom = CcacctfromTestCase().root
-        ccacctto = CcaccttoTestCase().root
+        bankacctfrom = BankacctfromTestCase.etree
+        bankacctto = BankaccttoTestCase.etree
+        ccacctfrom = CcacctfromTestCase.etree
+        ccacctto = CcaccttoTestCase.etree
 
         for acctfrom in (bankacctfrom, ccacctfrom):
             for acctto in (bankacctto, ccacctto):
@@ -55,22 +72,18 @@ class XferinfoTestCase(unittest.TestCase, base.TestAggregate):
                 root.append(acctfrom)
                 root.append(acctto)
                 SubElement(root, "TRNAMT").text = "257.53"
-                SubElement(root, "DTDUE").text = "20080930000000"
+                SubElement(root, "DTDUE").text = "20080930000000.000[0:GMT]"
                 yield root
-
-    @property
-    def root(self):
-        return next(self.validSoup)
 
     @classproperty
     @classmethod
     def invalidSoup(cls):
         root_ = Element("XFERINFO")
 
-        bankacctfrom = BankacctfromTestCase().root
-        bankacctto = BankaccttoTestCase().root
-        ccacctfrom = CcacctfromTestCase().root
-        ccacctto = CcaccttoTestCase().root
+        bankacctfrom = BankacctfromTestCase.etree
+        bankacctto = BankaccttoTestCase.etree
+        ccacctfrom = CcacctfromTestCase.etree
+        ccacctto = CcaccttoTestCase.etree
         trnamt = Element("TRNAMT")
         trnamt.text = "257.53"
 
@@ -107,26 +120,21 @@ class XferprcstsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["XFERPRCCODE", "DTXFERPRC"]
+    oneOfs = {"XFERPRCCODE": ["WILLPROCESSON", "POSTEDON", "NOFUNDSON", "CANCELEDON", "FAILEDON"]}
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("XFERPRCSTS")
         SubElement(root, "XFERPRCCODE").text = "POSTEDON"
-        SubElement(root, "DTXFERPRC").text = "20071231000000"
-
+        SubElement(root, "DTXFERPRC").text = "20071231000000.000[0:GMT]"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, XFERPRCSTS)
-        self.assertEqual(instance.xferprccode, "POSTEDON")
-        self.assertEqual(instance.dtxferprc, datetime(2007, 12, 31, tzinfo=UTC))
-
-    def testOneOf(self):
-        self.oneOfTest(
-            "XFERPRCCODE",
-            ["WILLPROCESSON", "POSTEDON", "NOFUNDSON", "CANCELEDON", "FAILEDON"],
-        )
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return XFERPRCSTS(xferprccode="POSTEDON",
+                          dtxferprc=datetime(2007, 12, 31, tzinfo=UTC))
 
 
 class IntrarqTestCase(unittest.TestCase, base.TestAggregate):
@@ -134,18 +142,17 @@ class IntrarqTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["XFERINFO"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("INTRARQ")
-        xferinfo = XferinfoTestCase().root
-        root.append(xferinfo)
-
+        root.append(XferinfoTestCase.etree)
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, INTRARQ)
-        self.assertIsInstance(instance.xferinfo, XFERINFO)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return INTRARQ(xferinfo=XferinfoTestCase.aggregate)
 
 
 class IntrarsTestCase(unittest.TestCase, base.TestAggregate):
@@ -153,6 +160,25 @@ class IntrarsTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["CURDEF", "SRVRTID", "XFERINFO"]
     optionalElements = ["RECSRVRTID", "XFERPRCSTS"]
+    oneOfs = {"CURDEF": CURRENCY_CODES}
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("INTRARS")
+        SubElement(root, "CURDEF").text = "EUR"
+        SubElement(root, "SRVRTID").text = "DEADBEEF"
+        root.append(XferinfoTestCase.etree)
+        SubElement(root, "RECSRVRTID").text = "B16B00B5"
+        root.append(XferprcstsTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return INTRARS(curdef="EUR", srvrtid="DEADBEEF",
+                       xferinfo=XferinfoTestCase.aggregate, recsrvrtid="B16B00B5",
+                       xferprcsts=XferprcstsTestCase.aggregate)
 
     @classproperty
     @classmethod
@@ -166,18 +192,14 @@ class IntrarsTestCase(unittest.TestCase, base.TestAggregate):
             root = Element("INTRARS")
             SubElement(root, "CURDEF").text = "EUR"
             SubElement(root, "SRVRTID").text = "DEADBEEF"
-            xferinfo = XferinfoTestCase().root
+            xferinfo = XferinfoTestCase.etree
             root.append(xferinfo)
             if dtChoice is not None:
                 root.append(dtChoice)
             SubElement(root, "RECSRVRTID").text = "B16B00B5"
-            xferprcsts = XferprcstsTestCase().root
+            xferprcsts = XferprcstsTestCase.etree
             root.append(xferprcsts)
             yield root
-
-    @property
-    def root(self):
-        return next(self.validSoup)
 
     @classproperty
     @classmethod
@@ -191,15 +213,12 @@ class IntrarsTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("INTRARS")
         SubElement(root, "CURDEF").text = "EUR"
         SubElement(root, "SRVRTID").text = "DEADBEEF"
-        xferinfo = XferinfoTestCase().root
+        xferinfo = XferinfoTestCase.etree
         root.append(xferinfo)
         root.append(dtxferprj)
         root.append(dtposted)
 
         yield root
-
-    def testOneOf(self):
-        self.oneOfTest("CURDEF", CURRENCY_CODES)
 
 
 class IntramodrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -207,20 +226,18 @@ class IntramodrqTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["SRVRTID", "XFERINFO"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("INTRAMODRQ")
         SubElement(root, "SRVRTID").text = "DEADBEEF"
-        xferinfo = XferinfoTestCase().root
-        root.append(xferinfo)
-
+        root.append(XferinfoTestCase.etree)
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, INTRAMODRQ)
-        self.assertIsInstance(instance.xferinfo, XFERINFO)
-        self.assertEqual(instance.srvrtid, "DEADBEEF")
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return INTRAMODRQ(srvrtid="DEADBEEF", xferinfo=XferinfoTestCase.aggregate)
 
 
 class IntracanrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -228,17 +245,17 @@ class IntracanrqTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["SRVRTID"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("INTRACANRQ")
         SubElement(root, "SRVRTID").text = "DEADBEEF"
-
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, INTRACANRQ)
-        self.assertEqual(instance.srvrtid, "DEADBEEF")
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return INTRACANRQ(srvrtid="DEADBEEF")
 
 
 class IntramodrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -246,23 +263,20 @@ class IntramodrsTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["SRVRTID", "XFERINFO"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("INTRAMODRS")
         SubElement(root, "SRVRTID").text = "DEADBEEF"
-        xferinfo = XferinfoTestCase().root
-        root.append(xferinfo)
-        xferprcsts = XferprcstsTestCase().root
-        root.append(xferprcsts)
-
+        root.append(XferinfoTestCase.etree)
+        root.append(XferprcstsTestCase.etree)
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, INTRAMODRS)
-        self.assertEqual(instance.srvrtid, "DEADBEEF")
-        self.assertIsInstance(instance.xferinfo, XFERINFO)
-        self.assertIsInstance(instance.xferprcsts, XFERPRCSTS)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return INTRAMODRS(srvrtid="DEADBEEF", xferinfo=XferinfoTestCase.aggregate,
+                          xferprcsts=XferprcstsTestCase.aggregate)
 
 
 class IntracanrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -270,17 +284,17 @@ class IntracanrsTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["SRVRTID"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("INTRACANRS")
         SubElement(root, "SRVRTID").text = "DEADBEEF"
-
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, INTRACANRS)
-        self.assertEqual(instance.srvrtid, "DEADBEEF")
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return INTRACANRS(srvrtid="DEADBEEF")
 
 
 class IntratrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
@@ -290,10 +304,16 @@ class IntratrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
 
     @classproperty
     @classmethod
+    def aggregate(cls):
+        return INTRATRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
+                          intrarq=IntrarqTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(cls):
         for Test in IntrarqTestCase, IntramodrqTestCase, IntracanrqTestCase:
-            root = deepcopy(cls.emptyBase)
-            rq = Test().root
+            root = cls.emptyBase
+            rq = Test.etree
             root.append(rq)
             yield root
 
@@ -337,7 +357,7 @@ class IntratrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
         ]:
             root = deepcopy(cls.emptyBase)
             for Test in Tests:
-                root.append(Test().root)
+                root.append(Test.etree)
             yield root
 
         # Wrapped aggregate in the wrong place (should be right after TAN)
@@ -357,10 +377,18 @@ class IntratrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
 
     @classproperty
     @classmethod
+    def aggregate(cls):
+        return INTRATRNRS(trnuid="DEADBEEF",
+                          status=base.StatusTestCase.aggregate,
+                          cltcookie="B00B135",
+                          intrars=IntrarsTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(cls):
         for Test in IntrarsTestCase, IntramodrsTestCase, IntracanrsTestCase:
-            root = deepcopy(cls.emptyBase)
-            rs = Test().root
+            root = cls.emptyBase
+            rs = Test.etree
             root.append(rs)
             yield root
 
@@ -375,7 +403,7 @@ class IntratrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
         # TRNUID/STATUS/CLTCOOKIE out of order
         trnuid = Element("TRNUID")
         trnuid.text = "DEADBEEF"
-        status = base.StatusTestCase().root
+        status = base.StatusTestCase.etree
         cltcookie = Element("CLTCOOKIE")
         cltcookie.text = "B00B135"
 
@@ -403,15 +431,13 @@ class IntratrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
         ]:
             root = deepcopy(cls.emptyBase)
             for Test in Tests:
-                root.append(Test().root)
+                root.append(Test.etree)
             yield root
 
         # Wrapped aggregate in the wrong place (should be right after CLTCOOKIE)
-
-        root_ = deepcopy(cls.emptyBase)
         index = list(root_).index(root_.find("CLTCOOKIE"))
         for n in range(index):
-            root = deepcopy(root_)
+            root = cls.emptyBase
             root.insert(n, cls.wrapped)
             yield root
 

@@ -26,6 +26,8 @@ from ofxtools.models.billpay.list import (
     PAYEEMODRS,
     PAYEEDELRQ,
     PAYEEDELRS,
+    PAYEETRNRQ,
+    PAYEETRNRS,
 )
 from ofxtools.models.i18n import CURRENCY, CURRENCY_CODES
 from ofxtools.utils import UTC, classproperty
@@ -46,11 +48,23 @@ class PayeerqTestCase(unittest.TestCase, base.TestAggregate):
 
     @classproperty
     @classmethod
+    def etree(cls):
+        #  return next(cls.validSoup)
+        return list(cls.validSoup)[-1]
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PAYEERQ("123", "123", payee=PayeeTestCase.aggregate,
+                       bankacctto=BankaccttoTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(cls):
         payeeid = Element("PAYEEID")
         payeeid.text = "DEADBEEF"
-        payee = PayeeTestCase().root
-        bankacctto = BankaccttoTestCase().root
+        payee = PayeeTestCase.etree
+        bankacctto = BankaccttoTestCase.etree
         payacct = Element("PAYACCT")
         payacct.text = "123"
 
@@ -68,8 +82,8 @@ class PayeerqTestCase(unittest.TestCase, base.TestAggregate):
     def invalidSoup(cls):
         payeeid = Element("PAYEE")
         payeeid.text = "DEADBEEF"
-        payee = PayeeTestCase().root
-        bankacctto = BankaccttoTestCase().root
+        payee = PayeeTestCase.etree
+        bankacctto = BankaccttoTestCase.etree
         payacct = Element("PAYACCT")
         payacct.text = "123"
 
@@ -87,20 +101,6 @@ class PayeerqTestCase(unittest.TestCase, base.TestAggregate):
         root.append(payacct)
         yield root
 
-    @property
-    def root(self):
-        #  return next(self.validSoup)
-        return list(self.validSoup)[-1]
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, PAYEERQ)
-        self.assertEqual(instance.payacct, None)
-        self.assertEqual(len(instance), 2)
-        payacct0, payacct1 = instance[:]
-        self.assertEqual(payacct0, "123")
-        self.assertEqual(payacct1, "123")
-
 
 class PayeersTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
@@ -110,12 +110,25 @@ class PayeersTestCase(unittest.TestCase, base.TestAggregate):
 
     @classproperty
     @classmethod
+    def etree(cls):
+        return list(cls.validSoup)[-1]
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PAYEERS("12345", "12345", payeelstid="B16B00B5",
+                       payee=PayeeTestCase.aggregate,
+                       bankacctto=BankaccttoTestCase.aggregate,
+                       extdpayee=ExtdpayeeTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(cls):
         root = Element("PAYEERS")
         SubElement(root, "PAYEELSTID").text = "B16B00B5"
-        root.append(PayeeTestCase().root)
-        root.append(BankaccttoTestCase().root)
-        root.append(ExtdpayeeTestCase().root)
+        root.append(PayeeTestCase.etree)
+        root.append(BankaccttoTestCase.etree)
+        root.append(ExtdpayeeTestCase.etree)
         yield root
         for i in range(2):
             SubElement(root, "PAYACCT").text = "12345"
@@ -126,21 +139,6 @@ class PayeersTestCase(unittest.TestCase, base.TestAggregate):
     def invalidSoup(cls):
         # FIXME
         yield from ()
-
-    @property
-    def root(self):
-        return list(self.validSoup)[-1]
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, PAYEERS)
-        self.assertEqual(instance.payeelstid, "B16B00B5")
-        self.assertIsInstance(instance.payee, PAYEE)
-        self.assertIsInstance(instance.bankacctto, BANKACCTTO)
-        self.assertIsInstance(instance.extdpayee, EXTDPAYEE)
-        self.assertEqual(len(instance), 2)
-        self.assertEqual(instance[0], "12345")
-        self.assertEqual(instance[1], "12345")
 
 
 class PayeemodrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -151,11 +149,23 @@ class PayeemodrqTestCase(unittest.TestCase, base.TestAggregate):
 
     @classproperty
     @classmethod
+    def etree(cls):
+        return list(cls.validSoup)[-1]
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PAYEEMODRQ("12345", "12345", payeelstid="DEADBEEF",
+                          payee=PayeeTestCase.aggregate,
+                          bankacctto=BankaccttoTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(cls):
         root = Element("PAYEEMODRQ")
         SubElement(root, "PAYEELSTID").text = "DEADBEEF"
-        root.append(PayeeTestCase().root)
-        root.append(BankaccttoTestCase().root)
+        root.append(PayeeTestCase.etree)
+        root.append(BankaccttoTestCase.etree)
         yield root
         for i in range(2):
             SubElement(root, "PAYACCT").text = "12345"
@@ -167,20 +177,6 @@ class PayeemodrqTestCase(unittest.TestCase, base.TestAggregate):
         # FIXME
         yield from ()
 
-    @property
-    def root(self):
-        return list(self.validSoup)[-1]
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, PAYEEMODRQ)
-        self.assertEqual(instance.payeelstid, "DEADBEEF")
-        self.assertIsInstance(instance.payee, PAYEE)
-        self.assertIsInstance(instance.bankacctto, BANKACCTTO)
-        self.assertEqual(len(instance), 2)
-        self.assertEqual(instance[0], "12345")
-        self.assertEqual(instance[1], "12345")
-
 
 class PayeemodrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
@@ -190,15 +186,35 @@ class PayeemodrsTestCase(unittest.TestCase, base.TestAggregate):
 
     @classproperty
     @classmethod
+    def etree(cls):
+        root = Element("PAYEEMODRS")
+        SubElement(root, "PAYEELSTID").text = "DEADBEEF"
+        root.append(PayeeTestCase.etree)
+        root.append(BankaccttoTestCase.etree)
+        SubElement(root, "PAYACCT").text = "12345"
+        SubElement(root, "PAYACCT").text = "12345"
+        root.append(ExtdpayeeTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PAYEEMODRS("12345", "12345", payeelstid="DEADBEEF",
+                          payee=PayeeTestCase.aggregate,
+                          bankacctto=BankaccttoTestCase.aggregate,
+                          extdpayee=ExtdpayeeTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(cls):
         for i in range(3):
             root = Element("PAYEEMODRS")
             SubElement(root, "PAYEELSTID").text = "DEADBEEF"
-            root.append(PayeeTestCase().root)
-            root.append(BankaccttoTestCase().root)
+            root.append(PayeeTestCase.etree)
+            root.append(BankaccttoTestCase.etree)
             for n in range(i):
                 SubElement(root, "PAYACCT").text = "12345"
-            root.append(ExtdpayeeTestCase().root)
+            root.append(ExtdpayeeTestCase.etree)
             yield root
 
     @classproperty
@@ -207,36 +223,23 @@ class PayeemodrsTestCase(unittest.TestCase, base.TestAggregate):
         # FIXME
         yield from ()
 
-    @property
-    def root(self):
-        return list(self.validSoup)[-1]
-
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, PAYEEMODRS)
-        self.assertEqual(instance.payeelstid, "DEADBEEF")
-        self.assertIsInstance(instance.payee, PAYEE)
-        self.assertIsInstance(instance.bankacctto, BANKACCTTO)
-        self.assertEqual(len(instance), 2)
-        self.assertEqual(instance[0], "12345")
-        self.assertEqual(instance[1], "12345")
-
 
 class PayeedelrqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["PAYEELSTID"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("PAYEEDELRQ")
         SubElement(root, "PAYEELSTID").text = "DEADBEEF"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, PAYEEDELRQ)
-        self.assertEqual(instance.payeelstid, "DEADBEEF")
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PAYEEDELRQ(payeelstid="DEADBEEF")
 
 
 class PayeedelrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -244,16 +247,17 @@ class PayeedelrsTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["PAYEELSTID"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("PAYEEDELRS")
         SubElement(root, "PAYEELSTID").text = "DEADBEEF"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, PAYEEDELRS)
-        self.assertEqual(instance.payeelstid, "DEADBEEF")
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PAYEEDELRS(payeelstid="DEADBEEF")
 
 
 class PayeetrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
@@ -263,10 +267,18 @@ class PayeetrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
 
     @classproperty
     @classmethod
+    def aggregate(cls):
+        return PAYEETRNRQ(trnuid="DEADBEEF",
+                          cltcookie="B00B135",
+                          tan="B16B00B5",
+                          payeerq=PayeerqTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(cls):
         for Test in PayeerqTestCase, PayeemodrqTestCase, PayeedelrqTestCase:
             root = cls.emptyBase
-            rq = Test().root
+            rq = Test.etree
             root.append(rq)
             yield root
 
@@ -310,7 +322,7 @@ class PayeetrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
         ]:
             root = deepcopy(cls.emptyBase)
             for Test in Tests:
-                root.append(Test().root)
+                root.append(Test.etree)
             yield root
 
         # Wrapped aggregate in the wrong place (should be right after TAN)
@@ -330,10 +342,18 @@ class PayeetrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
 
     @classproperty
     @classmethod
+    def aggregate(cls):
+        return PAYEETRNRS(trnuid="DEADBEEF",
+                          status=base.StatusTestCase.aggregate,
+                          cltcookie="B00B135",
+                          payeers=PayeersTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(cls):
         for Test in PayeersTestCase, PayeemodrsTestCase, PayeedelrsTestCase:
             root = deepcopy(cls.emptyBase)
-            rs = Test().root
+            rs = Test.etree
             root.append(rs)
             yield root
 
@@ -347,7 +367,7 @@ class PayeetrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
         # TRNUID/STATUS/CLTCOOKIE out of order
         trnuid = Element("TRNUID")
         trnuid.text = "DEADBEEF"
-        status = base.StatusTestCase().root
+        status = base.StatusTestCase.etree
         cltcookie = Element("CLTCOOKIE")
         cltcookie.text = "B00B135"
 
@@ -375,7 +395,7 @@ class PayeetrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
         ]:
             root = deepcopy(cls.emptyBase)
             for Test in Tests:
-                root.append(Test().root)
+                root.append(Test.etree)
             yield root
 
         # Wrapped aggregate in the wrong place (should be right after CLTCOOKIE)

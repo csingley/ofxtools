@@ -7,50 +7,48 @@ from xml.etree.ElementTree import Element, SubElement
 
 
 # local imports
-import base
-
 from ofxtools.models.base import Aggregate
 from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, CURRENCY_CODES
+from ofxtools.utils import classproperty
+
+
+# test imports
+import base
 
 
 class CurrencyTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ("CURRATE", "CURSYM")
+    oneOfs = {"CURSYM": CURRENCY_CODES}
 
-    @property
-    def root(self):
-        root = Element("CURRENCY")
-        SubElement(root, "CURRATE").text = "59.773"
-        SubElement(root, "CURSYM").text = "EUR"
-        return root
+    @classproperty
+    @classmethod
+    def etree(cls):
+        etree = Element("CURRENCY")
+        SubElement(etree, "CURRATE").text = "59.773"
+        SubElement(etree, "CURSYM").text = "EUR"
+        return etree
 
-    def testConvert(self):
-        # Make sure Aggregate.from_etree() calls Element.convert() and sets
-        # Aggregate instance attributes with the result
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, CURRENCY)
-        self.assertEqual(root.currate, Decimal("59.773"))
-        self.assertEqual(root.cursym, "EUR")
-
-    def testOneOf(self):
-        self.oneOfTest("CURSYM", CURRENCY_CODES)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CURRENCY(currate=Decimal("59.773"), cursym="EUR")
 
 
 class OrigcurrencyTestCase(CurrencyTestCase):
-    @property
-    def root(self):
-        root = super(OrigcurrencyTestCase, self).root
-        root.tag = "ORIGCURRENCY"
-        return root
+    @classproperty
+    @classmethod
+    def etree(cls):
+        etree = Element("ORIGCURRENCY")
+        SubElement(etree, "CURRATE").text = "59.773"
+        SubElement(etree, "CURSYM").text = "EUR"
+        return etree
 
-    def testConvert(self):
-        # Make sure Aggregate.from_etree() calls Element.convert() and sets
-        # Aggregate instance attributes with the result
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, ORIGCURRENCY)
-        self.assertEqual(root.currate, Decimal("59.773"))
-        self.assertEqual(root.cursym, "EUR")
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return ORIGCURRENCY(currate=Decimal("59.773"), cursym="EUR")
 
 
 if __name__ == "__main__":

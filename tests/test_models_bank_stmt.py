@@ -13,13 +13,14 @@ from copy import deepcopy
 # local imports
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import BAL, SVCSTATUSES
-import ofxtools.models
 from ofxtools.models.bank.stmt import (
     TRNTYPES,
     INV401KSOURCES,
     BANKACCTFROM,
+    BANKACCTTO,
     BANKACCTINFO,
     CCACCTFROM,
+    CCACCTTO,
     CCACCTINFO,
     PAYEE,
     LEDGERBAL,
@@ -28,10 +29,15 @@ from ofxtools.models.bank.stmt import (
     INCTRAN,
     BANKTRANLIST,
     REWARDINFO,
+    STMTTRN,
     STMTRQ,
     STMTRS,
+    STMTTRNRQ,
+    STMTTRNRS,
     CCSTMTRQ,
     CCSTMTRS,
+    CCSTMTTRNRQ,
+    CCSTMTTRNRS,
 )
 from ofxtools.models.i18n import CURRENCY_CODES, ORIGCURRENCY
 from ofxtools.utils import UTC, classproperty
@@ -48,11 +54,12 @@ class BankacctfromTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["BANKID", "ACCTID", "ACCTTYPE"]
     optionalElements = ["BRANCHID", "ACCTKEY"]
-    tag = "BANKACCTFROM"
+    oneOf = {"ACCTTYPE": ("CHECKING", "SAVINGS", "MONEYMRKT", "CREDITLINE", "CD")}
 
-    @property
-    def root(self):
-        root = Element(self.tag)
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("BANKACCTFROM")
         SubElement(root, "BANKID").text = "111000614"
         SubElement(root, "BRANCHID").text = "11223344"
         SubElement(root, "ACCTID").text = "123456789123456789"
@@ -60,52 +67,63 @@ class BankacctfromTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "ACCTKEY").text = "DEADBEEF"
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, getattr(ofxtools.models, self.tag))
-        self.assertEqual(root.bankid, "111000614")
-        self.assertEqual(root.branchid, "11223344")
-        self.assertEqual(root.acctid, "123456789123456789")
-        self.assertEqual(root.accttype, "CHECKING")
-        self.assertEqual(root.acctkey, "DEADBEEF")
-
-    def testOneOf(self):
-        self.oneOfTest(
-            "ACCTTYPE", ("CHECKING", "SAVINGS", "MONEYMRKT", "CREDITLINE", "CD")
-        )
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return BANKACCTFROM(bankid="111000614", branchid="11223344",
+                            acctid="123456789123456789", accttype="CHECKING",
+                            acctkey="DEADBEEF")
 
 
 class BankaccttoTestCase(BankacctfromTestCase):
-    tag = "BANKACCTTO"
+    __test__ = True
+
+    requiredElements = ["BANKID", "ACCTID", "ACCTTYPE"]
+    optionalElements = ["BRANCHID", "ACCTKEY"]
+    oneOf = {"ACCTTYPE": ("CHECKING", "SAVINGS", "MONEYMRKT", "CREDITLINE", "CD")}
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("BANKACCTTO")
+        SubElement(root, "BANKID").text = "111000614"
+        SubElement(root, "BRANCHID").text = "11223344"
+        SubElement(root, "ACCTID").text = "123456789123456789"
+        SubElement(root, "ACCTTYPE").text = "CHECKING"
+        SubElement(root, "ACCTKEY").text = "DEADBEEF"
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return BANKACCTTO(bankid="111000614", branchid="11223344",
+                          acctid="123456789123456789", accttype="CHECKING",
+                          acctkey="DEADBEEF")
 
 
 class BankacctinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["BANKACCTFROM", "SUPTXDL", "XFERSRC", "XFERDEST", "SVCSTATUS"]
+    oneOfs = {"SVCSTATUS": SVCSTATUSES}
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("BANKACCTINFO")
-        acctfrom = BankacctfromTestCase().root
-        root.append(acctfrom)
+        root.append(BankacctfromTestCase.etree)
         SubElement(root, "SUPTXDL").text = "Y"
         SubElement(root, "XFERSRC").text = "N"
         SubElement(root, "XFERDEST").text = "Y"
         SubElement(root, "SVCSTATUS").text = "AVAIL"
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, BANKACCTINFO)
-        self.assertIsInstance(root.bankacctfrom, BANKACCTFROM)
-        self.assertEqual(root.suptxdl, True)
-        self.assertEqual(root.xfersrc, False)
-        self.assertEqual(root.xferdest, True)
-        self.assertEqual(root.svcstatus, "AVAIL")
-
-    def testOneOf(self):
-        self.oneOfTest("SVCSTATUS", SVCSTATUSES)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return BANKACCTINFO(bankacctfrom=BankacctfromTestCase.aggregate,
+                            suptxdl=True, xfersrc=False, xferdest=True,
+                            svcstatus="AVAIL")
 
 
 class CcacctfromTestCase(unittest.TestCase, base.TestAggregate):
@@ -113,54 +131,64 @@ class CcacctfromTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["ACCTID"]
     optionalElements = ["ACCTKEY"]
-    tag = "CCACCTFROM"
 
-    @property
-    def root(self):
-        root = Element(self.tag)
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("CCACCTFROM")
         SubElement(root, "ACCTID").text = "123456789123456789"
         SubElement(root, "ACCTKEY").text = "DEADBEEF"
         return root
 
-    def testConvert(self):
-        # Make sure Aggregate.from_etree() calls Element.convert() and sets
-        # Aggregate instance attributes with the result
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, getattr(ofxtools.models, self.tag))
-        self.assertEqual(root.acctid, "123456789123456789")
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CCACCTFROM(acctid="123456789123456789", acctkey="DEADBEEF")
 
 
-class CcaccttoTestCase(CcacctfromTestCase):
-    tag = "CCACCTTO"
+class CcaccttoTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["ACCTID"]
+    optionalElements = ["ACCTKEY"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("CCACCTTO")
+        SubElement(root, "ACCTID").text = "123456789123456789"
+        SubElement(root, "ACCTKEY").text = "DEADBEEF"
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CCACCTTO(acctid="123456789123456789", acctkey="DEADBEEF")
 
 
 class CcacctinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["CCACCTFROM", "SUPTXDL", "XFERSRC", "XFERDEST", "SVCSTATUS"]
+    oneOfs = {"SVCSTATUS": SVCSTATUSES}
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("CCACCTINFO")
-        acctfrom = CcacctfromTestCase().root
-        root.append(acctfrom)
+        root.append(CcacctfromTestCase.etree)
         SubElement(root, "SUPTXDL").text = "Y"
         SubElement(root, "XFERSRC").text = "N"
         SubElement(root, "XFERDEST").text = "Y"
         SubElement(root, "SVCSTATUS").text = "PEND"
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, CCACCTINFO)
-        self.assertIsInstance(root.ccacctfrom, CCACCTFROM)
-        self.assertEqual(root.suptxdl, True)
-        self.assertEqual(root.xfersrc, False)
-        self.assertEqual(root.xferdest, True)
-        self.assertEqual(root.svcstatus, "PEND")
-
-    def testOneOf(self):
-        self.oneOfTest("SVCSTATUS", SVCSTATUSES)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CCACCTINFO(ccacctfrom=CcacctfromTestCase.aggregate,
+                          suptxdl=True, xfersrc=False, xferdest=True,
+                          svcstatus="PEND")
 
 
 class InctranTestCase(unittest.TestCase, base.TestAggregate):
@@ -169,20 +197,21 @@ class InctranTestCase(unittest.TestCase, base.TestAggregate):
     requiredElements = ["INCLUDE"]
     optionalElements = ["DTSTART", "DTEND"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("INCTRAN")
-        SubElement(root, "DTSTART").text = "20110401"
-        SubElement(root, "DTEND").text = "20110430"
+        SubElement(root, "DTSTART").text = "20110401000000.000[0:GMT]"
+        SubElement(root, "DTEND").text = "20110430000000.000[0:GMT]"
         SubElement(root, "INCLUDE").text = "Y"
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, INCTRAN)
-        self.assertEqual(root.dtstart, datetime(2011, 4, 1, tzinfo=UTC))
-        self.assertEqual(root.dtend, datetime(2011, 4, 30, tzinfo=UTC))
-        self.assertEqual(root.include, True)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return INCTRAN(dtstart=datetime(2011, 4, 1, tzinfo=UTC),
+                       dtend=datetime(2011, 4, 30, tzinfo=UTC),
+                       include=True)
 
 
 class StmtrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -191,25 +220,22 @@ class StmtrqTestCase(unittest.TestCase, base.TestAggregate):
     requiredElements = ["BANKACCTFROM"]
     optionalElements = ["INCTRAN", "INCLUDEPENDING", "INCTRANIMG"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("STMTRQ")
-        acctfrom = BankacctfromTestCase().root
-        root.append(acctfrom)
-        inctran = InctranTestCase().root
-        root.append(inctran)
+        root.append(BankacctfromTestCase.etree)
+        root.append(InctranTestCase.etree)
         SubElement(root, "INCLUDEPENDING").text = "Y"
         SubElement(root, "INCTRANIMG").text = "N"
-
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, STMTRQ)
-        self.assertIsInstance(root.bankacctfrom, BANKACCTFROM)
-        self.assertIsInstance(root.inctran, INCTRAN)
-        self.assertEqual(root.includepending, True)
-        self.assertEqual(root.inctranimg, False)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return STMTRQ(bankacctfrom=BankacctfromTestCase.aggregate,
+                      inctran=InctranTestCase.aggregate,
+                      includepending=True, inctranimg=False)
 
 
 class PayeeTestCase(unittest.TestCase, base.TestAggregate):
@@ -218,8 +244,9 @@ class PayeeTestCase(unittest.TestCase, base.TestAggregate):
     requiredElements = ["NAME", "ADDR1", "CITY", "STATE", "POSTALCODE", "PHONE"]
     optionalElements = ["ADDR2", "ADDR3", "COUNTRY"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("PAYEE")
         SubElement(root, "NAME").text = "Wrigley Field"
         SubElement(root, "ADDR1").text = "3717 N Clark St"
@@ -232,23 +259,18 @@ class PayeeTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "PHONE").text = "(773) 309-1027"
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, PAYEE)
-        self.assertEqual(root.name, "Wrigley Field")
-        self.assertEqual(root.addr1, "3717 N Clark St")
-        self.assertEqual(root.addr2, "Dugout Box, Aisle 19")
-        self.assertEqual(root.addr3, "Seat A1")
-        self.assertEqual(root.city, "Chicago")
-        self.assertEqual(root.state, "IL")
-        self.assertEqual(root.postalcode, "60613")
-        self.assertEqual(root.country, "USA")
-        self.assertEqual(root.phone, "(773) 309-1027")
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PAYEE(name="Wrigley Field", addr1="3717 N Clark St",
+                     addr2="Dugout Box, Aisle 19", addr3="Seat A1",
+                     city="Chicago", state="IL", postalcode="60613",
+                     country="USA", phone="(773) 309-1027")
 
     def testConvertNameTooLong(self):
         """ Don't enforce length restriction on NAME; raise Warning """
         # Issue #12
-        copy_root = deepcopy(self.root)
+        copy_root = deepcopy(self.etree)
         copy_element = Element("NAME")
         copy_element.text = """
         The true war is a celebration of markets. Organic markets, carefully
@@ -296,6 +318,7 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
         "MEMO",
         "INV401KSOURCE",
     ]
+    oneOfs = {"TRNTYPE": TRNTYPES, "INV401KSOURCE": INV401KSOURCES}
     unsupported = ["imagedata"]
 
     @classproperty
@@ -303,9 +326,9 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
     def emptyBase(cls):
         root = Element("STMTTRN")
         SubElement(root, "TRNTYPE").text = "CHECK"
-        SubElement(root, "DTPOSTED").text = "20130615"
-        SubElement(root, "DTUSER").text = "20130614"
-        SubElement(root, "DTAVAIL").text = "20130616"
+        SubElement(root, "DTPOSTED").text = "20130615000000.000[0:GMT]"
+        SubElement(root, "DTUSER").text = "20130614000000.000[0:GMT]"
+        SubElement(root, "DTAVAIL").text = "20130616000000.000[0:GMT]"
         SubElement(root, "TRNAMT").text = "-433.25"
         SubElement(root, "FITID").text = "DEADBEEF"
         SubElement(root, "CORRECTFITID").text = "B00B5"
@@ -320,14 +343,42 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
 
     @classproperty
     @classmethod
+    def etree(cls):
+        root = cls.emptyBase
+        SubElement(root, "NAME").text = "Porky Pig"
+        SubElement(root, "EXTDNAME").text = "Walkin' bacon"
+        root.append(BankaccttoTestCase.etree)
+        SubElement(root, "MEMO").text = "Th-th-th-that's all folks!"
+        root.append(CurrencyTestCase.etree)
+        SubElement(root, "INV401KSOURCE").text = "ROLLOVER"
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return STMTTRN(trntype="CHECK", dtposted=datetime(2013,6, 15, tzinfo=UTC),
+                       dtuser=datetime(2013, 6, 14, tzinfo=UTC),
+                       dtavail=datetime(2013, 6, 16, tzinfo=UTC),
+                       trnamt=Decimal("-433.25"), fitid="DEADBEEF",
+                       correctfitid="B00B5", correctaction="REPLACE",
+                       srvrtid="101A2", checknum="101", refnum="5A6B",
+                       sic="171103", payeeid="77810", name="Porky Pig",
+                       extdname="Walkin' bacon",
+                       bankacctto=BankaccttoTestCase.aggregate,
+                       memo="Th-th-th-that's all folks!",
+                       currency=CurrencyTestCase.aggregate,
+                       inv401ksource="ROLLOVER")
+
+    @classproperty
+    @classmethod
     def validSoup(cls):
         name = Element("NAME")
         name.text = "Tweet E. Bird"
-        payee = PayeeTestCase().root
-        bankacctto = BankaccttoTestCase().root
-        ccacctto = CcaccttoTestCase().root
-        currency = CurrencyTestCase().root
-        origcurrency = OrigcurrencyTestCase().root
+        payee = PayeeTestCase.etree
+        bankacctto = BankaccttoTestCase.etree
+        ccacctto = CcaccttoTestCase.etree
+        currency = CurrencyTestCase.etree
+        origcurrency = OrigcurrencyTestCase.etree
         for payeeChoice in (None, name, payee):
             for acctto in (None, bankacctto, ccacctto):
                 for currencyChoice in (None, currency, origcurrency):
@@ -349,10 +400,6 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
                     SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
                     yield root
 
-    @property
-    def root(self):
-        return list(self.validSoup)[-1]
-
     @classproperty
     @classmethod
     def invalidSoup(cls):
@@ -360,11 +407,11 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
 
         name = Element("NAME")
         name.text = "Tweet E. Bird"
-        payee = PayeeTestCase().root
-        bankacctto = BankaccttoTestCase().root
-        ccacctto = CcaccttoTestCase().root
-        currency = CurrencyTestCase().root
-        origcurrency = OrigcurrencyTestCase().root
+        payee = PayeeTestCase.etree
+        bankacctto = BankaccttoTestCase.etree
+        ccacctto = CcaccttoTestCase.etree
+        currency = CurrencyTestCase.etree
+        origcurrency = OrigcurrencyTestCase.etree
 
         #  optionalMutexes = [
         #  ("name", "payee"),
@@ -392,37 +439,40 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
 
         # FIXME - add out-of-sequence errors
 
-    def testOneOf(self):
-        self.oneOfTest("TRNTYPE", TRNTYPES)
-        self.oneOfTest("INV401KSOURCE", INV401KSOURCES)
-
-    def testUnsupported(self):
-        root = Aggregate.from_etree(self.root)
-        for unsupp in self.unsupported:
-            setattr(root, unsupp, "FOOBAR")
-            self.assertIsNone(getattr(root, unsupp))
-
     def testPropertyAliases(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertEqual(instance.curtype, "ORIGCURRENCY")
-        self.assertEqual(instance.cursym, instance.origcurrency.cursym)
-        self.assertEqual(instance.currate, instance.origcurrency.currate)
+        instance = Aggregate.from_etree(self.etree)
+        self.assertEqual(instance.curtype, "CURRENCY")
+        self.assertEqual(instance.cursym, instance.currency.cursym)
+        self.assertEqual(instance.currate, instance.currency.currate)
 
 
 class BanktranlistTestCase(unittest.TestCase, base.TranlistTestCase):
     __test__ = True
 
-    @property
-    def validSoup(self):
-        trn = StmttrnTestCase().root
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = super().etree
+        root.append(StmttrnTestCase.etree)
+        root.append(StmttrnTestCase.etree)
+        return root
 
-        for root_ in super().validSoup:
-            root = deepcopy(root_)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return BANKTRANLIST(StmttrnTestCase.aggregate, StmttrnTestCase.aggregate,
+                            dtstart=datetime(2016, 1, 1, tzinfo=UTC),
+                            dtend =datetime(2016, 12, 31, tzinfo=UTC))
+
+    @classproperty
+    @classmethod
+    def validSoup(cls):
+        for root in super().validSoup:
             # 0 contained aggregrates
             yield root
             # 1 or more contained aggregates
             for n in range(2):
-                root.append(deepcopy(trn))
+                root.append(StmttrnTestCase.etree)
                 yield root
 
 
@@ -431,20 +481,19 @@ class LedgerbalTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["BALAMT", "DTASOF"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("LEDGERBAL")
         SubElement(root, "BALAMT").text = "12345.67"
-        SubElement(root, "DTASOF").text = "20051029101003"
+        SubElement(root, "DTASOF").text = "20051029101003.000[0:GMT]"
         return root
 
-    def testConvert(self):
-        # Make sure Aggregate.from_etree() calls Element.convert() and sets
-        # Aggregate instance attributes with the result
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, LEDGERBAL)
-        self.assertEqual(root.balamt, Decimal("12345.67"))
-        self.assertEqual(root.dtasof, datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC))
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return LEDGERBAL(balamt=Decimal("12345.67"),
+                         dtasof=datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC))
 
 
 class AvailbalTestCase(unittest.TestCase, base.TestAggregate):
@@ -452,20 +501,19 @@ class AvailbalTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["BALAMT", "DTASOF"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("AVAILBAL")
         SubElement(root, "BALAMT").text = "12345.67"
-        SubElement(root, "DTASOF").text = "20051029101003"
+        SubElement(root, "DTASOF").text = "20051029101003.000[0:GMT]"
         return root
 
-    def testConvert(self):
-        # Make sure Aggregate.from_etree() calls Element.convert() and sets
-        # Aggregate instance attributes with the result
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, AVAILBAL)
-        self.assertEqual(root.balamt, Decimal("12345.67"))
-        self.assertEqual(root.dtasof, datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC))
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return AVAILBAL(balamt=Decimal("12345.67"),
+                        dtasof=datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC))
 
 
 class BallistTestCase(unittest.TestCase, base.TestAggregate):
@@ -475,33 +523,28 @@ class BallistTestCase(unittest.TestCase, base.TestAggregate):
 
     optionalElements = ()  # FIXME - how to handle multiple BALs?
 
-    @property
-    def root(self):
-        root = Element("BALLIST")
-        bal1 = BalTestCase().root
-        bal2 = deepcopy(bal1)
-        root.append(bal1)
-        root.append(bal2)
-
-        return root
-
     def testListItems(self):
         # BALLLIST may only contain BAL
         listitems = BALLIST.listitems
         self.assertEqual(len(listitems), 1)
-        root = deepcopy(self.root)
-        root.append(StmttrnTestCase().root)
+        root = self.etree
+        root.append(StmttrnTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
 
-    def testConvert(self):
-        # Test *TRANLIST wrapper.  STMTTRN is tested elsewhere.
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, BALLIST)
-        self.assertEqual(len(root), 2)
-        self.assertIsInstance(root[0], BAL)
-        self.assertIsInstance(root[1], BAL)
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("BALLIST")
+        root.append(BalTestCase.etree)
+        root.append(BalTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return BALLIST(BalTestCase.aggregate, BalTestCase.aggregate)
 
 
 class StmtrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -516,58 +559,45 @@ class StmtrsTestCase(unittest.TestCase, base.TestAggregate):
         "BALLIST",
         "MKTGINFO",
     ]
-    unsupported = ["banktranlistp"]
+    #  unsupported = ["banktranlistp"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("STMTRS")
         SubElement(root, "CURDEF").text = "USD"
-        acctfrom = BankacctfromTestCase().root
-        root.append(acctfrom)
-        tranlist = BanktranlistTestCase().root
-        root.append(tranlist)
-        tranlist = SubElement(root, "BANKTRANLISTP")
-        SubElement(tranlist, "DTASOF").text = "20130101"
-        stmttrnp = SubElement(tranlist, "STMTTRNP")
-        SubElement(stmttrnp, "TRNTYPE").text = "FEE"
-        SubElement(stmttrnp, "DTTRAN").text = "20130101"
-        SubElement(stmttrnp, "TRNAMT").text = "5.99"
-        SubElement(stmttrnp, "NAME").text = "Usury"
-        ledgerbal = LedgerbalTestCase().root
-        root.append(ledgerbal)
-        availbal = AvailbalTestCase().root
-        root.append(availbal)
+        root.append(BankacctfromTestCase.etree)
+        root.append(BanktranlistTestCase.etree)
+        #  tranlist = SubElement(root, "BANKTRANLISTP")
+        #  SubElement(tranlist, "DTASOF").text = "20130101"
+        #  stmttrnp = SubElement(tranlist, "STMTTRNP")
+        #  SubElement(stmttrnp, "TRNTYPE").text = "FEE"
+        #  SubElement(stmttrnp, "DTTRAN").text = "20130101"
+        #  SubElement(stmttrnp, "TRNAMT").text = "5.99"
+        #  SubElement(stmttrnp, "NAME").text = "Usury"
+        root.append(LedgerbalTestCase.etree)
+        root.append(AvailbalTestCase.etree)
         SubElement(root, "CASHADVBALAMT").text = "10000.00"
         SubElement(root, "INTRATE").text = "20.99"
-        ballist = BallistTestCase().root
-        root.append(ballist)
+        root.append(BallistTestCase.etree)
         SubElement(root, "MKTGINFO").text = "Get Free Stuff NOW!!"
-
         return root
 
-    def testConvert(self):
-        # Test *TRNRS wrapper and **RS Aggregate.
-        # Everything below that is tested elsewhere.
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, STMTRS)
-        self.assertIn(root.curdef, CURRENCY_CODES)
-        self.assertIsInstance(root.bankacctfrom, BANKACCTFROM)
-        self.assertIsInstance(root.banktranlist, BANKTRANLIST)
-        self.assertIsInstance(root.ledgerbal, LEDGERBAL)
-        self.assertIsInstance(root.availbal, AVAILBAL)
-        self.assertEqual(root.cashadvbalamt, Decimal("10000"))
-        self.assertEqual(root.intrate, Decimal("20.99"))
-        self.assertIsInstance(root.ballist, BALLIST)
-        self.assertEqual(root.mktginfo, "Get Free Stuff NOW!!")
-
-    def testUnsupported(self):
-        root = Aggregate.from_etree(self.root)
-        for tag in self.unsupported:
-            setattr(root, tag, "FOOBAR")
-            self.assertIsNone(getattr(root, tag, None))
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return STMTRS(curdef="USD",
+                      bankacctfrom=BankacctfromTestCase.aggregate,
+                      banktranlist=BanktranlistTestCase.aggregate,
+                      ledgerbal=LedgerbalTestCase.aggregate,
+                      availbal=AvailbalTestCase.aggregate,
+                      cashadvbalamt=Decimal("10000.00"),
+                      intrate=Decimal("20.99"),
+                      ballist=BallistTestCase.aggregate,
+                      mktginfo="Get Free Stuff NOW!!")
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
+        root = Aggregate.from_etree(self.etree)
         self.assertIsInstance(root.account, BANKACCTFROM)
         self.assertIsInstance(root.transactions, BANKTRANLIST)
         self.assertIsInstance(root.balance, LEDGERBAL)
@@ -578,14 +608,28 @@ class StmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
 
     wraps = StmtrqTestCase
 
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return STMTTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
+                         stmtrq=StmtrqTestCase.aggregate)
+
 
 class StmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
 
     wraps = StmtrsTestCase
 
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return STMTTRNRS(trnuid="DEADBEEF",
+                         status=base.StatusTestCase.aggregate,
+                         cltcookie="B00B135",
+                         stmtrs=StmtrsTestCase.aggregate)
+
     def testPropertyAliases(self):
-        instance = Aggregate.from_etree(self.root)
+        instance = self.aggregate
         stmt = instance.statement
         self.assertIsInstance(stmt, STMTRS)
 
@@ -593,20 +637,20 @@ class StmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
 class RewardinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("REWARDINFO")
         SubElement(root, "NAME").text = "Cash Back"
         SubElement(root, "REWARDBAL").text = "655"
         SubElement(root, "REWARDEARNED").text = "200"
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, REWARDINFO)
-        self.assertEqual(root.name, "Cash Back")
-        self.assertEqual(root.rewardbal, Decimal("655"))
-        self.assertEqual(root.rewardearned, Decimal("200"))
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return REWARDINFO(name="Cash Back", rewardbal=Decimal("655"),
+                          rewardearned=Decimal("200"))
 
 
 class CcstmtrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -615,27 +659,22 @@ class CcstmtrqTestCase(unittest.TestCase, base.TestAggregate):
     requiredElements = ["CCACCTFROM"]
     optionalElements = ["INCTRAN", "INCLUDEPENDING", "INCTRANIMG"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("CCSTMTRQ")
-        acctfrom = CcacctfromTestCase().root
-        root.append(acctfrom)
-        inctran = InctranTestCase().root
-        root.append(inctran)
+        root.append(CcacctfromTestCase.etree)
+        root.append(InctranTestCase.etree)
         SubElement(root, "INCLUDEPENDING").text = "N"
         SubElement(root, "INCTRANIMG").text = "Y"
-
         return root
 
-    def testConvert(self):
-        # Test *TRNRQ wrapper and direct child elements
-        # Everything below that is tested elsewhere.
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, CCSTMTRQ)
-        self.assertIsInstance(root.ccacctfrom, CCACCTFROM)
-        self.assertIsInstance(root.inctran, INCTRAN)
-        self.assertEqual(root.includepending, False)
-        self.assertEqual(root.inctranimg, True)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CCSTMTRQ(ccacctfrom=CcacctfromTestCase.aggregate,
+                        inctran=InctranTestCase.aggregate,
+                        includepending=False, inctranimg=True)
 
 
 class CcstmtrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -652,61 +691,46 @@ class CcstmtrsTestCase(unittest.TestCase, base.TestAggregate):
         "BALLIST",
         "MKTGINFO",
     ]
-    unsupported = ["banktranlistp"]
+    #  unsupported = ["banktranlistp"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("CCSTMTRS")
         SubElement(root, "CURDEF").text = "USD"
-        acctfrom = CcacctfromTestCase().root
-        root.append(acctfrom)
-        tranlist = BanktranlistTestCase().root
-        root.append(tranlist)
-        ledgerbal = LedgerbalTestCase().root
-        root.append(ledgerbal)
-        availbal = AvailbalTestCase().root
-        root.append(availbal)
+        root.append(CcacctfromTestCase.etree)
+        root.append(BanktranlistTestCase.etree)
+        root.append(LedgerbalTestCase.etree)
+        root.append(AvailbalTestCase.etree)
         SubElement(root, "CASHADVBALAMT").text = "10000.00"
         SubElement(root, "INTRATEPURCH").text = "20.99"
         SubElement(root, "INTRATECASH").text = "25.99"
         SubElement(root, "INTRATEXFER").text = "21.99"
-        rewardinfo = RewardinfoTestCase().root
-        root.append(rewardinfo)
-        ballist = BallistTestCase().root
-        root.append(ballist)
+        root.append(RewardinfoTestCase.etree)
+        root.append(BallistTestCase.etree)
         SubElement(root, "MKTGINFO").text = "Get Free Stuff NOW!!"
-
         return root
 
-    def testConvert(self):
-        # Test *TRNRS wrapper and direct child elements.
-        # Everything below that is tested elsewhere.
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, CCSTMTRS)
-        self.assertEqual(root.curdef, "USD")
-        self.assertIsInstance(root.ccacctfrom, CCACCTFROM)
-        self.assertIsInstance(root.banktranlist, BANKTRANLIST)
-        self.assertIsInstance(root.ledgerbal, LEDGERBAL)
-        self.assertIsInstance(root.availbal, AVAILBAL)
-        self.assertEqual(root.cashadvbalamt, Decimal("10000"))
-        self.assertEqual(root.intratepurch, Decimal("20.99"))
-        self.assertEqual(root.intratecash, Decimal("25.99"))
-        self.assertEqual(root.intratexfer, Decimal("21.99"))
-        self.assertIsInstance(root.rewardinfo, REWARDINFO)
-        self.assertIsInstance(root.ballist, BALLIST)
-        self.assertEqual(root.mktginfo, "Get Free Stuff NOW!!")
-
-    def testUnsupported(self):
-        root = Aggregate.from_etree(self.root)
-        for tag in self.unsupported:
-            setattr(root, tag, "FOOBAR")
-            self.assertIsNone(getattr(root, tag, None))
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CCSTMTRS(curdef="USD", ccacctfrom=CcacctfromTestCase.aggregate,
+                        banktranlist=BanktranlistTestCase.aggregate,
+                        ledgerbal=LedgerbalTestCase.aggregate,
+                        availbal=AvailbalTestCase.aggregate,
+                        cashadvbalamt=Decimal("10000.00"),
+                        intratepurch=Decimal("20.99"),
+                        intratecash=Decimal("25.99"),
+                        intratexfer=Decimal("21.99"),
+                        rewardinfo=RewardinfoTestCase.aggregate,
+                        ballist=BallistTestCase.aggregate,
+                        mktginfo="Get Free Stuff NOW!!")
 
     def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root.account, CCACCTFROM)
-        self.assertIsInstance(root.transactions, BANKTRANLIST)
-        self.assertIsInstance(root.balance, LEDGERBAL)
+        instance = self.aggregate
+        self.assertIsInstance(instance.account, CCACCTFROM)
+        self.assertIsInstance(instance.transactions, BANKTRANLIST)
+        self.assertIsInstance(instance.balance, LEDGERBAL)
 
 
 class CcstmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
@@ -714,11 +738,25 @@ class CcstmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
 
     wraps = CcstmtrqTestCase
 
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CCSTMTTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
+                           ccstmtrq=CcstmtrqTestCase.aggregate)
+
 
 class CcstmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
 
     wraps = CcstmtrsTestCase
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CCSTMTTRNRS(trnuid="DEADBEEF",
+                           status=base.StatusTestCase.aggregate,
+                           cltcookie="B00B135",
+                           ccstmtrs=CcstmtrsTestCase.aggregate)
 
 
 if __name__ == "__main__":

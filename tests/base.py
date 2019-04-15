@@ -8,6 +8,7 @@ from copy import deepcopy
 import itertools
 
 # local imports
+import ofxtools.models
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import STATUS
 from ofxtools.utils import classproperty
@@ -20,6 +21,11 @@ class TestAggregate:
     # not ``ofxtools.Types.Element`` (i.e. includes both Aggregates & Elements)
     requiredElements = []
     optionalElements = []
+    oneOfs = {}
+    unsupported = []
+
+    etree = NotImplemented
+    aggregate = NotImplemented
 
     @classproperty
     @classmethod
@@ -34,70 +40,103 @@ class TestAggregate:
         yield ET.Element("NOTAREALOFXTAG")
 
     def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
+        for etree in self.validSoup:
+            Aggregate.from_etree(etree)
 
     def testInvalidSoup(self):
-        for root in self.invalidSoup:
+        for etree in self.invalidSoup:
             with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
-
-    @property
-    def root(self):
-        # Use the last return value for TestAggregate test methods
-        return list(self.validSoup)[-1]
+                Aggregate.from_etree(etree)
 
     def testRequired(self):
         if self.requiredElements:
             for tag in self.requiredElements:
-                root = deepcopy(self.root)
-                child = root.find(tag)
+                etree = deepcopy(self.etree)
+                child = etree.find(tag)
                 try:
-                    root.remove(child)
+                    etree.remove(child)
                 except TypeError:
                     msg = "Can't find {} (from requiredElements) under {}"
-                    raise ValueError(msg.format(tag, root.tag))
+                    raise ValueError(msg.format(tag, etree.tag))
                 with self.assertRaises(ValueError):
-                    Aggregate.from_etree(root)
+                    Aggregate.from_etree(etree)
 
     def testOptional(self):
         if self.optionalElements:
             for tag in self.optionalElements:
-                root = deepcopy(self.root)
-                child = root.find(tag)
+                etree = deepcopy(self.etree)
+                child = etree.find(tag)
                 try:
-                    root.remove(child)
+                    etree.remove(child)
                 except TypeError:
                     msg = "Can't find {} (from optionalElements) under {}"
-                    raise ValueError(msg.format(tag, root.tag))
-                Aggregate.from_etree(root)
+                    raise ValueError(msg.format(tag, etree.tag))
+                Aggregate.from_etree(etree)
 
     def testExtraElement(self):
-        root = deepcopy(self.root)
-        ET.SubElement(root, "FAKEELEMENT").text = "garbage"
+        etree = deepcopy(self.etree)
+        ET.SubElement(etree, "FAKEELEMENT").text = "garbage"
         with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
+            Aggregate.from_etree(etree)
 
     def oneOfTest(self, tag, texts):
         # Make sure OneOf validator allows all legal values and disallows
         # illegal values
         for text in texts:
-            root = deepcopy(self.root)
-            target = root.find(".//%s" % tag)
+            etree = deepcopy(self.etree)
+            target = etree.find(".//%s" % tag)
             target.text = text
-            Aggregate.from_etree(root)
+            Aggregate.from_etree(etree)
 
-        root = deepcopy(self.root)
-        target = root.find(".//%s" % tag)
+        etree = deepcopy(self.etree)
+        target = etree.find(".//%s" % tag)
         target.text = "garbage"
         with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
+            Aggregate.from_etree(etree)
 
     def assertElement(self, elem, tag, text, length):
         self.assertIsInstance(elem, ET.Element)
         self.assertEqual(elem.tag, tag)
         self.assertEqual(elem.text, text)
         self.assertEqual(len(elem), length)
+
+    def _eqEtree(self, elem0, elem1):
+        self.assertIsInstance(elem0, ET.Element)
+        self.assertIsInstance(elem1, ET.Element)
+        self.assertEqual(elem0.tag, elem1.tag)
+        self.assertEqual(elem0.text, elem1.text)
+        self.assertEqual(len(elem0), len(elem1))
+        for child0, child1 in zip(elem0, elem1):
+            self._eqEtree(child0, child1)
+
+    def _eqAggregate(self, agg0, agg1):
+        self.assertIsInstance(agg0, Aggregate)
+        self.assertIsInstance(agg1, Aggregate)
+        self.assertIs(agg0.__class__, agg1.__class__)
+        for attr in agg0.spec:
+            attr0 = getattr(agg0, attr)
+            attr1 = getattr(agg1, attr)
+            if isinstance(attr0, Aggregate):
+                self.assertIsInstance(attr1, Aggregate)
+                self._eqAggregate(attr0, attr1)
+            else:
+                self.assertEqual(attr0, attr1)
+
+    def testFromEtree(self):
+        self._eqAggregate(self.aggregate, Aggregate.from_etree(self.etree))
+
+    def testToEtree(self):
+        self._eqEtree(self.etree, self.aggregate.to_etree())
+
+    def testOneOf(self):
+        for tag, choices in self.oneOfs.items():
+            self.oneOfTest(tag, choices)
+
+    def testUnsupported(self):
+        instance = Aggregate.from_etree(self.etree)
+        for unsupp in self.unsupported:
+            setattr(instance, unsupp, "FOOBAR")
+            self.assertIsNone(getattr(instance, unsupp))
 
 
 # StatusTestCase needs to be defined here (rather than test_models_common)
@@ -107,31 +146,26 @@ class StatusTestCase(unittest.TestCase, TestAggregate):
 
     requiredElements = ("CODE", "SEVERITY")
     optionalElements = ("MESSAGE",)
+    oneOfs = {"SEVERITY": ("INFO", "WARN", "ERROR")}
 
-    @property
-    def root(self):
-        root = ET.Element("STATUS")
-        ET.SubElement(root, "CODE").text = "0"
-        ET.SubElement(root, "SEVERITY").text = "INFO"
-        ET.SubElement(root, "MESSAGE").text = "Do your laundry!"
-        return root
+    @classproperty
+    @classmethod
+    def etree(cls):
+        etree = ET.Element("STATUS")
+        ET.SubElement(etree, "CODE").text = "0"
+        ET.SubElement(etree, "SEVERITY").text = "INFO"
+        ET.SubElement(etree, "MESSAGE").text = "Do your laundry!"
+        return etree
 
-    def testConvert(self):
-        # Make sure Aggregate.from_etree() calls Element.convert() and sets
-        # Aggregate instance attributes with the result
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, STATUS)
-        self.assertEqual(root.code, 0)
-        self.assertEqual(root.severity, "INFO")
-        self.assertEqual(root.message, "Do your laundry!")
-
-    def testOneOf(self):
-        self.oneOfTest("SEVERITY", ("INFO", "WARN", "ERROR"))
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return STATUS(code=0, severity="INFO", message="Do your laundry!")
 
 
 class TrnrqTestCase(TestAggregate):
     """
-    Cf. models.common.TrnRq
+    Cf. models.wrapperbases.TrnRq
     """
 
     wraps = NotImplemented
@@ -146,24 +180,36 @@ class TrnrqTestCase(TestAggregate):
     @classproperty
     @classmethod
     def wrapped(cls):
-        return cls.wraps().root
+        return cls.wraps().etree
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        return next(cls.validSoup)
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        tag = cls.wraps.__name__.replace("TestCase", "").upper()
+        Model = getattr(ofxtools.models, tag)
+        return Model(cls.wraps.aggregate, trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5")
 
     @classproperty
     @classmethod
     def emptyBase(cls):
         tag = cls.__name__.replace("TestCase", "").upper()
-        root = ET.Element(tag)
-        ET.SubElement(root, "TRNUID").text = "DEADBEEF"
-        ET.SubElement(root, "CLTCOOKIE").text = "B00B135"
-        ET.SubElement(root, "TAN").text = "B16B00B5"
-        return root
+        etree = ET.Element(tag)
+        ET.SubElement(etree, "TRNUID").text = "DEADBEEF"
+        ET.SubElement(etree, "CLTCOOKIE").text = "B00B135"
+        ET.SubElement(etree, "TAN").text = "B16B00B5"
+        return etree
 
     @classproperty
     @classmethod
     def validSoup(cls):
-        root = deepcopy(cls.emptyBase)
-        root.append(cls.wrapped)
-        yield root
+        etree = cls.emptyBase
+        etree.append(cls.wrapped)
+        yield etree
 
     @classproperty
     @classmethod
@@ -171,7 +217,7 @@ class TrnrqTestCase(TestAggregate):
         # Don't need to test missing TRNUID, since this case is
         # tested by ``requiredElements``
         tag = cls.__name__.replace("TestCase", "").upper()
-        root_ = ET.Element(tag)
+        etree_ = ET.Element(tag)
 
         # TRNUID/COOKIE/TAN out of order
         trnuid = ET.Element("TRNUID")
@@ -186,31 +232,27 @@ class TrnrqTestCase(TestAggregate):
         for elements in itertools.permutations(legal):
             if [el.tag for el in elements] == legal_tags:
                 continue
-            root = deepcopy(root_)
+            etree = deepcopy(etree_)
             for element in elements:
-                root.append(element)
-            root.append(cls.wrapped)
-            yield root
+                etree.append(element)
+            etree.append(cls.wrapped)
+            yield etree
 
         # Don't need to test missing wrapped aggregate, since this case is
         # tested by ``requiredElements``
 
         # Wrapped aggregate in the wrong place (should be right after TAN)
-        for root_ in cls.validSoup:
-            index = list(root_).index(root_.find("TAN"))
+        for etree_ in cls.validSoup:
+            index = list(etree_).index(etree_.find("TAN"))
             for n in range(index):
-                root = deepcopy(root_)
-                root.insert(n, cls.wrapped)
-                yield root
-
-    @property
-    def root(self):
-        return next(self.validSoup)
+                etree = deepcopy(etree_)
+                etree.insert(n, cls.wrapped)
+                yield etree
 
 
 class TrnrsTestCase(TestAggregate):
     """
-    Cf. models.common.TrnRs
+    Cf. models.wrapperbases.TrnRs
     """
 
     wraps = NotImplemented
@@ -220,25 +262,35 @@ class TrnrsTestCase(TestAggregate):
     @classproperty
     @classmethod
     def wrapped(cls):
-        return cls.wraps().root
+        return cls.wraps().etree
+
+    @classproperty
+    @classmethod
+    def etree(self):
+        return next(self.validSoup)
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        raise NotImplemented
 
     @classproperty
     @classmethod
     def emptyBase(cls):
         tag = cls.__name__.replace("TestCase", "").upper()
-        root = ET.Element(tag)
-        ET.SubElement(root, "TRNUID").text = "DEADBEEF"
-        status = StatusTestCase().root
-        root.append(status)
-        ET.SubElement(root, "CLTCOOKIE").text = "B00B135"
-        return root
+        etree = ET.Element(tag)
+        ET.SubElement(etree, "TRNUID").text = "DEADBEEF"
+        status = StatusTestCase().etree
+        etree.append(status)
+        ET.SubElement(etree, "CLTCOOKIE").text = "B00B135"
+        return etree
 
     @classproperty
     @classmethod
     def validSoup(cls):
-        root = deepcopy(cls.emptyBase)
-        root.append(cls.wrapped)
-        yield root
+        etree = deepcopy(cls.emptyBase)
+        etree.append(cls.wrapped)
+        yield etree
 
     @classproperty
     @classmethod
@@ -246,12 +298,12 @@ class TrnrsTestCase(TestAggregate):
         # Don't need to test missing TRNUID, since this case is
         # tested by ``requiredElements``
         tag = cls.__name__.replace("TestCase", "").upper()
-        root_ = ET.Element(tag)
+        etree_ = ET.Element(tag)
 
         # TRNUID/COOKIE/TAN out of order
         trnuid = ET.Element("TRNUID")
         trnuid.text = "DEADBEEF"
-        status = StatusTestCase().root
+        status = StatusTestCase().etree
         cltcookie = ET.Element("CLTCOOKIE")
         cltcookie.text = "B00B135"
 
@@ -260,26 +312,22 @@ class TrnrsTestCase(TestAggregate):
         for elements in itertools.permutations(legal):
             if [el.tag for el in elements] == legal_tags:
                 continue
-            root = deepcopy(root_)
+            etree = deepcopy(etree_)
             for element in elements:
-                root.append(element)
-            root.append(cls.wrapped)
-            yield root
+                etree.append(element)
+            etree.append(cls.wrapped)
+            yield etree
 
         # Don't need to test missing wrapped aggregate, since this case is
         # tested by ``requiredElements``
 
         # Wrapped aggregate in the wrong place (should be right after CLTCOOKIE)
-        for root_ in cls.validSoup:
-            index = list(root_).index(root_.find("CLTCOOKIE"))
+        for etree_ in cls.validSoup:
+            index = list(etree_).index(etree_.find("CLTCOOKIE"))
             for n in range(index):
-                root = deepcopy(root_)
-                root.insert(n, cls.wrapped)
-                yield root
-
-    @property
-    def root(self):
-        return next(self.validSoup)
+                etree = deepcopy(etree_)
+                etree.insert(n, cls.wrapped)
+                yield etree
 
 
 class TranlistTestCase(TestAggregate):
@@ -291,11 +339,16 @@ class TranlistTestCase(TestAggregate):
 
     @classproperty
     @classmethod
+    def etree(cls):
+        return next(cls.validSoup)
+
+    @classproperty
+    @classmethod
     def validSoup(cls):
         tag = cls.__name__.replace("TestCase", "").upper()
         root = ET.Element(tag)
-        ET.SubElement(root, "DTSTART").text = "20160101000000"
-        ET.SubElement(root, "DTEND").text = "20161231000000"
+        ET.SubElement(root, "DTSTART").text = "20160101000000.000[0:GMT]"
+        ET.SubElement(root, "DTEND").text = "20161231000000.000[0:GMT]"
         yield root
 
     @classproperty
@@ -303,11 +356,8 @@ class TranlistTestCase(TestAggregate):
     def invalidSoup(cls):
         # Don't need to test missing DTSTART/DTEND, since this case is
         # tested by ``requiredElements``
+        # FIXME
         yield from ()
-
-    @property
-    def root(self):
-        return next(self.validSoup)
 
 
 class SyncrqTestCase(TestAggregate):
@@ -316,16 +366,19 @@ class SyncrqTestCase(TestAggregate):
     """
 
     requiredElements = ["REJECTIFMISSING"]
-
     mutexes = [("TOKEN", "DEADBEEF"), ("TOKENONLY", "Y"), ("REFRESH", "N")]
+
+    @classproperty
+    @classmethod
+    def etree(self):
+        # Use the first return value for TestAggregate test methods
+        return next(self.validSoup)
 
     @classproperty
     @classmethod
     def emptyBase(cls):
         tag = cls.__name__.replace("TestCase", "").upper()
         root = ET.Element(tag)
-        ET.SubElement(root, "REJECTIFMISSING").text = "Y"
-
         return root
 
     @classproperty
@@ -333,29 +386,28 @@ class SyncrqTestCase(TestAggregate):
     def validSoup(cls):
         # One of each TOKEN/TOKENONLY/REFRESH
         for tag, text in cls.mutexes:
-            root = deepcopy(cls.emptyBase)
-            sub = ET.Element(tag)
-            sub.text = text
-            root.insert(0, sub)
+            root = cls.emptyBase
+            ET.SubElement(root, tag).text = text
+            ET.SubElement(root, "REJECTIFMISSING").text = "Y"
             yield root
 
     @classproperty
     @classmethod
     def invalidSoup(cls):
-        # TOKEN/TOKENONLY/REFRESH out of order
-        for tag, text in cls.mutexes:
-            root = deepcopy(cls.emptyBase)
-            sub = ET.Element(tag)
-            sub.text = text
-            root.insert(1, sub)  # Should be root.insert(0, sub) to be valid
-            yield root
-
         # TOKEN/TOKENONLY/REFRESH missing
         yield cls.emptyBase
 
+        # TOKEN/TOKENONLY/REFRESH out of order
+        for tag, text in cls.mutexes:
+            root = cls.emptyBase
+            sub = ET.Element(tag)
+            sub.text = text
+            root.insert(1, sub)  # Should be etree.insert(0, sub) to be valid
+            yield root
+
         # TOKEN/TOKENONLY/REFRESH duplicated
         for tag, text in cls.mutexes:
-            root = deepcopy(cls.emptyBase)
+            root = cls.emptyBase
             sub = ET.Element(tag)
             sub.text = text
             root.insert(0, sub)
@@ -363,26 +415,10 @@ class SyncrqTestCase(TestAggregate):
             yield root
 
         # REJECTIFMISSING duplicated
-        root = deepcopy(cls.emptyBase)
-        rejectifmissing = root.find("REJECTIFMISSING")
-        root.append(rejectifmissing)
-        root.append(rejectifmissing)
-
+        root = cls.emptyBase
+        ET.SubElement(root, "REJECTIFMISSING").text = "Y"
+        ET.SubElement(root, "REJECTIFMISSING").text = "Y"
         yield root
-
-    @property
-    def root(self):
-        # Use the first return value for TestAggregate test methods
-        return next(self.validSoup)
-
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
 
 
 class SyncrsTestCase(TestAggregate):
@@ -393,8 +429,9 @@ class SyncrsTestCase(TestAggregate):
     requiredElements = ["TOKEN"]
     optionalElements = ["LOSTSYNC"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(self):
         return next(self.validSoup)
 
     @classproperty
@@ -404,7 +441,6 @@ class SyncrsTestCase(TestAggregate):
         root = ET.Element(tag)
         ET.SubElement(root, "TOKEN").text = "DEADBEEF"
         ET.SubElement(root, "LOSTSYNC").text = "Y"
-
         yield root
 
     @classproperty
@@ -412,17 +448,8 @@ class SyncrsTestCase(TestAggregate):
     def invalidSoup(cls):
         # TOKEN/LOSTSYNC out of order
         tag = cls.__name__.replace("TestCase", "").upper()
-        root = ET.Element(tag)
-        ET.SubElement(root, "LOSTSYNC").text = "Y"
-        ET.SubElement(root, "TOKEN").text = "DEADBEEF"
+        etree = ET.Element(tag)
+        ET.SubElement(etree, "LOSTSYNC").text = "Y"
+        ET.SubElement(etree, "TOKEN").text = "DEADBEEF"
 
-        yield root
-
-    def testValidSoup(self):
-        for root in self.validSoup:
-            Aggregate.from_etree(root)
-
-    def testInvalidSoup(self):
-        for root in self.invalidSoup:
-            with self.assertRaises(ValueError):
-                Aggregate.from_etree(root)
+        yield etree

@@ -25,8 +25,12 @@ from ofxtools.models.billpay.pmt import (
     PMTMODRS,
     PMTCANRQ,
     PMTCANRS,
+    PMTTRNRQ,
+    PMTTRNRS,
     PMTINQRQ,
     PMTINQRS,
+    PMTINQTRNRQ,
+    PMTINQTRNRS,
 )
 from ofxtools.models.i18n import CURRENCY_CODES
 from ofxtools.utils import UTC, classproperty
@@ -46,50 +50,48 @@ class PmtrqTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["PMTINFO"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("PMTRQ")
-        root.append(PmtinfoTestCase().root)
+        root.append(PmtinfoTestCase.etree)
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, PMTRQ)
-        self.assertIsInstance(instance.pmtinfo, PMTINFO)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PMTRQ(pmtinfo=PmtinfoTestCase.aggregate)
 
 
 class PmtrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["SRVRTID", "PAYEELSTID", "CURDEF", "PMTINFO", "PMTPRCSTS"]
+    oneOfs = {"CURDEF": CURRENCY_CODES}
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("PMTRS")
         SubElement(root, "SRVRTID").text = "DEADBEEF"
         SubElement(root, "PAYEELSTID").text = "B16B00B5"
         SubElement(root, "CURDEF").text = "GBP"
-        root.append(PmtinfoTestCase().root)
-        root.append(ExtdpayeeTestCase().root)
+        root.append(PmtinfoTestCase.etree)
+        root.append(ExtdpayeeTestCase.etree)
         SubElement(root, "CHECKNUM").text = "215"
-        root.append(PmtprcstsTestCase().root)
+        root.append(PmtprcstsTestCase.etree)
         SubElement(root, "RECSRVRTID").text = "B00B135"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, PMTRS)
-        self.assertEqual(instance.srvrtid, "DEADBEEF")
-        self.assertEqual(instance.payeelstid, "B16B00B5")
-        self.assertEqual(instance.curdef, "GBP")
-        self.assertIsInstance(instance.pmtinfo, PMTINFO)
-        self.assertIsInstance(instance.extdpayee, EXTDPAYEE)
-        self.assertEqual(instance.checknum, "215")
-        self.assertIsInstance(instance.pmtprcsts, PMTPRCSTS)
-        self.assertEqual(instance.recsrvrtid, "B00B135")
-
-    def testOneOf(self):
-        self.oneOfTest("CURDEF", CURRENCY_CODES)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PMTRS(srvrtid="DEADBEEF", payeelstid="B16B00B5", curdef="GBP",
+                     pmtinfo=PmtinfoTestCase.aggregate,
+                     extdpayee=ExtdpayeeTestCase.aggregate,
+                     checknum="215",
+                     pmtprcsts=PmtprcstsTestCase.aggregate,
+                     recsrvrtid="B00B135")
 
 
 class PmtmodrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -97,18 +99,19 @@ class PmtmodrqTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["SRVRTID", "PMTINFO"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("PMTMODRQ")
         SubElement(root, "SRVRTID").text = "DEADBEEF"
-        root.append(PmtinfoTestCase().root)
+        root.append(PmtinfoTestCase.etree)
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, PMTMODRQ)
-        self.assertEqual(instance.srvrtid, "DEADBEEF")
-        self.assertIsInstance(instance.pmtinfo, PMTINFO)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PMTMODRQ(srvrtid="DEADBEEF",
+                        pmtinfo=PmtinfoTestCase.aggregate)
 
 
 class PmtmodrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -117,20 +120,21 @@ class PmtmodrsTestCase(unittest.TestCase, base.TestAggregate):
     requiredElements = ["SRVRTID", "PMTINFO"]
     optionalElements = ["PMTPRCSTS"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("PMTMODRS")
         SubElement(root, "SRVRTID").text = "DEADBEEF"
-        root.append(PmtinfoTestCase().root)
-        root.append(PmtprcstsTestCase().root)
+        root.append(PmtinfoTestCase.etree)
+        root.append(PmtprcstsTestCase.etree)
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, PMTMODRS)
-        self.assertEqual(instance.srvrtid, "DEADBEEF")
-        self.assertIsInstance(instance.pmtinfo, PMTINFO)
-        self.assertIsInstance(instance.pmtprcsts, PMTPRCSTS)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PMTMODRS(srvrtid="DEADBEEF",
+                        pmtinfo=PmtinfoTestCase.aggregate,
+                        pmtprcsts=PmtprcstsTestCase.aggregate)
 
 
 class PmtcanrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -138,16 +142,17 @@ class PmtcanrqTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["SRVRTID"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("PMTCANRQ")
         SubElement(root, "SRVRTID").text = "DEADBEEF"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, PMTCANRQ)
-        self.assertEqual(instance.srvrtid, "DEADBEEF")
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PMTCANRQ(srvrtid="DEADBEEF")
 
 
 class PmtcanrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -155,16 +160,17 @@ class PmtcanrsTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["SRVRTID"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("PMTCANRS")
         SubElement(root, "SRVRTID").text = "DEADBEEF"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, PMTCANRS)
-        self.assertEqual(instance.srvrtid, "DEADBEEF")
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PMTCANRS(srvrtid="DEADBEEF")
 
 
 class PmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
@@ -174,10 +180,16 @@ class PmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
 
     @classproperty
     @classmethod
+    def aggregate(cls):
+        return PMTTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
+                        pmtrq=PmtrqTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(cls):
         for Test in PmtrqTestCase, PmtmodrqTestCase, PmtcanrqTestCase:
             root = cls.emptyBase
-            rq = Test().root
+            rq = Test.etree
             root.append(rq)
             yield root
 
@@ -187,7 +199,6 @@ class PmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
         # Don't need to test missing TRNUID, since this case is
         # tested by ``requiredElements``
         tag = cls.__name__.replace("TestCase", "").upper()
-        root_ = Element(tag)
 
         # TRNUID/COOKIE/TAN out of order
         trnuid = Element("TRNUID")
@@ -202,7 +213,7 @@ class PmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
         for elements in itertools.permutations(legal):
             if [el.tag for el in elements] == legal_tags:
                 continue
-            root = deepcopy(root_)
+            root = Element(tag)
             for element in elements:
                 root.append(element)
             root.append(cls.wrapped)
@@ -221,7 +232,7 @@ class PmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
         ]:
             root = deepcopy(cls.emptyBase)
             for Test in Tests:
-                root.append(Test().root)
+                root.append(Test.etree)
             yield root
 
         # Wrapped aggregate in the wrong place (should be right after TAN)
@@ -241,13 +252,28 @@ class PmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
 
     @classproperty
     @classmethod
+    def etree(cls):
+        root = cls.emptyBase
+        root.append(PmtrsTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PMTTRNRS(trnuid="DEADBEEF",
+                        status=base.StatusTestCase.aggregate,
+                        cltcookie="B00B135",
+                        pmtrs=PmtrsTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(cls):
         # Empty *RS is OK
         yield cls.emptyBase
 
         for Test in PmtrsTestCase, PmtmodrsTestCase, PmtcanrsTestCase:
             root = deepcopy(cls.emptyBase)
-            rs = Test().root
+            rs = Test.etree
             root.append(rs)
             yield root
 
@@ -261,7 +287,7 @@ class PmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
         # TRNUID/STATUS/CLTCOOKIE out of order
         trnuid = Element("TRNUID")
         trnuid.text = "DEADBEEF"
-        status = base.StatusTestCase().root
+        status = base.StatusTestCase.etree
         cltcookie = Element("CLTCOOKIE")
         cltcookie.text = "B00B135"
 
@@ -289,7 +315,7 @@ class PmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
         ]:
             root = deepcopy(cls.emptyBase)
             for Test in Tests:
-                root.append(Test().root)
+                root.append(Test.etree)
             yield root
 
         # Wrapped aggregate in the wrong place (should be right after CLTCOOKIE)
@@ -306,16 +332,17 @@ class PmtinqrqTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["SRVRTID"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("PMTINQRQ")
         SubElement(root, "SRVRTID").text = "DEADBEEF"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, PMTINQRQ)
-        self.assertEqual(instance.srvrtid, "DEADBEEF")
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PMTINQRQ(srvrtid="DEADBEEF")
 
 
 class PmtinqrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -324,18 +351,21 @@ class PmtinqrsTestCase(unittest.TestCase, base.TestAggregate):
     requiredElements = ["SRVRTID", "PMTPRCSTS"]
     optionalElements = ["CHECKNUM"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("PMTINQRS")
         SubElement(root, "SRVRTID").text = "DEADBEEF"
-        root.append(PmtprcstsTestCase().root)
+        root.append(PmtprcstsTestCase.etree)
         SubElement(root, "CHECKNUM").text = "215"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, PMTINQRS)
-        self.assertIsInstance(instance.pmtprcsts, PMTPRCSTS)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PMTINQRS(srvrtid="DEADBEEF",
+                        pmtprcsts=PmtprcstsTestCase.aggregate,
+                        checknum="215")
 
 
 class PmtinqtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
@@ -343,11 +373,25 @@ class PmtinqtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
 
     wraps = PmtinqrqTestCase
 
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PMTINQTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
+                           pmtinqrq=PmtinqrqTestCase.aggregate)
+
 
 class PmtinqtrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
 
     wraps = PmtinqrsTestCase
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PMTINQTRNRS(trnuid="DEADBEEF",
+                           status=base.StatusTestCase.aggregate,
+                           cltcookie="B00B135",
+                           pmtinqrs=PmtinqrsTestCase.aggregate)
 
 
 if __name__ == "__main__":

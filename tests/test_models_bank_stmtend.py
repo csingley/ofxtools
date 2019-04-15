@@ -18,12 +18,16 @@ from ofxtools.models.bank.stmtend import (
     LASTPMTINFO,
     STMTENDRQ,
     STMTENDRS,
+    STMTENDTRNRQ,
+    STMTENDTRNRS,
     CCCLOSING,
     CCSTMTENDRQ,
     CCSTMTENDRS,
+    CCSTMTENDTRNRQ,
+    CCSTMTENDTRNRS,
 )
 from ofxtools.models.i18n import CURRENCY
-from ofxtools.utils import UTC
+from ofxtools.utils import UTC, classproperty
 
 
 # test imports
@@ -53,13 +57,14 @@ class ClosingTestCase(unittest.TestCase, base.TestAggregate):
         "CURRENCY",
     ]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("CLOSING")
         SubElement(root, "FITID").text = "DEADBEEF"
-        SubElement(root, "DTOPEN").text = "20161201"
-        SubElement(root, "DTCLOSE").text = "20161225"
-        SubElement(root, "DTNEXT").text = "20170101"
+        SubElement(root, "DTOPEN").text = "20161201000000.000[0:GMT]"
+        SubElement(root, "DTCLOSE").text = "20161225000000.000[0:GMT]"
+        SubElement(root, "DTNEXT").text = "20170101000000.000[0:GMT]"
         SubElement(root, "BALOPEN").text = "11"
         SubElement(root, "BALCLOSE").text = "20"
         SubElement(root, "BALMIN").text = "6"
@@ -67,32 +72,27 @@ class ClosingTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "CHKANDDEBIT").text = "-5"
         SubElement(root, "TOTALFEES").text = "0"
         SubElement(root, "TOTALINT").text = "0"
-        SubElement(root, "DTPOSTSTART").text = "20161201"
-        SubElement(root, "DTPOSTEND").text = "20161225"
+        SubElement(root, "DTPOSTSTART").text = "20161201000000.000[0:GMT]"
+        SubElement(root, "DTPOSTEND").text = "20161225000000.000[0:GMT]"
         SubElement(root, "MKTGINFO").text = "Get Free Stuff NOW!!"
-        currency = CurrencyTestCase().root
-        root.append(currency)
-
+        root.append(CurrencyTestCase.etree)
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, CLOSING)
-        self.assertEqual(instance.fitid, "DEADBEEF")
-        self.assertEqual(instance.dtopen, datetime(2016, 12, 1, tzinfo=UTC))
-        self.assertEqual(instance.dtclose, datetime(2016, 12, 25, tzinfo=UTC))
-        self.assertEqual(instance.dtnext, datetime(2017, 1, 1, tzinfo=UTC))
-        self.assertEqual(instance.balopen, Decimal("11"))
-        self.assertEqual(instance.balclose, Decimal("20"))
-        self.assertEqual(instance.balmin, Decimal("6"))
-        self.assertEqual(instance.depandcredit, Decimal("14"))
-        self.assertEqual(instance.chkanddebit, Decimal("-5"))
-        self.assertEqual(instance.totalfees, Decimal("0"))
-        self.assertEqual(instance.totalint, Decimal("0"))
-        self.assertEqual(instance.dtpoststart, datetime(2016, 12, 1, tzinfo=UTC))
-        self.assertEqual(instance.dtpostend, datetime(2016, 12, 25, tzinfo=UTC))
-        self.assertEqual(instance.mktginfo, "Get Free Stuff NOW!!")
-        self.assertIsInstance(instance.currency, CURRENCY)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CLOSING(fitid="DEADBEEF",
+                       dtopen=datetime(2016, 12, 1, tzinfo=UTC),
+                       dtclose=datetime(2016, 12, 25, tzinfo=UTC),
+                       dtnext=datetime(2017, 1, 1, tzinfo=UTC),
+                       balopen=Decimal("11"), balclose=Decimal("20"),
+                       balmin=Decimal("6"), depandcredit=Decimal("14"),
+                       chkanddebit=Decimal("-5"), totalfees=Decimal("0"),
+                       totalint=Decimal("0"),
+                       dtpoststart=datetime(2016, 12, 1, tzinfo=UTC),
+                       dtpostend=datetime(2016, 12, 25, tzinfo=UTC),
+                       mktginfo="Get Free Stuff NOW!!",
+                       currency=CurrencyTestCase.aggregate)
 
 
 class StmtendrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -101,21 +101,22 @@ class StmtendrqTestCase(unittest.TestCase, base.TestAggregate):
     requiredElements = ["BANKACCTFROM"]
     optionalElements = ["DTSTART", "DTEND"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("STMTENDRQ")
-        root.append(BankacctfromTestCase().root)
-        SubElement(root, "DTSTART").text = "20161201"
-        SubElement(root, "DTEND").text = "20161225"
+        root.append(BankacctfromTestCase.etree)
+        SubElement(root, "DTSTART").text = "20161201000000.000[0:GMT]"
+        SubElement(root, "DTEND").text = "20161225000000.000[0:GMT]"
 
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, STMTENDRQ)
-        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
-        self.assertEqual(instance.dtstart, datetime(2016, 12, 1, tzinfo=UTC))
-        self.assertEqual(instance.dtend, datetime(2016, 12, 25, tzinfo=UTC))
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return STMTENDRQ(bankacctfrom=BankacctfromTestCase.aggregate,
+                         dtstart=datetime(2016, 12, 1, tzinfo=UTC),
+                         dtend=datetime(2016, 12, 25, tzinfo=UTC))
 
 
 class StmtendrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -124,25 +125,23 @@ class StmtendrsTestCase(unittest.TestCase, base.TestAggregate):
     requiredElements = ["CURDEF", "BANKACCTFROM"]
     optionalElements = ["CLOSING"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("STMTENDRS")
         SubElement(root, "CURDEF").text = "CAD"
-        root.append(BankacctfromTestCase().root)
-        closing = ClosingTestCase().root
+        root.append(BankacctfromTestCase.etree)
+        closing = ClosingTestCase.etree
         root.append(closing)
-        root.append(deepcopy(closing))
+        root.append(closing)
 
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, STMTENDRS)
-        self.assertEqual(instance.curdef, "CAD")
-        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
-        self.assertEqual(len(instance), 2)
-        self.assertIsInstance(instance[0], CLOSING)
-        self.assertIsInstance(instance[1], CLOSING)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return STMTENDRS(ClosingTestCase.aggregate, ClosingTestCase.aggregate,
+                         curdef="CAD", bankacctfrom=BankacctfromTestCase.aggregate)
 
 
 class StmtendtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
@@ -150,28 +149,44 @@ class StmtendtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
 
     wraps = StmtendrqTestCase
 
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return STMTENDTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
+                            stmtendrq=StmtendrqTestCase.aggregate)
+
 
 class StmtendtrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
 
     wraps = StmtendrsTestCase
 
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return STMTENDTRNRS(trnuid="DEADBEEF",
+                            status=base.StatusTestCase.aggregate,
+                            cltcookie="B00B135",
+                            stmtendrs=StmtendrsTestCase.aggregate)
+
 
 class LastpmtinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("LASTPMTINFO")
-        SubElement(root, "LASTPMTDATE").text = "20170501"
+        SubElement(root, "LASTPMTDATE").text = "20170501000000.000[0:GMT]"
         SubElement(root, "LASTPMTAMT").text = "655.50"
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, LASTPMTINFO)
-        self.assertEqual(root.lastpmtdate, datetime(2017, 5, 1, tzinfo=UTC))
-        self.assertEqual(root.lastpmtamt, Decimal("655.50"))
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return LASTPMTINFO(
+            lastpmtdate=datetime(2017, 5, 1, tzinfo=UTC),
+            lastpmtamt=Decimal("655.50"))
 
 
 class CcclosingTestCase(unittest.TestCase, base.TestAggregate):
@@ -202,19 +217,20 @@ class CcclosingTestCase(unittest.TestCase, base.TestAggregate):
         "MKTGINFO",
         "CURRENCY",
     )
-    unsupported = ["IMAGEDATA"]
+    unsupported = ["imagedata"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("CCCLOSING")
         SubElement(root, "FITID").text = "1001"
-        SubElement(root, "DTOPEN").text = "20040701"
-        SubElement(root, "DTCLOSE").text = "20040704"
-        SubElement(root, "DTNEXT").text = "20040804"
+        SubElement(root, "DTOPEN").text = "20040701000000.000[0:GMT]"
+        SubElement(root, "DTCLOSE").text = "20040704000000.000[0:GMT]"
+        SubElement(root, "DTNEXT").text = "20040804000000.000[0:GMT]"
         SubElement(root, "BALOPEN").text = "24.5"
         SubElement(root, "BALCLOSE").text = "26.5"
         SubElement(root, "INTYTD").text = "0.01"
-        SubElement(root, "DTPMTDUE").text = "20040715"
+        SubElement(root, "DTPMTDUE").text = "20040715000000.000[0:GMT]"
         SubElement(root, "MINPMTDUE").text = "7.65"
         SubElement(root, "PASTDUEAMT").text = "0.35"
         SubElement(root, "LATEFEEAMT").text = "5"
@@ -227,49 +243,41 @@ class CcclosingTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "DEBADJ").text = "1.45"
         SubElement(root, "CREDITLIMIT").text = "50000"
         SubElement(root, "CASHADVCREDITLIMIT").text = "5000"
-        SubElement(root, "DTPOSTSTART").text = "20040701"
-        SubElement(root, "DTPOSTEND").text = "20040704"
+        SubElement(root, "DTPOSTSTART").text = "20040701000000.000[0:GMT]"
+        SubElement(root, "DTPOSTEND").text = "20040704000000.000[0:GMT]"
         SubElement(root, "AUTOPAY").text = "Y"
-        lastpmtinfo = LastpmtinfoTestCase().root
+        lastpmtinfo = LastpmtinfoTestCase.etree
         root.append(lastpmtinfo)
-        rewardinfo = RewardinfoTestCase().root
+        rewardinfo = RewardinfoTestCase.etree
         root.append(rewardinfo)
         SubElement(root, "MKTGINFO").text = "It's a floor wax! And a dessert topping!!"
-        currency = CurrencyTestCase().root
+        currency = CurrencyTestCase.etree
         root.append(currency)
 
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, CCCLOSING)
-        self.assertEqual(root.fitid, "1001")
-        self.assertEqual(root.dtopen, datetime(2004, 7, 1, tzinfo=UTC))
-        self.assertEqual(root.dtclose, datetime(2004, 7, 4, tzinfo=UTC))
-        self.assertEqual(root.dtnext, datetime(2004, 8, 4, tzinfo=UTC))
-        self.assertEqual(root.balopen, Decimal("24.5"))
-        self.assertEqual(root.balclose, Decimal("26.5"))
-        self.assertEqual(root.intytd, Decimal("0.01"))
-        self.assertEqual(root.dtpmtdue, datetime(2004, 7, 15, tzinfo=UTC))
-        self.assertEqual(root.minpmtdue, Decimal("7.65"))
-        self.assertEqual(root.pastdueamt, Decimal("0.35"))
-        self.assertEqual(root.latefeeamt, Decimal("5"))
-        self.assertEqual(root.finchg, Decimal("0.5"))
-        self.assertEqual(root.intratepurch, Decimal("26"))
-        self.assertEqual(root.intratecash, Decimal("30"))
-        self.assertEqual(root.intratexfer, Decimal("28"))
-        self.assertEqual(root.payandcredit, Decimal("1.5"))
-        self.assertEqual(root.purandadv, Decimal("2.75"))
-        self.assertEqual(root.debadj, Decimal("1.45"))
-        self.assertEqual(root.creditlimit, Decimal("50000"))
-        self.assertEqual(root.cashadvcreditlimit, Decimal("5000"))
-        self.assertEqual(root.dtpoststart, datetime(2004, 7, 1, tzinfo=UTC))
-        self.assertEqual(root.dtpostend, datetime(2004, 7, 4, tzinfo=UTC))
-        self.assertEqual(root.autopay, True)
-        self.assertIsInstance(root.lastpmtinfo, LASTPMTINFO)
-        self.assertIsInstance(root.rewardinfo, REWARDINFO)
-        self.assertEqual(root.mktginfo, "It's a floor wax! And a dessert topping!!")
-        self.assertIsInstance(root.currency, CURRENCY)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CCCLOSING(fitid="1001", dtopen=datetime(2004, 7, 1, tzinfo=UTC),
+                         dtclose=datetime(2004, 7, 4, tzinfo=UTC), dtnext=datetime(2004, 8, 4, tzinfo=UTC),
+                         balopen=Decimal("24.5"), balclose=Decimal("26.5"),
+                         intytd=Decimal("0.01"),
+                         dtpmtdue=datetime(2004, 7, 15, tzinfo=UTC),
+                         minpmtdue=Decimal("7.65"), pastdueamt=Decimal("0.35"),
+                         latefeeamt=Decimal("5"), finchg=Decimal("0.5"),
+                         intratepurch=Decimal("26"), intratecash=Decimal("30"),
+                         intratexfer=Decimal("28"), payandcredit=Decimal("1.5"),
+                         purandadv=Decimal("2.75"), debadj=Decimal("1.45"),
+                         creditlimit=Decimal("50000"),
+                         cashadvcreditlimit=Decimal("5000"),
+                         dtpoststart=datetime(2004, 7, 1, tzinfo=UTC),
+                         dtpostend=datetime(2004, 7, 4, tzinfo=UTC),
+                         autopay=True,
+                         lastpmtinfo=LastpmtinfoTestCase.aggregate,
+                         rewardinfo=RewardinfoTestCase.aggregate,
+                         mktginfo="It's a floor wax! And a dessert topping!!",
+                         currency=CurrencyTestCase.aggregate)
 
 
 class CcstmtendrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -278,26 +286,25 @@ class CcstmtendrqTestCase(unittest.TestCase, base.TestAggregate):
     requiredElements = ("CCACCTFROM",)
     optionalElements = ("DTSTART", "DTEND", "INCSTMTIMG")
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("CCSTMTENDRQ")
-        acctfrom = CcacctfromTestCase().root
+        acctfrom = CcacctfromTestCase.etree
         root.append(acctfrom)
-        SubElement(root, "DTSTART").text = "20040701"
-        SubElement(root, "DTEND").text = "20040704"
+        SubElement(root, "DTSTART").text = "20040701000000.000[0:GMT]"
+        SubElement(root, "DTEND").text = "20040704000000.000[0:GMT]"
         SubElement(root, "INCSTMTIMG").text = "N"
 
         return root
 
-    def testConvert(self):
-        # Test *RQ and direct child elements.
-        # Everything below that is tested elsewhere.
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, CCSTMTENDRQ)
-        self.assertIsInstance(root.ccacctfrom, CCACCTFROM)
-        self.assertEqual(root.dtstart, datetime(2004, 7, 1, tzinfo=UTC))
-        self.assertEqual(root.dtend, datetime(2004, 7, 4, tzinfo=UTC))
-        self.assertEqual(root.incstmtimg, False)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CCSTMTENDRQ(ccacctfrom=CcacctfromTestCase.aggregate,
+                           dtstart=datetime(2004, 7, 1, tzinfo=UTC),
+                           dtend=datetime(2004, 7, 4, tzinfo=UTC),
+                           incstmtimg=False)
 
 
 class CcstmtendrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -306,40 +313,51 @@ class CcstmtendrsTestCase(unittest.TestCase, base.TestAggregate):
     requiredElements = ("CURDEF", "CCACCTFROM")
     optionalElements = ("CCCLOSING",)
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("CCSTMTENDRS")
         SubElement(root, "CURDEF").text = "USD"
-        acctfrom = CcacctfromTestCase().root
+        acctfrom = CcacctfromTestCase.etree
         root.append(acctfrom)
-        ccclosing = CcclosingTestCase().root
+        ccclosing = CcclosingTestCase.etree
         root.append(ccclosing)
         root.append(ccclosing)
 
         return root
 
-    def testConvert(self):
-        # Test *RS and direct child elements.
-        # Everything below that is tested elsewhere.
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, CCSTMTENDRS)
-        self.assertEqual(instance.curdef, "USD")
-        self.assertIsInstance(instance.ccacctfrom, CCACCTFROM)
-        self.assertEqual(len(instance), 2)
-        self.assertIsInstance(instance[0], CCCLOSING)
-        self.assertIsInstance(instance[1], CCCLOSING)
-
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CCSTMTENDRS(CcclosingTestCase.aggregate,
+                           CcclosingTestCase.aggregate,
+                           curdef="USD",
+                           ccacctfrom=CcacctfromTestCase.aggregate)
 
 class CcstmtendtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     __test__ = True
 
     wraps = CcstmtendrqTestCase
 
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CCSTMTENDTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
+                              ccstmtendrq=CcstmtendrqTestCase.aggregate)
+
 
 class CcstmtendtrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
 
     wraps = CcstmtendrsTestCase
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CCSTMTENDTRNRS(trnuid="DEADBEEF",
+                              status=base.StatusTestCase.aggregate,
+                              cltcookie="B00B135",
+                              ccstmtendrs=CcstmtendrsTestCase.aggregate)
 
 
 if __name__ == "__main__":

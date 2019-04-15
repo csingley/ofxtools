@@ -36,7 +36,7 @@ from ofxtools.models.invest.openorders import (
 )
 from ofxtools.models.invest.securities import SECID
 from ofxtools.models.i18n import CURRENCY, CURRENCY_CODES
-from ofxtools.utils import UTC
+from ofxtools.utils import UTC, classproperty
 
 
 # test imports
@@ -67,15 +67,19 @@ class OoTestCase(unittest.TestCase, base.TestAggregate):
         "CURRENCY",
         "INV401KSOURCE",
     ]
+    oneOfs = {"SUBACCT": INVSUBACCTS,
+              "DURATION": ("DAY", "GOODTILCANCEL", "IMMEDIATE"),
+              "RESTRICTION": ("ALLORNONE", "MINUNITS", "NONE"),
+              "CURSYM": CURRENCY_CODES, "INV401KSOURCE": INV401KSOURCES}
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("OO")
         SubElement(root, "FITID").text = "1001"
         SubElement(root, "SRVRTID").text = "2002"
-        secid = SecidTestCase().root
-        root.append(secid)
-        SubElement(root, "DTPLACED").text = "20040701"
+        root.append(SecidTestCase.etree)
+        SubElement(root, "DTPLACED").text = "20040701000000.000[0:GMT]"
         SubElement(root, "UNITS").text = "150"
         SubElement(root, "SUBACCT").text = "CASH"
         SubElement(root, "DURATION").text = "GOODTILCANCEL"
@@ -84,167 +88,139 @@ class OoTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "LIMITPRICE").text = "10.50"
         SubElement(root, "STOPPRICE").text = "10.00"
         SubElement(root, "MEMO").text = "Open Order"
-        currency = CurrencyTestCase().root
-        root.append(currency)
+        root.append(CurrencyTestCase.etree)
         SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertEqual(instance.fitid, "1001")
-        self.assertEqual(instance.srvrtid, "2002")
-        self.assertIsInstance(instance.secid, SECID)
-        self.assertEqual(instance.dtplaced, datetime(2004, 7, 1, tzinfo=UTC))
-        self.assertEqual(instance.units, Decimal("150"))
-        self.assertEqual(instance.subacct, "CASH")
-        self.assertEqual(instance.duration, "GOODTILCANCEL")
-        self.assertEqual(instance.restriction, "ALLORNONE")
-        self.assertEqual(instance.minunits, Decimal("100"))
-        self.assertEqual(instance.limitprice, Decimal("10.50"))
-        self.assertEqual(instance.stopprice, Decimal("10.00"))
-        self.assertEqual(instance.memo, "Open Order")
-        self.assertIsInstance(instance.currency, CURRENCY)
-        self.assertEqual(instance.inv401ksource, "PROFITSHARING")
-        return instance
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return OO(fitid="1001", srvrtid="2002", secid=SecidTestCase.aggregate,
+                  dtplaced=datetime(2004, 7, 1, tzinfo=UTC),
+                  units=Decimal("150"), subacct="CASH",
+                  duration="GOODTILCANCEL", restriction="ALLORNONE",
+                  minunits=Decimal("100"), limitprice=Decimal("10.50"),
+                  stopprice=Decimal("10.00"), memo="Open Order",
+                  currency=CurrencyTestCase.aggregate,
+                  inv401ksource="PROFITSHARING")
 
-    def testOneOf(self):
-        self.oneOfTest("SUBACCT", INVSUBACCTS)
-        self.oneOfTest("DURATION", ("DAY", "GOODTILCANCEL", "IMMEDIATE"))
-        self.oneOfTest("RESTRICTION", ("ALLORNONE", "MINUNITS", "NONE"))
-        self.oneOfTest("CURSYM", CURRENCY_CODES)
-        self.oneOfTest("INV401KSOURCE", INV401KSOURCES)
-
-    def testPropertyAliases(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertEqual(instance.uniqueid, instance.secid.uniqueid)
-        self.assertEqual(instance.uniqueidtype, instance.secid.uniqueidtype)
-        #  self.assertEqual(instance.heldinacct, instance.invpos.heldinacct)
-        #  self.assertEqual(instance.postype, instance.invpos.postype)
-        #  self.assertEqual(instance.units, instance.invpos.units)
-        #  self.assertEqual(instance.unitprice, instance.invpos.unitprice)
-        #  self.assertEqual(instance.mktval, instance.invpos.mktval)
-        #  self.assertEqual(instance.dtpriceasof, instance.invpos.dtpriceasof)
-        self.assertEqual(instance.cursym, instance.currency.cursym)
-        self.assertEqual(instance.currate, instance.currency.currate)
+    def testPropertyAliases(cls):
+        instance = Aggregate.from_etree(cls.etree)
+        cls.assertEqual(instance.uniqueid, instance.secid.uniqueid)
+        cls.assertEqual(instance.uniqueidtype, instance.secid.uniqueidtype)
+        #  cls.assertEqual(instance.heldinacct, instance.invpos.heldinacct)
+        #  cls.assertEqual(instance.postype, instance.invpos.postype)
+        #  cls.assertEqual(instance.units, instance.invpos.units)
+        #  cls.assertEqual(instance.unitprice, instance.invpos.unitprice)
+        #  cls.assertEqual(instance.mktval, instance.invpos.mktval)
+        #  cls.assertEqual(instance.dtpriceasof, instance.invpos.dtpriceasof)
+        cls.assertEqual(instance.cursym, instance.currency.cursym)
+        cls.assertEqual(instance.currate, instance.currency.currate)
 
 
 class OobuydebtTestCase(unittest.TestCase, base.TestAggregate):
-    """ """
-
     __test__ = True
 
     requiredElements = ["OO", "AUCTION"]
     optionalElements = ["DTAUCTION"]
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("OOBUYDEBT")
-        oo = OoTestCase().root
-        root.append(oo)
+        root.append(OoTestCase.etree)
         SubElement(root, "AUCTION").text = "N"
-        SubElement(root, "DTAUCTION").text = "20120109"
+        SubElement(root, "DTAUCTION").text = "20120109000000.000[0:GMT]"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance.oo, OO)
-        self.assertEqual(instance.auction, False)
-        self.assertEqual(instance.dtauction, datetime(2012, 1, 9, tzinfo=UTC))
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return OOBUYDEBT(oo=OoTestCase.aggregate, auction=False,
+                         dtauction=datetime(2012, 1, 9, tzinfo=UTC))
 
 
 class OobuymfTestCase(unittest.TestCase, base.TestAggregate):
-    """ """
-
     __test__ = True
 
     requiredElements = ["OO", "BUYTYPE", "UNITTYPE"]
+    oneOfs = {"BUYTYPE": BUYTYPES, "UNITTYPE": UNITTYPES}
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("OOBUYMF")
-        oo = OoTestCase().root
-        root.append(oo)
+        root.append(OoTestCase.etree)
         SubElement(root, "BUYTYPE").text = "BUY"
         SubElement(root, "UNITTYPE").text = "SHARES"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance.oo, OO)
-        self.assertEqual(instance.buytype, "BUY")
-        self.assertEqual(instance.unittype, "SHARES")
-
-    def testOneOf(self):
-        self.oneOfTest("BUYTYPE", BUYTYPES)
-        self.oneOfTest("UNITTYPE", UNITTYPES)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return OOBUYMF(oo=OoTestCase.aggregate, buytype="BUY",
+                       unittype="SHARES")
 
 
 class OobuyoptTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["OO", "OPTBUYTYPE"]
+    oneOfs = {"OPTBUYTYPE": OPTBUYTYPES}
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("OOBUYOPT")
-        oo = OoTestCase().root
-        root.append(oo)
+        root.append(OoTestCase.etree)
         SubElement(root, "OPTBUYTYPE").text = "BUYTOOPEN"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance.oo, OO)
-        self.assertEqual(instance.optbuytype, "BUYTOOPEN")
-
-    def testOneOf(self):
-        self.oneOfTest("OPTBUYTYPE", OPTBUYTYPES)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return OOBUYOPT(oo=OoTestCase.aggregate, optbuytype="BUYTOOPEN")
 
 
 class OobuyotherTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["OO", "UNITTYPE"]
+    oneOfs = {"UNITTYPE": UNITTYPES}
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("OOBUYOTHER")
-        oo = OoTestCase().root
-        root.append(oo)
+        root.append(OoTestCase.etree)
         SubElement(root, "UNITTYPE").text = "SHARES"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance.oo, OO)
-        self.assertEqual(instance.unittype, "SHARES")
-
-    def testOneOf(self):
-        self.oneOfTest("UNITTYPE", UNITTYPES)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return OOBUYOTHER(oo=OoTestCase.aggregate, unittype="SHARES")
 
 
 class OobuystockTestCase(unittest.TestCase, base.TestAggregate):
-    """ """
-
     __test__ = True
 
     requiredElements = ["OO", "BUYTYPE"]
+    oneOfs = {"BUYTYPE": BUYTYPES}
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("OOBUYSTOCK")
-        oo = OoTestCase().root
+        oo = OoTestCase.etree
         root.append(oo)
         SubElement(root, "BUYTYPE").text = "BUYTOCOVER"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance.oo, OO)
-        self.assertEqual(instance.buytype, "BUYTOCOVER")
-
-    def testOneOf(self):
-        self.oneOfTest("BUYTYPE", BUYTYPES)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return OOBUYSTOCK(oo=OoTestCase.aggregate, buytype="BUYTOCOVER")
 
 
 class OoselldebtTestCase(unittest.TestCase, base.TestAggregate):
@@ -253,16 +229,17 @@ class OoselldebtTestCase(unittest.TestCase, base.TestAggregate):
     requiredElements = ["OO"]
     optionalElements = []
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("OOSELLDEBT")
-        oo = OoTestCase().root
-        root.append(oo)
+        root.append(OoTestCase.etree)
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance.oo, OO)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return OOSELLDEBT(oo=OoTestCase.aggregate)
 
 
 class OosellmfTestCase(unittest.TestCase, base.TestAggregate):
@@ -270,27 +247,23 @@ class OosellmfTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["OO", "SELLTYPE", "UNITTYPE", "SELLALL"]
     optionalElements = []
+    oneOfs = {"SELLTYPE": SELLTYPES, "UNITTYPE": UNITTYPES}
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("OOSELLMF")
-        oo = OoTestCase().root
-        root.append(oo)
+        root.append(OoTestCase.etree)
         SubElement(root, "SELLTYPE").text = "SELLSHORT"
         SubElement(root, "UNITTYPE").text = "SHARES"
         SubElement(root, "SELLALL").text = "Y"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance.oo, OO)
-        self.assertEqual(instance.selltype, "SELLSHORT")
-        self.assertEqual(instance.unittype, "SHARES")
-        self.assertEqual(instance.sellall, True)
-
-    def testOneOf(self):
-        self.oneOfTest("SELLTYPE", SELLTYPES)
-        self.oneOfTest("UNITTYPE", UNITTYPES)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return OOSELLMF(oo=OoTestCase.aggregate, selltype="SELLSHORT",
+                        unittype="SHARES", sellall=True)
 
 
 class OoselloptTestCase(unittest.TestCase, base.TestAggregate):
@@ -298,22 +271,20 @@ class OoselloptTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["OO", "OPTSELLTYPE"]
     optionalElements = []
+    oneOfs = {"OPTSELLTYPE": OPTSELLTYPES}
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("OOSELLOPT")
-        oo = OoTestCase().root
-        root.append(oo)
+        root.append(OoTestCase.etree)
         SubElement(root, "OPTSELLTYPE").text = "SELLTOCLOSE"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance.oo, OO)
-        self.assertEqual(instance.optselltype, "SELLTOCLOSE")
-
-    def testOneOf(self):
-        self.oneOfTest("OPTSELLTYPE", OPTSELLTYPES)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return OOSELLOPT(oo=OoTestCase.aggregate, optselltype="SELLTOCLOSE")
 
 
 class OosellotherTestCase(unittest.TestCase, base.TestAggregate):
@@ -321,22 +292,20 @@ class OosellotherTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["OO", "UNITTYPE"]
     optionalElements = []
+    oneOfs = {"UNITTYPE": UNITTYPES}
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("OOSELLOTHER")
-        oo = OoTestCase().root
-        root.append(oo)
+        root.append(OoTestCase.etree)
         SubElement(root, "UNITTYPE").text = "SHARES"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance.oo, OO)
-        self.assertEqual(instance.unittype, "SHARES")
-
-    def testOneOf(self):
-        self.oneOfTest("UNITTYPE", UNITTYPES)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return OOSELLOTHER(oo=OoTestCase.aggregate, unittype="SHARES")
 
 
 class OosellstockTestCase(unittest.TestCase, base.TestAggregate):
@@ -344,22 +313,20 @@ class OosellstockTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["OO", "SELLTYPE"]
     optionalElements = []
+    oneOfs = {"SELLTYPE": SELLTYPES}
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("OOSELLSTOCK")
-        oo = OoTestCase().root
-        root.append(oo)
+        root.append(OoTestCase.etree)
         SubElement(root, "SELLTYPE").text = "SELLSHORT"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance.oo, OO)
-        self.assertEqual(instance.selltype, "SELLSHORT")
-
-    def testOneOf(self):
-        self.oneOfTest("SELLTYPE", SELLTYPES)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return OOSELLSTOCK(oo=OoTestCase.aggregate, selltype="SELLSHORT")
 
 
 class SwitchmfTestCase(unittest.TestCase, base.TestAggregate):
@@ -367,27 +334,23 @@ class SwitchmfTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["OO", "SECID", "UNITTYPE", "SWITCHALL"]
     optionalElements = []
+    oneOfs = {"UNITTYPE": UNITTYPES}
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("SWITCHMF")
-        oo = OoTestCase().root
-        root.append(oo)
-        secid = SecidTestCase().root
-        root.append(secid)
+        root.append(OoTestCase.etree)
+        root.append(SecidTestCase.etree)
         SubElement(root, "UNITTYPE").text = "SHARES"
         SubElement(root, "SWITCHALL").text = "Y"
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance.oo, OO)
-        self.assertIsInstance(instance.secid, SECID)
-        self.assertEqual(instance.unittype, "SHARES")
-        self.assertEqual(instance.switchall, True)
-
-    def testOneOf(self):
-        self.oneOfTest("UNITTYPE", UNITTYPES)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return SWITCHMF(oo=OoTestCase.aggregate, secid=SecidTestCase.aggregate,
+                        unittype="SHARES", switchall=True)
 
 
 class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
@@ -395,8 +358,9 @@ class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
 
     optionalElements = []  # FIXME - how to handle OO subclasses?
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("INVOOLIST")
         for oo in (
             "Oobuydebt",
@@ -412,7 +376,7 @@ class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
             "Switchmf",
         ):
             testCase = "{}TestCase".format(oo)
-            elem = globals()[testCase]().root
+            elem = globals()[testCase].etree
             root.append(elem)
         return root
 
@@ -423,28 +387,26 @@ class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
         # 'OOSELLOTHER', 'OOSELLSTOCK', 'SWITCHMF', ]
         listitems = INVOOLIST.listitems
         self.assertEqual(len(listitems), 11)
-        root = deepcopy(self.root)
-        root.append(StmttrnTestCase().root)
+        root = self.etree
+        root.append(StmttrnTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
 
-    def testConvert(self):
-        # Test OOLIST wrapper.  OO members are tested elsewhere.
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, INVOOLIST)
-        self.assertEqual(len(instance), 11)
-        self.assertIsInstance(instance[0], OOBUYDEBT)
-        self.assertIsInstance(instance[1], OOBUYMF)
-        self.assertIsInstance(instance[2], OOBUYOPT)
-        self.assertIsInstance(instance[3], OOBUYOTHER)
-        self.assertIsInstance(instance[4], OOBUYSTOCK)
-        self.assertIsInstance(instance[5], OOSELLDEBT)
-        self.assertIsInstance(instance[6], OOSELLMF)
-        self.assertIsInstance(instance[7], OOSELLOPT)
-        self.assertIsInstance(instance[8], OOSELLOTHER)
-        self.assertIsInstance(instance[9], OOSELLSTOCK)
-        self.assertIsInstance(instance[10], SWITCHMF)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return INVOOLIST(OobuydebtTestCase.aggregate,
+                         OobuymfTestCase.aggregate,
+                         OobuyoptTestCase.aggregate,
+                         OobuyotherTestCase.aggregate,
+                         OobuystockTestCase.aggregate,
+                         OoselldebtTestCase.aggregate,
+                         OosellmfTestCase.aggregate,
+                         OoselloptTestCase.aggregate,
+                         OosellotherTestCase.aggregate,
+                         OosellstockTestCase.aggregate,
+                         SwitchmfTestCase.aggregate)
 
 
 if __name__ == "__main__":

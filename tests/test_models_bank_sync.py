@@ -11,6 +11,23 @@ from copy import deepcopy
 
 # local imports
 from ofxtools.models.base import Aggregate
+from ofxtools.models.bank.sync import (
+    STPCHKSYNCRQ,
+    STPCHKSYNCRS,
+    INTRASYNCRQ,
+    INTRASYNCRS,
+    INTERSYNCRQ,
+    INTERSYNCRS,
+    WIRESYNCRQ,
+    WIRESYNCRS,
+    BANKMAILSYNCRQ,
+    BANKMAILSYNCRS,
+    RECINTRASYNCRQ,
+    RECINTRASYNCRS,
+    RECINTERSYNCRQ,
+    RECINTERSYNCRS,
+)
+from ofxtools.utils import classproperty
 
 
 # test imports
@@ -30,29 +47,45 @@ class StpchksyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
 
     requiredElements = base.SyncrqTestCase.requiredElements + ["BANKACCTFROM"]
 
-    @property
-    def validSoup(self):
-        acctfrom = BankacctfromTestCase().root
-        trnrq = StpchktrnrqTestCase().root
+    @classproperty
+    @classmethod
+    def etree(self):
+        root = Element("STPCHKSYNCRQ")
+        SubElement(root, "TOKEN").text = "DEADBEEF"
+        SubElement(root, "REJECTIFMISSING").text = "Y"
+        root.append(BankacctfromTestCase.etree)
+        root.append(StpchktrnrqTestCase.etree)
+        root.append(StpchktrnrqTestCase.etree)
+        return root
 
-        for root_ in super().validSoup:
-            root = deepcopy(root_)
-            root.append(deepcopy(acctfrom))
+    @classproperty
+    @classmethod
+    def aggregate(self):
+        return STPCHKSYNCRQ(StpchktrnrqTestCase.aggregate,
+                            StpchktrnrqTestCase.aggregate,
+                            bankacctfrom=BankacctfromTestCase.aggregate,
+                            token="DEADBEEF", rejectifmissing=True)
+
+    @classproperty
+    @classmethod
+    def validSoup(self):
+        for root in super().validSoup:
+            root.append(BankacctfromTestCase.etree)
             # 0 contained aggregrates
             yield root
             # 1 or more contained aggregates
             for n in range(2):
-                root.append(deepcopy(trnrq))
+                root.append(StpchktrnrqTestCase.etree)
                 yield root
 
-    @property
+    @classproperty
+    @classmethod
     def invalidSoup(self):
-        acctfrom = BankacctfromTestCase().root
-        #  trnrq = StpchktrnrqTestCase().root
+        acctfrom = BankacctfromTestCase.etree
+        #  trnrq = StpchktrnrqTestCase.etree
 
         # SYNCRQ base malformed; STPCHK additions OK
-        for root_ in super().invalidSoup:
-            root = deepcopy(root_)
+        for root in super().invalidSoup:
             root.append(acctfrom)
             yield root
 
@@ -80,25 +113,45 @@ class StpchksyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
 
     requiredElements = base.SyncrsTestCase.requiredElements + ["BANKACCTFROM"]
 
-    @property
-    def validSoup(self):
-        acctfrom = BankacctfromTestCase().root
-        trnrs = StpchktrnrsTestCase().root
+    @classproperty
+    @classmethod
+    def etree(self):
+        root = Element("STPCHKSYNCRS")
+        SubElement(root, "TOKEN").text = "DEADBEEF"
+        SubElement(root, "LOSTSYNC").text = "Y"
+        root.append(BankacctfromTestCase.etree)
+        root.append(StpchktrnrsTestCase.etree)
+        root.append(StpchktrnrsTestCase.etree)
+        return root
 
-        for root_ in super().validSoup:
-            root = deepcopy(root_)
-            root.append(deepcopy(acctfrom))
+    @classproperty
+    @classmethod
+    def aggregate(self):
+        return STPCHKSYNCRS(StpchktrnrsTestCase.aggregate,
+                            StpchktrnrsTestCase.aggregate,
+                            token="DEADBEEF", lostsync=True,
+                            bankacctfrom=BankacctfromTestCase.aggregate)
+
+    @classproperty
+    @classmethod
+    def validSoup(self):
+        acctfrom = BankacctfromTestCase.etree
+        trnrs = StpchktrnrsTestCase.etree
+
+        for root in super().validSoup:
+            root.append(acctfrom)
             # 0 contained aggregrates
             yield root
             # 1 or more contained aggregates
             for n in range(2):
-                root.append(deepcopy(trnrs))
+                root.append(trnrs)
                 yield root
 
-    @property
+    @classproperty
+    @classmethod
     def invalidSoup(self):
-        acctfrom = BankacctfromTestCase().root
-        #  trnrs = StpchktrnrsTestCase().root
+        acctfrom = BankacctfromTestCase.etree
+        #  trnrs = StpchktrnrsTestCase.etree
 
         # SYNCRS base malformed; STPCHK additions OK
         for root_ in super().invalidSoup:
@@ -128,11 +181,27 @@ class StpchksyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
 class IntrasyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     __test__ = True
 
-    @property
+    @classproperty
+    @classmethod
+    def etree(self):
+        root = Element("INTRASYNCRQ")
+        SubElement(root, "TOKEN").text = "DEADBEEF"
+        SubElement(root, "REJECTIFMISSING").text = "Y"
+        root.append(BankacctfromTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(self):
+        return INTRASYNCRQ(token="DEADBEEF", rejectifmissing=True,
+                           bankacctfrom=BankacctfromTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(self):
-        bankacctfrom = BankacctfromTestCase().root
-        ccacctfrom = CcacctfromTestCase().root
-        trnrq = IntratrnrqTestCase().root
+        bankacctfrom = BankacctfromTestCase.etree
+        ccacctfrom = CcacctfromTestCase.etree
+        trnrq = IntratrnrqTestCase.etree
 
         for root_ in super().validSoup:
             for acctfrom in (bankacctfrom, ccacctfrom):
@@ -145,11 +214,12 @@ class IntrasyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
                     root.append(deepcopy(trnrq))
                     yield root
 
-    @property
+    @classproperty
+    @classmethod
     def invalidSoup(self):
-        bankacctfrom = BankacctfromTestCase().root
-        ccacctfrom = CcacctfromTestCase().root
-        trnrq = IntratrnrsTestCase().root
+        bankacctfrom = BankacctfromTestCase.etree
+        ccacctfrom = CcacctfromTestCase.etree
+        trnrq = IntratrnrsTestCase.etree
 
         # SYNCRQ base malformed; INTRA additions OK
         for root_ in super().invalidSoup:
@@ -199,11 +269,27 @@ class IntrasyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
 class IntrasyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     __test__ = True
 
-    @property
+    @classproperty
+    @classmethod
+    def etree(self):
+        root = Element("INTRASYNCRS")
+        SubElement(root, "TOKEN").text = "DEADBEEF"
+        SubElement(root, "LOSTSYNC").text = "Y"
+        root.append(BankacctfromTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(self):
+        return INTRASYNCRS(token="DEADBEEF", lostsync=True,
+                           bankacctfrom=BankacctfromTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(self):
-        bankacctfrom = BankacctfromTestCase().root
-        ccacctfrom = CcacctfromTestCase().root
-        trnrs = IntratrnrsTestCase().root
+        bankacctfrom = BankacctfromTestCase.etree
+        ccacctfrom = CcacctfromTestCase.etree
+        trnrs = IntratrnrsTestCase.etree
 
         for root_ in super().validSoup:
             for acctfrom in (bankacctfrom, ccacctfrom):
@@ -216,11 +302,12 @@ class IntrasyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
                     root.append(deepcopy(trnrs))
                     yield root
 
-    @property
+    @classproperty
+    @classmethod
     def invalidSoup(self):
-        bankacctfrom = BankacctfromTestCase().root
-        ccacctfrom = CcacctfromTestCase().root
-        trnrs = IntratrnrsTestCase().root
+        bankacctfrom = BankacctfromTestCase.etree
+        ccacctfrom = CcacctfromTestCase.etree
+        trnrs = IntratrnrsTestCase.etree
 
         # SYNCRS base malformed; INTRA additions OK
         for root_ in super().invalidSoup:
@@ -270,11 +357,27 @@ class IntrasyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
 class IntersyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     __test__ = True
 
-    @property
+    @classproperty
+    @classmethod
+    def etree(self):
+        root = Element("INTERSYNCRQ")
+        SubElement(root, "TOKEN").text = "DEADBEEF"
+        SubElement(root, "REJECTIFMISSING").text = "Y"
+        root.append(BankacctfromTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(self):
+        return INTERSYNCRQ(token="DEADBEEF", rejectifmissing=True,
+                           bankacctfrom=BankacctfromTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(self):
-        bankacctfrom = BankacctfromTestCase().root
-        ccacctfrom = CcacctfromTestCase().root
-        trnrq = IntertrnrqTestCase().root
+        bankacctfrom = BankacctfromTestCase.etree
+        ccacctfrom = CcacctfromTestCase.etree
+        trnrq = IntertrnrqTestCase.etree
 
         for root_ in super().validSoup:
             for acctfrom in (bankacctfrom, ccacctfrom):
@@ -287,11 +390,12 @@ class IntersyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
                     root.append(deepcopy(trnrq))
                     yield root
 
-    @property
+    @classproperty
+    @classmethod
     def invalidSoup(self):
-        bankacctfrom = BankacctfromTestCase().root
-        ccacctfrom = CcacctfromTestCase().root
-        trnrq = IntertrnrsTestCase().root
+        bankacctfrom = BankacctfromTestCase.etree
+        ccacctfrom = CcacctfromTestCase.etree
+        trnrq = IntertrnrsTestCase.etree
 
         # SYNCRQ base malformed; INTER additions OK
         for root_ in super().invalidSoup:
@@ -341,11 +445,27 @@ class IntersyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
 class IntersyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     __test__ = True
 
-    @property
+    @classproperty
+    @classmethod
+    def etree(self):
+        root = Element("INTERSYNCRS")
+        SubElement(root, "TOKEN").text = "DEADBEEF"
+        SubElement(root, "LOSTSYNC").text = "Y"
+        root.append(BankacctfromTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(self):
+        return INTERSYNCRS(token="DEADBEEF", lostsync=True,
+                           bankacctfrom=BankacctfromTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(self):
-        bankacctfrom = BankacctfromTestCase().root
-        ccacctfrom = CcacctfromTestCase().root
-        trnrs = IntertrnrsTestCase().root
+        bankacctfrom = BankacctfromTestCase.etree
+        ccacctfrom = CcacctfromTestCase.etree
+        trnrs = IntertrnrsTestCase.etree
 
         for root_ in super().validSoup:
             for acctfrom in (bankacctfrom, ccacctfrom):
@@ -358,11 +478,12 @@ class IntersyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
                     root.append(deepcopy(trnrs))
                     yield root
 
-    @property
+    @classproperty
+    @classmethod
     def invalidSoup(self):
-        bankacctfrom = BankacctfromTestCase().root
-        ccacctfrom = CcacctfromTestCase().root
-        trnrs = IntertrnrsTestCase().root
+        bankacctfrom = BankacctfromTestCase.etree
+        ccacctfrom = CcacctfromTestCase.etree
+        trnrs = IntertrnrsTestCase.etree
 
         # SYNCRS base malformed; INTER additions OK
         for root_ in super().invalidSoup:
@@ -414,20 +535,41 @@ class WiresyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
 
     requiredElements = ["REJECTIFMISSING", "BANKACCTFROM"]
 
-    @property
+    @classproperty
+    @classmethod
+    def etree(self):
+        root = Element("WIRESYNCRQ")
+        SubElement(root, "TOKEN").text = "DEADBEEF"
+        SubElement(root, "REJECTIFMISSING").text = "Y"
+        root.append(BankacctfromTestCase.etree)
+        root.append(WiretrnrqTestCase.etree)
+        root.append(WiretrnrqTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(self):
+        return WIRESYNCRQ(WiretrnrqTestCase.aggregate,
+                          WiretrnrqTestCase.aggregate,
+                          token="DEADBEEF", rejectifmissing=True,
+                          bankacctfrom=BankacctfromTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(self):
-        acctfrom = BankacctfromTestCase().root
-        trnrq = WiretrnrqTestCase().root
+        acctfrom = BankacctfromTestCase.etree
+        trnrq = WiretrnrqTestCase.etree
 
         for root in super().validSoup:
             root.append(acctfrom)
             root.append(trnrq)
             yield root
 
-    @property
+    @classproperty
+    @classmethod
     def invalidSoup(self):
-        acctfrom = BankacctfromTestCase().root
-        trnrq = IntratrnrsTestCase().root
+        acctfrom = BankacctfromTestCase.etree
+        trnrq = IntratrnrsTestCase.etree
 
         # SYNCRQ base malformed; WIRE additions OK
         for root in super().invalidSoup:
@@ -460,10 +602,30 @@ class WiresyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
 class WiresyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     __test__ = True
 
-    @property
+    @classproperty
+    @classmethod
+    def etree(self):
+        root = Element("WIRESYNCRS")
+        SubElement(root, "TOKEN").text = "DEADBEEF"
+        SubElement(root, "LOSTSYNC").text = "Y"
+        root.append(BankacctfromTestCase.etree)
+        root.append(WiretrnrsTestCase.etree)
+        root.append(WiretrnrsTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(self):
+        return WIRESYNCRS(WiretrnrsTestCase.aggregate,
+                          WiretrnrsTestCase.aggregate,
+                          token="DEADBEEF", lostsync=True,
+                          bankacctfrom=BankacctfromTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(self):
-        acctfrom = BankacctfromTestCase().root
-        trnrs = WiretrnrsTestCase().root
+        acctfrom = BankacctfromTestCase.etree
+        trnrs = WiretrnrsTestCase.etree
 
         for root in super().validSoup:
             root.append(acctfrom)
@@ -474,10 +636,11 @@ class WiresyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
                 root.append(deepcopy(trnrs))
                 yield root
 
-    @property
+    @classproperty
+    @classmethod
     def invalidSoup(self):
-        acctfrom = BankacctfromTestCase().root
-        trnrs = WiretrnrsTestCase().root
+        acctfrom = BankacctfromTestCase.etree
+        trnrs = WiretrnrsTestCase.etree
 
         # SYNCRS base malformed; WIRE additions OK
         for root in super().invalidSoup:
@@ -513,20 +676,37 @@ class RecintrasyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
 
     requiredElements = ["REJECTIFMISSING", "BANKACCTFROM"]
 
-    @property
+    @classproperty
+    @classmethod
+    def etree(self):
+        root = Element("RECINTRASYNCRQ")
+        SubElement(root, "TOKEN").text = "DEADBEEF"
+        SubElement(root, "REJECTIFMISSING").text = "Y"
+        root.append(BankacctfromTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(self):
+        return RECINTRASYNCRQ(token="DEADBEEF", rejectifmissing=True,
+                              bankacctfrom=BankacctfromTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(self):
-        acctfrom = BankacctfromTestCase().root
-        trnrq = RecintratrnrqTestCase().root
+        acctfrom = BankacctfromTestCase.etree
+        trnrq = RecintratrnrqTestCase.etree
 
         for root in super().validSoup:
             root.append(acctfrom)
             root.append(trnrq)
             yield root
 
-    @property
+    @classproperty
+    @classmethod
     def invalidSoup(self):
-        acctfrom = BankacctfromTestCase().root
-        trnrq = RecintratrnrqTestCase().root
+        acctfrom = BankacctfromTestCase.etree
+        trnrq = RecintratrnrqTestCase.etree
 
         # SYNCRQ base malformed; RECINTRA additions OK
         for root in super().invalidSoup:
@@ -559,10 +739,26 @@ class RecintrasyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
 class RecintrasyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     __test__ = True
 
-    @property
+    @classproperty
+    @classmethod
+    def etree(self):
+        root = Element("RECINTRASYNCRS")
+        SubElement(root, "TOKEN").text = "DEADBEEF"
+        SubElement(root, "LOSTSYNC").text = "Y"
+        root.append(BankacctfromTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(self):
+        return RECINTRASYNCRS(token="DEADBEEF", lostsync=True,
+                              bankacctfrom=BankacctfromTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(self):
-        acctfrom = BankacctfromTestCase().root
-        trnrs = RecintratrnrsTestCase().root
+        acctfrom = BankacctfromTestCase.etree
+        trnrs = RecintratrnrsTestCase.etree
 
         for root in super().validSoup:
             root.append(acctfrom)
@@ -573,10 +769,11 @@ class RecintrasyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
                 root.append(deepcopy(trnrs))
                 yield root
 
-    @property
+    @classproperty
+    @classmethod
     def invalidSoup(self):
-        acctfrom = BankacctfromTestCase().root
-        trnrs = RecintratrnrsTestCase().root
+        acctfrom = BankacctfromTestCase.etree
+        trnrs = RecintratrnrsTestCase.etree
 
         # SYNCRS base malformed; WIRE additions OK
         for root in super().invalidSoup:
@@ -612,20 +809,37 @@ class RecintersyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
 
     requiredElements = ["REJECTIFMISSING", "BANKACCTFROM"]
 
-    @property
+    @classproperty
+    @classmethod
+    def etree(self):
+        root = Element("RECINTERSYNCRQ")
+        SubElement(root, "TOKEN").text = "DEADBEEF"
+        SubElement(root, "REJECTIFMISSING").text = "Y"
+        root.append(BankacctfromTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(self):
+        return RECINTERSYNCRQ(token="DEADBEEF", rejectifmissing=True,
+                              bankacctfrom=BankacctfromTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(self):
-        acctfrom = BankacctfromTestCase().root
-        trnrq = RecintertrnrqTestCase().root
+        acctfrom = BankacctfromTestCase.etree
+        trnrq = RecintertrnrqTestCase.etree
 
         for root in super().validSoup:
             root.append(acctfrom)
             root.append(trnrq)
             yield root
 
-    @property
+    @classproperty
+    @classmethod
     def invalidSoup(self):
-        acctfrom = BankacctfromTestCase().root
-        trnrq = RecintertrnrqTestCase().root
+        acctfrom = BankacctfromTestCase.etree
+        trnrq = RecintertrnrqTestCase.etree
 
         # SYNCRQ base malformed; RECINTER additions OK
         for root in super().invalidSoup:
@@ -658,10 +872,26 @@ class RecintersyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
 class RecintersyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     __test__ = True
 
-    @property
+    @classproperty
+    @classmethod
+    def etree(self):
+        root = Element("RECINTERSYNCRS")
+        SubElement(root, "TOKEN").text = "DEADBEEF"
+        SubElement(root, "LOSTSYNC").text = "Y"
+        root.append(BankacctfromTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(self):
+        return RECINTERSYNCRS(token="DEADBEEF", lostsync=True,
+                              bankacctfrom=BankacctfromTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(self):
-        acctfrom = BankacctfromTestCase().root
-        trnrs = RecintertrnrsTestCase().root
+        acctfrom = BankacctfromTestCase.etree
+        trnrs = RecintertrnrsTestCase.etree
 
         for root in super().validSoup:
             root.append(acctfrom)
@@ -672,10 +902,11 @@ class RecintersyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
                 root.append(deepcopy(trnrs))
                 yield root
 
-    @property
+    @classproperty
+    @classmethod
     def invalidSoup(self):
-        acctfrom = BankacctfromTestCase().root
-        trnrs = RecintertrnrsTestCase().root
+        acctfrom = BankacctfromTestCase.etree
+        trnrs = RecintertrnrsTestCase.etree
 
         # SYNCRS base malformed; RECINTER additions OK
         for root in super().invalidSoup:
@@ -715,10 +946,29 @@ class BankmailsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
         "BANKACCTFROM",
     ]
 
-    @property
+    @classproperty
+    @classmethod
+    def etree(self):
+        root = Element("BANKMAILSYNCRQ")
+        SubElement(root, "TOKEN").text = "DEADBEEF"
+        SubElement(root, "REJECTIFMISSING").text = "Y"
+        SubElement(root, "INCIMAGES").text = "Y"
+        SubElement(root, "USEHTML").text = "N"
+        root.append(BankacctfromTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(self):
+        return BANKMAILSYNCRQ(token="DEADBEEF", rejectifmissing=True,
+                              incimages=True, usehtml=False,
+                              bankacctfrom=BankacctfromTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(self):
-        acctfrom = BankacctfromTestCase().root
-        trnrq = BankmailtrnrqTestCase().root
+        acctfrom = BankacctfromTestCase.etree
+        trnrq = BankmailtrnrqTestCase.etree
 
         for root in super().validSoup:
             SubElement(root, "INCIMAGES").text = "N"
@@ -727,10 +977,11 @@ class BankmailsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
             root.append(trnrq)
             yield root
 
-    @property
+    @classproperty
+    @classmethod
     def invalidSoup(self):
-        acctfrom = BankacctfromTestCase().root
-        trnrq = IntratrnrsTestCase().root
+        acctfrom = BankacctfromTestCase.etree
+        trnrq = IntratrnrsTestCase.etree
 
         # SYNCRQ base malformed; WIRE additions OK
         for root in super().invalidSoup:
@@ -765,10 +1016,26 @@ class BankmailsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
 class BankmailsyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     __test__ = True
 
-    @property
+    @classproperty
+    @classmethod
+    def etree(self):
+        root = Element("BANKMAILSYNCRS")
+        SubElement(root, "TOKEN").text = "DEADBEEF"
+        SubElement(root, "LOSTSYNC").text = "Y"
+        root.append(BankacctfromTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(self):
+        return BANKMAILSYNCRS(token="DEADBEEF", lostsync=True,
+                              bankacctfrom=BankacctfromTestCase.aggregate)
+
+    @classproperty
+    @classmethod
     def validSoup(self):
-        acctfrom = BankacctfromTestCase().root
-        trnrs = BankmailtrnrsTestCase().root
+        acctfrom = BankacctfromTestCase.etree
+        trnrs = BankmailtrnrsTestCase.etree
 
         for root in super().validSoup:
             root.append(acctfrom)
@@ -779,10 +1046,11 @@ class BankmailsyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
                 root.append(deepcopy(trnrs))
                 yield root
 
-    @property
+    @classproperty
+    @classmethod
     def invalidSoup(self):
-        acctfrom = BankacctfromTestCase().root
-        trnrs = BankmailtrnrsTestCase().root
+        acctfrom = BankacctfromTestCase.etree
+        trnrs = BankmailtrnrsTestCase.etree
 
         # SYNCRS base malformed; WIRE additions OK
         for root in super().invalidSoup:

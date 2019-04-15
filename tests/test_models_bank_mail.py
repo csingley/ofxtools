@@ -14,7 +14,14 @@ from ofxtools.models.base import Aggregate
 
 from ofxtools.models.email import MAIL
 from ofxtools.models.bank.stmt import BANKACCTFROM
-from ofxtools.models.bank.mail import CHKMAILRS, DEPMAILRS
+from ofxtools.models.bank.mail import (
+    BANKMAILRQ,
+    BANKMAILRS,
+    BANKMAILTRNRQ,
+    BANKMAILTRNRS,
+    CHKMAILRS,
+    DEPMAILRS,
+)
 from ofxtools.utils import UTC, classproperty
 
 
@@ -31,26 +38,33 @@ class BankmailrqTestCase(unittest.TestCase, base.TestAggregate):
 
     @classproperty
     @classmethod
-    def validSoup(self):
-        bankacctfrom = BankacctfromTestCase().root
-        ccacctfrom = CcacctfromTestCase().root
-        mail = MailTestCase().root
+    def etree(cls):
+        return next(cls.validSoup)
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return BANKMAILRQ(bankacctfrom=BankacctfromTestCase.aggregate,
+                          mail=MailTestCase.aggregate)
+
+    @classproperty
+    @classmethod
+    def validSoup(cls):
+        bankacctfrom = BankacctfromTestCase.etree
+        ccacctfrom = CcacctfromTestCase.etree
+        mail = MailTestCase.etree
         for acctfrom in bankacctfrom, ccacctfrom:
             root = Element("BANKMAILRQ")
             root.append(acctfrom)
             root.append(mail)
             yield root
 
-    @property
-    def root(self):
-        return next(self.validSoup)
-
     @classproperty
     @classmethod
-    def invalidSoup(self):
-        bankacctfrom = BankacctfromTestCase().root
-        ccacctfrom = CcacctfromTestCase().root
-        mail = MailTestCase().root
+    def invalidSoup(cls):
+        bankacctfrom = BankacctfromTestCase.etree
+        ccacctfrom = CcacctfromTestCase.etree
+        mail = MailTestCase.etree
 
         #  requiredMutexes = [("bankacctfrom", "ccacctfrom")]
         #  Neither
@@ -75,26 +89,33 @@ class BankmailrsTestCase(unittest.TestCase, base.TestAggregate):
 
     @classproperty
     @classmethod
-    def validSoup(self):
-        bankacctfrom = BankacctfromTestCase().root
-        ccacctfrom = CcacctfromTestCase().root
-        mail = MailTestCase().root
+    def etree(cls):
+        return next(cls.validSoup)
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return BANKMAILRS(bankacctfrom=BankacctfromTestCase.aggregate,
+                          mail=MailTestCase.aggregate)
+
+    @classproperty
+    @classmethod
+    def validSoup(cls):
+        bankacctfrom = BankacctfromTestCase.etree
+        ccacctfrom = CcacctfromTestCase.etree
+        mail = MailTestCase.etree
         for acctfrom in bankacctfrom, ccacctfrom:
             root = Element("BANKMAILRS")
             root.append(acctfrom)
             root.append(mail)
             yield root
 
-    @property
-    def root(self):
-        return next(self.validSoup)
-
     @classproperty
     @classmethod
-    def invalidSoup(self):
-        bankacctfrom = BankacctfromTestCase().root
-        ccacctfrom = CcacctfromTestCase().root
-        mail = MailTestCase().root
+    def invalidSoup(cls):
+        bankacctfrom = BankacctfromTestCase.etree
+        ccacctfrom = CcacctfromTestCase.etree
+        mail = MailTestCase.etree
 
         #  requiredMutexes = [("bankacctfrom", "ccacctfrom")]
         #  Neither
@@ -118,30 +139,30 @@ class ChkmailrsTestCase(unittest.TestCase, base.TestAggregate):
     requiredElements = ["BANKACCTFROM", "MAIL", "CHECKNUM"]
     optionalElements = ["TRNAMT", "DTUSER", "FEE"]
 
-    @property
-    def root(self):
-        bankacctfrom = BankacctfromTestCase().root
-        mail = MailTestCase().root
+    @classproperty
+    @classmethod
+    def etree(cls):
+        bankacctfrom = BankacctfromTestCase.etree
+        mail = MailTestCase.etree
 
         root = Element("CHKMAILRS")
         root.append(bankacctfrom)
         root.append(mail)
         SubElement(root, "CHECKNUM").text = "1001"
         SubElement(root, "TRNAMT").text = "321.45"
-        SubElement(root, "DTUSER").text = "21060930"
+        SubElement(root, "DTUSER").text = "21060930000000.000[0:GMT]"
         SubElement(root, "FEE").text = "21.50"
 
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, CHKMAILRS)
-        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
-        self.assertIsInstance(instance.mail, MAIL)
-        self.assertEqual(instance.checknum, "1001")
-        self.assertEqual(instance.trnamt, Decimal("321.45"))
-        self.assertEqual(instance.dtuser, datetime(2106, 9, 30, tzinfo=UTC))
-        self.assertEqual(instance.fee, Decimal("21.50"))
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CHKMAILRS(bankacctfrom=BankacctfromTestCase.aggregate,
+                         mail=MailTestCase.aggregate, checknum="1001",
+                         trnamt=Decimal("321.45"),
+                         dtuser=datetime(2106, 9, 30, tzinfo=UTC),
+                         fee=Decimal("21.50"))
 
 
 class DepmailrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -150,28 +171,29 @@ class DepmailrsTestCase(unittest.TestCase, base.TestAggregate):
     requiredElements = ["BANKACCTFROM", "MAIL", "TRNAMT"]
     optionalElements = ["DTUSER", "FEE"]
 
-    @property
-    def root(self):
-        bankacctfrom = BankacctfromTestCase().root
-        mail = MailTestCase().root
+    @classproperty
+    @classmethod
+    def etree(cls):
+        bankacctfrom = BankacctfromTestCase.etree
+        mail = MailTestCase.etree
 
         root = Element("DEPMAILRS")
         root.append(bankacctfrom)
         root.append(mail)
         SubElement(root, "TRNAMT").text = "321.45"
-        SubElement(root, "DTUSER").text = "21060930"
+        SubElement(root, "DTUSER").text = "21060930000000.000[0:GMT]"
         SubElement(root, "FEE").text = "21.50"
 
         return root
 
-    def testConvert(self):
-        instance = Aggregate.from_etree(self.root)
-        self.assertIsInstance(instance, DEPMAILRS)
-        self.assertIsInstance(instance.bankacctfrom, BANKACCTFROM)
-        self.assertIsInstance(instance.mail, MAIL)
-        self.assertEqual(instance.trnamt, Decimal("321.45"))
-        self.assertEqual(instance.dtuser, datetime(2106, 9, 30, tzinfo=UTC))
-        self.assertEqual(instance.fee, Decimal("21.50"))
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return DEPMAILRS(
+            bankacctfrom=BankacctfromTestCase.aggregate,
+            mail=MailTestCase.aggregate,
+            trnamt=Decimal("321.45"), dtuser=datetime(2106, 9, 30, tzinfo=UTC),
+            fee=Decimal("21.50"))
 
 
 class BankmailtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
@@ -179,11 +201,25 @@ class BankmailtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
 
     wraps = BankmailrqTestCase
 
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return BANKMAILTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
+                             bankmailrq=BankmailrqTestCase.aggregate)
+
 
 class BankmailtrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
 
     wraps = BankmailrsTestCase
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return BANKMAILTRNRS(trnuid="DEADBEEF",
+                             status=base.StatusTestCase.aggregate,
+                             cltcookie="B00B135",
+                             bankmailrs=BankmailrsTestCase.aggregate)
 
 
 if __name__ == "__main__":

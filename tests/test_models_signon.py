@@ -16,7 +16,7 @@ from ofxtools.models.signon import (
     SONRS,
 )
 from ofxtools.models.i18n import LANG_CODES
-from ofxtools.utils import UTC
+from ofxtools.utils import UTC, classproperty
 
 
 # test imports
@@ -28,18 +28,18 @@ class FiTestCase(unittest.TestCase, base.TestAggregate):
 
     optionalElements = ("FID",)
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("FI")
         SubElement(root, "ORG").text = "IBLLC-US"
         SubElement(root, "FID").text = "4705"
         return root
 
-    def testConvert(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, FI)
-        self.assertEqual(root.org, "IBLLC-US")
-        self.assertEqual(root.fid, "4705")
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return FI(org="IBLLC-US", fid="4705")
 
 
 class SonrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -58,16 +58,17 @@ class SonrqTestCase(unittest.TestCase, base.TestAggregate):
         "AUTHTOKEN",
         "ACCESSKEY",
     ]
+    oneOfs = {"LANGUAGE": LANG_CODES}
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("SONRQ")
-        SubElement(root, "DTCLIENT").text = "20051029101003"
+        SubElement(root, "DTCLIENT").text = "20051029101003.000[0:GMT]"
         SubElement(root, "USERKEY").text = "DEADBEEF"
         SubElement(root, "GENUSERKEY").text = "N"
         SubElement(root, "LANGUAGE").text = "ENG"
-        fi = FiTestCase().root
-        root.append(fi)
+        root.append(FiTestCase.etree)
         SubElement(root, "SESSCOOKIE").text = "BADA55"
         SubElement(root, "APPID").text = "QWIN"
         SubElement(root, "APPVER").text = "1500"
@@ -79,27 +80,16 @@ class SonrqTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "ACCESSKEY").text = "CAFEBABE"
         return root
 
-    def testConvert(self):
-        # Make sure Aggregate.from_etree() calls Element.convert() and sets
-        # Aggregate instance attributes with the result
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SONRQ)
-        self.assertEqual(root.dtclient, datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC))
-        self.assertEqual(root.userkey, "DEADBEEF")
-        self.assertEqual(root.genuserkey, False)
-        self.assertEqual(root.language, "ENG")
-        self.assertIsInstance(root.fi, FI)
-        self.assertEqual(root.sesscookie, "BADA55")
-        self.assertEqual(root.appid, "QWIN")
-        self.assertEqual(root.appver, "1500")
-        self.assertEqual(root.clientuid, "DEADBEEF")
-        self.assertEqual(root.usercred1, "Something")
-        self.assertEqual(root.usercred2, "Something else")
-        self.assertEqual(root.authtoken, "line noise")
-        self.assertEqual(root.accesskey, "CAFEBABE")
-
-    def testOneOf(self):
-        self.oneOfTest("LANGUAGE", LANG_CODES)
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return SONRQ(dtclient=datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC),
+                     userkey="DEADBEEF", genuserkey=False, language="ENG",
+                     fi=FiTestCase.aggregate, sesscookie="BADA55",
+                     appid="QWIN", appver="1500", appkey="CAFEBABE",
+                     clientuid="DEADBEEF", usercred1="Something",
+                     usercred2="Something else", authtoken="line noise",
+                     accesskey="CAFEBABE")
 
 
 class SonrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -115,68 +105,61 @@ class SonrsTestCase(unittest.TestCase, base.TestAggregate):
         "SESSCOOKIE",
         "ACCESSKEY",
     )
+    oneOfs = {"LANGUAGE": LANG_CODES}
 
-    @property
-    def root(self):
+    @classproperty
+    @classmethod
+    def etree(cls):
         root = Element("SONRS")
-        status = base.StatusTestCase().root
-        root.append(status)
-        SubElement(root, "DTSERVER").text = "20051029101003"
+        root.append(base.StatusTestCase.etree)
+        SubElement(root, "DTSERVER").text = "20051029101003.000[0:GMT]"
         SubElement(root, "USERKEY").text = "DEADBEEF"
-        SubElement(root, "TSKEYEXPIRE").text = "20051231"
+        SubElement(root, "TSKEYEXPIRE").text = "20051231000000.000[0:GMT]"
         SubElement(root, "LANGUAGE").text = "ENG"
-        SubElement(root, "DTPROFUP").text = "20050101"
-        SubElement(root, "DTACCTUP").text = "20050102"
-        fi = FiTestCase().root
-        root.append(fi)
+        SubElement(root, "DTPROFUP").text = "20050101000000.000[0:GMT]"
+        SubElement(root, "DTACCTUP").text = "20050102000000.000[0:GMT]"
+        root.append(FiTestCase.etree)
         SubElement(root, "SESSCOOKIE").text = "BADA55"
         SubElement(root, "ACCESSKEY").text = "CAFEBABE"
         return root
 
-    def testConvert(self):
-        # Make sure Aggregate.from_etree() calls Element.convert() and sets
-        # Aggregate instance attributes with the result
-        root = Aggregate.from_etree(self.root)
-        self.assertIsInstance(root, SONRS)
-        self.assertIsInstance(root.status, STATUS)
-        self.assertEqual(root.dtserver, datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC))
-        self.assertEqual(root.userkey, "DEADBEEF")
-        self.assertEqual(root.tskeyexpire, datetime(2005, 12, 31, tzinfo=UTC))
-        self.assertEqual(root.language, "ENG")
-        self.assertEqual(root.dtprofup, datetime(2005, 1, 1, tzinfo=UTC))
-        self.assertEqual(root.dtacctup, datetime(2005, 1, 2, tzinfo=UTC))
-        self.assertIsInstance(root.fi, FI)
-        self.assertEqual(root.sesscookie, "BADA55")
-        self.assertEqual(root.accesskey, "CAFEBABE")
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return SONRS(status=base.StatusTestCase.aggregate,
+                     dtserver=datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC),
+                     userkey="DEADBEEF",
+                     tskeyexpire=datetime(2005, 12, 31, tzinfo=UTC),
+                     language="ENG", dtprofup=datetime(2005, 1, 1, tzinfo=UTC),
+                     dtacctup=datetime(2005, 1, 2, tzinfo=UTC),
+                     fi=FiTestCase.aggregate, sesscookie="BADA55",
+                     accesskey="CAFEBABE")
 
-    def testConvertRemoveProprietaryTag(self):
+    def testConvertRemoveProprietaryTag(cls):
         # Make sure SONRS.from_etree() removes proprietary tags
-        root = deepcopy(self.root)
+        root = deepcopy(cls.etree)
         SubElement(root, "INTU.BANKID").text = "12345678"
 
         sonrs = Aggregate.from_etree(root)
-        self.assertIsInstance(sonrs, SONRS)
+        cls.assertIsInstance(sonrs, SONRS)
         # Converted Aggregate should still have 10 values, not 11
-        self.assertEqual(len(sonrs._spec_repr), 10)
+        cls.assertEqual(len(sonrs._spec_repr), 10)
 
-        self.assertIsInstance(sonrs.status, STATUS)
-        self.assertEqual(sonrs.dtserver, datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC))
-        self.assertEqual(sonrs.userkey, "DEADBEEF")
-        self.assertEqual(sonrs.tskeyexpire, datetime(2005, 12, 31, tzinfo=UTC))
-        self.assertEqual(sonrs.language, "ENG")
-        self.assertEqual(sonrs.dtprofup, datetime(2005, 1, 1, tzinfo=UTC))
-        self.assertEqual(sonrs.dtacctup, datetime(2005, 1, 2, tzinfo=UTC))
-        self.assertIsInstance(sonrs.fi, FI)
-        self.assertEqual(sonrs.sesscookie, "BADA55")
-        self.assertEqual(sonrs.accesskey, "CAFEBABE")
+        cls.assertIsInstance(sonrs.status, STATUS)
+        cls.assertEqual(sonrs.dtserver, datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC))
+        cls.assertEqual(sonrs.userkey, "DEADBEEF")
+        cls.assertEqual(sonrs.tskeyexpire, datetime(2005, 12, 31, tzinfo=UTC))
+        cls.assertEqual(sonrs.language, "ENG")
+        cls.assertEqual(sonrs.dtprofup, datetime(2005, 1, 1, tzinfo=UTC))
+        cls.assertEqual(sonrs.dtacctup, datetime(2005, 1, 2, tzinfo=UTC))
+        cls.assertIsInstance(sonrs.fi, FI)
+        cls.assertEqual(sonrs.sesscookie, "BADA55")
+        cls.assertEqual(sonrs.accesskey, "CAFEBABE")
 
-    def testOneOf(self):
-        self.oneOfTest("LANGUAGE", LANG_CODES)
-
-    def testPropertyAliases(self):
-        root = Aggregate.from_etree(self.root)
-        self.assertEqual(root.org, "IBLLC-US")
-        self.assertEqual(root.fid, "4705")
+    def testPropertyAliases(cls):
+        root = Aggregate.from_etree(cls.etree)
+        cls.assertEqual(root.org, "IBLLC-US")
+        cls.assertEqual(root.fid, "4705")
 
 
 if __name__ == "__main__":
