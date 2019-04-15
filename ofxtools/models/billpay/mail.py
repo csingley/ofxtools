@@ -2,7 +2,7 @@
 """
 Payment mail - OFX Section 12.8
 """
-from ofxtools.Types import Bool, String, Decimal
+from ofxtools.Types import Bool, String, Decimal, ListItem
 from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
 from ofxtools.models.email import MAIL
@@ -45,11 +45,10 @@ class PMTMAILSYNCRQ(SyncRqList):
 
     incimages = Bool(required=True)
     usehtml = Bool(required=True)
-
-    dataTags = ["PMTMAILTRNRQ"]
+    pmtmailtrnrq = ListItem(PMTMAILTRNRQ)
 
 
 class PMTMAILSYNCRS(SyncRsList):
     """ OFX Section 12.8.2.2 """
 
-    dataTags = ["PMTMAILTRNRS"]
+    pmtmailtrnrs = ListItem(PMTMAILTRNRS)

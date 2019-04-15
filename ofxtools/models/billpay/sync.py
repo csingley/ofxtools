@@ -15,7 +15,9 @@ from ofxtools.models.billpay import (
 )
 
 
-__all__ = ["PMTSYNCRQ", "PMTSYNCRS", "RECPMTSYNCRQ", "RECPMTSYNCRS"]
+__all__ = [
+    "PMTSYNCRQ", "PMTSYNCRS", "RECPMTSYNCRQ", "RECPMTSYNCRS", "PAYEESYNCRQ", "PAYEESYNCRS",
+]
 
 
 class PMTSYNCRQ(SyncRqList):

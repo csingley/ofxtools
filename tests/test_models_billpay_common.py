@@ -51,8 +51,7 @@ class BpacctinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = ET.Element("BPACCTINFO")
-        acctfrom = BankacctfromTestCase.etree
-        root.append(acctfrom)
+        root.append(BankacctfromTestCase.etree)
         ET.SubElement(root, "SVCSTATUS").text = "AVAIL"
         return root
 

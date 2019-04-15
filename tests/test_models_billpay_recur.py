@@ -1,28 +1,208 @@
 # coding: utf-8
-""" Unit tests for models.billpay.common """
+""" Unit tests for models.billpay.recur """
 # stdlib imports
 import unittest
-from datetime import datetime
 from decimal import Decimal
 
 import xml.etree.ElementTree as ET
 
 
 # local imports
-from ofxtools.Types import DateTime
-from ofxtools.models.base import Aggregate
-from ofxtools.models.wrapperbases import TranList
-from ofxtools.models.common import BAL, OFXELEMENT, OFXEXTENSION
-from ofxtools.models.bank.stmt import BANKACCTFROM
-from ofxtools.models.billpay.common import (
-    BPACCTINFO,
+from ofxtools.models.billpay.recur import (
+    RECPMTRQ,
+    RECPMTRS,
+    RECPMTMODRQ,
+    RECPMTMODRS,
+    RECPMTCANRQ,
+    RECPMTCANRS,
+    RECPMTTRNRQ,
+    RECPMTTRNRS,
 )
-from ofxtools.models.i18n import CURRENCY, CURRENCY_CODES
-from ofxtools.utils import UTC
+from ofxtools.utils import classproperty
 
 
 # test imports
 import base
-from test_models_i18n import CurrencyTestCase
-from test_models_base import TESTAGGREGATE, TESTSUBAGGREGATE
-from test_models_bank_stmt import BankacctfromTestCase
+import test_models_bank_recur as bk_recur
+import test_models_billpay_common as bp_common
+
+
+class RecpmtrqTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["RECURRINST", "PMTINFO"]
+    optionalElements = ["INITIALAMT", "FINALAMT"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = ET.Element("RECPMTRQ")
+        root.append(bk_recur.RecurrinstTestCase.etree)
+        root.append(bp_common.PmtinfoTestCase.etree)
+        ET.SubElement(root, "INITIALAMT").text = "12.25"
+        ET.SubElement(root, "FINALAMT").text = "22.50"
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return RECPMTRQ(recurrinst=bk_recur.RecurrinstTestCase.aggregate,
+                        pmtinfo=bp_common.PmtinfoTestCase.aggregate,
+                        initialamt=Decimal("12.25"), finalamt=Decimal("22.50"))
+
+
+class RecpmtrsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["RECURRINST", "PMTINFO"]
+    optionalElements = ["INITIALAMT", "FINALAMT", "EXTDPAYEE"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = ET.Element("RECPMTRS")
+        root.append(bk_recur.RecurrinstTestCase.etree)
+        root.append(bp_common.PmtinfoTestCase.etree)
+        ET.SubElement(root, "INITIALAMT").text = "12.25"
+        ET.SubElement(root, "FINALAMT").text = "22.50"
+        root.append(bp_common.ExtdpayeeTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return RECPMTRS(recurrinst=bk_recur.RecurrinstTestCase.aggregate,
+                        pmtinfo=bp_common.PmtinfoTestCase.aggregate,
+                        initialamt=Decimal("12.25"), finalamt=Decimal("22.50"),
+                        extdpayee=bp_common.ExtdpayeeTestCase.aggregate)
+
+
+class RecpmtmodrqTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["RECSRVRTID", "RECURRINST", "PMTINFO", "MODPENDING"]
+    optionalElements = ["INITIALAMT", "FINALAMT"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = ET.Element("RECPMTMODRQ")
+        ET.SubElement(root, "RECSRVRTID").text = "DEADBEEF"
+        root.append(bk_recur.RecurrinstTestCase.etree)
+        root.append(bp_common.PmtinfoTestCase.etree)
+        ET.SubElement(root, "INITIALAMT").text = "12.25"
+        ET.SubElement(root, "FINALAMT").text = "22.50"
+        ET.SubElement(root, "MODPENDING").text = "Y"
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return RECPMTMODRQ(recsrvrtid="DEADBEEF",
+                           recurrinst=bk_recur.RecurrinstTestCase.aggregate,
+                           pmtinfo=bp_common.PmtinfoTestCase.aggregate,
+                           initialamt=Decimal("12.25"),
+                           finalamt=Decimal("22.50"), modpending=True)
+
+
+class RecpmtmodrsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["RECSRVRTID", "RECURRINST", "PMTINFO", "MODPENDING"]
+    optionalElements = ["INITIALAMT", "FINALAMT"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = ET.Element("RECPMTMODRS")
+        ET.SubElement(root, "RECSRVRTID").text = "DEADBEEF"
+        root.append(bk_recur.RecurrinstTestCase.etree)
+        root.append(bp_common.PmtinfoTestCase.etree)
+        ET.SubElement(root, "INITIALAMT").text = "12.25"
+        ET.SubElement(root, "FINALAMT").text = "22.50"
+        ET.SubElement(root, "MODPENDING").text = "Y"
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return RECPMTMODRS(recsrvrtid="DEADBEEF",
+                           recurrinst=bk_recur.RecurrinstTestCase.aggregate,
+                           pmtinfo=bp_common.PmtinfoTestCase.aggregate,
+                           initialamt=Decimal("12.25"),
+                           finalamt=Decimal("22.50"), modpending=True)
+
+
+class RecpmtcanrqTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["RECSRVRTID", "CANPENDING"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = ET.Element("RECPMTCANRQ")
+        ET.SubElement(root, "RECSRVRTID").text = "DEADBEEF"
+        ET.SubElement(root, "CANPENDING").text = "Y"
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return RECPMTCANRQ(recsrvrtid="DEADBEEF", canpending=True)
+
+
+class RecpmtcanrsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["RECSRVRTID", "CANPENDING"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = ET.Element("RECPMTCANRS")
+        ET.SubElement(root, "RECSRVRTID").text = "DEADBEEF"
+        ET.SubElement(root, "CANPENDING").text = "Y"
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return RECPMTCANRS(recsrvrtid="DEADBEEF", canpending=True)
+
+
+class RecpmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
+    __test__ = True
+
+    wraps = RecpmtrqTestCase
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return RECPMTTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
+                           recpmtrq=RecpmtrqTestCase.aggregate)
+
+
+class RecpmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
+    __test__ = True
+
+    wraps = RecpmtrsTestCase
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = cls.emptyBase
+        root.append(RecpmtrsTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return RECPMTTRNRS(trnuid="DEADBEEF",
+                           status=base.StatusTestCase.aggregate,
+                           cltcookie="B00B135",
+                           recpmtrs=RecpmtrsTestCase.aggregate)
+
+
+if __name__ == "__main__":
+    unittest.main()
