@@ -78,8 +78,7 @@ class BankmailrqTestCase(unittest.TestCase, base.TestAggregate):
         root.append(mail)
         yield root
 
-        #  FIXME
-        #  Check out-of-order errors
+        #  FIXME - Check out-of-order errors
 
 
 class BankmailrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -129,8 +128,7 @@ class BankmailrsTestCase(unittest.TestCase, base.TestAggregate):
         root.append(mail)
         yield root
 
-        #  FIXME
-        #  Check out-of-order errors
+        #  FIXME - Check out-of-order errors
 
 
 class ChkmailrsTestCase(unittest.TestCase, base.TestAggregate):

@@ -356,8 +356,6 @@ class SwitchmfTestCase(unittest.TestCase, base.TestAggregate):
 class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    optionalElements = []  # FIXME - how to handle OO subclasses?
-
     @classproperty
     @classmethod
     def etree(cls):

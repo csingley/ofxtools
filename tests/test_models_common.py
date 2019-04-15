@@ -84,8 +84,6 @@ class OfxelementTestCase(unittest.TestCase, base.TestAggregate):
 class OfxextensionTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    optionalElements = []  # FIXME - how to handle multiple OFXELEMENTs?
-
     @classproperty
     @classmethod
     def etree(cls):

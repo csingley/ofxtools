@@ -117,8 +117,7 @@ class StpchkrqTestCase(unittest.TestCase, base.TestAggregate):
         root.append(chkdesc)
         yield root
 
-        #  FIXME
-        #  Check out-of-order errors
+        #  FIXME - test out-of-order errors
 
 
 class StpchknumTestCase(unittest.TestCase, base.TestAggregate):

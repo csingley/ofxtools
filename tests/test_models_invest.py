@@ -47,6 +47,7 @@ import base
 from test_models_bank_stmt import InctranTestCase, BallistTestCase, StmttrnTestCase
 from test_models_securities import SecidTestCase
 from test_models_i18n import CurrencyTestCase
+from test_models_invest_oo import InvoolistTestCase
 #  from test_models_invest_transactions import InvbanktranTestCase
 
 
@@ -506,12 +507,10 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
         "INVTRANLIST",
         "INVPOSLIST",
         "INVBAL",
-        # FIXME - INVOOLIST
-        #  "INVOOLIST",
+        "INVOOLIST",
         "MKTGINFO",
-        #  "INV401KBAL",
-        #  'MKTGINFO',
-        #  'INV401KBAL',
+        "INV401KBAL",
+        'MKTGINFO',
     ]
     unsupported = ("inv401k",)
 
@@ -525,11 +524,9 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
         root.append(InvtranlistTestCase.etree)
         root.append(InvposlistTestCase.etree)
         root.append(InvbalTestCase.etree)
-        # FIXME - INVOOLIST
-        #  root.append(InvoolistTestCase.etree)
+        root.append(InvoolistTestCase.etree)
         SubElement(root, "MKTGINFO").text = "Get Free Stuff NOW!!"
-        # FIXME - INV401K
-        #  root.append(Inv401kbalTestCase.etree)
+        root.append(Inv401kbalTestCase.etree)
 
         return root
 
@@ -542,9 +539,9 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
                          invtranlist=InvtranlistTestCase.aggregate,
                          invposlist=InvposlistTestCase.aggregate,
                          invbal=InvbalTestCase.aggregate,
-                         #  invoolist=InvoolistTestCase.aggregate,
+                         invoolist=InvoolistTestCase.aggregate,
+                         inv401kbal=Inv401kbalTestCase.aggregate,
                          mktginfo="Get Free Stuff NOW!!")
-                         #  inv401kbal=Inv401kbalTestCase.aggregate,
 
     def testPropertyAliases(cls):
         instance = Aggregate.from_etree(cls.etree)

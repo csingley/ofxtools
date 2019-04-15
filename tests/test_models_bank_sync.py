@@ -82,7 +82,7 @@ class StpchksyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     @classmethod
     def invalidSoup(self):
         acctfrom = BankacctfromTestCase.etree
-        #  trnrq = StpchktrnrqTestCase.etree
+        trnrq = StpchktrnrqTestCase.etree
 
         # SYNCRQ base malformed; STPCHK additions OK
         for root in super().invalidSoup:
@@ -100,12 +100,13 @@ class StpchksyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
                 yield root
 
             #  STPCHKTRNRQ in the wrong place
-            #  (should be right after BANKACCTFROM)
-            #
-            # FIXME
-            # Currently the ``List`` data model offers no way to verify that
-            # data appears in correct position relative to metadata, since
-            # ``dataTags`` doesn't appear in the ``cls.spec``.
+            #  (should be last, right after BANKACCTFROM)
+            index = len(root_)
+            for n in range(index):
+                root = deepcopy(root_)
+                root.insert(n, trnrq)
+                root.append(BankacctfromTestCase.etree)
+                yield root
 
 
 class StpchksyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
@@ -151,7 +152,7 @@ class StpchksyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     @classmethod
     def invalidSoup(self):
         acctfrom = BankacctfromTestCase.etree
-        #  trnrs = StpchktrnrsTestCase.etree
+        trnrs = StpchktrnrsTestCase.etree
 
         # SYNCRS base malformed; STPCHK additions OK
         for root_ in super().invalidSoup:
@@ -171,11 +172,12 @@ class StpchksyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
 
             #  STPCHKTRNRS in the wrong place
             #  (should be right after BANKACCTFROM)
-            #
-            # FIXME
-            # Currently the ``List`` data model offers no way to verify that
-            # data appears in correct position relative to metadata, since
-            # ``dataTags`` doesn't appear in the ``cls.spec``.
+            index = len(root_)
+            for n in range(index):
+                root = deepcopy(root_)
+                root.insert(n, trnrs)
+                root.append(BankacctfromTestCase.etree)
+                yield root
 
 
 class IntrasyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
@@ -259,11 +261,12 @@ class IntrasyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
 
             #  *TRNRQ in the wrong place
             #  (should be right after *ACCTFROM)
-            #
-            # FIXME
-            # Currently the ``List`` data model offers no way to verify that
-            # data appears in correct position relative to metadata, since
-            # ``dataTags`` doesn't appear in the ``cls.spec``.
+            index = len(root_)
+            for n in range(index):
+                root = deepcopy(root_)
+                root.insert(n, trnrq)
+                root.append(BankacctfromTestCase.etree)
+                yield root
 
 
 class IntrasyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
@@ -347,11 +350,12 @@ class IntrasyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
 
             #  *TRNRS in the wrong place
             #  (should be right after *ACCTFROM)
-            #
-            # FIXME
-            # Currently the ``List`` data model offers no way to verify that
-            # data appears in correct position relative to metadata, since
-            # ``dataTags`` doesn't appear in the ``cls.spec``.
+            index = len(root_)
+            for n in range(index):
+                root = deepcopy(root_)
+                root.insert(n, trnrs)
+                root.append(BankacctfromTestCase.etree)
+                yield root
 
 
 class IntersyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
@@ -435,11 +439,12 @@ class IntersyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
 
             #  *TRNRQ in the wrong place
             #  (should be right after *ACCTFROM)
-            #
-            # FIXME
-            # Currently the ``List`` data model offers no way to verify that
-            # data appears in correct position relative to metadata, since
-            # ``dataTags`` doesn't appear in the ``cls.spec``.
+            index = len(root_)
+            for n in range(index):
+                root = deepcopy(root_)
+                root.insert(n, trnrq)
+                root.append(BankacctfromTestCase.etree)
+                yield root
 
 
 class IntersyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
@@ -523,11 +528,12 @@ class IntersyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
 
             #  *TRNRS in the wrong place
             #  (should be right after *ACCTFROM)
-            #
-            # FIXME
-            # Currently the ``List`` data model offers no way to verify that
-            # data appears in correct position relative to metadata, since
-            # ``dataTags`` doesn't appear in the ``cls.spec``.
+            index = len(root_)
+            for n in range(index):
+                root = deepcopy(root_)
+                root.insert(n, trnrs)
+                root.append(BankacctfromTestCase.etree)
+                yield root
 
 
 class WiresyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
@@ -592,11 +598,12 @@ class WiresyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
 
             #  *TRNRQ in the wrong place
             #  (should be right after *ACCTFROM)
-            #
-            # FIXME
-            # Currently the ``List`` data model offers no way to verify that
-            # data appears in correct position relative to metadata, since
-            # ``dataTags`` doesn't appear in the ``cls.spec``.
+            index = len(root)
+            for n in range(index):
+                root = deepcopy(root)
+                root.insert(n, trnrq)
+                root.append(BankacctfromTestCase.etree)
+                yield root
 
 
 class WiresyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
@@ -664,11 +671,12 @@ class WiresyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
 
             #  *TRNRS in the wrong place
             #  (should be right after *ACCTFROM)
-            #
-            # FIXME
-            # Currently the ``List`` data model offers no way to verify that
-            # data appears in correct position relative to metadata, since
-            # ``dataTags`` doesn't appear in the ``cls.spec``.
+            index = len(root)
+            for n in range(index):
+                root = deepcopy(root)
+                root.insert(n, trnrs)
+                root.append(BankacctfromTestCase.etree)
+                yield root
 
 
 class RecintrasyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
@@ -729,11 +737,12 @@ class RecintrasyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
 
             #  *TRNRQ in the wrong place
             #  (should be right after *ACCTFROM)
-            #
-            # FIXME
-            # Currently the ``List`` data model offers no way to verify that
-            # data appears in correct position relative to metadata, since
-            # ``dataTags`` doesn't appear in the ``cls.spec``.
+            index = len(root)
+            for n in range(index):
+                root = deepcopy(root)
+                root.insert(n, trnrq)
+                root.append(BankacctfromTestCase.etree)
+                yield root
 
 
 class RecintrasyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
@@ -787,7 +796,6 @@ class RecintrasyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
 
         # SYNCRS base OK; WIRE additions malformed
         for root in super().validSoup:
-
             # *ACCTFROM in the wrong place
             # (should be right after LOSTSYNC)
             index = list(root).index(root.find("LOSTSYNC"))
@@ -797,11 +805,12 @@ class RecintrasyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
 
             #  *TRNRS in the wrong place
             #  (should be right after *ACCTFROM)
-            #
-            # FIXME
-            # Currently the ``List`` data model offers no way to verify that
-            # data appears in correct position relative to metadata, since
-            # ``dataTags`` doesn't appear in the ``cls.spec``.
+            index = len(root)
+            for n in range(index):
+                root = deepcopy(root)
+                root.insert(n, trnrs)
+                root.append(BankacctfromTestCase.etree)
+                yield root
 
 
 class RecintersyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
@@ -862,11 +871,12 @@ class RecintersyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
 
             #  *TRNRQ in the wrong place
             #  (should be right after *ACCTFROM)
-            #
-            # FIXME
-            # Currently the ``List`` data model offers no way to verify that
-            # data appears in correct position relative to metadata, since
-            # ``dataTags`` doesn't appear in the ``cls.spec``.
+            index = len(root)
+            for n in range(index):
+                root = deepcopy(root)
+                root.insert(n, trnrq)
+                root.append(BankacctfromTestCase.etree)
+                yield root
 
 
 class RecintersyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
@@ -930,11 +940,12 @@ class RecintersyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
 
             #  *TRNRS in the wrong place
             #  (should be right after *ACCTFROM)
-            #
-            # FIXME
-            # Currently the ``List`` data model offers no way to verify that
-            # data appears in correct position relative to metadata, since
-            # ``dataTags`` doesn't appear in the ``cls.spec``.
+            index = len(root)
+            for n in range(index):
+                root = deepcopy(root)
+                root.insert(n, trnrs)
+                root.append(BankacctfromTestCase.etree)
+                yield root
 
 
 class BankmailsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
@@ -1006,11 +1017,12 @@ class BankmailsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
 
             #  *TRNRQ in the wrong place
             #  (should be right after *ACCTFROM)
-            #
-            # FIXME
-            # Currently the ``List`` data model offers no way to verify that
-            # data appears in correct position relative to metadata, since
-            # ``dataTags`` doesn't appear in the ``cls.spec``.
+            index = len(root)
+            for n in range(index):
+                root = deepcopy(root)
+                root.insert(n, trnrq)
+                root.append(BankacctfromTestCase.etree)
+                yield root
 
 
 class BankmailsyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
@@ -1074,11 +1086,12 @@ class BankmailsyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
 
             #  *TRNRS in the wrong place
             #  (should be right after *ACCTFROM)
-            #
-            # FIXME
-            # Currently the ``List`` data model offers no way to verify that
-            # data appears in correct position relative to metadata, since
-            # ``dataTags`` doesn't appear in the ``cls.spec``.
+            index = len(root)
+            for n in range(index):
+                root = deepcopy(root)
+                root.insert(n, trnrs)
+                root.append(BankacctfromTestCase.etree)
+                yield root
 
 
 if __name__ == "__main__":

@@ -260,8 +260,6 @@ class PortionTestCase(unittest.TestCase, base.TestAggregate):
 class MfassetclassTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    # requiredElements = ('PORTION',)  # FIXME - how to handle multiple PORTIONs?
-
     @classproperty
     @classmethod
     def etree(cls):
@@ -299,8 +297,6 @@ class FiportionTestCase(unittest.TestCase, base.TestAggregate):
 
 class FimfassetclassTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
-
-    # requiredElements = ('FIPORTION',)  # FIXME - how to handle multiple FIPORTIONs?
 
     @classproperty
     @classmethod
@@ -469,8 +465,6 @@ class StockinfoTestCase(unittest.TestCase, base.TestAggregate):
 class SeclistTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    optionalElements = []  # FIXME - how to handle SECINFO subclasses?
-
     @classproperty
     @classmethod
     def etree(cls):
@@ -545,8 +539,7 @@ class SecrqTestCase(unittest.TestCase, base.TestAggregate):
         root.append(fiid)
         yield root
 
-        #  FIXME
-        #  Check out-of-order errors
+        #  FIXME - Check out-of-order errors
 
 
 class SeclistrqTestCase(unittest.TestCase, base.TestAggregate):

@@ -312,7 +312,6 @@ class EnrollrqTestCase(unittest.TestCase, base.TestAggregate):
         "POSTALCODE",
         "EMAIL",
     ]
-    # FIXME BANKACCTFROM/CCACCTFROM/INVACCTFROM mutex
     optionalElements = [
         "MIDDLENAME",
         "ADDR2",

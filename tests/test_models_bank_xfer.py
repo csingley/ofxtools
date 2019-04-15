@@ -112,8 +112,7 @@ class XferinfoTestCase(unittest.TestCase, base.TestAggregate):
         root.append(trnamt)
         yield root
 
-        # FIXME
-        # test out-of-order errors
+        #  FIXME - Check out-of-order errors
 
 
 class XferprcstsTestCase(unittest.TestCase, base.TestAggregate):

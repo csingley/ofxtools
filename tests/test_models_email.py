@@ -218,6 +218,7 @@ class MailsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
         incimages.text = "Y"
         usehtml = Element("USEHTML")
         usehtml.text = "N"
+        trnrq = MailtrnrqTestCase.etree
 
         # INCIMAGES in the wrong place
         # (should be right after REJECTIFMISSING)
@@ -227,6 +228,7 @@ class MailsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
                 root = deepcopy(root_)
                 root.insert(n, incimages)
                 root.append(usehtml)
+                root.append(trnrq)
                 yield root
 
         # USEHTML in the wrong place
@@ -237,15 +239,19 @@ class MailsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
             for n in range(index):
                 root = deepcopy(root_)
                 root.insert(n, usehtml)
+                root.append(trnrq)
                 yield root
 
         #  MAILTRNRQ in the wrong place
         #  (should be right after USEHTML)
-        #
-        # FIXME
-        # Currently the ``List`` data model offers no way to verify that
-        # data appears in correct position relative to metadata, since
-        # ``dataTags`` doesn't appear in the ``cls.spec``.
+        for root_ in super().validSoup:
+            root_.append(incimages)
+            root_.append(usehtml)
+            index = len(root_)
+            for n in range(index):
+                root = deepcopy(root_)
+                root.insert(n, trnrq)
+                yield root
 
 
 class MailsyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
@@ -292,11 +298,12 @@ class MailsyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
         # SYNCRS base OK; MAIL additions malformed
         #  MAILTRNRS in the wrong place
         #  (should be right after LOSTSYNC)
-        #
-        # FIXME
-        # Currently the ``List`` data model offers no way to verify that
-        # data appears in correct position relative to metadata, since
-        # ``dataTags`` doesn't appear in the ``cls.spec``.
+        for root_ in super().validSoup:
+            index = len(root_)
+            for n in range(index):
+                root = deepcopy(root_)
+                root.insert(n, trnrs)
+                yield root
 
 
 class GetmimerqTestCase(unittest.TestCase, base.TestAggregate):
