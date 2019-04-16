@@ -1,31 +1,40 @@
+"""
+Release process:
+    1. Update VERSION
+"""
 from setuptools import setup, find_packages
 import os.path
 
-# Get the long description from the relevant file
 __here__ = os.path.dirname(os.path.realpath(__file__))
-with open(os.path.join(__here__, 'README.rst'), 'r') as f:
-    long_description = f.read()
 
-NAME = 'ofxtools'
-VERSION = '0.7.1'
-URL = 'https://github.com/csingley/ofxtools'
+about = {}
+with open(os.path.join(__here__, 'ofxtools', '__version__.py'), 'r', 'utf-8') as f:
+    exec(f.read(), about)
+
+with open(os.path.join(__here__, 'README.rst'), 'r') as f:
+    readme = f.read()
+
+url_base = "{}/tarball".format(about["__url__"]),
 
 setup(
-    name=NAME,
-    version=VERSION,
-    # Note: change 'master' to the tag name when release a new verion
-    download_url='{}/tarball/master'.format(URL),
-    #  download_url='{}/tarball/{}'.format(URL, VERSION),
-
-    description=('Library for working with Open Financial Exchange (OFX) '
-                 'formatted data used by financial institutions'),
-    long_description=long_description,
+    name=about["__title__"],
+    version=about["__version"],
+    description=about["__description"],
+    long_description=readme,
     long_description_content_type="text/x-rst",
-    url=URL,
-    author='Christopher Singley',
-    author_email='csingley@gmail.com',
+    author=about["__author__"],
+    author_email=about["__author_url__"],
+    url=about["__url__"],
+    packages=find_packages(),
+    package_data={'ofxtools': ['README.rst', 'config/*.cfg', 'tests/*']},
+    python_requires=">=3.4",
+    license=about["__license"],
 
-    license='MIT',
+    # Note: change 'master' to the tag name when releasing a new verion
+    #  download_url="{}/master".format(url_base),
+    download_url="{}/{}".format(url_base, about["__version__"]),
+
+    entry_points={'console_scripts': ['ofxget=ofxtools.Client:main']},
 
     classifiers=[
         'Development Status :: 3 - Alpha',
@@ -49,16 +58,4 @@ setup(
     ],
 
     keywords=['ofx', 'Open Financial Exchange'],
-
-    packages=find_packages(),
-
-    package_data={
-        'ofxtools': ['README.rst', 'config/*.cfg', 'tests/*'],
-    },
-
-    entry_points={
-        'console_scripts': [
-            'ofxget=ofxtools.Client:main',
-        ],
-    },
 )

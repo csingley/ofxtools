@@ -16,17 +16,18 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
+import ofxtools
+
 
 # -- Project information -----------------------------------------------------
-
-project = 'ofxtools'
-copyright = '2019, Christopher Singley'
-author = 'Christopher Singley'
+project = ofxtools.__title__
+copyright = ofxtools.__copyright__
+author = ofxtools.__author__
 
 # The short X.Y version
-version = '0.7.1'
+version = ofxtools.__version__
 # The full version, including alpha/beta/rc tags
-release = '0.7.1'
+release = ofxtools.__version__
 
 
 # -- General configuration ---------------------------------------------------
