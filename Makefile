@@ -7,12 +7,12 @@ clean:
 	find -regex '.*~' -exec rm {} \;
 	rm -rf reg-settings.py
 	rm -rf MANIFEST dist build *.egg-info
-	rm -rf test.db
+	rm coverage.xml
 
 install:
 	make clean
 	make uninstall
-	python setup.py install
+	pip install .
 
 uninstall:
 	pip uninstall -y ofxtools
@@ -26,4 +26,4 @@ lint-tests:
 html:
 	sphinx-build -b html docs docs/_build
 
-.PHONY:	test clean lint lint-tests install uninstall
+.PHONY:	test clean lint lint-tests install uninstall html

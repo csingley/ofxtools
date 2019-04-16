@@ -14,7 +14,7 @@ with open(os.path.join(__here__, 'ofxtools', '__version__.py'), 'r') as f:
 with open(os.path.join(__here__, 'README.rst'), 'r') as f:
     readme = f.read()
 
-url_base = "{}/tarball".format(about["__url__"]),
+url_base = "{}/tarball".format(about["__url__"])
 
 setup(
     name=about["__title__"],
