@@ -9,9 +9,6 @@ from datetime import datetime
 # local imports
 from ofxtools.models.base import Aggregate
 from ofxtools.models.ofx import OFX
-from ofxtools.models.signon import SIGNONMSGSRSV1
-from ofxtools.models.bank import BANKMSGSRSV1, CREDITCARDMSGSRSV1
-from ofxtools.models.invest import INVSTMTMSGSRSV1, SECLISTMSGSRSV1
 from ofxtools.models.signon import SONRS
 from ofxtools.models.bank import STMTRS, CCSTMTRS, CCSTMTENDRS
 from ofxtools.models.invest import INVSTMTRS
@@ -20,9 +17,31 @@ from ofxtools.utils import UTC, classproperty
 
 # test imports
 import base
-
-
 import test_models_msgsets as msgsets
+
+
+# Cache results of expensive class properties for reuse
+signonmsgsrqv1 = msgsets.Signonmsgsrqv1TestCase.etree
+signupmsgsrqv1 = msgsets.Signupmsgsrqv1TestCase.etree
+bankmsgsrqv1 = msgsets.Bankmsgsrqv1TestCase.etree
+creditcardmsgsrqv1 = msgsets.Creditcardmsgsrqv1TestCase.etree
+invstmtmsgsrqv1 = msgsets.Invstmtmsgsrqv1TestCase.etree
+interxfermsgsrqv1 = msgsets.Interxfermsgsrqv1TestCase.etree
+wirexfermsgsrqv1 = msgsets.Wirexfermsgsrqv1TestCase.etree
+emailmsgsrqv1 = msgsets.Emailmsgsrqv1TestCase.etree
+seclistmsgsrqv1 = msgsets.Seclistmsgsrqv1TestCase.etree
+profmsgsrqv1 = msgsets.Profmsgsrqv1TestCase.etree
+
+signonmsgsrsv1 = msgsets.Signonmsgsrsv1TestCase.etree
+signupmsgsrsv1 = msgsets.Signupmsgsrsv1TestCase.etree
+bankmsgsrsv1 = msgsets.Bankmsgsrsv1TestCase.etree
+creditcardmsgsrsv1 = msgsets.Creditcardmsgsrsv1TestCase.etree
+invstmtmsgsrsv1 = msgsets.Invstmtmsgsrsv1TestCase.etree
+interxfermsgsrsv1 = msgsets.Interxfermsgsrsv1TestCase.etree
+wirexfermsgsrsv1 = msgsets.Wirexfermsgsrsv1TestCase.etree
+emailmsgsrsv1 = msgsets.Emailmsgsrsv1TestCase.etree
+seclistmsgsrsv1 = msgsets.Seclistmsgsrsv1TestCase.etree
+profmsgsrsv1 = msgsets.Profmsgsrsv1TestCase.etree
 
 
 class OfxTestCase(unittest.TestCase, base.TestAggregate):
@@ -51,16 +70,16 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("OFX")
-        root.append(msgsets.Signonmsgsrqv1TestCase.etree)
-        root.append(msgsets.Signupmsgsrqv1TestCase.etree)
-        root.append(msgsets.Bankmsgsrqv1TestCase.etree)
-        root.append(msgsets.Creditcardmsgsrqv1TestCase.etree)
-        root.append(msgsets.Invstmtmsgsrqv1TestCase.etree)
-        root.append(msgsets.Interxfermsgsrqv1TestCase.etree)
-        root.append(msgsets.Wirexfermsgsrqv1TestCase.etree)
-        root.append(msgsets.Emailmsgsrqv1TestCase.etree)
-        root.append(msgsets.Seclistmsgsrqv1TestCase.etree)
-        root.append(msgsets.Profmsgsrqv1TestCase.etree)
+        root.append(signonmsgsrqv1)
+        root.append(signupmsgsrqv1)
+        root.append(bankmsgsrqv1)
+        root.append(creditcardmsgsrqv1)
+        root.append(invstmtmsgsrqv1)
+        root.append(interxfermsgsrqv1)
+        root.append(wirexfermsgsrqv1)
+        root.append(emailmsgsrqv1)
+        root.append(seclistmsgsrqv1)
+        root.append(profmsgsrqv1)
         return root
 
     @classproperty
@@ -82,48 +101,48 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
     def validSoup(cls):
         for signonmsgs, optionalmsgs in [
             (
-                msgsets.Signonmsgsrqv1TestCase,
+                signonmsgsrqv1,
                 [
-                    msgsets.Signupmsgsrqv1TestCase,
-                    msgsets.Bankmsgsrqv1TestCase,
-                    msgsets.Creditcardmsgsrqv1TestCase,
-                    msgsets.Invstmtmsgsrqv1TestCase,
-                    msgsets.Interxfermsgsrqv1TestCase,
-                    msgsets.Wirexfermsgsrqv1TestCase,
-                    msgsets.Emailmsgsrqv1TestCase,
-                    msgsets.Seclistmsgsrqv1TestCase,
-                    msgsets.Profmsgsrqv1TestCase,
+                    signupmsgsrqv1,
+                    bankmsgsrqv1,
+                    creditcardmsgsrqv1,
+                    invstmtmsgsrqv1,
+                    interxfermsgsrqv1,
+                    wirexfermsgsrqv1,
+                    emailmsgsrqv1,
+                    seclistmsgsrqv1,
+                    profmsgsrqv1,
                 ],
             ),
             (
-                msgsets.Signonmsgsrsv1TestCase,
+                signonmsgsrsv1,
                 [
-                    msgsets.Signupmsgsrsv1TestCase,
-                    msgsets.Bankmsgsrsv1TestCase,
-                    msgsets.Creditcardmsgsrsv1TestCase,
-                    msgsets.Invstmtmsgsrsv1TestCase,
-                    msgsets.Interxfermsgsrsv1TestCase,
-                    msgsets.Wirexfermsgsrsv1TestCase,
-                    msgsets.Emailmsgsrsv1TestCase,
-                    msgsets.Seclistmsgsrsv1TestCase,
-                    msgsets.Profmsgsrsv1TestCase,
+                    signupmsgsrsv1,
+                    bankmsgsrsv1,
+                    creditcardmsgsrsv1,
+                    invstmtmsgsrsv1,
+                    interxfermsgsrsv1,
+                    wirexfermsgsrsv1,
+                    emailmsgsrsv1,
+                    seclistmsgsrsv1,
+                    profmsgsrsv1,
                 ],
             ),
         ]:
             root = Element("OFX")
-            root.append(signonmsgs.etree)
+            root.append(signonmsgs)
             yield root
             for msgs in optionalmsgs:
-                root.append(msgs.etree)
+                root.append(msgs)
                 yield root
 
     @classproperty
     @classmethod
     def invalidSoup(cls):
-        signonmsgsrqv1 = msgsets.Signonmsgsrqv1TestCase.etree
-        signonmsgsrsv1 = msgsets.Signonmsgsrsv1TestCase.etree
-        signupmsgsrqv1 = msgsets.Signupmsgsrqv1TestCase.etree
-        signupmsgsrsv1 = msgsets.Signupmsgsrsv1TestCase.etree
+        #  signonmsgsrqv1 = msgsets.Signonmsgsrqv1TestCase.etree
+        #  signonmsgsrsv1 = msgsets.Signonmsgsrsv1TestCase.etree
+        #  signupmsgsrqv1 = msgsets.Signupmsgsrqv1TestCase.etree
+        #  signupmsgsrsv1 = msgsets.Signupmsgsrsv1TestCase.etree
 
         # Neither SIGNONMSGSRQV1 nor SIGNONMSGSRSV1
         root = Element("OFX")

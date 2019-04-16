@@ -10,9 +10,6 @@ import itertools
 
 
 # local imports
-from ofxtools.models.base import Aggregate
-from ofxtools.models.bank.xfer import INTRARQ, INTRARS
-from ofxtools.models.bank.interxfer import INTERRQ, INTERRS
 from ofxtools.models.bank.recur import (
     FREQUENCIES,
     RECURRINST,

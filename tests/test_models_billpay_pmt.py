@@ -2,22 +2,12 @@
 """ Unit tests for models.billpay.pmt """
 # stdlib imports
 import unittest
-from datetime import datetime
-from decimal import Decimal
 from xml.etree.ElementTree import Element, SubElement
 from copy import deepcopy
 import itertools
 
 
 # local imports
-from ofxtools.Types import DateTime
-from ofxtools.models.base import Aggregate
-from ofxtools.models.wrapperbases import TranList
-from ofxtools.models.billpay.common import (
-    PMTINFO,
-    EXTDPAYEE,
-    PMTPRCSTS,
-)
 from ofxtools.models.billpay.pmt import (
     PMTRQ,
     PMTRS,
@@ -33,7 +23,7 @@ from ofxtools.models.billpay.pmt import (
     PMTINQTRNRS,
 )
 from ofxtools.models.i18n import CURRENCY_CODES
-from ofxtools.utils import UTC, classproperty
+from ofxtools.utils import classproperty
 
 
 # test imports

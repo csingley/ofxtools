@@ -10,7 +10,6 @@ from copy import deepcopy
 
 
 # local imports
-from ofxtools.models.base import Aggregate
 from ofxtools.models.bank.sync import (
     STPCHKSYNCRQ,
     STPCHKSYNCRS,

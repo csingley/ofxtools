@@ -11,8 +11,6 @@ from copy import deepcopy
 
 
 # local imports
-from ofxtools.models.base import Aggregate
-from ofxtools.models.bank.stmt import BANKACCTFROM
 from ofxtools.models.bank.stpchk import (
     CHKRANGE, CHKDESC, STPCHKNUM, STPCHKRQ, STPCHKRS, STPCHKTRNRQ, STPCHKTRNRS,
 )
@@ -23,7 +21,6 @@ from ofxtools.utils import UTC, classproperty
 import base
 import test_models_i18n as i18n
 import test_models_bank_stmt as bk_stmt
-
 
 
 class ChkrangeTestCase(unittest.TestCase, base.TestAggregate):

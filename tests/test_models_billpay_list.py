@@ -2,23 +2,12 @@
 """ Unit tests for models.billpay.common """
 # stdlib imports
 import unittest
-from datetime import datetime
-from decimal import Decimal
 from xml.etree.ElementTree import Element, SubElement
 from copy import deepcopy
 import itertools
 
 
 # local imports
-from ofxtools.Types import DateTime
-from ofxtools.models.base import Aggregate
-from ofxtools.models.wrapperbases import TranList
-from ofxtools.models.common import BAL, OFXELEMENT, OFXEXTENSION
-from ofxtools.models.bank.stmt import BANKACCTFROM, BANKACCTTO, PAYEE
-from ofxtools.models.billpay.common import (
-    BPACCTINFO,
-    EXTDPAYEE,
-)
 from ofxtools.models.billpay.list import (
     PAYEERQ,
     PAYEERS,

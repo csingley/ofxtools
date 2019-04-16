@@ -8,107 +8,36 @@ import unittest
 from xml.etree.ElementTree import Element, SubElement
 from datetime import time
 from decimal import Decimal
-from copy import deepcopy
-import itertools
 
 
 # local imports
 from ofxtools.models.base import Aggregate
-from ofxtools.models.common import OFXEXTENSION
-from ofxtools.models import (
-    MSGSETCORE,
+from ofxtools.models.i18n import LANG_CODES
+from ofxtools.models.signon import (
     SIGNONMSGSRQV1, SIGNONMSGSRSV1, SIGNONMSGSETV1, SIGNONMSGSET,
-    XFERPROF,
-    STPCHKPROF,
-    EMAILPROF,
-    PROFMSGSRQV1, PROFMSGSRSV1, PROFMSGSETV1, PROFMSGSET,
+)
+from ofxtools.models.profile import (
+    MSGSETLIST, PROFMSGSRQV1, PROFMSGSRSV1, PROFMSGSETV1, PROFMSGSET,
+)
+from ofxtools.models.signup import (
     SIGNUPMSGSRQV1, SIGNUPMSGSRSV1, SIGNUPMSGSETV1, SIGNUPMSGSET,
-    WEBENROLL,
+)
+from ofxtools.models.email import (
     EMAILMSGSRQV1, EMAILMSGSRSV1, EMAILMSGSETV1, EMAILMSGSET,
+)
+from ofxtools.models.bank.msgsets import (
+    MSGSETCORE, XFERPROF, STPCHKPROF, EMAILPROF,
     BANKMSGSRQV1, BANKMSGSRSV1, BANKMSGSETV1, BANKMSGSET,
     CREDITCARDMSGSRQV1, CREDITCARDMSGSRSV1, CREDITCARDMSGSETV1, CREDITCARDMSGSET,
     INTERXFERMSGSRQV1, INTERXFERMSGSRSV1, INTERXFERMSGSETV1, INTERXFERMSGSET,
     WIREXFERMSGSRQV1, WIREXFERMSGSRSV1, WIREXFERMSGSETV1, WIREXFERMSGSET,
-    BILLPAYMSGSRQV1, BILLPAYMSGSRSV1, BILLPAYMSGSETV1, BILLPAYMSGSET,
+)
+from ofxtools.models.bank.stmt import ACCTTYPES, STMTRS
+from ofxtools.models.invest.msgsets import (
     INVSTMTMSGSRQV1, INVSTMTMSGSRSV1, INVSTMTMSGSETV1, INVSTMTMSGSET,
     SECLISTMSGSRQV1, SECLISTMSGSRSV1, SECLISTMSGSETV1, SECLISTMSGSET,
-    TAX1099MSGSETV1, TAX1099MSGSET,
 )
-from ofxtools.models.signon import SONRQ, SONRS
-from ofxtools.models.profile import PROFTRNRQ, PROFTRNRS, MSGSETLIST
-from ofxtools.models.signup import ENROLLTRNRQ, ENROLLTRNRS
-from ofxtools.models.email import (
-    MAILTRNRQ,
-    MAILTRNRS,
-    GETMIMETRNRQ,
-    GETMIMETRNRS,
-    MAILSYNCRQ,
-    MAILSYNCRS,
-)
-from ofxtools.models.bank.stmt import (
-    ACCTTYPES,
-    STMTRS,
-    STMTTRNRQ,
-    STMTTRNRS,
-    CCSTMTTRNRQ,
-    CCSTMTTRNRS,
-)
-from ofxtools.models.bank.stmtend import (
-    STMTENDTRNRQ,
-    STMTENDTRNRS,
-    CCSTMTENDTRNRQ,
-    CCSTMTENDTRNRS,
-)
-from ofxtools.models.bank.stpchk import STPCHKTRNRQ, STPCHKTRNRS
-from ofxtools.models.bank.xfer import INTRATRNRQ, INTRATRNRS
-from ofxtools.models.bank.interxfer import INTERTRNRQ, INTERTRNRS
-from ofxtools.models.bank.wire import WIRETRNRQ, WIRETRNRS
-from ofxtools.models.bank.recur import (
-    RECINTRATRNRQ,
-    RECINTRATRNRS,
-    RECINTERTRNRQ,
-    RECINTERTRNRS,
-)
-from ofxtools.models.bank.mail import BANKMAILTRNRQ, BANKMAILTRNRS
-from ofxtools.models.bank.sync import (
-    STPCHKSYNCRQ,
-    STPCHKSYNCRS,
-    INTRASYNCRQ,
-    INTRASYNCRS,
-    INTERSYNCRQ,
-    INTERSYNCRS,
-    WIRESYNCRQ,
-    WIRESYNCRS,
-    RECINTRASYNCRQ,
-    RECINTRASYNCRS,
-    RECINTERSYNCRQ,
-    RECINTERSYNCRS,
-    BANKMAILSYNCRQ,
-    BANKMAILSYNCRS,
-)
-#  from ofxtools.models.billpay import (
-    #  PMTTRNRQ,
-    #  RECPMTTRNRQ,
-    #  PAYEETRNRQ,
-    #  PMTINQTRNRQ,
-    #  PMTMAILTRNRQ,
-    #  PMTSYNCRQ,
-    #  RECPMTSYNCRQ,
-    #  PAYEESYNCRQ,
-    #  PMTMAILSYNCRQ,
-    #  PMTTRNRS,
-    #  RECPMTTRNRS,
-    #  PAYEETRNRS,
-    #  PMTINQTRNRS,
-    #  PMTMAILTRNRS,
-    #  PMTSYNCRS,
-    #  RECPMTSYNCRS,
-    #  PAYEESYNCRS,
-    #  PMTMAILSYNCRS,
-#  )
-from ofxtools.models.invest.stmt import INVSTMTTRNRQ, INVSTMTTRNRS
-from ofxtools.models.invest import SECLIST
-from ofxtools.models.i18n import LANG_CODES
+from ofxtools.models.tax1099 import TAX1099MSGSETV1, TAX1099MSGSET
 from ofxtools.utils import UTC, classproperty
 
 
@@ -127,22 +56,6 @@ import test_models_bank_wire as wire
 import test_models_bank_recur as recur
 import test_models_bank_mail as bank_mail
 import test_models_bank_sync as bank_sync
-#  from test_models_billpay_pmt import (
-    #  PmttrnrqTestCase, PayeetrnrqTestCase, PmtinqtrnrqTestCase,
-    #  PmttrnrsTestCase, PayeetrnrsTestCase, PmtinqtrnrsTestCase,
-#  )
-#  from test_models_billpay_recur import RecpmttrnrqTestCase, RecpmttrnrsTestCase
-#  from test_models_billpay_mail import PmtmailtrnrqTestCase, PmtmailtrnrsTestCase
-#  from test_models_billpay_sync import (
-    #  PmtsyncRqTestCase,
-    #  RecpmtsyncrqTestCase,
-    #  PayeesyncrqTestCase,
-    #  PmtmailsyncrqTestCase,
-    #  PmtsyncRsTestCase,
-    #  RecpmtsyncrsTestCase,
-    #  PayeesyncrsTestCase,
-    #  PmtmailsyncrsTestCase,
-#  )
 import test_models_invest as invest
 import test_models_securities as securities
 import test_models_signup as signup

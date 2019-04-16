@@ -5,7 +5,6 @@ import unittest
 from xml.etree.ElementTree import Element, SubElement
 from decimal import Decimal
 from datetime import datetime
-from copy import deepcopy
 
 
 # local imports
@@ -13,29 +12,15 @@ from ofxtools.models.base import Aggregate
 from ofxtools.models.bank.stmt import INV401KSOURCES
 from ofxtools.models.invest.acct import INVSUBACCTS
 from ofxtools.models.invest.transactions import (
-    BUYTYPES,
-    SELLTYPES,
-    OPTBUYTYPES,
-    OPTSELLTYPES,
+    BUYTYPES, SELLTYPES, OPTBUYTYPES, OPTSELLTYPES,
 )
 from ofxtools.models.invest.openorders import (
-    UNITTYPES,
-    OO,
-    OOBUYDEBT,
-    OOBUYMF,
-    OOBUYOPT,
-    OOBUYOTHER,
-    OOBUYSTOCK,
-    OOSELLDEBT,
-    OOSELLMF,
-    OOSELLOPT,
-    OOSELLOTHER,
-    OOSELLSTOCK,
-    SWITCHMF,
-    INVOOLIST,
+    UNITTYPES, OO,
+    OOBUYDEBT, OOBUYMF, OOBUYOPT, OOBUYOTHER, OOBUYSTOCK,
+    OOSELLDEBT, OOSELLMF, OOSELLOPT, OOSELLOTHER, OOSELLSTOCK,
+    SWITCHMF, INVOOLIST,
 )
-from ofxtools.models.invest.securities import SECID
-from ofxtools.models.i18n import CURRENCY, CURRENCY_CODES
+from ofxtools.models.i18n import CURRENCY_CODES
 from ofxtools.utils import UTC, classproperty
 
 

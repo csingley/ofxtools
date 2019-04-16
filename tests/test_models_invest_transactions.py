@@ -5,45 +5,20 @@ import unittest
 from xml.etree.ElementTree import Element, SubElement
 from decimal import Decimal
 from datetime import datetime
-from copy import deepcopy
 
 
 # local imports
 from ofxtools.models.base import Aggregate
-from ofxtools.models.bank.stmt import STMTTRN, INV401KSOURCES
+from ofxtools.models.bank.stmt import INV401KSOURCES
 from ofxtools.models.invest import (
-    INVTRAN,
-    INVBUY,
-    INVSELL,
-    INVBANKTRAN,
-    BUYDEBT,
-    BUYMF,
-    BUYOPT,
-    BUYOTHER,
-    BUYSTOCK,
-    CLOSUREOPT,
-    INCOME,
-    INVEXPENSE,
-    JRNLFUND,
-    JRNLSEC,
-    MARGININTEREST,
-    REINVEST,
-    RETOFCAP,
-    SELLDEBT,
-    SELLMF,
-    SELLOPT,
-    SELLOTHER,
-    SELLSTOCK,
-    SPLIT,
-    TRANSFER,
-    #  INVTRANLIST,
-    INVACCTFROM,
-    BUYTYPES,
-    SELLTYPES,
-    INCOMETYPES,
-    INVSUBACCTS,
+    BUYTYPES, SELLTYPES, INCOMETYPES, INVSUBACCTS,
+    INVTRAN, INVBUY, INVSELL, INVBANKTRAN,
+    BUYDEBT, BUYMF, BUYOPT, BUYOTHER, BUYSTOCK,
+    CLOSUREOPT, INCOME, INVEXPENSE, JRNLFUND,
+    JRNLSEC, MARGININTEREST, REINVEST, RETOFCAP,
+    SELLDEBT, SELLMF, SELLOPT, SELLOTHER, SELLSTOCK,
+    SPLIT, TRANSFER,
 )
-from ofxtools.models.invest.securities import SECID
 from ofxtools.models.i18n import CURRENCY
 from ofxtools.utils import UTC, classproperty
 

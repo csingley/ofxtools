@@ -16,8 +16,6 @@ from ofxtools.utils import (
     validate_isin,
     cusip2isin,
     sedol2isin,
-    #  settleDate,
-    #  NYSEcalendar,
 )
 
 

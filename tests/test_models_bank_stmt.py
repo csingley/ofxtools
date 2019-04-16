@@ -12,7 +12,7 @@ from copy import deepcopy
 
 # local imports
 from ofxtools.models.base import Aggregate
-from ofxtools.models.common import BAL, SVCSTATUSES
+from ofxtools.models.common import SVCSTATUSES
 from ofxtools.models.bank.stmt import (
     TRNTYPES,
     INV401KSOURCES,
@@ -39,7 +39,6 @@ from ofxtools.models.bank.stmt import (
     CCSTMTTRNRQ,
     CCSTMTTRNRS,
 )
-from ofxtools.models.i18n import CURRENCY_CODES, ORIGCURRENCY
 from ofxtools.utils import UTC, classproperty
 
 

@@ -5,40 +5,20 @@ import unittest
 from xml.etree.ElementTree import Element, SubElement
 from decimal import Decimal
 from datetime import datetime
-from copy import deepcopy
 
 
 # local imports
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import SVCSTATUSES
-from ofxtools.models.bank.stmt import BALLIST, INV401KSOURCES, INCTRAN
+from ofxtools.models.bank.stmt import INV401KSOURCES
 from ofxtools.models.invest import (
-    INVPOS,
-    POSDEBT,
-    POSMF,
-    POSOPT,
-    POSOTHER,
-    POSSTOCK,
-    INVTRANLIST,
-    INVPOSLIST,
-    INCPOS,
-    INVACCTFROM,
-    INVACCTTO,
-    INVACCTINFO,
-    INV401KBAL,
-    INVBAL,
-    INVSTMTRQ,
-    INVSTMTRS,
-    INVSTMTTRNRQ,
-    INVSTMTTRNRS,
-    USPRODUCTTYPES,
-    INVACCTTYPES,
-    INVSUBACCTS,
-    INVSTMTMSGSRQV1,
-    INVSTMTMSGSRSV1,
+    USPRODUCTTYPES, INVACCTTYPES, INVSUBACCTS,
+    INVPOS, POSDEBT, POSMF, POSOPT, POSOTHER, POSSTOCK,
+    INVTRANLIST, INVPOSLIST, INCPOS,
+    INVACCTFROM, INVACCTTO, INVACCTINFO,
+    INV401KBAL, INVBAL,
+    INVSTMTRQ, INVSTMTRS, INVSTMTTRNRQ, INVSTMTTRNRS,
 )
-from ofxtools.models.invest.securities import SECID
-from ofxtools.models.i18n import CURRENCY, CURRENCY_CODES
 from ofxtools.utils import UTC, classproperty
 
 
@@ -526,7 +506,6 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
         root.append(oo.InvoolistTestCase.etree)
         SubElement(root, "MKTGINFO").text = "Get Free Stuff NOW!!"
         root.append(Inv401kbalTestCase.etree)
-
         return root
 
     @classproperty

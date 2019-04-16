@@ -5,31 +5,17 @@
 import unittest
 from datetime import datetime
 from decimal import Decimal
-from xml.etree.ElementTree import Element, SubElement, tostring
+from xml.etree.ElementTree import Element, SubElement
 from copy import deepcopy
 
 
 # local imports
 from ofxtools.models.base import Aggregate
 from ofxtools.models.invest.securities import (
-    SECID,
-    SECINFO,
-    DEBTINFO,
-    MFINFO,
-    OPTINFO,
-    OTHERINFO,
-    STOCKINFO,
-    PORTION,
-    FIPORTION,
-    MFASSETCLASS,
-    FIMFASSETCLASS,
-    ASSETCLASSES,
-    SECLIST,
-    SECRQ,
-    SECLISTRQ,
-    SECLISTRS,
-    SECLISTTRNRQ,
-    SECLISTTRNRS,
+    ASSETCLASSES, SECID, SECINFO,
+    DEBTINFO, MFINFO, OPTINFO, OTHERINFO, STOCKINFO,
+    PORTION, FIPORTION, MFASSETCLASS, FIMFASSETCLASS,
+    SECLIST, SECRQ, SECLISTRQ, SECLISTRS, SECLISTTRNRQ, SECLISTTRNRS,
 )
 from ofxtools.utils import UTC, classproperty
 
@@ -37,7 +23,6 @@ from ofxtools.utils import UTC, classproperty
 # test imports
 import base
 import test_models_i18n as i18n
-
 
 
 class SecidTestCase(unittest.TestCase, base.TestAggregate):

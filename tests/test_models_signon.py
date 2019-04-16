@@ -10,11 +10,7 @@ from copy import deepcopy
 # local imports
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import STATUS
-from ofxtools.models.signon import (
-    FI,
-    SONRQ,
-    SONRS,
-)
+from ofxtools.models.signon import FI, SONRQ, SONRS
 from ofxtools.models.i18n import LANG_CODES
 from ofxtools.utils import UTC, classproperty
 

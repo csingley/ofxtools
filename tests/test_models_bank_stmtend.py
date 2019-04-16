@@ -7,12 +7,9 @@ import unittest
 from xml.etree.ElementTree import Element, SubElement
 from datetime import datetime
 from decimal import Decimal
-from copy import deepcopy
 
 
 # local imports
-from ofxtools.models.base import Aggregate
-from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM, REWARDINFO
 from ofxtools.models.bank.stmtend import (
     CLOSING,
     LASTPMTINFO,
@@ -26,7 +23,6 @@ from ofxtools.models.bank.stmtend import (
     CCSTMTENDTRNRQ,
     CCSTMTENDTRNRS,
 )
-from ofxtools.models.i18n import CURRENCY
 from ofxtools.utils import UTC, classproperty
 
 
