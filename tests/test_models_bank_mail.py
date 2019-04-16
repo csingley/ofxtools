@@ -27,8 +27,8 @@ from ofxtools.utils import UTC, classproperty
 
 # test imports
 import base
-from test_models_email import MailTestCase
-from test_models_bank_stmt import BankacctfromTestCase, CcacctfromTestCase
+import test_models_email as email
+import test_models_bank_stmt as bk_stmt
 
 
 class BankmailrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -44,15 +44,15 @@ class BankmailrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return BANKMAILRQ(bankacctfrom=BankacctfromTestCase.aggregate,
-                          mail=MailTestCase.aggregate)
+        return BANKMAILRQ(bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+                          mail=email.MailTestCase.aggregate)
 
     @classproperty
     @classmethod
     def validSoup(cls):
-        bankacctfrom = BankacctfromTestCase.etree
-        ccacctfrom = CcacctfromTestCase.etree
-        mail = MailTestCase.etree
+        bankacctfrom = bk_stmt.BankacctfromTestCase.etree
+        ccacctfrom = bk_stmt.CcacctfromTestCase.etree
+        mail = email.MailTestCase.etree
         for acctfrom in bankacctfrom, ccacctfrom:
             root = Element("BANKMAILRQ")
             root.append(acctfrom)
@@ -62,9 +62,9 @@ class BankmailrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def invalidSoup(cls):
-        bankacctfrom = BankacctfromTestCase.etree
-        ccacctfrom = CcacctfromTestCase.etree
-        mail = MailTestCase.etree
+        bankacctfrom = bk_stmt.BankacctfromTestCase.etree
+        ccacctfrom = bk_stmt.CcacctfromTestCase.etree
+        mail = email.MailTestCase.etree
 
         #  requiredMutexes = [("bankacctfrom", "ccacctfrom")]
         #  Neither
@@ -94,15 +94,15 @@ class BankmailrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return BANKMAILRS(bankacctfrom=BankacctfromTestCase.aggregate,
-                          mail=MailTestCase.aggregate)
+        return BANKMAILRS(bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+                          mail=email.MailTestCase.aggregate)
 
     @classproperty
     @classmethod
     def validSoup(cls):
-        bankacctfrom = BankacctfromTestCase.etree
-        ccacctfrom = CcacctfromTestCase.etree
-        mail = MailTestCase.etree
+        bankacctfrom = bk_stmt.BankacctfromTestCase.etree
+        ccacctfrom = bk_stmt.CcacctfromTestCase.etree
+        mail = email.MailTestCase.etree
         for acctfrom in bankacctfrom, ccacctfrom:
             root = Element("BANKMAILRS")
             root.append(acctfrom)
@@ -112,9 +112,9 @@ class BankmailrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def invalidSoup(cls):
-        bankacctfrom = BankacctfromTestCase.etree
-        ccacctfrom = CcacctfromTestCase.etree
-        mail = MailTestCase.etree
+        bankacctfrom = bk_stmt.BankacctfromTestCase.etree
+        ccacctfrom = bk_stmt.CcacctfromTestCase.etree
+        mail = email.MailTestCase.etree
 
         #  requiredMutexes = [("bankacctfrom", "ccacctfrom")]
         #  Neither
@@ -140,8 +140,8 @@ class ChkmailrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def etree(cls):
-        bankacctfrom = BankacctfromTestCase.etree
-        mail = MailTestCase.etree
+        bankacctfrom = bk_stmt.BankacctfromTestCase.etree
+        mail = email.MailTestCase.etree
 
         root = Element("CHKMAILRS")
         root.append(bankacctfrom)
@@ -156,8 +156,8 @@ class ChkmailrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CHKMAILRS(bankacctfrom=BankacctfromTestCase.aggregate,
-                         mail=MailTestCase.aggregate, checknum="1001",
+        return CHKMAILRS(bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+                         mail=email.MailTestCase.aggregate, checknum="1001",
                          trnamt=Decimal("321.45"),
                          dtuser=datetime(2106, 9, 30, tzinfo=UTC),
                          fee=Decimal("21.50"))
@@ -172,8 +172,8 @@ class DepmailrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def etree(cls):
-        bankacctfrom = BankacctfromTestCase.etree
-        mail = MailTestCase.etree
+        bankacctfrom = bk_stmt.BankacctfromTestCase.etree
+        mail = email.MailTestCase.etree
 
         root = Element("DEPMAILRS")
         root.append(bankacctfrom)
@@ -188,8 +188,8 @@ class DepmailrsTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return DEPMAILRS(
-            bankacctfrom=BankacctfromTestCase.aggregate,
-            mail=MailTestCase.aggregate,
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+            mail=email.MailTestCase.aggregate,
             trnamt=Decimal("321.45"), dtuser=datetime(2106, 9, 30, tzinfo=UTC),
             fee=Decimal("21.50"))
 

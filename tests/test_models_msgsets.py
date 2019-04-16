@@ -115,61 +115,18 @@ from ofxtools.utils import UTC, classproperty
 # test imports
 import base
 from test_models_common import OfxextensionTestCase
-from test_models_signon import (
-    SonrqTestCase,
-    SonrsTestCase,
-)
-from test_models_profile import (
-    ProftrnrqTestCase,
-    ProftrnrsTestCase,
-)
-from test_models_email import (
-    MailtrnrqTestCase,
-    MailtrnrsTestCase,
-    GetmimetrnrqTestCase,
-    GetmimetrnrsTestCase,
-    MailsyncrqTestCase,
-    MailsyncrsTestCase,
-)
-from test_models_bank_stmt import (
-    StmttrnrqTestCase,
-    StmttrnrsTestCase,
-    CcstmttrnrqTestCase,
-    CcstmttrnrsTestCase,
-)
-from test_models_bank_stmtend import (
-    StmtendtrnrqTestCase,
-    StmtendtrnrsTestCase,
-    CcstmtendtrnrqTestCase,
-    CcstmtendtrnrsTestCase,
-)
-from test_models_bank_stpchk import StpchktrnrqTestCase, StpchktrnrsTestCase
-from test_models_bank_xfer import IntratrnrqTestCase, IntratrnrsTestCase
-from test_models_bank_interxfer import IntertrnrqTestCase, IntertrnrsTestCase
-from test_models_bank_wire import WiretrnrqTestCase, WiretrnrsTestCase
-from test_models_bank_recur import (
-    RecintratrnrqTestCase,
-    RecintratrnrsTestCase,
-    RecintertrnrqTestCase,
-    RecintertrnrsTestCase,
-)
-from test_models_bank_mail import BankmailtrnrqTestCase, BankmailtrnrsTestCase
-from test_models_bank_sync import (
-    StpchksyncrqTestCase,
-    StpchksyncrsTestCase,
-    IntrasyncrqTestCase,
-    IntrasyncrsTestCase,
-    IntersyncrqTestCase,
-    IntersyncrsTestCase,
-    WiresyncrqTestCase,
-    WiresyncrsTestCase,
-    RecintrasyncrqTestCase,
-    RecintrasyncrsTestCase,
-    RecintersyncrqTestCase,
-    RecintersyncrsTestCase,
-    BankmailsyncrqTestCase,
-    BankmailsyncrsTestCase,
-)
+import test_models_signon as signon
+import test_models_profile as profile
+import test_models_email as email
+import test_models_bank_stmt as bk_stmt
+import test_models_bank_stmtend as bk_stmtend
+import test_models_bank_stpchk as stpchk
+import test_models_bank_xfer as xfer
+import test_models_bank_interxfer as interxfer
+import test_models_bank_wire as wire
+import test_models_bank_recur as recur
+import test_models_bank_mail as bank_mail
+import test_models_bank_sync as bank_sync
 #  from test_models_billpay_pmt import (
     #  PmttrnrqTestCase, PayeetrnrqTestCase, PmtinqtrnrqTestCase,
     #  PmttrnrsTestCase, PayeetrnrsTestCase, PmtinqtrnrsTestCase,
@@ -186,9 +143,9 @@ from test_models_bank_sync import (
     #  PayeesyncrsTestCase,
     #  PmtmailsyncrsTestCase,
 #  )
-from test_models_invest import InvstmttrnrqTestCase, InvstmttrnrsTestCase
-from test_models_securities import SeclisttrnrqTestCase, SeclisttrnrsTestCase, SeclistTestCase
-from test_models_signup import WebenrollTestCase, EnrolltrnrqTestCase, EnrolltrnrsTestCase
+import test_models_invest as invest
+import test_models_securities as securities
+import test_models_signup as signup
 
 
 class Signonmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
@@ -198,13 +155,13 @@ class Signonmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("SIGNONMSGSRQV1")
-        root.append(SonrqTestCase.etree)
+        root.append(signon.SonrqTestCase.etree)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return SIGNONMSGSRQV1(sonrq=SonrqTestCase.aggregate)
+        return SIGNONMSGSRQV1(sonrq=signon.SonrqTestCase.aggregate)
 
 
 class Signonmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
@@ -214,13 +171,13 @@ class Signonmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("SIGNONMSGSRSV1")
-        root.append(SonrsTestCase.etree)
+        root.append(signon.SonrsTestCase.etree)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return SIGNONMSGSRSV1(sonrs=SonrsTestCase.aggregate)
+        return SIGNONMSGSRSV1(sonrs=signon.SonrsTestCase.aggregate)
 
 
 class Signonmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
@@ -263,21 +220,21 @@ class Profmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("PROFMSGSRQV1")
         for i in range(2):
-            root.append(ProftrnrqTestCase.etree)
+            root.append(profile.ProftrnrqTestCase.etree)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PROFMSGSRQV1(ProftrnrqTestCase.aggregate,
-                            ProftrnrqTestCase.aggregate)
+        return PROFMSGSRQV1(profile.ProftrnrqTestCase.aggregate,
+                            profile.ProftrnrqTestCase.aggregate)
 
     def testListItem(self):
         # PROFMSGSRQV1 may only contain PROFTRNRQ
         listitems = PROFMSGSRQV1.listitems
         self.assertEqual(len(listitems), 1)
         root = self.etree
-        root.append(ProftrnrsTestCase.etree)
+        root.append(profile.ProftrnrsTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
@@ -291,20 +248,20 @@ class Profmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("PROFMSGSRSV1")
         for i in range(2):
-            root.append(ProftrnrsTestCase.etree)
+            root.append(profile.ProftrnrsTestCase.etree)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PROFMSGSRSV1(ProftrnrsTestCase.aggregate, ProftrnrsTestCase.aggregate)
+        return PROFMSGSRSV1(profile.ProftrnrsTestCase.aggregate, profile.ProftrnrsTestCase.aggregate)
 
     def testListItems(self):
         # PROFMSGSRSV1 may only contain PROFTRNRS
         listitems = PROFMSGSRSV1.listitems
         self.assertEqual(len(listitems), 1)
         root = self.etree
-        root.append(ProftrnrqTestCase.etree)
+        root.append(profile.ProftrnrqTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
@@ -352,14 +309,14 @@ class Signupmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("SIGNUPMSGSRQV1")
         for i in range(2):
-            root.append(EnrolltrnrqTestCase.etree)
+            root.append(signup.EnrolltrnrqTestCase.etree)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return SIGNUPMSGSRQV1(EnrolltrnrqTestCase.aggregate,
-                              EnrolltrnrqTestCase.aggregate)
+        return SIGNUPMSGSRQV1(signup.EnrolltrnrqTestCase.aggregate,
+                              signup.EnrolltrnrqTestCase.aggregate)
 
     def testListItems(self):
         # SIGNUPMSGSRQV1 may contain
@@ -367,7 +324,7 @@ class Signupmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         listitems = SIGNUPMSGSRQV1.listitems
         self.assertEqual(len(listitems), 4)
         root = self.etree
-        root.append(EnrolltrnrsTestCase.etree)
+        root.append(signup.EnrolltrnrsTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
@@ -381,13 +338,13 @@ class Signupmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("SIGNUPMSGSRSV1")
         for i in range(2):
-            root.append(EnrolltrnrsTestCase.etree)
+            root.append(signup.EnrolltrnrsTestCase.etree)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return SIGNUPMSGSRSV1(EnrolltrnrsTestCase.aggregate, EnrolltrnrsTestCase.aggregate)
+        return SIGNUPMSGSRSV1(signup.EnrolltrnrsTestCase.aggregate, signup.EnrolltrnrsTestCase.aggregate)
 
     def testListItems(self):
         # SIGNUPMSGSRSV1 may contain
@@ -395,7 +352,7 @@ class Signupmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         listitems = SIGNUPMSGSRSV1.listitems
         self.assertEqual(len(listitems), 4)
         root = self.etree
-        root.append(EnrolltrnrqTestCase.etree)
+        root.append(signup.EnrolltrnrqTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
@@ -411,7 +368,7 @@ class Signupmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("SIGNUPMSGSETV1")
         root.append(MsgsetcoreTestCase.etree)
-        root.append(WebenrollTestCase.etree)
+        root.append(signup.WebenrollTestCase.etree)
         SubElement(root, "CHGUSERINFO").text = "N"
         SubElement(root, "AVAILACCTS").text = "Y"
         SubElement(root, "CLIENTACTREQ").text = "N"
@@ -421,7 +378,7 @@ class Signupmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return SIGNUPMSGSETV1(msgsetcore=MsgsetcoreTestCase.aggregate,
-                              webenroll=WebenrollTestCase.aggregate,
+                              webenroll=signup.WebenrollTestCase.aggregate,
                               chguserinfo=False,
                               availaccts=True,
                               clientactreq=False)
@@ -452,7 +409,7 @@ class Emailmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("EMAILMSGSRQV1")
-        for rq in (MailtrnrqTestCase, GetmimetrnrqTestCase, MailsyncrqTestCase):
+        for rq in (email.MailtrnrqTestCase, email.GetmimetrnrqTestCase, email.MailsyncrqTestCase):
             for i in range(2):
                 root.append(rq.etree)
         return root
@@ -461,16 +418,16 @@ class Emailmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return EMAILMSGSRQV1(
-            MailtrnrqTestCase.aggregate, MailtrnrqTestCase.aggregate,
-            GetmimetrnrqTestCase.aggregate, GetmimetrnrqTestCase.aggregate,
-            MailsyncrqTestCase.aggregate, MailsyncrqTestCase.aggregate)
+            email.MailtrnrqTestCase.aggregate, email.MailtrnrqTestCase.aggregate,
+            email.GetmimetrnrqTestCase.aggregate, email.GetmimetrnrqTestCase.aggregate,
+            email.MailsyncrqTestCase.aggregate, email.MailsyncrqTestCase.aggregate)
 
     def testListItems(self):
         # EMAILMSGSRQV1 may contain ["MAILTRNRQ", "GETMIMETRNRQ", "MAILSYNCRQ"]
         listitems = EMAILMSGSRQV1.listitems
         self.assertEqual(len(listitems), 3)
         root = self.etree
-        root.append(MailtrnrsTestCase.etree)
+        root.append(email.MailtrnrsTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
@@ -483,7 +440,7 @@ class Emailmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("EMAILMSGSRSV1")
-        for rs in (MailtrnrsTestCase, GetmimetrnrsTestCase, MailsyncrsTestCase):
+        for rs in (email.MailtrnrsTestCase, email.GetmimetrnrsTestCase, email.MailsyncrsTestCase):
             for i in range(2):
                 root.append(rs.etree)
         return root
@@ -491,19 +448,19 @@ class Emailmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return EMAILMSGSRSV1(MailtrnrsTestCase.aggregate,
-                             MailtrnrsTestCase.aggregate,
-                             GetmimetrnrsTestCase.aggregate,
-                             GetmimetrnrsTestCase.aggregate,
+        return EMAILMSGSRSV1(email.MailtrnrsTestCase.aggregate,
+                             email.MailtrnrsTestCase.aggregate,
+                             email.GetmimetrnrsTestCase.aggregate,
+                             email.GetmimetrnrsTestCase.aggregate,
                              
-                             MailsyncrsTestCase.aggregate, MailsyncrsTestCase.aggregate)
+                             email.MailsyncrsTestCase.aggregate, email.MailsyncrsTestCase.aggregate)
 
     def testListItems(self):
         # EMAILMSGSRSV1 may contain ["MAILTRNRS", "GETMIMETRNRS", "MAILSYNCRS"]
         listitems = EMAILMSGSRSV1.listitems
         self.assertEqual(len(listitems), 3)
         root = self.etree
-        root.append(MailtrnrqTestCase.etree)
+        root.append(email.MailtrnrqTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
@@ -552,16 +509,16 @@ class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("BANKMSGSRQV1")
         for rq in (
-            StmttrnrqTestCase,
-            StmtendtrnrqTestCase,
-            StpchktrnrqTestCase,
-            IntratrnrqTestCase,
-            RecintratrnrqTestCase,
-            BankmailtrnrqTestCase,
-            StpchksyncrqTestCase,
-            IntrasyncrqTestCase,
-            RecintrasyncrqTestCase,
-            BankmailsyncrqTestCase,
+            bk_stmt.StmttrnrqTestCase,
+            bk_stmtend.StmtendtrnrqTestCase,
+            stpchk.StpchktrnrqTestCase,
+            xfer.IntratrnrqTestCase,
+            recur.RecintratrnrqTestCase,
+            bank_mail.BankmailtrnrqTestCase,
+            bank_sync.StpchksyncrqTestCase,
+            bank_sync.IntrasyncrqTestCase,
+            bank_sync.RecintrasyncrqTestCase,
+            bank_sync.BankmailsyncrqTestCase,
         ):
             for i in range(2):
                 root.append(rq.etree)
@@ -570,26 +527,26 @@ class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return BANKMSGSRQV1(StmttrnrqTestCase.aggregate,
-                            StmttrnrqTestCase.aggregate,
-                            StmtendtrnrqTestCase.aggregate,
-                            StmtendtrnrqTestCase.aggregate,
-                            StpchktrnrqTestCase.aggregate,
-                            StpchktrnrqTestCase.aggregate,
-                            IntratrnrqTestCase.aggregate,
-                            IntratrnrqTestCase.aggregate,
-                            RecintratrnrqTestCase.aggregate,
-                            RecintratrnrqTestCase.aggregate,
-                            BankmailtrnrqTestCase.aggregate,
-                            BankmailtrnrqTestCase.aggregate,
-                            StpchksyncrqTestCase.aggregate,
-                            StpchksyncrqTestCase.aggregate,
-                            IntrasyncrqTestCase.aggregate,
-                            IntrasyncrqTestCase.aggregate,
-                            RecintrasyncrqTestCase.aggregate,
-                            RecintrasyncrqTestCase.aggregate,
-                            BankmailsyncrqTestCase.aggregate,
-                            BankmailsyncrqTestCase.aggregate)
+        return BANKMSGSRQV1(bk_stmt.StmttrnrqTestCase.aggregate,
+                            bk_stmt.StmttrnrqTestCase.aggregate,
+                            bk_stmtend.StmtendtrnrqTestCase.aggregate,
+                            bk_stmtend.StmtendtrnrqTestCase.aggregate,
+                            stpchk.StpchktrnrqTestCase.aggregate,
+                            stpchk.StpchktrnrqTestCase.aggregate,
+                            xfer.IntratrnrqTestCase.aggregate,
+                            xfer.IntratrnrqTestCase.aggregate,
+                            recur.RecintratrnrqTestCase.aggregate,
+                            recur.RecintratrnrqTestCase.aggregate,
+                            bank_mail.BankmailtrnrqTestCase.aggregate,
+                            bank_mail.BankmailtrnrqTestCase.aggregate,
+                            bank_sync.StpchksyncrqTestCase.aggregate,
+                            bank_sync.StpchksyncrqTestCase.aggregate,
+                            bank_sync.IntrasyncrqTestCase.aggregate,
+                            bank_sync.IntrasyncrqTestCase.aggregate,
+                            bank_sync.RecintrasyncrqTestCase.aggregate,
+                            bank_sync.RecintrasyncrqTestCase.aggregate,
+                            bank_sync.BankmailsyncrqTestCase.aggregate,
+                            bank_sync.BankmailsyncrqTestCase.aggregate)
 
     def testListItems(self):
         # BANKMSGSRQV1 may contain
@@ -600,7 +557,7 @@ class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         listitems = BANKMSGSRQV1.listitems
         self.assertEqual(len(listitems), 10)
         root = self.etree
-        root.append(StmttrnrsTestCase.etree)
+        root.append(bk_stmt.StmttrnrsTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
@@ -614,16 +571,16 @@ class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("BANKMSGSRSV1")
         for rs in (
-            StmttrnrsTestCase,
-            StmtendtrnrsTestCase,
-            StpchktrnrsTestCase,
-            IntratrnrsTestCase,
-            RecintratrnrsTestCase,
-            BankmailtrnrsTestCase,
-            StpchksyncrsTestCase,
-            IntrasyncrsTestCase,
-            RecintrasyncrsTestCase,
-            BankmailsyncrsTestCase,
+            bk_stmt.StmttrnrsTestCase,
+            bk_stmtend.StmtendtrnrsTestCase,
+            stpchk.StpchktrnrsTestCase,
+            xfer.IntratrnrsTestCase,
+            recur.RecintratrnrsTestCase,
+            bank_mail.BankmailtrnrsTestCase,
+            bank_sync.StpchksyncrsTestCase,
+            bank_sync.IntrasyncrsTestCase,
+            bank_sync.RecintrasyncrsTestCase,
+            bank_sync.BankmailsyncrsTestCase,
         ):
             for i in range(2):
                 root.append(rs.etree)
@@ -632,26 +589,26 @@ class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return BANKMSGSRSV1(StmttrnrsTestCase.aggregate,
-                            StmttrnrsTestCase.aggregate,
-                            StmtendtrnrsTestCase.aggregate,
-                            StmtendtrnrsTestCase.aggregate,
-                            StpchktrnrsTestCase.aggregate,
-                            StpchktrnrsTestCase.aggregate,
-                            IntratrnrsTestCase.aggregate,
-                            IntratrnrsTestCase.aggregate,
-                            RecintratrnrsTestCase.aggregate,
-                            RecintratrnrsTestCase.aggregate,
-                            BankmailtrnrsTestCase.aggregate,
-                            BankmailtrnrsTestCase.aggregate,
-                            StpchksyncrsTestCase.aggregate,
-                            StpchksyncrsTestCase.aggregate,
-                            IntrasyncrsTestCase.aggregate,
-                            IntrasyncrsTestCase.aggregate,
-                            RecintrasyncrsTestCase.aggregate,
-                            RecintrasyncrsTestCase.aggregate,
-                            BankmailsyncrsTestCase.aggregate,
-                            BankmailsyncrsTestCase.aggregate)
+        return BANKMSGSRSV1(bk_stmt.StmttrnrsTestCase.aggregate,
+                            bk_stmt.StmttrnrsTestCase.aggregate,
+                            bk_stmtend.StmtendtrnrsTestCase.aggregate,
+                            bk_stmtend.StmtendtrnrsTestCase.aggregate,
+                            stpchk.StpchktrnrsTestCase.aggregate,
+                            stpchk.StpchktrnrsTestCase.aggregate,
+                            xfer.IntratrnrsTestCase.aggregate,
+                            xfer.IntratrnrsTestCase.aggregate,
+                            recur.RecintratrnrsTestCase.aggregate,
+                            recur.RecintratrnrsTestCase.aggregate,
+                            bank_mail.BankmailtrnrsTestCase.aggregate,
+                            bank_mail.BankmailtrnrsTestCase.aggregate,
+                            bank_sync.StpchksyncrsTestCase.aggregate,
+                            bank_sync.StpchksyncrsTestCase.aggregate,
+                            bank_sync.IntrasyncrsTestCase.aggregate,
+                            bank_sync.IntrasyncrsTestCase.aggregate,
+                            bank_sync.RecintrasyncrsTestCase.aggregate,
+                            bank_sync.RecintrasyncrsTestCase.aggregate,
+                            bank_sync.BankmailsyncrsTestCase.aggregate,
+                            bank_sync.BankmailsyncrsTestCase.aggregate)
 
     def testListItems(self):
         # BANKMSGSRSV! may contain
@@ -661,7 +618,7 @@ class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         listitems = BANKMSGSRSV1.listitems
         self.assertEqual(len(listitems), 10)
         root = self.etree
-        root.append(StmttrnrqTestCase.etree)
+        root.append(bk_stmt.StmttrnrqTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
@@ -794,15 +751,15 @@ class Creditcardmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("CREDITCARDMSGSRQV1")
-        root.append(CcstmttrnrqTestCase.etree)
-        root.append(CcstmtendtrnrqTestCase.etree)
+        root.append(bk_stmt.CcstmttrnrqTestCase.etree)
+        root.append(bk_stmtend.CcstmtendtrnrqTestCase.etree)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CREDITCARDMSGSRQV1(CcstmttrnrqTestCase.aggregate,
-                                  CcstmtendtrnrqTestCase.aggregate)
+        return CREDITCARDMSGSRQV1(bk_stmt.CcstmttrnrqTestCase.aggregate,
+                                  bk_stmtend.CcstmtendtrnrqTestCase.aggregate)
 
 
 class Creditcardmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
@@ -812,15 +769,15 @@ class Creditcardmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("CREDITCARDMSGSRSV1")
-        root.append(CcstmttrnrsTestCase.etree)
-        root.append(CcstmtendtrnrsTestCase.etree)
+        root.append(bk_stmt.CcstmttrnrsTestCase.etree)
+        root.append(bk_stmtend.CcstmtendtrnrsTestCase.etree)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CREDITCARDMSGSRSV1(CcstmttrnrsTestCase.aggregate,
-                                  CcstmtendtrnrsTestCase.aggregate)
+        return CREDITCARDMSGSRSV1(bk_stmt.CcstmttrnrsTestCase.aggregate,
+                                  bk_stmtend.CcstmtendtrnrsTestCase.aggregate)
 
 
 class Creditcardmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
@@ -869,10 +826,10 @@ class Interxfermsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("INTERXFERMSGSRQV1")
         for rq in (
-            IntertrnrqTestCase,
-            RecintertrnrqTestCase,
-            IntersyncrqTestCase,
-            RecintersyncrqTestCase,
+            interxfer.IntertrnrqTestCase,
+            recur.RecintertrnrqTestCase,
+            bank_sync.IntersyncrqTestCase,
+            bank_sync.RecintersyncrqTestCase,
         ):
             for i in range(2):
                 root.append(rq.etree)
@@ -881,14 +838,14 @@ class Interxfermsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INTERXFERMSGSRQV1(IntertrnrqTestCase.aggregate,
-                                 IntertrnrqTestCase.aggregate,
-                                 RecintertrnrqTestCase.aggregate,
-                                 RecintertrnrqTestCase.aggregate,
-                                 IntersyncrqTestCase.aggregate,
-                                 IntersyncrqTestCase.aggregate,
-                                 RecintersyncrqTestCase.aggregate,
-                                 RecintersyncrqTestCase.aggregate)
+        return INTERXFERMSGSRQV1(interxfer.IntertrnrqTestCase.aggregate,
+                                 interxfer.IntertrnrqTestCase.aggregate,
+                                 recur.RecintertrnrqTestCase.aggregate,
+                                 recur.RecintertrnrqTestCase.aggregate,
+                                 bank_sync.IntersyncrqTestCase.aggregate,
+                                 bank_sync.IntersyncrqTestCase.aggregate,
+                                 bank_sync.RecintersyncrqTestCase.aggregate,
+                                 bank_sync.RecintersyncrqTestCase.aggregate)
 
     def testListItems(self):
         # INTERXFERMSGSRQV1 may contain
@@ -896,7 +853,7 @@ class Interxfermsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         listitems = INTERXFERMSGSRQV1.listitems
         self.assertEqual(len(listitems), 4)
         root = self.etree
-        root.append(IntertrnrsTestCase.etree)
+        root.append(interxfer.IntertrnrsTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
@@ -910,10 +867,10 @@ class Interxfermsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("INTERXFERMSGSRSV1")
         for rq in (
-            IntertrnrsTestCase,
-            RecintertrnrsTestCase,
-            IntersyncrsTestCase,
-            RecintersyncrsTestCase,
+            interxfer.IntertrnrsTestCase,
+            recur.RecintertrnrsTestCase,
+            bank_sync.IntersyncrsTestCase,
+            bank_sync.RecintersyncrsTestCase,
         ):
             for i in range(2):
                 root.append(rq.etree)
@@ -922,14 +879,14 @@ class Interxfermsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INTERXFERMSGSRSV1(IntertrnrsTestCase.aggregate,
-                                 IntertrnrsTestCase.aggregate,
-                                 RecintertrnrsTestCase.aggregate,
-                                 RecintertrnrsTestCase.aggregate,
-                                 IntersyncrsTestCase.aggregate,
-                                 IntersyncrsTestCase.aggregate,
-                                 RecintersyncrsTestCase.aggregate,
-                                 RecintersyncrsTestCase.aggregate)
+        return INTERXFERMSGSRSV1(interxfer.IntertrnrsTestCase.aggregate,
+                                 interxfer.IntertrnrsTestCase.aggregate,
+                                 recur.RecintertrnrsTestCase.aggregate,
+                                 recur.RecintertrnrsTestCase.aggregate,
+                                 bank_sync.IntersyncrsTestCase.aggregate,
+                                 bank_sync.IntersyncrsTestCase.aggregate,
+                                 bank_sync.RecintersyncrsTestCase.aggregate,
+                                 bank_sync.RecintersyncrsTestCase.aggregate)
 
     def testListItems(self):
         # INTERXFERMSGSRSV1 may contain
@@ -937,7 +894,7 @@ class Interxfermsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         listitems = INTERXFERMSGSRSV1.listitems
         self.assertEqual(len(listitems), 4)
         root = self.etree
-        root.append(IntertrnrqTestCase.etree)
+        root.append(interxfer.IntertrnrqTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
@@ -991,7 +948,7 @@ class Wirexfermsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("WIREXFERMSGSRQV1")
-        for rq in (WiretrnrqTestCase, WiresyncrqTestCase):
+        for rq in (wire.WiretrnrqTestCase, bank_sync.WiresyncrqTestCase):
             for i in range(2):
                 root.append(rq.etree)
         return root
@@ -999,10 +956,10 @@ class Wirexfermsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return WIREXFERMSGSRQV1(WiretrnrqTestCase.aggregate,
-                                WiretrnrqTestCase.aggregate,
-                                WiresyncrqTestCase.aggregate,
-                                WiresyncrqTestCase.aggregate)
+        return WIREXFERMSGSRQV1(wire.WiretrnrqTestCase.aggregate,
+                                wire.WiretrnrqTestCase.aggregate,
+                                bank_sync.WiresyncrqTestCase.aggregate,
+                                bank_sync.WiresyncrqTestCase.aggregate)
 
     def testListItems(self):
         # WIREXFERMSGSRQV1 may contain
@@ -1010,7 +967,7 @@ class Wirexfermsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         listitems = WIREXFERMSGSRQV1.listitems
         self.assertEqual(len(listitems), 2)
         root = self.etree
-        root.append(WiretrnrsTestCase.etree)
+        root.append(wire.WiretrnrsTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
@@ -1023,7 +980,7 @@ class Wirexfermsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("WIREXFERMSGSRSV1")
-        for rq in (WiretrnrsTestCase, WiresyncrsTestCase):
+        for rq in (wire.WiretrnrsTestCase, bank_sync.WiresyncrsTestCase):
             for i in range(2):
                 root.append(rq.etree)
         return root
@@ -1031,10 +988,10 @@ class Wirexfermsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return WIREXFERMSGSRSV1(WiretrnrsTestCase.aggregate,
-                                WiretrnrsTestCase.aggregate,
-                                WiresyncrsTestCase.aggregate,
-                                WiresyncrsTestCase.aggregate)
+        return WIREXFERMSGSRSV1(wire.WiretrnrsTestCase.aggregate,
+                                wire.WiretrnrsTestCase.aggregate,
+                                bank_sync.WiresyncrsTestCase.aggregate,
+                                bank_sync.WiresyncrsTestCase.aggregate)
 
     def testListItems(self):
         # WIRERXFERMSGSRSV1 may contain
@@ -1042,7 +999,7 @@ class Wirexfermsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         listitems = WIREXFERMSGSRSV1.listitems
         self.assertEqual(len(listitems), 2)
         root = self.etree
-        root.append(WiretrnrqTestCase.etree)
+        root.append(wire.WiretrnrqTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
@@ -1260,15 +1217,15 @@ class Invstmtmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("INVSTMTMSGSRQV1")
         for i in range(2):
-            stmttrnrq = InvstmttrnrqTestCase.etree
+            stmttrnrq = invest.InvstmttrnrqTestCase.etree
             root.append(stmttrnrq)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INVSTMTMSGSRQV1(InvstmttrnrqTestCase.aggregate,
-                               InvstmttrnrqTestCase.aggregate)
+        return INVSTMTMSGSRQV1(invest.InvstmttrnrqTestCase.aggregate,
+                               invest.InvstmttrnrqTestCase.aggregate)
 
     def testListItems(self):
         # INVSTMTMSGSRQV1 may only contain
@@ -1276,7 +1233,7 @@ class Invstmtmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         listitems = INVSTMTMSGSRQV1.listitems
         self.assertEqual(len(listitems), 3)
         root = self.etree
-        root.append(InvstmttrnrsTestCase.etree)
+        root.append(invest.InvstmttrnrsTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
@@ -1290,14 +1247,14 @@ class Invstmtmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("INVSTMTMSGSRSV1")
         for i in range(2):
-            stmttrnrs = InvstmttrnrsTestCase.etree
+            stmttrnrs = invest.InvstmttrnrsTestCase.etree
             root.append(stmttrnrs)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INVSTMTMSGSRSV1(InvstmttrnrsTestCase.aggregate, InvstmttrnrsTestCase.aggregate)
+        return INVSTMTMSGSRSV1(invest.InvstmttrnrsTestCase.aggregate, invest.InvstmttrnrsTestCase.aggregate)
 
     def testListItems(self):
         # INVSTMTMSGSRSV1 may only contain
@@ -1305,7 +1262,7 @@ class Invstmtmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         listitems = INVSTMTMSGSRSV1.listitems
         self.assertEqual(len(listitems), 3)
         root = self.etree
-        root.append(InvstmttrnrqTestCase.etree)
+        root.append(invest.InvstmttrnrqTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
@@ -1375,14 +1332,14 @@ class Seclistmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("SECLISTMSGSRQV1")
         for i in range(2):
-            root.append(SeclisttrnrqTestCase.etree)
+            root.append(securities.SeclisttrnrqTestCase.etree)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return SECLISTMSGSRQV1(SeclisttrnrqTestCase.aggregate,
-                               SeclisttrnrqTestCase.aggregate)
+        return SECLISTMSGSRQV1(securities.SeclisttrnrqTestCase.aggregate,
+                               securities.SeclisttrnrqTestCase.aggregate)
 
     def testListItems(self):
         # SECLISTMSGSRQV1 may only contain SECLISTTRNRQ
@@ -1390,7 +1347,7 @@ class Seclistmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         listitems = SECLISTMSGSRQV1.listitems
         self.assertEqual(len(listitems), 1)
         root = self.etree
-        root.append(SeclisttrnrsTestCase.etree)
+        root.append(securities.SeclisttrnrsTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
@@ -1406,15 +1363,15 @@ class Seclistmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("SECLISTMSGSRSV1")
-        root.append(SeclistTestCase.etree)
-        root.append(SeclistTestCase.etree)
+        root.append(securities.SeclistTestCase.etree)
+        root.append(securities.SeclistTestCase.etree)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return SECLISTMSGSRSV1(SeclistTestCase.aggregate,
-                               SeclistTestCase.aggregate)
+        return SECLISTMSGSRSV1(securities.SeclistTestCase.aggregate,
+                               securities.SeclistTestCase.aggregate)
 
     def testListItems(self):
         # SECLISTMSGSRSV1 may only contain SECLISTTRNRS, SECLIST
@@ -1422,7 +1379,7 @@ class Seclistmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         listitems = SECLISTMSGSRSV1.listitems
         self.assertEqual(len(listitems), 2)
         root = self.etree
-        root.append(SeclisttrnrqTestCase.etree)
+        root.append(securities.SeclisttrnrqTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)
@@ -1600,7 +1557,7 @@ class MsgsetlistTestCase(unittest.TestCase, base.TestAggregate):
         #  cls.assertEqual(len(listitems), 13)
         self.assertEqual(len(listitems), 11)
         root = self.etree
-        root.append(StmttrnrsTestCase.etree)
+        root.append(bk_stmt.StmttrnrsTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)

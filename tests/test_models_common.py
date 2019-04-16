@@ -19,7 +19,7 @@ from ofxtools.utils import UTC, classproperty
 
 # test imports
 import base
-from test_models_i18n import CurrencyTestCase
+import test_models_i18n as i18n
 from test_models_base import TESTAGGREGATE, TESTSUBAGGREGATE
 
 
@@ -48,7 +48,7 @@ class BalTestCase(unittest.TestCase, base.TestAggregate):
         ET.SubElement(root, "BALTYPE").text = "DOLLAR"
         ET.SubElement(root, "VALUE").text = "111.22"
         ET.SubElement(root, "DTASOF").text = "20010630000000.000[0:GMT]"
-        currency = CurrencyTestCase.etree
+        currency = i18n.CurrencyTestCase.etree
         root.append(currency)
         return root
 
@@ -58,7 +58,7 @@ class BalTestCase(unittest.TestCase, base.TestAggregate):
         return BAL(name="balance", desc="Balance", baltype="DOLLAR",
                    value=Decimal("111.22"),
                    dtasof=datetime(2001, 6, 30, tzinfo=UTC),
-                   currency=CurrencyTestCase.aggregate)
+                   currency=i18n.CurrencyTestCase.aggregate)
 
 
 class OfxelementTestCase(unittest.TestCase, base.TestAggregate):

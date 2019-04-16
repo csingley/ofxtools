@@ -38,11 +38,7 @@ from ofxtools.utils import UTC, classproperty
 
 # test imports
 import base
-from test_models_billpay_common import (
-    PmtinfoTestCase,
-    ExtdpayeeTestCase,
-    PmtprcstsTestCase,
-)
+import test_models_billpay_common as bp_common
 
 
 class PmtrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -54,13 +50,13 @@ class PmtrqTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("PMTRQ")
-        root.append(PmtinfoTestCase.etree)
+        root.append(bp_common.PmtinfoTestCase.etree)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PMTRQ(pmtinfo=PmtinfoTestCase.aggregate)
+        return PMTRQ(pmtinfo=bp_common.PmtinfoTestCase.aggregate)
 
 
 class PmtrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -76,10 +72,10 @@ class PmtrsTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "SRVRTID").text = "DEADBEEF"
         SubElement(root, "PAYEELSTID").text = "B16B00B5"
         SubElement(root, "CURDEF").text = "GBP"
-        root.append(PmtinfoTestCase.etree)
-        root.append(ExtdpayeeTestCase.etree)
+        root.append(bp_common.PmtinfoTestCase.etree)
+        root.append(bp_common.ExtdpayeeTestCase.etree)
         SubElement(root, "CHECKNUM").text = "215"
-        root.append(PmtprcstsTestCase.etree)
+        root.append(bp_common.PmtprcstsTestCase.etree)
         SubElement(root, "RECSRVRTID").text = "B00B135"
         return root
 
@@ -87,10 +83,10 @@ class PmtrsTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return PMTRS(srvrtid="DEADBEEF", payeelstid="B16B00B5", curdef="GBP",
-                     pmtinfo=PmtinfoTestCase.aggregate,
-                     extdpayee=ExtdpayeeTestCase.aggregate,
+                     pmtinfo=bp_common.PmtinfoTestCase.aggregate,
+                     extdpayee=bp_common.ExtdpayeeTestCase.aggregate,
                      checknum="215",
-                     pmtprcsts=PmtprcstsTestCase.aggregate,
+                     pmtprcsts=bp_common.PmtprcstsTestCase.aggregate,
                      recsrvrtid="B00B135")
 
 
@@ -104,14 +100,14 @@ class PmtmodrqTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("PMTMODRQ")
         SubElement(root, "SRVRTID").text = "DEADBEEF"
-        root.append(PmtinfoTestCase.etree)
+        root.append(bp_common.PmtinfoTestCase.etree)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
         return PMTMODRQ(srvrtid="DEADBEEF",
-                        pmtinfo=PmtinfoTestCase.aggregate)
+                        pmtinfo=bp_common.PmtinfoTestCase.aggregate)
 
 
 class PmtmodrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -125,16 +121,16 @@ class PmtmodrsTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("PMTMODRS")
         SubElement(root, "SRVRTID").text = "DEADBEEF"
-        root.append(PmtinfoTestCase.etree)
-        root.append(PmtprcstsTestCase.etree)
+        root.append(bp_common.PmtinfoTestCase.etree)
+        root.append(bp_common.PmtprcstsTestCase.etree)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
         return PMTMODRS(srvrtid="DEADBEEF",
-                        pmtinfo=PmtinfoTestCase.aggregate,
-                        pmtprcsts=PmtprcstsTestCase.aggregate)
+                        pmtinfo=bp_common.PmtinfoTestCase.aggregate,
+                        pmtprcsts=bp_common.PmtprcstsTestCase.aggregate)
 
 
 class PmtcanrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -356,7 +352,7 @@ class PmtinqrsTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("PMTINQRS")
         SubElement(root, "SRVRTID").text = "DEADBEEF"
-        root.append(PmtprcstsTestCase.etree)
+        root.append(bp_common.PmtprcstsTestCase.etree)
         SubElement(root, "CHECKNUM").text = "215"
         return root
 
@@ -364,7 +360,7 @@ class PmtinqrsTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return PMTINQRS(srvrtid="DEADBEEF",
-                        pmtprcsts=PmtprcstsTestCase.aggregate,
+                        pmtprcsts=bp_common.PmtprcstsTestCase.aggregate,
                         checknum="215")
 
 

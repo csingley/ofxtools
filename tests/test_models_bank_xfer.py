@@ -31,12 +31,7 @@ from ofxtools.utils import UTC, classproperty
 
 # test imports
 import base
-from test_models_bank_stmt import (
-    BankacctfromTestCase,
-    BankaccttoTestCase,
-    CcacctfromTestCase,
-    CcaccttoTestCase,
-)
+import test_models_bank_stmt as bk_stmt
 
 
 class XferinfoTestCase(unittest.TestCase, base.TestAggregate):
@@ -53,18 +48,18 @@ class XferinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return XFERINFO(bankacctfrom=BankacctfromTestCase.aggregate,
-                        bankacctto=BankaccttoTestCase.aggregate,
+        return XFERINFO(bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+                        bankacctto=bk_stmt.BankaccttoTestCase.aggregate,
                         trnamt=Decimal("257.53"),
                         dtdue=datetime(2008, 9, 30, tzinfo=UTC))
 
     @classproperty
     @classmethod
     def validSoup(cls):
-        bankacctfrom = BankacctfromTestCase.etree
-        bankacctto = BankaccttoTestCase.etree
-        ccacctfrom = CcacctfromTestCase.etree
-        ccacctto = CcaccttoTestCase.etree
+        bankacctfrom = bk_stmt.BankacctfromTestCase.etree
+        bankacctto = bk_stmt.BankaccttoTestCase.etree
+        ccacctfrom = bk_stmt.CcacctfromTestCase.etree
+        ccacctto = bk_stmt.CcaccttoTestCase.etree
 
         for acctfrom in (bankacctfrom, ccacctfrom):
             for acctto in (bankacctto, ccacctto):
@@ -80,10 +75,10 @@ class XferinfoTestCase(unittest.TestCase, base.TestAggregate):
     def invalidSoup(cls):
         root_ = Element("XFERINFO")
 
-        bankacctfrom = BankacctfromTestCase.etree
-        bankacctto = BankaccttoTestCase.etree
-        ccacctfrom = CcacctfromTestCase.etree
-        ccacctto = CcaccttoTestCase.etree
+        bankacctfrom = bk_stmt.BankacctfromTestCase.etree
+        bankacctto = bk_stmt.BankaccttoTestCase.etree
+        ccacctfrom = bk_stmt.CcacctfromTestCase.etree
+        ccacctto = bk_stmt.CcaccttoTestCase.etree
         trnamt = Element("TRNAMT")
         trnamt.text = "257.53"
 

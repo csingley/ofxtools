@@ -50,10 +50,10 @@ from ofxtools.utils import UTC, classproperty
 
 # test imports
 import base
-from test_models_bank_stmt import StmttrnTestCase
-from test_models_invest import InvacctfromTestCase
-from test_models_securities import SecidTestCase
-from test_models_i18n import CurrencyTestCase
+import test_models_bank_stmt as bk_stmt
+import test_models_invest as invest
+import test_models_securities as securities
+import test_models_i18n as i18n
 
 
 class InvbanktranTestCase(unittest.TestCase, base.TestAggregate):
@@ -66,7 +66,7 @@ class InvbanktranTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("INVBANKTRAN")
-        stmttrn = StmttrnTestCase.etree
+        stmttrn = bk_stmt.StmttrnTestCase.etree
         root.append(stmttrn)
         SubElement(root, "SUBACCTFUND").text = "MARGIN"
         return root
@@ -74,12 +74,12 @@ class InvbanktranTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INVBANKTRAN(stmttrn=StmttrnTestCase.aggregate,
+        return INVBANKTRAN(stmttrn=bk_stmt.StmttrnTestCase.aggregate,
                            subacctfund="MARGIN")
 
     def testPropertyAliases(self):
         instance = Aggregate.from_etree(self.etree)
-        stmttrn = Aggregate.from_etree(StmttrnTestCase.etree)
+        stmttrn = Aggregate.from_etree(bk_stmt.StmttrnTestCase.etree)
         self.assertEqual(instance.trntype, stmttrn.trntype)
         self.assertEqual(instance.dtposted, stmttrn.dtposted)
         self.assertEqual(instance.trnamt, stmttrn.trnamt)
@@ -149,7 +149,7 @@ class InvbuyTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("INVBUY")
         root.append(InvtranTestCase.etree)
-        root.append(SecidTestCase.etree)
+        root.append(securities.SecidTestCase.etree)
         SubElement(root, "UNITS").text = "100"
         SubElement(root, "UNITPRICE").text = "1.50"
         SubElement(root, "MARKUP").text = "0"
@@ -158,7 +158,7 @@ class InvbuyTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "FEES").text = "1.50"
         SubElement(root, "LOAD").text = "0"
         SubElement(root, "TOTAL").text = "-161.49"
-        root.append(CurrencyTestCase.etree)
+        root.append(i18n.CurrencyTestCase.etree)
         SubElement(root, "SUBACCTSEC").text = "MARGIN"
         SubElement(root, "SUBACCTFUND").text = "CASH"
         SubElement(root, "LOANID").text = "1"
@@ -173,12 +173,12 @@ class InvbuyTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return INVBUY(invtran=InvtranTestCase.aggregate,
-                      secid=SecidTestCase.aggregate, units=Decimal("100"),
+                      secid=securities.SecidTestCase.aggregate, units=Decimal("100"),
                       unitprice=Decimal("1.50"), markup=Decimal("0"),
                       commission=Decimal("9.99"), taxes=Decimal("0"),
                       fees=Decimal("1.50"), load=Decimal("0"),
                       total=Decimal("-161.49"),
-                      currency=CurrencyTestCase.aggregate,
+                      currency=i18n.CurrencyTestCase.aggregate,
                       subacctsec="MARGIN", subacctfund="CASH", loanid="1",
                       loanprincipal=Decimal("1.50"),
                       loaninterest=Decimal("3.50"),
@@ -229,7 +229,7 @@ class InvsellTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("INVSELL")
         invtran = InvtranTestCase.etree
         root.append(invtran)
-        secid = SecidTestCase.etree
+        secid = securities.SecidTestCase.etree
         root.append(secid)
         SubElement(root, "UNITS").text = "-100"
         SubElement(root, "UNITPRICE").text = "1.50"
@@ -242,7 +242,7 @@ class InvsellTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "TAXEXEMPT").text = "N"
         SubElement(root, "TOTAL").text = "131.00"
         SubElement(root, "GAIN").text = "3.47"
-        currency = CurrencyTestCase.etree
+        currency = i18n.CurrencyTestCase.etree
         root.append(currency)
         SubElement(root, "SUBACCTSEC").text = "MARGIN"
         SubElement(root, "SUBACCTFUND").text = "CASH"
@@ -256,13 +256,13 @@ class InvsellTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return INVSELL(invtran=InvtranTestCase.aggregate,
-                       secid=SecidTestCase.aggregate, units=Decimal("-100"),
+                       secid=securities.SecidTestCase.aggregate, units=Decimal("-100"),
                        unitprice=Decimal("1.50"), markdown=Decimal("0"),
                        commission=Decimal("9.99"), taxes=Decimal("2"),
                        fees=Decimal("1.50"), load=Decimal("0"),
                        withholding=Decimal("3"), taxexempt=False,
                        total=Decimal("131.00"), gain=Decimal("3.47"),
-                       currency=CurrencyTestCase.aggregate,
+                       currency=i18n.CurrencyTestCase.aggregate,
                        subacctsec="MARGIN", subacctfund="CASH", loanid="1",
                        statewithholding=Decimal("2.50"),
                        penalty=Decimal("0.01"), inv401ksource="PROFITSHARING")
@@ -477,7 +477,7 @@ class ClosureoptTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("CLOSUREOPT")
         root.append(InvtranTestCase.etree)
-        root.append(SecidTestCase.etree)
+        root.append(securities.SecidTestCase.etree)
         SubElement(root, "OPTACTION").text = "EXERCISE"
         SubElement(root, "UNITS").text = "200"
         SubElement(root, "SHPERCTRCT").text = "100"
@@ -490,7 +490,7 @@ class ClosureoptTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return CLOSUREOPT(invtran=InvtranTestCase.aggregate,
-                          secid=SecidTestCase.aggregate,
+                          secid=securities.SecidTestCase.aggregate,
                           optaction="EXERCISE", units=Decimal("200"),
                           shperctrct=100, subacctsec="MARGIN", relfitid="1001",
                           gain=Decimal("123.45"))
@@ -524,14 +524,14 @@ class IncomeTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("INCOME")
         root.append(InvtranTestCase.etree)
-        root.append(SecidTestCase.etree)
+        root.append(securities.SecidTestCase.etree)
         SubElement(root, "INCOMETYPE").text = "CGLONG"
         SubElement(root, "TOTAL").text = "1500"
         SubElement(root, "SUBACCTSEC").text = "MARGIN"
         SubElement(root, "SUBACCTFUND").text = "CASH"
         SubElement(root, "TAXEXEMPT").text = "Y"
         SubElement(root, "WITHHOLDING").text = "123.45"
-        root.append(CurrencyTestCase.etree)
+        root.append(i18n.CurrencyTestCase.etree)
         SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
         return root
 
@@ -539,11 +539,11 @@ class IncomeTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return INCOME(invtran=InvtranTestCase.aggregate,
-                      secid=SecidTestCase.aggregate,
+                      secid=securities.SecidTestCase.aggregate,
                       incometype="CGLONG", total=Decimal("1500"),
                       subacctsec="MARGIN", subacctfund="CASH", taxexempt=True,
                       withholding=Decimal("123.45"),
-                      currency=CurrencyTestCase.aggregate,
+                      currency=i18n.CurrencyTestCase.aggregate,
                       inv401ksource="PROFITSHARING")
 
     def testPropertyAliases(self):
@@ -574,11 +574,11 @@ class InvexpenseTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("INVEXPENSE")
         root.append(InvtranTestCase.etree)
-        root.append(SecidTestCase.etree)
+        root.append(securities.SecidTestCase.etree)
         SubElement(root, "TOTAL").text = "-161.49"
         SubElement(root, "SUBACCTSEC").text = "MARGIN"
         SubElement(root, "SUBACCTFUND").text = "CASH"
-        root.append(CurrencyTestCase.etree)
+        root.append(i18n.CurrencyTestCase.etree)
         SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
         return root
 
@@ -586,10 +586,10 @@ class InvexpenseTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return INVEXPENSE(invtran=InvtranTestCase.aggregate,
-                          secid=SecidTestCase.aggregate,
+                          secid=securities.SecidTestCase.aggregate,
                           total=Decimal("-161.49"), subacctsec="MARGIN",
                           subacctfund="CASH",
-                          currency=CurrencyTestCase.aggregate,
+                          currency=i18n.CurrencyTestCase.aggregate,
                           inv401ksource="PROFITSHARING")
 
     def testPropertyAliases(self):
@@ -644,7 +644,7 @@ class JrnlsecTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("JRNLSEC")
         root.append(InvtranTestCase.etree)
-        root.append(SecidTestCase.etree)
+        root.append(securities.SecidTestCase.etree)
         SubElement(root, "SUBACCTTO").text = "MARGIN"
         SubElement(root, "SUBACCTFROM").text = "CASH"
         SubElement(root, "UNITS").text = "1600"
@@ -654,7 +654,7 @@ class JrnlsecTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return JRNLSEC(invtran=InvtranTestCase.aggregate,
-                       secid=SecidTestCase.aggregate, subacctto="MARGIN",
+                       secid=securities.SecidTestCase.aggregate, subacctto="MARGIN",
                        subacctfrom="CASH", units=Decimal("1600"))
 
     def testPropertyAliases(self):
@@ -681,7 +681,7 @@ class MargininterestTestCase(unittest.TestCase, base.TestAggregate):
         root.append(invtran)
         SubElement(root, "TOTAL").text = "161.49"
         SubElement(root, "SUBACCTFUND").text = "CASH"
-        currency = CurrencyTestCase.etree
+        currency = i18n.CurrencyTestCase.etree
         root.append(currency)
         return root
 
@@ -690,7 +690,7 @@ class MargininterestTestCase(unittest.TestCase, base.TestAggregate):
     def aggregate(cls):
         return MARGININTEREST(invtran=InvtranTestCase.aggregate,
                               total=Decimal("161.49"), subacctfund="CASH",
-                              currency=CurrencyTestCase.aggregate)
+                              currency=i18n.CurrencyTestCase.aggregate)
 
     def testPropertyAliases(self):
         instance = Aggregate.from_etree(self.etree)
@@ -732,7 +732,7 @@ class ReinvestTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("REINVEST")
         root.append(InvtranTestCase.etree)
-        root.append(SecidTestCase.etree)
+        root.append(securities.SecidTestCase.etree)
         SubElement(root, "INCOMETYPE").text = "CGLONG"
         SubElement(root, "TOTAL").text = "-161.49"
         SubElement(root, "SUBACCTSEC").text = "MARGIN"
@@ -743,7 +743,7 @@ class ReinvestTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "FEES").text = "1.50"
         SubElement(root, "LOAD").text = "0"
         SubElement(root, "TAXEXEMPT").text = "Y"
-        root.append(CurrencyTestCase.etree)
+        root.append(i18n.CurrencyTestCase.etree)
         SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
         return root
 
@@ -751,13 +751,13 @@ class ReinvestTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return REINVEST(invtran=InvtranTestCase.aggregate,
-                        secid=SecidTestCase.aggregate,
+                        secid=securities.SecidTestCase.aggregate,
                         total=Decimal("-161.49"), incometype="CGLONG",
                         subacctsec="MARGIN", units=Decimal("100"),
                         unitprice=Decimal("1.50"), commission=Decimal("9.99"),
                         taxes=Decimal("0"), fees=Decimal("1.50"),
                         load=Decimal("0"), taxexempt=True,
-                        currency=CurrencyTestCase.aggregate,
+                        currency=i18n.CurrencyTestCase.aggregate,
                         inv401ksource="PROFITSHARING")
 
     def testPropertyAliases(self):
@@ -785,11 +785,11 @@ class RetofcapTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("RETOFCAP")
         root.append(InvtranTestCase.etree)
-        root.append(SecidTestCase.etree)
+        root.append(securities.SecidTestCase.etree)
         SubElement(root, "TOTAL").text = "-161.49"
         SubElement(root, "SUBACCTSEC").text = "MARGIN"
         SubElement(root, "SUBACCTFUND").text = "CASH"
-        root.append(CurrencyTestCase.etree)
+        root.append(i18n.CurrencyTestCase.etree)
         SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
         return root
 
@@ -797,10 +797,10 @@ class RetofcapTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return RETOFCAP(invtran=InvtranTestCase.aggregate,
-                        secid=SecidTestCase.aggregate,
+                        secid=securities.SecidTestCase.aggregate,
                         total=Decimal("-161.49"), subacctsec="MARGIN",
                         subacctfund="CASH",
-                        currency=CurrencyTestCase.aggregate,
+                        currency=i18n.CurrencyTestCase.aggregate,
                         inv401ksource="PROFITSHARING")
 
     def testPropertyAliases(self):
@@ -1027,13 +1027,13 @@ class SplitTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("SPLIT")
         root.append(InvtranTestCase.etree)
-        root.append(SecidTestCase.etree)
+        root.append(securities.SecidTestCase.etree)
         SubElement(root, "SUBACCTSEC").text = "MARGIN"
         SubElement(root, "OLDUNITS").text = "200"
         SubElement(root, "NEWUNITS").text = "100"
         SubElement(root, "NUMERATOR").text = "1"
         SubElement(root, "DENOMINATOR").text = "2"
-        root.append(CurrencyTestCase.etree)
+        root.append(i18n.CurrencyTestCase.etree)
         SubElement(root, "FRACCASH").text = "0.50"
         SubElement(root, "SUBACCTFUND").text = "CASH"
         SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
@@ -1043,10 +1043,10 @@ class SplitTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return SPLIT(invtran=InvtranTestCase.aggregate,
-                     secid=SecidTestCase.aggregate, subacctsec="MARGIN",
+                     secid=securities.SecidTestCase.aggregate, subacctsec="MARGIN",
                      oldunits=Decimal("200"), newunits=Decimal("100"),
                      numerator=Decimal("1"), denominator=Decimal("2"),
-                     currency=CurrencyTestCase.aggregate,
+                     currency=i18n.CurrencyTestCase.aggregate,
                      fraccash=Decimal("0.50"), subacctfund="CASH",
                      inv401ksource="PROFITSHARING")
 
@@ -1088,12 +1088,12 @@ class TransferTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("TRANSFER")
         root.append(InvtranTestCase.etree)
-        root.append(SecidTestCase.etree)
+        root.append(securities.SecidTestCase.etree)
         SubElement(root, "SUBACCTSEC").text = "MARGIN"
         SubElement(root, "UNITS").text = "100"
         SubElement(root, "TFERACTION").text = "OUT"
         SubElement(root, "POSTYPE").text = "LONG"
-        root.append(InvacctfromTestCase.etree)
+        root.append(invest.InvacctfromTestCase.etree)
         SubElement(root, "AVGCOSTBASIS").text = "22.22"
         SubElement(root, "UNITPRICE").text = "23.01"
         SubElement(root, "DTPURCHASE").text = "19991231000000.000[0:GMT]"
@@ -1104,9 +1104,9 @@ class TransferTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return TRANSFER(invtran=InvtranTestCase.aggregate,
-                        secid=SecidTestCase.aggregate, subacctsec="MARGIN",
+                        secid=securities.SecidTestCase.aggregate, subacctsec="MARGIN",
                         units=Decimal("100"), tferaction="OUT", postype="LONG",
-                        invacctfrom=InvacctfromTestCase.aggregate,
+                        invacctfrom=invest.InvacctfromTestCase.aggregate,
                         avgcostbasis=Decimal("22.22"),
                         unitprice=Decimal("23.01"),
                         dtpurchase=datetime(1999, 12, 31, tzinfo=UTC),

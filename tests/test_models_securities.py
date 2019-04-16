@@ -36,7 +36,8 @@ from ofxtools.utils import UTC, classproperty
 
 # test imports
 import base
-from test_models_i18n import CurrencyTestCase
+import test_models_i18n as i18n
+
 
 
 class SecidTestCase(unittest.TestCase, base.TestAggregate):
@@ -75,7 +76,7 @@ class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "RATING").text = "Aa"
         SubElement(root, "UNITPRICE").text = "94.5"
         SubElement(root, "DTASOF").text = "20130615000000.000[0:GMT]"
-        root.append(CurrencyTestCase.etree)
+        root.append(i18n.CurrencyTestCase.etree)
         SubElement(root, "MEMO").text = "Foobar"
         return root
 
@@ -87,7 +88,7 @@ class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
                        ticker="ACME", fiid="AC.ME", rating="Aa",
                        unitprice=Decimal("94.5"),
                        dtasof=datetime(2013, 6, 15, tzinfo=UTC),
-                       currency=CurrencyTestCase.aggregate,
+                       currency=i18n.CurrencyTestCase.aggregate,
                        memo="Foobar")
 
     def testConvertSecnameTooLong(self):

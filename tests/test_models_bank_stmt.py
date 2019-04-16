@@ -45,8 +45,8 @@ from ofxtools.utils import UTC, classproperty
 
 # test imports
 import base
-from test_models_common import BalTestCase
-from test_models_i18n import CurrencyTestCase, OrigcurrencyTestCase
+import test_models_common as common
+import test_models_i18n as i18n
 
 
 class BankacctfromTestCase(unittest.TestCase, base.TestAggregate):
@@ -349,7 +349,7 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "EXTDNAME").text = "Walkin' bacon"
         root.append(BankaccttoTestCase.etree)
         SubElement(root, "MEMO").text = "Th-th-th-that's all folks!"
-        root.append(CurrencyTestCase.etree)
+        root.append(i18n.CurrencyTestCase.etree)
         SubElement(root, "INV401KSOURCE").text = "ROLLOVER"
         return root
 
@@ -366,7 +366,7 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
                        extdname="Walkin' bacon",
                        bankacctto=BankaccttoTestCase.aggregate,
                        memo="Th-th-th-that's all folks!",
-                       currency=CurrencyTestCase.aggregate,
+                       currency=i18n.CurrencyTestCase.aggregate,
                        inv401ksource="ROLLOVER")
 
     @classproperty
@@ -377,8 +377,8 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
         payee = PayeeTestCase.etree
         bankacctto = BankaccttoTestCase.etree
         ccacctto = CcaccttoTestCase.etree
-        currency = CurrencyTestCase.etree
-        origcurrency = OrigcurrencyTestCase.etree
+        currency = i18n.CurrencyTestCase.etree
+        origcurrency = i18n.OrigcurrencyTestCase.etree
         for payeeChoice in (None, name, payee):
             for acctto in (None, bankacctto, ccacctto):
                 for currencyChoice in (None, currency, origcurrency):
@@ -410,8 +410,8 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
         payee = PayeeTestCase.etree
         bankacctto = BankaccttoTestCase.etree
         ccacctto = CcaccttoTestCase.etree
-        currency = CurrencyTestCase.etree
-        origcurrency = OrigcurrencyTestCase.etree
+        currency = i18n.CurrencyTestCase.etree
+        origcurrency = i18n.OrigcurrencyTestCase.etree
 
         #  optionalMutexes = [
         #  ("name", "payee"),
@@ -537,14 +537,14 @@ class BallistTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("BALLIST")
-        root.append(BalTestCase.etree)
-        root.append(BalTestCase.etree)
+        root.append(common.BalTestCase.etree)
+        root.append(common.BalTestCase.etree)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return BALLIST(BalTestCase.aggregate, BalTestCase.aggregate)
+        return BALLIST(common.BalTestCase.aggregate, common.BalTestCase.aggregate)
 
 
 class StmtrsTestCase(unittest.TestCase, base.TestAggregate):

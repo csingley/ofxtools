@@ -44,11 +44,10 @@ from ofxtools.utils import UTC, classproperty
 
 # test imports
 import base
-from test_models_bank_stmt import InctranTestCase, BallistTestCase, StmttrnTestCase
-from test_models_securities import SecidTestCase
-from test_models_i18n import CurrencyTestCase
-from test_models_invest_oo import InvoolistTestCase
-#  from test_models_invest_transactions import InvbanktranTestCase
+import test_models_bank_stmt as bk_stmt
+import test_models_securities as securities
+import test_models_i18n as i18n
+import test_models_invest_oo as oo
 
 
 class InvacctfromTestCase(unittest.TestCase, base.TestAggregate):
@@ -165,7 +164,7 @@ class InvposlistTestCase(unittest.TestCase, base.TestAggregate):
         listitems = INVPOSLIST.listitems
         cls.assertEqual(len(listitems), 5)
         root = cls.etree
-        root.append(StmttrnTestCase.etree)
+        root.append(bk_stmt.StmttrnTestCase.etree)
 
         with cls.assertRaises(ValueError):
             Aggregate.from_etree(root)
@@ -224,7 +223,7 @@ class Inv401kbalTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "OTHERVEST").text = "7"
         SubElement(root, "OTHERNONVEST").text = "8"
         SubElement(root, "TOTAL").text = "36"
-        ballist = BallistTestCase.etree
+        ballist = bk_stmt.BallistTestCase.etree
         root.append(ballist)
         return root
 
@@ -236,7 +235,7 @@ class Inv401kbalTestCase(unittest.TestCase, base.TestAggregate):
                           profitsharing=Decimal("5"), rollover=Decimal("6"),
                           othervest=Decimal("7"), othernonvest=Decimal("8"),
                           total=Decimal("36"),
-                          ballist=BallistTestCase.aggregate)
+                          ballist=bk_stmt.BallistTestCase.aggregate)
 
 
 class InvposTestCase(unittest.TestCase, base.TestAggregate):
@@ -261,7 +260,7 @@ class InvposTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("INVPOS")
-        root.append(SecidTestCase.etree)
+        root.append(securities.SecidTestCase.etree)
         SubElement(root, "HELDINACCT").text = "MARGIN"
         SubElement(root, "POSTYPE").text = "LONG"
         SubElement(root, "UNITS").text = "100"
@@ -269,7 +268,7 @@ class InvposTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "MKTVAL").text = "9000"
         SubElement(root, "AVGCOSTBASIS").text = "85"
         SubElement(root, "DTPRICEASOF").text = "20130630000000.000[0:GMT]"
-        root.append(CurrencyTestCase.etree)
+        root.append(i18n.CurrencyTestCase.etree)
         SubElement(root, "MEMO").text = "Marked to myth"
         SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
         return root
@@ -277,12 +276,12 @@ class InvposTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INVPOS(secid=SecidTestCase.aggregate,
+        return INVPOS(secid=securities.SecidTestCase.aggregate,
                       heldinacct="MARGIN", postype="LONG",
                       units=Decimal("100"), unitprice=Decimal("90"),
                       mktval=Decimal("9000"), avgcostbasis=Decimal("85"),
                       dtpriceasof=datetime(2013, 6, 30, tzinfo=UTC),
-                      currency=CurrencyTestCase.aggregate,
+                      currency=i18n.CurrencyTestCase.aggregate,
                       memo="Marked to myth", inv401ksource="PROFITSHARING")
 
 
@@ -481,7 +480,7 @@ class InvstmtrqTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("INVSTMTRQ")
         root.append(InvacctfromTestCase.etree)
-        root.append(InctranTestCase.etree)
+        root.append(bk_stmt.InctranTestCase.etree)
         SubElement(root, "INCOO").text = "N"
         root.append(IncposTestCase.etree)
         SubElement(root, "INCBAL").text = "N"
@@ -494,7 +493,7 @@ class InvstmtrqTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return INVSTMTRQ(invacctfrom=InvacctfromTestCase.aggregate,
-                         inctran=InctranTestCase.aggregate, incoo=False,
+                         inctran=bk_stmt.InctranTestCase.aggregate, incoo=False,
                          incpos=IncposTestCase.aggregate, incbal=False,
                          inc401k=True, inc401kbal=False, inctranimg=True)
 
@@ -524,7 +523,7 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
         root.append(InvtranlistTestCase.etree)
         root.append(InvposlistTestCase.etree)
         root.append(InvbalTestCase.etree)
-        root.append(InvoolistTestCase.etree)
+        root.append(oo.InvoolistTestCase.etree)
         SubElement(root, "MKTGINFO").text = "Get Free Stuff NOW!!"
         root.append(Inv401kbalTestCase.etree)
 
@@ -539,7 +538,7 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
                          invtranlist=InvtranlistTestCase.aggregate,
                          invposlist=InvposlistTestCase.aggregate,
                          invbal=InvbalTestCase.aggregate,
-                         invoolist=InvoolistTestCase.aggregate,
+                         invoolist=oo.InvoolistTestCase.aggregate,
                          inv401kbal=Inv401kbalTestCase.aggregate,
                          mktginfo="Get Free Stuff NOW!!")
 

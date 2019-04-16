@@ -22,28 +22,7 @@ from ofxtools.utils import UTC, classproperty
 import base
 
 
-from test_models_msgsets import (
-    Signonmsgsrqv1TestCase,
-    Signonmsgsrsv1TestCase,
-    Profmsgsrqv1TestCase,
-    Profmsgsrsv1TestCase,
-    Signupmsgsrqv1TestCase,
-    Signupmsgsrsv1TestCase,
-    Emailmsgsrqv1TestCase,
-    Emailmsgsrsv1TestCase,
-    Bankmsgsrqv1TestCase,
-    Bankmsgsrsv1TestCase,
-    Creditcardmsgsrqv1TestCase,
-    Creditcardmsgsrsv1TestCase,
-    Interxfermsgsrqv1TestCase,
-    Interxfermsgsrsv1TestCase,
-    Wirexfermsgsrqv1TestCase,
-    Wirexfermsgsrsv1TestCase,
-    Invstmtmsgsrqv1TestCase,
-    Invstmtmsgsrsv1TestCase,
-    Seclistmsgsrqv1TestCase,
-    Seclistmsgsrsv1TestCase,
-)
+import test_models_msgsets as msgsets
 
 
 class OfxTestCase(unittest.TestCase, base.TestAggregate):
@@ -72,62 +51,62 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("OFX")
-        root.append(Signonmsgsrqv1TestCase.etree)
-        root.append(Signupmsgsrqv1TestCase.etree)
-        root.append(Bankmsgsrqv1TestCase.etree)
-        root.append(Creditcardmsgsrqv1TestCase.etree)
-        root.append(Invstmtmsgsrqv1TestCase.etree)
-        root.append(Interxfermsgsrqv1TestCase.etree)
-        root.append(Wirexfermsgsrqv1TestCase.etree)
-        root.append(Emailmsgsrqv1TestCase.etree)
-        root.append(Seclistmsgsrqv1TestCase.etree)
-        root.append(Profmsgsrqv1TestCase.etree)
+        root.append(msgsets.Signonmsgsrqv1TestCase.etree)
+        root.append(msgsets.Signupmsgsrqv1TestCase.etree)
+        root.append(msgsets.Bankmsgsrqv1TestCase.etree)
+        root.append(msgsets.Creditcardmsgsrqv1TestCase.etree)
+        root.append(msgsets.Invstmtmsgsrqv1TestCase.etree)
+        root.append(msgsets.Interxfermsgsrqv1TestCase.etree)
+        root.append(msgsets.Wirexfermsgsrqv1TestCase.etree)
+        root.append(msgsets.Emailmsgsrqv1TestCase.etree)
+        root.append(msgsets.Seclistmsgsrqv1TestCase.etree)
+        root.append(msgsets.Profmsgsrqv1TestCase.etree)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return OFX(signonmsgsrqv1=Signonmsgsrqv1TestCase.aggregate,
-                   signupmsgsrqv1=Signupmsgsrqv1TestCase.aggregate,
-                   bankmsgsrqv1=Bankmsgsrqv1TestCase.aggregate,
-                   creditcardmsgsrqv1=Creditcardmsgsrqv1TestCase.aggregate,
-                   invstmtmsgsrqv1=Invstmtmsgsrqv1TestCase.aggregate,
-                   interxfermsgsrqv1=Interxfermsgsrqv1TestCase.aggregate,
-                   wirexfermsgsrqv1=Wirexfermsgsrqv1TestCase.aggregate,
-                   emailmsgsrqv1=Emailmsgsrqv1TestCase.aggregate,
-                   seclistmsgsrqv1=Seclistmsgsrqv1TestCase.aggregate,
-                   profmsgsrqv1=Profmsgsrqv1TestCase.aggregate)
+        return OFX(signonmsgsrqv1=msgsets.Signonmsgsrqv1TestCase.aggregate,
+                   signupmsgsrqv1=msgsets.Signupmsgsrqv1TestCase.aggregate,
+                   bankmsgsrqv1=msgsets.Bankmsgsrqv1TestCase.aggregate,
+                   creditcardmsgsrqv1=msgsets.Creditcardmsgsrqv1TestCase.aggregate,
+                   invstmtmsgsrqv1=msgsets.Invstmtmsgsrqv1TestCase.aggregate,
+                   interxfermsgsrqv1=msgsets.Interxfermsgsrqv1TestCase.aggregate,
+                   wirexfermsgsrqv1=msgsets.Wirexfermsgsrqv1TestCase.aggregate,
+                   emailmsgsrqv1=msgsets.Emailmsgsrqv1TestCase.aggregate,
+                   seclistmsgsrqv1=msgsets.Seclistmsgsrqv1TestCase.aggregate,
+                   profmsgsrqv1=msgsets.Profmsgsrqv1TestCase.aggregate)
 
     @classproperty
     @classmethod
     def validSoup(cls):
         for signonmsgs, optionalmsgs in [
             (
-                Signonmsgsrqv1TestCase,
+                msgsets.Signonmsgsrqv1TestCase,
                 [
-                    Signupmsgsrqv1TestCase,
-                    Bankmsgsrqv1TestCase,
-                    Creditcardmsgsrqv1TestCase,
-                    Invstmtmsgsrqv1TestCase,
-                    Interxfermsgsrqv1TestCase,
-                    Wirexfermsgsrqv1TestCase,
-                    Emailmsgsrqv1TestCase,
-                    Seclistmsgsrqv1TestCase,
-                    Profmsgsrqv1TestCase,
+                    msgsets.Signupmsgsrqv1TestCase,
+                    msgsets.Bankmsgsrqv1TestCase,
+                    msgsets.Creditcardmsgsrqv1TestCase,
+                    msgsets.Invstmtmsgsrqv1TestCase,
+                    msgsets.Interxfermsgsrqv1TestCase,
+                    msgsets.Wirexfermsgsrqv1TestCase,
+                    msgsets.Emailmsgsrqv1TestCase,
+                    msgsets.Seclistmsgsrqv1TestCase,
+                    msgsets.Profmsgsrqv1TestCase,
                 ],
             ),
             (
-                Signonmsgsrsv1TestCase,
+                msgsets.Signonmsgsrsv1TestCase,
                 [
-                    Signupmsgsrsv1TestCase,
-                    Bankmsgsrsv1TestCase,
-                    Creditcardmsgsrsv1TestCase,
-                    Invstmtmsgsrsv1TestCase,
-                    Interxfermsgsrsv1TestCase,
-                    Wirexfermsgsrsv1TestCase,
-                    Emailmsgsrsv1TestCase,
-                    Seclistmsgsrsv1TestCase,
-                    Profmsgsrsv1TestCase,
+                    msgsets.Signupmsgsrsv1TestCase,
+                    msgsets.Bankmsgsrsv1TestCase,
+                    msgsets.Creditcardmsgsrsv1TestCase,
+                    msgsets.Invstmtmsgsrsv1TestCase,
+                    msgsets.Interxfermsgsrsv1TestCase,
+                    msgsets.Wirexfermsgsrsv1TestCase,
+                    msgsets.Emailmsgsrsv1TestCase,
+                    msgsets.Seclistmsgsrsv1TestCase,
+                    msgsets.Profmsgsrsv1TestCase,
                 ],
             ),
         ]:
@@ -141,10 +120,10 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def invalidSoup(cls):
-        signonmsgsrqv1 = Signonmsgsrqv1TestCase.etree
-        signonmsgsrsv1 = Signonmsgsrsv1TestCase.etree
-        signupmsgsrqv1 = Signupmsgsrqv1TestCase.etree
-        signupmsgsrsv1 = Signupmsgsrsv1TestCase.etree
+        signonmsgsrqv1 = msgsets.Signonmsgsrqv1TestCase.etree
+        signonmsgsrsv1 = msgsets.Signonmsgsrsv1TestCase.etree
+        signupmsgsrqv1 = msgsets.Signupmsgsrqv1TestCase.etree
+        signupmsgsrsv1 = msgsets.Signupmsgsrsv1TestCase.etree
 
         # Neither SIGNONMSGSRQV1 nor SIGNONMSGSRSV1
         root = Element("OFX")

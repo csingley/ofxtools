@@ -10,11 +10,6 @@ import xml.etree.ElementTree as ET
 
 
 # local imports
-from ofxtools.Types import DateTime
-from ofxtools.models.base import Aggregate
-from ofxtools.models.wrapperbases import TranList
-from ofxtools.models.common import BAL, OFXELEMENT, OFXEXTENSION
-from ofxtools.models.bank.stmt import BANKACCTFROM
 from ofxtools.models.billpay.common import (
     PMTINFO,
     BPACCTINFO,
@@ -28,16 +23,12 @@ from ofxtools.models.billpay.common import (
     EXTDPMTINV,
     PMTPRCSTS,
 )
-from ofxtools.models.i18n import CURRENCY, CURRENCY_CODES
 from ofxtools.utils import UTC, classproperty
 
 
 # test imports
 import base
-from test_models_i18n import CurrencyTestCase
-from test_models_bank_stmt import (
-    BankacctfromTestCase, BankaccttoTestCase, PayeeTestCase,
-)
+import test_models_bank_stmt as bk_stmt
 
 
 class BpacctinfoTestCase(unittest.TestCase, base.TestAggregate):
@@ -51,14 +42,14 @@ class BpacctinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = ET.Element("BPACCTINFO")
-        root.append(BankacctfromTestCase.etree)
+        root.append(bk_stmt.BankacctfromTestCase.etree)
         ET.SubElement(root, "SVCSTATUS").text = "AVAIL"
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return BPACCTINFO(bankacctfrom=BankacctfromTestCase.aggregate,
+        return BPACCTINFO(bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
                           svcstatus="AVAIL")
 
 
@@ -92,11 +83,11 @@ class PmtinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = ET.Element("PMTINFO")
-        root.append(BankacctfromTestCase.etree)
+        root.append(bk_stmt.BankacctfromTestCase.etree)
         ET.SubElement(root, "TRNAMT").text = "313.45"
         ET.SubElement(root, "PAYEEID").text = "5112"
         ET.SubElement(root, "PAYEELSTID").text = "240"
-        root.append(BankaccttoTestCase.etree)
+        root.append(bk_stmt.BankaccttoTestCase.etree)
         root.append(ExtdpmtTestCase.etree)
         root.append(ExtdpmtTestCase.etree)
         ET.SubElement(root, "PAYACCT").text = "711"
@@ -111,10 +102,10 @@ class PmtinfoTestCase(unittest.TestCase, base.TestAggregate):
     def aggregate(cls):
         return PMTINFO(ExtdpmtTestCase.aggregate,
                        ExtdpmtTestCase.aggregate,
-                       bankacctfrom=BankacctfromTestCase.aggregate,
+                       bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
                        trnamt=Decimal("313.45"), payeeid="5112",
                        payeelstid="240",
-                       bankacctto=BankaccttoTestCase.aggregate,
+                       bankacctto=bk_stmt.BankaccttoTestCase.aggregate,
                        payacct="711", dtdue=datetime(1924, 5, 7, tzinfo=UTC),
                        memo="Time's up", billrefinfo="Paying it",
                        billpubinfo=BillpubinfoTestCase.aggregate)
@@ -123,7 +114,7 @@ class PmtinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def emptyBase(cls):
         root = ET.Element("PMTINFO")
-        root.append(BankacctfromTestCase.etree)
+        root.append(bk_stmt.BankacctfromTestCase.etree)
         ET.SubElement(root, "TRNAMT").text = "313.45"
         return root
 
@@ -132,14 +123,14 @@ class PmtinfoTestCase(unittest.TestCase, base.TestAggregate):
     def validSoup(cls):
         payeeid = ET.Element("PAYEEID")
         payeeid.text = "5112"
-        payee = PayeeTestCase.etree
+        payee = bk_stmt.PayeeTestCase.etree
         extdpmt = next(ExtdpmtTestCase.validSoup)
         billpubinfo = BillpubinfoTestCase.etree
         for choice in payeeid, payee:
             root = cls.emptyBase
             root.append(choice)
             ET.SubElement(root, "PAYEELSTID").text = "240"
-            acctto = BankaccttoTestCase.etree
+            acctto = bk_stmt.BankaccttoTestCase.etree
             root.append(acctto)
             for i in range(2):
                 root.append(extdpmt)

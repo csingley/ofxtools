@@ -57,19 +57,8 @@ from ofxtools.models.i18n import COUNTRY_CODES
 
 # test imports
 import base
-from test_models_bank_stmt import (
-    BankacctfromTestCase,
-    BankaccttoTestCase,
-    BankacctinfoTestCase,
-    CcacctfromTestCase,
-    CcaccttoTestCase,
-    CcacctinfoTestCase,
-)
-from test_models_invest import (
-    InvacctfromTestCase,
-    InvaccttoTestCase,
-    InvacctinfoTestCase,
-)
+import test_models_bank_stmt as bk_stmt
+import test_models_invest as invest
 
 
 class ClientenrollTestCase(unittest.TestCase, base.TestAggregate):
@@ -137,27 +126,27 @@ class AcctinfoTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("ACCTINFO")
         SubElement(root, "DESC").text = "All accounts"
         SubElement(root, "PHONE").text = "8675309"
-        bankacctinfo = BankacctinfoTestCase.etree
+        bankacctinfo = bk_stmt.BankacctinfoTestCase.etree
         root.append(bankacctinfo)
-        ccacctinfo = CcacctinfoTestCase.etree
+        ccacctinfo = bk_stmt.CcacctinfoTestCase.etree
         root.append(ccacctinfo)
-        invacctinfo = InvacctinfoTestCase.etree
+        invacctinfo = invest.InvacctinfoTestCase.etree
         root.append(invacctinfo)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return ACCTINFO(BankacctinfoTestCase.aggregate,
-                        CcacctinfoTestCase.aggregate,
-                        InvacctinfoTestCase.aggregate,
+        return ACCTINFO(bk_stmt.BankacctinfoTestCase.aggregate,
+                        bk_stmt.CcacctinfoTestCase.aggregate,
+                        invest.InvacctinfoTestCase.aggregate,
                         desc="All accounts", phone="8675309")
 
     @classproperty
     @classmethod
     def validSoup(cls):
         # Any order of *ACCTINFO is OK
-        acctinfos = [BankacctinfoTestCase, CcacctinfoTestCase, InvacctinfoTestCase]
+        acctinfos = [bk_stmt.BankacctinfoTestCase, bk_stmt.CcacctinfoTestCase, invest.InvacctinfoTestCase]
         for seq in itertools.permutations(acctinfos):
             root = Element("ACCTINFO")
             SubElement(root, "DESC").text = "All accounts"
@@ -175,7 +164,7 @@ class AcctinfoTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "PHONE").text = "8675309"
         yield root
 
-        acctinfos = [BankacctinfoTestCase, CcacctinfoTestCase, InvacctinfoTestCase]
+        acctinfos = [bk_stmt.BankacctinfoTestCase, bk_stmt.CcacctinfoTestCase, invest.InvacctinfoTestCase]
 
         # Two of the same *ACCTINFO
         for seq in itertools.permutations(acctinfos):
@@ -205,7 +194,7 @@ class AcctinfoMalformedTestCase(unittest.TestCase):
 
     def testMultipleBankacctinfo(cls):
         root = Element("ACCTINFO")
-        bankacctinfo = BankacctinfoTestCase.etree
+        bankacctinfo = bk_stmt.BankacctinfoTestCase.etree
         root.append(bankacctinfo)
         root.append(bankacctinfo)
 
@@ -214,7 +203,7 @@ class AcctinfoMalformedTestCase(unittest.TestCase):
 
     def testMultipleCcacctinfo(cls):
         root = Element("ACCTINFO")
-        ccacctinfo = CcacctinfoTestCase.etree
+        ccacctinfo = bk_stmt.CcacctinfoTestCase.etree
         root.append(ccacctinfo)
         root.append(ccacctinfo)
 
@@ -223,7 +212,7 @@ class AcctinfoMalformedTestCase(unittest.TestCase):
 
     def testMultipleInvacctinfo(cls):
         root = Element("ACCTINFO")
-        invacctinfo = InvacctinfoTestCase.etree
+        invacctinfo = invest.InvacctinfoTestCase.etree
         root.append(invacctinfo)
         root.append(invacctinfo)
 
@@ -353,7 +342,7 @@ class EnrollrqTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = cls.emptyBase
-        root.append(BankacctfromTestCase.etree)
+        root.append(bk_stmt.BankacctfromTestCase.etree)
         return root
 
     @classproperty
@@ -367,14 +356,14 @@ class EnrollrqTestCase(unittest.TestCase, base.TestAggregate):
                         email="spam@null.void", userid="bacon2b",
                         taxid="123456789", securityname="Petunia",
                         datebirth=datetime(2016, 7, 5, tzinfo=UTC),
-                        bankacctfrom=BankacctfromTestCase.aggregate)
+                        bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate)
 
     @classproperty
     @classmethod
     def validSoup(cls):
         root = cls.emptyBase
         yield root
-        for acctfrom in BankacctfromTestCase, CcacctfromTestCase, InvacctfromTestCase:
+        for acctfrom in bk_stmt.BankacctfromTestCase, bk_stmt.CcacctfromTestCase, invest.InvacctfromTestCase:
             root = cls.emptyBase
             root.append(acctfrom.etree)
             yield root
@@ -387,7 +376,7 @@ class EnrollrqTestCase(unittest.TestCase, base.TestAggregate):
             #  ("bankacctfrom", "invacctfrom"),
             #  ("ccacctfrom", "invacctfrom"),
         #  ]
-        acctfroms = [BankacctfromTestCase, CcacctfromTestCase, InvacctfromTestCase]
+        acctfroms = [bk_stmt.BankacctfromTestCase, bk_stmt.CcacctfromTestCase, invest.InvacctfromTestCase]
         # Two of the same *ACCTFROM
         for acctfrom in acctfroms:
             root = cls.emptyBase
@@ -481,19 +470,19 @@ class SvcaddTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("SVCADD")
-        acctto = BankaccttoTestCase.etree
+        acctto = bk_stmt.BankaccttoTestCase.etree
         root.append(acctto)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return SVCADD(bankacctto=BankaccttoTestCase.aggregate)
+        return SVCADD(bankacctto=bk_stmt.BankaccttoTestCase.aggregate)
 
     @classproperty
     @classmethod
     def validSoup(cls):
-        accttos = [BankaccttoTestCase, CcaccttoTestCase, InvaccttoTestCase]
+        accttos = [bk_stmt.BankaccttoTestCase, bk_stmt.CcaccttoTestCase, invest.InvaccttoTestCase]
         for acctto in accttos:
             root = Element("SVCADD")
             root.append(acctto.etree)
@@ -508,7 +497,7 @@ class SvcaddTestCase(unittest.TestCase, base.TestAggregate):
         yield Element("SVCADD")
 
         # Two of the same *ACCTTO
-        accttos = [BankaccttoTestCase, CcaccttoTestCase, InvaccttoTestCase]
+        accttos = [bk_stmt.BankaccttoTestCase, bk_stmt.CcaccttoTestCase, invest.InvaccttoTestCase]
         for acctto in accttos:
             root = Element("SVCADD")
             root.append(acctto.etree)
@@ -534,21 +523,21 @@ class SvcchgTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("SVCCHG")
-        root.append(BankacctfromTestCase.etree)
-        root.append(BankaccttoTestCase.etree)
+        root.append(bk_stmt.BankacctfromTestCase.etree)
+        root.append(bk_stmt.BankaccttoTestCase.etree)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return SVCCHG(bankacctfrom=BankacctfromTestCase.aggregate,
-                      bankacctto=BankaccttoTestCase.aggregate)
+        return SVCCHG(bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+                      bankacctto=bk_stmt.BankaccttoTestCase.aggregate)
 
     @classproperty
     @classmethod
     def validSoup(cls):
-        acctfroms = [BankacctfromTestCase, CcacctfromTestCase, InvacctfromTestCase]
-        accttos = [BankaccttoTestCase, CcaccttoTestCase, InvaccttoTestCase]
+        acctfroms = [bk_stmt.BankacctfromTestCase, bk_stmt.CcacctfromTestCase, invest.InvacctfromTestCase]
+        accttos = [bk_stmt.BankaccttoTestCase, bk_stmt.CcaccttoTestCase, invest.InvaccttoTestCase]
         for acctfrom in acctfroms:
             for acctto in accttos:
                 root = Element("SVCCHG")
@@ -567,8 +556,8 @@ class SvcchgTestCase(unittest.TestCase, base.TestAggregate):
         # No *ACCTFROM or *ACCTTO
         yield Element("SVCCHG")
 
-        acctfroms = [BankacctfromTestCase, CcacctfromTestCase, InvacctfromTestCase]
-        accttos = [BankaccttoTestCase, CcaccttoTestCase, InvaccttoTestCase]
+        acctfroms = [bk_stmt.BankacctfromTestCase, bk_stmt.CcacctfromTestCase, invest.InvacctfromTestCase]
+        accttos = [bk_stmt.BankaccttoTestCase, bk_stmt.CcaccttoTestCase, invest.InvaccttoTestCase]
 
         # *ACCTFROM with no *ACCTTO
         for acctfrom in acctfroms:
@@ -644,19 +633,19 @@ class SvcdelTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("SVCDEL")
-        acctfrom = BankacctfromTestCase.etree
+        acctfrom = bk_stmt.BankacctfromTestCase.etree
         root.append(acctfrom)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return SVCDEL(bankacctfrom=BankacctfromTestCase.aggregate)
+        return SVCDEL(bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate)
 
     @classproperty
     @classmethod
     def validSoup(cls):
-        acctfroms = [BankacctfromTestCase, CcacctfromTestCase, InvacctfromTestCase]
+        acctfroms = [bk_stmt.BankacctfromTestCase, bk_stmt.CcacctfromTestCase, invest.InvacctfromTestCase]
         for acctfrom in acctfroms:
             root = Element("SVCDEL")
             root.append(acctfrom.etree)
@@ -671,7 +660,7 @@ class SvcdelTestCase(unittest.TestCase, base.TestAggregate):
         yield Element("SVCDEL")
 
         # Two of the same *ACCTFROM
-        acctfroms = [BankacctfromTestCase, CcacctfromTestCase, InvacctfromTestCase]
+        acctfroms = [bk_stmt.BankacctfromTestCase, bk_stmt.CcacctfromTestCase, invest.InvacctfromTestCase]
         for acctfrom in acctfroms:
             root = Element("SVCDEL")
             root.append(acctfrom.etree)

@@ -26,7 +26,7 @@ from ofxtools.utils import classproperty
 
 
 # test imports
-from test_models_bank_xfer import XferinfoTestCase, XferprcstsTestCase
+import test_models_bank_xfer as xfer
 
 
 class InterrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -38,13 +38,13 @@ class InterrqTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("INTERRQ")
-        root.append(XferinfoTestCase.etree)
+        root.append(xfer.XferinfoTestCase.etree)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INTERRQ(xferinfo=XferinfoTestCase.aggregate)
+        return INTERRQ(xferinfo=xfer.XferinfoTestCase.aggregate)
 
 
 class InterrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -66,12 +66,12 @@ class InterrsTestCase(unittest.TestCase, base.TestAggregate):
             root = Element("INTERRS")
             SubElement(root, "CURDEF").text = "EUR"
             SubElement(root, "SRVRTID").text = "DEADBEEF"
-            root.append(XferinfoTestCase.etree)
+            root.append(xfer.XferinfoTestCase.etree)
             if dtChoice is not None:
                 root.append(dtChoice)
             SubElement(root, "REFNUM").text = "B00B135"
             SubElement(root, "RECSRVRTID").text = "B16B00B5"
-            root.append(XferprcstsTestCase.etree)
+            root.append(xfer.XferprcstsTestCase.etree)
             yield root
 
     @classproperty
@@ -86,7 +86,7 @@ class InterrsTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("INTERRS")
         SubElement(root, "CURDEF").text = "EUR"
         SubElement(root, "SRVRTID").text = "DEADBEEF"
-        xferinfo = XferinfoTestCase.etree
+        xferinfo = xfer.XferinfoTestCase.etree
         root.append(xferinfo)
         root.append(dtxferprj)
         root.append(dtposted)
@@ -102,9 +102,9 @@ class InterrsTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return INTERRS(curdef="EUR", srvrtid="DEADBEEF",
-                       xferinfo=XferinfoTestCase.aggregate,
+                       xferinfo=xfer.XferinfoTestCase.aggregate,
                        refnum="B00B135", recsrvrtid="B16B00B5",
-                       xferprcsts=XferprcstsTestCase.aggregate)
+                       xferprcsts=xfer.XferprcstsTestCase.aggregate)
 
 
 class IntermodrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -117,14 +117,14 @@ class IntermodrqTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("INTERMODRQ")
         SubElement(root, "SRVRTID").text = "DEADBEEF"
-        root.append(XferinfoTestCase.etree)
+        root.append(xfer.XferinfoTestCase.etree)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
         return INTERMODRQ(srvrtid="DEADBEEF",
-                          xferinfo=XferinfoTestCase.aggregate)
+                          xferinfo=xfer.XferinfoTestCase.aggregate)
 
 
 class IntercanrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -155,16 +155,16 @@ class IntermodrsTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("INTERMODRS")
         SubElement(root, "SRVRTID").text = "DEADBEEF"
-        root.append(XferinfoTestCase.etree)
-        root.append(XferprcstsTestCase.etree)
+        root.append(xfer.XferinfoTestCase.etree)
+        root.append(xfer.XferprcstsTestCase.etree)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
         return INTERMODRS(srvrtid="DEADBEEF",
-                          xferinfo=XferinfoTestCase.aggregate,
-                          xferprcsts=XferprcstsTestCase.aggregate)
+                          xferinfo=xfer.XferinfoTestCase.aggregate,
+                          xferprcsts=xfer.XferprcstsTestCase.aggregate)
 
 
 class IntercanrsTestCase(unittest.TestCase, base.TestAggregate):

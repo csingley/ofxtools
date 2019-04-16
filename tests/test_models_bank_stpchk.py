@@ -21,8 +21,9 @@ from ofxtools.utils import UTC, classproperty
 
 # test imports
 import base
-from test_models_i18n import CurrencyTestCase, OrigcurrencyTestCase
-from test_models_bank_stmt import BankacctfromTestCase
+import test_models_i18n as i18n
+import test_models_bank_stmt as bk_stmt
+
 
 
 class ChkrangeTestCase(unittest.TestCase, base.TestAggregate):
@@ -82,14 +83,14 @@ class StpchkrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return STPCHKRQ(bankacctfrom=BankacctfromTestCase.aggregate,
+        return STPCHKRQ(bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
                         chkrange=ChkrangeTestCase.aggregate)
 
     @classproperty
     @classmethod
     def emptyBase(cls):
         root = Element("STPCHKRQ")
-        root.append(BankacctfromTestCase.etree)
+        root.append(bk_stmt.BankacctfromTestCase.etree)
         return root
 
     @classproperty
@@ -155,8 +156,8 @@ class StpchknumTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def validSoup(cls):
-        currency = CurrencyTestCase.etree
-        origcurrency = OrigcurrencyTestCase.etree
+        currency = i18n.CurrencyTestCase.etree
+        origcurrency = i18n.OrigcurrencyTestCase.etree
         for currencyChoice in (None, currency, origcurrency):
             root = deepcopy(cls.emptyBase)
             if currencyChoice is not None:
@@ -167,8 +168,8 @@ class StpchknumTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def invalidSoup(cls):
         #  optionalMutexes = [("currency", "origcurrency")]
-        currency = CurrencyTestCase.etree
-        origcurrency = OrigcurrencyTestCase.etree
+        currency = i18n.CurrencyTestCase.etree
+        origcurrency = i18n.OrigcurrencyTestCase.etree
 
         root = deepcopy(cls.emptyBase)
         root.append(currency)
@@ -186,7 +187,7 @@ class StpchkrsTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("STPCHKRS")
         SubElement(root, "CURDEF").text = "CAD"
-        root.append(BankacctfromTestCase.etree)
+        root.append(bk_stmt.BankacctfromTestCase.etree)
         stpchknum = StpchknumTestCase.etree
         root.append(stpchknum)
         root.append(stpchknum)
@@ -199,7 +200,7 @@ class StpchkrsTestCase(unittest.TestCase, base.TestAggregate):
     def aggregate(cls):
         return STPCHKRS(StpchknumTestCase.aggregate,
                         StpchknumTestCase.aggregate, curdef="CAD",
-                        bankacctfrom=BankacctfromTestCase.aggregate,
+                        bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
                         fee=Decimal("25"), feemsg="Shit's expensive yo")
 
 

@@ -29,18 +29,13 @@ from ofxtools.models.billpay.list import (
     PAYEETRNRQ,
     PAYEETRNRS,
 )
-from ofxtools.models.i18n import CURRENCY, CURRENCY_CODES
-from ofxtools.utils import UTC, classproperty
+from ofxtools.utils import classproperty
 
 
 # test imports
 import base
-from test_models_i18n import CurrencyTestCase
-from test_models_base import TESTAGGREGATE, TESTSUBAGGREGATE
-from test_models_bank_stmt import BankaccttoTestCase, PayeeTestCase
-from test_models_billpay_common import (
-    ExtdpayeeTestCase,
-)
+import test_models_bank_stmt as bank_stmt
+import test_models_billpay_common as bp_common
 
 
 class PayeerqTestCase(unittest.TestCase, base.TestAggregate):
@@ -55,16 +50,16 @@ class PayeerqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PAYEERQ("123", "123", payee=PayeeTestCase.aggregate,
-                       bankacctto=BankaccttoTestCase.aggregate)
+        return PAYEERQ("123", "123", payee=bank_stmt.PayeeTestCase.aggregate,
+                       bankacctto=bank_stmt.BankaccttoTestCase.aggregate)
 
     @classproperty
     @classmethod
     def validSoup(cls):
         payeeid = Element("PAYEEID")
         payeeid.text = "DEADBEEF"
-        payee = PayeeTestCase.etree
-        bankacctto = BankaccttoTestCase.etree
+        payee = bank_stmt.PayeeTestCase.etree
+        bankacctto = bank_stmt.BankaccttoTestCase.etree
         payacct = Element("PAYACCT")
         payacct.text = "123"
 
@@ -82,8 +77,8 @@ class PayeerqTestCase(unittest.TestCase, base.TestAggregate):
     def invalidSoup(cls):
         payeeid = Element("PAYEE")
         payeeid.text = "DEADBEEF"
-        payee = PayeeTestCase.etree
-        bankacctto = BankaccttoTestCase.etree
+        payee = bank_stmt.PayeeTestCase.etree
+        bankacctto = bank_stmt.BankaccttoTestCase.etree
         payacct = Element("PAYACCT")
         payacct.text = "123"
 
@@ -117,18 +112,18 @@ class PayeersTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return PAYEERS("12345", "12345", payeelstid="B16B00B5",
-                       payee=PayeeTestCase.aggregate,
-                       bankacctto=BankaccttoTestCase.aggregate,
-                       extdpayee=ExtdpayeeTestCase.aggregate)
+                       payee=bank_stmt.PayeeTestCase.aggregate,
+                       bankacctto=bank_stmt.BankaccttoTestCase.aggregate,
+                       extdpayee=bp_common.ExtdpayeeTestCase.aggregate)
 
     @classproperty
     @classmethod
     def validSoup(cls):
         root = Element("PAYEERS")
         SubElement(root, "PAYEELSTID").text = "B16B00B5"
-        root.append(PayeeTestCase.etree)
-        root.append(BankaccttoTestCase.etree)
-        root.append(ExtdpayeeTestCase.etree)
+        root.append(bank_stmt.PayeeTestCase.etree)
+        root.append(bank_stmt.BankaccttoTestCase.etree)
+        root.append(bp_common.ExtdpayeeTestCase.etree)
         yield root
         for i in range(2):
             SubElement(root, "PAYACCT").text = "12345"
@@ -156,16 +151,16 @@ class PayeemodrqTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return PAYEEMODRQ("12345", "12345", payeelstid="DEADBEEF",
-                          payee=PayeeTestCase.aggregate,
-                          bankacctto=BankaccttoTestCase.aggregate)
+                          payee=bank_stmt.PayeeTestCase.aggregate,
+                          bankacctto=bank_stmt.BankaccttoTestCase.aggregate)
 
     @classproperty
     @classmethod
     def validSoup(cls):
         root = Element("PAYEEMODRQ")
         SubElement(root, "PAYEELSTID").text = "DEADBEEF"
-        root.append(PayeeTestCase.etree)
-        root.append(BankaccttoTestCase.etree)
+        root.append(bank_stmt.PayeeTestCase.etree)
+        root.append(bank_stmt.BankaccttoTestCase.etree)
         yield root
         for i in range(2):
             SubElement(root, "PAYACCT").text = "12345"
@@ -189,20 +184,20 @@ class PayeemodrsTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("PAYEEMODRS")
         SubElement(root, "PAYEELSTID").text = "DEADBEEF"
-        root.append(PayeeTestCase.etree)
-        root.append(BankaccttoTestCase.etree)
+        root.append(bank_stmt.PayeeTestCase.etree)
+        root.append(bank_stmt.BankaccttoTestCase.etree)
         SubElement(root, "PAYACCT").text = "12345"
         SubElement(root, "PAYACCT").text = "12345"
-        root.append(ExtdpayeeTestCase.etree)
+        root.append(bp_common.ExtdpayeeTestCase.etree)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
         return PAYEEMODRS("12345", "12345", payeelstid="DEADBEEF",
-                          payee=PayeeTestCase.aggregate,
-                          bankacctto=BankaccttoTestCase.aggregate,
-                          extdpayee=ExtdpayeeTestCase.aggregate)
+                          payee=bank_stmt.PayeeTestCase.aggregate,
+                          bankacctto=bank_stmt.BankaccttoTestCase.aggregate,
+                          extdpayee=bp_common.ExtdpayeeTestCase.aggregate)
 
     @classproperty
     @classmethod
@@ -210,11 +205,11 @@ class PayeemodrsTestCase(unittest.TestCase, base.TestAggregate):
         for i in range(3):
             root = Element("PAYEEMODRS")
             SubElement(root, "PAYEELSTID").text = "DEADBEEF"
-            root.append(PayeeTestCase.etree)
-            root.append(BankaccttoTestCase.etree)
+            root.append(bank_stmt.PayeeTestCase.etree)
+            root.append(bank_stmt.BankaccttoTestCase.etree)
             for n in range(i):
                 SubElement(root, "PAYACCT").text = "12345"
-            root.append(ExtdpayeeTestCase.etree)
+            root.append(bp_common.ExtdpayeeTestCase.etree)
             yield root
 
     @classproperty

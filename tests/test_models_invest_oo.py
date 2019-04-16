@@ -41,9 +41,9 @@ from ofxtools.utils import UTC, classproperty
 
 # test imports
 import base
-from test_models_securities import SecidTestCase
-from test_models_bank_stmt import StmttrnTestCase
-from test_models_i18n import CurrencyTestCase
+import test_models_securities as securities
+import test_models_bank_stmt as bk_stmt
+import test_models_i18n as i18n
 
 
 class OoTestCase(unittest.TestCase, base.TestAggregate):
@@ -78,7 +78,7 @@ class OoTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("OO")
         SubElement(root, "FITID").text = "1001"
         SubElement(root, "SRVRTID").text = "2002"
-        root.append(SecidTestCase.etree)
+        root.append(securities.SecidTestCase.etree)
         SubElement(root, "DTPLACED").text = "20040701000000.000[0:GMT]"
         SubElement(root, "UNITS").text = "150"
         SubElement(root, "SUBACCT").text = "CASH"
@@ -88,20 +88,20 @@ class OoTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "LIMITPRICE").text = "10.50"
         SubElement(root, "STOPPRICE").text = "10.00"
         SubElement(root, "MEMO").text = "Open Order"
-        root.append(CurrencyTestCase.etree)
+        root.append(i18n.CurrencyTestCase.etree)
         SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return OO(fitid="1001", srvrtid="2002", secid=SecidTestCase.aggregate,
+        return OO(fitid="1001", srvrtid="2002", secid=securities.SecidTestCase.aggregate,
                   dtplaced=datetime(2004, 7, 1, tzinfo=UTC),
                   units=Decimal("150"), subacct="CASH",
                   duration="GOODTILCANCEL", restriction="ALLORNONE",
                   minunits=Decimal("100"), limitprice=Decimal("10.50"),
                   stopprice=Decimal("10.00"), memo="Open Order",
-                  currency=CurrencyTestCase.aggregate,
+                  currency=i18n.CurrencyTestCase.aggregate,
                   inv401ksource="PROFITSHARING")
 
     def testPropertyAliases(cls):
@@ -341,7 +341,7 @@ class SwitchmfTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("SWITCHMF")
         root.append(OoTestCase.etree)
-        root.append(SecidTestCase.etree)
+        root.append(securities.SecidTestCase.etree)
         SubElement(root, "UNITTYPE").text = "SHARES"
         SubElement(root, "SWITCHALL").text = "Y"
         return root
@@ -349,7 +349,7 @@ class SwitchmfTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return SWITCHMF(oo=OoTestCase.aggregate, secid=SecidTestCase.aggregate,
+        return SWITCHMF(oo=OoTestCase.aggregate, secid=securities.SecidTestCase.aggregate,
                         unittype="SHARES", switchall=True)
 
 
@@ -386,7 +386,7 @@ class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
         listitems = INVOOLIST.listitems
         self.assertEqual(len(listitems), 11)
         root = self.etree
-        root.append(StmttrnTestCase.etree)
+        root.append(bk_stmt.StmttrnTestCase.etree)
 
         with self.assertRaises(ValueError):
             Aggregate.from_etree(root)

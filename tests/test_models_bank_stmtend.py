@@ -32,12 +32,8 @@ from ofxtools.utils import UTC, classproperty
 
 # test imports
 import base
-from test_models_i18n import CurrencyTestCase
-from test_models_bank_stmt import (
-    BankacctfromTestCase,
-    CcacctfromTestCase,
-    RewardinfoTestCase,
-)
+import test_models_i18n as i18n
+import test_models_bank_stmt as bk_stmt
 
 
 class ClosingTestCase(unittest.TestCase, base.TestAggregate):
@@ -75,7 +71,7 @@ class ClosingTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "DTPOSTSTART").text = "20161201000000.000[0:GMT]"
         SubElement(root, "DTPOSTEND").text = "20161225000000.000[0:GMT]"
         SubElement(root, "MKTGINFO").text = "Get Free Stuff NOW!!"
-        root.append(CurrencyTestCase.etree)
+        root.append(i18n.CurrencyTestCase.etree)
         return root
 
     @classproperty
@@ -92,7 +88,7 @@ class ClosingTestCase(unittest.TestCase, base.TestAggregate):
                        dtpoststart=datetime(2016, 12, 1, tzinfo=UTC),
                        dtpostend=datetime(2016, 12, 25, tzinfo=UTC),
                        mktginfo="Get Free Stuff NOW!!",
-                       currency=CurrencyTestCase.aggregate)
+                       currency=i18n.CurrencyTestCase.aggregate)
 
 
 class StmtendrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -105,7 +101,7 @@ class StmtendrqTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("STMTENDRQ")
-        root.append(BankacctfromTestCase.etree)
+        root.append(bk_stmt.BankacctfromTestCase.etree)
         SubElement(root, "DTSTART").text = "20161201000000.000[0:GMT]"
         SubElement(root, "DTEND").text = "20161225000000.000[0:GMT]"
 
@@ -114,7 +110,7 @@ class StmtendrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return STMTENDRQ(bankacctfrom=BankacctfromTestCase.aggregate,
+        return STMTENDRQ(bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
                          dtstart=datetime(2016, 12, 1, tzinfo=UTC),
                          dtend=datetime(2016, 12, 25, tzinfo=UTC))
 
@@ -130,7 +126,7 @@ class StmtendrsTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("STMTENDRS")
         SubElement(root, "CURDEF").text = "CAD"
-        root.append(BankacctfromTestCase.etree)
+        root.append(bk_stmt.BankacctfromTestCase.etree)
         closing = ClosingTestCase.etree
         root.append(closing)
         root.append(closing)
@@ -141,7 +137,7 @@ class StmtendrsTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return STMTENDRS(ClosingTestCase.aggregate, ClosingTestCase.aggregate,
-                         curdef="CAD", bankacctfrom=BankacctfromTestCase.aggregate)
+                         curdef="CAD", bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate)
 
 
 class StmtendtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
@@ -248,10 +244,10 @@ class CcclosingTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "AUTOPAY").text = "Y"
         lastpmtinfo = LastpmtinfoTestCase.etree
         root.append(lastpmtinfo)
-        rewardinfo = RewardinfoTestCase.etree
+        rewardinfo = bk_stmt.RewardinfoTestCase.etree
         root.append(rewardinfo)
         SubElement(root, "MKTGINFO").text = "It's a floor wax! And a dessert topping!!"
-        currency = CurrencyTestCase.etree
+        currency = i18n.CurrencyTestCase.etree
         root.append(currency)
 
         return root
@@ -275,9 +271,9 @@ class CcclosingTestCase(unittest.TestCase, base.TestAggregate):
                          dtpostend=datetime(2004, 7, 4, tzinfo=UTC),
                          autopay=True,
                          lastpmtinfo=LastpmtinfoTestCase.aggregate,
-                         rewardinfo=RewardinfoTestCase.aggregate,
+                         rewardinfo=bk_stmt.RewardinfoTestCase.aggregate,
                          mktginfo="It's a floor wax! And a dessert topping!!",
-                         currency=CurrencyTestCase.aggregate)
+                         currency=i18n.CurrencyTestCase.aggregate)
 
 
 class CcstmtendrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -290,7 +286,7 @@ class CcstmtendrqTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("CCSTMTENDRQ")
-        acctfrom = CcacctfromTestCase.etree
+        acctfrom = bk_stmt.CcacctfromTestCase.etree
         root.append(acctfrom)
         SubElement(root, "DTSTART").text = "20040701000000.000[0:GMT]"
         SubElement(root, "DTEND").text = "20040704000000.000[0:GMT]"
@@ -301,7 +297,7 @@ class CcstmtendrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CCSTMTENDRQ(ccacctfrom=CcacctfromTestCase.aggregate,
+        return CCSTMTENDRQ(ccacctfrom=bk_stmt.CcacctfromTestCase.aggregate,
                            dtstart=datetime(2004, 7, 1, tzinfo=UTC),
                            dtend=datetime(2004, 7, 4, tzinfo=UTC),
                            incstmtimg=False)
@@ -318,7 +314,7 @@ class CcstmtendrsTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("CCSTMTENDRS")
         SubElement(root, "CURDEF").text = "USD"
-        acctfrom = CcacctfromTestCase.etree
+        acctfrom = bk_stmt.CcacctfromTestCase.etree
         root.append(acctfrom)
         ccclosing = CcclosingTestCase.etree
         root.append(ccclosing)
@@ -332,7 +328,7 @@ class CcstmtendrsTestCase(unittest.TestCase, base.TestAggregate):
         return CCSTMTENDRS(CcclosingTestCase.aggregate,
                            CcclosingTestCase.aggregate,
                            curdef="USD",
-                           ccacctfrom=CcacctfromTestCase.aggregate)
+                           ccacctfrom=bk_stmt.CcacctfromTestCase.aggregate)
 
 class CcstmtendtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     __test__ = True

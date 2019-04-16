@@ -3,22 +3,11 @@
 # stdlib imports
 import unittest
 from xml.etree.ElementTree import Element, SubElement
-from datetime import datetime, time
-from decimal import Decimal
-from copy import deepcopy
+from datetime import datetime
 
 
 # local imports
 from ofxtools.models.base import Aggregate
-from ofxtools.models.common import OFXEXTENSION
-from ofxtools.models.email import (
-    MAILTRNRQ,
-    MAILTRNRS,
-    GETMIMETRNRQ,
-    GETMIMETRNRS,
-    MAILSYNCRQ,
-    MAILSYNCRS,
-)
 from ofxtools.models.profile import (
     PROFRQ,
     PROFRS,
@@ -28,101 +17,11 @@ from ofxtools.models.profile import (
     SIGNONINFOLIST,
     MSGSETLIST,
 )
-from ofxtools.models.bank.stmt import (
-    ACCTTYPES,
-    STMTRS,
-    STMTTRNRQ,
-    STMTTRNRS,
-    CCSTMTTRNRQ,
-    CCSTMTTRNRS,
-)
-from ofxtools.models.bank.stmtend import (
-    STMTENDTRNRQ,
-    STMTENDTRNRS,
-    CCSTMTENDTRNRQ,
-    CCSTMTENDTRNRS,
-)
-from ofxtools.models.bank.stpchk import STPCHKTRNRQ, STPCHKTRNRS
-from ofxtools.models.bank.xfer import INTRATRNRQ, INTRATRNRS
-from ofxtools.models.bank.interxfer import INTERTRNRQ, INTERTRNRS
-from ofxtools.models.bank.wire import WIRETRNRQ, WIRETRNRS
-from ofxtools.models.bank.recur import (
-    RECINTRATRNRQ,
-    RECINTRATRNRS,
-    RECINTERTRNRQ,
-    RECINTERTRNRS,
-)
-from ofxtools.models.bank.mail import BANKMAILTRNRQ, BANKMAILTRNRS
-from ofxtools.models.bank.sync import (
-    STPCHKSYNCRQ,
-    STPCHKSYNCRS,
-    INTRASYNCRQ,
-    INTRASYNCRS,
-    INTERSYNCRQ,
-    INTERSYNCRS,
-    WIRESYNCRQ,
-    WIRESYNCRS,
-    RECINTRASYNCRQ,
-    RECINTRASYNCRS,
-    RECINTERSYNCRQ,
-    RECINTERSYNCRS,
-    BANKMAILSYNCRQ,
-    BANKMAILSYNCRS,
-)
-from ofxtools.models.i18n import LANG_CODES
 from ofxtools.utils import UTC, classproperty
 
 
 # test imports
 import base
-from test_models_common import OfxextensionTestCase
-from test_models_signup import WebenrollTestCase
-from test_models_email import (
-    MailtrnrqTestCase,
-    MailtrnrsTestCase,
-    GetmimetrnrqTestCase,
-    GetmimetrnrsTestCase,
-    MailsyncrqTestCase,
-    MailsyncrsTestCase,
-)
-from test_models_bank_stmt import (
-    BankacctfromTestCase,
-    StmttrnrqTestCase,
-    StmttrnrsTestCase,
-    CcstmttrnrqTestCase,
-    CcstmttrnrsTestCase,
-)
-from test_models_bank_stmtend import (
-    StmtendtrnrqTestCase,
-    StmtendtrnrsTestCase,
-    CcstmtendtrnrqTestCase,
-    CcstmtendtrnrsTestCase,
-)
-from test_models_bank_stpchk import StpchktrnrqTestCase, StpchktrnrsTestCase
-from test_models_bank_xfer import IntratrnrqTestCase, IntratrnrsTestCase
-from test_models_bank_interxfer import IntertrnrqTestCase, IntertrnrsTestCase
-from test_models_bank_wire import WiretrnrqTestCase, WiretrnrsTestCase
-from test_models_bank_recur import (
-    RecintratrnrqTestCase,
-    RecintratrnrsTestCase,
-    RecintertrnrqTestCase,
-    RecintertrnrsTestCase,
-)
-from test_models_bank_mail import BankmailtrnrqTestCase, BankmailtrnrsTestCase
-from test_models_bank_sync import (
-    StpchksyncrqTestCase,
-    StpchksyncrsTestCase,
-    IntrasyncrqTestCase,
-    IntrasyncrsTestCase,
-    IntersyncrqTestCase,
-    IntersyncrsTestCase,
-    RecintrasyncrqTestCase,
-    RecintrasyncrsTestCase,
-    RecintersyncrqTestCase,
-    RecintersyncrsTestCase,
-    BankmailsyncrqTestCase,
-    BankmailsyncrsTestCase,
-)
 
 
 class ProfrqTestCase(unittest.TestCase, base.TestAggregate):

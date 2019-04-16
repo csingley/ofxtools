@@ -10,8 +10,6 @@ from decimal import Decimal
 
 
 # local imports
-from ofxtools.models.base import Aggregate
-from ofxtools.models.bank.stmt import BANKACCTFROM
 from ofxtools.models.bank.wire import (
     EXTBANKDESC,
     WIREDESTBANK,
@@ -29,7 +27,7 @@ from ofxtools.utils import UTC, classproperty
 
 # test imports
 import base
-from test_models_bank_stmt import BankacctfromTestCase, BankaccttoTestCase
+import test_models_bank_stmt as bk_stmt
 
 
 class WirebeneficiaryTestCase(unittest.TestCase, base.TestAggregate):
@@ -47,7 +45,7 @@ class WirebeneficiaryTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return WIREBENEFICIARY(name="Elmer Fudd",
-                               bankacctto=BankaccttoTestCase.aggregate,
+                               bankacctto=bk_stmt.BankaccttoTestCase.aggregate,
                                memo="For hunting wabbits")
 
     @classproperty
@@ -55,7 +53,7 @@ class WirebeneficiaryTestCase(unittest.TestCase, base.TestAggregate):
     def validSoup(cls):
         root = Element("WIREBENEFICIARY")
         SubElement(root, "NAME").text = "Elmer Fudd"
-        root.append(BankaccttoTestCase.etree)
+        root.append(bk_stmt.BankaccttoTestCase.etree)
         SubElement(root, "MEMO").text = "For hunting wabbits"
         yield root
 
@@ -137,7 +135,7 @@ class WirerqTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("WIRERQ")
-        root.append(BankacctfromTestCase.etree)
+        root.append(bk_stmt.BankacctfromTestCase.etree)
         root.append(WirebeneficiaryTestCase.etree)
         root.append(WiredestbankTestCase.etree)
         SubElement(root, "TRNAMT").text = "123.45"
@@ -149,7 +147,7 @@ class WirerqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return WIRERQ(bankacctfrom=BankacctfromTestCase.aggregate,
+        return WIRERQ(bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
                       wirebeneficiary=WirebeneficiaryTestCase.aggregate,
                       wiredestbank=WiredestbankTestCase.aggregate,
                       trnamt=Decimal("123.45"),
@@ -178,7 +176,7 @@ class WirersTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return WIRERS(curdef="USD", srvrtid="DEADBEEF",
-                      bankacctfrom=BankacctfromTestCase.aggregate,
+                      bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
                       wirebeneficiary=WirebeneficiaryTestCase.aggregate,
                       wiredestbank=WiredestbankTestCase.aggregate,
                       trnamt=Decimal("123.45"),
@@ -193,7 +191,7 @@ class WirersTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("WIRERS")
         SubElement(root, "CURDEF").text = "USD"
         SubElement(root, "SRVRTID").text = "DEADBEEF"
-        root.append(BankacctfromTestCase.etree)
+        root.append(bk_stmt.BankacctfromTestCase.etree)
         root.append(WirebeneficiaryTestCase.etree)
         root.append(WiredestbankTestCase.etree)
         SubElement(root, "TRNAMT").text = "123.45"

@@ -38,8 +38,8 @@ from ofxtools.utils import classproperty
 
 # test imports
 import base
-from test_models_bank_xfer import IntrarqTestCase, IntrarsTestCase
-from test_models_bank_interxfer import InterrqTestCase, InterrsTestCase
+import test_models_bank_xfer as xfer
+import test_models_bank_interxfer as interxfer
 
 
 class RecurrinstTestCase(unittest.TestCase, base.TestAggregate):
@@ -73,14 +73,14 @@ class RecintrarqTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("RECINTRARQ")
         root.append(RecurrinstTestCase.etree)
-        root.append(IntrarqTestCase.etree)
+        root.append(xfer.IntrarqTestCase.etree)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
         return RECINTRARQ(recurrinst=RecurrinstTestCase.aggregate,
-                          intrarq=IntrarqTestCase.aggregate)
+                          intrarq=xfer.IntrarqTestCase.aggregate)
 
 
 class RecintrarsTestCase(unittest.TestCase, base.TestAggregate):
@@ -94,7 +94,7 @@ class RecintrarsTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("RECINTRARS")
         SubElement(root, "RECSRVRTID").text = "DEADBEEF"
         root.append(RecurrinstTestCase.etree)
-        root.append(IntrarsTestCase.etree)
+        root.append(xfer.IntrarsTestCase.etree)
         return root
 
     @classproperty
@@ -102,7 +102,7 @@ class RecintrarsTestCase(unittest.TestCase, base.TestAggregate):
     def aggregate(cls):
         return RECINTRARS(recsrvrtid="DEADBEEF",
                           recurrinst=RecurrinstTestCase.aggregate,
-                          intrars=IntrarsTestCase.aggregate)
+                          intrars=xfer.IntrarsTestCase.aggregate)
 
 
 class RecintramodrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -116,7 +116,7 @@ class RecintramodrqTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("RECINTRAMODRQ")
         SubElement(root, "RECSRVRTID").text = "DEADBEEF"
         root.append(RecurrinstTestCase.etree)
-        root.append(IntrarqTestCase.etree)
+        root.append(xfer.IntrarqTestCase.etree)
         SubElement(root, "MODPENDING").text = "N"
         return root
 
@@ -125,7 +125,7 @@ class RecintramodrqTestCase(unittest.TestCase, base.TestAggregate):
     def aggregate(cls):
         return RECINTRAMODRQ(recsrvrtid="DEADBEEF",
                              recurrinst=RecurrinstTestCase.aggregate,
-                             intrarq=IntrarqTestCase.aggregate,
+                             intrarq=xfer.IntrarqTestCase.aggregate,
                              modpending=False)
 
 
@@ -140,7 +140,7 @@ class RecintramodrsTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("RECINTRAMODRS")
         SubElement(root, "RECSRVRTID").text = "DEADBEEF"
         root.append(RecurrinstTestCase.etree)
-        root.append(IntrarsTestCase.etree)
+        root.append(xfer.IntrarsTestCase.etree)
         SubElement(root, "MODPENDING").text = "N"
         return root
 
@@ -149,7 +149,7 @@ class RecintramodrsTestCase(unittest.TestCase, base.TestAggregate):
     def aggregate(cls):
         return RECINTRAMODRS(recsrvrtid="DEADBEEF",
                              recurrinst=RecurrinstTestCase.aggregate,
-                             intrars=IntrarsTestCase.aggregate,
+                             intrars=xfer.IntrarsTestCase.aggregate,
                              modpending=False)
 
 
@@ -344,14 +344,14 @@ class RecinterrqTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("RECINTERRQ")
         root.append(RecurrinstTestCase.etree)
-        root.append(InterrqTestCase.etree)
+        root.append(interxfer.InterrqTestCase.etree)
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
         return RECINTERRQ(recurrinst=RecurrinstTestCase.aggregate,
-                          interrq=InterrqTestCase.aggregate)
+                          interrq=interxfer.InterrqTestCase.aggregate)
 
 
 class RecinterrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -366,7 +366,7 @@ class RecinterrsTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("RECINTERRS")
         SubElement(root, "RECSRVRTID").text = "DEADBEEF"
         root.append(RecurrinstTestCase.etree)
-        root.append(InterrsTestCase.etree)
+        root.append(interxfer.InterrsTestCase.etree)
         return root
 
     @classproperty
@@ -374,7 +374,7 @@ class RecinterrsTestCase(unittest.TestCase, base.TestAggregate):
     def aggregate(cls):
         return RECINTERRS(recsrvrtid="DEADBEEF",
                           recurrinst=RecurrinstTestCase.aggregate,
-                          interrs=InterrsTestCase.aggregate)
+                          interrs=interxfer.InterrsTestCase.aggregate)
 
 
 class RecintermodrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -388,7 +388,7 @@ class RecintermodrqTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("RECINTERMODRQ")
         SubElement(root, "RECSRVRTID").text = "DEADBEEF"
         root.append(RecurrinstTestCase.etree)
-        root.append(InterrqTestCase.etree)
+        root.append(interxfer.InterrqTestCase.etree)
         SubElement(root, "MODPENDING").text = "N"
         return root
 
@@ -397,7 +397,7 @@ class RecintermodrqTestCase(unittest.TestCase, base.TestAggregate):
     def aggregate(cls):
         return RECINTERMODRQ(recsrvrtid="DEADBEEF",
                              recurrinst=RecurrinstTestCase.aggregate,
-                             interrq=InterrqTestCase.aggregate,
+                             interrq=interxfer.InterrqTestCase.aggregate,
                              modpending=False)
 
 
@@ -412,7 +412,7 @@ class RecintermodrsTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("RECINTERMODRS")
         SubElement(root, "RECSRVRTID").text = "DEADBEEF"
         root.append(RecurrinstTestCase.etree)
-        root.append(InterrsTestCase.etree)
+        root.append(interxfer.InterrsTestCase.etree)
         SubElement(root, "MODPENDING").text = "N"
         return root
 
@@ -421,7 +421,7 @@ class RecintermodrsTestCase(unittest.TestCase, base.TestAggregate):
     def aggregate(cls):
         return RECINTERMODRS(recsrvrtid="DEADBEEF",
                              recurrinst=RecurrinstTestCase.aggregate,
-                             interrs=InterrsTestCase.aggregate,
+                             interrs=interxfer.InterrsTestCase.aggregate,
                              modpending=False)
 
 
