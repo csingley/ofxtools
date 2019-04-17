@@ -11,7 +11,8 @@ import itertools
 import ofxtools.models
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import STATUS
-from ofxtools.utils import classproperty
+from ofxtools.utils import classproperty, indent
+from ofxtools.Parser import OFXTree, TreeBuilder
 
 
 class TestAggregate:
@@ -453,3 +454,43 @@ class SyncrsTestCase(TestAggregate):
         ET.SubElement(etree, "TOKEN").text = "DEADBEEF"
 
         yield etree
+
+
+class OfxTestCase:
+    ofx = NotImplemented
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tree = OFXTree()
+        parser = TreeBuilder()
+        parser.feed(cls.ofx)
+        cls.tree._root = parser.close()
+
+    def _eqAggregate(self, agg0, agg1):
+        self.assertIsInstance(agg0, Aggregate)
+        self.assertIsInstance(agg1, Aggregate)
+        self.assertIs(agg0.__class__, agg1.__class__)
+        for attr in agg0.spec:
+            attr0 = getattr(agg0, attr)
+            attr1 = getattr(agg1, attr)
+            if isinstance(attr0, Aggregate):
+                self.assertIsInstance(attr1, Aggregate)
+                self._eqAggregate(attr0, attr1)
+            else:
+                self.assertEqual(attr0, attr1)
+
+    def _eqOfx(self, string0, string1):
+        string0 = string0.strip()
+        string1 = string0.strip()
+        for line0, line1 in zip(string0.splitlines(), string1.splitlines()):
+            self.assertEqual(line0.strip(), line1.strip())
+
+    def testFromOfx(self):
+        self.assertIsInstance(self.tree._root, ET.Element)
+        self._eqAggregate(self.aggregate, self.tree.convert())
+
+    def testToOfx(self):
+        root = self.aggregate.to_etree()
+        indent(root)
+        ofx = ET.tostring(root, method="html").decode()
+        self._eqOfx(self.ofx, ofx)
