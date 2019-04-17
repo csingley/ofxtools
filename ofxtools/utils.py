@@ -48,6 +48,43 @@ def all_equal(iterable):
     return next(g, True) and not next(g, False)
 
 
+def indent(elem, level=0):
+    """
+    Indent xml.etree.ElementTree.Element.text by nesting level.
+
+    http://effbot.org/zone/element-lib.htm#prettyprint
+    """
+    i = "\n" + level * "  "
+    if len(elem):
+        if not elem.text or not elem.text.strip():
+            elem.text = i + "  "
+        if not elem.tail or not elem.tail.strip():
+            elem.tail = i
+        for elem in elem:
+            indent(elem, level + 1)
+        if not elem.tail or not elem.tail.strip():
+            elem.tail = i
+    else:
+        if level and (not elem.tail or not elem.tail.strip()):
+            elem.tail = i
+
+
+def tostring_unclosed_elements(elem):
+    """
+    SGML-style string representation of xml.etree.ElementTree, without closing tags.
+
+    Drop-in replacement for xml.etree.ElementTree.tostring().
+    """
+    if len(elem) == 0:
+        output = bytes("<{}>{}".format(elem.tag, elem.text or ""), "utf_8")
+    else:
+        output = bytes("<{}>".format(elem.tag), "utf_8")
+        for child in elem:
+            output += tostring_unclosed_elements(child)
+        output += bytes("</{}>".format(elem.tag), "utf_8")
+    return output
+
+
 def cusip_checksum(base):
     """
     Compute the check digit for a base Committee on Uniform Security

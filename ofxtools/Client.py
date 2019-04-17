@@ -81,7 +81,7 @@ from ofxtools.models.invest import (
     INCPOS,
     INVSTMTMSGSRQV1,
 )
-from ofxtools.utils import fixpath, UTC
+from ofxtools.utils import fixpath, UTC, indent, tostring_unclosed_elements
 
 
 # Statement request data containers
@@ -444,39 +444,6 @@ class OFXClient:
             ssl_context = ssl.create_default_context()
         response = urllib.request.urlopen(req, context=ssl_context)
         return response
-
-
-### UTILITIES
-def indent(elem, level=0):
-    """
-    Indent Element.text by nesting level.
-
-    http://effbot.org/zone/element-lib.htm#prettyprint
-    """
-    i = "\n" + level * "  "
-    if len(elem):
-        if not elem.text or not elem.text.strip():
-            elem.text = i + "  "
-        if not elem.tail or not elem.tail.strip():
-            elem.tail = i
-        for elem in elem:
-            indent(elem, level + 1)
-        if not elem.tail or not elem.tail.strip():
-            elem.tail = i
-    else:
-        if level and (not elem.tail or not elem.tail.strip()):
-            elem.tail = i
-
-
-def tostring_unclosed_elements(elem):
-    if len(elem) == 0:
-        output = bytes("<{}>{}".format(elem.tag, elem.text or ""), "utf_8")
-    else:
-        output = bytes("<{}>".format(elem.tag), "utf_8")
-        for child in elem:
-            output += tostring_unclosed_elements(child)
-        output += bytes("</{}>".format(elem.tag), "utf_8")
-    return output
 
 
 ### CLI COMMANDS
