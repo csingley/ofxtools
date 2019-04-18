@@ -672,9 +672,8 @@ class Example4SyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
         trnrs = models.INTRATRNRS(trnuid="0", status=STATUS, intrars=rs)
         return models.OFX(signonmsgsrsv1=SIGNONMSGSRSV1,
                           bankmsgsrsv1=models.BANKMSGSRSV1(
-                              models.INTRASYNCRS(token="22243",
-                                                 bankacctfrom=BANKACCTFROM,
-                                                 intratrnrs=trnrs)))
+                              models.INTRASYNCRS(trnrs, token="22243",
+                                                 bankacctfrom=BANKACCTFROM)))
 
 
 class Example4RecsyncRequestTestCase(base.OfxTestCase, unittest.TestCase):
@@ -701,7 +700,7 @@ class Example4RecsyncRequestTestCase(base.OfxTestCase, unittest.TestCase):
                 <REJECTIFMISSING>Y</REJECTIFMISSING>
                 <BANKACCTFROM>
                     <BANKID>121099999</BANKID>
-                    <ACCTID>99998</ACCTID>
+                    <ACCTID>999988</ACCTID>
                     <ACCTTYPE>CHECKING</ACCTTYPE>
                 </BANKACCTFROM>
                 <RECINTRATRNRQ>
@@ -719,12 +718,11 @@ class Example4RecsyncRequestTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        rq = models.RECINTRASYNCRQ(token="324789987", rejectifmissing=True,
-                                   bankacctfrom=BANKACCTFROM,
-                                   recintratrnrq=models.RECINTRATRNRQ(
-                                       trnuid="1005",
-                                       recintracanrq=models.RECINTRACANRQ(
-                                           recsrvrtid="20000", canpending=True)))
+        rq = models.RECINTRASYNCRQ(models.RECINTRATRNRQ(trnuid="1005",
+                                                        recintracanrq=models.RECINTRACANRQ(
+                                                            recsrvrtid="20000", canpending=True)),
+                                   token="324789987", rejectifmissing=True,
+                                   bankacctfrom=BANKACCTFROM)
         return models.OFX(signonmsgsrqv1=SIGNONMSGSRQV1,
                           bankmsgsrqv1=models.BANKMSGSRQV1(rq))
 
@@ -754,7 +752,7 @@ class Example4RecsyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
                 <TOKEN>324789988</TOKEN
                 <BANKACCTFROM>
                     <BANKID>121099999</BANKID>
-                    <ACCTID>99998</ACCTID>
+                    <ACCTID>999988</ACCTID>
                     <ACCTTYPE>CHECKING</ACCTTYPE>
                 </BANKACCTFROM>
                 <RECINTRATRNRS>
@@ -781,9 +779,9 @@ class Example4RecsyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
                                          recsrvrtid="20000", canpending=True))
         return models.OFX(signonmsgsrsv1=SIGNONMSGSRSV1,
                           bankmsgsrsv1=models.BANKMSGSRSV1(
-                              models.RECINTRASYNCRS(token="324789988",
-                                                    bankacctfrom=BANKACCTFROM,
-                                                    recintratrnrs=trnrs)))
+                              models.RECINTRASYNCRS(trnrs,
+                                                    token="324789988",
+                                                    bankacctfrom=BANKACCTFROM)))
 
 
 class Example4NextSyncRequestTestCase(base.OfxTestCase, unittest.TestCase):
@@ -810,7 +808,7 @@ class Example4NextSyncRequestTestCase(base.OfxTestCase, unittest.TestCase):
                 <REJECTIFMISSING>N</REJECTIFMISSING>
                 <BANKACCTFROM>
                     <BANKID>121099999</BANKID>
-                    <ACCTID>99998</ACCTID>
+                    <ACCTID>999988</ACCTID>
                     <ACCTTYPE>CHECKING</ACCTTYPE>
                 </BANKACCTFROM>
             </INTRASYNCRQ>
@@ -997,9 +995,8 @@ class Example4NextSyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
                                            bankacctfrom=BANKACCTFROM,
                                            bankacctto=BANKACCTTO,
                                            trnamt=Decimal("1000.00")),
-                                       xferprcsts=models.XFERPRCSTS(
-                                           xferprccode="POSTEDON",
-                                           dtxferprc=datetime(2006, 12, 15, tzinfo=UTC))))
+                                       dtxferprj=datetime(2006, 12, 15, tzinfo=UTC),
+                                       recsrvrtid="20000"))
 
         trnrs2 = models.INTRATRNRS(trnuid="0", status=STATUS,
                                    intramodrs=models.INTRAMODRS(
@@ -1019,7 +1016,7 @@ class Example4NextSyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
                                            bankacctfrom=BANKACCTFROM,
                                            bankacctto=BANKACCTTO,
                                            trnamt=Decimal("1000.00")),
-                                       dtxferprj=datetime(2006, 11, 15, tzinfo=UTC),
+                                       dtxferprj=datetime(2006, 1, 15, tzinfo=UTC),
                                        recsrvrtid="20000"))
 
         trnrs4 = models.INTRATRNRS(trnuid="0", status=STATUS,

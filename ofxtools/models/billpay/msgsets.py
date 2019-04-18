@@ -11,6 +11,7 @@ from ofxtools.models.billpay.pmt import (
     PMTTRNRS,
     PMTINQTRNRQ,
     PMTINQTRNRS,
+
 )
 from ofxtools.models.billpay.recur import (
     RECPMTTRNRQ,
@@ -19,12 +20,20 @@ from ofxtools.models.billpay.recur import (
 from ofxtools.models.billpay.sync import (
     PMTSYNCRQ,
     PMTSYNCRS,
+    PAYEESYNCRQ,
+    PAYEESYNCRS,
     RECPMTSYNCRQ,
     RECPMTSYNCRS,
 )
 from ofxtools.models.billpay.mail import (
     PMTMAILTRNRQ,
     PMTMAILTRNRS,
+    PMTMAILSYNCRQ,
+    PMTMAILSYNCRS,
+)
+from ofxtools.models.billpay.list import (
+    PAYEETRNRQ,
+    PAYEETRNRS,
 )
 
 
@@ -41,14 +50,13 @@ class BILLPAYMSGSRQV1(Aggregate):
 
     pmttrnrq = ListItem(PMTTRNRQ)
     recpmttrnrq = ListItem(RECPMTTRNRQ)
-    #  payeetrnrq = ListItem(PAYEETRNRQ)
-    payeetrnrq = Unsupported()
+    payeetrnrq = ListItem(PAYEETRNRQ)
     pmtinqtrnrq = ListItem(PMTINQTRNRQ)
     pmtmailtrnrq = ListItem(PMTMAILTRNRQ)
     pmtsyncrq = ListItem(PMTSYNCRQ)
     recpmtsyncrq = ListItem(RECPMTSYNCRQ)
-    #  payeesyncrq = ListItem(PAYEESYNCRQ)
-    #  pmtmailsyncrq = ListItem(PMTMAILSYNCRQ)
+    payeesyncrq = ListItem(PAYEESYNCRQ)
+    pmtmailsyncrq = ListItem(PMTMAILSYNCRQ)
 
 
 class BILLPAYMSGSRSV1(Aggregate):
@@ -56,14 +64,14 @@ class BILLPAYMSGSRSV1(Aggregate):
 
     pmttrnrs = ListItem(PMTTRNRS)
     recpmttrnrs = ListItem(RECPMTTRNRS)
-    #  payeetrnrs = ListItem(PAYEETRNRS)
-    payeetrnrs = Unsupported()
+    payeetrnrs = ListItem(PAYEETRNRS)
+    #  payeetrnrs = Unsupported()
     pmtinqtrnrs = ListItem(PMTINQTRNRS)
     pmtmailtrns = ListItem(PMTMAILTRNRS)
     pmtsyncrs = ListItem(PMTSYNCRS)
     recpmtsyncrs = ListItem(RECPMTSYNCRS)
-    #  payeesyncrs = ListItem(PAYEESYNCRS)
-    #  pmtmailsyncrs = ListItem(PMTMAILSYNCRS)
+    payeesyncrs = ListItem(PAYEESYNCRS)
+    pmtmailsyncrs = ListItem(PMTMAILSYNCRS)
 
 
 class BILLPAYMSGSETV1(ElementList):

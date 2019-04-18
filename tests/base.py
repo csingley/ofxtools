@@ -8,8 +8,9 @@ from copy import deepcopy
 import itertools
 
 # local imports
+from ofxtools.Types import ListItem, ListElement
 import ofxtools.models
-from ofxtools.models.base import Aggregate
+from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.common import STATUS
 from ofxtools.utils import classproperty, indent
 from ofxtools.Parser import OFXTree, TreeBuilder
@@ -114,7 +115,7 @@ class TestAggregate:
         self.assertIsInstance(agg0, Aggregate)
         self.assertIsInstance(agg1, Aggregate)
         self.assertIs(agg0.__class__, agg1.__class__)
-        for attr in agg0.spec:
+        for attr in agg0.spec_no_listitems:
             attr0 = getattr(agg0, attr)
             attr1 = getattr(agg1, attr)
             if isinstance(attr0, Aggregate):
@@ -122,6 +123,15 @@ class TestAggregate:
                 self._eqAggregate(attr0, attr1)
             else:
                 self.assertEqual(attr0, attr1)
+
+        self.assertEqual(len(agg0), len(agg1))
+        for n, item0 in enumerate(agg0):
+            item1 = agg1[n]
+            if isinstance(item0, Aggregate):
+                self.assertIsInstance(item1, Aggregate)
+                self._eqAggregate(item0, item1)
+            else:
+                self.assertEqual(item0, item1)
 
     def testFromEtree(self):
         self._eqAggregate(self.aggregate, Aggregate.from_etree(self.etree))
@@ -470,7 +480,7 @@ class OfxTestCase:
         self.assertIsInstance(agg0, Aggregate)
         self.assertIsInstance(agg1, Aggregate)
         self.assertIs(agg0.__class__, agg1.__class__)
-        for attr in agg0.spec:
+        for attr in agg0.spec_no_listitems:
             attr0 = getattr(agg0, attr)
             attr1 = getattr(agg1, attr)
             if isinstance(attr0, Aggregate):
@@ -478,6 +488,15 @@ class OfxTestCase:
                 self._eqAggregate(attr0, attr1)
             else:
                 self.assertEqual(attr0, attr1)
+
+        self.assertEqual(len(agg0), len(agg1))
+        for n, item0 in enumerate(agg0):
+            item1 = agg1[n]
+            if isinstance(item0, Aggregate):
+                self.assertIsInstance(item1, Aggregate)
+                self._eqAggregate(item0, item1)
+            else:
+                self.assertEqual(item0, item1)
 
     def _eqOfx(self, string0, string1):
         string0 = string0.strip()
@@ -492,5 +511,6 @@ class OfxTestCase:
     def testToOfx(self):
         root = self.aggregate.to_etree()
         indent(root)
+        # ``method="html"`` skips the initial XML declaration
         ofx = ET.tostring(root, method="html").decode()
         self._eqOfx(self.ofx, ofx)

@@ -48,8 +48,6 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     unsupported = [
-        "billpaymsgsrqv1",
-        "billpaymsgsrsv1",
         "presdirmsgsrqv1",
         "presdirmsgsrsv1",
         "presdlvmsgsrqv1",
@@ -139,10 +137,10 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def invalidSoup(cls):
-        #  signonmsgsrqv1 = msgsets.Signonmsgsrqv1TestCase.etree
-        #  signonmsgsrsv1 = msgsets.Signonmsgsrsv1TestCase.etree
-        #  signupmsgsrqv1 = msgsets.Signupmsgsrqv1TestCase.etree
-        #  signupmsgsrsv1 = msgsets.Signupmsgsrsv1TestCase.etree
+        signonmsgsrqv1 = msgsets.Signonmsgsrqv1TestCase.etree
+        signonmsgsrsv1 = msgsets.Signonmsgsrsv1TestCase.etree
+        signupmsgsrqv1 = msgsets.Signupmsgsrqv1TestCase.etree
+        signupmsgsrsv1 = msgsets.Signupmsgsrsv1TestCase.etree
 
         # Neither SIGNONMSGSRQV1 nor SIGNONMSGSRSV1
         root = Element("OFX")
