@@ -64,6 +64,8 @@ import test_models_signup as signup
 class Signonmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
+    requiredElements = ["SONRQ"]
+
     @classproperty
     @classmethod
     def etree(cls):
@@ -79,6 +81,8 @@ class Signonmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
 
 class Signonmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
+
+    requiredElements = ["SONRS"]
 
     @classproperty
     @classmethod

@@ -1,10 +1,10 @@
 # coding: utf-8
 """
-Bill pay message sets
+Bill pay message sets - OFX Section 12.11
 """
 # local imports
 from ofxtools.Types import Bool, Integer, Time, OneOf, ListItem, ListElement
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, ElementList
+from ofxtools.models.base import Aggregate, SubAggregate, ElementList
 from ofxtools.models.common import MSGSETCORE
 from ofxtools.models.billpay.pmt import (
     PMTTRNRQ,
@@ -65,7 +65,6 @@ class BILLPAYMSGSRSV1(Aggregate):
     pmttrnrs = ListItem(PMTTRNRS)
     recpmttrnrs = ListItem(RECPMTTRNRS)
     payeetrnrs = ListItem(PAYEETRNRS)
-    #  payeetrnrs = Unsupported()
     pmtinqtrnrs = ListItem(PMTINQTRNRS)
     pmtmailtrns = ListItem(PMTMAILTRNRS)
     pmtsyncrs = ListItem(PMTSYNCRS)

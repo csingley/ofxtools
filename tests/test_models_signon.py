@@ -10,7 +10,25 @@ from copy import deepcopy
 # local imports
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import STATUS
-from ofxtools.models.signon import FI, SONRQ, SONRS
+from ofxtools.models.signon import (
+    FI,
+    MFACHALLENGE,
+    MFACHALLENGEA,
+    SONRQ,
+    SONRS,
+    PINCHRQ,
+    PINCHRS,
+    PINCHTRNRQ,
+    PINCHTRNRS,
+    CHALLENGERQ,
+    CHALLENGERS,
+    CHALLENGETRNRQ,
+    CHALLENGETRNRS,
+    MFACHALLENGERQ,
+    MFACHALLENGERS,
+    MFACHALLENGETRNRQ,
+    MFACHALLENGETRNRS,
+)
 from ofxtools.models.i18n import LANG_CODES
 from ofxtools.utils import UTC, classproperty
 
@@ -22,7 +40,7 @@ import base
 class FiTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    optionalElements = ("FID",)
+    optionalElements = ["FID"]
 
     @classproperty
     @classmethod
@@ -36,6 +54,47 @@ class FiTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return FI(org="IBLLC-US", fid="4705")
+
+
+class MfachallengeTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["MFAPHRASEID"]
+    optionalElements = ["MFAPHRASELABEL"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("MFACHALLENGE")
+        SubElement(root, "MFAPHRASEID").text = "MFA13"
+        SubElement(root, "MFAPHRASELABEL").text = "Please enter the last four digits of your social security number"
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return MFACHALLENGE(mfaphraseid="MFA13",
+                            mfaphraselabel="Please enter the last four digits of your social security number")
+
+
+class MfachallengeaTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["MFAPHRASEID", "MFAPHRASEA"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("MFACHALLENGEA")
+        SubElement(root, "MFAPHRASEID").text = "MFA13"
+        SubElement(root, "MFAPHRASEA").text = "1234"
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return MFACHALLENGEA(mfaphraseid="MFA13",
+                             mfaphrasea="1234")
 
 
 class SonrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -156,6 +215,209 @@ class SonrsTestCase(unittest.TestCase, base.TestAggregate):
         root = Aggregate.from_etree(cls.etree)
         cls.assertEqual(root.org, "IBLLC-US")
         cls.assertEqual(root.fid, "4705")
+
+
+class PinchrqTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["USERID", "NEWUSERPASS"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("PINCHRQ")
+        SubElement(root, "USERID").text = "12345"
+        SubElement(root, "NEWUSERPASS").text = "5321"
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PINCHRQ(userid="12345",
+                       newuserpass="5321")
+
+
+class PinchrsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["USERID"]
+    optionalElements = ["DTCHANGED"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("PINCHRS")
+        SubElement(root, "USERID").text = "12345"
+        SubElement(root, "DTCHANGED").text = "20110101000000.000[0:GMT]"
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PINCHRS(userid="12345",
+                       dtchanged=datetime(2011, 1, 1, tzinfo=UTC))
+
+
+class PinchtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
+    __test__ = True
+
+    wraps = PinchrqTestCase
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PINCHTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
+                          pinchrq=PinchrqTestCase.aggregate)
+
+
+class PinchtrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
+    __test__ = True
+
+    wraps = PinchrsTestCase
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PINCHTRNRS(trnuid="DEADBEEF",
+                          status=base.StatusTestCase.aggregate,
+                          cltcookie="B00B135",
+                          pinchrs=PinchrsTestCase.aggregate)
+
+
+class ChallengerqTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["USERID"]
+    optionalElements = ["FICERTID"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("CHALLENGERQ")
+        SubElement(root, "USERID").text = "12345"
+        SubElement(root, "FICERTID").text = "5321"
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CHALLENGERQ(userid="12345", ficertid="5321")
+
+
+class ChallengersTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["USERID", "NONCE", "FICERTID"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("CHALLENGERS")
+        SubElement(root, "USERID").text = "12345"
+        SubElement(root, "NONCE").text = "REALLYRANDOM"
+        SubElement(root, "FICERTID").text = "5321"
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CHALLENGERS(userid="12345", nonce="REALLYRANDOM", ficertid="5321")
+
+
+class ChallengetrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
+    __test__ = True
+
+    wraps = ChallengerqTestCase
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CHALLENGETRNRQ(trnuid="DEADBEEF", cltcookie="B00B135",
+                              tan="B16B00B5",
+                              challengerq=ChallengerqTestCase.aggregate)
+
+
+class ChallengetrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
+    __test__ = True
+
+    wraps = ChallengersTestCase
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CHALLENGETRNRS(trnuid="DEADBEEF",
+                              status=base.StatusTestCase.aggregate,
+                              cltcookie="B00B135",
+                              challengers=ChallengersTestCase.aggregate)
+
+
+class MfachallengerqTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["DTCLIENT"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("MFACHALLENGERQ")
+        SubElement(root, "DTCLIENT").text = "20100317000000.000[0:GMT]"
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return MFACHALLENGERQ(dtclient=datetime(2010, 3, 17, tzinfo=UTC))
+
+
+class MfachallengersTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("MFACHALLENGERS")
+        root.append(MfachallengeTestCase.etree)
+        root.append(MfachallengeTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        challenge = MfachallengeTestCase.aggregate
+        return MFACHALLENGERS(challenge, challenge)
+
+    @classproperty
+    @classmethod
+    def invalidSoup(cls):
+        # FIXME - "1 or more"
+        yield from ()
+
+
+class MfachallengetrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
+    __test__ = True
+
+    wraps = MfachallengerqTestCase
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return MFACHALLENGETRNRQ(trnuid="DEADBEEF", cltcookie="B00B135",
+                                 tan="B16B00B5",
+                                 mfachallengerq=MfachallengerqTestCase.aggregate)
+
+
+class MfachallengetrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
+    __test__ = True
+
+    wraps = MfachallengersTestCase
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return MFACHALLENGETRNRS(trnuid="DEADBEEF",
+                                 status=base.StatusTestCase.aggregate,
+                                 cltcookie="B00B135",
+                                 mfachallengers=MfachallengersTestCase.aggregate)
 
 
 if __name__ == "__main__":
