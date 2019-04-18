@@ -50,7 +50,7 @@ class Aggregate(list):
         list.__init__(self)
         self.validate_args(*args, **kwargs)
 
-        for attr in self.spec:
+        for attr in self.spec_no_listitems:
             value = kwargs.pop(attr, None)
             try:
                 # If attr is an element (i.e. its class is defined in
@@ -109,14 +109,18 @@ class Aggregate(list):
             self.append(member)
 
     def _apply_residual_kwargs(self, **kwargs):
-        # Check that all kwargs have been consumed, i.e. we haven't been passed
-        # any args that aren't in ``self.spec()``.
+        # Check that all kwargs have been consumed
         if kwargs:
-            msg = "Aggregate {} does not define {} (spec={})".format(
-                self.__class__.__name__,
-                str(list(kwargs.keys())),
-                str(list(self.spec.keys())),
-            )
+            args = {k: v for k, v in kwargs.items() if k in self.listitems}
+            if args:
+                msg = "{}: pass ListItems as args, not kwargs".format(
+                    list(args.keys()))
+            else:
+                msg = "Aggregate {} does not define {} (spec={})".format(
+                    self.__class__.__name__,
+                    str(list(kwargs.keys())),
+                    str(list(self.spec.keys())),
+                )
             raise ValueError(msg)
 
     @classmethod
@@ -296,6 +300,16 @@ class Aggregate(list):
 
     @classproperty
     @classmethod
+    def spec_no_listitems(cls):
+        """
+        OrderedDict of all class attributes that are
+        Elements/SubAggregates/Unsupported, excluding ListItems/ListElements
+        """
+        return cls._ordered_attrs(lambda v: isinstance(v, (Element, Unsupported))
+                                  and not isinstance(v, (ListItem, ListElement)))
+
+    @classproperty
+    @classmethod
     def elements(cls):
         """
         OrderedDict of all class attributes that are Elements but not
@@ -339,8 +353,9 @@ class Aggregate(list):
         """
         attrs = [
             (attr, repr(getattr(self, attr)))
-            for attr in self.spec
-            if getattr(self, attr) is not None
+            for attr, validator in self.spec.items()
+            if not isinstance(validator, (ListItem, ListElement))
+            and getattr(self, attr) is not None
         ]
         return attrs
 

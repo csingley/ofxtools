@@ -425,6 +425,7 @@ class OFXClient:
                 raise ValueError(msg.format(self.version))
             body = tostring_unclosed_elements(tree)
         else:
+            # ``method="html"`` skips the initial XML declaration
             body = ET.tostring(tree, encoding="utf_8", method="html")
 
         request = self.ofxheader + body

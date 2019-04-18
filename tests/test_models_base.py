@@ -608,6 +608,28 @@ class ListTestCase(unittest.TestCase):
         self.assertEqual(instance1[0], agg0)
         self.assertEqual(instance1[1], agg1)
 
+    def testInitListItemsAsKwargs(self):
+        # Test that passing in list items as keyword arguments
+        # (rather than positional args) raises an error
+        subagg0 = TESTSUBAGGREGATE(data="quux")
+        agg0 = TESTAGGREGATE(
+            metadata="foo", req00=True, req11=False, testsubaggregate=subagg0
+        )
+        subagg1 = TESTSUBAGGREGATE(data="quuz")
+        agg1 = TESTAGGREGATE(
+            metadata="bar", req00=False, req11=True, testsubaggregate=subagg1
+        )
+        agg2 = TESTAGGREGATE2(metadata="dumbo")
+
+        with self.assertRaises(ValueError):
+            TESTLIST(metadata="foo", testaggregate=agg0)
+
+        with self.assertRaises(ValueError):
+            TESTLIST(metadata="foo", testaggregate2=agg2)
+
+        with self.assertRaises(ValueError):
+            TESTLIST(agg0, metadata="foo", testaggregate=agg1)
+
     def testToEtree(self):
         root = self.instance.to_etree()
         self.assertElement(root, tag="TESTLIST", text=None, len=4)
