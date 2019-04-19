@@ -61,6 +61,9 @@ class RecpmtrsTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = ET.Element("RECPMTRS")
+        ET.SubElement(root, "RECSRVRTID").text = "DEADBEEF"
+        ET.SubElement(root, "PAYEELSTID").text = "123456"
+        ET.SubElement(root, "CURDEF").text = "USD"
         root.append(bk_recur.RecurrinstTestCase.etree)
         root.append(bp_common.PmtinfoTestCase.etree)
         ET.SubElement(root, "INITIALAMT").text = "12.25"
@@ -71,7 +74,8 @@ class RecpmtrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return RECPMTRS(recurrinst=bk_recur.RecurrinstTestCase.aggregate,
+        return RECPMTRS(recsrvrtid="DEADBEEF", payeelstid="123456", curdef="USD",
+                        recurrinst=bk_recur.RecurrinstTestCase.aggregate,
                         pmtinfo=bp_common.PmtinfoTestCase.aggregate,
                         initialamt=Decimal("12.25"), finalamt=Decimal("22.50"),
                         extdpayee=bp_common.ExtdpayeeTestCase.aggregate)
