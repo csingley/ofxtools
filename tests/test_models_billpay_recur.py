@@ -13,8 +13,8 @@ from ofxtools.models.billpay.recur import (
     RECPMTRS,
     RECPMTMODRQ,
     RECPMTMODRS,
-    RECPMTCANRQ,
-    RECPMTCANRS,
+    RECPMTCANCRQ,
+    RECPMTCANCRS,
     RECPMTTRNRQ,
     RECPMTTRNRS,
 )
@@ -133,7 +133,7 @@ class RecpmtmodrsTestCase(unittest.TestCase, base.TestAggregate):
                            finalamt=Decimal("22.50"), modpending=True)
 
 
-class RecpmtcanrqTestCase(unittest.TestCase, base.TestAggregate):
+class RecpmtcancrqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["RECSRVRTID", "CANPENDING"]
@@ -141,7 +141,7 @@ class RecpmtcanrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def etree(cls):
-        root = ET.Element("RECPMTCANRQ")
+        root = ET.Element("RECPMTCANCRQ")
         ET.SubElement(root, "RECSRVRTID").text = "DEADBEEF"
         ET.SubElement(root, "CANPENDING").text = "Y"
         return root
@@ -149,10 +149,10 @@ class RecpmtcanrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return RECPMTCANRQ(recsrvrtid="DEADBEEF", canpending=True)
+        return RECPMTCANCRQ(recsrvrtid="DEADBEEF", canpending=True)
 
 
-class RecpmtcanrsTestCase(unittest.TestCase, base.TestAggregate):
+class RecpmtcancrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["RECSRVRTID", "CANPENDING"]
@@ -160,7 +160,7 @@ class RecpmtcanrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def etree(cls):
-        root = ET.Element("RECPMTCANRS")
+        root = ET.Element("RECPMTCANCRS")
         ET.SubElement(root, "RECSRVRTID").text = "DEADBEEF"
         ET.SubElement(root, "CANPENDING").text = "Y"
         return root
@@ -168,7 +168,7 @@ class RecpmtcanrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return RECPMTCANRS(recsrvrtid="DEADBEEF", canpending=True)
+        return RECPMTCANCRS(recsrvrtid="DEADBEEF", canpending=True)
 
 
 class RecpmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):

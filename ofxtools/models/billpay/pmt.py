@@ -12,7 +12,7 @@ from ofxtools.models.billpay.common import PMTINFO, EXTDPAYEE, PMTPRCSTS
 __all__ = [
     "PMTRQ", "PMTRS",
     "PMTMODRQ", "PMTMODRS",
-    "PMTCANRQ", "PMTCANRS",
+    "PMTCANCRQ", "PMTCANCRS",
     "PMTTRNRQ", "PMTTRNRS",
     "PMTINQRQ", "PMTINQRS",
     "PMTINQTRNRQ", "PMTINQTRNRS",
@@ -49,12 +49,12 @@ class PMTMODRS(Aggregate):
     pmtprcsts = SubAggregate(PMTPRCSTS)
 
 
-class PMTCANRQ(Aggregate):
+class PMTCANCRQ(Aggregate):
     """ OFX section 12.6.3.1 """
     srvrtid = String(10, required=True)
 
 
-class PMTCANRS(Aggregate):
+class PMTCANCRS(Aggregate):
     """ OFX section 12.6.3.2 """
     srvrtid = String(10, required=True)
 
@@ -62,17 +62,17 @@ class PMTCANRS(Aggregate):
 class PMTTRNRQ(TrnRq):
     pmtrq = SubAggregate(PMTRQ)
     pmtmodrq = SubAggregate(PMTMODRQ)
-    pmtcanrq = SubAggregate(PMTCANRQ)
+    pmtcancrq = SubAggregate(PMTCANCRQ)
 
-    requiredMutexes = [('pmtrq', 'pmtmodrq', 'pmtcanrq')]
+    requiredMutexes = [('pmtrq', 'pmtmodrq', 'pmtcancrq')]
 
 
 class PMTTRNRS(TrnRs):
     pmtrs = SubAggregate(PMTRS)
     pmtmodrs = SubAggregate(PMTMODRS)
-    pmtcanrs = SubAggregate(PMTCANRS)
+    pmtcancrs = SubAggregate(PMTCANCRS)
 
-    optionalMutexes = [('pmtrs', 'pmtmodrs', 'pmtcanrs')]
+    optionalMutexes = [('pmtrs', 'pmtmodrs', 'pmtcancrs')]
 
 
 class PMTINQRQ(Aggregate):

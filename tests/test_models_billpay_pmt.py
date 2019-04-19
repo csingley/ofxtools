@@ -13,8 +13,8 @@ from ofxtools.models.billpay.pmt import (
     PMTRS,
     PMTMODRQ,
     PMTMODRS,
-    PMTCANRQ,
-    PMTCANRS,
+    PMTCANCRQ,
+    PMTCANCRS,
     PMTTRNRQ,
     PMTTRNRS,
     PMTINQRQ,
@@ -123,7 +123,7 @@ class PmtmodrsTestCase(unittest.TestCase, base.TestAggregate):
                         pmtprcsts=bp_common.PmtprcstsTestCase.aggregate)
 
 
-class PmtcanrqTestCase(unittest.TestCase, base.TestAggregate):
+class PmtcancrqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["SRVRTID"]
@@ -131,17 +131,17 @@ class PmtcanrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def etree(cls):
-        root = Element("PMTCANRQ")
+        root = Element("PMTCANCRQ")
         SubElement(root, "SRVRTID").text = "DEADBEEF"
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PMTCANRQ(srvrtid="DEADBEEF")
+        return PMTCANCRQ(srvrtid="DEADBEEF")
 
 
-class PmtcanrsTestCase(unittest.TestCase, base.TestAggregate):
+class PmtcancrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["SRVRTID"]
@@ -149,14 +149,14 @@ class PmtcanrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def etree(cls):
-        root = Element("PMTCANRS")
+        root = Element("PMTCANCRS")
         SubElement(root, "SRVRTID").text = "DEADBEEF"
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PMTCANRS(srvrtid="DEADBEEF")
+        return PMTCANCRS(srvrtid="DEADBEEF")
 
 
 class PmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
@@ -173,7 +173,7 @@ class PmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def validSoup(cls):
-        for Test in PmtrqTestCase, PmtmodrqTestCase, PmtcanrqTestCase:
+        for Test in PmtrqTestCase, PmtmodrqTestCase, PmtcancrqTestCase:
             root = cls.emptyBase
             rq = Test.etree
             root.append(rq)
@@ -205,16 +205,16 @@ class PmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
             root.append(cls.wrapped)
             yield root
 
-        #  requiredMutex= ("pmtrq", "pmtmodrq", "pmtcanrq")
+        #  requiredMutex= ("pmtrq", "pmtmodrq", "pmtcancrq")
         root_ = deepcopy(cls.emptyBase)
-        # Missing PMTRQ/PMTMODRQ/PMTCANRQ
+        # Missing PMTRQ/PMTMODRQ/PMTCANCRQ
         yield root
 
-        # Multiple PMTRQ/PMTMODRQ/PMTCANRQ
+        # Multiple PMTRQ/PMTMODRQ/PMTCANCRQ
         for Tests in [
             (PmtrqTestCase, PmtmodrqTestCase),
-            (PmtrqTestCase, PmtcanrqTestCase),
-            (PmtmodrqTestCase, PmtcanrqTestCase),
+            (PmtrqTestCase, PmtcancrqTestCase),
+            (PmtmodrqTestCase, PmtcancrqTestCase),
         ]:
             root = deepcopy(cls.emptyBase)
             for Test in Tests:
@@ -257,7 +257,7 @@ class PmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
         # Empty *RS is OK
         yield cls.emptyBase
 
-        for Test in PmtrsTestCase, PmtmodrsTestCase, PmtcanrsTestCase:
+        for Test in PmtrsTestCase, PmtmodrsTestCase, PmtcancrsTestCase:
             root = deepcopy(cls.emptyBase)
             rs = Test.etree
             root.append(rs)
@@ -288,16 +288,16 @@ class PmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
             root.append(cls.wrapped)
             yield root
 
-        #  requiredMutex= ("pmtrs", "pmtmodrs", "pmtcanrs")
+        #  requiredMutex= ("pmtrs", "pmtmodrs", "pmtcancrs")
         root_ = deepcopy(cls.emptyBase)
-        # Missing PMTRS/PMTMODRS/PMTCANRS
+        # Missing PMTRS/PMTMODRS/PMTCANCRS
         yield root
 
-        # Multiple PMTRS/PMTMODRS/PMTCANRS
+        # Multiple PMTRS/PMTMODRS/PMTCANCRS
         for Tests in [
             (PmtrsTestCase, PmtmodrsTestCase),
-            (PmtrsTestCase, PmtcanrsTestCase),
-            (PmtmodrsTestCase, PmtcanrsTestCase),
+            (PmtrsTestCase, PmtcancrsTestCase),
+            (PmtmodrsTestCase, PmtcancrsTestCase),
         ]:
             root = deepcopy(cls.emptyBase)
             for Test in Tests:

@@ -2,9 +2,10 @@
 """
 Recurring payments - OFX Section 12.7
 """
-from ofxtools.Types import Bool, String, Decimal
+from ofxtools.Types import Bool, String, Decimal, OneOf
 from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.models.i18n import CURRENCY_CODES
 from ofxtools.models.billpay.common import PMTINFO, EXTDPAYEE
 from ofxtools.models.bank.recur import RECURRINST
 
@@ -12,9 +13,10 @@ from ofxtools.models.bank.recur import RECURRINST
 __all__ = [
     "RECPMTRQ", "RECPMTRS",
     "RECPMTMODRQ", "RECPMTMODRS",
-    "RECPMTCANRQ", "RECPMTCANRS",
+    "RECPMTCANCRQ", "RECPMTCANCRS",
     "RECPMTTRNRQ", "RECPMTTRNRS",
 ]
+
 
 class RECPMTRQ(Aggregate):
     """ OFX Section 12.7.1.1 """
@@ -26,6 +28,9 @@ class RECPMTRQ(Aggregate):
 
 class RECPMTRS(Aggregate):
     """ OFX Section 12.7.1.2 """
+    recsrvrtid = String(10, required=True)
+    payeelstid = String(12, required=True)
+    curdef = OneOf(*CURRENCY_CODES, required=True)
     recurrinst = SubAggregate(RECURRINST, required=True)
     pmtinfo = SubAggregate(PMTINFO, required=True)
     initialamt = Decimal()
@@ -53,13 +58,13 @@ class RECPMTMODRS(Aggregate):
     modpending = Bool(required=True)
 
 
-class RECPMTCANRQ(Aggregate):
+class RECPMTCANCRQ(Aggregate):
     """ OFX Section 12.7.3.1 """
     recsrvrtid = String(10, required=True)
     canpending = Bool(required=True)
 
 
-class RECPMTCANRS(Aggregate):
+class RECPMTCANCRS(Aggregate):
     """ OFX Section 12.7.3.1 """
     recsrvrtid = String(10, required=True)
     canpending = Bool(required=True)
@@ -68,14 +73,14 @@ class RECPMTCANRS(Aggregate):
 class RECPMTTRNRQ(TrnRq):
     recpmtrq = SubAggregate(RECPMTRQ)
     recpmtmodrq = SubAggregate(RECPMTMODRQ)
-    recpmtcanrq = SubAggregate(RECPMTCANRQ)
+    recpmtcancrq = SubAggregate(RECPMTCANCRQ)
 
-    requiredMutexes = [('recpmtrq', 'recpmtmodrq', 'recpmtcanrq')]
+    requiredMutexes = [('recpmtrq', 'recpmtmodrq', 'recpmtcancrq')]
 
 
 class RECPMTTRNRS(TrnRs):
     recpmtrs = SubAggregate(RECPMTRS)
     recpmtmodrs = SubAggregate(RECPMTMODRS)
-    recpmtcanrs = SubAggregate(RECPMTCANRS)
+    recpmtcancrs = SubAggregate(RECPMTCANCRS)
 
-    optionalMutexes = [('recpmtrs', 'recpmtmodrs', 'recpmtcanrs')]
+    optionalMutexes = [('recpmtrs', 'recpmtmodrs', 'recpmtcancrs')]
