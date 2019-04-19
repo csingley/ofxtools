@@ -103,7 +103,6 @@ class SonrqTestCase(unittest.TestCase, base.TestAggregate):
     requiredElements = ["DTCLIENT", "LANGUAGE", "APPID", "APPVER"]
     optionalElements = [
         "FI",
-        "USERKEY",
         "GENUSERKEY",
         "SESSCOOKIE",
         "APPKEY",
@@ -149,6 +148,8 @@ class SonrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def validSoup(cls):
+        dtclient = Element("DTCLIENT")
+        dtclient.text = "20060912"
         language = Element("LANGUAGE")
         language.text = "ENG"
         appid = Element("APPID")
@@ -158,6 +159,7 @@ class SonrqTestCase(unittest.TestCase, base.TestAggregate):
 
         #  "Either <USERID> and <USERPASS> or <USERKEY>, but not both"
         root = Element("SONRQ")
+        root.append(dtclient)
         SubElement(root, "USERID").text = "malellolikejallello"
         SubElement(root, "USERPASS").text = "t0ps3kr1t"
         for child in language, appid, appver:
@@ -165,6 +167,7 @@ class SonrqTestCase(unittest.TestCase, base.TestAggregate):
         yield root
 
         root = Element("SONRQ")
+        root.append(dtclient)
         SubElement(root, "USERKEY").text = "DEADBEEF"
         for child in language, appid, appver:
             root.append(child)
@@ -173,6 +176,8 @@ class SonrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def invalidSoup(cls):
+        dtclient = Element("DTCLIENT")
+        dtclient.text = "20060912"
         language = Element("LANGUAGE")
         language.text = "ENG"
         appid = Element("APPID")
@@ -182,11 +187,13 @@ class SonrqTestCase(unittest.TestCase, base.TestAggregate):
 
         #  "Either <USERID> and <USERPASS> or <USERKEY>, but not both"
         root = Element("SONRQ")
+        root.append(dtclient)
         for child in language, appid, appver:
             root.append(child)
         yield root
 
         root = Element("SONRQ")
+        root.append(dtclient)
         SubElement(root, "USERID").text = "malellolikejallello"
         SubElement(root, "USERPASS").text = "t0ps3kr1t"
         SubElement(root, "USERKEY").text = "DEADBEEF"
