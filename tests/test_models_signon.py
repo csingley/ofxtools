@@ -146,6 +146,54 @@ class SonrqTestCase(unittest.TestCase, base.TestAggregate):
                      usercred2="Something else", authtoken="line noise",
                      accesskey="CAFEBABE")
 
+    @classproperty
+    @classmethod
+    def validSoup(cls):
+        language = Element("LANGUAGE")
+        language.text = "ENG"
+        appid = Element("APPID")
+        appid.text = "QWIN"
+        appver = Element("APPVER")
+        appver.text = "1500"
+
+        #  "Either <USERID> and <USERPASS> or <USERKEY>, but not both"
+        root = Element("SONRQ")
+        SubElement(root, "USERID").text = "malellolikejallello"
+        SubElement(root, "USERPASS").text = "t0ps3kr1t"
+        for child in language, appid, appver:
+            root.append(child)
+        yield root
+
+        root = Element("SONRQ")
+        SubElement(root, "USERKEY").text = "DEADBEEF"
+        for child in language, appid, appver:
+            root.append(child)
+        yield root
+
+    @classproperty
+    @classmethod
+    def invalidSoup(cls):
+        language = Element("LANGUAGE")
+        language.text = "ENG"
+        appid = Element("APPID")
+        appid.text = "QWIN"
+        appver = Element("APPVER")
+        appver.text = "1500"
+
+        #  "Either <USERID> and <USERPASS> or <USERKEY>, but not both"
+        root = Element("SONRQ")
+        for child in language, appid, appver:
+            root.append(child)
+        yield root
+
+        root = Element("SONRQ")
+        SubElement(root, "USERID").text = "malellolikejallello"
+        SubElement(root, "USERPASS").text = "t0ps3kr1t"
+        SubElement(root, "USERKEY").text = "DEADBEEF"
+        for child in language, appid, appver:
+            root.append(child)
+        yield root
+
 
 class SonrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True

@@ -103,7 +103,7 @@ class MFACHALLENGEA(Aggregate):
 
 
 class SONRQ(Aggregate):
-    """ OFX section 2.5.1.5 """
+    """ OFX section 2.5.1.2 """
 
     dtclient = DateTime(required=True)
     userid = String(32)
@@ -125,9 +125,25 @@ class SONRQ(Aggregate):
     mfachallengea = ListItem(MFACHALLENGEA)
     ofxextension = Unsupported()
 
+    @classmethod
+    def validate_args(cls, *args, **kwargs):
+        #  "Either <USERID> and <USERPASS> or <USERKEY>, but not both"
+        userid = kwargs.get("userid", None)
+        userpass = kwargs.get("userpass", None)
+        userkey = kwargs.get("userkey", None)
+        try:
+            assert (userid and userpass) or userkey
+            assert not ((userid or userpass) and userkey)
+        except AssertionError:
+            msg = ("{} must contain either <USERID> and <USERPASS> "
+                   "or <USERKEY>, but not both")
+            raise ValueError(msg.format(cls.__name__))
+
+        super().validate_args(*args, **kwargs)
+
 
 class SONRS(Aggregate):
-    """ OFX section 2.5.1.6 """
+    """ OFX section 2.5.1.3 """
 
     status = SubAggregate(STATUS, required=True)
     dtserver = DateTime(required=True)

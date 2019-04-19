@@ -65,12 +65,13 @@ class RECPMTCANCRQ(Aggregate):
 
 
 class RECPMTCANCRS(Aggregate):
-    """ OFX Section 12.7.3.1 """
+    """ OFX Section 12.7.3.2 """
     recsrvrtid = String(10, required=True)
     canpending = Bool(required=True)
 
 
 class RECPMTTRNRQ(TrnRq):
+    """ OFX Section 12.7.1.1 """
     recpmtrq = SubAggregate(RECPMTRQ)
     recpmtmodrq = SubAggregate(RECPMTMODRQ)
     recpmtcancrq = SubAggregate(RECPMTCANCRQ)
@@ -79,6 +80,7 @@ class RECPMTTRNRQ(TrnRq):
 
 
 class RECPMTTRNRS(TrnRs):
+    """ OFX Section 12.7.1.2 """
     recpmtrs = SubAggregate(RECPMTRS)
     recpmtmodrs = SubAggregate(RECPMTMODRS)
     recpmtcancrs = SubAggregate(RECPMTCANCRS)
