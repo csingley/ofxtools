@@ -2,8 +2,8 @@
 """
 Investments - OFX Section 13
 """
-from ofxtools.Types import Bool, String, OneOf, Decimal, DateTime, ListItem
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
+from ofxtools.Types import Bool, String, Integer, OneOf, Decimal, DateTime, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.invest.acct import INVACCTFROM
 from ofxtools.models.invest.transactions import INVTRANLIST
@@ -16,6 +16,7 @@ from ofxtools.utils import all_equal
 
 
 __all__ = [
+    "FREQUENCIES",
     "INCPOS",
     "INVSTMTRQ",
     "INVBAL",
@@ -102,6 +103,8 @@ class MATCHINFO(Aggregate):
     """ OFX section 13.9.3 """
 
     matchpct = Decimal(required=True)
+    maxmatchamt = Decimal()
+    maxmatchpct = Decimal()
     startofyear = DateTime()
     basematchamt = Decimal()
     basematchpct = Decimal()
@@ -178,6 +181,13 @@ class LOANINFO(Aggregate):
     dtasof = DateTime(required=True)
     loanrate = Decimal()
     loanpmtamt = Decimal()
+    loanpmtfreq = OneOf(*FREQUENCIES)
+    loanpmtsinitial = Integer(5)
+    loanpmtsremaining = Integer(5)
+    loanmaturitydate = DateTime()
+    loantotalprojinterest = Decimal()
+    loaninteresttodate = Decimal()
+    loannextpmtdate = DateTime()
 
 
 class Inv401kSubaccountMixin:

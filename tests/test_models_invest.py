@@ -12,11 +12,13 @@ from ofxtools.models.base import Aggregate
 from ofxtools.models.common import SVCSTATUSES
 from ofxtools.models.bank.stmt import INV401KSOURCES
 from ofxtools.models.invest import (
-    USPRODUCTTYPES, INVACCTTYPES, INVSUBACCTS,
+    USPRODUCTTYPES, INVACCTTYPES, INVSUBACCTS, FREQUENCIES,
     INVPOS, POSDEBT, POSMF, POSOPT, POSOTHER, POSSTOCK,
-    INVTRANLIST, INVPOSLIST, INCPOS,
-    INVACCTFROM, INVACCTTO, INVACCTINFO,
-    INV401KBAL, INVBAL,
+    INVTRANLIST, INVPOSLIST, INCPOS, INVACCTFROM, INVACCTTO, INVACCTINFO,
+    INVBAL, INV401KBAL,
+    MATCHINFO, CONTRIBSECURITY, CONTRIBINFO, VESTINFO, LOANINFO,
+    CONTRIBUTIONS, WITHDRAWALS, EARNINGS,
+    YEARTODATE, INCEPTODATE, PERIODTODATE, INV401KSUMMARY, INV401K,
     INVSTMTRQ, INVSTMTRS, INVSTMTTRNRQ, INVSTMTTRNRS,
 )
 from ofxtools.utils import UTC, classproperty
@@ -218,9 +220,498 @@ class Inv401kbalTestCase(unittest.TestCase, base.TestAggregate):
                           ballist=bk_stmt.BallistTestCase.aggregate)
 
 
-class InvposTestCase(unittest.TestCase, base.TestAggregate):
-    """ """
+class MatchinfoTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
 
+    requiredElements = ["MATCHPCT"]
+    optionalElements = [
+        "MAXMATCHAMT",
+        "MAXMATCHPCT",
+        "STARTOFYEAR",
+        "BASEMATCHAMT",
+        "BASEMATCHPCT",
+    ]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("MATCHINFO")
+        SubElement(root, "MATCHPCT").text = "25.0"
+        SubElement(root, "MAXMATCHAMT").text = "5000"
+        SubElement(root, "MAXMATCHPCT").text = "20.0"
+        SubElement(root, "STARTOFYEAR").text = "19990101000000.000[0:GMT]"
+        SubElement(root, "BASEMATCHAMT").text = "1000"
+        SubElement(root, "BASEMATCHPCT").text = "1.0"
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return MATCHINFO(matchpct=Decimal("25.0"), maxmatchamt=Decimal("5000"),
+                         maxmatchpct=Decimal("20.0"),
+                         startofyear=datetime(1999, 1, 1, tzinfo=UTC),
+                         basematchamt=Decimal("1000"),
+                         basematchpct=Decimal("1.0"))
+
+
+class ContribsecurityTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["SECID"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("CONTRIBSECURITY")
+        root.append(securities.SecidTestCase.etree)
+        SubElement(root, "PRETAXCONTRIBPCT").text = "25.0"
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CONTRIBSECURITY(
+            secid=securities.SecidTestCase.aggregate,
+            pretaxcontribpct=Decimal("25.0"))
+
+    @classproperty
+    @classmethod
+    def validSoup(cls):
+        pretaxcontribpct = Element("PRETAXCONTRIBPCT")
+        pretaxcontribpct.text = "25.0"
+        pretaxcontribamt = Element("PRETAXCONTRIBAMT")
+        pretaxcontribamt.text = "5000"
+        aftertaxcontribpct = Element("AFTERTAXCONTRIBPCT")
+        aftertaxcontribpct.text = "25.0"
+        aftertaxcontribamt = Element("AFTERTAXCONTRIBAMT")
+        aftertaxcontribamt.text = "5000"
+        matchcontribpct = Element("MATCHCONTRIBPCT")
+        matchcontribpct.text = "25.0"
+        matchcontribamt = Element("MATCHCONTRIBAMT")
+        matchcontribamt.text = "5000"
+        profitsharingcontribpct = Element("PROFITSHARINGCONTRIBPCT")
+        profitsharingcontribpct.text = "25.0"
+        profitsharingcontribamt = Element("PROFITSHARINGCONTRIBAMT")
+        profitsharingcontribamt.text = "5000"
+        rollovercontribpct = Element("ROLLOVERCONTRIBPCT")
+        rollovercontribpct.text = "25.0"
+        rollovercontribamt = Element("ROLLOVERCONTRIBAMT")
+        rollovercontribamt.text = "5000"
+        othervestpct = Element("OTHERVESTPCT")
+        othervestpct.text = "25.0"
+        othervestamt = Element("OTHERVESTAMT")
+        othervestamt.text = "5000"
+        othernonvestpct = Element("OTHERNONVESTPCT")
+        othernonvestpct.text = "25.0"
+        othernonvestamt = Element("OTHERNONVESTAMT")
+        othernonvestamt.text = "5000"
+
+        root = Element("CONTRIBSECURITY")
+        root.append(securities.SecidTestCase.etree)
+
+        for pct in (pretaxcontribpct, aftertaxcontribpct, matchcontribpct,
+                    profitsharingcontribpct, rollovercontribpct, othervestpct,
+                    othernonvestpct):
+            root.append(pct)
+            yield root
+
+        root = Element("CONTRIBSECURITY")
+        root.append(securities.SecidTestCase.etree)
+
+        for amt in (pretaxcontribamt, aftertaxcontribamt, matchcontribamt,
+                    profitsharingcontribamt, rollovercontribamt, othervestamt,
+                    othernonvestamt):
+            root.append(amt)
+            yield root
+
+    @classproperty
+    @classmethod
+    def invalidSoup(cls):
+        pretaxcontribpct = Element("PRETAXCONTRIBPCT")
+        pretaxcontribpct.text = "25.0"
+        pretaxcontribamt = Element("PRETAXCONTRIBAMT")
+        pretaxcontribamt.text = "5000"
+        aftertaxcontribpct = Element("AFTERTAXCONTRIBPCT")
+        aftertaxcontribpct.text = "25.0"
+        aftertaxcontribamt = Element("AFTERTAXCONTRIBAMT")
+        aftertaxcontribamt.text = "5000"
+        matchcontribpct = Element("MATCHCONTRIBPCT")
+        matchcontribpct.text = "25.0"
+        matchcontribamt = Element("MATCHCONTRIBAMT")
+        matchcontribamt.text = "5000"
+        profitsharingcontribpct = Element("PROFITSHARINGCONTRIBPCT")
+        profitsharingcontribpct.text = "25.0"
+        profitsharingcontribamt = Element("PROFITSHARINGCONTRIBAMT")
+        profitsharingcontribamt.text = "5000"
+        rollovercontribpct = Element("ROLLOVERCONTRIBPCT")
+        rollovercontribpct.text = "25.0"
+        rollovercontribamt = Element("ROLLOVERCONTRIBAMT")
+        rollovercontribamt.text = "5000"
+        othervestpct = Element("OTHERVESTPCT")
+        othervestpct.text = "25.0"
+        othervestamt = Element("OTHERVESTAMT")
+        othervestamt.text = "5000"
+        othernonvestpct = Element("OTHERNONVESTPCT")
+        othernonvestpct.text = "25.0"
+        othernonvestamt = Element("OTHERNONVESTAMT")
+        othernonvestamt.text = "5000"
+
+        # No sources is invalid
+        root = Element("CONTRIBSECURITY")
+        root.append(securities.SecidTestCase.etree)
+        yield root
+
+        # Mixing *pct and *amt is invalid
+        for pct in (pretaxcontribpct, aftertaxcontribpct, matchcontribpct,
+                    profitsharingcontribpct, rollovercontribpct, othervestpct,
+                    othernonvestpct):
+            for amt in (pretaxcontribamt, aftertaxcontribamt, matchcontribamt,
+                        profitsharingcontribamt, rollovercontribamt,
+                        othervestamt, othernonvestamt):
+                root = Element("CONTRIBSECURITY")
+                root.append(securities.SecidTestCase.etree)
+                root.append(pct)
+                root.append(amt)
+                yield root
+
+
+class ContribinfoTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("CONTRIBINFO")
+        root.append(ContribsecurityTestCase.etree)
+        root.append(ContribsecurityTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CONTRIBINFO(ContribsecurityTestCase.aggregate,
+                           ContribsecurityTestCase.aggregate)
+
+    @classproperty
+    @classmethod
+    def invalidSoup(cls):
+        # zero contained CONTRIBSECURITY elmenet is invalid
+        root = Element("CONTRIBINFO")
+        yield root
+
+
+class VestinfoTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["VESTPCT"]
+    optionalElements = ["VESTDATE"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("VESTINFO")
+        SubElement(root, "VESTDATE").text = "20040928000000.000[0:GMT]"
+        SubElement(root, "VESTPCT").text = "29.6671"
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return VESTINFO(vestdate=datetime(2004, 9, 28, tzinfo=UTC),
+                        vestpct=Decimal("29.6671"))
+
+
+class LoaninfoTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["LOANID", "CURRENTLOANBAL", "DTASOF"]
+    optionalElements = ["LOANDESC", "INITIALLOANBAL", "LOANSTARTDATE",
+                        "LOANRATE", "LOANPMTAMT", "LOANPMTFREQ",
+                        "LOANPMTSINITIAL", "LOANPMTSREMAINING",
+                        "LOANMATURITYDATE", "LOANTOTALPROJINTEREST",
+                        "LOANINTERESTTODATE", "LOANNEXTPMTDATE"]
+    oneOfs = {"LOANPMTFREQ": FREQUENCIES}
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("LOANINFO")
+        SubElement(root, "LOANID").text = "1"
+        SubElement(root, "LOANDESC").text = "House down payment"
+        SubElement(root, "INITIALLOANBAL").text = "21000"
+        SubElement(root, "LOANSTARTDATE").text = "20050701000000.000[0:GMT]"
+        SubElement(root, "CURRENTLOANBAL").text = "12000"
+        SubElement(root, "DTASOF").text = "20090701000000.000[0:GMT]"
+        SubElement(root, "LOANRATE").text = "5.0"
+        SubElement(root, "LOANPMTAMT").text = "865.34"
+        SubElement(root, "LOANPMTFREQ").text = "MONTHLY"
+        SubElement(root, "LOANPMTSINITIAL").text = "60"
+        SubElement(root, "LOANPMTSREMAINING").text = "12"
+        SubElement(root, "LOANMATURITYDATE").text = "20100701000000.000[0:GMT]"
+        SubElement(root, "LOANTOTALPROJINTEREST").text = "13000"
+        SubElement(root, "LOANINTERESTTODATE").text = "8500"
+        SubElement(root, "LOANNEXTPMTDATE").text = "20090801000000.000[0:GMT]"
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return LOANINFO(loanid="1", loandesc="House down payment",
+                        initialloanbal=Decimal("21000"),
+                        loanstartdate=datetime(2005, 7, 1, tzinfo=UTC),
+                        currentloanbal=Decimal("12000"),
+                        dtasof=datetime(2009, 7, 1, tzinfo=UTC),
+                        loanrate=Decimal("5.0"), loanpmtamt=Decimal("865.34"),
+                        loanpmtfreq="MONTHLY", loanpmtsinitial=60,
+                        loanpmtsremaining=12,
+                        loanmaturitydate=datetime(2010, 7, 1, tzinfo=UTC),
+                        loantotalprojinterest=Decimal("13000"),
+                        loaninteresttodate=Decimal("8500"),
+                        loannextpmtdate=datetime(2009, 8, 1, tzinfo=UTC))
+
+
+class ContributionsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["TOTAL"]
+    optionalElements = ["PRETAX", "AFTERTAX", "MATCH", "PROFITSHARING",
+                        "ROLLOVER", "OTHERVEST", "OTHERNONVEST"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("CONTRIBUTIONS")
+        SubElement(root, "PRETAX").text = "1"
+        SubElement(root, "AFTERTAX").text = "2"
+        SubElement(root, "MATCH").text = "3"
+        SubElement(root, "PROFITSHARING").text = "4"
+        SubElement(root, "ROLLOVER").text = "5"
+        SubElement(root, "OTHERVEST").text = "6"
+        SubElement(root, "OTHERNONVEST").text = "7"
+        SubElement(root, "TOTAL").text = "28"
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return CONTRIBUTIONS(pretax=Decimal("1"), aftertax=Decimal("2"),
+                             match=Decimal("3"), profitsharing=Decimal("4"),
+                             rollover=Decimal("5"), othervest=Decimal("6"),
+                             othernonvest=Decimal("7"), total=Decimal("28"))
+
+
+class WithdrawalsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["TOTAL"]
+    optionalElements = ["PRETAX", "AFTERTAX", "MATCH", "PROFITSHARING",
+                        "ROLLOVER", "OTHERVEST", "OTHERNONVEST"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("WITHDRAWALS")
+        SubElement(root, "PRETAX").text = "1"
+        SubElement(root, "AFTERTAX").text = "2"
+        SubElement(root, "MATCH").text = "3"
+        SubElement(root, "PROFITSHARING").text = "4"
+        SubElement(root, "ROLLOVER").text = "5"
+        SubElement(root, "OTHERVEST").text = "6"
+        SubElement(root, "OTHERNONVEST").text = "7"
+        SubElement(root, "TOTAL").text = "28"
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return WITHDRAWALS(pretax=Decimal("1"), aftertax=Decimal("2"),
+                           match=Decimal("3"), profitsharing=Decimal("4"),
+                           rollover=Decimal("5"), othervest=Decimal("6"),
+                           othernonvest=Decimal("7"), total=Decimal("28"))
+
+
+class EarningsTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["TOTAL"]
+    optionalElements = ["PRETAX", "AFTERTAX", "MATCH", "PROFITSHARING",
+                        "ROLLOVER", "OTHERVEST", "OTHERNONVEST"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("EARNINGS")
+        SubElement(root, "PRETAX").text = "1"
+        SubElement(root, "AFTERTAX").text = "2"
+        SubElement(root, "MATCH").text = "3"
+        SubElement(root, "PROFITSHARING").text = "4"
+        SubElement(root, "ROLLOVER").text = "5"
+        SubElement(root, "OTHERVEST").text = "6"
+        SubElement(root, "OTHERNONVEST").text = "7"
+        SubElement(root, "TOTAL").text = "28"
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return EARNINGS(pretax=Decimal("1"), aftertax=Decimal("2"),
+                        match=Decimal("3"), profitsharing=Decimal("4"),
+                        rollover=Decimal("5"), othervest=Decimal("6"),
+                        othernonvest=Decimal("7"), total=Decimal("28"))
+
+
+class YeartodateTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["DTSTART", "DTEND"]
+    optionalElements = ["CONTRIBUTIONS", "WITHDRAWALS", "EARNINGS"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("YEARTODATE")
+        SubElement(root, "DTSTART").text = "20010101000000.000[0:GMT]"
+        SubElement(root, "DTEND").text = "20011231000000.000[0:GMT]"
+        root.append(ContributionsTestCase.etree)
+        root.append(WithdrawalsTestCase.etree)
+        root.append(EarningsTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return YEARTODATE(dtstart=datetime(2001, 1, 1, tzinfo=UTC),
+                          dtend=datetime(2001, 12, 31, tzinfo=UTC),
+                          contributions=ContributionsTestCase.aggregate,
+                          withdrawals=WithdrawalsTestCase.aggregate,
+                          earnings=EarningsTestCase.aggregate)
+
+
+class InceptodateTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["DTSTART", "DTEND"]
+    optionalElements = ["CONTRIBUTIONS", "WITHDRAWALS", "EARNINGS"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("INCEPTODATE")
+        SubElement(root, "DTSTART").text = "20010101000000.000[0:GMT]"
+        SubElement(root, "DTEND").text = "20011231000000.000[0:GMT]"
+        root.append(ContributionsTestCase.etree)
+        root.append(WithdrawalsTestCase.etree)
+        root.append(EarningsTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return INCEPTODATE(dtstart=datetime(2001, 1, 1, tzinfo=UTC),
+                           dtend=datetime(2001, 12, 31, tzinfo=UTC),
+                           contributions=ContributionsTestCase.aggregate,
+                           withdrawals=WithdrawalsTestCase.aggregate,
+                           earnings=EarningsTestCase.aggregate)
+
+
+class PeriodtodateTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["DTSTART", "DTEND"]
+    optionalElements = ["CONTRIBUTIONS", "WITHDRAWALS", "EARNINGS"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("PERIODTODATE")
+        SubElement(root, "DTSTART").text = "20010101000000.000[0:GMT]"
+        SubElement(root, "DTEND").text = "20011231000000.000[0:GMT]"
+        root.append(ContributionsTestCase.etree)
+        root.append(WithdrawalsTestCase.etree)
+        root.append(EarningsTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return PERIODTODATE(dtstart=datetime(2001, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2001, 12, 31, tzinfo=UTC),
+                            contributions=ContributionsTestCase.aggregate,
+                            withdrawals=WithdrawalsTestCase.aggregate,
+                            earnings=EarningsTestCase.aggregate)
+
+
+class Inv401ksummaryTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["YEARTODATE"]
+    optionalElements = ["INCEPTODATE", "PERIODTODATE"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("INV401KSUMMARY")
+        root.append(YeartodateTestCase.etree)
+        root.append(InceptodateTestCase.etree)
+        root.append(PeriodtodateTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return INV401KSUMMARY(yeartodate=YeartodateTestCase.aggregate,
+                              inceptodate=InceptodateTestCase.aggregate,
+                              periodtodate=PeriodtodateTestCase.aggregate)
+
+
+class Inv401kTestCase(unittest.TestCase, base.TestAggregate):
+    __test__ = True
+
+    requiredElements = ["EMPLOYERNAME"]
+    optionalElements = ["PLANID", "PLANJOINDATE", "EMPLOYERCONTACTINFO",
+                        "BROKERCONTACTINFO", "DEFERPCTPRETAX",
+                        "DEFERPCTAFTERTAX", "MATCHINFO", "CONTRIBINFO",
+                        "CURRENTVESTPCT", "INV401KSUMMARY"]
+
+    @classproperty
+    @classmethod
+    def etree(cls):
+        root = Element("INV401K")
+        SubElement(root, "EMPLOYERNAME").text = "V2 Rockets GmbH"
+        SubElement(root, "PLANID").text = "1"
+        SubElement(root, "PLANJOINDATE").text = "20040707000000.000[0:GMT]"
+        SubElement(root, "EMPLOYERCONTACTINFO").text = "plan_help@v2.com"
+        SubElement(root, "BROKERCONTACTINFO").text = "plan_help@dch.com"
+        SubElement(root, "DEFERPCTPRETAX").text = "15.0"
+        SubElement(root, "DEFERPCTAFTERTAX").text = "15.0"
+        root.append(MatchinfoTestCase.etree)
+        root.append(ContribinfoTestCase.etree)
+        SubElement(root, "CURRENTVESTPCT").text = "75.0"
+        root.append(VestinfoTestCase.etree)
+        root.append(VestinfoTestCase.etree)
+        root.append(LoaninfoTestCase.etree)
+        root.append(LoaninfoTestCase.etree)
+        root.append(Inv401ksummaryTestCase.etree)
+        return root
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return INV401K(VestinfoTestCase.aggregate, VestinfoTestCase.aggregate,
+                       LoaninfoTestCase.aggregate, LoaninfoTestCase.aggregate,
+                       employername="V2 Rockets GmbH", planid="1",
+                       planjoindate=datetime(2004, 7, 7, tzinfo=UTC),
+                       employercontactinfo="plan_help@v2.com",
+                       brokercontactinfo="plan_help@dch.com",
+                       deferpctpretax=Decimal("15.0"),
+                       deferpctaftertax=Decimal("15.0"),
+                       matchinfo=MatchinfoTestCase.aggregate,
+                       contribinfo=ContribinfoTestCase.aggregate,
+                       currentvestpct=Decimal("75.0"),
+                       inv401ksummary=Inv401ksummaryTestCase.aggregate)
+
+
+class InvposTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = [
