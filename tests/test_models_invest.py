@@ -491,7 +491,6 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
         "INV401KBAL",
         'MKTGINFO',
     ]
-    unsupported = ("inv401k",)
 
     @classproperty
     @classmethod

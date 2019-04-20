@@ -76,7 +76,7 @@ class OFX(Aggregate):
     def validate_args(cls, *args, **kwargs):
         # Don't allow mixed *RQ and *RS in the same OFX
         if not all_equal(key[-7:] for key in kwargs):
-            msg = "{}: mixed *MSGRQV1 and *MSGSRSV1 are invalide"
+            msg = "{}: mixed *MSGRQV1 and *MSGSRSV1 are invalid"
             raise ValueError(msg.format(cls.__name__))
 
         super().validate_args(*args, **kwargs)
