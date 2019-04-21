@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# vim: set fileencoding=utf-8
+# coding: utf-8
 """
 Network client that composes/transmits Open Financial Exchange (OFX) requests,
 and receives OFX responses in reply.  A basic CLI utility is included.
@@ -21,20 +21,15 @@ For example:
 
 >>> client = OFXClient('https://onlinebanking.capitalone.com/ofx/process.ofx',
 ...                    org='Hibernia', fid='1001', bankid='056073502',
-...                    appver=202)
->>> s0 = StmtRq(acctid='1', accttype='CHECKING',
-...             dtstart=datetime.date(2015, 1, 1),
-...             dtend=datetime.date(2015, 1, 31))
->>> s1 = StmtRq(acctid='2', accttype='SAVINGS',
-...             dtstart=datetime.date(2015, 1, 1),
-...             dtend=datetime.date(2015, 1, 31))
->>> c0 = CcStmtRq(acctid='3',
-...               dtstart=datetime.date(2015, 1, 1),
-...               dtend=datetime.date(2015, 1, 31))
+...                    version=202)
+>>> dtstart = datetime.datetime(2015, 1, 1, tzinfo=ofxtools.utils.UTC)
+>>> dtend = datetime.datetime(2015, 1, 31, tzinfo=ofxtools.utils.UTC)
+>>> s0 = StmtRq(acctid='1', accttype='CHECKING', dtstart=dtstart, dtend=dtend)
+>>> s1 = StmtRq(acctid='2', accttype='SAVINGS', dtstart=dtstart, dtend=dtend)
+>>> c0 = CcStmtRq(acctid='3', dtstart=dtstart, dtend=dtend)
 >>> response = client.request_statements('jpmorgan', 't0ps3kr1t', s0, s1, c0,
 ...                                      prettyprint=True)
 """
-
 # stdlib imports
 import datetime
 import uuid
@@ -42,7 +37,6 @@ import xml.etree.ElementTree as ET
 from collections import namedtuple
 from os import path
 import getpass
-
 from configparser import ConfigParser
 import ssl
 import urllib
@@ -81,7 +75,8 @@ from ofxtools.models.invest import (
     INCPOS,
     INVSTMTMSGSRQV1,
 )
-from ofxtools.utils import fixpath, UTC, indent, tostring_unclosed_elements
+from ofxtools import utils
+from ofxtools.utils import UTC
 
 
 # Statement request data containers
@@ -117,7 +112,7 @@ class OFXClient:
     fid = None
     version = 203
     appid = "QWIN"
-    appver = "2300"
+    appver = "2700"
     language = "ENG"
 
     # Stmt request
@@ -154,12 +149,6 @@ class OFXClient:
         return str(uuid.uuid4())
 
     @property
-    def ofxheader(self):
-        """ Prepend to OFX markup. """
-        header = make_header(version=self.version, newfileuid=self.uuid)
-        return bytes(str(header), "utf_8")
-
-    @property
     def http_headers(self):
         """ Pass to urllib.request.urlopen() """
         mimetype = "application/x-ofx"
@@ -184,7 +173,11 @@ class OFXClient:
         user,
         password,
         *requests,
+        language=None,
         clientuid=None,
+        appid=None,
+        appver=None,
+        version=None,
         dryrun=False,
         prettyprint=False,
         close_elements=True
@@ -226,10 +219,19 @@ class OFXClient:
                 msg = "Not a *StmtRq: {}".format(clsName)
                 raise ValueError(msg)
 
-        signon = self.signon(user, password, clientuid=clientuid)
+        signon = self.signon(user,
+                             password,
+                             language=language,
+                             clientuid=clientuid,
+                             appid=appid,
+                             appver=appver)
         ofx = OFX(signonmsgsrqv1=signon, **msgs)
         return self.download(
-            ofx, dryrun=dryrun, prettyprint=prettyprint, close_elements=close_elements
+            ofx,
+            dryrun=dryrun,
+            version=version,
+            prettyprint=prettyprint,
+            close_elements=close_elements
         )
 
     def request_end_statements(
@@ -237,7 +239,11 @@ class OFXClient:
         user,
         password,
         *requests,
+        language=None,
         clientuid=None,
+        appid=None,
+        appver=None,
+        version=None,
         dryrun=False,
         prettyprint=False,
         close_elements=True
@@ -272,17 +278,30 @@ class OFXClient:
                 msg = "Not a *StmtEndRq: {}".format(clsName)
                 raise ValueError(msg)
 
-        signon = self.signon(user, password, clientuid=clientuid)
+        signon = self.signon(user,
+                             password,
+                             language=language,
+                             clientuid=clientuid,
+                             appid=appid,
+                             appver=appver)
         ofx = OFX(signonmsgsrqv1=signon, **msgs)
         return self.download(
-            ofx, dryrun=dryrun, prettyprint=prettyprint, close_elements=close_elements
+            ofx,
+            dryrun=dryrun,
+            version=version,
+            prettyprint=prettyprint,
+            close_elements=close_elements
         )
 
     def request_profile(
         self,
         user=None,
         password=None,
+        language=None,
+        appid=None,
+        appver=None,
         dryrun=False,
+        version=None,
         prettyprint=False,
         close_elements=True,
     ):
@@ -298,11 +317,19 @@ class OFXClient:
 
         user = user or "{:0<32}".format("anonymous")
         password = password or "{:0<32}".format("anonymous")
-        signonmsgs = self.signon(user, password)
+        signon = self.signon(user,
+                             password,
+                             language=language,
+                             appid=appid,
+                             appver=appver)
 
-        ofx = OFX(signonmsgsrqv1=signonmsgs, profmsgsrqv1=msgs)
+        ofx = OFX(signonmsgsrqv1=signon, profmsgsrqv1=msgs)
         return self.download(
-            ofx, dryrun=dryrun, prettyprint=prettyprint, close_elements=close_elements
+            ofx,
+            dryrun=dryrun,
+            version=version,
+            prettyprint=prettyprint,
+            close_elements=close_elements
         )
 
     def request_accounts(
@@ -310,25 +337,40 @@ class OFXClient:
         user,
         password,
         dtacctup,
+        language=None,
         clientuid=None,
+        appid=None,
+        appver=None,
         dryrun=False,
+        version=None,
         prettyprint=False,
         close_elements=True,
     ):
         """
         Package and send OFX account info requests (ACCTINFORQ)
         """
-        signonmsgs = self.signon(user, password, clientuid=clientuid)
+        signon = self.signon(user,
+                             password,
+                             language=language,
+                             clientuid=clientuid,
+                             appid=appid,
+                             appver=appver)
+
         acctinforq = ACCTINFORQ(dtacctup=dtacctup)
         acctinfotrnrq = ACCTINFOTRNRQ(trnuid=self.uuid, acctinforq=acctinforq)
         signupmsgs = SIGNUPMSGSRQV1(acctinfotrnrq)
 
-        ofx = OFX(signonmsgsrqv1=signonmsgs, signupmsgsrqv1=signupmsgs)
+        ofx = OFX(signonmsgsrqv1=signon, signupmsgsrqv1=signupmsgs)
         return self.download(
-            ofx, dryrun=dryrun, prettyprint=prettyprint, close_elements=close_elements
+            ofx,
+            dryrun=dryrun,
+            version=version,
+            prettyprint=prettyprint,
+            close_elements=close_elements,
         )
 
-    def signon(self, userid, userpass, sesscookie=None, clientuid=None):
+    def signon(self, userid, userpass, language=None, sesscookie=None,
+               appid=None, appver=None, clientuid=None):
         """ Construct SONRQ; package in SIGNONMSGSRQV1 """
         if self.org:
             fi = FI(org=self.org, fid=self.fid)
@@ -339,11 +381,11 @@ class OFXClient:
             dtclient=self.dtclient(),
             userid=userid,
             userpass=userpass,
-            language=self.language,
+            language=language or self.language,
             fi=fi,
             sesscookie=sesscookie,
-            appid=self.appid,
-            appver=self.appver,
+            appid=appid or self.appid,
+            appver=appver or self.appver,
             clientuid=clientuid,
         )
         return SIGNONMSGSRQV1(sonrq=sonrq)
@@ -403,32 +445,23 @@ class OFXClient:
         trnuid = self.uuid
         return INVSTMTTRNRQ(trnuid=trnuid, invstmtrq=stmtrq)
 
-    def download(
-        self, ofx, dryrun=False, prettyprint=False, close_elements=True, verify_ssl=True
-    ):
+    def download(self,
+                 ofx,
+                 dryrun=False,
+                 version=None,
+                 prettyprint=False,
+                 close_elements=True,
+                 verify_ssl=True):
         """
         Package complete OFX tree and POST to server.
 
         Returns a file-like object that supports the file interface, and can
         therefore be passed drectly to ``OFXTree.parse()``.
         """
-        tree = ofx.to_etree()
-
-        if prettyprint:
-            indent(tree)
-
-        # Some servers choke on OFXv1 requests including ending tags for
-        # elements (which are optional per the spec).
-        if close_elements is False:
-            if self.version >= 200:
-                msg = "OFX version {} requires ending tags for elements"
-                raise ValueError(msg.format(self.version))
-            body = tostring_unclosed_elements(tree)
-        else:
-            # ``method="html"`` skips the initial XML declaration
-            body = ET.tostring(tree, encoding="utf_8", method="html")
-
-        request = self.ofxheader + body
+        request = self.serialize(ofx,
+                                 version=version,
+                                 prettyprint=prettyprint,
+                                 close_elements=close_elements)
 
         if dryrun:
             return BytesIO(request)
@@ -445,6 +478,33 @@ class OFXClient:
             ssl_context = ssl.create_default_context()
         response = urllib.request.urlopen(req, context=ssl_context)
         return response
+
+    def serialize(self,
+                  ofx,
+                  version=None,
+                  prettyprint=False,
+                  close_elements=True):
+        if version is None:
+            version = self.version
+        header = make_header(version=version, newfileuid=self.uuid)
+        header = bytes(str(header), "utf_8")
+
+        tree = ofx.to_etree()
+        if prettyprint:
+            utils.indent(tree)
+
+        # Some servers choke on OFXv1 requests including ending tags for
+        # elements (which are optional per the spec).
+        if close_elements is False:
+            if version >= 200:
+                msg = "OFX version {} requires ending tags for elements"
+                raise ValueError(msg.format(version))
+            body = utils.tostring_unclosed_elements(tree)
+        else:
+            # ``method="html"`` skips the initial XML declaration
+            body = ET.tostring(tree, encoding="utf_8", method="html")
+
+        return header + body
 
 
 ### CLI COMMANDS
@@ -549,6 +609,30 @@ def do_profile(args):
     print(response.decode())
 
 
+def do_acctinfo(args):
+    """
+    Construct OFX account info request from CLI/config args; send to server.
+    """
+    client = init_client(args)
+
+    # Use dummy password for dummy request
+    if args.dryrun:
+        password = "{:0<32}".format("anonymous")
+    else:
+        password = getpass.getpass()
+
+    dtacctup = datetime.datetime(1999, 12, 31, tzinfo=UTC)
+
+    with client.request_accounts(args.user,
+                                 password,
+                                 dtacctup,
+                                 dryrun=args.dryrun,
+                                 close_elements=not args.unclosedelements) as f:
+        response = f.read()
+
+    print(response.decode())
+
+
 class OFXConfigParser(ConfigParser):
     """
     INI parser that loads default FI configs from oftools/config/fi.cfg and
@@ -565,10 +649,10 @@ class OFXConfigParser(ConfigParser):
 
     def read(self, filenames=None):
         # Load FI config
-        with open(fixpath(self.fi_config)) as fi_config:
+        with open(utils.fixpath(self.fi_config)) as fi_config:
             self.read_file(fi_config)
         # Then load user configs (defaults to fi.cfg [global] config: value)
-        filenames = filenames or fixpath(self.get("global", "config"))
+        filenames = filenames or utils.fixpath(self.get("global", "config"))
         return ConfigParser.read(self, filenames)
 
     @property
@@ -600,6 +684,12 @@ def make_argparser(fi_index):
         action="store_true",
         default=False,
         help="Download OFX profile instead of statement",
+    )
+    argparser.add_argument(
+        "--accts",
+        action="store_true",
+        default=False,
+        help="Download account information instead of statement",
     )
     argparser.add_argument(
         "--unclosedelements",
@@ -738,6 +828,8 @@ def main():
     # Pass the parsed args to the statement-request function
     if args.profile:
         do_profile(args)
+    elif args.accts:
+        do_acctinfo(args)
     else:
         do_stmt(args)
 

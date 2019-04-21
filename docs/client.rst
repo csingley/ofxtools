@@ -75,7 +75,7 @@ Using OFXClient in another program
 To use within another program, first initialize an ``ofxtools.Client.OFXClient``
 instance with the relevant connection parameters.
 
-Using the configured OFXClient instance, make a request by calling the
+Using the configured ``OFXClient`` instance, make a request by calling the
 relevant method, e.g. ``OFXClient.request_statements()``.  OFX supports
 multi-part statement requests, so ``request_statements()`` accepts sequences as
 arguments.  Simple data containers for each statement
@@ -85,21 +85,22 @@ The method call therefore looks like this:
 
 .. code-block:: python 
 
+
     >>> client = OFXClient('https://onlinebanking.capitalone.com/ofx/process.ofx',
     ...                    org='Hibernia', fid='1001', bankid='056073502',
-    ...                    appver=202)
-    >>> s0 = StmtRq(acctid='1', accttype='CHECKING',
-    ...             dtstart=datetime.date(2015, 1, 1),
-    ...             dtend=datetime.date(2015, 1, 31))
-    >>> s1 = StmtRq(acctid='2', accttype='SAVINGS',
-    ...             dtstart=datetime.date(2015, 1, 1),
-    ...             dtend=datetime.date(2015, 1, 31))
-    >>> c0 = CcStmtRq(acctid='3',
-    ...               dtstart=datetime.date(2015, 1, 1),
-    ...               dtend=datetime.date(2015, 1, 31))
-    >>> response = client.request_statements(user='jpmorgan', password='t0ps3kr1t',
-    ...                                      stmtrqs=[s0, s1], ccstmtrqs=[c0])
+    ...                    version=202)
+    >>> dtstart = datetime.datetime(2015, 1, 1, tzinfo=ofxtools.utils.UTC)
+    >>> dtend = datetime.datetime(2015, 1, 31, tzinfo=ofxtools.utils.UTC)
+    >>> s0 = StmtRq(acctid='1', accttype='CHECKING', dtstart=dtstart, dtend=dtend)
+    >>> s1 = StmtRq(acctid='2', accttype='SAVINGS', dtstart=dtstart, dtend=dtend)
+    >>> c0 = CcStmtRq(acctid='3', dtstart=dtstart, dtend=dtend)
+    >>> response = client.request_statements('jpmorgan', 't0ps3kr1t', s0, s1, c0,
+    ...                                      prettyprint=True)
 
+Other methods available:
+    * ``OFXClient.request_end_statements()`` - STMTENDRQ/CCSTMTENDRQ
+    * ``OFXClient.request_profile()`` - PROFRQ
+    * ``OFXClient.request_accounts()``- ACCTINFORQ
 
 .. _OFX Home: http://www.ofxhome.com/
 .. _ABA routing number: http://routingnumber.aba.com/default1.aspx
