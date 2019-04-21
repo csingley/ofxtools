@@ -1157,7 +1157,7 @@ class MainTestCase(unittest.TestCase):
     def testMakeArgparser(self):
         fi_index = ["bank0", "broker0"]
         argparser = make_argparser(fi_index)
-        self.assertEqual(len(argparser._actions), 28)
+        self.assertEqual(len(argparser._actions), 29)
 
     def testMergeConfig(self):
         config = MagicMock()
