@@ -77,6 +77,7 @@ from ofxtools.models.invest import (
 )
 from ofxtools import utils
 from ofxtools.utils import UTC
+from ofxtools.ofxhome import OFXHomeLookup
 
 
 # Statement request data containers
@@ -805,6 +806,16 @@ def merge_config(config, args):
             arg.extend(values)
         else:
             setattr(args, cfg, value)
+
+    # Fall back to OFX Home, if possible
+    url = getattr(args, "url", None)
+    if url is None and "ofxhome_id" in config[server]:
+        lookup = OFXHomeLookup(config[server]["ofxhome_id"])
+        args.url = lookup.url
+        for cfg in "fid", "org", "brokerid":
+            if getattr(args, cfg , None) is None:
+                value = getattr(lookup, cfg)
+                setattr(args, cfg, value)
 
     return args
 
