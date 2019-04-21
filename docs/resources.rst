@@ -17,7 +17,7 @@ More open-source OFX code
 * `csv2ofx`_
 
 .. _OFX spec: http://www.ofx.net/downloads.html
-.. _Quicken data mapping guide: https://fi.intuit.com/downloads/QW_DataMappingGuide.pdf
+.. _Quicken data mapping guide: https://fi.intuit.com/technical/resources_tools/QW_DataMappingGuide.pdf
 .. _OFX Home: http://www.ofxhome.com/
 .. _libofx: https://github.com/libofx/libofx
 .. _ofxparse: https://github.com/jseutter/ofxparse
