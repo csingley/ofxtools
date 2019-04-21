@@ -69,6 +69,12 @@ aren't from Quicken.  It's usually safest to tell them you're a recent version
 of Quicken for Windows.  ``OFXClient`` does this by default, so you probably
 don't need to worry about it.
 
+Finally, some financial institutions are picky about formatting.  They may
+fail to parse OFXv1 that includes closing tags - the ``unclosedelements``
+argument comes in handy here.  They may require that OFX requests either
+must have or can't have tags separated by newlines - try setting or
+unsetting the ``prettyprint`` argument.
+
 We've also had some problems with FIs checking the ``User-Agent`` header in
 HTTP requests, so it's blanked out.  If a motivated user wants to send along
 a packet capture showing what Quicken sends for ``User_Agent``, it might be
