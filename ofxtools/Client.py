@@ -34,7 +34,7 @@ For example:
 import datetime
 import uuid
 import xml.etree.ElementTree as ET
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from os import path
 import getpass
 from configparser import ConfigParser
@@ -43,6 +43,7 @@ import urllib
 from io import BytesIO
 import itertools
 from operator import attrgetter
+import concurrent.futures
 
 
 # local imports
@@ -77,7 +78,7 @@ from ofxtools.models.invest import (
 )
 from ofxtools import utils
 from ofxtools.utils import UTC
-from ofxtools.ofxhome import OFXHomeLookup
+from ofxtools import ofxhome
 
 
 # Statement request data containers
@@ -181,7 +182,8 @@ class OFXClient:
         version=None,
         dryrun=False,
         prettyprint=False,
-        close_elements=True
+        close_elements=True,
+        timeout=None,
     ):
         """
         Package and send OFX statement requests (STMTRQ/CCSTMTRQ/INVSTMTRQ).
@@ -232,7 +234,8 @@ class OFXClient:
             dryrun=dryrun,
             version=version,
             prettyprint=prettyprint,
-            close_elements=close_elements
+            close_elements=close_elements,
+            timeout=timeout,
         )
 
     def request_end_statements(
@@ -247,7 +250,8 @@ class OFXClient:
         version=None,
         dryrun=False,
         prettyprint=False,
-        close_elements=True
+        close_elements=True,
+        timeout=None,
     ):
         """
         Package and send OFX end statement requests (STMTENDRQ, CCSTMTENDRQ).
@@ -291,7 +295,8 @@ class OFXClient:
             dryrun=dryrun,
             version=version,
             prettyprint=prettyprint,
-            close_elements=close_elements
+            close_elements=close_elements,
+            timeout=timeout,
         )
 
     def request_profile(
@@ -305,6 +310,7 @@ class OFXClient:
         version=None,
         prettyprint=False,
         close_elements=True,
+        timeout=None,
     ):
         """
         Package and send OFX profile requests (PROFRQ).
@@ -330,7 +336,8 @@ class OFXClient:
             dryrun=dryrun,
             version=version,
             prettyprint=prettyprint,
-            close_elements=close_elements
+            close_elements=close_elements,
+            timeout=timeout,
         )
 
     def request_accounts(
@@ -346,6 +353,7 @@ class OFXClient:
         version=None,
         prettyprint=False,
         close_elements=True,
+        timeout=None,
     ):
         """
         Package and send OFX account info requests (ACCTINFORQ)
@@ -368,6 +376,7 @@ class OFXClient:
             version=version,
             prettyprint=prettyprint,
             close_elements=close_elements,
+            timeout=timeout,
         )
 
     def signon(self, userid, userpass, language=None, sesscookie=None,
@@ -452,7 +461,8 @@ class OFXClient:
                  version=None,
                  prettyprint=False,
                  close_elements=True,
-                 verify_ssl=True):
+                 verify_ssl=True,
+                 timeout=None):
         """
         Package complete OFX tree and POST to server.
 
@@ -477,7 +487,8 @@ class OFXClient:
             ssl_context = ssl._create_unverified_context()
         else:
             ssl_context = ssl.create_default_context()
-        response = urllib.request.urlopen(req, context=ssl_context)
+        response = urllib.request.urlopen(req, timeout=timeout,
+                                          context=ssl_context)
         return response
 
     def serialize(self,
@@ -590,7 +601,8 @@ def do_stmt(args):
         *stmtrqs,
         clientuid=args.clientuid,
         dryrun=args.dryrun,
-        close_elements=not args.unclosedelements
+        close_elements=not args.unclosedelements,
+        prettyprint=args.pretty
     ) as f:
         response = f.read()
 
@@ -603,11 +615,21 @@ def do_profile(args):
     """
     client = init_client(args)
     with client.request_profile(
-        dryrun=args.dryrun, close_elements=not args.unclosedelements
+        dryrun=args.dryrun,
+        close_elements=not args.unclosedelements,
+        prettyprint=args.pretty
     ) as f:
         response = f.read()
 
     print(response.decode())
+
+
+def do_scan(args):
+    """
+    Report working connection parameters
+    """
+    results= scan_ofx_profile(args.url, args.org, args.fid)
+    print(results)
 
 
 def do_acctinfo(args):
@@ -628,7 +650,9 @@ def do_acctinfo(args):
                                  password,
                                  dtacctup,
                                  dryrun=args.dryrun,
-                                 close_elements=not args.unclosedelements) as f:
+                                 close_elements=not args.unclosedelements,
+                                 prettyprint=args.pretty
+                                ) as f:
         response = f.read()
 
     print(response.decode())
@@ -687,6 +711,12 @@ def make_argparser(fi_index):
         help="Download OFX profile instead of statement",
     )
     argparser.add_argument(
+        "--scan",
+        action="store_true",
+        default=False,
+        help="Scan for working OFX connection parameters",
+    )
+    argparser.add_argument(
         "--accts",
         action="store_true",
         default=False,
@@ -697,6 +727,12 @@ def make_argparser(fi_index):
         action="store_true",
         default=False,
         help="Omit end tags for elements (OFXv1 only)",
+    )
+    argparser.add_argument(
+        "--pretty",
+        action="store_true",
+        default=False,
+        help="Insert newlines and whitespace indentation",
     )
 
     signon_group = argparser.add_argument_group(title="Signon Options")
@@ -810,14 +846,122 @@ def merge_config(config, args):
     # Fall back to OFX Home, if possible
     url = getattr(args, "url", None)
     if url is None and "ofxhome_id" in config[server]:
-        lookup = OFXHomeLookup(config[server]["ofxhome_id"])
+        lookup = ofxhome.lookup(config[server]["ofxhome_id"])
         args.url = lookup.url
         for cfg in "fid", "org", "brokerid":
-            if getattr(args, cfg , None) is None:
+            if getattr(args, cfg, None) is None:
                 value = getattr(lookup, cfg)
                 setattr(args, cfg, value)
 
     return args
+
+
+def scan_ofx_profiles(start, stop, timeout=None):
+    """
+    Scan OFX Home's list of FIs fo
+    """
+    results = {}
+
+    institutions = ofxhome.list_institutions()
+    for institution in institutions[start:stop]:
+        ofxhome_id = int(institution.get("id"))
+        lookup = ofxhome.lookup(ofxhome_id)
+        if any(lookup is None,
+               ofxhome.ofx_invalid(lookup),
+               ofxhome.ssl_invalid(lookup)):
+            continue
+        working = scan_ofx_profile(url=lookup.url,
+                                   org=lookup.org,
+                                   fid=lookup.fid,
+                                   timeout=timeout)
+        if working:
+            results[ofxhome_id] = working
+
+    return results
+
+
+def scan_ofx_profile(url, org, fid, timeout=None):
+    """
+    Report permutations of OFX version/prettyprint/unclosed_elements that
+    successfully download OFX profile from server.
+
+    Returns (OFXv1 results, OFXv2 results), each type(dict).
+    In the dict values:
+        - ``None`` means optional
+        - ``True`` means required
+        - ``False`` means forbidden
+    """
+    if timeout is None:
+        timeout = 5
+
+    ofxv1 = [102, 103, 151, 160]
+    ofxv2 = [200, 201, 202, 203, 210, 211, 220]
+
+    futures = {}
+    client = OFXClient(url, org, fid)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        for prettyprint in (False, True):
+            for close_elements in (False, True):
+                futures.update({executor.submit(
+                    client.request_profile,
+                    version=version,
+                    prettyprint=prettyprint,
+                    close_elements=close_elements,
+                    timeout=timeout):
+                    (version, prettyprint, close_elements)
+                    for version in ofxv1})
+
+            futures.update({executor.submit(
+                client.request_profile,
+                version=version,
+                prettyprint=prettyprint,
+                close_elements=True,
+                timeout=timeout):
+                (version, prettyprint, True) for version in ofxv2})
+
+    v1_params = {"versions": set(), "newlines": set(), "closed_tags": set()}
+    v2_params = {"versions": set(), "newlines": set()}
+
+    for future in concurrent.futures.as_completed(futures):
+        try:
+            response = future.result()
+        except (urllib.error.URLError,
+                urllib.error.HTTPError,
+                ConnectionError,
+                OSError) as exc:
+            cancelled = future.cancel()
+            continue
+        else:
+            (version, prettyprint, close_elements) = futures[future]
+            if version < 200:
+                params = v1_params
+                params["closed_tags"].add(close_elements)
+            else:
+                params = v2_params
+
+            params["versions"].add(version)
+            params["newlines"].add(prettyprint)
+
+    def translate(set_):
+        if len(set_) == 1:
+            return set_.pop()
+        assert set_ == {False, True}
+        return None
+
+    if len(v1_params["versions"]) > 0:
+        v1_params["versions"] = sorted(list(v1_params["versions"]))
+        v1_params["newlines"] = translate(v1_params["newlines"])
+        v1_params["closed_tags"] = translate(v1_params["closed_tags"])
+    else:
+        v1_params = {}
+
+    if len(v2_params["versions"]) > 0:
+        v2_params["versions"] = sorted(list(v2_params["versions"]))
+        v2_params["newlines"] = translate(v2_params["newlines"])
+    else:
+        v2_params = {}
+
+    return v1_params, v2_params
 
 
 def main():
@@ -839,6 +983,8 @@ def main():
     # Pass the parsed args to the statement-request function
     if args.profile:
         do_profile(args)
+    elif args.scan:
+        do_scan(args)
     elif args.accts:
         do_acctinfo(args)
     else:

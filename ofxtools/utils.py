@@ -48,6 +48,17 @@ def all_equal(iterable):
     return next(g, True) and not next(g, False)
 
 
+def partition(pred, iterable):
+    """
+    Use a predicate to partition entries into false entries and true entries
+
+    https://docs.python.org/2/library/itertools.html#recipes
+    """
+    # partition(is_odd, range(10)) --> 0 2 4 6 8   and  1 3 5 7 9
+    t1, t2 = itertools.tee(iterable)
+    return itertools.filterfalse(pred, t1), filter(pred, t2)
+
+
 def indent(elem, level=0):
     """
     Indent xml.etree.ElementTree.Element.text by nesting level.

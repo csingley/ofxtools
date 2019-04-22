@@ -1,75 +1,123 @@
 #!/usr/bin/env python
 """
-Interface with http://ofxhome.com
+Interface with http://ofxhome.com API
 """
 # stdlib imports
+from collections import namedtuple
 import datetime
 import xml.etree.ElementTree as ET
 import urllib
 from xml.sax import saxutils
-#  from os import path
-#  import csv
-#  import concurrent.futures
-
-# local imports
-#  from ofxtools.Client import OFXClient
+import re
 
 
-class OFXHomeLookup:
-    query_url = "http://www.ofxhome.com/api.php?{}"
-    valid_days = 90
+__all__ = ["URL", "VALID_DAYS", "OFXServer", "list_institutions", "lookup",
+           "ofx_invalid", "ssl_invalid"]
 
-    def __init__(self, id):
-        self.id = id
-        params = urllib.parse.urlencode({'lookup': id})
-        query_url = self.query_url.format(params)
-        with urllib.request.urlopen(query_url) as f:
+
+URL = "http://www.ofxhome.com/api.php"
+VALID_DAYS = 90
+
+FID_REGEX = re.compile(r"<fid>([^<]*)</fid>")
+
+
+OFXServer = namedtuple("OFXServer",
+                       ["id", "name", "fid", "org", "url", "brokerid",
+                        "ofxfail", "sslfail", "lastofxvalidation",
+                        "lastsslvalidation", "profile"])
+OFXServer.__new__.__defaults__ = (None, ) * len(OFXServer._fields)
+
+
+def list_institutions():
+    query = _make_query(all="yes")
+    with urllib.request.urlopen(query) as f:
+        response = f.read()
+
+    return ET.fromstring(response)
+
+
+def lookup(id):
+    query = _make_query(lookup=id)
+    try:
+        with urllib.request.urlopen(query) as f:
             response = f.read()
             try:
-                self.xml = ET.fromstring(response)
-            except Exception as exc:
-                print(response)
-                return
+                etree = ET.fromstring(response)
+            except ET.ParseError:
+                # OFX Home fails to escape XML control characters for <FID>
+                response = FID_REGEX.sub(_escape_fid, response.decode())
+                etree = ET.fromstring(response)
+    except urllib.error.URLError as exc:
+        return
 
-        self.name = self._read("name")
-        self.fid = self._read("fid")
-        self.org = self._read("org")
-        self.url = self._read("url")
-        self.brokerid = self._read("brokerid")
-        self.ofxfail = bool(int(self._read("ofxfail")))
-        self.sslfail = bool(int(self._read("sslfail")))
-        self.lastofxvalidation = self._read_date("lastofxvalidation")
-        self.lastsslvalidation = self._read_date("lastsslvalidation")
+    reader = {"ofxfail": _read_bool,
+              "sslfail": _read_bool,
+              "lastofxvalidation": _read_date,
+              "lastsslvalidation": _read_date,
+              "profile": _read_profile}
 
-    def _read(self, attr):
-        child = self.xml.find(attr)
-        if child is not None:
-            text = child.text
-            if text:
-                text = saxutils.unescape(text)
-            return text
+    attrs = {e.tag: reader.get(e.tag, _read)(e) for e in etree}
+    return OFXServer(**attrs)
 
-    def _read_date(self, attr):
-        child = self.xml.find(attr)
-        if child is not None:
-            text = child.text
-            if text:
-                text = datetime.datetime.fromisoformat(text)
-            return text
 
-    @property
-    def ofx_valid(self):
-        now = datetime.datetime.now()
-        return (not self.ofxfail) and (now - self.lastofxvalidation) < datetime.timedelta(days=self.valid_days)
+def ofx_invalid(srvr, valid_days=None):
+    if srvr.ofxfail:
+        return True
 
-    @property
-    def ssl_valid(self):
-        now = datetime.datetime.now()
-        return (not self.sslfail) and (now - self.lastsslvalidation)  < datetime.timedelta(days=self.valid_days)
+    valid_days = valid_days or VALID_DAYS
+    now = datetime.datetime.now()
+    if (now - srvr.lastofxvalidation) > datetime.timedelta(days=valid_days):
+        return True
 
-    def __repr__(self):
-        template = "id={id}, name='{name}', fid='{fid}', org='{org}'"
-        if self.brokerid:
-            template += ", brokerid='{brokerid}'"
-        filled = template.format(**self.__dict__)
-        return "<{}({})>".format(self.__class__.__name__, filled)
+    return False
+
+
+def ssl_invalid(srvr, valid_days=None):
+    if srvr.sslfail:
+        return True
+
+    valid_days = valid_days or VALID_DAYS
+    now = datetime.datetime.now()
+    if (now - srvr.lastsslvalidation) > datetime.timedelta(days=valid_days):
+        return True
+
+    return False
+
+
+def _make_query(**kwargs):
+    params = urllib.parse.urlencode(kwargs)
+    return "{}?{}".format(URL, params)
+
+
+def _read(elem):
+    text = elem.text or None
+    if text:
+        text = saxutils.unescape(text)
+    return text
+
+
+def _read_date(elem):
+    text = elem.text or None
+    if text:
+        text = datetime.datetime.fromisoformat(text)
+    return text
+
+
+def _read_bool(elem):
+    text = elem.text or None
+    if text:
+        text = bool(int(text))
+    return text
+
+
+def _read_profile(elem):
+    attrib = elem.attrib
+    for key, val in attrib.items():
+        if key.endswith("msgset"):
+            attrib[key] = {"true": True, "false": False}[val]
+    return attrib
+
+
+def _escape_fid(match):
+    fid = saxutils.escape(match.group(1))
+    return "<fid>{}</fid>".format(fid)
