@@ -204,7 +204,8 @@ class OFXClientV1TestCase(unittest.TestCase):
                     self.assertEqual(kwargs["method"], "POST")
                     self.assertEqual(kwargs["headers"], self.client.http_headers)
 
-                    mock_urlopen.assert_called_once_with(sentinel.REQUEST, context=ANY)
+                    mock_urlopen.assert_called_once_with(
+                        sentinel.REQUEST, context=ANY, timeout=None)
                     self.assertEqual(output, sentinel.RESPONSE)
 
                     return kwargs["data"].decode("utf_8")
@@ -877,6 +878,7 @@ class CliTestCase(unittest.TestCase):
             user="porkypig",
             clientuid=None,
             unclosedelements=False,
+            pretty=False,
         )
 
     def testInitClient(self):
@@ -1006,7 +1008,11 @@ class CliTestCase(unittest.TestCase):
                     ],
                 )
                 self.assertEqual(
-                    kwargs, {"clientuid": None, "dryrun": False, "close_elements": True}
+                    kwargs, {"clientuid": None,
+                             "dryrun": False,
+                             "close_elements": True,
+                             "prettyprint": False,
+                            }
                 )
 
     def testDoStmtDryrun(self):
@@ -1114,7 +1120,12 @@ class CliTestCase(unittest.TestCase):
                 ],
             )
             self.assertEqual(
-                kwargs, {"clientuid": None, "dryrun": True, "close_elements": True}
+                kwargs, {
+                    "clientuid": None,
+                    "dryrun": True,
+                    "close_elements": True,
+                    "prettyprint": False,
+                }
             )
 
     def testDoProfile(self):
@@ -1127,7 +1138,11 @@ class CliTestCase(unittest.TestCase):
 
             args, kwargs = fake_rq_prof.call_args
             self.assertEqual(len(args), 0)
-            self.assertEqual(kwargs, {"dryrun": True, "close_elements": True})
+            self.assertEqual(kwargs, {
+                "dryrun": True,
+                "close_elements": True,
+                "prettyprint": False,
+            })
 
 
 class MainTestCase(unittest.TestCase):
@@ -1157,7 +1172,7 @@ class MainTestCase(unittest.TestCase):
     def testMakeArgparser(self):
         fi_index = ["bank0", "broker0"]
         argparser = make_argparser(fi_index)
-        self.assertEqual(len(argparser._actions), 29)
+        self.assertEqual(len(argparser._actions), 31)
 
     def testMergeConfig(self):
         config = MagicMock()
