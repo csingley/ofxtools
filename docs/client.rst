@@ -16,13 +16,13 @@ Activate the virtual environment in which you installed ``ofxtools``, e.g.
 
 .. code-block:: bash
 
-    source ~/.venvs/ofxtools/bin/activate
+    $ source ~/.venvs/ofxtools/bin/activate
 
 Execute ``ofxget`` with appropriate arguments, for example:
 
 .. code-block:: bash
 
-    ofxget https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do\?request_type\=nl_ofxdownload --org AMEX --fid 3101 --user porkypig --creditcard 99999999999 --start 20140101 --end 20140630 > 2014-04_amex.ofx
+    $ ofxget https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do\?request_type\=nl_ofxdownload --org AMEX --fid 3101 --user porkypig --creditcard 99999999999 --start 20140101 --end 20140630 > 2014-04_amex.ofx
 
 Enter your password when prompted.
 
@@ -68,7 +68,7 @@ Using such a configuration, the command invocation simplifies to this:
 
 .. code-block:: bash
 
-    ofxget amex -s 20140101 -e 20140630 > 2014-04_amex.ofx
+    $ ofxget amex -s 20140101 -e 20140630 > 2014-04_amex.ofx
 
 
 Discovering OFX client configurations
@@ -106,7 +106,7 @@ on their checks.
 
 US brokers tend to follow the recommendation of the OFX spec and use their
 primary DNS domain as their brokerid (e.g. "ameritrade.com").  Some FIs
-style the brokerid in all caps (e.g. "SHWAB.COM").  Some apparently don't
+style the brokerid in all caps (e.g. "SCHWAB.COM").  Some apparently don't
 understand the DNS system, and use the FQDN of their website
 (e.g. "www.scottrade.com").  Try various permutations.  Of course, then there's
 Interactive Brokers, whose brokerid is an apparently random 4-digit number
@@ -124,6 +124,8 @@ all the necessary configuration data.  In fact, you don't even need to enter
 all of it into your ``ofxtools`` configuration file... just get the OFX Home
 database id (at the end of the webpage URL) and configure ``ofxtools`` like so:
 
+.. code-block:: ini
+
     # American Express
     [amex]
     ofxhome_id: 424
@@ -133,7 +135,7 @@ requesting their OFX profile, which doesn't require login info or acct#s.
 
 .. code-block:: bash
 
-    ofxget --profile amex                                                                                                           1 ↵
+    $ ofxget --profile amex                                                                                                           1 ↵
     <?xml version="1.0" encoding="UTF-8" standalone="no"?>
     <?OFX OFXHEADER="200" VERSION="203" SECURITY="NONE" OLDFILEUID="NONE" NEWFILEUID="08c9f61f-f16a-4471-9b1c-463b31dbaae4"?>
     <OFX><SIGNONMSGSRSV1><SONRS><STATUS><CODE>0</CODE><SEVERITY>INFO</SEVERITY><MESSAGE>Login successful</MESSAGE></STATUS><DTSERVER>20190422122549.771[-7:MST]</DTSERVER><LANGUAGE>ENG</LANGUAGE><FI><ORG>AMEX</ORG><FID>3101</FID></FI><START.TIME>20190422122549</START.TIME></SONRS></SIGNONMSGSRSV1><PROFMSGSRSV1><PROFTRNRS><TRNUID>6397def1-869e-4141-9c14-8c0236f7b8a1</TRNUID><STATUS><CODE>0</CODE><SEVERITY>INFO</SEVERITY></STATUS><PROFRS><MSGSETLIST><SIGNONMSGSET><SIGNONMSGSETV1><MSGSETCORE><VER>1</VER><URL>https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload</URL><OFXSEC>NONE</OFXSEC><TRANSPSEC>Y</TRANSPSEC><SIGNONREALM>AMEXREALM</SIGNONREALM><LANGUAGE>ENG</LANGUAGE><SYNCMODE>LITE</SYNCMODE><RESPFILEER>Y</RESPFILEER><SPNAME>Aexp</SPNAME></MSGSETCORE></SIGNONMSGSETV1></SIGNONMSGSET><SIGNUPMSGSET><SIGNUPMSGSETV1><MSGSETCORE><VER>1</VER><URL>https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload</URL><OFXSEC>NONE</OFXSEC><TRANSPSEC>Y</TRANSPSEC><SIGNONREALM>AMEXREALM</SIGNONREALM><LANGUAGE>ENG</LANGUAGE><SYNCMODE>LITE</SYNCMODE><RESPFILEER>Y</RESPFILEER><SPNAME>Aexp</SPNAME></MSGSETCORE><WEBENROLL><URL>https://www.americanexpress.com</URL></WEBENROLL><CHGUSERINFO>N</CHGUSERINFO><AVAILACCTS>Y</AVAILACCTS><CLIENTACTREQ>Y</CLIENTACTREQ></SIGNUPMSGSETV1></SIGNUPMSGSET><BANKMSGSET><BANKMSGSETV1><MSGSETCORE><VER>1</VER><URL>https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload</URL><OFXSEC>NONE</OFXSEC><TRANSPSEC>Y</TRANSPSEC><SIGNONREALM>AMEXREALM</SIGNONREALM><LANGUAGE>ENG</LANGUAGE><SYNCMODE>LITE</SYNCMODE><RESPFILEER>Y</RESPFILEER><SPNAME>Aexp</SPNAME></MSGSETCORE><CLOSINGAVAIL>N</CLOSINGAVAIL><EMAILPROF><CANEMAIL>N</CANEMAIL><CANNOTIFY>N</CANNOTIFY></EMAILPROF></BANKMSGSETV1></BANKMSGSET><CREDITCARDMSGSET><CREDITCARDMSGSETV1><MSGSETCORE><VER>1</VER><URL>https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload</URL><OFXSEC>NONE</OFXSEC><TRANSPSEC>Y</TRANSPSEC><SIGNONREALM>AMEXREALM</SIGNONREALM><LANGUAGE>ENG</LANGUAGE><SYNCMODE>LITE</SYNCMODE><RESPFILEER>Y</RESPFILEER><SPNAME>Aexp</SPNAME></MSGSETCORE><CLOSINGAVAIL>N</CLOSINGAVAIL></CREDITCARDMSGSETV1></CREDITCARDMSGSET><PROFMSGSET><PROFMSGSETV1><MSGSETCORE><VER>1</VER><URL>https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload</URL><OFXSEC>NONE</OFXSEC><TRANSPSEC>Y</TRANSPSEC><SIGNONREALM>AMEXREALM</SIGNONREALM><LANGUAGE>ENG</LANGUAGE><SYNCMODE>LITE</SYNCMODE><RESPFILEER>Y</RESPFILEER><SPNAME>Aexp</SPNAME></MSGSETCORE></PROFMSGSETV1></PROFMSGSET></MSGSETLIST><SIGNONINFOLIST><SIGNONINFO><SIGNONREALM>AMEXREALM</SIGNONREALM><MIN>5</MIN><MAX>20</MAX><CHARTYPE>ALPHAANDNUMERIC</CHARTYPE><CASESEN>N</CASESEN><SPECIAL>Y</SPECIAL><SPACES>N</SPACES><PINCH>N</PINCH><CHGPINFIRST>N</CHGPINFIRST><CLIENTUIDREQ>N</CLIENTUIDREQ><AUTHTOKENFIRST>N</AUTHTOKENFIRST><MFACHALLENGESUPT>N</MFACHALLENGESUPT><MFACHALLENGEFIRST>N</MFACHALLENGEFIRST></SIGNONINFO></SIGNONINFOLIST><DTPROFUP>20120730200000.925[-7:MST]</DTPROFUP><FINAME>American Express</FINAME><ADDR1>777 American Expressway</ADDR1><CITY>Fort Lauderdale</CITY><STATE>Fla.</STATE><POSTALCODE>33337-0001</POSTALCODE><COUNTRY>USA</COUNTRY><CSPHONE>1-800-AXP-7500  (1-800-297-7500)</CSPHONE></PROFRS></PROFTRNRS></PROFMSGSRSV1></OFX>
@@ -163,7 +165,7 @@ Here's how to use it.
 Try to exercise restraint with this command.  Each invocation sends several
 dozen HTTP requests to the server; you can get your IP throttled or blocked.
 
-The output show configurations that worked - a tuple of (OFXv1, OFXv2).
+The output shows configurations that worked - a tuple of (OFXv1, OFXv2).
 Interpret the dictionary values as follows: "None" means optional;
 "True" means mandatory; and "False" means forbidden.
 
