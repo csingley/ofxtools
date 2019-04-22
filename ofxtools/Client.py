@@ -841,6 +841,10 @@ def merge_config(config, args):
             assert isinstance(arg, list)
             arg.extend(values)
         else:
+            # Coerce config to bool, if applicable
+            arg = getattr(args, cfg, None)
+            if type(arg) is bool:
+                value = config.getboolean(server, cfg)
             setattr(args, cfg, value)
 
     # Fall back to OFX Home, if possible
