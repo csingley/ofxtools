@@ -1,38 +1,43 @@
 """
 Release process:
-    1. Update VERSION
+    1. Update ofxtools.__version__.__version
+    2. Change download_url below
+    3. Commit changes & push
+    4. `git tag` the release
+    5. Push tags
+    6. Change download_url back to master; commit & push
 """
-from setuptools import setup, find_packages
 import os.path
+from setuptools import setup, find_packages
 
 __here__ = os.path.dirname(os.path.realpath(__file__))
 
-about = {}
+ABOUT = {}
 with open(os.path.join(__here__, 'ofxtools', '__version__.py'), 'r') as f:
-    exec(f.read(), about)
+    exec(f.read(), ABOUT)
 
 with open(os.path.join(__here__, 'README.rst'), 'r') as f:
-    readme = f.read()
+    README = f.read()
 
-url_base = "{}/tarball".format(about["__url__"])
+URL_BASE = "{}/tarball".format(ABOUT["__url__"])
 
 setup(
-    name=about["__title__"],
-    version=about["__version__"],
-    description=about["__description__"],
-    long_description=readme,
+    name=ABOUT["__title__"],
+    version=ABOUT["__version__"],
+    description=ABOUT["__description__"],
+    long_description=README,
     long_description_content_type="text/x-rst",
-    author=about["__author__"],
-    author_email=about["__author_email__"],
-    url=about["__url__"],
+    author=ABOUT["__author__"],
+    author_email=ABOUT["__author_email__"],
+    url=ABOUT["__url__"],
     packages=find_packages(),
     package_data={'ofxtools': ['README.rst', 'config/*.cfg', 'tests/*']},
     python_requires=">=3.4",
-    license=about["__license__"],
+    license=ABOUT["__license__"],
 
     # Note: change 'master' to the tag name when releasing a new verion
-    #  download_url="{}/master".format(url_base),
-    download_url="{}/{}".format(url_base, about["__version__"]),
+    #  download_url="{}/master".format(URL_BASE),
+    download_url="{}/{}".format(URL_BASE, ABOUT["__version__"]),
 
     entry_points={'console_scripts': ['ofxget=ofxtools.Client:main']},
 
