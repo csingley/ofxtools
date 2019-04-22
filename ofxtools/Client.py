@@ -131,8 +131,7 @@ class OFXClient:
         appver=None,
         language=None,
         bankid=None,
-        brokerid=None,
-    ):
+        brokerid=None):
         self.url = url
         self.org = org
         self.fid = fid
@@ -183,8 +182,7 @@ class OFXClient:
         dryrun=False,
         prettyprint=False,
         close_elements=True,
-        timeout=None,
-    ):
+        timeout=None):
         """
         Package and send OFX statement requests (STMTRQ/CCSTMTRQ/INVSTMTRQ).
 
@@ -251,8 +249,7 @@ class OFXClient:
         dryrun=False,
         prettyprint=False,
         close_elements=True,
-        timeout=None,
-    ):
+        timeout=None):
         """
         Package and send OFX end statement requests (STMTENDRQ, CCSTMTENDRQ).
 
@@ -310,8 +307,7 @@ class OFXClient:
         version=None,
         prettyprint=False,
         close_elements=True,
-        timeout=None,
-    ):
+        timeout=None):
         """
         Package and send OFX profile requests (PROFRQ).
         """
@@ -353,8 +349,7 @@ class OFXClient:
         version=None,
         prettyprint=False,
         close_elements=True,
-        timeout=None,
-    ):
+        timeout=None):
         """
         Package and send OFX account info requests (ACCTINFORQ)
         """
