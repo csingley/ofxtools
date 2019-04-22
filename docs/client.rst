@@ -10,82 +10,12 @@ Other financial institutions are good enough to offer you a server socket,
 to which ``ofxtools`` can connect and download OFX data for you.
 
 
-Configuring an OFX client
--------------------------
-Setting up a client to connect with an OFX servers requires configuring
-some parameters.  Quicken and Money don't expose OFX-specific parameters, so
-you'll have to find these on your own.  Tech support calls to banks tend to go
-like this:
-    | Me: Hi, what's your OFX server URL?
-    | CSR: What version of Quicken do you run?  Sorry, we don't support that.
-
-The best resource for finding OFX configs is the `OFX Home`_ website
-(thanks are due to Jesse Lietch).  Sadly, since Microsoft Money went EOL,
-Microsoft no longer provides a web API containing FI configs (as utilized
-in Jeremy Jongsma's pioneering `getfidata.sh`_ script) - the source data
-for OFX Home.  Read through the OFX Home comments; users often post updates
-with configurations that have worked for them.
-
-You can also talk to the fine folks at `GnuCash`_, who share the struggle.
-
-You will definitely need to configure:
-
-- Server URL
-- Bank id
-- Broker id
-- Account numbers
-
-The URL is of course mandatory in order to connect.  You will need
-bankid/brokerid and acount numbers in order to download statements.
-
-For US banks, the bankid is an `ABA routing number`_.  This will be printed
-on their checks.
-
-US brokers tend to follow the recommendation of the OFX spec and use their
-primary DNS domain as their brokerid (e.g. "ameritrade.com").  You could also
-try using a 4-digit `DTC number`_.
-
-You may also need to configure:
-
-- Financial institution identifiers (``<FI><ORG>`` and ``<FI><FID>``)
-- Supported OFX version
-- Supported client application
-
-It's entirely possible that you don't need to configure ``<FI>`` in order
-to connect.  This aggregate is optional per the OFX spec, and if your financial
-institution is running its own OFX server it is unnecessary - many major
-don't need it to connect.  However, Quicken always sends ``<FI>``, so your bank
-may require it.
-
-Quicken also hasn't yet updated to OFX version 2, so your bank may require
-a lower protocol version in order to connect.  Quicken only requires
-compliance with OFXv1.0.3 if implementing multifactor authentication; if
-a financial institution doesn't support MFA (as published in its OFX profile)
-then it may reject any OFX version higher than 1.0.2.  E*Trade, for example,
-does this.
-
-Similarly, many banks configure their servers to reject any connections that
-aren't from Quicken.  It's usually safest to tell them you're a recent version
-of Quicken for Windows.  ``OFXClient`` does this by default, so you probably
-don't need to worry about it.
-
-Finally, some financial institutions are picky about formatting.  They may
-fail to parse OFXv1 that includes closing tags - the ``unclosedelements``
-argument comes in handy here.  They may require that OFX requests either
-must have or can't have tags separated by newlines - try setting or
-unsetting the ``prettyprint`` argument.
-
-We've also had some problems with FIs checking the ``User-Agent`` header in
-HTTP requests, so it's blanked out.  If a motivated user wants to send along
-a packet capture showing what Quicken sends for ``User_Agent``, it might be
-a good idea to spoof that as well.
-
-
 Using the ofxget script
 -----------------------
 Activate the virtual environment in which you installed ``ofxtools``, e.g.
 
 .. code-block:: bash
+
     source ~/.venvs/ofxtools/bin/activate
 
 Execute ``ofxget`` with appropriate arguments, for example:
@@ -139,6 +69,165 @@ Using such a configuration, the command invocation simplifies to this:
 .. code-block:: bash
 
     ofxget amex -s 20140101 -e 20140630 > 2014-04_amex.ofx
+
+
+Discovering OFX client configurations
+-------------------------------------
+Quicken and Money don't expose OFX-specific parameters, so you'll have to find
+these on your own.  Tech support calls to banks tend to go like this:
+    | Me: Hi, what's your OFX server URL?
+    | CSR: What version of Quicken do you run?  Sorry, we don't support that.
+
+Sadly, since Microsoft Money went EOL, Microsoft no longer provides a public
+web API containing FI configs.  However, Jesse Lietch is carrying the torch
+at the `OFX Home`_ website, which is the best resource for finding OFX configs.
+
+The OFX Home database is getting a little stale in places. Read through the
+comments, where users often post updated configurations that have worked
+for them.  If you get something working, post it there.
+
+You can also talk to the fine folks at `GnuCash`_, who share the struggle.
+
+You will definitely need to configure:
+
+- Server URL
+- Bank id
+- Broker id
+- Account numbers
+
+The URL is of course mandatory in order to connect at all.
+
+You will need bankid/brokerid and acount numbers in order to download
+statements.  I'm optimistic that you'll be able to discover your account
+numbers.
+
+For US banks, the bankid is an `ABA routing number`_.  This will be printed
+on their checks.
+
+US brokers tend to follow the recommendation of the OFX spec and use their
+primary DNS domain as their brokerid (e.g. "ameritrade.com").  Some FIs
+style the brokerid in all caps (e.g. "SHWAB.COM").  Some apparently don't
+understand the DNS system, and use the FQDN of their website
+(e.g. "www.scottrade.com").  Try various permutations.  Of course, then there's
+Interactive Brokers, whose brokerid is an apparently random 4-digit number
+(no, it's not a `DTC number`_ )... not that it really matters, since they don't
+open a port anyway.
+
+Probably you will also need to configure financial institution identifiers
+(i.e. ``<FI><ORG>`` and ``<FI><FID>`` in the signon request.)  This aggregate
+is optional per the OFX spec, and if your FI is running its own OFX server it
+is unnecessary - many major providers don't need it to connect.  However,
+Quicken always sends ``<FI>``, so your bank may require it anyway.
+
+If a listing exists (and is up to date), `OFX Home`_ can provide you with
+all the necessary configuration data.  In fact, you don't even need to enter
+all of it into your ``ofxtools`` configuration file... just get the OFX Home
+database id (at the end of the webpage URL) and configure ``ofxtools`` like so:
+
+    # American Express
+    [amex]
+    ofxhome_id: 424
+
+With any luck this will just work.  You can test the connection parameters by
+requesting their OFX profile, which doesn't require login info or acct#s.
+
+.. code-block:: bash
+
+    ofxget --profile amex                                                                                                           1 ↵
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+    <?OFX OFXHEADER="200" VERSION="203" SECURITY="NONE" OLDFILEUID="NONE" NEWFILEUID="08c9f61f-f16a-4471-9b1c-463b31dbaae4"?>
+    <OFX><SIGNONMSGSRSV1><SONRS><STATUS><CODE>0</CODE><SEVERITY>INFO</SEVERITY><MESSAGE>Login successful</MESSAGE></STATUS><DTSERVER>20190422122549.771[-7:MST]</DTSERVER><LANGUAGE>ENG</LANGUAGE><FI><ORG>AMEX</ORG><FID>3101</FID></FI><START.TIME>20190422122549</START.TIME></SONRS></SIGNONMSGSRSV1><PROFMSGSRSV1><PROFTRNRS><TRNUID>6397def1-869e-4141-9c14-8c0236f7b8a1</TRNUID><STATUS><CODE>0</CODE><SEVERITY>INFO</SEVERITY></STATUS><PROFRS><MSGSETLIST><SIGNONMSGSET><SIGNONMSGSETV1><MSGSETCORE><VER>1</VER><URL>https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload</URL><OFXSEC>NONE</OFXSEC><TRANSPSEC>Y</TRANSPSEC><SIGNONREALM>AMEXREALM</SIGNONREALM><LANGUAGE>ENG</LANGUAGE><SYNCMODE>LITE</SYNCMODE><RESPFILEER>Y</RESPFILEER><SPNAME>Aexp</SPNAME></MSGSETCORE></SIGNONMSGSETV1></SIGNONMSGSET><SIGNUPMSGSET><SIGNUPMSGSETV1><MSGSETCORE><VER>1</VER><URL>https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload</URL><OFXSEC>NONE</OFXSEC><TRANSPSEC>Y</TRANSPSEC><SIGNONREALM>AMEXREALM</SIGNONREALM><LANGUAGE>ENG</LANGUAGE><SYNCMODE>LITE</SYNCMODE><RESPFILEER>Y</RESPFILEER><SPNAME>Aexp</SPNAME></MSGSETCORE><WEBENROLL><URL>https://www.americanexpress.com</URL></WEBENROLL><CHGUSERINFO>N</CHGUSERINFO><AVAILACCTS>Y</AVAILACCTS><CLIENTACTREQ>Y</CLIENTACTREQ></SIGNUPMSGSETV1></SIGNUPMSGSET><BANKMSGSET><BANKMSGSETV1><MSGSETCORE><VER>1</VER><URL>https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload</URL><OFXSEC>NONE</OFXSEC><TRANSPSEC>Y</TRANSPSEC><SIGNONREALM>AMEXREALM</SIGNONREALM><LANGUAGE>ENG</LANGUAGE><SYNCMODE>LITE</SYNCMODE><RESPFILEER>Y</RESPFILEER><SPNAME>Aexp</SPNAME></MSGSETCORE><CLOSINGAVAIL>N</CLOSINGAVAIL><EMAILPROF><CANEMAIL>N</CANEMAIL><CANNOTIFY>N</CANNOTIFY></EMAILPROF></BANKMSGSETV1></BANKMSGSET><CREDITCARDMSGSET><CREDITCARDMSGSETV1><MSGSETCORE><VER>1</VER><URL>https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload</URL><OFXSEC>NONE</OFXSEC><TRANSPSEC>Y</TRANSPSEC><SIGNONREALM>AMEXREALM</SIGNONREALM><LANGUAGE>ENG</LANGUAGE><SYNCMODE>LITE</SYNCMODE><RESPFILEER>Y</RESPFILEER><SPNAME>Aexp</SPNAME></MSGSETCORE><CLOSINGAVAIL>N</CLOSINGAVAIL></CREDITCARDMSGSETV1></CREDITCARDMSGSET><PROFMSGSET><PROFMSGSETV1><MSGSETCORE><VER>1</VER><URL>https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload</URL><OFXSEC>NONE</OFXSEC><TRANSPSEC>Y</TRANSPSEC><SIGNONREALM>AMEXREALM</SIGNONREALM><LANGUAGE>ENG</LANGUAGE><SYNCMODE>LITE</SYNCMODE><RESPFILEER>Y</RESPFILEER><SPNAME>Aexp</SPNAME></MSGSETCORE></PROFMSGSETV1></PROFMSGSET></MSGSETLIST><SIGNONINFOLIST><SIGNONINFO><SIGNONREALM>AMEXREALM</SIGNONREALM><MIN>5</MIN><MAX>20</MAX><CHARTYPE>ALPHAANDNUMERIC</CHARTYPE><CASESEN>N</CASESEN><SPECIAL>Y</SPECIAL><SPACES>N</SPACES><PINCH>N</PINCH><CHGPINFIRST>N</CHGPINFIRST><CLIENTUIDREQ>N</CLIENTUIDREQ><AUTHTOKENFIRST>N</AUTHTOKENFIRST><MFACHALLENGESUPT>N</MFACHALLENGESUPT><MFACHALLENGEFIRST>N</MFACHALLENGEFIRST></SIGNONINFO></SIGNONINFOLIST><DTPROFUP>20120730200000.925[-7:MST]</DTPROFUP><FINAME>American Express</FINAME><ADDR1>777 American Expressway</ADDR1><CITY>Fort Lauderdale</CITY><STATE>Fla.</STATE><POSTALCODE>33337-0001</POSTALCODE><COUNTRY>USA</COUNTRY><CSPHONE>1-800-AXP-7500  (1-800-297-7500)</CSPHONE></PROFRS></PROFTRNRS></PROFMSGSRSV1></OFX>
+
+Looking good!  If it doesn't work...  well, Quicken hasn't yet updated
+to OFX version 2, so your bank may require a lower protocol version in order to
+connect.  The ``version`` argument is used for this purpose.
+
+As well, some financial institutions are picky about formatting.  They may
+fail to parse OFXv1 that includes closing tags - the ``unclosedelements``
+argument comes in handy here.  They may require that OFX requests either
+must have or can't have tags separated by newlines - try setting or
+unsetting the ``prettyprint`` argument.
+
+``ofxget`` includes a ``scan`` option to help you discover these requirements.
+Here's how to use it.
+
+.. code-block:: bash
+
+    $ ofxget --scan fidelity
+    ({'versions': [102, 103, 151, 160], 'newlines': None, 'closed_tags': False}, {'versions': [200, 201, 202, 203, 210, 211, 220], 'newlines': None})
+    $ ofxget --scan etrade  
+    ({'versions': [102], 'newlines': None, 'closed_tags': None}, {})
+    $ ofxget --scan usaa    
+    ({'versions': [102, 151], 'newlines': None, 'closed_tags': False}, {'versions': [200, 202], 'newlines': None})
+
+Try to exercise restraint with this command.  Each invocation sends several
+dozen HTTP requests to the server; you can get your IP throttled or blocked.
+
+The output show configurations that worked - a tuple of (OFXv1, OFXv2).
+Interpret the dictionary values as follows: "None" means optional;
+"True" means mandatory; and "False" means forbidden.
+
+Fidelity will accept any version of OFX, with or without newlines, but if
+you send OFXv1, it can't have closing tags.
+
+E*Trade will only accept OFX version 1.02; they don't care about newlines or
+closing tags.
+
+USAA only accepts specific versions of OFX version 1 or 2.  Like Fidelity,
+if you connect with OFXv1, it needs to be old-school SGML - no closing tags.
+
+Write these configs in your ``ofxget.cfg`` like so:
+
+.. code-block:: ini
+
+    [etrade]
+    ofxhome_id: 446
+    version: 102
+
+    [fidelity]
+    ofxhome_id: 449
+    version: 103
+    unclosedelements: yes
+    prettyprint: yes
+
+    [usaa]
+    ofxhome_id: 483
+    version: 102
+    unclosedelements: yes
+    prettyprint: no
+
+The ``prettyprint`` configs are just to show the boolean syntax.  Really,
+for these FIs you can avoid mucking around with newlines and closing tags just
+by using a supported version number.
+
+.. code-block:: ini
+
+    [etrade]
+    ofxhome_id: 446
+    version: 102
+
+    [fidelity]
+    ofxhome_id: 449
+    version: 203
+
+    [usaa]
+    ofxhome_id: 483
+    version: 202
+
+The master configs for OFX connection parameters are located in
+``ofxtools/config/fi.cfg`` - if you get something working, edit it there and
+submit a pull request to help out others.
+
+Finally, many banks configure their servers to reject any connections that
+aren't from Quicken.  It's usually safest to tell them you're a recent version
+of Quicken for Windows.  ``OFXClient`` does this by default, so you probably
+don't need to worry about it.  If you do need to fiddle with it, use the
+``appid`` and ``appver`` arguments.
+
+We've also had some problems with FIs checking the ``User-Agent`` header in
+HTTP requests, so it's been blanked out.  If some motivated user wants to send
+along a packet capture showing what Quicken sends for ``User_Agent``, it might
+be a good idea to spoof that as well.
 
 Using OFXClient in another program
 ----------------------------------
