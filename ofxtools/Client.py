@@ -34,7 +34,7 @@ For example:
 import datetime
 import uuid
 import xml.etree.ElementTree as ET
-from collections import namedtuple, defaultdict
+from collections import namedtuple, defaultdict, OrderedDict
 from os import path
 import getpass
 from configparser import ConfigParser
@@ -44,6 +44,7 @@ from io import BytesIO
 import itertools
 from operator import attrgetter
 import concurrent.futures
+import json
 
 
 # local imports
@@ -623,7 +624,7 @@ def do_scan(args):
     """
     Report working connection parameters
     """
-    results= scan_ofx_profile(args.url, args.org, args.fid)
+    results = scan_ofx_profile(args.url, args.org, args.fid)
     print(results)
 
 
@@ -865,9 +866,9 @@ def scan_ofx_profiles(start, stop, timeout=None):
     for institution in institutions[start:stop]:
         ofxhome_id = int(institution.get("id"))
         lookup = ofxhome.lookup(ofxhome_id)
-        if any(lookup is None,
+        if any((lookup is None,
                ofxhome.ofx_invalid(lookup),
-               ofxhome.ssl_invalid(lookup)):
+               ofxhome.ssl_invalid(lookup))):
             continue
         working = scan_ofx_profile(url=lookup.url,
                                    org=lookup.org,
@@ -918,8 +919,7 @@ def scan_ofx_profile(url, org, fid, timeout=None):
                 timeout=timeout):
                 (version, prettyprint, True) for version in ofxv2})
 
-    v1_params = {"versions": set(), "newlines": set(), "closed_tags": set()}
-    v2_params = {"versions": set(), "newlines": set()}
+    working = defaultdict(list)
 
     for future in concurrent.futures.as_completed(futures):
         try:
@@ -932,35 +932,12 @@ def scan_ofx_profile(url, org, fid, timeout=None):
             continue
         else:
             (version, prettyprint, close_elements) = futures[future]
-            if version < 200:
-                params = v1_params
-                params["closed_tags"].add(close_elements)
-            else:
-                params = v2_params
+            working[version].append({"pretty": prettyprint,
+                                     "unclosed_elements": not close_elements})
 
-            params["versions"].add(version)
-            params["newlines"].add(prettyprint)
-
-    def translate(set_):
-        if len(set_) == 1:
-            return set_.pop()
-        assert set_ == {False, True}
-        return None
-
-    if len(v1_params["versions"]) > 0:
-        v1_params["versions"] = sorted(list(v1_params["versions"]))
-        v1_params["newlines"] = translate(v1_params["newlines"])
-        v1_params["closed_tags"] = translate(v1_params["closed_tags"])
-    else:
-        v1_params = {}
-
-    if len(v2_params["versions"]) > 0:
-        v2_params["versions"] = sorted(list(v2_params["versions"]))
-        v2_params["newlines"] = translate(v2_params["newlines"])
-    else:
-        v2_params = {}
-
-    return v1_params, v2_params
+    # Sort by OFX version
+    working = OrderedDict(sorted(working.items(), key=lambda i: i[0]))
+    return json.dumps(working)
 
 
 def main():

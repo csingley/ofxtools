@@ -155,30 +155,29 @@ Here's how to use it.
 
 .. code-block:: bash
 
-    $ ofxget --scan fidelity
-    ({'versions': [102, 103, 151, 160], 'newlines': None, 'closed_tags': False}, {'versions': [200, 201, 202, 203, 210, 211, 220], 'newlines': None})
-    $ ofxget --scan etrade  
-    ({'versions': [102], 'newlines': None, 'closed_tags': None}, {})
+    $ ofxget --scan etrade
+    {"102": [{"pretty": false, "unclosed_elements": true}, {"pretty": false, "unclosed_elements": false}]}
     $ ofxget --scan usaa    
-    ({'versions': [102, 151], 'newlines': None, 'closed_tags': False}, {'versions': [200, 202], 'newlines': None})
+    {"102": [{"pretty": false, "unclosed_elements": true}, {"pretty": true, "unclosed_elements": true}], "151": [{"pretty": false, "unclosed_elements": true}, {"pretty": true, "unclosed_elements": true}], "200": [{"pretty": true, "unclosed_elements": false}, {"pretty": false, "unclosed_elements": false}], "202": [{"pretty": true, "unclosed_elements": false}, {"pretty": false, "unclosed_elements": false}]}
+    $ ofxget --scan vanguard
+    {"102": [{"pretty": false, "unclosed_elements": true}, {"pretty": true, "unclosed_elements": false}, {"pretty": true, "unclosed_elements": true}], "103": [{"pretty": true, "unclosed_elements": false}, {"pretty": false, "unclosed_elements": true}, {"pretty": true, "unclosed_elements": true}], "151": [{"pretty": true, "unclosed_elements": false}, {"pretty": true, "unclosed_elements": true}, {"pretty": false, "unclosed_elements": true}], "160": [{"pretty": true, "unclosed_elements": false}, {"pretty": true, "unclosed_elements": true}, {"pretty": false, "unclosed_elements": true}], "200": [{"pretty": true, "unclosed_elements": false}], "201": [{"pretty": true, "unclosed_elements": false}], "202": [{"pretty": true, "unclosed_elements": false}], "203": [{"pretty": true, "unclosed_elements": false}], "210": [{"pretty": true, "unclosed_elements": false}], "211": [{"pretty": true, "unclosed_elements": false}], "220": [{"pretty": true, "unclosed_elements": false}]}
 
-Try to exercise restraint with this command.  Each invocation sends several
-dozen HTTP requests to the server; you can get your IP throttled or blocked.
+(Try to exercise restraint with this command.  Each invocation sends several
+dozen HTTP requests to the server; you can get your IP throttled or blocked.)
 
-The output shows configurations that worked - a tuple of (OFXv1, OFXv2).
-Interpret the dictionary values as follows: "None" means optional;
-"True" means mandatory; and "False" means forbidden.
+The output shows configurations that worked.
 
-Fidelity will accept any version of OFX, with or without newlines, but if
-you send OFXv1, it can't have closing tags.
-
-E*Trade will only accept OFX version 1.02; they don't care about newlines or
+E*Trade will only accept OFX version 1.0.2; they don't care about newlines or
 closing tags.
 
-USAA only accepts specific versions of OFX version 1 or 2.  Like Fidelity,
-if you connect with OFXv1, it needs to be old-school SGML - no closing tags.
+USAA only accepts OFX versions 1.0.2, 1.5.1, 2.0.0, and 2.0.2.  Version 1 needs
+to be old-school SGML - no closing tags.  Newlines are optional.
 
-Write these configs in your ``ofxget.cfg`` like so:
+Vanguard is a little funkier.  They accept all versions of OFX, but version
+2 must have newlines.  For version 1, you must either insert newlines or
+leave element tags unclosed (or both).  Closing tags will fail without newlines.
+
+Copy these configs in your ``ofxget.cfg`` like so:
 
 .. code-block:: ini
 
@@ -186,39 +185,22 @@ Write these configs in your ``ofxget.cfg`` like so:
     ofxhome_id: 446
     version: 102
 
-    [fidelity]
-    ofxhome_id: 449
+    [usaa]
+    ofxhome_id: 483
     version: 103
-    unclosedelements: yes
-    prettyprint: yes
+    unclosedelements: true
 
-    [usaa]
-    ofxhome_id: 483
-    version: 102
-    unclosedelements: yes
-    prettyprint: no
-
-The ``prettyprint`` configs are just to show the boolean syntax.  Really,
-for these FIs you can avoid mucking around with newlines and closing tags just
-by using a supported version number.
-
-.. code-block:: ini
-
-    [etrade]
-    ofxhome_id: 446
-    version: 102
-
-    [fidelity]
-    ofxhome_id: 449
+    [vanguard]
+    ofxhome_id: 479
     version: 203
+    pretty: false
 
-    [usaa]
-    ofxhome_id: 483
-    version: 202
+
+In reality, though, it'd probaby be better just to use OFX 2.0.2 for USAA.
 
 The master configs for OFX connection parameters are located in
 ``ofxtools/config/fi.cfg`` - if you get something working, edit it there and
-submit a pull request to help out others.
+submit a pull request to share it with others.
 
 Finally, many banks configure their servers to reject any connections that
 aren't from Quicken.  It's usually safest to tell them you're a recent version
