@@ -87,12 +87,12 @@ def tostring_unclosed_elements(elem):
     Drop-in replacement for xml.etree.ElementTree.tostring().
     """
     if len(elem) == 0:
-        output = bytes("<{}>{}".format(elem.tag, elem.text or ""), "utf_8")
+        output = bytes("<{}>{}{}".format(elem.tag, elem.text or "", elem.tail or ""), "utf_8")
     else:
-        output = bytes("<{}>".format(elem.tag), "utf_8")
+        output = bytes("<{}>{}".format(elem.tag, elem.tail or ""), "utf_8")
         for child in elem:
             output += tostring_unclosed_elements(child)
-        output += bytes("</{}>".format(elem.tag), "utf_8")
+        output += bytes("</{}>{}".format(elem.tag, elem.tail or ""), "utf_8")
     return output
 
 
