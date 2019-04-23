@@ -155,12 +155,12 @@ Here's how to use it.
 
 .. code-block:: bash
 
-    $ ofxget --scan etrade
-    {"102": [{"pretty": false, "unclosed_elements": true}, {"pretty": false, "unclosed_elements": false}]}
-    $ ofxget --scan usaa    
-    {"102": [{"pretty": false, "unclosed_elements": true}, {"pretty": true, "unclosed_elements": true}], "151": [{"pretty": false, "unclosed_elements": true}, {"pretty": true, "unclosed_elements": true}], "200": [{"pretty": true, "unclosed_elements": false}, {"pretty": false, "unclosed_elements": false}], "202": [{"pretty": true, "unclosed_elements": false}, {"pretty": false, "unclosed_elements": false}]}
+    $ ofxget --scan etrade  
+    [{"versions": [102], "formats": [{"pretty": false, "unclosed_elements": true}, {"pretty": false, "unclosed_elements": false}]}, {"versions": [], "formats": []}]
+    $ ofxget --scan usaa
+    [{"versions": [102, 151], "formats": [{"pretty": false, "unclosed_elements": true}, {"pretty": true, "unclosed_elements": true}]}, {"versions": [200, 202], "formats": [{"pretty": false}, {"pretty": true}]}]
     $ ofxget --scan vanguard
-    {"102": [{"pretty": false, "unclosed_elements": true}, {"pretty": true, "unclosed_elements": false}, {"pretty": true, "unclosed_elements": true}], "103": [{"pretty": true, "unclosed_elements": false}, {"pretty": false, "unclosed_elements": true}, {"pretty": true, "unclosed_elements": true}], "151": [{"pretty": true, "unclosed_elements": false}, {"pretty": true, "unclosed_elements": true}, {"pretty": false, "unclosed_elements": true}], "160": [{"pretty": true, "unclosed_elements": false}, {"pretty": true, "unclosed_elements": true}, {"pretty": false, "unclosed_elements": true}], "200": [{"pretty": true, "unclosed_elements": false}], "201": [{"pretty": true, "unclosed_elements": false}], "202": [{"pretty": true, "unclosed_elements": false}], "203": [{"pretty": true, "unclosed_elements": false}], "210": [{"pretty": true, "unclosed_elements": false}], "211": [{"pretty": true, "unclosed_elements": false}], "220": [{"pretty": true, "unclosed_elements": false}]}
+    [{"versions": [102, 103, 151, 160], "formats": [{"pretty": false, "unclosed_elements": true}, {"pretty": true, "unclosed_elements": true}, {"pretty": true, "unclosed_elements": false}]}, {"versions": [200, 201, 202, 203, 210, 211, 220], "formats": [{"pretty": true}]}]
 
 (Try to exercise restraint with this command.  Each invocation sends several
 dozen HTTP requests to the server; you can get your IP throttled or blocked.)
@@ -187,13 +187,13 @@ Copy these configs in your ``ofxget.cfg`` like so:
 
     [usaa]
     ofxhome_id: 483
-    version: 103
+    version: 151
     unclosedelements: true
 
     [vanguard]
     ofxhome_id: 479
     version: 203
-    pretty: false
+    pretty: true
 
 
 In reality, though, it'd probaby be better just to use OFX 2.0.2 for USAA.

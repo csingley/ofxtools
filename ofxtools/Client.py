@@ -624,7 +624,7 @@ def do_scan(args):
     """
     Report working connection parameters
     """
-    results = scan_ofx_profile(args.url, args.org, args.fid)
+    results = scan_profile(args.url, args.org, args.fid)
     print(results)
 
 
@@ -856,9 +856,9 @@ def merge_config(config, args):
     return args
 
 
-def scan_ofx_profiles(start, stop, timeout=None):
+def scan_profiles(start, stop, timeout=None):
     """
-    Scan OFX Home's list of FIs fo
+    Scan OFX Home's list of FIs for working connection configs.
     """
     results = {}
 
@@ -870,26 +870,23 @@ def scan_ofx_profiles(start, stop, timeout=None):
                ofxhome.ofx_invalid(lookup),
                ofxhome.ssl_invalid(lookup))):
             continue
-        working = scan_ofx_profile(url=lookup.url,
-                                   org=lookup.org,
-                                   fid=lookup.fid,
-                                   timeout=timeout)
+        working = scan_profile(url=lookup.url,
+                               org=lookup.org,
+                               fid=lookup.fid,
+                               timeout=timeout)
         if working:
             results[ofxhome_id] = working
 
     return results
 
 
-def scan_ofx_profile(url, org, fid, timeout=None):
+def scan_profile(url, org, fid, timeout=None):
     """
     Report permutations of OFX version/prettyprint/unclosed_elements that
     successfully download OFX profile from server.
 
-    Returns (OFXv1 results, OFXv2 results), each type(dict).
-    In the dict values:
-        - ``None`` means optional
-        - ``True`` means required
-        - ``False`` means forbidden
+    Returns a pair of (OFXv1 results, OFXv2 results), each type(dict).
+    dict values provide ``ofxget`` configs that will work to connect.
     """
     if timeout is None:
         timeout = 5
@@ -932,12 +929,42 @@ def scan_ofx_profile(url, org, fid, timeout=None):
             continue
         else:
             (version, prettyprint, close_elements) = futures[future]
-            working[version].append({"pretty": prettyprint,
-                                     "unclosed_elements": not close_elements})
+            working[version].append((prettyprint, close_elements))
 
-    # Sort by OFX version
-    working = OrderedDict(sorted(working.items(), key=lambda i: i[0]))
-    return json.dumps(working)
+    def collate_results(results):
+        results = list(results)
+        if not results:
+            return [], []
+        versions, formats = zip(*results)
+
+        # Assumption: the same formatting requirements apply to all
+        # sub-versions (e.g. 1.0.2 and 1.0.3, or 2.0.3 and 2.2.0).
+        # If a (pretty, close_elements) pair succeeds on most sub-versions
+        # but fails on a few, we'll chalk it up to network transmission
+        # errors and ignore it.
+        #
+        # Translation: just pick the longest sequence of successful
+        # formats and assume it applies to the whole version.
+        formats = max(formats, key=len)
+        formats.sort()
+        formats = [OrderedDict([("pretty", format[0]),
+                               ("unclosed_elements", not format[1])])
+                   for format in formats]
+        return sorted(list(versions)), formats
+
+    v2, v1 = utils.partition(lambda pair: pair[0] < 200, working.items())
+    v1_versions, v1_formats = collate_results(v1)
+    v2_versions, v2_formats = collate_results(v2)
+
+    # V2 always has closing tags for elements; just report prettyprint
+    for format in v2_formats:
+        del format["unclosed_elements"]
+
+    return json.dumps((OrderedDict([("versions", v1_versions),
+                                    ("formats", v1_formats)]),
+                       OrderedDict([("versions", v2_versions),
+                                    ("formats", v2_formats)])))
+
 
 
 def main():
