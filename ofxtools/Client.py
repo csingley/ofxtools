@@ -866,9 +866,7 @@ def scan_profiles(start, stop, timeout=None):
     for institution in institutions[start:stop]:
         ofxhome_id = int(institution.get("id"))
         lookup = ofxhome.lookup(ofxhome_id)
-        if any((lookup is None,
-               ofxhome.ofx_invalid(lookup),
-               ofxhome.ssl_invalid(lookup))):
+        if lookup is None or ofxhome.ofx_invalid(lookup) or ofxhome.ssl_invalid(lookup):
             continue
         working = scan_profile(url=lookup.url,
                                org=lookup.org,
@@ -964,7 +962,6 @@ def scan_profile(url, org, fid, timeout=None):
                                     ("formats", v1_formats)]),
                        OrderedDict([("versions", v2_versions),
                                     ("formats", v2_formats)])))
-
 
 
 def main():
