@@ -12,12 +12,6 @@ to which ``ofxtools`` can connect and download OFX data for you.
 
 Using the ofxget script
 -----------------------
-Activate the virtual environment in which you installed ``ofxtools``, e.g.
-
-.. code-block:: bash
-
-    $ source ~/.venvs/ofxtools/bin/activate
-
 Execute ``ofxget`` with appropriate arguments, for example:
 
 .. code-block:: bash
