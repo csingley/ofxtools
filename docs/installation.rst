@@ -10,6 +10,9 @@ A simpler option for keeping clutter out of your system Python site is the
 `user install`_ option, which is recommended if only one system user needs
 the package (the normal situation).
 
+**NOTE: As of version 0.6, ofxtools no longer supports Python version 2,
+which goes EOL 2020-01-01.**
+
 Standard installation
 ---------------------
 If you just want to use the ``ofxtools`` library, and you don't have any
