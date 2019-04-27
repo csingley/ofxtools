@@ -360,7 +360,7 @@ class DateTime(Element):
                        (
                             (?P<hour>\d\d)(?P<minute>\d\d)((?P<second>\d\d))?
                             (
-                                \.(?P<millisecond>\d\d\d)
+                                (\.(?P<millisecond>\d\d\d))?
                                 (
                                     \[(?P<gmt_offset_hours>[0-9-+]+)
                                     (
