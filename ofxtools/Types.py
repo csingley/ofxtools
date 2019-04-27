@@ -383,28 +383,36 @@ class DateTime(Element):
 
     type = datetime.datetime
     # Valid datetime formats given by OFX spec
+    #
+    # WORKAROUND
+    # JPM sends DTPOSTED formatted as YYYYMMDDHHMMSS[offset], which isn't
+    # valid per the spec.  We allow it.
     regex = re.compile(
         r"""
-                       ^
-                       (?P<year>\d\d\d\d)
-                       (?P<month>\d\d)
-                       (?P<day>\d\d)
-                       (
-                            (?P<hour>\d\d)(?P<minute>\d\d)((?P<second>\d\d))?
-                            (
-                                (\.(?P<millisecond>\d\d\d))?
-                                (
-                                    \[(?P<gmt_offset_hours>[0-9-+]+)
-                                    (
-                                        (.(?P<gmt_offset_minutes>\d\d))?
-                                        (:(?P<tz_name>.*))?
-                                    )?
-                                    \]
-                                )?
-                            )?
-                       )?
-                       $
-                       """,
+        ^
+        (?P<year>[0-9]{4})
+        (?P<month>(0[1-9])|(1[0-2]))
+        (?P<day>(0[1-9])|([1-2][0-9])|(3[0-1]))
+        (
+            (
+                (?P<hour>([0-1][0-9])|(2[0-3]))
+                (?P<minute>[0-5][0-9])
+                (?P<second>([0-5][0-9])|(60))
+                (
+                    (\.(?P<millisecond>[0-9]{3}))?
+                    (
+                        \[(?P<gmt_offset_hours>[0-9-+]+)
+                        (
+                            (.(?P<gmt_offset_minutes>\d\d))?
+                            (:(?P<tz_name>.*))?
+                        )?
+                        \]
+                    )?
+                )?
+            )?
+        )?
+        $
+        """,
         re.VERBOSE,
     )
 
@@ -510,23 +518,30 @@ class Time(DateTime):
 
     type = datetime.time
     # Valid time formats given by OFX spec
+    #
+    # N.B. the language from section 3.2.8.3 gives the format as:
+    # HHMMSS.XXX[gmt offset[:tz name]]
+    # This is inconsistent with the regex from the DTD.  We follow the
+    # DTD rather than the human language version
     regex = re.compile(
         r"""
-                       ^
-                       (?P<hour>\d\d)(?P<minute>\d\d)(?P<second>\d\d)
-                       (
-                            \.(?P<millisecond>\d\d\d)
-                            (
-                                \[(?P<gmt_offset_hours>[0-9-+]+)
-                                (
-                                    (.(?P<gmt_offset_minutes>\d\d))?
-                                    (:(?P<tz_name>.*))?
-                                )?
-                                \]
-                            )?
-                       )?
-                       $
-                       """,
+        ^
+        (?P<hour>([0-1][0-9])|(2[0-3]))
+        (?P<minute>[0-5][0-9])
+        (?P<second>([0-5][0-9])|(60))
+        (
+            (\.(?P<millisecond>[0-9]{3}))?
+            (
+                \[(?P<gmt_offset_hours>[0-9-+]+)
+                (
+                    (.(?P<gmt_offset_minutes>\d\d))?
+                    (:(?P<tz_name>.*))?
+                )?
+                \]
+            )?
+        )?
+        $
+        """,
         re.VERBOSE,
     )
 

@@ -421,19 +421,18 @@ class DateTimeTestCase(unittest.TestCase, Base):
         # Accept YYYYMMDD
         check = datetime.datetime(2011, 11, 17, 0, 0, 0, 0, tzinfo=UTC)
         self.assertEqual(check, t.convert("20111117"))
-        # Accept YYYYMMDDHHMM
-        check = datetime.datetime(2011, 11, 17, 3, 30, 0, 0, tzinfo=UTC)
-        self.assertEqual(check, t.convert("201111170330"))
         # Accept YYYYMMDDHHMMSS
         check = datetime.datetime(2011, 11, 17, 3, 30, 45, 0, tzinfo=UTC)
         self.assertEqual(check, t.convert("20111117033045"))
         # Accept YYYYMMDDHHMMSS.XXX
         check = datetime.datetime(2011, 11, 17, 3, 30, 45, 150000, tzinfo=UTC)
         self.assertEqual(check, t.convert("20111117033045.150"))
-
         # Accept YYYYMMDDHHMMSS.XXX[offset]
         check = datetime.datetime(2011, 11, 17, 9, 30, 45, 150000, tzinfo=UTC)
         self.assertEqual(check, t.convert("20111117033045.150[-6]"))
+        # Accept YYYYMMDDHHMMSS[offset] - workaround for Chase Bank
+        check = datetime.datetime(2011, 11, 17, 9, 30, 45, tzinfo=UTC)
+        self.assertEqual(check, t.convert("20111117033045[-6]"))
         # Accept YYYYMMDDHHMMSS.XXX[offset:TZ]
         check = datetime.datetime(2011, 11, 17, 9, 30, 45, 150000, tzinfo=UTC)
         self.assertEqual(check, t.convert("20111117033045.150[-6:CST]"))
@@ -458,6 +457,12 @@ class DateTimeTestCase(unittest.TestCase, Base):
         # Don't accept integer
         with self.assertRaises(ValueError):
             t.convert(123)
+        # Don't accept YYYYMMDDHHMM
+        with self.assertRaises(ValueError):
+            t.convert("201111170330")
+        # Don't accept YYYYMMDD.XXX
+        with self.assertRaises(ValueError):
+            t.convert("20111117.150")
         # Don't accept YYYYMMDDHHMMSS.XXX[-:TZ] for TZs not defined in kludge
         with self.assertRaises(ValueError):
             t.convert("20111117033045.150[-:GMT]")
@@ -522,6 +527,10 @@ class TimeTestCase(unittest.TestCase, Base):
         # Accept + prefixed GMT offsets
         check = datetime.time(2, 30, 45, 20000, tzinfo=UTC)
         self.assertEqual(check, t.convert("033045.020[+1]"))
+
+        # Accept HHMMSS[offset:TZ]
+        check = datetime.time(9, 30, 45, tzinfo=UTC)
+        self.assertEqual(check, t.convert("033045[-6:CST]"))
 
         # Accept HHMMSS.XXX[offset:TZ]
         check = datetime.time(9, 30, 45, 150000, tzinfo=UTC)
