@@ -879,6 +879,7 @@ class CliTestCase(unittest.TestCase):
             clientuid=None,
             unclosedelements=False,
             pretty=False,
+            unsafe=False
         )
 
     def testInitClient(self):
@@ -1012,6 +1013,7 @@ class CliTestCase(unittest.TestCase):
                              "dryrun": False,
                              "close_elements": True,
                              "prettyprint": False,
+                             "verify_ssl": True,
                             }
                 )
 
@@ -1125,6 +1127,7 @@ class CliTestCase(unittest.TestCase):
                     "dryrun": True,
                     "close_elements": True,
                     "prettyprint": False,
+                    "verify_ssl": True,
                 }
             )
 
@@ -1142,6 +1145,7 @@ class CliTestCase(unittest.TestCase):
                 "dryrun": True,
                 "close_elements": True,
                 "prettyprint": False,
+                "verify_ssl": True,
             })
 
 
@@ -1172,7 +1176,7 @@ class MainTestCase(unittest.TestCase):
     def testMakeArgparser(self):
         fi_index = ["bank0", "broker0"]
         argparser = make_argparser(fi_index)
-        self.assertEqual(len(argparser._actions), 31)
+        self.assertEqual(len(argparser._actions), 32)
 
     def testMergeConfig(self):
         config = MagicMock()
