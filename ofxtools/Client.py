@@ -183,6 +183,7 @@ class OFXClient:
         dryrun=False,
         prettyprint=False,
         close_elements=True,
+        verify_ssl=True,
         timeout=None):
         """
         Package and send OFX statement requests (STMTRQ/CCSTMTRQ/INVSTMTRQ).
@@ -234,6 +235,7 @@ class OFXClient:
             version=version,
             prettyprint=prettyprint,
             close_elements=close_elements,
+            verify_ssl=verify_ssl,
             timeout=timeout,
         )
 
@@ -250,6 +252,7 @@ class OFXClient:
         dryrun=False,
         prettyprint=False,
         close_elements=True,
+        verify_ssl=True,
         timeout=None):
         """
         Package and send OFX end statement requests (STMTENDRQ, CCSTMTENDRQ).
@@ -294,6 +297,7 @@ class OFXClient:
             version=version,
             prettyprint=prettyprint,
             close_elements=close_elements,
+            verify_ssl=verify_ssl,
             timeout=timeout,
         )
 
@@ -308,6 +312,7 @@ class OFXClient:
         version=None,
         prettyprint=False,
         close_elements=True,
+        verify_ssl=True,
         timeout=None):
         """
         Package and send OFX profile requests (PROFRQ).
@@ -334,6 +339,7 @@ class OFXClient:
             version=version,
             prettyprint=prettyprint,
             close_elements=close_elements,
+            verify_ssl=verify_ssl,
             timeout=timeout,
         )
 
@@ -350,6 +356,7 @@ class OFXClient:
         version=None,
         prettyprint=False,
         close_elements=True,
+        verify_ssl=True,
         timeout=None):
         """
         Package and send OFX account info requests (ACCTINFORQ)
@@ -372,6 +379,7 @@ class OFXClient:
             version=version,
             prettyprint=prettyprint,
             close_elements=close_elements,
+            verify_ssl=verify_ssl,
             timeout=timeout,
         )
 
@@ -598,7 +606,8 @@ def do_stmt(args):
         clientuid=args.clientuid,
         dryrun=args.dryrun,
         close_elements=not args.unclosedelements,
-        prettyprint=args.pretty
+        prettyprint=args.pretty,
+        verify_ssl=not args.unsafe
     ) as f:
         response = f.read()
 
@@ -613,7 +622,8 @@ def do_profile(args):
     with client.request_profile(
         dryrun=args.dryrun,
         close_elements=not args.unclosedelements,
-        prettyprint=args.pretty
+        prettyprint=args.pretty,
+        verify_ssl=not args.unsafe
     ) as f:
         response = f.read()
 
@@ -647,7 +657,8 @@ def do_acctinfo(args):
                                  dtacctup,
                                  dryrun=args.dryrun,
                                  close_elements=not args.unclosedelements,
-                                 prettyprint=args.pretty
+                                 prettyprint=args.pretty,
+                                 verify_ssl=not args.unsafe
                                 ) as f:
         response = f.read()
 
@@ -705,6 +716,12 @@ def make_argparser(fi_index):
         action="store_true",
         default=False,
         help="Download OFX profile instead of statement",
+    )
+    argparser.add_argument(
+        "--unsafe",
+        action="store_true",
+        default=False,
+        help="Disable SSL certificate verification",
     )
     argparser.add_argument(
         "--scan",
@@ -878,7 +895,7 @@ def scan_profiles(start, stop, timeout=None):
     return results
 
 
-def scan_profile(url, org, fid, timeout=None):
+def scan_profile(url, org, fid, max_workers=None, timeout=None):
     """
     Report permutations of OFX version/prettyprint/unclosed_elements that
     successfully download OFX profile from server.
@@ -889,12 +906,15 @@ def scan_profile(url, org, fid, timeout=None):
     if timeout is None:
         timeout = 5
 
+    if max_workers is None:
+        max_workers = 5
+
     ofxv1 = [102, 103, 151, 160]
     ofxv2 = [200, 201, 202, 203, 210, 211, 220]
 
     futures = {}
     client = OFXClient(url, org, fid)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         for prettyprint in (False, True):
             for close_elements in (False, True):
                 futures.update({executor.submit(
