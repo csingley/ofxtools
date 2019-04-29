@@ -10,8 +10,32 @@ A simpler option for keeping clutter out of your system Python site is the
 `user install`_ option, which is recommended if only one system user needs
 the package (the normal situation).
 
-**NOTE: As of version 0.6, ofxtools no longer supports Python version 2,
-which goes EOL 2020-01-01.**
+Installation dependencies
+-------------------------
+You need to install Python 3 (at least version 3.4) in order to use ``ofxtools``.
+It won't work at all under Python 2.
+
+In order to use the OFX client to download OFX files, your Python 3 installation
+needs to be able to validate SSL certificates.  Users of Mac OS X should heed
+the following note from the `ReadMe.rtf` included with the Python installer as
+of version 3.6:
+
+    This variant of Python 3.6 now includes its own private copy of OpenSSL 1.0.2.
+    Unlike previous releases, the deprecated Apple-supplied OpenSSL libraries are
+    no longer used.  This also means that the trust certificates in system and user
+    keychains managed by the Keychain Access application and the security command
+    line utility are no longer used as defaults by the Python ssl module.
+    For 3.6.0, a sample command script is included in /Applications/Python 3.6
+    to install a curated bundle of default root certificates from the
+    third-party `certifi`_ package.
+
+To facilitate keeping this important security package up to date, it's advisable
+for Mac users to instead employ `pip`:
+
+.. code-block:: bash
+
+    pip install certifi
+
 
 Standard installation
 ---------------------
@@ -65,3 +89,4 @@ downloading files from OFX servers - and its sample configuration file in
 .. _PyPI: https://pypi.python.org/pypi/ofxtools
 .. _current master: https://github.com/csingley/ofxtools/archive/master.zip
 .. _development mode: https://setuptools.readthedocs.io/en/latest/setuptools.html?highlight=development%20mode#develop-deploy-the-project-source-in-development-mode
+.. _certifi: https://pypi.org/project/certifi/
