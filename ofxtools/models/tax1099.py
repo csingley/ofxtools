@@ -301,8 +301,9 @@ class TAX1099INT_V100(Aggregate):
     stateidnum = String(32)
     statetaxwheld = Decimal()
     addlstatetaxwhagg = SubAggregate(ADDLSTATETAXWHAGG)
-    payeraddr = SubAggregate(PAYERADDR)
+    payeraddr = SubAggregate(PAYERADDR, required=True)
     payerid = String(32, required=True)
+    recaddr = SubAggregate(RECADDR)
     recid = String(32)
     recacct = String(32)
     tinnot = Bool()
@@ -421,7 +422,8 @@ class TAX1099RS(Aggregate):
         # Must contain at least one TAX1099x_Vy
         if len(args) == 0:
             msg = "{} must contain at least one of {}"
-            raise ValueError(msg.format(cls.__name__, cls.listitems.keys()))
+            raise ValueError(msg.format(cls.__name__,
+                                        list(cls.listitems.keys())))
 
         super().validate_args(*args, **kwargs)
 
@@ -433,7 +435,7 @@ class TAX1099TRNRQ(TrnRq):
 
 class TAX1099TRNRS(TrnRs):
     """ OFX tax extensions section 2.2.4 """
-    tax1099rs = SubAggregate(TAX1099RS, required=True)
+    tax1099rs = SubAggregate(TAX1099RS)
 
 
 class TAX1099MSGSRQV1(Aggregate):
@@ -446,7 +448,8 @@ class TAX1099MSGSRQV1(Aggregate):
         # Must contain at least one TAX1099TRNRQ
         if len(args) == 0:
             msg = "{} must contain at least one of {}"
-            raise ValueError(msg.format(cls.__name__, cls.listitems.keys()))
+            raise ValueError(msg.format(cls.__name__,
+                                        list(cls.listitems.keys())))
 
         super().validate_args(*args, **kwargs)
 
@@ -461,7 +464,8 @@ class TAX1099MSGSRSV1(Aggregate):
         # Must contain at least one TAX1099TRNRS
         if len(args) == 0:
             msg = "{} must contain at least one of {}"
-            raise ValueError(msg.format(cls.__name__, cls.listitems.keys()))
+            raise ValueError(msg.format(cls.__name__,
+                                        list(cls.listitems.keys())))
 
         super().validate_args(*args, **kwargs)
 
@@ -479,7 +483,8 @@ class TAX1099MSGSETV1(ElementList):
         # Must contain at least one TAXYEARSUPPORTED
         if len(args) == 0:
             msg = "{} must contain at least one of {}"
-            raise ValueError(msg.format(cls.__name__, cls.listitems.keys()))
+            raise ValueError(msg.format(cls.__name__,
+                                        list(cls.listitems.keys())))
 
         super().validate_args(*args, **kwargs)
 
