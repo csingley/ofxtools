@@ -1354,9 +1354,8 @@ class Tax1099msgsetv1TestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return TAX1099MSGSETV1(msgsetcore=MsgsetcoreTestCase.aggregate,
-                               tax1099dnld=True, extd1099b=True,
-                               taxyearsupported=2005)
+        return TAX1099MSGSETV1(2005, msgsetcore=MsgsetcoreTestCase.aggregate,
+                               tax1099dnld=True, extd1099b=True)
 
 
 class Tax1099msgsetTestCase(unittest.TestCase, base.TestAggregate):
