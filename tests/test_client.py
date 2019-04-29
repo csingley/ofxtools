@@ -19,7 +19,6 @@ from ofxtools.Client import (
     InvStmtRq,
     StmtEndRq,
     CcStmtEndRq,
-    OFXConfigParser,
     init_client,
     make_argparser,
     merge_config,
@@ -825,27 +824,6 @@ class UtilitiesTestCase(unittest.TestCase):
             result,
             ("<ROOT>" "<LEVEL1>" "<LEVEL2>level2" "</LEVEL1>" "<LEVEL1>" "</ROOT>"),
         )
-
-
-class OFXConfigParserTestCase(unittest.TestCase):
-    @property
-    def parser(self):
-        parser = OFXConfigParser()
-        return parser
-
-    def testRead(self):
-        with patch("configparser.ConfigParser.read") as fake_read:
-            filenames = ["/fake/path"]
-            self.parser.read(filenames)
-            args, kwargs = fake_read.call_args
-            self.assertEqual(len(args), 2)
-            parser = args[0]
-            self.assertIsInstance(parser, OFXConfigParser)
-            self.assertEqual(args[1], filenames)
-            self.assertEqual(len(kwargs), 0)
-
-    def testFiIndex(self):
-        pass
 
 
 class CliTestCase(unittest.TestCase):

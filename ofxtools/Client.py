@@ -35,9 +35,9 @@ import datetime
 import uuid
 import xml.etree.ElementTree as ET
 from collections import namedtuple, defaultdict, OrderedDict
-from os import path
+#  from os import path
 import getpass
-from configparser import ConfigParser
+#  from configparser import ConfigParser
 import ssl
 import urllib
 from io import BytesIO
@@ -77,9 +77,8 @@ from ofxtools.models.invest import (
     INCPOS,
     INVSTMTMSGSRQV1,
 )
-from ofxtools import utils
 from ofxtools.utils import UTC
-from ofxtools import ofxhome
+from ofxtools import (utils, ofxhome, config)
 
 
 # Statement request data containers
@@ -665,36 +664,6 @@ def do_acctinfo(args):
     print(response.decode())
 
 
-class OFXConfigParser(ConfigParser):
-    """
-    INI parser that loads default FI configs from oftools/config/fi.cfg and
-    updates them from the user config file specified in its [global] section.
-
-    It also provides a list of configured FIs (i.e. config sections except
-    for [global]) for use by the CLI --help.
-    """
-
-    fi_config = path.join(path.dirname(__file__), "config", "fi.cfg")
-
-    def __init__(self):
-        ConfigParser.__init__(self)
-
-    def read(self, filenames=None):
-        # Load FI config
-        with open(utils.fixpath(self.fi_config)) as fi_config:
-            self.read_file(fi_config)
-        # Then load user configs (defaults to fi.cfg [global] config: value)
-        filenames = filenames or utils.fixpath(self.get("global", "config"))
-        return ConfigParser.read(self, filenames)
-
-    @property
-    def fi_index(self):
-        """ List of configured FIs """
-        sections = self.sections()
-        sections.remove("global")
-        return sections
-
-
 def make_argparser(fi_index):
     from argparse import ArgumentParser
 
@@ -986,10 +955,10 @@ def scan_profile(url, org, fid, max_workers=None, timeout=None):
 
 def main():
     # Read config first, so fi_index can be used in help
-    config = OFXConfigParser()
-    config.read()
+    cfg = config.OfxgetConfigParser()
+    cfg.read()
 
-    argparser = make_argparser(config.fi_index)
+    argparser = make_argparser(cfg.fi_index)
 
     args = argparser.parse_args()
 
@@ -998,7 +967,7 @@ def main():
     if urllib.parse.urlparse(server).scheme:
         args.url = server
     else:
-        args = merge_config(config, args)
+        args = merge_config(cfg, args)
 
     # Pass the parsed args to the statement-request function
     if args.profile:
