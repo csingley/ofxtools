@@ -61,7 +61,7 @@ via the included setup file:
 
 .. code-block:: bash
 
-    pip install .
+    pip install --user .
 
 
 Developer's installation
@@ -79,9 +79,9 @@ is in `development mode`_:
 Extra goodies
 -------------
 In addition to the Python package, these methods will also install the
-``ofxget`` script in ``~/.local/bin`` - a simple command line interface for
-downloading files from OFX servers - and its sample configuration file in
-``~/.config/ofxtools``.
+``ofxget`` script - a basic command line interface for downloading files from
+OFX servers.  ``pip uninstall ofxtools`` will remove this script along with
+the package.
 
 
 .. _virtual environment: https://packaging.python.org/tutorials/installing-packages/#creating-virtual-environments

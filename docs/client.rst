@@ -28,13 +28,18 @@ ISO-8601 (YYYY-mm-dd).
 Of course, typing this kind of command gets old very quickly.  You can store
 these details in a config file for reuse:
 
--  Copy ``~/.config/ofxtools/ofxget_example.cfg`` to
-   ``~/.config/ofxtools/ofxget.cfg`` and edit.
--  Add a section for your financial institution, including URL, account
-   information, login, etc.  See comments within the example file.
+-  Copy ``</path/to/ofxtools>/config/ofxget_example.cfg`` to
+  ``</path/to/user/config/directory>/ofxtools/ofxget.cfg``.
+  On Linux and Mac, the user config directory should be ``.config`` inside
+  your home directory.
+  On Windows, the user config directory should be ``AppData\Roaming`` inside
+  your user folder.
+-  Edit your copy of ``ofxget.cfg``, adding sections for your financial
+  institutions, including URL, account information, username, etc.
+  See comments within the example file.
 
 Since ``ofxtools`` already has connection information for American Express,
-our own config file would just look like this:
+our own ``ofxget.cfg`` here would just look like this:
 
 .. code-block:: ini
 
@@ -51,11 +56,12 @@ A more fully-specified configuration might look like this:
     [amex]
     url: https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload
     version: 220
-    org: AMEX
-    fid: 3101
     appid: QWIN
     appver:  2700
     user: porkypig
+    clientuid: 05425a7c-5f64-457c-92f1-544b52ae00eb
+    org: AMEX
+    fid: 3101
     creditcard: 88888888888,99999999999
 
 Using such a configuration, the command invocation simplifies to this:
