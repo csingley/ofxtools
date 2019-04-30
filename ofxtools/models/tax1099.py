@@ -409,7 +409,7 @@ class TAX1099RS(Aggregate):
     """ OFX tax extensions section 2.2.6 """
     acctnum = String(32)
     recid = String(32)
-    fidirectdepositinfo = SubAggregate(FIDIRECTDEPOSITINFO)
+    fidirectdepositinfo = ListItem(FIDIRECTDEPOSITINFO)
     tax1099misc_v100 = ListItem(TAX1099MISC_V100)
     tax1099r_v100 = ListItem(TAX1099R_V100)
     tax1099b_v100 = ListItem(TAX1099B_V100)
@@ -420,7 +420,7 @@ class TAX1099RS(Aggregate):
     @classmethod
     def validate_args(cls, *args, **kwargs):
         # Must contain at least one TAX1099x_Vy
-        if len(args) == 0:
+        if len([a for a in args if a.__class__.__name__.startswith("TAX1099")]) == 0:
             msg = "{} must contain at least one of {}"
             raise ValueError(msg.format(cls.__name__,
                                         list(cls.listitems.keys())))

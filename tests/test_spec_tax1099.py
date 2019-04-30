@@ -27,6 +27,10 @@ SONRS = models.SONRS(status=STATUS,
                      fi=models.FI(org="NCH", fid="1001"))
 SIGNONMSGSRSV1 = models.SIGNONMSGSRSV1(sonrs=SONRS)
 
+PAYERADDR = models.PAYERADDR(payername1="Broker One", addr1="1111 MTV",
+                             city="PAYER CITY", state="CA",
+                             postalcode="12345-6789")
+
 
 class Tax1099BTestCase(base.OfxTestCase, unittest.TestCase):
     """ OFX Tax Extensions Section 2.2.11 """
@@ -223,13 +227,6 @@ class Tax1099BTestCase(base.OfxTestCase, unittest.TestCase):
             salespr=Decimal("200.00"),
             washsalelossdisallowed=Decimal("50.00"))
 
-        payeraddr = models.PAYERADDR(
-            payername1="Broker One",
-            addr1="1111 MTV",
-            city="PAYER CITY",
-            state="CA",
-            postalcode="12345-6789")
-
         recaddr = models.RECADDR(
             recname1="Diane Jones",
             addr1="7535 Santa Fe Rd",
@@ -243,7 +240,7 @@ class Tax1099BTestCase(base.OfxTestCase, unittest.TestCase):
 
         tax1099b = models.TAX1099B_V100(
             srvrtid="IMASRVRTID", taxyear=2018, extdbinfo_v100=extdbinfo,
-            payeraddr=payeraddr, payerid="012345678", recaddr=recaddr,
+            payeraddr=PAYERADDR, payerid="012345678", recaddr=recaddr,
             recid="****56789", recacct="1000002222")
 
         return models.OFX(
@@ -253,25 +250,94 @@ class Tax1099BTestCase(base.OfxTestCase, unittest.TestCase):
                                     status=STATUS,
                                     tax1099rs=models.TAX1099RS(tax1099b))))
 
-        #  <TAX1099RS>
-            #  <RECID>111423815</RECID>
-            #  <FIDIRECTDEPOSITINFO>
-                #  <FINAME_DIRECTDEPOSIT>Your FI name here</FINAME_DIRECTDEPOSIT>
-                #  <FIROUTINGNUM>122000247</FIROUTINGNUM>
-                #  <FIACCTNUM>080808080808</FIACCTNUM>
-            #  </FIDIRECTDEPOSITINFO>
-            #  <FIDIRECTDEPOSITINFO>
-                #  <FINAME_DIRECTDEPOSIT>Your FI name here</FINAME_DIRECTDEPOSIT>
-                #  <FIROUTINGNUM>933000247</FIROUTINGNUM>
-                #  <FIACCTNUM>090809080808</FIACCTNUM>
-                #  <FIACCOUNTNICKNAME>James’ nest egg</FIACCOUNTNICKNAME>
-            #  </FIDIRECTDEPOSITINFO>
-            #  <TAX1099B_V100>
-            #  </TAX1099B_V100>
-        #  </TAX1099RS>
-        #  </TAX1099TRNRS>
-        #  </TAX1099MSGSRSV1>
-        #  </OFX>
+
+class FidirectdepositinfoTestCase(base.OfxTestCase, unittest.TestCase):
+    """
+    Sample request
+
+    OFX Tax Extensions Section 2.3.1
+    """
+    ofx = """
+    <OFX>
+        <SIGNONMSGSRSV1>
+            <SONRS>
+                <STATUS>
+                    <CODE>0</CODE>
+                    <SEVERITY>INFO</SEVERITY>
+                </STATUS>
+                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <LANGUAGE>ENG</LANGUAGE>
+                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <FI>
+                    <ORG>NCH</ORG>
+                    <FID>1001</FID>
+                </FI>
+            </SONRS>
+        </SIGNONMSGSRSV1>
+        <TAX1099MSGSRSV1>
+            <TAX1099TRNRS>
+                <TRNUID>1001</TRNUID>
+                <STATUS>
+                    <CODE>0</CODE>
+                    <SEVERITY>INFO</SEVERITY>
+                </STATUS>
+                <TAX1099RS>
+                    <RECID>111423815</RECID>
+                    <FIDIRECTDEPOSITINFO>
+                        <FINAME_DIRECTDEPOSIT>Your FI name here</FINAME_DIRECTDEPOSIT>
+                        <FIROUTINGNUM>122000247</FIROUTINGNUM>
+                        <FIACCTNUM>080808080808</FIACCTNUM>
+                    </FIDIRECTDEPOSITINFO>
+                    <FIDIRECTDEPOSITINFO>
+                        <FINAME_DIRECTDEPOSIT>Your FI name here</FINAME_DIRECTDEPOSIT>
+                        <FIROUTINGNUM>933000247</FIROUTINGNUM>
+                        <FIACCTNUM>090809080808</FIACCTNUM>
+                        <FIACCOUNTNICKNAME>James’ nest egg</FIACCOUNTNICKNAME>
+                    </FIDIRECTDEPOSITINFO>
+                    <TAX1099B_V100>
+                        <SRVRTID>IMASRVTID</SRVRTID>
+                        <TAXYEAR>2018</TAXYEAR>
+                        <PAYERADDR>
+                            <PAYERNAME1>Broker One</PAYERNAME1>
+                            <ADDR1>1111 MTV</ADDR1>
+                            <CITY>PAYER CITY</CITY>
+                            <STATE>CA</STATE>
+                            <POSTALCODE>12345-6789</POSTALCODE>
+                        </PAYERADDR>
+                        <PAYERID>012345678</PAYERID>
+                        <RECID>****56789</RECID>
+                    </TAX1099B_V100>
+                </TAX1099RS>
+            </TAX1099TRNRS>
+        </TAX1099MSGSRSV1>
+    </OFX>
+    """
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        tax1099b = models.TAX1099B_V100(
+            srvrtid="IMASRVRTID", taxyear=2018, payeraddr=PAYERADDR,
+            payerid="012345678", recid="****56789")
+
+        dd0 = models.FIDIRECTDEPOSITINFO(
+            finame_directdeposit="Your FI name here",
+            firouting_num="122000247",
+            fiacctnum="080808080808")
+        dd1 = models.FIDIRECTDEPOSITINFO(
+            finame_directdeposit="Your FI name here",
+            firouting_num="933000247",
+            fiacctnum="090809080808",
+            fiaccountnickname="James’ nest egg")
+
+        return models.OFX(
+            signonmsgsrsv1=SIGNONMSGSRSV1,
+            tax1099msgsrsv1=models.TAX1099MSGSRSV1(
+                models.TAX1099TRNRS(trnuid="1001",
+                                    status=STATUS,
+                                    tax1099rs=models.TAX1099RS(dd0, dd1,
+                                                               tax1099b))))
 
 
 class Tax1099RequestTestCase(base.OfxTestCase, unittest.TestCase):

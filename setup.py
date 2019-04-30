@@ -7,8 +7,12 @@ Release process:
     5. Push tags
     6. Change download_url back to master; commit & push
 """
+# stdlib imports
 import os.path
 from setuptools import setup, find_packages
+
+# local imports
+import ofxtools
 
 __here__ = os.path.dirname(os.path.realpath(__file__))
 
@@ -31,7 +35,7 @@ setup(
     author_email=ABOUT["__author_email__"],
     url=ABOUT["__url__"],
     packages=find_packages(),
-    package_data={'ofxtools': ['README.rst', 'config/*.cfg', 'tests/*']},
+    package_data={'ofxtools': ["README.rst", "config/*.cfg"]},
     python_requires=">=3.4",
     license=ABOUT["__license__"],
 
@@ -39,27 +43,27 @@ setup(
     #  download_url="{}/master".format(URL_BASE),
     download_url="{}/{}".format(URL_BASE, ABOUT["__version__"]),
 
-    entry_points={'console_scripts': ['ofxget=ofxtools.Client:main']},
+    entry_points={'console_scripts': ['ofxget=ofxtools.scripts.ofxget:main']},
 
     classifiers=[
-        'Development Status :: 3 - Alpha',
-        'Intended Audience :: Developers',
-        'Intended Audience :: Financial and Insurance Industry',
-        'Topic :: Software Development :: Libraries :: Python Modules',
-        'Topic :: Utilities',
-        'Topic :: Office/Business',
-        'Topic :: Office/Business :: Financial',
-        'Topic :: Office/Business :: Financial :: Accounting',
-        'Topic :: Office/Business :: Financial :: Investment',
-        'License :: OSI Approved :: MIT License',
-        'Operating System :: OS Independent',
-        'Natural Language :: English',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Financial and Insurance Industry",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: Utilities",
+        "Topic :: Office/Business",
+        "Topic :: Office/Business :: Financial",
+        "Topic :: Office/Business :: Financial :: Accounting",
+        "Topic :: Office/Business :: Financial :: Investment",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+        "Natural Language :: English",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
     ],
     keywords=['ofx', 'Open Financial Exchange'],
 )
