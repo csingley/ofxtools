@@ -64,7 +64,7 @@ authenticating a login.
 
 .. code-block:: bash
 
-    $ ofxget prof https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do\?request_type\=nl_ofxdownload --org AMEX --fid 3101
+    $ ofxget --org AMEX --fid 3101 prof https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do\?request_type\=nl_ofxdownload
 
 This works just fine, dumping a load of markup on the screen telling us
 what OFX services are available and some parameters for using them.
@@ -124,6 +124,7 @@ After passing authentication, a successful result looks like this:
 Within all that markup, the part we're looking for is this:
 
 .. code-block:: xml
+
     <CCACCTFROM><ACCTID>888888888888888</ACCTID></CCACCTFROM>
     <CCACCTFROM><ACCTID>999999999999999</ACCTID></CCACCTFROM>
 
