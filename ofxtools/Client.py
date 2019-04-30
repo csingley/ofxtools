@@ -70,6 +70,11 @@ from ofxtools.models.invest import (
     INCPOS,
     INVSTMTMSGSRQV1,
 )
+from ofxtools.models.tax1099 import (
+    TAX1099RQ,
+    TAX1099TRNRQ,
+    TAX1099MSGSRQV1,
+)
 from ofxtools.utils import UTC
 from ofxtools import utils
 
@@ -375,6 +380,48 @@ class OFXClient:
             timeout=timeout,
         )
 
+    def request_tax1099(
+        self,
+        user,
+        password,
+        *taxyears,
+        acctnum=None,
+        recid=None,
+        language=None,
+        clientuid=None,
+        appid=None,
+        appver=None,
+        dryrun=False,
+        version=None,
+        prettyprint=False,
+        close_elements=True,
+        verify_ssl=True,
+        timeout=None):
+        """
+        Request US federal income tax form 1099 (TAX1099RQ)
+        """
+        signon = self.signon(user,
+                             password,
+                             language=language,
+                             clientuid=clientuid,
+                             appid=appid,
+                             appver=appver)
+
+        rq = TAX1099RQ(*taxyears, recid=recid or None)
+        msgs = TAX1099MSGSRQV1(
+            TAX1099TRNRQ(trnuid=self.uuid, tax1099rq=rq))
+
+        ofx = OFX(signonmsgsrqv1=signon, tax1099msgsrqv1=msgs)
+        return self.download(
+            ofx,
+            dryrun=dryrun,
+            version=version,
+            prettyprint=prettyprint,
+            close_elements=close_elements,
+            verify_ssl=verify_ssl,
+            timeout=timeout,
+        )
+
     def signon(self, userid, userpass, language=None, sesscookie=None,
                appid=None, appver=None, clientuid=None):
         """ Construct SONRQ; package in SIGNONMSGSRQV1 """
@@ -513,4 +560,3 @@ class OFXClient:
             body = ET.tostring(tree, encoding="utf_8", method="html")
 
         return header + body
-

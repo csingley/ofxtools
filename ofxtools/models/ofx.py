@@ -23,6 +23,9 @@ from ofxtools.models.billpay.msgsets import BILLPAYMSGSRQV1, BILLPAYMSGSRSV1
 from ofxtools.models.invest.msgsets import (
     INVSTMTMSGSRQV1, INVSTMTMSGSRSV1, SECLISTMSGSRQV1, SECLISTMSGSRSV1,
 )
+from ofxtools.models.tax1099 import (
+    TAX1099MSGSRQV1, TAX1099MSGSRSV1,
+)
 from ofxtools.utils import all_equal
 
 
@@ -63,8 +66,8 @@ class OFX(Aggregate):
     loanmsgsrsv1 = Unsupported()
     tax1098msgsrqv1 = Unsupported()
     tax1098msgsrsv1 = Unsupported()
-    tax1099msgsrqv1 = Unsupported()
-    tax1099msgsrsv1 = Unsupported()
+    tax1099msgsrqv1 = SubAggregate(TAX1099MSGSRQV1)
+    tax1099msgsrsv1 = SubAggregate(TAX1099MSGSRSV1)
     taxw2msgsrqv1 = Unsupported()
     taxw2msgsrsv1 = Unsupported()
     tax1095msgsrqv1 = Unsupported()

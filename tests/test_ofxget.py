@@ -24,13 +24,7 @@ from ofxtools.Client import (
 from ofxtools.models.signon import SIGNONMSGSRQV1
 from ofxtools.utils import UTC, indent, tostring_unclosed_elements
 from ofxtools.models.signon import SONRQ
-from ofxtools.scripts.ofxget import (
-    init_client,
-    make_argparser,
-    merge_config,
-    do_stmt,
-    do_profile,
-)
+from ofxtools.scripts import ofxget
 
 
 class CliTestCase(unittest.TestCase):
@@ -69,7 +63,7 @@ class CliTestCase(unittest.TestCase):
 
     def testInitClient(self):
         args = self.args
-        client = init_client(args)
+        client = ofxget.init_client(args)
         self.assertIsInstance(client, OFXClient)
         self.assertEqual(str(client.version), args.version)
         for arg in [
@@ -84,7 +78,7 @@ class CliTestCase(unittest.TestCase):
         ]:
             self.assertEqual(getattr(client, arg), getattr(args, arg))
 
-    def testDoStmt(self):
+    def testRequestStmt(self):
         args = self.args
         args.dryrun = False
 
@@ -92,7 +86,7 @@ class CliTestCase(unittest.TestCase):
             fake_getpass.return_value = "t0ps3kr1t"
             with patch("ofxtools.Client.OFXClient.request_statements") as fake_rq_stmt:
                 fake_rq_stmt.return_value = BytesIO(b"th-th-th-that's all folks!")
-                output = do_stmt(args)
+                output = ofxget.request_stmt(args)
 
                 self.assertEqual(output, None)
 
@@ -202,10 +196,10 @@ class CliTestCase(unittest.TestCase):
                             }
                 )
 
-    def testDoStmtDryrun(self):
+    def testRequestStmtDryrun(self):
         with patch("ofxtools.Client.OFXClient.request_statements") as fake_rq_stmt:
             fake_rq_stmt.return_value = BytesIO(b"th-th-th-that's all folks!")
-            output = do_stmt(self.args)
+            output = ofxget.request_stmt(self.args)
 
             self.assertEqual(output, None)
 
@@ -316,11 +310,11 @@ class CliTestCase(unittest.TestCase):
                 }
             )
 
-    def testDoProfile(self):
+    def testRequestProfile(self):
         with patch("ofxtools.Client.OFXClient.request_profile") as fake_rq_prof:
             fake_rq_prof.return_value = BytesIO(b"th-th-th-that's all folks!")
 
-            output = do_profile(self.args)
+            output = ofxget.request_profile(self.args)
 
             self.assertEqual(output, None)
 
@@ -360,8 +354,8 @@ class MainTestCase(unittest.TestCase):
 
     def testMakeArgparser(self):
         fi_index = ["bank0", "broker0"]
-        argparser = make_argparser(fi_index)
-        self.assertEqual(len(argparser._actions), 32)
+        argparser = ofxget.make_argparser(fi_index)
+        self.assertEqual(len(argparser._actions), 30)
 
     def testMergeConfig(self):
         config = MagicMock()
@@ -373,7 +367,7 @@ class MainTestCase(unittest.TestCase):
             ("creditcard", "222, 333"),
         ]
 
-        args = merge_config(config, self.args)
+        args = ofxget.merge_config(config, self.args)
         self.assertIsInstance(args, argparse.Namespace)
         # Only the args specified in config.items() have been updated
         for attr in (
@@ -404,7 +398,7 @@ class MainTestCase(unittest.TestCase):
         config = MagicMock()
         config.fi_index = []
         with self.assertRaises(ValueError):
-            merge_config(config, self.args)
+            ofxget.merge_config(config, self.args)
 
 
 if __name__ == "__main__":

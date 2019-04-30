@@ -113,7 +113,7 @@ class ACCTINFO(Aggregate):
     """
     OFX section 8.5.3
 
-    The text description is a little ambiguous.  Here's what the DTD says:
+    The text description is a little ambiguous.  Here's what the schema says:
     <xsd:sequence>
         <xsd:element name="DESC" type="ofx:ShortMessageType" minOccurs="0"/>
         <xsd:element name="PHONE" type="ofx:PhoneType" minOccurs="0"/>

@@ -507,7 +507,7 @@ class Time(DateTime):
     """
     OFX Section 3.2.8.3
 
-    The regex given by the spec (in OFX_Common.xsd):
+    The regex given by the spec schema (in OFX_Common.xsd):
 
     (([0-1][0-9])|(2[0-3]))
     [0-5][0-9]
@@ -521,8 +521,8 @@ class Time(DateTime):
     #
     # N.B. the language from section 3.2.8.3 gives the format as:
     # HHMMSS.XXX[gmt offset[:tz name]]
-    # This is inconsistent with the regex from the DTD.  We follow the
-    # DTD rather than the human language version
+    # This is inconsistent with the regex from the schema.  We follow the
+    # schema rather than the human language version
     regex = re.compile(
         r"""
         ^
