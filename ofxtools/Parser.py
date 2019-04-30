@@ -120,7 +120,7 @@ class TreeBuilder(ET.TreeBuilder):
     # Each start tag may be followed by text (if a data-bearing element)
     # and optionally an end tag (not mandatory for OFXv1 syntax).
     regex = re.compile(
-        r"""<(?P<tag>[A-Z0-9./ ]+?)>
+        r"""<(?P<tag>[A-Z0-9./_ ]+?)>
                             (?P<text>[^<]+)?
                             (</(?P<closetag>(?P=tag))>)?
                             (?P<tail>[^<]+)?
