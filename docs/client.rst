@@ -152,6 +152,17 @@ we'll go ahead and include this information in our ``ofxget.cfg``:
 
 Note that multiple accounts are specified as a comma-separated list.
 
+Alternatively, as touched on in the TL;DR - if you're in a hurry, you can skip 
+configuring which accounts you want, and instead just pass the ``--all``
+argument:
+
+.. code-block:: bash
+
+    $ ofxget stmt --all amex
+
+This tells ``ofxget`` to generate an ACCTINFO request as above, parse the
+response, and generate a STMT request for each account listed therein.
+
 By default, a statement request asks for all transaction activity available
 from the server.  To restrict the statement to a certain time period, we
 use the ``--start`` and ``--end`` arguments:
