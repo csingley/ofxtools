@@ -61,7 +61,7 @@ class Tax1099BTestCase(base.OfxTestCase, unittest.TestCase):
                 </STATUS>
                 <TAX1099RS>
                     <TAX1099B_V100>
-                        <SRVRTID>IMASRVTID</SRVRTID>
+                        <SRVRTID>IMASRVRTID</SRVRTID>
                         <TAXYEAR>2018</TAXYEAR>
                         <EXTDBINFO_V100>
                             <PROCSUM_V100>
@@ -145,7 +145,7 @@ class Tax1099BTestCase(base.OfxTestCase, unittest.TestCase):
                         <PAYERID>012345678</PAYERID>
                         <RECADDR>
                             <RECNAME1>Diane Jones</RECNAME1>
-                            <ADDR1>7535 Sante Fe Rd</ADDR1>
+                            <ADDR1>7535 Santa Fe Rd</ADDR1>
                             <CITY>Recipient City</CITY>
                             <STATE>CA</STATE>
                             <POSTALCODE>9876-54321</POSTALCODE>
@@ -169,7 +169,7 @@ class Tax1099BTestCase(base.OfxTestCase, unittest.TestCase):
         procsum1 = models.PROCSUM_V100(
             form8949code="A", adjcode="MW", sumcostbasis=Decimal("1270.00"),
             sumsalespr=Decimal("1200.00"), sumadjamt=Decimal("100.00"),
-            sumdescription=" SHORT TERM WASH SALES")
+            sumdescription="SHORT TERM WASH SALES")
 
         procdet0 = models.PROCDET_V100(
             dtaqd=datetime(2017, 9, 10, tzinfo=UTC),
@@ -296,7 +296,7 @@ class FidirectdepositinfoTestCase(base.OfxTestCase, unittest.TestCase):
                         <FIACCOUNTNICKNAME>James’ nest egg</FIACCOUNTNICKNAME>
                     </FIDIRECTDEPOSITINFO>
                     <TAX1099B_V100>
-                        <SRVRTID>IMASRVTID</SRVRTID>
+                        <SRVRTID>IMASRVRTID</SRVRTID>
                         <TAXYEAR>2018</TAXYEAR>
                         <PAYERADDR>
                             <PAYERNAME1>Broker One</PAYERNAME1>
@@ -323,11 +323,11 @@ class FidirectdepositinfoTestCase(base.OfxTestCase, unittest.TestCase):
 
         dd0 = models.FIDIRECTDEPOSITINFO(
             finame_directdeposit="Your FI name here",
-            firouting_num="122000247",
+            firoutingnum="122000247",
             fiacctnum="080808080808")
         dd1 = models.FIDIRECTDEPOSITINFO(
             finame_directdeposit="Your FI name here",
-            firouting_num="933000247",
+            firoutingnum="933000247",
             fiacctnum="090809080808",
             fiaccountnickname="James’ nest egg")
 
@@ -336,8 +336,9 @@ class FidirectdepositinfoTestCase(base.OfxTestCase, unittest.TestCase):
             tax1099msgsrsv1=models.TAX1099MSGSRSV1(
                 models.TAX1099TRNRS(trnuid="1001",
                                     status=STATUS,
-                                    tax1099rs=models.TAX1099RS(dd0, dd1,
-                                                               tax1099b))))
+                                    tax1099rs=models.TAX1099RS(
+                                        dd0, dd1, tax1099b, recid="111423815"
+                                    ))))
 
 
 class Tax1099RequestTestCase(base.OfxTestCase, unittest.TestCase):
@@ -495,7 +496,7 @@ class Tax1099ResponseTestCase(base.OfxTestCase, unittest.TestCase):
                         <PAYERID>2331243</PAYERID>
                         <RECADDR>
                             <RECNAME1>Mr Investor</RECNAME1>
-                            <ADDR1>464 Invester Way</ADDR1>
+                            <ADDR1>464 Investor Way</ADDR1>
                             <CITY>Mountain View</CITY>
                             <STATE>CA</STATE>
                             <POSTALCODE>96433</POSTALCODE>
