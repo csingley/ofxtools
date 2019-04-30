@@ -63,7 +63,7 @@ def make_argparser(fi_index):
 
     signon_group = argparser.add_argument_group(title="Signon Options")
     signon_group.add_argument("-u", "--user", help="FI login username")
-    signon_group.add_argument("--clientuid", help="OFX client UID")
+    signon_group.add_argument("--clientuid", metavar="UUID4", help="OFX client UID")
     signon_group.add_argument("--org", help="FI.ORG")
     signon_group.add_argument("--fid", help="FI.FID")
     signon_group.add_argument("--bankid", help="ABA routing#")
@@ -75,39 +75,39 @@ def make_argparser(fi_index):
 
     stmt_group = argparser.add_argument_group(title="Statement Options")
     stmt_group.add_argument(
-        "-C", "--checking", metavar="acct#", action="append", default=[],
-        help="(option can be repeated)"
+        "-C", "--checking", metavar="#", action="append", default=[],
+        help="Account number (option can be repeated)"
     )
     stmt_group.add_argument(
-        "-S", "--savings", metavar="acct#", action="append", default=[],
-        help="(option can be repeated)"
+        "-S", "--savings", metavar="#", action="append", default=[],
+        help="Account number (option can be repeated)"
     )
     stmt_group.add_argument(
-        "-M", "--moneymrkt", metavar="acct#", action="append", default=[],
-        help="(option can be repeated)"
+        "-M", "--moneymrkt", metavar="#", action="append", default=[],
+        help="Account number (option can be repeated)"
     )
     stmt_group.add_argument(
-        "-L", "--creditline", metavar="acct#", action="append", default=[],
-        help="(option can be repeated)"
+        "-L", "--creditline", metavar="#", action="append", default=[],
+        help="Account number (option can be repeated)"
     )
     stmt_group.add_argument(
-        "-c", "--creditcard", "--cc", metavar="acct#", action="append",
-        default=[], help="(option can be repeated)"
+        "-c", "--creditcard", "--cc", metavar="#", action="append", default=[],
+        help="Account number (option can be repeated)"
     )
     stmt_group.add_argument(
-        "-i", "--investment", metavar="acct#", action="append", default=[],
-        help="(option can be repeated)"
+        "-i", "--investment", metavar="#", action="append", default=[],
+        help="Account number (option can be repeated)"
     )
     stmt_group.add_argument(
-        "-s", "--start", dest="dtstart", help="(YYYYmmdd) Transactions list start date"
+        "-s", "--start", metavar="DATE", dest="dtstart",
+        help="(YYYYmmdd) Transactions list start date"
     )
     stmt_group.add_argument(
-        "-e", "--end", dest="dtend", help="(YYYYmmdd) Transactions list end date"
+        "-e", "--end", metavar="DATE", dest="dtend",
+        help="(YYYYmmdd) Transactions list end date"
     )
     stmt_group.add_argument(
-        "-a",
-        "--asof",
-        dest="dtasof",
+        "-a", "--asof", metavar="DATE", dest="dtasof",
         help="(YYYYmmdd) As-of date for investment positions",
     )
     stmt_group.add_argument(
@@ -143,17 +143,13 @@ def make_argparser(fi_index):
         dest="all",
         action="store_true",
         default=False,
-        help="Request ACCTINFO from server; download statements for all",
+        help="Request ACCTINFO; download statements for all",
     )
 
     tax_group = argparser.add_argument_group(title="Tax Form Options")
     tax_group.add_argument(
-        "-y",
-        "--year",
-        dest="years",
-        type=int,
-        action="append",
-        default=[],
+        "-y", "--year", metavar="YEAR", dest="years",
+        type=int, action="append", default=[],
         help="(YYYY) Tax year (option can be repeated)",
     )
     tax_group.add_argument(
@@ -198,7 +194,7 @@ def scan_profile(args):
     """
     Report working connection parameters
     """
-    results = scan_profile(args.url, args.org, args.fid)
+    results = _scan_profile(args.url, args.org, args.fid)
     print(results)
 
 

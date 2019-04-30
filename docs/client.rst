@@ -1,7 +1,5 @@
 .. _client:
 
-Downloading OFX Data
-====================
 Some financial institutions make you use their web application to generate
 OFX (or QFX) files that you can download via your browser.  If they give you
 a choice, prefer "OFX" or "Microsoft Money" format over "QFX" or "Quicken".
@@ -10,119 +8,90 @@ Other financial institutions are good enough to offer you a server socket,
 to which ``ofxtools`` can connect and download OFX data for you.
 
 
-Using the ofxget script
------------------------
-Execute ``ofxget`` with appropriate arguments, for example:
+Downloading OFX Data With ofxget
+================================
+
+Locating ofxget
+--------------------------
+The ``ofxget`` shell script should have been installed by ``pip`` along with
+the ``ofxtools`` library.  If the install location isn't already in your
+``$PATH``, you'll likely want to add it.
+
+A user installation drops ``ofxget`` under ``~/.local/bin`` on Linux or Mac,
+and ``AppData\Roaming\Python\PythonXY\Scripts`` for Windows.
+
+If all else fails, you can execute
+``</path/to/ofxtools>/ofxtools/scripts/ofxget.py``.
+
+Using ofxget  - TL;DR
+---------------------
+If your financial institution is known to ``ofxtools/config/fi.cfg``, then
+the quickest way to get your data is to say (e.g. for American Express):
 
 .. code-block:: bash
 
-    $ ofxget https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do\?request_type\=nl_ofxdownload --org AMEX --fid 3101 --user porkypig --creditcard 99999999999 --start 20140101 --end 20140630 > 2014-04_amex.ofx
+    $ ofxget stmt amex --user <your_username> --all
 
 Enter your password when prompted.
 
+Using ofxget - in depth 
+-----------------------
+``ofxget`` takes two mandatory positional arguments - the request type and
+the server URL or nickname - along with a bunch of optional keyword arguments.
+
 See the ``--help`` for explanation of the script options.
 
-Please note that the CLI accepts OFX-formatted dates (YYYYmmdd) rather than
-ISO-8601 (YYYY-mm-dd).
+Available request types (as indicated in the ``--help``) are ``scan``,
+``prof``, ``acctinfo``, ``stmt``, and ``tax1099``.  We'll work through most of
+these in an example of bootstrapping a full configuration for American Express.
 
-Of course, typing this kind of command gets old very quickly.  You can store
-these details in a config file for reuse:
+We must know the OFX server URL in order to connect at all.  The best place
+to find this (along with other useful connection information) is the
+`OFX Home`_ website.  You can also try the fine folks at `GnuCash`_, who share
+the struggle.
 
--  Copy ``</path/to/ofxtools>/config/ofxget_example.cfg`` to
-  ``</path/to/user/config/directory>/ofxtools/ofxget.cfg``.
-  On Linux and Mac, the user config directory should be ``.config`` inside
-  your home directory.
-  On Windows, the user config directory should be ``AppData\Roaming`` inside
-  your user folder.
--  Edit your copy of ``ofxget.cfg``, adding sections for your financial
-  institutions, including URL, account information, username, etc.
-  See comments within the example file.
+OFX Home has a listing for AmEx, giving a URL plus the ``ORG``/``FID`` pair
+(i.e. ``<FI><ORG>`` and ``<FI><FID>`` in the signon request.)  This aggregate
+is optional per the OFX spec, and if your FI is running its own OFX server it
+is optional - many major providers don't need it to connect.  However,
+Quicken always sends ``<FI>``, so your bank may require it anyway.  AmEx
+appears to be one of these; its OFX server throws HTTP error 503 if you omit
+``ORG``/``FID``.
 
-Since ``ofxtools`` already has connection information for American Express,
-our own ``ofxget.cfg`` here would just look like this:
+Using the connection information from OFX Home, first we will try to establish
+basic connectivity by requesting an OFX profile, which does not require
+authenticating a login.
 
-.. code-block:: ini
+.. code-block:: bash
 
-    # American Express
-    [amex]
-    user: porkypig
-    creditcard: 99999999999
+    $ ofxget prof https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do\?request_type\=nl_ofxdownload --org AMEX --fid 3101
 
-A more fully-specified configuration might look like this:
+This works just fine, dumping a load of markup on the screen telling us
+what OFX services are available and some parameters for using them.
+
+If it doesn't work, see below for on scanning version and format parameters.
+
+We probably don't want to keep typing all that out every time we want to
+connect, so we'll create a configuration file to store it for reuse.  Inside
+our user home directory, the config file needs to be located at
+``.config/ofxtools/ofxget.cfg`` (for Linux and Mac), or
+``AppData\Roaming\ofxtools\ofxget.cfg`` (for Windows).  It's easy to create
+one from scratch (in simple INI format), or you can find a sample at
+``</path/to/ofxtools>/config/ofxget_example.cfg`` (including some hints in the
+comments).  Our config just copies the script args above, tagging them with a
+nickname for reference:
 
 .. code-block:: ini
 
     # American Express
     [amex]
     url: https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload
-    version: 220
-    appid: QWIN
-    appver:  2700
-    user: porkypig
-    clientuid: 05425a7c-5f64-457c-92f1-544b52ae00eb
     org: AMEX
     fid: 3101
-    creditcard: 88888888888,99999999999
 
-Using such a configuration, the command invocation simplifies to this:
-
-.. code-block:: bash
-
-    $ ofxget amex -s 20140101 -e 20140630 > 2014-04_amex.ofx
-
-
-Discovering OFX client configurations
--------------------------------------
-Quicken and Money don't expose OFX-specific parameters, so you'll have to find
-these on your own.  Tech support calls to banks tend to go like this:
-    | Me: Hi, what's your OFX server URL?
-    | CSR: What version of Quicken do you run?  Sorry, we don't support that.
-
-Sadly, since Microsoft Money went EOL, Microsoft no longer provides a public
-web API containing FI configs.  However, Jesse Lietch is carrying the torch
-at the `OFX Home`_ website, which is the best resource for finding OFX configs.
-
-The OFX Home database is getting a little stale in places. Read through the
-comments, where users often post updated configurations that have worked
-for them.  If you get something working, post it there.
-
-You can also talk to the fine folks at `GnuCash`_, who share the struggle.
-
-You will definitely need to configure:
-
-- Server URL
-- Bank id
-- Broker id
-- Account numbers
-
-The URL is of course mandatory in order to connect at all.
-
-You will need bankid/brokerid and acount numbers in order to download
-statements.  I'm optimistic that you'll be able to discover your account
-numbers.
-
-For US banks, the bankid is an `ABA routing number`_.  This will be printed
-on their checks.
-
-US brokers tend to follow the recommendation of the OFX spec and use their
-primary DNS domain as their brokerid (e.g. "ameritrade.com").  Some FIs
-style the brokerid in all caps (e.g. "SCHWAB.COM").  Some apparently don't
-understand the DNS system, and use the FQDN of their website
-(e.g. "www.scottrade.com").  Try various permutations.  Of course, then there's
-Interactive Brokers, whose brokerid is an apparently random 4-digit number
-(no, it's not a `DTC number`_ )... not that it really matters, since they don't
-open a port anyway.
-
-Probably you will also need to configure financial institution identifiers
-(i.e. ``<FI><ORG>`` and ``<FI><FID>`` in the signon request.)  This aggregate
-is optional per the OFX spec, and if your FI is running its own OFX server it
-is unnecessary - many major providers don't need it to connect.  However,
-Quicken always sends ``<FI>``, so your bank may require it anyway.
-
-If a listing exists (and is up to date), `OFX Home`_ can provide you with
-all the necessary configuration data.  In fact, you don't even need to enter
-all of it into your ``ofxtools`` configuration file... just get the OFX Home
-database id (at the end of the webpage URL) and configure ``ofxtools`` like so:
+Alternatively, since AmEx has working parameters listed on OFX Home, you can
+just use the OFX Home API to look them up for each request.  Using the OFX Home
+database id (at the end of the webpage URL), the config looks like this:
 
 .. code-block:: ini
 
@@ -130,17 +99,73 @@ database id (at the end of the webpage URL) and configure ``ofxtools`` like so:
     [amex]
     ofxhome_id: 424
 
-With any luck this will just work.  You can test the connection parameters by
-requesting their OFX profile, which doesn't require login info or acct#s.
+With either configuration, we can now use the provider nickname to make our
+connection more conveniently:
 
 .. code-block:: bash
 
-    $ ofxget --profile amex                                                                                                           1 ↵
-    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-    <?OFX OFXHEADER="200" VERSION="203" SECURITY="NONE" OLDFILEUID="NONE" NEWFILEUID="08c9f61f-f16a-4471-9b1c-463b31dbaae4"?>
-    <OFX><SIGNONMSGSRSV1><SONRS><STATUS><CODE>0</CODE><SEVERITY>INFO</SEVERITY><MESSAGE>Login successful</MESSAGE></STATUS><DTSERVER>20190422122549.771[-7:MST]</DTSERVER><LANGUAGE>ENG</LANGUAGE><FI><ORG>AMEX</ORG><FID>3101</FID></FI><START.TIME>20190422122549</START.TIME></SONRS></SIGNONMSGSRSV1><PROFMSGSRSV1><PROFTRNRS><TRNUID>6397def1-869e-4141-9c14-8c0236f7b8a1</TRNUID><STATUS><CODE>0</CODE><SEVERITY>INFO</SEVERITY></STATUS><PROFRS><MSGSETLIST><SIGNONMSGSET><SIGNONMSGSETV1><MSGSETCORE><VER>1</VER><URL>https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload</URL><OFXSEC>NONE</OFXSEC><TRANSPSEC>Y</TRANSPSEC><SIGNONREALM>AMEXREALM</SIGNONREALM><LANGUAGE>ENG</LANGUAGE><SYNCMODE>LITE</SYNCMODE><RESPFILEER>Y</RESPFILEER><SPNAME>Aexp</SPNAME></MSGSETCORE></SIGNONMSGSETV1></SIGNONMSGSET><SIGNUPMSGSET><SIGNUPMSGSETV1><MSGSETCORE><VER>1</VER><URL>https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload</URL><OFXSEC>NONE</OFXSEC><TRANSPSEC>Y</TRANSPSEC><SIGNONREALM>AMEXREALM</SIGNONREALM><LANGUAGE>ENG</LANGUAGE><SYNCMODE>LITE</SYNCMODE><RESPFILEER>Y</RESPFILEER><SPNAME>Aexp</SPNAME></MSGSETCORE><WEBENROLL><URL>https://www.americanexpress.com</URL></WEBENROLL><CHGUSERINFO>N</CHGUSERINFO><AVAILACCTS>Y</AVAILACCTS><CLIENTACTREQ>Y</CLIENTACTREQ></SIGNUPMSGSETV1></SIGNUPMSGSET><BANKMSGSET><BANKMSGSETV1><MSGSETCORE><VER>1</VER><URL>https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload</URL><OFXSEC>NONE</OFXSEC><TRANSPSEC>Y</TRANSPSEC><SIGNONREALM>AMEXREALM</SIGNONREALM><LANGUAGE>ENG</LANGUAGE><SYNCMODE>LITE</SYNCMODE><RESPFILEER>Y</RESPFILEER><SPNAME>Aexp</SPNAME></MSGSETCORE><CLOSINGAVAIL>N</CLOSINGAVAIL><EMAILPROF><CANEMAIL>N</CANEMAIL><CANNOTIFY>N</CANNOTIFY></EMAILPROF></BANKMSGSETV1></BANKMSGSET><CREDITCARDMSGSET><CREDITCARDMSGSETV1><MSGSETCORE><VER>1</VER><URL>https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload</URL><OFXSEC>NONE</OFXSEC><TRANSPSEC>Y</TRANSPSEC><SIGNONREALM>AMEXREALM</SIGNONREALM><LANGUAGE>ENG</LANGUAGE><SYNCMODE>LITE</SYNCMODE><RESPFILEER>Y</RESPFILEER><SPNAME>Aexp</SPNAME></MSGSETCORE><CLOSINGAVAIL>N</CLOSINGAVAIL></CREDITCARDMSGSETV1></CREDITCARDMSGSET><PROFMSGSET><PROFMSGSETV1><MSGSETCORE><VER>1</VER><URL>https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload</URL><OFXSEC>NONE</OFXSEC><TRANSPSEC>Y</TRANSPSEC><SIGNONREALM>AMEXREALM</SIGNONREALM><LANGUAGE>ENG</LANGUAGE><SYNCMODE>LITE</SYNCMODE><RESPFILEER>Y</RESPFILEER><SPNAME>Aexp</SPNAME></MSGSETCORE></PROFMSGSETV1></PROFMSGSET></MSGSETLIST><SIGNONINFOLIST><SIGNONINFO><SIGNONREALM>AMEXREALM</SIGNONREALM><MIN>5</MIN><MAX>20</MAX><CHARTYPE>ALPHAANDNUMERIC</CHARTYPE><CASESEN>N</CASESEN><SPECIAL>Y</SPECIAL><SPACES>N</SPACES><PINCH>N</PINCH><CHGPINFIRST>N</CHGPINFIRST><CLIENTUIDREQ>N</CLIENTUIDREQ><AUTHTOKENFIRST>N</AUTHTOKENFIRST><MFACHALLENGESUPT>N</MFACHALLENGESUPT><MFACHALLENGEFIRST>N</MFACHALLENGEFIRST></SIGNONINFO></SIGNONINFOLIST><DTPROFUP>20120730200000.925[-7:MST]</DTPROFUP><FINAME>American Express</FINAME><ADDR1>777 American Expressway</ADDR1><CITY>Fort Lauderdale</CITY><STATE>Fla.</STATE><POSTALCODE>33337-0001</POSTALCODE><COUNTRY>USA</COUNTRY><CSPHONE>1-800-AXP-7500  (1-800-297-7500)</CSPHONE></PROFRS></PROFTRNRS></PROFMSGSRSV1></OFX>
+    $ ofxget prof amex
 
-Looking good!  If it doesn't work...  well, Quicken hasn't yet updated
+The next step is to log into the OFX server with our username & password,
+and get a list of accounts for which we can download statements.
+
+.. code-block:: bash
+
+    $ ofxget acctinfo amex --user <username>
+
+After passing authentication, a successful result looks like this:
+
+.. code-block:: xml
+
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+    <?OFX OFXHEADER="200" VERSION="203" SECURITY="NONE" OLDFILEUID="NONE" NEWFILEUID="e1259eaf-b54e-46de-be22-fe07a9172b79"?>
+    <OFX><SIGNONMSGSRSV1><SONRS><STATUS><CODE>0</CODE><SEVERITY>INFO</SEVERITY><MESSAGE>Login successful</MESSAGE></STATUS><DTSERVER>20190430093324.000[-7:MST]</DTSERVER><LANGUAGE>ENG</LANGUAGE><FI><ORG>AMEX</ORG><FID>3101</FID></FI><ORIGIN.ID>FMPWeb</ORIGIN.ID><CUSTOMER.TYPE>BCM</CUSTOMER.TYPE><START.TIME>20190430093324</START.TIME></SONRS></SIGNONMSGSRSV1><SIGNUPMSGSRSV1><ACCTINFOTRNRS><TRNUID>2a3cbf11-23da-4e77-9a55-2359caf82afe</TRNUID><STATUS><CODE>0</CODE><SEVERITY>INFO</SEVERITY></STATUS><ACCTINFORS><DTACCTUP>20190430093324.150[-7:MST]</DTACCTUP><ACCTINFO><CCACCTINFO><CCACCTFROM><ACCTID>888888888888888</ACCTID><CYCLECUT.INDICATOR>false</CYCLECUT.INDICATOR><PURGE.INDICATOR>false</PURGE.INDICATOR><INTL.INDICATOR>false</INTL.INDICATOR></CCACCTFROM><SUPTXDL>Y</SUPTXDL><XFERSRC>N</XFERSRC><XFERDEST>N</XFERDEST><SVCSTATUS>ACTIVE</SVCSTATUS></CCACCTINFO></ACCTINFO><ACCTINFO><CCACCTINFO><CCACCTFROM><ACCTID>999999999999999</ACCTID><CYCLECUT.INDICATOR>false</CYCLECUT.INDICATOR><PURGE.INDICATOR>false</PURGE.INDICATOR><INTL.INDICATOR>false</INTL.INDICATOR></CCACCTFROM><SUPTXDL>Y</SUPTXDL><XFERSRC>N</XFERSRC><XFERDEST>N</XFERDEST><SVCSTATUS>ACTIVE</SVCSTATUS></CCACCTINFO></ACCTINFO></ACCTINFORS></ACCTINFOTRNRS></SIGNUPMSGSRSV1></OFX>
+
+Within all that markup, the part we're looking for is this:
+
+.. code-block:: xml
+    <CCACCTFROM><ACCTID>888888888888888</ACCTID></CCACCTFROM>
+    <CCACCTFROM><ACCTID>999999999999999</ACCTID></CCACCTFROM>
+
+We have two credit card accounts, 888888888888888 and 999999999999999.  We
+can request activity statements for them like so:
+
+.. code-block:: bash
+
+    $ ofxget stmt amex --user <username> --creditcard 888888888888888 --creditcard 999999999999999
+
+Note that multiple accounts are specified by repeating the ``creditcard`` argument.
+
+Of course, nobody wants to memorize and type out their account numbers, so
+we'll go ahead and include this information in our ``ofxget.cfg``:
+
+.. code-block:: ini
+
+    # American Express
+    [amex]
+    url: https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload
+    org: AMEX
+    fid: 3101
+    user: <username>
+    creditcard: 888888888888888,999999999999999
+
+Note that multiple accounts are specified as a comma-separated list.
+
+By default, a statement request asks for all transaction activity available
+from the server.  To restrict the statement to a certain time period, we
+use the ``--start`` and ``--end`` arguments:
+
+.. code-block:: bash
+
+    $ ofxget stmt amex --start 20140101 --end 20140630 > 2014-04_amex.ofx
+
+Please note that the CLI accepts OFX-formatted dates (YYYYmmdd) rather than
+ISO-8601 (YYYY-mm-dd).
+
+
+Scanning for OFX connection formats
+-----------------------------------
+If you can't make an OFX connection...  well, Quicken hasn't yet updated
 to OFX version 2, so your bank may require a lower protocol version in order to
 connect.  The ``version`` argument is used for this purpose.
 
@@ -155,11 +180,11 @@ Here's how to use it.
 
 .. code-block:: bash
 
-    $ ofxget --scan etrade  
+    $ ofxget scan etrade  
     [{"versions": [102], "formats": [{"pretty": false, "unclosed_elements": true}, {"pretty": false, "unclosed_elements": false}]}, {"versions": [], "formats": []}]
-    $ ofxget --scan usaa
+    $ ofxget scan usaa
     [{"versions": [102, 151], "formats": [{"pretty": false, "unclosed_elements": true}, {"pretty": true, "unclosed_elements": true}]}, {"versions": [200, 202], "formats": [{"pretty": false}, {"pretty": true}]}]
-    $ ofxget --scan vanguard
+    $ ofxget scan vanguard
     [{"versions": [102, 103, 151, 160], "formats": [{"pretty": false, "unclosed_elements": true}, {"pretty": true, "unclosed_elements": true}, {"pretty": true, "unclosed_elements": false}]}, {"versions": [200, 201, 202, 203, 210, 211, 220], "formats": [{"pretty": true}]}]
 
 (Try to exercise restraint with this command.  Each invocation sends several
@@ -213,8 +238,10 @@ HTTP requests, so it's been blanked out.  If some motivated user wants to send
 along a packet capture showing what Quicken sends for ``User_Agent``, it might
 be a good idea to spoof that as well.
 
-Using OFXClient in another program
-----------------------------------
+
+Using OFXClient in Another Program
+==================================
+
 To use within another program, first initialize an ``ofxtools.Client.OFXClient``
 instance with the relevant connection parameters.
 
