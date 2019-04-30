@@ -57,6 +57,7 @@ def lookup(id):
               "profile": _read_profile}
 
     attrs = {e.tag: reader.get(e.tag, _read)(e) for e in etree}
+    attrs["id"] = etree.attrib["id"]
     return OFXServer(**attrs)
 
 
@@ -99,7 +100,7 @@ def _read(elem):
 def _read_date(elem):
     text = elem.text or None
     if text:
-        text = datetime.datetime.fromisoformat(text)
+        text = datetime.datetime.strptime(text, "%Y-%m-%d %H:%M:%S")
     return text
 
 

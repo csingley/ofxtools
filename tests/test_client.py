@@ -3,12 +3,9 @@
 
 # stdlib imports
 import unittest
-from unittest.mock import MagicMock, patch, DEFAULT, sentinel, ANY
+from unittest.mock import patch, DEFAULT, sentinel, ANY
 from datetime import datetime
-from collections import namedtuple
-from io import BytesIO
 import xml.etree.ElementTree as ET
-import argparse
 
 
 # local imports
