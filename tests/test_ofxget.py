@@ -2,12 +2,9 @@
 """ Unit tests for ofxtools.ofxget """
 
 # stdlib imports
-import sys
-import os
 import unittest
-from unittest.mock import MagicMock, patch, DEFAULT, sentinel, ANY
+from unittest.mock import MagicMock, patch
 from datetime import datetime
-from collections import namedtuple
 from io import BytesIO
 import argparse
 
@@ -21,9 +18,7 @@ from ofxtools.Client import (
     StmtEndRq,
     CcStmtEndRq,
 )
-from ofxtools.models.signon import SIGNONMSGSRQV1
-from ofxtools.utils import UTC, indent, tostring_unclosed_elements
-from ofxtools.models.signon import SONRQ
+from ofxtools.utils import UTC
 from ofxtools.scripts import ofxget
 
 
@@ -58,7 +53,8 @@ class CliTestCase(unittest.TestCase):
             clientuid=None,
             unclosedelements=False,
             pretty=False,
-            unsafe=False
+            unsafe=False,
+            all=False,
         )
 
     def testInitClient(self):
@@ -355,7 +351,7 @@ class MainTestCase(unittest.TestCase):
     def testMakeArgparser(self):
         fi_index = ["bank0", "broker0"]
         argparser = ofxget.make_argparser(fi_index)
-        self.assertEqual(len(argparser._actions), 30)
+        self.assertEqual(len(argparser._actions), 34)
 
     def testMergeConfig(self):
         config = MagicMock()
