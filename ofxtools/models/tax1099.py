@@ -142,7 +142,7 @@ class FORINCOME(Aggregate):
 class FIDIRECTDEPOSITINFO(Aggregate):
     """ OFX tax extensions section 2.2.16 """
     finame_directdeposit = String(32, required=True)
-    firouting_num = Integer(9, required=True)
+    firoutingnum = Integer(9, required=True)
     fiacctnum = String(22, required=True)
     fiaccountnickname = String(32)
 
@@ -421,9 +421,10 @@ class TAX1099RS(Aggregate):
     def validate_args(cls, *args, **kwargs):
         # Must contain at least one TAX1099x_Vy
         if len([a for a in args if a.__class__.__name__.startswith("TAX1099")]) == 0:
+            mandatory = list(cls.listitems.keys())
+            mandatory.remove('fidirectdepositinfo')
             msg = "{} must contain at least one of {}"
-            raise ValueError(msg.format(cls.__name__,
-                                        list(cls.listitems.keys())))
+            raise ValueError(msg.format(cls.__name__, mandatory))
 
         super().validate_args(*args, **kwargs)
 
