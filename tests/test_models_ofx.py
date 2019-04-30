@@ -56,8 +56,6 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
         "loanmsgsrsv1",
         "tax1098msgsrqv1",
         "tax1098msgsrsv1",
-        "tax1099msgsrqv1",
-        "tax1099msgsrsv1",
         "taxw2msgsrqv1",
         "taxw2msgsrsv1",
         "tax1095msgsrqv1",
