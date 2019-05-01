@@ -258,31 +258,33 @@ To use within another program, first initialize an ``ofxtools.Client.OFXClient``
 instance with the relevant connection parameters.
 
 Using the configured ``OFXClient`` instance, make a request by calling the
-relevant method, e.g. ``OFXClient.request_statements()``.  OFX supports
-multi-part statement requests, so ``request_statements()`` accepts sequences as
-arguments.  Simple data containers for each statement
-(``StmtRq``, ``CcStmtRq``, etc.) are provided in ``ofxtools.Client``.
+relevant method, e.g. ``OFXClient.request_statements()``.  Pass
+username/password as the first two positional arguments.  Any remaining
+positional arguments are parsed as requests; simple data containers for each
+statement (`StmtRq`, `CcStmtRq`, etc.) are provided for this purpose.
+Options follow as keyword arguments.
 
 The method call therefore looks like this:
 
 .. code-block:: python 
 
-
-    >>> client = OFXClient('https://onlinebanking.capitalone.com/ofx/process.ofx',
-    ...                    org='Hibernia', fid='1001', bankid='056073502',
-    ...                    version=202)
+    >>> import datetime; import ofxtools
+    >>> from ofxtools import OFXClient, StmtRq, CcStmtRq
+    >>> client = OFXClient("https://ofx.chase.com", org="B1", fid="10898", 
+    ...                    bankid="111000614", version=220)
     >>> dtstart = datetime.datetime(2015, 1, 1, tzinfo=ofxtools.utils.UTC)
     >>> dtend = datetime.datetime(2015, 1, 31, tzinfo=ofxtools.utils.UTC)
-    >>> s0 = StmtRq(acctid='1', accttype='CHECKING', dtstart=dtstart, dtend=dtend)
-    >>> s1 = StmtRq(acctid='2', accttype='SAVINGS', dtstart=dtstart, dtend=dtend)
-    >>> c0 = CcStmtRq(acctid='3', dtstart=dtstart, dtend=dtend)
-    >>> response = client.request_statements('jpmorgan', 't0ps3kr1t', s0, s1, c0,
+    >>> s0 = StmtRq(acctid="1", accttype="CHECKING", dtstart=dtstart, dtend=dtend)
+    >>> s1 = StmtRq(acctid="2", accttype="SAVINGS", dtstart=dtstart, dtend=dtend)
+    >>> c0 = CcStmtRq(acctid="3", dtstart=dtstart, dtend=dtend)
+    >>> response = client.request_statements("momoney", "t0ps3kr1t", s0, s1, c0,
     ...                                      prettyprint=True)
 
 Other methods available:
     * ``OFXClient.request_end_statements()`` - STMTENDRQ/CCSTMTENDRQ
     * ``OFXClient.request_profile()`` - PROFRQ
     * ``OFXClient.request_accounts()``- ACCTINFORQ
+    * ``OFXClient.request_tax1099()``- TAX1099RQ
 
 .. _OFX Home: http://www.ofxhome.com/
 .. _ABA routing number: http://routingnumber.aba.com/default1.aspx
