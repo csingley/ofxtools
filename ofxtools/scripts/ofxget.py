@@ -10,6 +10,7 @@ import urllib
 import concurrent.futures
 import json
 from io import BytesIO
+from functools import singledispatch
 
 
 # local imports
@@ -311,48 +312,10 @@ def request_stmt(args):
         password = getpass.getpass()
 
     # Define statement requests
-    stmtrqs = []
     if args.all:
-        # Download ACCTINFORS; create *STMTRQ for each account therein.
-        parser = OFXTree()
-        acctinfo = _request_acctinfo(args, password)
-        parser.parse(acctinfo)
-        ofx = parser.convert()
-        msgs = ofx.signupmsgsrsv1
-        assert len(msgs) == 1
-        acctinfors = msgs[0].acctinfors
-        for _acctinfo in acctinfors:
-            for acctinfo in _acctinfo:
-                if isinstance(acctinfo, BANKACCTINFO):
-                    acct = acctinfo.bankacctfrom
-                    stmtrqs.append(
-                        StmtRq(
-                            acctid=acct.acctid,
-                            acctype=acct.accttype,
-                            dtstart=dt["start"],
-                            dtend=dt["end"],
-                            inctran=args.inctran))
-                elif isinstance(acctinfo, CCACCTINFO):
-                    acct = acctinfo.ccacctfrom
-                    stmtrqs.append(
-                        CcStmtRq(
-                            acctid=acct.acctid,
-                            dtstart=dt["start"],
-                            dtend=dt["end"],
-                            inctran=args.inctran))
-                elif isinstance(acctinfo, INVACCTINFO):
-                    acct = acctinfo.invacctfrom
-                    stmtrqs.append(
-                        InvStmtRq(
-                            acctid=acct.acctid,
-                            dtstart=dt["start"],
-                            dtend=dt["end"],
-                            dtasof=dt["asof"],
-                            inctran=args.inctran,
-                            incoo=args.incoo,
-                            incpos=args.incpos,
-                            incbal=args.incbal))
+        stmtrqs = all_stmts(args, dt, password)
     else:
+        stmtrqs = []
         # Create *STMTRQ for each account specified by config/args
         for accttype in ("checking", "savings", "moneymrkt", "creditline"):
             acctids = getattr(args, accttype, [])
@@ -402,6 +365,44 @@ def request_stmt(args):
         response = f.read()
 
     print(response.decode())
+
+
+def all_stmts(args, dt, password):
+    """ Download ACCTINFORS; create *STMTRQ for each account therein. """
+    acctinfo = _request_acctinfo(args, password)
+    parser = OFXTree()
+    parser.parse(acctinfo)
+    ofx = parser.convert()
+    msgs = ofx.signupmsgsrsv1
+    assert len(msgs) == 1
+    acctinfors = msgs[0].acctinfors
+
+    stmtrqs = []
+    for acctinfo in acctinfors:
+        stmtrqs.extend([mkstmtrq(acctinf, args, dt) for acctinf in acctinfo])
+    return stmtrqs
+
+
+@singledispatch
+def mkstmtrq(acctinfo, args, dt):
+    acct = acctinfo.bankacctfrom
+    return StmtRq(acctid=acct.acctid, acctype=acct.accttype,
+                  dtstart=dt["start"], dtend=dt["end"], inctran=args.inctran)
+
+
+@mkstmtrq.register(CCACCTINFO)
+def _(acctinfo, args, dt):
+    acct = acctinfo.ccacctfrom
+    return CcStmtRq(acctid=acct.acctid, dtstart=dt["start"], dtend=dt["end"],
+                    inctran=args.inctran)
+
+
+@mkstmtrq.register(INVACCTINFO)
+def _(acctinfo, args, dt):
+    acct = acctinfo.invacctfrom
+    return InvStmtRq(acctid=acct.acctid, dtstart=dt["start"], dtend=dt["end"],
+                     inctran=args.inctran, incoo=args.incoo, incpos=args.incpos,
+                     incbal=args.incbal)
 
 
 def request_stmtend(args):
