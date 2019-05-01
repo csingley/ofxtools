@@ -437,7 +437,7 @@ def request_stmtend(args):
         stmtendrqs.append(
             CcStmtEndRq(acctid=acctid, dtstart=dt["start"], dtend=dt["end"]))
 
-    with client.request_end_statements(
+    with client.request_statements(
         password,
         *stmtendrqs,
         dryrun=args.dryrun,

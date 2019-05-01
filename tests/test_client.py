@@ -291,11 +291,11 @@ class OFXClientV1TestCase(unittest.TestCase):
 
         self.assertEqual(data, request)
 
-    def testRequestStatementsBadArgs(self):
-        with self.assertRaises(ValueError):
-            self._testRequest(
-                self.client.request_statements, "t0ps3kr1t", self.stmtEndRq
-            )
+    #  def testRequestStatementsBadArgs(self):
+        #  with self.assertRaises(ValueError):
+            #  self._testRequest(
+                #  self.client.request_statements, "t0ps3kr1t", self.stmtEndRq
+            #  )
 
     def testRequestStatementsMultipleMixed(self):
         data = self._testRequest(
@@ -305,7 +305,11 @@ class OFXClientV1TestCase(unittest.TestCase):
             self.stmtRq1,
             self.ccStmtRq,
             self.invStmtRq,
+            self.stmtEndRq,
+            self.ccStmtEndRq,
         )
+
+        self.maxDiff = None
 
         request = (
             "OFXHEADER:100\r\n"
@@ -334,6 +338,18 @@ class OFXClientV1TestCase(unittest.TestCase):
             "</SONRQ>"
             "</SIGNONMSGSRQV1>"
             "<BANKMSGSRQV1>"
+            "<STMTENDTRNRQ>"
+            "<TRNUID>DEADBEEF</TRNUID>"
+            "<STMTENDRQ>"
+            "<BANKACCTFROM>"
+            "<BANKID>123456789</BANKID>"
+            "<ACCTID>111111</ACCTID>"
+            "<ACCTTYPE>CHECKING</ACCTTYPE>"
+            "</BANKACCTFROM>"
+            "<DTSTART>20170101000000.000[0:GMT]</DTSTART>"
+            "<DTEND>20170331000000.000[0:GMT]</DTEND>"
+            "</STMTENDRQ>"
+            "</STMTENDTRNRQ>"
             "<STMTTRNRQ>"
             "<TRNUID>DEADBEEF</TRNUID>"
             "<STMTRQ>"
@@ -366,6 +382,16 @@ class OFXClientV1TestCase(unittest.TestCase):
             "</STMTTRNRQ>"
             "</BANKMSGSRQV1>"
             "<CREDITCARDMSGSRQV1>"
+            "<CCSTMTENDTRNRQ>"
+            "<TRNUID>DEADBEEF</TRNUID>"
+            "<CCSTMTENDRQ>"
+            "<CCACCTFROM>"
+            "<ACCTID>222222</ACCTID>"
+            "</CCACCTFROM>"
+            "<DTSTART>20170101000000.000[0:GMT]</DTSTART>"
+            "<DTEND>20170331000000.000[0:GMT]</DTEND>"
+            "</CCSTMTENDRQ>"
+            "</CCSTMTENDTRNRQ>"
             "<CCSTMTTRNRQ>"
             "<TRNUID>DEADBEEF</TRNUID>"
             "<CCSTMTRQ>"
@@ -526,7 +552,7 @@ class OFXClientV1TestCase(unittest.TestCase):
 
     def testRequestEndStatements(self):
         data = self._testRequest(
-            self.client.request_end_statements, "t0ps3kr1t", self.stmtEndRq
+            self.client.request_statements, "t0ps3kr1t", self.stmtEndRq
         )
 
         request = (
@@ -574,17 +600,9 @@ class OFXClientV1TestCase(unittest.TestCase):
 
         self.assertEqual(data, request)
 
-    def testRequestEndStatementsBadArgs(self):
-        with self.assertRaises(ValueError):
-            self._testRequest(
-                self.client.request_end_statements,
-                "t0ps3kr1t",
-                self.stmtRq0,
-            )
-
     def testRequestEndStatementsMultipleMixed(self):
         data = self._testRequest(
-            self.client.request_end_statements,
+            self.client.request_statements,
             "t0ps3kr1t",
             self.stmtEndRq,
             self.ccStmtEndRq,
@@ -642,42 +660,6 @@ class OFXClientV1TestCase(unittest.TestCase):
             "</CCSTMTENDRQ>"
             "</CCSTMTENDTRNRQ>"
             "</CREDITCARDMSGSRQV1>"
-            "</OFX>"
-        ).format(appid=DEFAULT_APPID, appver=DEFAULT_APPVER)
-
-        self.assertEqual(data, request)
-
-    def testRequestEndStatementsEmpty(self):
-        data = self._testRequest(
-            self.client.request_end_statements, "t0ps3kr1t"
-        )
-
-        request = (
-            "OFXHEADER:100\r\n"
-            "DATA:OFXSGML\r\n"
-            "VERSION:103\r\n"
-            "SECURITY:NONE\r\n"
-            "ENCODING:USASCII\r\n"
-            "CHARSET:NONE\r\n"
-            "COMPRESSION:NONE\r\n"
-            "OLDFILEUID:NONE\r\n"
-            "NEWFILEUID:DEADBEEF\r\n"
-            "\r\n"
-            "<OFX>"
-            "<SIGNONMSGSRQV1>"
-            "<SONRQ>"
-            "<DTCLIENT>20170401000000.000[0:GMT]</DTCLIENT>"
-            "<USERID>elmerfudd</USERID>"
-            "<USERPASS>t0ps3kr1t</USERPASS>"
-            "<LANGUAGE>ENG</LANGUAGE>"
-            "<FI>"
-            "<ORG>FIORG</ORG>"
-            "<FID>FID</FID>"
-            "</FI>"
-            "<APPID>{appid}</APPID>"
-            "<APPVER>{appver}</APPVER>"
-            "</SONRQ>"
-            "</SIGNONMSGSRQV1>"
             "</OFX>"
         ).format(appid=DEFAULT_APPID, appver=DEFAULT_APPVER)
 

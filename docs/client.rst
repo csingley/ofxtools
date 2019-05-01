@@ -269,7 +269,7 @@ The method call therefore looks like this:
 .. code-block:: python 
 
     >>> import datetime; import ofxtools
-    >>> from ofxtools import OFXClient, StmtRq, CcStmtRq
+    >>> from ofxtools import OFXClient, StmtRq, CcStmtEndRq
     >>> client = OFXClient("https://ofx.chase.com", userid="MoMoney",
     ...                    org="B1", fid="10898",
     ...                    version=220, prettyprint=True,
@@ -278,12 +278,11 @@ The method call therefore looks like this:
     >>> dtend = datetime.datetime(2015, 1, 31, tzinfo=ofxtools.utils.UTC)
     >>> s0 = StmtRq(acctid="1", accttype="CHECKING", dtstart=dtstart, dtend=dtend)
     >>> s1 = StmtRq(acctid="2", accttype="SAVINGS", dtstart=dtstart, dtend=dtend)
-    >>> c0 = CcStmtRq(acctid="3", dtstart=dtstart, dtend=dtend)
+    >>> c0 = CcStmtEndRq(acctid="3", dtstart=dtstart, dtend=dtend)
     >>> response = client.request_statements("t0ps3kr1t", s0, s1, c0)
 
 
 Other methods available:
-    * ``OFXClient.request_end_statements()`` - STMTENDRQ/CCSTMTENDRQ
     * ``OFXClient.request_profile()`` - PROFRQ
     * ``OFXClient.request_accounts()``- ACCTINFORQ
     * ``OFXClient.request_tax1099()``- TAX1099RQ

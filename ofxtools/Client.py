@@ -20,7 +20,7 @@ arguments.
 For example:
 
 >>> import datetime; import ofxtools
->>> from ofxtools import OFXClient, StmtRq, CcStmtRq
+>>> from ofxtools import OFXClient, StmtRq, CcStmtEndRq
 >>> client = OFXClient("https://ofx.chase.com", userid="MoMoney",
 ...                    org="B1", fid="10898",
 ...                    version=220, prettyprint=True,
@@ -29,7 +29,7 @@ For example:
 >>> dtend = datetime.datetime(2015, 1, 31, tzinfo=ofxtools.utils.UTC)
 >>> s0 = StmtRq(acctid="1", accttype="CHECKING", dtstart=dtstart, dtend=dtend)
 >>> s1 = StmtRq(acctid="2", accttype="SAVINGS", dtstart=dtstart, dtend=dtend)
->>> c0 = CcStmtRq(acctid="3", dtstart=dtstart, dtend=dtend)
+>>> c0 = CcStmtEndRq(acctid="3", dtstart=dtstart, dtend=dtend)
 >>> response = client.request_statements("t0ps3kr1t", s0, s1, c0)
 """
 # stdlib imports
@@ -41,7 +41,7 @@ import ssl
 import urllib
 from io import BytesIO
 import itertools
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 from functools import singledispatch
 
 
@@ -98,7 +98,6 @@ InvStmtRq = namedtuple(
 )
 InvStmtRq.__new__.__defaults__ = (None, None, None, None, True, False, True, True)
 
-# Pass instances of these containers as args to OFXClient.request_end_statement()
 StmtEndRq = namedtuple("StmtEndRq", ["acctid", "accttype", "dtstart", "dtend"])
 StmtEndRq.__new__.__defaults__ = (None, None, None, None, True)
 
@@ -206,41 +205,42 @@ class OFXClient:
         return datetime.datetime.now(UTC)
 
     def request_statements(self, password, *requests,
-                           dryrun=False, verify_ssl=True, timeout=None,
-                           wrapfn=None):
+                           dryrun=False, verify_ssl=True, timeout=None):
         """
-        Package and send OFX statement requests (STMTRQ/CCSTMTRQ/INVSTMTRQ).
+        Package and send OFX statement requests
+        (STMTRQ/CCSTMTRQ/INVSTMTRQ/STMTENDRQ/CCSTMTENDRQ).
 
         Input *requests are instances of the corresponding namedtuples
-        (StmtRq, CcStmtRq, InvStmtRq)
+        (StmtRq, CcStmtRq, InvStmtRq, StmtEndRq, CcStmtEndRq)
         """
-        if wrapfn is None:
-            wrapfn = wrap_stmtrq
-
-        # *StmtRq (namedtuples) don't have rich comparison methods;
+        # *StmtRq/*StmtEndRqs (namedtuples) don't have rich comparison methods;
         # can't sort by class
         requests = sorted(requests, key=attrgetter("__class__.__name__"))
 
-        msgs = dict([wrapfn(cls(), rqs, self)
-                    for cls, rqs in itertools.groupby(
-                        requests, key=attrgetter("__class__"))])
+        trnrqs = [wrap_stmtrq(cls(), rqs, self)
+                  for cls, rqs in itertools.groupby(
+                      requests, key=attrgetter("__class__"))]
+
+        # trnrqs is a pair of (models.*MSGSRQV1, [*TRNRQ])
+        # Can't sort *MSGSRQV1 by class, either
+        trnrqs.sort(key=lambda p: p[0].__name__)
+
+        def _mkmsgs(msgcls, trnrqs):
+            """
+            msgcls - one of (BANKMSGSRQV1, CREDITCARDMSGSRQV1, INVSTMTMSGSRQV1)
+            trnrqs - sequence of sequences of (*STMTTRNRQ, *STMTENDTRNRQ)
+            """
+            trnrqs = list(itertools.chain.from_iterable(t[1] for t in trnrqs))
+            attr_name = msgcls.__name__.lower()
+            return (attr_name, msgcls(*trnrqs))
+
+        msgs = dict(_mkmsgs(msgcls, _trnrqs) for msgcls, _trnrqs
+                    in itertools.groupby(trnrqs, key=itemgetter(0)))
 
         signon = self.signon(password)
         ofx = OFX(signonmsgsrqv1=signon, **msgs)
         return self.download(ofx, dryrun=dryrun, verify_ssl=verify_ssl,
                              timeout=timeout)
-
-    def request_end_statements(self, password, *requests,
-                               dryrun=False, verify_ssl=True, timeout=None):
-        """
-        Package and send OFX end statement requests (STMTENDRQ, CCSTMTENDRQ).
-
-        Input *requests are instances of the corresponding namedtuples
-        (StmtEndRq, CcStmtEndRq)
-        """
-        return self.request_statements(password, *requests, dryrun=dryrun,
-                                       verify_ssl=verify_ssl, timeout=timeout,
-                                       wrapfn=wrap_stmtendrq)
 
     def request_profile(
         self,
@@ -450,44 +450,38 @@ class OFXClient:
 
 @singledispatch
 def wrap_stmtrq(nt, rqs, client):
-    msg = "Not a *StmtRq: {}".format(nt.__class__.__name__)
+    msg = "Not a *StmtRq/*StmtEndRq: {}".format(nt.__class__.__name__)
     raise ValueError(msg)
 
 
 @wrap_stmtrq.register(StmtRq)
 def _(nt, rqs, client):
-    return "bankmsgsrqv1", BANKMSGSRQV1(
-        *[client.stmttrnrq(**dict(rq._asdict(), bankid=client.bankid))
-          for rq in rqs])
+    return (BANKMSGSRQV1,
+            [client.stmttrnrq(**dict(rq._asdict(), bankid=client.bankid))
+             for rq in rqs])
 
 
 @wrap_stmtrq.register(CcStmtRq)
 def _(nt, rqs, client):
-    return "creditcardmsgsrqv1", CREDITCARDMSGSRQV1(
-        *[client.ccstmttrnrq(**rq._asdict()) for rq in rqs])
+    return (CREDITCARDMSGSRQV1,
+            [client.ccstmttrnrq(**rq._asdict()) for rq in rqs])
 
 
 @wrap_stmtrq.register(InvStmtRq)
 def _(nt, rqs, client):
-    return "invstmtmsgsrqv1", INVSTMTMSGSRQV1(
-        *[client.invstmttrnrq(**dict(rq._asdict(), brokerid=client.brokerid))
-          for rq in rqs])
+    return (INVSTMTMSGSRQV1,
+            [client.invstmttrnrq(**dict(r._asdict(), brokerid=client.brokerid))
+             for r in rqs])
 
 
-@singledispatch
-def wrap_stmtendrq(nt, rqs, client):
-    msg = "Not a *StmtEndRq: {}".format(nt.__class__.__name__)
-    raise ValueError(msg)
-
-
-@wrap_stmtendrq.register(StmtEndRq)
+@wrap_stmtrq.register(StmtEndRq)
 def _(nt, rqs, client):
-    return "bankmsgsrqv1", BANKMSGSRQV1(
-        *[client.stmtendtrnrq(**dict(rq._asdict(), bankid=client.bankid))
-          for rq in rqs])
+    return (BANKMSGSRQV1,
+            [client.stmtendtrnrq(**dict(rq._asdict(), bankid=client.bankid))
+             for rq in rqs])
 
 
-@wrap_stmtendrq.register(CcStmtEndRq)
+@wrap_stmtrq.register(CcStmtEndRq)
 def _(nt, rqs, client):
-    return "creditcardmsgsrqv1", CREDITCARDMSGSRQV1(
-        *[client.ccstmtendtrnrq(**rq._asdict()) for rq in rqs])
+    return (CREDITCARDMSGSRQV1,
+            [client.ccstmtendtrnrq(**rq._asdict()) for rq in rqs])
