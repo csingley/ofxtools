@@ -42,6 +42,7 @@ import urllib
 from io import BytesIO
 import itertools
 from operator import attrgetter
+from functools import singledispatch
 
 
 # local imports
@@ -84,7 +85,8 @@ from ofxtools import utils
 
 # Statement request data containers
 # Pass instances of these containers as args to OFXClient.request_statement()
-StmtRq = namedtuple("StmtRq", ["acctid", "accttype", "dtstart", "dtend", "inctran"])
+StmtRq = namedtuple("StmtRq",
+                    ["acctid", "accttype", "dtstart", "dtend", "inctran"])
 StmtRq.__new__.__defaults__ = (None, None, None, None, True)
 
 CcStmtRq = namedtuple("CcStmtRq", ["acctid", "dtstart", "dtend", "inctran"])
@@ -203,104 +205,42 @@ class OFXClient:
         """
         return datetime.datetime.now(UTC)
 
-    def request_statements(
-        self,
-        password,
-        *requests,
-        dryrun=False,
-        verify_ssl=True,
-        timeout=None):
+    def request_statements(self, password, *requests,
+                           dryrun=False, verify_ssl=True, timeout=None,
+                           wrapfn=None):
         """
         Package and send OFX statement requests (STMTRQ/CCSTMTRQ/INVSTMTRQ).
 
         Input *requests are instances of the corresponding namedtuples
         (StmtRq, CcStmtRq, InvStmtRq)
         """
-        msgs = {
-            "bankmsgsrqv1": None,
-            "creditcardmsgsrqv1": None,
-            "invstmtmsgsrqv1": None,
-        }
+        if wrapfn is None:
+            wrapfn = wrap_stmtrq
 
-        sortkey = attrgetter("__class__.__name__")
-        requests = sorted(requests, key=sortkey)
-        for clsName, rqs in itertools.groupby(requests, key=sortkey):
-            if clsName == "StmtRq":
-                msgs["bankmsgsrqv1"] = BANKMSGSRQV1(
-                    *[
-                        self.stmttrnrq(**dict(rq._asdict(), bankid=self.bankid))
-                        for rq in rqs
-                    ]
-                )
-            elif clsName == "CcStmtRq":
-                msgs["creditcardmsgsrqv1"] = CREDITCARDMSGSRQV1(
-                    *[self.ccstmttrnrq(**rq._asdict()) for rq in rqs]
-                )
-            elif clsName == "InvStmtRq":
-                msgs["invstmtmsgsrqv1"] = INVSTMTMSGSRQV1(
-                    *[
-                        self.invstmttrnrq(**dict(rq._asdict(), brokerid=self.brokerid))
-                        for rq in rqs
-                    ]
-                )
-            else:
-                msg = "Not a *StmtRq: {}".format(clsName)
-                raise ValueError(msg)
+        # *StmtRq (namedtuples) don't have rich comparison methods;
+        # can't sort by class
+        requests = sorted(requests, key=attrgetter("__class__.__name__"))
+
+        msgs = dict([wrapfn(cls(), rqs, self)
+                    for cls, rqs in itertools.groupby(
+                        requests, key=attrgetter("__class__"))])
 
         signon = self.signon(password)
         ofx = OFX(signonmsgsrqv1=signon, **msgs)
-        return self.download(
-            ofx,
-            dryrun=dryrun,
-            verify_ssl=verify_ssl,
-            timeout=timeout,
-        )
+        return self.download(ofx, dryrun=dryrun, verify_ssl=verify_ssl,
+                             timeout=timeout)
 
-    def request_end_statements(
-        self,
-        password,
-        *requests,
-        dryrun=False,
-        verify_ssl=True,
-        timeout=None):
+    def request_end_statements(self, password, *requests,
+                               dryrun=False, verify_ssl=True, timeout=None):
         """
         Package and send OFX end statement requests (STMTENDRQ, CCSTMTENDRQ).
 
         Input *requests are instances of the corresponding namedtuples
         (StmtEndRq, CcStmtEndRq)
         """
-        msgs = {
-            "bankmsgsrqv1": None,
-            "creditcardmsgsrqv1": None,
-            "invstmtmsgsrqv1": None,
-        }
-
-        sortkey = attrgetter("__class__.__name__")
-        requests = sorted(requests, key=sortkey)
-        for clsName, rqs in itertools.groupby(requests, key=sortkey):
-            if clsName == "StmtEndRq":
-                msgs["bankmsgsrqv1"] = BANKMSGSRQV1(
-                    *[
-                        self.stmtendtrnrq(**dict(rq._asdict(), bankid=self.bankid))
-                        for rq in rqs
-                    ]
-                )
-            elif clsName == "CcStmtEndRq":
-                msgs["creditcardmsgsrqv1"] = CREDITCARDMSGSRQV1(
-                    *[self.ccstmtendtrnrq(**rq._asdict()) for rq in rqs]
-                )
-            else:
-                msg = "Not a *StmtEndRq: {}".format(clsName)
-                raise ValueError(msg)
-
-        signon = self.signon(password)
-        ofx = OFX(signonmsgsrqv1=signon, **msgs)
-        return self.download(
-            ofx,
-            dryrun=dryrun,
-            verify_ssl=verify_ssl,
-            timeout=timeout,
-        )
+        return self.request_statements(password, *requests, dryrun=dryrun,
+                                       verify_ssl=verify_ssl, timeout=timeout,
+                                       wrapfn=wrap_stmtendrq)
 
     def request_profile(
         self,
@@ -506,3 +446,48 @@ class OFXClient:
             body = ET.tostring(tree, encoding="utf_8", method="html")
 
         return header + body
+
+
+@singledispatch
+def wrap_stmtrq(nt, rqs, client):
+    msg = "Not a *StmtRq: {}".format(nt.__class__.__name__)
+    raise ValueError(msg)
+
+
+@wrap_stmtrq.register(StmtRq)
+def _(nt, rqs, client):
+    return "bankmsgsrqv1", BANKMSGSRQV1(
+        *[client.stmttrnrq(**dict(rq._asdict(), bankid=client.bankid))
+          for rq in rqs])
+
+
+@wrap_stmtrq.register(CcStmtRq)
+def _(nt, rqs, client):
+    return "creditcardmsgsrqv1", CREDITCARDMSGSRQV1(
+        *[client.ccstmttrnrq(**rq._asdict()) for rq in rqs])
+
+
+@wrap_stmtrq.register(InvStmtRq)
+def _(nt, rqs, client):
+    return "invstmtmsgsrqv1", INVSTMTMSGSRQV1(
+        *[client.invstmttrnrq(**dict(rq._asdict(), brokerid=client.brokerid))
+          for rq in rqs])
+
+
+@singledispatch
+def wrap_stmtendrq(nt, rqs, client):
+    msg = "Not a *StmtEndRq: {}".format(nt.__class__.__name__)
+    raise ValueError(msg)
+
+
+@wrap_stmtendrq.register(StmtEndRq)
+def _(nt, rqs, client):
+    return "bankmsgsrqv1", BANKMSGSRQV1(
+        *[client.stmtendtrnrq(**dict(rq._asdict(), bankid=client.bankid))
+          for rq in rqs])
+
+
+@wrap_stmtendrq.register(CcStmtEndRq)
+def _(nt, rqs, client):
+    return "creditcardmsgsrqv1", CREDITCARDMSGSRQV1(
+        *[client.ccstmtendtrnrq(**rq._asdict()) for rq in rqs])

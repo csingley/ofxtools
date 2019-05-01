@@ -386,7 +386,7 @@ def all_stmts(args, dt, password):
 @singledispatch
 def mkstmtrq(acctinfo, args, dt):
     acct = acctinfo.bankacctfrom
-    return StmtRq(acctid=acct.acctid, acctype=acct.accttype,
+    return StmtRq(acctid=acct.acctid, accttype=acct.accttype,
                   dtstart=dt["start"], dtend=dt["end"], inctran=args.inctran)
 
 
