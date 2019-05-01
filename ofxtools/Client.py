@@ -9,25 +9,28 @@ identifiers, etc.
 
 If you don't have these, try http://ofxhome.com/ .
 
-Using the configured OFXClient instance, make a request by calling the
-relevant method, e.g. `OFXClient.request_statements()`, passing
-username/password as the first two positional arguments.  Any remaining
-positional arguments are parsed as requests; simple data containers for each
-statement (`StmtRq`, `CcStmtRq`, etc.) are provided for this purpose.
-Options follow as keyword arguments.
+
+Using the configured ``OFXClient`` instance, make a request by calling the
+relevant method, e.g. ``OFXClient.request_statements()``.  Provide the password
+as the first positional argument; any remaining positional arguments are parsed
+as requests.  Simple data containers for each statement (``StmtRq``,
+``CcStmtRq``, etc.) are provided for this purpose.  Options follow as keyword
+arguments.
 
 For example:
 
->>> client = OFXClient('https://onlinebanking.capitalone.com/ofx/process.ofx',
-...                    org='Hibernia', fid='1001', bankid='056073502',
-...                    version=202)
+>>> import datetime; import ofxtools
+>>> from ofxtools import OFXClient, StmtRq, CcStmtRq
+>>> client = OFXClient("https://ofx.chase.com", userid="MoMoney",
+...                    org="B1", fid="10898",
+...                    version=220, prettyprint=True,
+...                    bankid="111000614")
 >>> dtstart = datetime.datetime(2015, 1, 1, tzinfo=ofxtools.utils.UTC)
 >>> dtend = datetime.datetime(2015, 1, 31, tzinfo=ofxtools.utils.UTC)
->>> s0 = StmtRq(acctid='1', accttype='CHECKING', dtstart=dtstart, dtend=dtend)
->>> s1 = StmtRq(acctid='2', accttype='SAVINGS', dtstart=dtstart, dtend=dtend)
->>> c0 = CcStmtRq(acctid='3', dtstart=dtstart, dtend=dtend)
->>> response = client.request_statements('jpmorgan', 't0ps3kr1t', s0, s1, c0,
-...                                      prettyprint=True)
+>>> s0 = StmtRq(acctid="1", accttype="CHECKING", dtstart=dtstart, dtend=dtend)
+>>> s1 = StmtRq(acctid="2", accttype="SAVINGS", dtstart=dtstart, dtend=dtend)
+>>> c0 = CcStmtRq(acctid="3", dtstart=dtstart, dtend=dtend)
+>>> response = client.request_statements("t0ps3kr1t", s0, s1, c0)
 """
 # stdlib imports
 import datetime
@@ -107,6 +110,7 @@ class OFXClient:
     """
 
     # OFX header/signon defaults
+    userid = "{:0<32}".format("anonymous")
     clientuid = None
     org = None
     fid = None
@@ -115,6 +119,10 @@ class OFXClient:
     appver = "2700"
     language = "ENG"
 
+    # Formatting defaults
+    prettyprint = False
+    close_elements = True
+
     # Stmt request
     bankid = None
     brokerid = None
@@ -122,23 +130,51 @@ class OFXClient:
     def __init__(
         self,
         url,
+        userid=None,
+        clientuid=None,
         org=None,
         fid=None,
         version=None,
         appid=None,
         appver=None,
         language=None,
+        prettyprint=None,
+        close_elements=None,
         bankid=None,
         brokerid=None):
         self.url = url
+
+        # Signon
+        if userid is not None:
+            self.userid = userid
+        self.clientuid = clientuid
         self.org = org
         self.fid = fid
         if version is not None:
             self.version = int(version)
-        self.appid = appid or self.appid
+        if appid is not None:
+            self.appid = appid
         if appver is not None:
             self.appver = str(appver)
-        self.language = language or self.language
+        if language is not None:
+            self.language = language
+
+        # Formatting
+        if prettyprint is not None:
+            if type(prettyprint) is not bool:
+                msg = "'prettyprint' must be type(bool), not '{}'"
+                raise ValueError(msg.format(prettyprint))
+            self.prettyprint = prettyprint
+        if close_elements is not None:
+            if type(close_elements) is not bool:
+                msg = "'close_elements' must be type(bool), not '{}'"
+                raise ValueError(msg.format(close_elements))
+            if (not close_elements) and self.version >= 200:
+                msg = "OFX version {} must close all tags"
+                raise ValueError(msg.format(self.version))
+            self.close_elements = close_elements
+
+        # Statements
         self.bankid = bankid
         self.brokerid = brokerid
 
@@ -169,17 +205,9 @@ class OFXClient:
 
     def request_statements(
         self,
-        user,
         password,
         *requests,
-        language=None,
-        clientuid=None,
-        appid=None,
-        appver=None,
-        version=None,
         dryrun=False,
-        prettyprint=False,
-        close_elements=True,
         verify_ssl=True,
         timeout=None):
         """
@@ -219,36 +247,20 @@ class OFXClient:
                 msg = "Not a *StmtRq: {}".format(clsName)
                 raise ValueError(msg)
 
-        signon = self.signon(user,
-                             password,
-                             language=language,
-                             clientuid=clientuid,
-                             appid=appid,
-                             appver=appver)
+        signon = self.signon(password)
         ofx = OFX(signonmsgsrqv1=signon, **msgs)
         return self.download(
             ofx,
             dryrun=dryrun,
-            version=version,
-            prettyprint=prettyprint,
-            close_elements=close_elements,
             verify_ssl=verify_ssl,
             timeout=timeout,
         )
 
     def request_end_statements(
         self,
-        user,
         password,
         *requests,
-        language=None,
-        clientuid=None,
-        appid=None,
-        appver=None,
-        version=None,
         dryrun=False,
-        prettyprint=False,
-        close_elements=True,
         verify_ssl=True,
         timeout=None):
         """
@@ -281,34 +293,20 @@ class OFXClient:
                 msg = "Not a *StmtEndRq: {}".format(clsName)
                 raise ValueError(msg)
 
-        signon = self.signon(user,
-                             password,
-                             language=language,
-                             clientuid=clientuid,
-                             appid=appid,
-                             appver=appver)
+        signon = self.signon(password)
         ofx = OFX(signonmsgsrqv1=signon, **msgs)
         return self.download(
             ofx,
             dryrun=dryrun,
-            version=version,
-            prettyprint=prettyprint,
-            close_elements=close_elements,
             verify_ssl=verify_ssl,
             timeout=timeout,
         )
 
     def request_profile(
         self,
-        user=None,
         password=None,
-        language=None,
-        appid=None,
-        appver=None,
         dryrun=False,
         version=None,
-        prettyprint=False,
-        close_elements=True,
         verify_ssl=True,
         timeout=None):
         """
@@ -321,49 +319,29 @@ class OFXClient:
         proftrnrq = PROFTRNRQ(trnuid=trnuid, profrq=profrq)
         msgs = PROFMSGSRQV1(proftrnrq)
 
-        user = user or "{:0<32}".format("anonymous")
         password = password or "{:0<32}".format("anonymous")
-        signon = self.signon(user,
-                             password,
-                             language=language,
-                             appid=appid,
-                             appver=appver)
+        signon = self.signon(password)
 
         ofx = OFX(signonmsgsrqv1=signon, profmsgsrqv1=msgs)
         return self.download(
             ofx,
             dryrun=dryrun,
-            version=version,
-            prettyprint=prettyprint,
-            close_elements=close_elements,
             verify_ssl=verify_ssl,
             timeout=timeout,
         )
 
     def request_accounts(
         self,
-        user,
         password,
         dtacctup,
-        language=None,
-        clientuid=None,
-        appid=None,
-        appver=None,
         dryrun=False,
         version=None,
-        prettyprint=False,
-        close_elements=True,
         verify_ssl=True,
         timeout=None):
         """
         Package and send OFX account info requests (ACCTINFORQ)
         """
-        signon = self.signon(user,
-                             password,
-                             language=language,
-                             clientuid=clientuid,
-                             appid=appid,
-                             appver=appver)
+        signon = self.signon(password)
 
         acctinforq = ACCTINFORQ(dtacctup=dtacctup)
         acctinfotrnrq = ACCTINFOTRNRQ(trnuid=self.uuid, acctinforq=acctinforq)
@@ -373,39 +351,23 @@ class OFXClient:
         return self.download(
             ofx,
             dryrun=dryrun,
-            version=version,
-            prettyprint=prettyprint,
-            close_elements=close_elements,
             verify_ssl=verify_ssl,
             timeout=timeout,
         )
 
     def request_tax1099(
         self,
-        user,
         password,
         *taxyears,
         acctnum=None,
         recid=None,
-        language=None,
-        clientuid=None,
-        appid=None,
-        appver=None,
         dryrun=False,
-        version=None,
-        prettyprint=False,
-        close_elements=True,
         verify_ssl=True,
         timeout=None):
         """
         Request US federal income tax form 1099 (TAX1099RQ)
         """
-        signon = self.signon(user,
-                             password,
-                             language=language,
-                             clientuid=clientuid,
-                             appid=appid,
-                             appver=appver)
+        signon = self.signon(password)
 
         rq = TAX1099RQ(*taxyears, recid=recid or None)
         msgs = TAX1099MSGSRQV1(
@@ -415,15 +377,11 @@ class OFXClient:
         return self.download(
             ofx,
             dryrun=dryrun,
-            version=version,
-            prettyprint=prettyprint,
-            close_elements=close_elements,
             verify_ssl=verify_ssl,
             timeout=timeout,
         )
 
-    def signon(self, userid, userpass, language=None, sesscookie=None,
-               appid=None, appver=None, clientuid=None):
+    def signon(self, userpass, sesscookie=None):
         """ Construct SONRQ; package in SIGNONMSGSRQV1 """
         if self.org:
             fi = FI(org=self.org, fid=self.fid)
@@ -432,14 +390,14 @@ class OFXClient:
 
         sonrq = SONRQ(
             dtclient=self.dtclient(),
-            userid=userid,
+            userid=self.userid,
             userpass=userpass,
-            language=language or self.language,
+            language=self.language,
             fi=fi,
             sesscookie=sesscookie,
-            appid=appid or self.appid,
-            appver=appver or self.appver,
-            clientuid=clientuid,
+            appid=self.appid,
+            appver=self.appver,
+            clientuid=self.clientuid,
         )
         return SIGNONMSGSRQV1(sonrq=sonrq)
 
@@ -501,9 +459,6 @@ class OFXClient:
     def download(self,
                  ofx,
                  dryrun=False,
-                 version=None,
-                 prettyprint=False,
-                 close_elements=True,
                  verify_ssl=True,
                  timeout=None):
         """
@@ -512,10 +467,7 @@ class OFXClient:
         Returns a file-like object that supports the file interface, and can
         therefore be passed drectly to ``OFXTree.parse()``.
         """
-        request = self.serialize(ofx,
-                                 version=version,
-                                 prettyprint=prettyprint,
-                                 close_elements=close_elements)
+        request = self.serialize(ofx)
 
         if dryrun:
             return BytesIO(request)
@@ -534,26 +486,20 @@ class OFXClient:
                                           context=ssl_context)
         return response
 
-    def serialize(self,
-                  ofx,
-                  version=None,
-                  prettyprint=False,
-                  close_elements=True):
-        if version is None:
-            version = self.version
-        header = make_header(version=version, newfileuid=self.uuid)
+    def serialize(self, ofx):
+        header = make_header(version=self.version, newfileuid=self.uuid)
         header = bytes(str(header), "utf_8")
 
         tree = ofx.to_etree()
-        if prettyprint:
+        if self.prettyprint:
             utils.indent(tree)
 
         # Some servers choke on OFXv1 requests including ending tags for
         # elements (which are optional per the spec).
-        if close_elements is False:
-            if version >= 200:
+        if self.close_elements is False:
+            if self.version >= 200:
                 msg = "OFX version {} requires ending tags for elements"
-                raise ValueError(msg.format(version))
+                raise ValueError(msg.format(self.version))
             body = utils.tostring_unclosed_elements(tree)
         else:
             # ``method="html"`` skips the initial XML declaration

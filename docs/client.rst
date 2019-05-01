@@ -258,11 +258,11 @@ To use within another program, first initialize an ``ofxtools.Client.OFXClient``
 instance with the relevant connection parameters.
 
 Using the configured ``OFXClient`` instance, make a request by calling the
-relevant method, e.g. ``OFXClient.request_statements()``.  Pass
-username/password as the first two positional arguments.  Any remaining
-positional arguments are parsed as requests; simple data containers for each
-statement (`StmtRq`, `CcStmtRq`, etc.) are provided for this purpose.
-Options follow as keyword arguments.
+relevant method, e.g. ``OFXClient.request_statements()``.  Provide the password
+as the first positional argument; any remaining positional arguments are parsed
+as requests.  Simple data containers for each statement (``StmtRq``,
+``CcStmtRq``, etc.) are provided for this purpose.  Options follow as keyword
+arguments.
 
 The method call therefore looks like this:
 
@@ -270,15 +270,17 @@ The method call therefore looks like this:
 
     >>> import datetime; import ofxtools
     >>> from ofxtools import OFXClient, StmtRq, CcStmtRq
-    >>> client = OFXClient("https://ofx.chase.com", org="B1", fid="10898", 
-    ...                    bankid="111000614", version=220)
+    >>> client = OFXClient("https://ofx.chase.com", userid="MoMoney",
+    ...                    org="B1", fid="10898",
+    ...                    version=220, prettyprint=True,
+    ...                    bankid="111000614")
     >>> dtstart = datetime.datetime(2015, 1, 1, tzinfo=ofxtools.utils.UTC)
     >>> dtend = datetime.datetime(2015, 1, 31, tzinfo=ofxtools.utils.UTC)
     >>> s0 = StmtRq(acctid="1", accttype="CHECKING", dtstart=dtstart, dtend=dtend)
     >>> s1 = StmtRq(acctid="2", accttype="SAVINGS", dtstart=dtstart, dtend=dtend)
     >>> c0 = CcStmtRq(acctid="3", dtstart=dtstart, dtend=dtend)
-    >>> response = client.request_statements("momoney", "t0ps3kr1t", s0, s1, c0,
-    ...                                      prettyprint=True)
+    >>> response = client.request_statements("t0ps3kr1t", s0, s1, c0)
+
 
 Other methods available:
     * ``OFXClient.request_end_statements()`` - STMTENDRQ/CCSTMTENDRQ

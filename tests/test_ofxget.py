@@ -87,8 +87,7 @@ class CliTestCase(unittest.TestCase):
                 self.assertEqual(output, None)
 
                 args, kwargs = fake_rq_stmt.call_args
-                user, password, *stmtrqs = args
-                self.assertEqual(user, "porkypig")
+                password, *stmtrqs = args
                 self.assertEqual(password, "t0ps3kr1t")
                 self.assertEqual(
                     stmtrqs,
@@ -184,8 +183,7 @@ class CliTestCase(unittest.TestCase):
                     ],
                 )
                 self.assertEqual(
-                    kwargs, {"clientuid": None,
-                             "dryrun": False,
+                    kwargs, {"dryrun": False,
                              "close_elements": True,
                              "prettyprint": False,
                              "verify_ssl": True,
@@ -200,8 +198,7 @@ class CliTestCase(unittest.TestCase):
             self.assertEqual(output, None)
 
             args, kwargs = fake_rq_stmt.call_args
-            user, password, *stmtrqs = args
-            self.assertEqual(user, "porkypig")
+            password, *stmtrqs = args
             self.assertEqual(password, "{:0<32}".format("anonymous"))
             self.assertEqual(
                 stmtrqs,
@@ -297,13 +294,11 @@ class CliTestCase(unittest.TestCase):
                 ],
             )
             self.assertEqual(
-                kwargs, {
-                    "clientuid": None,
-                    "dryrun": True,
-                    "close_elements": True,
-                    "prettyprint": False,
-                    "verify_ssl": True,
-                }
+                kwargs, {"dryrun": True,
+                         "close_elements": True,
+                         "prettyprint": False,
+                         "verify_ssl": True,
+                        }
             )
 
     def testRequestProfile(self):

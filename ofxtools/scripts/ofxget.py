@@ -13,7 +13,10 @@ from io import BytesIO
 
 
 # local imports
-from ofxtools.Client import (OFXClient, StmtRq, CcStmtRq, InvStmtRq)
+from ofxtools.Client import (
+    OFXClient, StmtRq, CcStmtRq, InvStmtRq,
+    StmtEndRq, CcStmtEndRq,
+)
 from ofxtools.Types import DateTime
 from ofxtools.utils import UTC
 from ofxtools import (utils, ofxhome, config)
@@ -31,7 +34,8 @@ def make_argparser(fi_index):
         epilog="FIs configured: {}".format(fi_index),
     )
     argparser.add_argument(
-        "request", choices=["scan", "prof", "acctinfo", "stmt", "tax1099"],
+        "request",
+        choices=list(REQUEST_FNS.keys()),
         help="Request type")
     argparser.add_argument(
         "server", help="OFX server - URL or FI name from ofxget.cfg/fi.cfg")
@@ -43,22 +47,25 @@ def make_argparser(fi_index):
         help="display OFX request and exit without sending",
     )
     argparser.add_argument(
+        "--unsafe",
+        action="store_true",
+        default=False,
+        help="Disable SSL certificate verification",
+    )
+
+    format_group = argparser.add_argument_group(title="Format Options")
+    format_group.add_argument("--version", help="OFX version")
+    format_group.add_argument(
         "--unclosedelements",
         action="store_true",
         default=False,
         help="Omit end tags for elements (OFXv1 only)",
     )
-    argparser.add_argument(
+    format_group.add_argument(
         "--pretty",
         action="store_true",
         default=False,
         help="Insert newlines and whitespace indentation",
-    )
-    argparser.add_argument(
-        "--unsafe",
-        action="store_true",
-        default=False,
-        help="Disable SSL certificate verification",
     )
 
     signon_group = argparser.add_argument_group(title="Signon Options")
@@ -66,14 +73,13 @@ def make_argparser(fi_index):
     signon_group.add_argument("--clientuid", metavar="UUID4", help="OFX client UID")
     signon_group.add_argument("--org", help="FI.ORG")
     signon_group.add_argument("--fid", help="FI.FID")
-    signon_group.add_argument("--bankid", help="ABA routing#")
-    signon_group.add_argument("--brokerid", help="Broker ID string")
-    signon_group.add_argument("--version", help="OFX version")
     signon_group.add_argument("--appid", help="OFX client app identifier")
     signon_group.add_argument("--appver", help="OFX client app version")
     signon_group.add_argument("--language", default="ENG", help="OFX language")
 
     stmt_group = argparser.add_argument_group(title="Statement Options")
+    stmt_group.add_argument("--bankid", help="ABA routing#")
+    stmt_group.add_argument("--brokerid", help="Broker ID string")
     stmt_group.add_argument(
         "-C", "--checking", metavar="#", action="append", default=[],
         help="Account number (option can be repeated)"
@@ -289,7 +295,7 @@ def _scan_profile(url, org, fid, max_workers=None, timeout=None):
 
 def request_stmt(args):
     """
-    Send STMTRQ/INVSTMTRQ
+    Send *STMTRQ
     """
     client = init_client(args)
 
@@ -388,13 +394,52 @@ def request_stmt(args):
             )
 
     with client.request_statements(
-        args.user,
         password,
         *stmtrqs,
-        clientuid=args.clientuid,
         dryrun=args.dryrun,
-        close_elements=not args.unclosedelements,
-        prettyprint=args.pretty,
+        verify_ssl=not args.unsafe
+    ) as f:
+        response = f.read()
+
+    print(response.decode())
+
+
+def request_stmtend(args):
+    """
+    Send *STMTENDRQ
+    """
+    client = init_client(args)
+
+    # Convert dtstart/dtend/dtasof to Python datetime type
+    D = DateTime().convert
+    dt = {d[2:]: D(getattr(args, d)) for d in ("dtstart", "dtend", "dtasof")}
+
+    # Prompt for password
+    if args.dryrun:
+        # Use dummy password for dummy request
+        password = "{:0<32}".format("anonymous")
+    else:
+        password = getpass.getpass()
+
+    # Define statement requests
+    stmtendrqs = []
+
+    # Create *STMTENDRQ for each account specified by config/args
+    for accttype in ("checking", "savings", "moneymrkt", "creditline"):
+        acctids = getattr(args, accttype, [])
+        stmtendrqs.extend(
+            [StmtEndRq(acctid=acctid, accttype=accttype.upper(),
+                       dtstart=dt["start"], dtend=dt["end"])
+             for acctid in acctids])
+
+    for acctid in args.creditcard:
+        stmtendrqs.append(
+            CcStmtEndRq(acctid=acctid, dtstart=dt["start"], dtend=dt["end"]))
+
+    with client.request_end_statements(
+        password,
+        *stmtendrqs,
+        dryrun=args.dryrun,
         verify_ssl=not args.unsafe
     ) as f:
         response = f.read()
@@ -409,8 +454,6 @@ def request_profile(args):
     client = init_client(args)
     with client.request_profile(
         dryrun=args.dryrun,
-        close_elements=not args.unclosedelements,
-        prettyprint=args.pretty,
         verify_ssl=not args.unsafe
     ) as f:
         response = f.read()
@@ -437,12 +480,9 @@ def _request_acctinfo(args, password):
 
     dtacctup = datetime.datetime(1999, 12, 31, tzinfo=UTC)
 
-    with client.request_accounts(args.user,
-                                 password,
+    with client.request_accounts(password,
                                  dtacctup,
                                  dryrun=args.dryrun,
-                                 close_elements=not args.unclosedelements,
-                                 prettyprint=args.pretty,
                                  verify_ssl=not args.unsafe
                                 ) as f:
         response = f.read()
@@ -462,19 +502,26 @@ def request_tax1099(args):
     else:
         password = getpass.getpass()
 
-    with client.request_tax1099(args.user,
-                                password,
+    with client.request_tax1099(password,
                                 *args.years,
                                 acctnum=args.acctnum,
                                 recid=args.recid,
                                 dryrun=args.dryrun,
-                                close_elements=not args.unclosedelements,
-                                prettyprint=args.pretty,
                                 verify_ssl=not args.unsafe
                                ) as f:
         response = f.read()
 
     print(response.decode())
+
+
+# Map args.request choices to request function
+REQUEST_FNS = {"scan": scan_profile,
+               "prof": request_profile,
+               "acctinfo": request_acctinfo,
+               "stmt": request_stmt,
+               "stmtend": request_stmtend,
+               "tax1099": request_tax1099,
+              }
 
 
 def init_client(args):
@@ -483,12 +530,16 @@ def init_client(args):
     """
     client = OFXClient(
         args.url,
+        userid=args.user,
+        clientuid=args.clientuid,
         org=args.org,
         fid=args.fid,
         version=args.version,
         appid=args.appid,
         appver=args.appver,
         language=args.language,
+        prettyprint=args.pretty,
+        close_elements=not args.unclosedelements,
         bankid=args.bankid,
         brokerid=args.brokerid,
     )
@@ -541,15 +592,6 @@ def merge_config(config, args):
                 setattr(args, cfg, value)
 
     return args
-
-
-# Map args.request choices to request function
-REQUEST_FNS = {"scan": scan_profile,
-               "prof": request_profile,
-               "acctinfo": request_acctinfo,
-               "stmt": request_stmt,
-               "tax1099": request_tax1099,
-              }
 
 
 def main():
