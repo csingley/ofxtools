@@ -182,13 +182,7 @@ class CliTestCase(unittest.TestCase):
                         ),
                     ],
                 )
-                self.assertEqual(
-                    kwargs, {"dryrun": False,
-                             "close_elements": True,
-                             "prettyprint": False,
-                             "verify_ssl": True,
-                            }
-                )
+                self.assertEqual(kwargs, {"dryrun": False,"verify_ssl": True})
 
     def testRequestStmtDryrun(self):
         with patch("ofxtools.Client.OFXClient.request_statements") as fake_rq_stmt:
@@ -293,13 +287,7 @@ class CliTestCase(unittest.TestCase):
                     ),
                 ],
             )
-            self.assertEqual(
-                kwargs, {"dryrun": True,
-                         "close_elements": True,
-                         "prettyprint": False,
-                         "verify_ssl": True,
-                        }
-            )
+            self.assertEqual(kwargs, {"dryrun": True, "verify_ssl": True})
 
     def testRequestProfile(self):
         with patch("ofxtools.Client.OFXClient.request_profile") as fake_rq_prof:
@@ -311,12 +299,7 @@ class CliTestCase(unittest.TestCase):
 
             args, kwargs = fake_rq_prof.call_args
             self.assertEqual(len(args), 0)
-            self.assertEqual(kwargs, {
-                "dryrun": True,
-                "close_elements": True,
-                "prettyprint": False,
-                "verify_ssl": True,
-            })
+            self.assertEqual(kwargs, {"dryrun": True, "verify_ssl": True})
 
 
 class MainTestCase(unittest.TestCase):
