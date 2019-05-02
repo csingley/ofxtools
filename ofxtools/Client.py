@@ -85,21 +85,21 @@ from ofxtools import utils
 
 # Statement request data containers
 # Pass instances of these containers as args to OFXClient.request_statement()
-StmtRq = namedtuple("StmtRq", "acctid accttype dtstart dtend inctran",
-                    defaults=[None]*4 + [True])
+StmtRq = namedtuple("StmtRq", "acctid accttype dtstart dtend inctran")
+StmtRq.__new__.__defaults__ = (None, None, None, None, True)
 
-CcStmtRq = namedtuple("CcStmtRq", ["acctid", "dtstart", "dtend", "inctran"],
-                      defaults=[None]*3 + [True])
+CcStmtRq = namedtuple("CcStmtRq", ["acctid", "dtstart", "dtend", "inctran"])
+CcStmtRq.__new__.__defaults__ = (None, None, None, True)
 
 InvStmtRq = namedtuple("InvStmtRq", ["acctid", "dtstart", "dtend", "dtasof",
-                                     "inctran", "incoo", "incpos", "incbal"],
-                       defaults=[None]*4 + [True, False, True, True])
+                                     "inctran", "incoo", "incpos", "incbal"])
+InvStmtRq.__new__.__defaults__ = (None, None, None, None, True, False, True, True)
 
-StmtEndRq = namedtuple("StmtEndRq", ["acctid", "accttype", "dtstart", "dtend"],
-                       defaults=[None]*4)
+StmtEndRq = namedtuple("StmtEndRq", ["acctid", "accttype", "dtstart", "dtend"])
+StmtEndRq.__new__.__defaults__ = (None, None, None, None)
 
-CcStmtEndRq = namedtuple("CcStmtEndRq", ["acctid", "dtstart", "dtend"],
-                         defaults=[None]*3)
+CcStmtEndRq = namedtuple("CcStmtEndRq", ["acctid", "dtstart", "dtend"])
+CcStmtEndRq.__new__.__defaults__ =  (None, None, None, )
 
 
 class OFXClient:
