@@ -3,14 +3,16 @@
 """
 """
 # stdlib imports
+from argparse import ArgumentParser, Namespace
 import datetime
-from collections import defaultdict, OrderedDict
+from collections import defaultdict, OrderedDict, ChainMap
 import getpass
 import urllib
 import concurrent.futures
 import json
 from io import BytesIO
 from functools import singledispatch
+
 
 
 # local imports
@@ -27,9 +29,15 @@ from ofxtools.models.signup import (
 )
 
 
-def make_argparser(fi_index):
-    from argparse import ArgumentParser
+ARG_DEFAULTS = {"dryrun": False, "unsafe": False, "unclosedelements": False,
+                "pretty": False, "checking": [], "savings": [],
+                "moneymrkt": [], "creditline": [], "creditcard": [],
+                "investment": [], "inctran": True, "incbal": True,
+                "incpos": True, "incoo": False, "all": False, "years": [],
+                "acctnum": None, "recid": None}
 
+
+def make_argparser(fi_index):
     argparser = ArgumentParser(
         description="Download OFX financial data",
         epilog="FIs configured: {}".format(fi_index),
@@ -44,13 +52,13 @@ def make_argparser(fi_index):
         "-n",
         "--dryrun",
         action="store_true",
-        default=False,
+        default=None,
         help="display OFX request and exit without sending",
     )
     argparser.add_argument(
         "--unsafe",
         action="store_true",
-        default=False,
+        default=None,
         help="Disable SSL certificate verification",
     )
 
@@ -59,13 +67,13 @@ def make_argparser(fi_index):
     format_group.add_argument(
         "--unclosedelements",
         action="store_true",
-        default=False,
+        default=None,
         help="Omit end tags for elements (OFXv1 only)",
     )
     format_group.add_argument(
         "--pretty",
         action="store_true",
-        default=False,
+        default=None,
         help="Insert newlines and whitespace indentation",
     )
 
@@ -76,33 +84,33 @@ def make_argparser(fi_index):
     signon_group.add_argument("--fid", help="FI.FID")
     signon_group.add_argument("--appid", help="OFX client app identifier")
     signon_group.add_argument("--appver", help="OFX client app version")
-    signon_group.add_argument("--language", default="ENG", help="OFX language")
+    signon_group.add_argument("--language", default=None, help="OFX language")
 
     stmt_group = argparser.add_argument_group(title="Statement Options")
     stmt_group.add_argument("--bankid", help="ABA routing#")
     stmt_group.add_argument("--brokerid", help="Broker ID string")
     stmt_group.add_argument(
-        "-C", "--checking", metavar="#", action="append", default=[],
+        "-C", "--checking", metavar="#", action="append", default=None,
         help="Account number (option can be repeated)"
     )
     stmt_group.add_argument(
-        "-S", "--savings", metavar="#", action="append", default=[],
+        "-S", "--savings", metavar="#", action="append", default=None,
         help="Account number (option can be repeated)"
     )
     stmt_group.add_argument(
-        "-M", "--moneymrkt", metavar="#", action="append", default=[],
+        "-M", "--moneymrkt", metavar="#", action="append", default=None,
         help="Account number (option can be repeated)"
     )
     stmt_group.add_argument(
-        "-L", "--creditline", metavar="#", action="append", default=[],
+        "-L", "--creditline", metavar="#", action="append", default=None,
         help="Account number (option can be repeated)"
     )
     stmt_group.add_argument(
-        "-c", "--creditcard", "--cc", metavar="#", action="append", default=[],
+        "-c", "--creditcard", "--cc", metavar="#", action="append", default=None,
         help="Account number (option can be repeated)"
     )
     stmt_group.add_argument(
-        "-i", "--investment", metavar="#", action="append", default=[],
+        "-i", "--investment", metavar="#", action="append", default=None,
         help="Account number (option can be repeated)"
     )
     stmt_group.add_argument(
@@ -121,42 +129,42 @@ def make_argparser(fi_index):
         "--no-transactions",
         dest="inctran",
         action="store_false",
-        default=True,
+        default=None,
         help="Omit transactions list",
     )
     stmt_group.add_argument(
         "--no-balances",
         dest="incbal",
         action="store_false",
-        default=True,
+        default=None,
         help="Omit balances",
     )
     stmt_group.add_argument(
         "--no-positions",
         dest="incpos",
         action="store_false",
-        default=True,
+        default=None,
         help="Omit investment positions",
     )
     stmt_group.add_argument(
         "--open-orders",
         dest="incoo",
         action="store_true",
-        default=False,
+        default=None,
         help="Include open orders for investments",
     )
     stmt_group.add_argument(
         "--all",
         dest="all",
         action="store_true",
-        default=False,
+        default=None,
         help="Request ACCTINFO; download statements for all",
     )
 
     tax_group = argparser.add_argument_group(title="Tax Form Options")
     tax_group.add_argument(
         "-y", "--year", metavar="YEAR", dest="years",
-        type=int, action="append", default=[],
+        type=int, action="append", default=None,
         help="(YYYY) Tax year (option can be repeated)",
     )
     tax_group.add_argument(
@@ -201,13 +209,13 @@ def scan_profile(args):
     """
     Report working connection parameters
     """
-    results = _scan_profile(args.url, args.org, args.fid)
+    results = _scan_profile(args["url"], args["org"], args["fid"])
     print(results)
 
 
 def _scan_profile(url, org, fid, max_workers=None, timeout=None):
     """
-    Report permutations of OFX version/prettyprint/unclosed_elements that
+    Report permutations of OFX version/prettyprint/unclosedelements that
     successfully download OFX profile from server.
 
     Returns a pair of (OFXv1 results, OFXv2 results), each type(dict).
@@ -223,7 +231,8 @@ def _scan_profile(url, org, fid, max_workers=None, timeout=None):
     ofxv2 = [200, 201, 202, 203, 210, 211, 220]
 
     futures = {}
-    client = OFXClient(url, org, fid)
+    client = OFXClient(url, org=org, fid=fid)
+
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         for prettyprint in (False, True):
             for close_elements in (False, True):
@@ -276,7 +285,7 @@ def _scan_profile(url, org, fid, max_workers=None, timeout=None):
         formats = max(formats, key=len)
         formats.sort()
         formats = [OrderedDict([("pretty", format[0]),
-                               ("unclosed_elements", not format[1])])
+                               ("unclosedelements", not format[1])])
                    for format in formats]
         return sorted(list(versions)), formats
 
@@ -286,7 +295,7 @@ def _scan_profile(url, org, fid, max_workers=None, timeout=None):
 
     # V2 always has closing tags for elements; just report prettyprint
     for format in v2_formats:
-        del format["unclosed_elements"]
+        del format["unclosedelements"]
 
     return json.dumps((OrderedDict([("versions", v1_versions),
                                     ("formats", v1_formats)]),
@@ -298,27 +307,25 @@ def request_stmt(args):
     """
     Send *STMTRQ
     """
-    client = init_client(args)
-
     # Convert dtstart/dtend/dtasof to Python datetime type
     D = DateTime().convert
-    dt = {d[2:]: D(getattr(args, d)) for d in ("dtstart", "dtend", "dtasof")}
+    dt = {d[2:]: D(args[d]) for d in ("dtstart", "dtend", "dtasof")}
 
     # Prompt for password
-    if args.dryrun:
+    if args["dryrun"]:
         # Use dummy password for dummy request
         password = "{:0<32}".format("anonymous")
     else:
         password = getpass.getpass()
 
     # Define statement requests
-    if args.all:
+    if args["all"]:
         stmtrqs = all_stmts(args, dt, password)
     else:
         stmtrqs = []
         # Create *STMTRQ for each account specified by config/args
         for accttype in ("checking", "savings", "moneymrkt", "creditline"):
-            acctids = getattr(args, accttype, [])
+            acctids = args.get(accttype, [])
             stmtrqs.extend(
                 [
                     StmtRq(
@@ -326,41 +333,42 @@ def request_stmt(args):
                         accttype=accttype.upper(),
                         dtstart=dt["start"],
                         dtend=dt["end"],
-                        inctran=args.inctran,
+                        inctran=args["inctran"],
                     )
                     for acctid in acctids
                 ]
             )
 
-        for acctid in args.creditcard:
+        for acctid in args.get("creditcard", []):
             stmtrqs.append(
                 CcStmtRq(
                     acctid=acctid,
                     dtstart=dt["start"],
                     dtend=dt["end"],
-                    inctran=args.inctran,
+                    inctran=args["inctran"],
                 )
             )
 
-        for acctid in args.investment:
+        for acctid in args.get("investment", []):
             stmtrqs.append(
                 InvStmtRq(
                     acctid=acctid,
                     dtstart=dt["start"],
                     dtend=dt["end"],
                     dtasof=dt["asof"],
-                    inctran=args.inctran,
-                    incoo=args.incoo,
-                    incpos=args.incpos,
-                    incbal=args.incbal,
+                    inctran=args["inctran"],
+                    incoo=args["incoo"],
+                    incpos=args["incpos"],
+                    incbal=args["incbal"],
                 )
             )
 
+    client = init_client(args)
     with client.request_statements(
         password,
         *stmtrqs,
-        dryrun=args.dryrun,
-        verify_ssl=not args.unsafe
+        dryrun=args["dryrun"],
+        verify_ssl=not args["unsafe"]
     ) as f:
         response = f.read()
 
@@ -387,36 +395,34 @@ def all_stmts(args, dt, password):
 def mkstmtrq(acctinfo, args, dt):
     acct = acctinfo.bankacctfrom
     return StmtRq(acctid=acct.acctid, accttype=acct.accttype,
-                  dtstart=dt["start"], dtend=dt["end"], inctran=args.inctran)
+                  dtstart=dt["start"], dtend=dt["end"], inctran=args["inctran"])
 
 
 @mkstmtrq.register(CCACCTINFO)
 def _(acctinfo, args, dt):
     acct = acctinfo.ccacctfrom
     return CcStmtRq(acctid=acct.acctid, dtstart=dt["start"], dtend=dt["end"],
-                    inctran=args.inctran)
+                    inctran=args["inctran"])
 
 
 @mkstmtrq.register(INVACCTINFO)
 def _(acctinfo, args, dt):
     acct = acctinfo.invacctfrom
     return InvStmtRq(acctid=acct.acctid, dtstart=dt["start"], dtend=dt["end"],
-                     inctran=args.inctran, incoo=args.incoo, incpos=args.incpos,
-                     incbal=args.incbal)
+                     inctran=args["inctran"], incoo=args["incoo"],
+                     incpos=args["incpos"], incbal=args["incbal"])
 
 
 def request_stmtend(args):
     """
     Send *STMTENDRQ
     """
-    client = init_client(args)
-
     # Convert dtstart/dtend/dtasof to Python datetime type
     D = DateTime().convert
-    dt = {d[2:]: D(getattr(args, d)) for d in ("dtstart", "dtend", "dtasof")}
+    dt = {d[2:]: D(args[d]) for d in ("dtstart", "dtend", "dtasof")}
 
     # Prompt for password
-    if args.dryrun:
+    if args["dryrun"]:
         # Use dummy password for dummy request
         password = "{:0<32}".format("anonymous")
     else:
@@ -427,21 +433,22 @@ def request_stmtend(args):
 
     # Create *STMTENDRQ for each account specified by config/args
     for accttype in ("checking", "savings", "moneymrkt", "creditline"):
-        acctids = getattr(args, accttype, [])
+        acctids = args.get(accttype, [])
         stmtendrqs.extend(
             [StmtEndRq(acctid=acctid, accttype=accttype.upper(),
                        dtstart=dt["start"], dtend=dt["end"])
              for acctid in acctids])
 
-    for acctid in args.creditcard:
+    for acctid in args.get("creditcard", []):
         stmtendrqs.append(
             CcStmtEndRq(acctid=acctid, dtstart=dt["start"], dtend=dt["end"]))
 
+    client = init_client(args)
     with client.request_statements(
         password,
         *stmtendrqs,
-        dryrun=args.dryrun,
-        verify_ssl=not args.unsafe
+        dryrun=args["dryrun"],
+        verify_ssl=not args["unsafe"]
     ) as f:
         response = f.read()
 
@@ -453,9 +460,13 @@ def request_profile(args):
     Send PROFRQ
     """
     client = init_client(args)
+
     with client.request_profile(
-        dryrun=args.dryrun,
-        verify_ssl=not args.unsafe
+        version=args["version"],
+        prettyprint=args["pretty"],
+        close_elements=not args["unclosedelements"],
+        dryrun=args["dryrun"],
+        verify_ssl=not args["unsafe"]
     ) as f:
         response = f.read()
 
@@ -468,7 +479,7 @@ def request_acctinfo(args):
     """
 
     # Use dummy password for dummy request
-    if args.dryrun:
+    if args["dryrun"]:
         password = "{:0<32}".format("anonymous")
     else:
         password = getpass.getpass()
@@ -483,9 +494,8 @@ def _request_acctinfo(args, password):
 
     with client.request_accounts(password,
                                  dtacctup,
-                                 dryrun=args.dryrun,
-                                 verify_ssl=not args.unsafe
-                                ) as f:
+                                 dryrun=args["dryrun"],
+                                 verify_ssl=not args["unsafe"]) as f:
         response = f.read()
 
     return BytesIO(response)
@@ -498,17 +508,17 @@ def request_tax1099(args):
     client = init_client(args)
 
     # Use dummy password for dummy request
-    if args.dryrun:
+    if args["dryrun"]:
         password = "{:0<32}".format("anonymous")
     else:
         password = getpass.getpass()
 
     with client.request_tax1099(password,
-                                *args.years,
-                                acctnum=args.acctnum,
-                                recid=args.recid,
-                                dryrun=args.dryrun,
-                                verify_ssl=not args.unsafe
+                                *args["years"],
+                                acctnum=args["acctnum"],
+                                recid=args["recid"],
+                                dryrun=args["dryrun"],
+                                verify_ssl=not args["unsafe"]
                                ) as f:
         response = f.read()
 
@@ -530,69 +540,69 @@ def init_client(args):
     Initialize OFXClient with connection info from args
     """
     client = OFXClient(
-        args.url,
-        userid=args.user,
-        clientuid=args.clientuid,
-        org=args.org,
-        fid=args.fid,
-        version=args.version,
-        appid=args.appid,
-        appver=args.appver,
-        language=args.language,
-        prettyprint=args.pretty,
-        close_elements=not args.unclosedelements,
-        bankid=args.bankid,
-        brokerid=args.brokerid,
+        args["url"],
+        userid=args["user"],
+        clientuid=args["clientuid"],
+        org=args["org"],
+        fid=args["fid"],
+        version=args["version"],
+        appid=args["appid"],
+        appver=args["appver"],
+        language=args["language"],
+        prettyprint=args["pretty"],
+        close_elements=not args["unclosedelements"],
+        bankid=args["bankid"],
+        brokerid=args["brokerid"],
     )
     return client
+
+
+def parse_config(key, value):
+    LISTS = ["checking", "savings", "moneymrkt", "creditline", "creditcard",
+             "investment"]
+    BOOLS = ["dryrun", "unsafe", "pretty", "unclosedelements", "inctran",
+             "incpos", "incbal", "incoo", "all"]
+    INTS = ["version"]
+
+    if key in LISTS:
+        # Allow sequences of acct nos
+        value = [v.strip() for v in value.split(",")]
+    elif key in BOOLS:
+        BOOLY = config.OfxgetConfigParser.BOOLEAN_STATES
+        value_ = BOOLY.get(value, None)
+        if value_ is None:
+            msg = "Can't interpret '{}' as bool; must be in {}"
+            raise ValueError(msg.format(value, list(BOOLY.keys())))
+        value = value_
+    elif key in INTS:
+        value = int(value)
+
+    return value
 
 
 def merge_config(config, args):
     """
     Merge default FI configs with user configs from oftools.cfg and CLI args
     """
-    server = args.server
+    # dict of all ArgumentParser args that have a value set
+    args = {k: v for k, v in vars(args).items() if v is not None}
+    server = args["server"]
+    #  if server not in config:
     if server not in config.fi_index:
         raise ValueError(
             "Unknown FI '{}' not in {}".format(server, str(config.fi_index))
         )
-    # List of nonempty argparse args set from command line
-    overrides = [k for k, v in vars(args).items() if v]
-    for cfg, value in config.items(server, raw=True):
-        # argparse settings override configparser settings
-        if cfg in overrides:
-            continue
-        if cfg in (
-            "checking",
-            "savings",
-            "moneymrkt",
-            "creditline",
-            "creditcard",
-            "investment",
-        ):
-            # Allow sequences of acct nos
-            values = [v.strip() for v in value.split(",")]
-            arg = getattr(args, cfg)
-            assert isinstance(arg, list)
-            arg.extend(values)
-        else:
-            # Coerce config to bool, if applicable
-            arg = getattr(args, cfg, None)
-            if type(arg) is bool:
-                value = config.getboolean(server, cfg)
-            setattr(args, cfg, value)
+    cfg = {k: parse_config(k, v) for k, v in config.items(server)}
+
+    merged = ChainMap(args, cfg, ARG_DEFAULTS)
 
     # Fall back to OFX Home, if possible
-    url = getattr(args, "url", None)
-    if url is None and "ofxhome_id" in config[server]:
-        lookup = ofxhome.lookup(config[server]["ofxhome_id"])
-        args.url = lookup.url
-        for cfg in "fid", "org", "brokerid":
-            if getattr(args, cfg, None) is None:
-                value = getattr(lookup, cfg)
-                setattr(args, cfg, value)
+    if merged.get("url", None) is None and "ofxhome_id" in merged:
+        lookup = ofxhome.lookup(merged["ofxhome_id"])
+        merged.maps.append({"url": lookup.url, "org": lookup.org,
+                            "fid": lookup.fid, "brokerid": lookup.brokerid})
 
-    return args
+    return merged
 
 
 def main():
@@ -601,17 +611,19 @@ def main():
     cfg.read()
 
     argparser = make_argparser(cfg.fi_index)
-
     args = argparser.parse_args()
 
     # If positional arg is FI name (not URL), then merge config
     server = args.server
     if urllib.parse.urlparse(server).scheme:
         args.url = server
+        args = vars(args)
     else:
         args = merge_config(cfg, args)
 
-    REQUEST_FNS[args.request](args)
+    args = defaultdict(type(None), args)
+
+    REQUEST_FNS[args["request"]](args)
 
 
 if __name__ == "__main__":

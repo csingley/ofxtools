@@ -25,43 +25,43 @@ from ofxtools.scripts import ofxget
 class CliTestCase(unittest.TestCase):
     @property
     def args(self):
-        return argparse.Namespace(
-            url="http://example.com",
-            org="Example",
-            fid="666",
-            version="103",
-            appid="ofxtools",
-            appver="0.7.0",
-            language="ENG",
-            bankid="1234567890",
-            brokerid="example.com",
-            dtstart="20070101000000",
-            dtend="20071231000000",
-            dtasof="20071231000000",
-            checking=["123", "234"],
-            savings=["345", "456"],
-            moneymrkt=["567", "678"],
-            creditline=["789", "890"],
-            creditcard=["111", "222"],
-            investment=["333", "444"],
-            inctran=True,
-            incoo=False,
-            incpos=True,
-            incbal=True,
-            dryrun=True,
-            user="porkypig",
-            clientuid=None,
-            unclosedelements=False,
-            pretty=False,
-            unsafe=False,
-            all=False,
-        )
+        return {
+            "url": "http://example.com",
+            "org": "Example",
+            "fid": "666",
+            "version": "103",
+            "appid": "ofxtools",
+            "appver": "0.7.0",
+            "language": "ENG",
+            "bankid": "1234567890",
+            "brokerid": "example.com",
+            "dtstart": "20070101000000",
+            "dtend": "20071231000000",
+            "dtasof": "20071231000000",
+            "checking": ["123", "234"],
+            "savings": ["345", "456"],
+            "moneymrkt": ["567", "678"],
+            "creditline": ["789", "890"],
+            "creditcard": ["111", "222"],
+            "investment": ["333", "444"],
+            "inctran": True,
+            "incoo": False,
+            "incpos": True,
+            "incbal": True,
+            "dryrun": True,
+            "user": "porkypig",
+            "clientuid": None,
+            "unclosedelements": False,
+            "pretty": False,
+            "unsafe": False,
+            "all": False,
+        }
 
     def testInitClient(self):
         args = self.args
         client = ofxget.init_client(args)
         self.assertIsInstance(client, OFXClient)
-        self.assertEqual(str(client.version), args.version)
+        self.assertEqual(str(client.version), args["version"])
         for arg in [
             "url",
             "org",
@@ -72,11 +72,11 @@ class CliTestCase(unittest.TestCase):
             "bankid",
             "brokerid",
         ]:
-            self.assertEqual(getattr(client, arg), getattr(args, arg))
+            self.assertEqual(getattr(client, arg), args[arg])
 
     def testRequestStmt(self):
         args = self.args
-        args.dryrun = False
+        args["dryrun"] = False
 
         with patch("getpass.getpass") as fake_getpass:
             fake_getpass.return_value = "t0ps3kr1t"
@@ -299,7 +299,13 @@ class CliTestCase(unittest.TestCase):
 
             args, kwargs = fake_rq_prof.call_args
             self.assertEqual(len(args), 0)
-            self.assertEqual(kwargs, {"dryrun": True, "verify_ssl": True})
+
+            self.assertEqual(kwargs,
+                             {"dryrun": self.args["dryrun"],
+                              "verify_ssl": not self.args["unsafe"],
+                              "version": self.args["version"],
+                              "prettyprint": self.args["pretty"],
+                              "close_elements": not self.args["unclosedelements"]})
 
 
 class MainTestCase(unittest.TestCase):
@@ -310,10 +316,10 @@ class MainTestCase(unittest.TestCase):
             dtstart="20070101000000",
             dtend="20071231000000",
             dtasof="20071231000000",
-            checking=[],
+            checking=None,
             savings=["444"],
-            moneymrkt=[],
-            creditline=[],
+            moneymrkt=None,
+            creditline=None,
             creditcard=["555"],
             investment=["666"],
             inctran=True,
@@ -342,31 +348,28 @@ class MainTestCase(unittest.TestCase):
         ]
 
         args = ofxget.merge_config(config, self.args)
-        self.assertIsInstance(args, argparse.Namespace)
-        # Only the args specified in config.items() have been updated
-        for attr in (
-            "server",
-            "dtstart",
-            "dtend",
-            "dtasof",
-            "savings",
-            "moneymrkt",
-            "creditline",
-            "investment",
-            "inctran",
-            "incoo",
-            "incpos",
-            "incbal",
-            "dryrun",
-            "clientuid",
-            "unclosedelements",
-        ):
-            self.assertEqual(getattr(args, attr), getattr(self.args, attr))
-        self.assertEqual(args.user, "porkypig")
-        self.assertEqual(args.checking, ["111"])
-        self.assertEqual(args.savings, ["444"])
+        # Entries in self.args that are not None and aren't specified in
+        # config.items() remain unchanged.
+        attrs = ["server", "dtstart", "dtend", "dtasof", "savings",
+                 "investment", "inctran", "incoo", "incpos", "incbal",
+                 "dryrun", "unclosedelements"]
+        for attr in attrs:
+            self.assertEqual(args[attr], getattr(self.args, attr))
+
+        # Entries in self.args that are missing or None fall back to
+        # entries from config
+        self.assertEqual(args["user"], "porkypig")
+        self.assertEqual(args["checking"], ["111"])
         # CLI args override config completely (not append)
-        self.assertEqual(args.creditcard, ["555"])
+        self.assertEqual(args["creditcard"], ["555"])
+
+        # Entries that are are missing or None in both self.args and config
+        # fall back to ARG_DEFAULTS
+        attrs = ["moneymrkt", "creditline", "clientuid", "unsafe", "pretty",
+                 "all", "years", "acctnum", "recid"]
+
+        for atttr in attrs:
+            self.assertEqual(args[attr], ofxget.ARG_DEFAULTS[attr])
 
     def testMergeConfigUnknownFiArg(self):
         config = MagicMock()
