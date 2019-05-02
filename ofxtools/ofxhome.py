@@ -3,7 +3,7 @@
 Interface with http://ofxhome.com API
 """
 # stdlib imports
-from collections import namedtuple
+from collections import OrderedDict, namedtuple
 import datetime
 import xml.etree.ElementTree as ET
 import urllib
@@ -33,7 +33,8 @@ def list_institutions():
     with urllib.request.urlopen(query) as f:
         response = f.read()
 
-    return ET.fromstring(response)
+    return OrderedDict((fi.get("id"), fi.get("name"))
+                       for fi in ET.fromstring(response))
 
 
 def lookup(id):

@@ -5,7 +5,7 @@
 import unittest
 from unittest.mock import patch
 from io import BytesIO
-import xml.etree.ElementTree as ET
+from collections import OrderedDict
 from datetime import datetime
 
 # local imports
@@ -26,27 +26,8 @@ class ListInstitutionsTestCase(unittest.TestCase):
             mock_urlopen.return_value = mock_xml
             lst = ofxhome.list_institutions()
 
-        self.assertIsInstance(lst, ET.Element)
-        self.assertEqual(lst.tag, "institutionlist")
-        self.assertEqual(len((lst.text or "").strip()), 0)
-        self.assertEqual(len((lst.tail or "").strip()), 0)
-        self.assertEqual(lst.attrib, {})
-        self.assertEqual(len(lst), 2)
-        inst0, inst1 = lst[:]
-
-        self.assertIsInstance(inst0, ET.Element)
-        self.assertEqual(inst0.tag, "institutionid")
-        self.assertEqual(len((inst0.text or "").strip()), 0)
-        self.assertEqual(len((inst0.tail or "").strip()), 0)
-        self.assertEqual(inst0.attrib,
-                         {"name": "American Express", "id": "1234"})
-
-        self.assertIsInstance(inst1, ET.Element)
-        self.assertEqual(inst1.tag, "institutionid")
-        self.assertEqual(len((inst1.text or "").strip()), 0)
-        self.assertEqual(len((inst1.tail or "").strip()), 0)
-        self.assertEqual(inst1.attrib,
-                         {"name": "Bank of America", "id": "2222"})
+        self.assertEqual(lst, OrderedDict([("1234", "American Express"),
+                                          ("2222", "Bank of America")]))
 
 
 class LookupTestCase(unittest.TestCase):
