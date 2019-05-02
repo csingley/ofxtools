@@ -7,6 +7,8 @@ from unittest.mock import MagicMock, patch
 from datetime import datetime
 from io import BytesIO
 import argparse
+import configparser
+import collections
 
 
 # local imports
@@ -20,6 +22,7 @@ from ofxtools.Client import (
 )
 from ofxtools.utils import UTC
 from ofxtools.scripts import ofxget
+from ofxtools.ofxhome import OFXServer
 
 
 class CliTestCase(unittest.TestCase):
@@ -308,7 +311,14 @@ class CliTestCase(unittest.TestCase):
                               "close_elements": not self.args["unclosedelements"]})
 
 
-class MainTestCase(unittest.TestCase):
+class MakeArgParserTestCase(unittest.TestCase):
+    def testMakeArgparser(self):
+        # This is the lamest test ever
+        argparser = ofxget.make_argparser()
+        self.assertEqual(len(argparser._actions), 34)
+
+
+class MergeConfigTestCase(unittest.TestCase):
     @property
     def args(self):
         return argparse.Namespace(
@@ -332,50 +342,119 @@ class MainTestCase(unittest.TestCase):
             unclosedelements=False,
         )
 
-    def testMakeArgparser(self):
-        fi_index = ["bank0", "broker0"]
-        argparser = ofxget.make_argparser(fi_index)
-        self.assertEqual(len(argparser._actions), 34)
+    @classmethod
+    def setUpClass(cls):
+        # Monkey-patch ofxget.USER_CFG, ofxget.DEFAULT_CFG
+        user_cfg = configparser.ConfigParser()
+        user_cfg["2big2fail"] = {}
+        user_cfg["2big2fail"]["fid"] = "33"
+        user_cfg["2big2fail"]["user"] = "porkypig"
+        user_cfg["2big2fail"]["savings"] = "111"
+        user_cfg["2big2fail"]["checking"] = "222, 333"
+        user_cfg["2big2fail"]["creditcard"] = "444, 555"
+
+        default_cfg = configparser.ConfigParser()
+        default_cfg["2big2fail"] = {}
+        default_cfg["2big2fail"]["ofxhome_id"] = "417"
+        default_cfg["2big2fail"]["version"] = "203"
+        default_cfg["2big2fail"]["pretty"] = "true"
+        default_cfg["2big2fail"]["fid"] = "44"
+        default_cfg["2big2fail"]["org"] = "2big2fail"
+
+        cls._USER_CFG = ofxget.USER_CFG
+        ofxget.USER_CFG = user_cfg
+
+        cls._DEFAULT_CFG = ofxget.DEFAULT_CFG
+        ofxget.DEFAULT_CFG = default_cfg
+
+    @classmethod
+    def tearDownClass(cls):
+        # Undo monkey patches for ofxget.USER_CFG, ofxget.DEFAULT_CFG
+        ofxget.USER_CFG = cls._USER_CFG
+        ofxget.DEFAULT_CFG = cls._DEFAULT_CFG
 
     def testMergeConfig(self):
-        config = MagicMock()
-        config.fi_index = ["2big2fail"]
-        self.assertEqual(config.fi_index, ["2big2fail"])
-        config.items.return_value = [
-            ("user", "porkypig"),
-            ("checking", "111"),
-            ("creditcard", "222, 333"),
-        ]
+        args = argparse.Namespace(
+            server="2big2fail",
+            user="daffyduck",
+            creditcard=["666"],
+        )
 
-        args = ofxget.merge_config(config, self.args)
-        # Entries in self.args that are not None and aren't specified in
-        # config.items() remain unchanged.
-        attrs = ["server", "dtstart", "dtend", "dtasof", "savings",
-                 "investment", "inctran", "incoo", "incpos", "incbal",
-                 "dryrun", "unclosedelements"]
-        for attr in attrs:
-            self.assertEqual(args[attr], getattr(self.args, attr))
+        with patch("ofxtools.ofxhome.lookup") as ofxhome_lookup:
+            ofxhome_lookup.return_value = OFXServer(
+                id="1", name="Two Big Two Fail", fid="22", org="2BIG2FAIL",
+                url="https://ofx.test.com", brokerid="2big2fail.com")
 
-        # Entries in self.args that are missing or None fall back to
-        # entries from config
-        self.assertEqual(args["user"], "porkypig")
-        self.assertEqual(args["checking"], ["111"])
-        # CLI args override config completely (not append)
-        self.assertEqual(args["creditcard"], ["555"])
+            merged = ofxget.merge_config(args)
 
-        # Entries that are are missing or None in both self.args and config
-        # fall back to ARG_DEFAULTS
-        attrs = ["moneymrkt", "creditline", "clientuid", "unsafe", "pretty",
-                 "all", "years", "acctnum", "recid"]
+        # None of args/usercfg/defaultcfg has the URL,
+        # so there should have been an OFX Home lookup
+        ofxhome_lookup.assert_called_once_with("417")
 
-        for atttr in attrs:
-            self.assertEqual(args[attr], ofxget.ARG_DEFAULTS[attr])
+        # ChainMap(args, user_cfg, default_cfg, ofxhome_lookup, DEFAULTS)
+        self.assertIsInstance(merged, collections.ChainMap)
+        maps = merged.maps
+        self.assertEqual(len(maps), 5)
+        self.assertEqual(maps[0]["user"], "daffyduck")
+        self.assertEqual(maps[1]["user"], "porkypig")
+        self.assertEqual(maps[2]["org"], "2big2fail")
+        self.assertEqual(maps[3]["org"], "2BIG2FAIL")
+        self.assertEqual(maps[4], ofxget.DEFAULTS)
+
+        # Args passed from the CLI trump everything
+        self.assertEqual(merged["user"], "daffyduck")
+
+        # For list-type configs, higher-priority config overrides
+        # lower-priority config (i.e. it's not appended).
+        self.assertEqual(merged["creditcard"], ["666"])
+
+        # Args missing from CLI fall back to user config...
+        self.assertEqual(merged["savings"], ["111"])
+
+        # ...or, failing that, fall back to library default config...
+        self.assertEqual(merged["org"], "2big2fail")
+
+        # ...or, failing that, fall back to ofxhome lookup
+        self.assertEqual(merged["brokerid"], "2big2fail.com")
+
+        # ...or, failing THAT, fall back to ofxget.DEFAULTS
+        self.assertEqual(merged["unsafe"], False)
+
+        # User config trumps library default config and ofxhome lookup
+        self.assertEqual(merged["fid"], "33")
+
+        # Library default config trumps ofxhome lookup
+        self.assertEqual(merged["org"], "2big2fail")
+
+        # Library default config drumps ofxget.DEFAULTS
+        # Also, INI bool conversion works
+        self.assertEqual(merged["pretty"], True)
+
+        # INI list chunking works
+        self.assertEqual(maps[1]["checking"], ["222", "333"])
+
+        # INI int conversion works
+        self.assertEqual(maps[2]["version"], 203)
+
+        # We have proper types for all lists, even absent configuration
+        for lst in ("checking", "savings", "moneymrkt", "creditline",
+                    "creditcard", "investment", "years", ):
+            self.assertIsInstance(merged[lst], list)
+
+        # We have proper types for all bools, even absent configuration
+        for boole in ("dryrun", "unsafe", "unclosedelements", "pretty",
+                      "inctran", "incbal", "incpos", "incoo", "all", ):
+            self.assertIsInstance(merged[boole], bool)
+
+        # We have default value of None for all unset string configs
+        for string in ("appid", "appver", "bankid", "clientuid", "language",
+                       "acctnum", "recid"):
+            self.assertIsNone(merged[string])
 
     def testMergeConfigUnknownFiArg(self):
-        config = MagicMock()
-        config.fi_index = []
+        args = argparse.Namespace(server="3big4fail")
         with self.assertRaises(ValueError):
-            ofxget.merge_config(config, self.args)
+            ofxget.merge_config(args)
 
 
 if __name__ == "__main__":

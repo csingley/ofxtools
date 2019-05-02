@@ -3,7 +3,9 @@
 """
 """
 # stdlib imports
-from argparse import ArgumentParser, Namespace
+import os
+from argparse import ArgumentParser
+from configparser import ConfigParser
 import datetime
 from collections import defaultdict, OrderedDict, ChainMap
 import getpass
@@ -12,7 +14,6 @@ import concurrent.futures
 import json
 from io import BytesIO
 from functools import singledispatch
-
 
 
 # local imports
@@ -25,22 +26,37 @@ from ofxtools.utils import UTC
 from ofxtools import (utils, ofxhome, config)
 from ofxtools.Parser import OFXTree
 from ofxtools.models.signup import (
-    BANKACCTINFO, CCACCTINFO, INVACCTINFO,
+    BANKACCTINFO, CCACCTINFO, INVACCTINFO
 )
 
 
-ARG_DEFAULTS = {"dryrun": False, "unsafe": False, "unclosedelements": False,
-                "pretty": False, "checking": [], "savings": [],
-                "moneymrkt": [], "creditline": [], "creditcard": [],
-                "investment": [], "inctran": True, "incbal": True,
-                "incpos": True, "incoo": False, "all": False, "years": [],
-                "acctnum": None, "recid": None}
+configpath = os.path.join(config.CONFIGDIR, "fi.cfg")
+DEFAULT_CFG = ConfigParser()
+DEFAULT_CFG.read(configpath)
+
+userconfigpath = os.path.join(config.USERCONFIGDIR, "ofxget.cfg")
+USER_CFG = ConfigParser()
+USER_CFG.read(userconfigpath)
 
 
-def make_argparser(fi_index):
+DEFAULTS = {"url": None, "org": None, "fid": None, "version": None,
+            "appid": None, "appver": None, "bankid": None, "brokerid": None,
+            "user": None, "clientuid": None, "language": None, "dryrun": False,
+            "unsafe": False, "unclosedelements": False, "pretty": False,
+            "checking": [], "savings": [], "moneymrkt": [], "creditline": [],
+            "creditcard": [], "investment": [], "inctran": True,
+            "incbal": True, "incpos": True, "incoo": False, "all": False,
+            "years": [], "acctnum": None, "recid": None}
+
+
+def fi_index():
+    return sorted(set(USER_CFG.sections() + DEFAULT_CFG.sections()))
+
+
+def make_argparser():
     argparser = ArgumentParser(
         description="Download OFX financial data",
-        epilog="FIs configured: {}".format(fi_index),
+        epilog="FIs configured: {}".format(fi_index()),
     )
     argparser.add_argument(
         "request",
@@ -559,7 +575,7 @@ def init_client(args):
 
 def parse_config(key, value):
     LISTS = ["checking", "savings", "moneymrkt", "creditline", "creditcard",
-             "investment"]
+             "investment", "years"]
     BOOLS = ["dryrun", "unsafe", "pretty", "unclosedelements", "inctran",
              "incpos", "incbal", "incoo", "all"]
     INTS = ["version"]
@@ -568,7 +584,7 @@ def parse_config(key, value):
         # Allow sequences of acct nos
         value = [v.strip() for v in value.split(",")]
     elif key in BOOLS:
-        BOOLY = config.OfxgetConfigParser.BOOLEAN_STATES
+        BOOLY = ConfigParser.BOOLEAN_STATES
         value_ = BOOLY.get(value, None)
         if value_ is None:
             msg = "Can't interpret '{}' as bool; must be in {}"
@@ -580,37 +596,45 @@ def parse_config(key, value):
     return value
 
 
-def merge_config(config, args):
+def merge_config(args):
     """
-    Merge default FI configs with user configs from oftools.cfg and CLI args
+    Merge CLI args > user config > library config > defaults
     """
     # dict of all ArgumentParser args that have a value set
     args = {k: v for k, v in vars(args).items() if v is not None}
     server = args["server"]
-    #  if server not in config:
-    if server not in config.fi_index:
+
+    def read_cfg(cfg, section):
+        return {k: parse_config(k, v)
+                for k, v in cfg[server].items()} if section in cfg else {}
+
+    user_cfg = read_cfg(USER_CFG, server)
+    default_cfg = read_cfg(DEFAULT_CFG, server)
+
+    #  if server not in fi_index():
+    if not (user_cfg or default_cfg):
         raise ValueError(
-            "Unknown FI '{}' not in {}".format(server, str(config.fi_index))
+            "Unknown FI '{}' not in {}".format(server, str(fi_index()))
         )
-    cfg = {k: parse_config(k, v) for k, v in config.items(server)}
 
-    merged = ChainMap(args, cfg, ARG_DEFAULTS)
+    merged = ChainMap(args, user_cfg, default_cfg, DEFAULTS)
 
-    # Fall back to OFX Home, if possible
-    if merged.get("url", None) is None and "ofxhome_id" in merged:
+    # If we don't know URL, try to fall back to OFX Home
+    if merged.get("url", None) is None \
+       and merged.get("ofxhome_id", None) is not None:
         lookup = ofxhome.lookup(merged["ofxhome_id"])
-        merged.maps.append({"url": lookup.url, "org": lookup.org,
+        # There's no reason why DEFAULTS should have any overlap with
+        # an ofxhome lookup, but on general principles we'll make sure
+        # DEFAULTS comes last in the mapping order
+        merged.maps.insert(-1,
+                           {"url": lookup.url, "org": lookup.org,
                             "fid": lookup.fid, "brokerid": lookup.brokerid})
 
     return merged
 
 
 def main():
-    # Read config first, so fi_index can be used in help
-    cfg = config.OfxgetConfigParser()
-    cfg.read()
-
-    argparser = make_argparser(cfg.fi_index)
+    argparser = make_argparser()
     args = argparser.parse_args()
 
     # If positional arg is FI name (not URL), then merge config
@@ -619,7 +643,11 @@ def main():
         args.url = server
         args = vars(args)
     else:
-        args = merge_config(cfg, args)
+        args = merge_config(args)
+
+    if "url" not in args:
+        msg = ""  # FIXME
+        raise ValueError(msg)
 
     args = defaultdict(type(None), args)
 
