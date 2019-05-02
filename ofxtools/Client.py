@@ -85,24 +85,21 @@ from ofxtools import utils
 
 # Statement request data containers
 # Pass instances of these containers as args to OFXClient.request_statement()
-StmtRq = namedtuple("StmtRq",
-                    ["acctid", "accttype", "dtstart", "dtend", "inctran"])
-StmtRq.__new__.__defaults__ = (None, None, None, None, True)
+StmtRq = namedtuple("StmtRq", "acctid accttype dtstart dtend inctran",
+                    defaults=[None]*4 + [True])
 
-CcStmtRq = namedtuple("CcStmtRq", ["acctid", "dtstart", "dtend", "inctran"])
-CcStmtRq.__new__.__defaults__ = (None, None, None, True)
+CcStmtRq = namedtuple("CcStmtRq", ["acctid", "dtstart", "dtend", "inctran"],
+                      defaults=[None]*3 + [True])
 
-InvStmtRq = namedtuple(
-    "InvStmtRq",
-    ["acctid", "dtstart", "dtend", "dtasof", "inctran", "incoo", "incpos", "incbal"],
-)
-InvStmtRq.__new__.__defaults__ = (None, None, None, None, True, False, True, True)
+InvStmtRq = namedtuple("InvStmtRq", ["acctid", "dtstart", "dtend", "dtasof",
+                                     "inctran", "incoo", "incpos", "incbal"],
+                       defaults=[None]*4 + [True, False, True, True])
 
-StmtEndRq = namedtuple("StmtEndRq", ["acctid", "accttype", "dtstart", "dtend"])
-StmtEndRq.__new__.__defaults__ = (None, None, None, None, True)
+StmtEndRq = namedtuple("StmtEndRq", ["acctid", "accttype", "dtstart", "dtend"],
+                       defaults=[None]*4)
 
-CcStmtEndRq = namedtuple("CcStmtEndRq", ["acctid", "dtstart", "dtend"])
-CcStmtEndRq.__new__.__defaults__ = (None, None, None, False)
+CcStmtEndRq = namedtuple("CcStmtEndRq", ["acctid", "dtstart", "dtend"],
+                         defaults=[None]*3)
 
 
 class OFXClient:
@@ -128,6 +125,17 @@ class OFXClient:
     bankid = None
     brokerid = None
 
+    def __repr__(self):
+        r = ("{cls}(url='{url}', userid='{userid}', clientuid='{clientuid}', "
+             "org='{org}', fid='{fid}', version={version}, appid='{appid}', "
+             "appver='{appver}', language='{language}', "
+             "prettyprint='{prettyprint}', close_elements='{close_elements}', "
+             "bankid='{bankid}', brokerid='{brokerid}')")
+        attrs = dict(vars(self.__class__))
+        attrs.update(vars(self))
+        attrs["cls"] = self.__class__.__name__
+        return r.format(**attrs)
+
     def __init__(
         self,
         url,
@@ -143,6 +151,7 @@ class OFXClient:
         close_elements=None,
         bankid=None,
         brokerid=None):
+
         self.url = url
 
         # Signon
@@ -213,6 +222,10 @@ class OFXClient:
         Input *requests are instances of the corresponding namedtuples
         (StmtRq, CcStmtRq, InvStmtRq, StmtEndRq, CcStmtEndRq)
         """
+        # Our input requests are (potentially mixed) *STMTRQ/*STMTENDRQ
+        # namedtuples.  They must be grouped by type and passed to the
+        # appropriate *TRNRQ hander function (see singledispatch setup below).
+
         # *StmtRq/*StmtEndRqs (namedtuples) don't have rich comparison methods;
         # can't sort by class
         requests = sorted(requests, key=attrgetter("__class__.__name__"))
@@ -244,27 +257,32 @@ class OFXClient:
 
     def request_profile(
         self,
-        password=None,
-        dryrun=False,
         version=None,
+        prettyprint=None,
+        close_elements=None,
+        dryrun=False,
         verify_ssl=True,
         timeout=None):
         """
         Package and send OFX profile requests (PROFRQ).
+
+        ofxget.scan_profile() overrides version/prettyprint/close_elements.
         """
 
         dtprofup = datetime.datetime(1990, 1, 1, tzinfo=UTC)
         profrq = PROFRQ(clientrouting="NONE", dtprofup=dtprofup)
-        trnuid = self.uuid
-        proftrnrq = PROFTRNRQ(trnuid=trnuid, profrq=profrq)
-        msgs = PROFMSGSRQV1(proftrnrq)
+        proftrnrq = PROFTRNRQ(trnuid=self.uuid, profrq=profrq)
 
-        password = password or "{:0<32}".format("anonymous")
-        signon = self.signon(password)
+        user = password = "{:0<32}".format("anonymous")
+        signon = self.signon(password, userid=user)
 
-        ofx = OFX(signonmsgsrqv1=signon, profmsgsrqv1=msgs)
+        ofx = OFX(signonmsgsrqv1=signon, profmsgsrqv1=PROFMSGSRQV1(proftrnrq))
+
         return self.download(
             ofx,
+            version=version,
+            prettyprint=prettyprint,
+            close_elements=close_elements,
             dryrun=dryrun,
             verify_ssl=verify_ssl,
             timeout=timeout,
@@ -321,16 +339,19 @@ class OFXClient:
             timeout=timeout,
         )
 
-    def signon(self, userpass, sesscookie=None):
+    def signon(self, userpass, userid=None, sesscookie=None):
         """ Construct SONRQ; package in SIGNONMSGSRQV1 """
         if self.org:
             fi = FI(org=self.org, fid=self.fid)
         else:
             fi = None
 
+        if userid is None:
+            userid = self.userid
+
         sonrq = SONRQ(
             dtclient=self.dtclient(),
-            userid=self.userid,
+            userid=userid,
             userpass=userpass,
             language=self.language,
             fi=fi,
@@ -398,6 +419,9 @@ class OFXClient:
 
     def download(self,
                  ofx,
+                 version=None,
+                 prettyprint=None,
+                 close_elements=None,
                  dryrun=False,
                  verify_ssl=True,
                  timeout=None):
@@ -406,8 +430,11 @@ class OFXClient:
 
         Returns a file-like object that supports the file interface, and can
         therefore be passed drectly to ``OFXTree.parse()``.
+
+        ofxget.scan_profile() overrides version/prettyprint/close_elements.
         """
-        request = self.serialize(ofx)
+        request = self.serialize(ofx, version=version, prettyprint=prettyprint,
+                                 close_elements=close_elements)
 
         if dryrun:
             return BytesIO(request)
@@ -426,20 +453,27 @@ class OFXClient:
                                           context=ssl_context)
         return response
 
-    def serialize(self, ofx):
-        header = make_header(version=self.version, newfileuid=self.uuid)
+    def serialize(self, ofx, version=None, prettyprint=None,
+                  close_elements=None):
+        if version is None:
+            version = self.version
+        if prettyprint is None:
+            prettyprint = self.prettyprint
+        if close_elements is None:
+            close_elements = self.close_elements
+        header = make_header(version=version, newfileuid=self.uuid)
         header = bytes(str(header), "utf_8")
 
         tree = ofx.to_etree()
-        if self.prettyprint:
+        if prettyprint:
             utils.indent(tree)
 
         # Some servers choke on OFXv1 requests including ending tags for
         # elements (which are optional per the spec).
-        if self.close_elements is False:
-            if self.version >= 200:
+        if close_elements is False:
+            if version >= 200:
                 msg = "OFX version {} requires ending tags for elements"
-                raise ValueError(msg.format(self.version))
+                raise ValueError(msg.format(version))
             body = utils.tostring_unclosed_elements(tree)
         else:
             # ``method="html"`` skips the initial XML declaration
