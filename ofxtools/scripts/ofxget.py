@@ -14,6 +14,7 @@ import concurrent.futures
 import json
 from io import BytesIO
 from functools import singledispatch
+import sys
 
 
 # local imports
@@ -30,13 +31,13 @@ from ofxtools.models.signup import (
 )
 
 
-configpath = os.path.join(config.CONFIGDIR, "fi.cfg")
-DEFAULT_CFG = ConfigParser()
-DEFAULT_CFG.read(configpath)
+CONFIGPATH = os.path.join(config.CONFIGDIR, "fi.cfg")
+DefaultConfig = ConfigParser()
+DefaultConfig.read(CONFIGPATH)
 
-userconfigpath = os.path.join(config.USERCONFIGDIR, "ofxget.cfg")
-USER_CFG = ConfigParser()
-USER_CFG.read(userconfigpath)
+USERCONFIGPATH = os.path.join(config.USERCONFIGDIR, "ofxget.cfg")
+UserConfig = ConfigParser()
+UserConfig.read(USERCONFIGPATH)
 
 
 DEFAULTS = {"url": None, "org": None, "fid": None, "version": None,
@@ -44,13 +45,14 @@ DEFAULTS = {"url": None, "org": None, "fid": None, "version": None,
             "user": None, "clientuid": None, "language": None, "dryrun": False,
             "unsafe": False, "unclosedelements": False, "pretty": False,
             "checking": [], "savings": [], "moneymrkt": [], "creditline": [],
-            "creditcard": [], "investment": [], "inctran": True,
+            "creditcard": [], "investment": [], "dtstart": None, "dtend": None,
+            "dtasof": None, "inctran": True,
             "incbal": True, "incpos": True, "incoo": False, "all": False,
-            "years": [], "acctnum": None, "recid": None}
+            "years": [], "acctnum": None, "recid": None, "write": False}
 
 
 def fi_index():
-    return sorted(set(USER_CFG.sections() + DEFAULT_CFG.sections()))
+    return sorted(set(UserConfig.sections() + DefaultConfig.sections()))
 
 
 def make_argparser():
@@ -93,9 +95,14 @@ def make_argparser():
         help="Insert newlines and whitespace indentation",
     )
 
+    scan_group = argparser.add_argument_group(title="Profile Scan Options")
+    scan_group.add_argument("-w", "--write", action="store_true", default=None,
+                            help="Write scan results to config file")
+
     signon_group = argparser.add_argument_group(title="Signon Options")
     signon_group.add_argument("-u", "--user", help="FI login username")
-    signon_group.add_argument("--clientuid", metavar="UUID4", help="OFX client UID")
+    signon_group.add_argument("--clientuid", metavar="UUID4",
+                              help="OFX client UID")
     signon_group.add_argument("--org", help="FI.ORG")
     signon_group.add_argument("--fid", help="FI.FID")
     signon_group.add_argument("--appid", help="OFX client app identifier")
@@ -146,28 +153,28 @@ def make_argparser():
         dest="inctran",
         action="store_false",
         default=None,
-        help="Omit transactions list",
+        help="Omit transactions (config 'inctran: false')",
     )
     stmt_group.add_argument(
         "--no-balances",
         dest="incbal",
         action="store_false",
         default=None,
-        help="Omit balances",
+        help="Omit balances (config 'incbal: false')",
     )
     stmt_group.add_argument(
         "--no-positions",
         dest="incpos",
         action="store_false",
         default=None,
-        help="Omit investment positions",
+        help="Omit investment positions (config 'incpos: false')",
     )
     stmt_group.add_argument(
         "--open-orders",
         dest="incoo",
         action="store_true",
         default=None,
-        help="Include open orders for investments",
+        help="Include open orders (config 'incoo: true')",
     )
     stmt_group.add_argument(
         "--all",
@@ -206,8 +213,7 @@ def scan_profiles(start, stop, timeout=None):
     results = {}
 
     institutions = ofxhome.list_institutions()
-    for institution in institutions[start:stop]:
-        ofxhome_id = int(institution.get("id"))
+    for ofxhome_id in list(institutions.keys())[start:stop]:
         lookup = ofxhome.lookup(ofxhome_id)
         if lookup is None or ofxhome.ofx_invalid(lookup) or ofxhome.ssl_invalid(lookup):
             continue
@@ -226,7 +232,46 @@ def scan_profile(args):
     Report working connection parameters
     """
     results = _scan_profile(args["url"], args["org"], args["fid"])
-    print(results)
+
+    v1, v2 = results
+    if v2["versions"]:
+        result = v2
+    elif v1["versions"]:
+        result = v1
+    else:
+        msg = "Scan found no working formats for {}"
+        print(msg.format(args["url"]))
+        sys.exit()
+
+    print(json.dumps(results))
+
+    if args["write"]:
+        server = args["server"]
+        if server == args["url"]:
+            msg = "Please provide a server nickname to write the config"
+            raise ValueError(msg)
+
+        # Prefer the highest version
+        version = result["versions"].pop()
+
+        # Prefer formats with "pretty"/"unclosedelements" False over True
+        formats = sorted(result["formats"], key=lambda f: sum(f.values()))
+        fmt = formats[0]
+
+        if not UserConfig.has_section(server):
+            UserConfig[server] = {}
+        cfg = UserConfig[server]
+        for opt in "url", "org", "fid":
+            cfg[opt] = args[opt]
+
+        cfg["version"] = str(version)
+        for k, v in fmt.items():
+            cfg[k] = str(v).lower()
+
+        msg = "Writing '{}' configs {} to {}"
+        print(msg.format(server, dict(cfg.items()), USERCONFIGPATH))
+        with open(USERCONFIGPATH, "w") as f:
+            UserConfig.write(f)
 
 
 def _scan_profile(url, org, fid, max_workers=None, timeout=None):
@@ -313,10 +358,8 @@ def _scan_profile(url, org, fid, max_workers=None, timeout=None):
     for format in v2_formats:
         del format["unclosedelements"]
 
-    return json.dumps((OrderedDict([("versions", v1_versions),
-                                    ("formats", v1_formats)]),
-                       OrderedDict([("versions", v2_versions),
-                                    ("formats", v2_formats)])))
+    return (OrderedDict([("versions", v1_versions), ("formats", v1_formats)]),
+            OrderedDict([("versions", v2_versions), ("formats", v2_formats)]))
 
 
 def request_stmt(args):
@@ -398,8 +441,9 @@ def all_stmts(args, dt, password):
     parser.parse(acctinfo)
     ofx = parser.convert()
     msgs = ofx.signupmsgsrsv1
-    assert len(msgs) == 1
+    assert msgs is not None and len(msgs) == 1
     acctinfors = msgs[0].acctinfors
+    assert acctinfors is not None
 
     stmtrqs = []
     for acctinfo in acctinfors:
@@ -598,7 +642,7 @@ def parse_config(key, value):
 
 def merge_config(args):
     """
-    Merge CLI args > user config > library config > defaults
+    Merge CLI args > user config > library config > OFX Home > defaults
     """
     # dict of all ArgumentParser args that have a value set
     args = {k: v for k, v in vars(args).items() if v is not None}
@@ -608,8 +652,8 @@ def merge_config(args):
         return {k: parse_config(k, v)
                 for k, v in cfg[server].items()} if section in cfg else {}
 
-    user_cfg = read_cfg(USER_CFG, server)
-    default_cfg = read_cfg(DEFAULT_CFG, server)
+    user_cfg = read_cfg(UserConfig, server)
+    default_cfg = read_cfg(DefaultConfig, server)
 
     #  if server not in fi_index():
     if not (user_cfg or default_cfg):
@@ -620,15 +664,19 @@ def merge_config(args):
     merged = ChainMap(args, user_cfg, default_cfg, DEFAULTS)
 
     # If we don't know URL, try to fall back to OFX Home
-    if merged.get("url", None) is None \
-       and merged.get("ofxhome_id", None) is not None:
+    if merged.get("url", None) is None:
+        if merged.get("ofxhome_id", None) is None:
+            msg = "Unknown server '{}'; please configure 'url' or 'ofxhome_id'"
+            raise ValueError(msg.format(server))
+
         lookup = ofxhome.lookup(merged["ofxhome_id"])
+
         # There's no reason why DEFAULTS should have any overlap with
         # an ofxhome lookup, but on general principles we'll make sure
         # DEFAULTS comes last in the mapping order
-        merged.maps.insert(-1,
-                           {"url": lookup.url, "org": lookup.org,
-                            "fid": lookup.fid, "brokerid": lookup.brokerid})
+        merged.maps.insert(-1, {"url": lookup.url, "org": lookup.org,
+                                "fid": lookup.fid,
+                                "brokerid": lookup.brokerid})
 
     return merged
 
@@ -644,12 +692,6 @@ def main():
         args = vars(args)
     else:
         args = merge_config(args)
-
-    if "url" not in args:
-        msg = ""  # FIXME
-        raise ValueError(msg)
-
-    args = defaultdict(type(None), args)
 
     REQUEST_FNS[args["request"]](args)
 
