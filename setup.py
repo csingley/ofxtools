@@ -37,8 +37,8 @@ setup(
     license=ABOUT["__license__"],
 
     # Note: change 'master' to the tag name when releasing a new verion
-    download_url="{}/master".format(URL_BASE),
-    #  download_url="{}/{}".format(URL_BASE, ABOUT["__version__"]),
+    #  download_url="{}/master".format(URL_BASE),
+    download_url="{}/{}".format(URL_BASE, ABOUT["__version__"]),
 
     entry_points={'console_scripts': ['ofxget=ofxtools.scripts.ofxget:main']},
 
