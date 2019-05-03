@@ -24,11 +24,9 @@ from ofxtools.Client import (
 )
 from ofxtools.Types import DateTime
 from ofxtools.utils import UTC
-from ofxtools import (utils, ofxhome, config)
+from ofxtools import (utils, ofxhome, config, models)
 from ofxtools.Parser import OFXTree
-from ofxtools.models.signup import (
-    BANKACCTINFO, CCACCTINFO, INVACCTINFO
-)
+from ofxtools import models
 
 
 CONFIGPATH = os.path.join(config.CONFIGDIR, "fi.cfg")
@@ -98,6 +96,8 @@ def make_argparser():
     scan_group = argparser.add_argument_group(title="Profile Scan Options")
     scan_group.add_argument("-w", "--write", action="store_true", default=None,
                             help="Write scan results to config file")
+    scan_group.add_argument("--ofxhome_id", default=None,
+                            help="FI id# on http://www.ofxhome.com/")
 
     signon_group = argparser.add_argument_group(title="Signon Options")
     signon_group.add_argument("-u", "--user", help="FI login username")
@@ -261,12 +261,15 @@ def scan_profile(args):
         if not UserConfig.has_section(server):
             UserConfig[server] = {}
         cfg = UserConfig[server]
-        for opt in "url", "org", "fid":
-            cfg[opt] = args[opt]
+
+        for opt in "url", "ofxhome_id", "org", "fid", "brokerid", "bankid":
+            if (opt in args) and args[opt]:
+                cfg[opt] = str(args[opt])
 
         cfg["version"] = str(version)
         for k, v in fmt.items():
-            cfg[k] = str(v).lower()
+            if v:
+                cfg[k] = str(v).lower()
 
         msg = "Writing '{}' configs {} to {}"
         print(msg.format(server, dict(cfg.items()), USERCONFIGPATH))
@@ -440,13 +443,27 @@ def all_stmts(args, dt, password):
     parser = OFXTree()
     parser.parse(acctinfo)
     ofx = parser.convert()
+    status = ofx.signonmsgsrsv1.sonrs.status
+    if status.code != 0:
+        msg = "OFX signon failed, code={}, severity={}, message='{}'"
+        raise ValueError(msg.format(status.code, status.severity,
+                                    status.message))
     msgs = ofx.signupmsgsrsv1
     assert msgs is not None and len(msgs) == 1
-    acctinfors = msgs[0].acctinfors
-    assert acctinfors is not None
+    trnrs = msgs[0]
+    assert isinstance(trnrs, models.ACCTINFOTRNRS)
+    status = trnrs.status
+    if status.code != 0:
+        msg = "ACCTINFO request failed, code={}, severity={}, message='{}'"
+        raise ValueError(msg.format(status.code, status.severity,
+                                    status.message))
+
+    rs = trnrs.acctinfors
+    assert isinstance(rs, models.ACCTINFORS)
 
     stmtrqs = []
-    for acctinfo in acctinfors:
+    for acctinfo in rs:
+        assert isinstance(acctinfo, models.ACCTINFO)
         stmtrqs.extend([mkstmtrq(acctinf, args, dt) for acctinf in acctinfo])
     return stmtrqs
 
@@ -458,14 +475,14 @@ def mkstmtrq(acctinfo, args, dt):
                   dtstart=dt["start"], dtend=dt["end"], inctran=args["inctran"])
 
 
-@mkstmtrq.register(CCACCTINFO)
+@mkstmtrq.register(models.CCACCTINFO)
 def _(acctinfo, args, dt):
     acct = acctinfo.ccacctfrom
     return CcStmtRq(acctid=acct.acctid, dtstart=dt["start"], dtend=dt["end"],
                     inctran=args["inctran"])
 
 
-@mkstmtrq.register(INVACCTINFO)
+@mkstmtrq.register(models.INVACCTINFO)
 def _(acctinfo, args, dt):
     acct = acctinfo.invacctfrom
     return InvStmtRq(acctid=acct.acctid, dtstart=dt["start"], dtend=dt["end"],
@@ -654,12 +671,6 @@ def merge_config(args):
 
     user_cfg = read_cfg(UserConfig, server)
     default_cfg = read_cfg(DefaultConfig, server)
-
-    #  if server not in fi_index():
-    if not (user_cfg or default_cfg):
-        raise ValueError(
-            "Unknown FI '{}' not in {}".format(server, str(fi_index()))
-        )
 
     merged = ChainMap(args, user_cfg, default_cfg, DEFAULTS)
 
