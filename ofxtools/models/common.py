@@ -65,17 +65,3 @@ class MSGSETCORE(Aggregate):
     respfileer = Bool(required=True)
     spname = String(32)
     ofxextension = SubAggregate(OFXEXTENSION)
-
-    @staticmethod
-    def groom(elem):
-        """
-        Remove proprietary tags e.g. INTU.XXX
-        """
-        # Keep input free of side effects
-        elem = deepcopy(elem)
-
-        for child in set(elem):
-            if "." in child.tag:
-                elem.remove(child)
-
-        return super(MSGSETCORE, MSGSETCORE).groom(elem)

@@ -134,20 +134,6 @@ class PROFRS(Aggregate):
     url = String(255)
     email = String(80)
 
-    @staticmethod
-    def groom(elem):
-        """
-        Remove proprietary tags e.g. INTU.XXX
-        """
-        # Keep input free of side effects
-        elem = deepcopy(elem)
-
-        for child in set(elem):
-            if "." in child.tag:
-                elem.remove(child)
-
-        return super(PROFRS, PROFRS).groom(elem)
-
 
 class PROFTRNRQ(TrnRq):
     """ OFX section 7.1.5 """

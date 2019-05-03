@@ -201,11 +201,19 @@ class Aggregate(list):
         """
         Modify incoming ``ET.Element`` to play nice with our Python schema.
 
-        Override in subclass.
+        Default action is to emove extended tags, e.g. INTU.XXX
+
+        Extend in subclass.
 
         N.B. make sure to perform modifications on a copy.deepcopy(), in order
         to keep the input free of side effects!
         """
+        elem = deepcopy(elem)
+
+        for child in set(elem):
+            if "." in child.tag:
+                elem.remove(child)
+
         return elem
 
     def to_etree(self):
