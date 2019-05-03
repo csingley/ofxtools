@@ -25,14 +25,30 @@ If all else fails, you can execute
 
 Using ofxget  - TL;DR
 ---------------------
-If your financial institution is known to ``ofxtools/config/fi.cfg``, then
-the quickest way to get your data is to say (e.g. for American Express):
+If your financial institution has working connection parameters posted on
+`OFX Home`_ , then the quickest way to get your hands on some OFX data
+is to say:
 
 .. code-block:: bash
 
-    $ ofxget stmt amex --user <your_username> --all
+    $ ofxget scan <server_nickname> --ofxhome <ofxhome_id> --write
+    $ ofxget acctinfo <server_nickname> -u <your_username> --write
+    $ ofxget stmt <server_nickname>
 
 Enter your password when prompted.
+
+The first command finds working OFX connection parameters for your FI,
+and saves them to a config file in your user home directory (referenced by
+a nickname of your choice).
+
+The second command requests a list of accounts and updates your config file
+accordingly.
+
+These are in the nature of first-time setup chores.
+
+The third command is the kind of thing you'd run on a regular basis; it
+requests statements for each account listed in your config file for a given
+server nickname.
 
 Using ofxget - in depth 
 -----------------------
@@ -152,6 +168,14 @@ we'll go ahead and include this information in our ``ofxget.cfg``:
 
 Note that multiple accounts are specified as a comma-separated list.
 
+To spare your eyes from looking through all that tag soup, you can just tell
+``ofxget`` to download the ACCTINFO response and try to update your config
+file automatically:
+
+.. code-block:: bash
+
+    $ ofxget acctinfo amex --user <username> --write
+
 Alternatively, as touched on in the TL;DR - if you're in a hurry, you can skip 
 configuring which accounts you want, and instead just pass the ``--all``
 argument:
@@ -219,21 +243,34 @@ Copy these configs in your ``ofxget.cfg`` like so:
 .. code-block:: ini
 
     [etrade]
-    ofxhome_id: 446
     version: 102
 
     [usaa]
-    ofxhome_id: 483
     version: 151
     unclosedelements: true
 
     [vanguard]
-    ofxhome_id: 479
     version: 203
     pretty: true
 
 
 In reality, though, it'd probaby be better just to use OFX 2.0.2 for USAA.
+
+If your FI is not already known to ``ofxget``, you won't be able to use
+an existing server nickname.  If there's a working entry for your FI on
+`OFX Home`_ , then it's easiest to use the command shown above in the TL;DR:
+
+.. code-block:: bash
+
+    $ ofxget scan <server_nickname> --ofxhome <ofxhome_id> --write
+
+Otherwise, you'll need to source URL/FID/ORG from somewhere else, and
+manually add a section in your ``ofxget.cfg``.  With that in hand, you can
+proceed with the connection scan:
+
+.. code-block:: bash
+
+    $ ofxget scan <server_nickname> --write
 
 The master configs for OFX connection parameters are located in
 ``ofxtools/config/fi.cfg`` - if you get something working, edit it there and
@@ -243,7 +280,8 @@ Finally, many banks configure their servers to reject any connections that
 aren't from Quicken.  It's usually safest to tell them you're a recent version
 of Quicken for Windows.  ``OFXClient`` does this by default, so you probably
 don't need to worry about it.  If you do need to fiddle with it, use the
-``appid`` and ``appver`` arguments.
+``appid`` and ``appver`` arguments, either from the command line or in your
+``ofxget.cfg``.
 
 We've also had some problems with FIs checking the ``User-Agent`` header in
 HTTP requests, so it's been blanked out.  If some motivated user wants to send

@@ -13,7 +13,9 @@ import urllib
 import concurrent.futures
 import json
 from io import BytesIO
-from functools import singledispatch
+import functools
+import itertools
+from operator import attrgetter
 import sys
 
 
@@ -26,7 +28,6 @@ from ofxtools.Types import DateTime
 from ofxtools.utils import UTC
 from ofxtools import (utils, ofxhome, config, models)
 from ofxtools.Parser import OFXTree
-from ofxtools import models
 
 
 CONFIGPATH = os.path.join(config.CONFIGDIR, "fi.cfg")
@@ -246,11 +247,6 @@ def scan_profile(args):
     print(json.dumps(results))
 
     if args["write"]:
-        server = args["server"]
-        if server == args["url"]:
-            msg = "Please provide a server nickname to write the config"
-            raise ValueError(msg)
-
         # Prefer the highest version
         version = result["versions"].pop()
 
@@ -258,23 +254,35 @@ def scan_profile(args):
         formats = sorted(result["formats"], key=lambda f: sum(f.values()))
         fmt = formats[0]
 
-        if not UserConfig.has_section(server):
-            UserConfig[server] = {}
-        cfg = UserConfig[server]
-
-        for opt in "url", "ofxhome_id", "org", "fid", "brokerid", "bankid":
-            if (opt in args) and args[opt]:
-                cfg[opt] = str(args[opt])
+        cfg = mk_server_cfg(args)
 
         cfg["version"] = str(version)
         for k, v in fmt.items():
             if v:
                 cfg[k] = str(v).lower()
 
-        msg = "Writing '{}' configs {} to {}"
-        print(msg.format(server, dict(cfg.items()), USERCONFIGPATH))
+        msg = "\nWriting '{}' configs {} to {}..."
+        print(msg.format(args["server"], dict(cfg.items()), USERCONFIGPATH))
         with open(USERCONFIGPATH, "w") as f:
             UserConfig.write(f)
+        print("...write OK")
+
+
+def mk_server_cfg(args):
+    server = args["server"]
+    if server == args["url"]:
+        msg = "Please provide a server nickname to write the config"
+        raise ValueError(msg)
+
+    if not UserConfig.has_section(server):
+        UserConfig[server] = {}
+    cfg = UserConfig[server]
+
+    for opt in "url", "ofxhome_id", "org", "fid", "brokerid", "bankid", "user":
+        if (opt in args) and args[opt]:
+            cfg[opt] = str(args[opt])
+
+    return cfg
 
 
 def _scan_profile(url, org, fid, max_workers=None, timeout=None):
@@ -365,6 +373,159 @@ def _scan_profile(url, org, fid, max_workers=None, timeout=None):
             OrderedDict([("versions", v2_versions), ("formats", v2_formats)]))
 
 
+def request_profile(args):
+    """
+    Send PROFRQ
+    """
+    client = init_client(args)
+
+    with client.request_profile(
+        version=args["version"],
+        prettyprint=args["pretty"],
+        close_elements=not args["unclosedelements"],
+        dryrun=args["dryrun"],
+        verify_ssl=not args["unsafe"]
+    ) as f:
+        response = f.read()
+
+    print(response.decode())
+
+
+def request_acctinfo(args):
+    """
+    Send ACCTINFORQ
+    """
+
+    # Use dummy password for dummy request
+    if args["dryrun"]:
+        password = "{:0<32}".format("anonymous")
+    else:
+        password = getpass.getpass()
+
+    acctinfo = _request_acctinfo(args, password)
+
+    print(acctinfo.read().decode())
+
+    if args["write"]:
+        cfg = mk_server_cfg(args)
+        acctinfo.seek(0)
+        acctinfors = extract_acctinfors(acctinfo)
+        cfg.update(configFromAcctinfors(acctinfors))
+
+        with open(USERCONFIGPATH, "w") as f:
+            UserConfig.write(f)
+
+
+def _request_acctinfo(args, password):
+    client = init_client(args)
+
+    dtacctup = datetime.datetime(1999, 12, 31, tzinfo=UTC)
+
+    with client.request_accounts(password,
+                                 dtacctup,
+                                 dryrun=args["dryrun"],
+                                 verify_ssl=not args["unsafe"]) as f:
+        response = f.read()
+
+    return BytesIO(response)
+
+
+def extract_acctinfors(markup):
+    """ Input seralized OFX; output ofxtools.models.ACCTINFORS """
+    parser = OFXTree()
+    parser.parse(markup)
+    ofx = parser.convert()
+
+    def verify_status(trnrs):
+        status = trnrs.status
+        if status.code != 0:
+            msg = ("{cls}: Request failed, code={code}, "
+                   "severity={severity}, message='{msg}'")
+            raise ValueError(msg.format(cls=trnrs.__class__.__name__,
+                                        code=status.code,
+                                        severity=status.severity,
+                                        msg=status.message))
+
+    sonrs = ofx.signonmsgsrsv1.sonrs
+    assert isinstance(sonrs, models.SONRS)
+    verify_status(sonrs)
+
+    msgs = ofx.signupmsgsrsv1
+    assert msgs is not None and len(msgs) == 1
+    trnrs = msgs[0]
+    assert isinstance(trnrs, models.ACCTINFOTRNRS)
+    verify_status(trnrs)
+
+    rs = trnrs.acctinfors
+    assert isinstance(rs, models.ACCTINFORS)
+
+    return rs
+
+
+def configFromAcctinfors(acctinfors):
+    acctinfos = itertools.chain.from_iterable(acctinfors)
+
+    # *ACCTINFO classes don't have rich comparison methods;
+    # can't sort by class
+    sortKey = attrgetter("__class__.__name__")
+    acctinfos = sorted(acctinfos, key=sortKey)
+
+    def _stringifyList(lst):
+        return str(lst).strip("[]").replace("'", "")
+
+    def cfgBANKACCTINFO(acctinfos):
+        # Transform to list of acctids keyed by accttype
+        bankids = []
+        cfg = defaultdict(list)
+        for acctinfo in acctinfos:
+            bankids.append(acctinfo.bankid)
+            cfg[acctinfo.accttype.lower()].append(acctinfo.acctid)
+
+        # INI-friendly string representation of Python list type
+        cfg = {type: _stringifyList(id) for type, id in cfg.items()}
+
+        bankids = set(bankids)
+        if len(bankids) > 1:
+            msg = "Multiple BANKIDs {}; can't configure automatically"
+            raise ValueError(msg.format(list(bankids)))
+        cfg["bankid"] = bankids.pop()
+
+        return cfg
+
+    def cfgINVACCTINFO(acctinfos):
+        brokerids, acctids = zip(
+            *[(acctinfo.brokerid, acctinfo.acctid) for acctinfo in acctinfos]
+        )
+
+        # INI-friendly string representation of Python list type
+        cfg = {"investment": _stringifyList(list(acctids))}
+
+        brokerids = set(brokerids)
+        if len(brokerids) > 1:
+            msg = "Multiple BROKERIDs {}; can't configure automatically"
+            raise ValueError(msg.format(list(brokerids)))
+        cfg["brokerid"] = brokerids.pop()
+
+        return cfg
+
+    def cfgCCACCTINFO(acctinfos):
+        acctids = [acctinfo.acctid for acctinfo in acctinfos]
+        return {"creditcard": _stringifyList(acctids)}
+
+    def cfgBPACCTINFO(acctinfors):
+        return {}
+
+    dispatcher = {"BANKACCTINFO": cfgBANKACCTINFO,
+                  "CCACCTINFO": cfgCCACCTINFO,
+                  "INVACCTINFO": cfgINVACCTINFO,
+                  "BPACCTINFO": cfgBPACCTINFO,
+                 }
+
+    return ChainMap(*[dispatcher[clsName](_acctinfos)
+                      for clsName, _acctinfos in itertools.groupby(
+                          acctinfos, key=sortKey)])
+
+
 def request_stmt(args):
     """
     Send *STMTRQ
@@ -382,7 +543,13 @@ def request_stmt(args):
 
     # Define statement requests
     if args["all"]:
-        stmtrqs = all_stmts(args, dt, password)
+        acctinfo = _request_acctinfo(args, password)
+        acctinfors = extract_acctinfors(acctinfo)
+        stmtrqs = []
+        for acctinfo in acctinfors:
+            assert isinstance(acctinfo, models.ACCTINFO)
+            stmtrqs.extend([mkstmtrq(acctinf, args, dt) for acctinf in acctinfo])
+        return stmtrqs
     else:
         stmtrqs = []
         # Create *STMTRQ for each account specified by config/args
@@ -437,42 +604,18 @@ def request_stmt(args):
     print(response.decode())
 
 
-def all_stmts(args, dt, password):
-    """ Download ACCTINFORS; create *STMTRQ for each account therein. """
-    acctinfo = _request_acctinfo(args, password)
-    parser = OFXTree()
-    parser.parse(acctinfo)
-    ofx = parser.convert()
-    status = ofx.signonmsgsrsv1.sonrs.status
-    if status.code != 0:
-        msg = "OFX signon failed, code={}, severity={}, message='{}'"
-        raise ValueError(msg.format(status.code, status.severity,
-                                    status.message))
-    msgs = ofx.signupmsgsrsv1
-    assert msgs is not None and len(msgs) == 1
-    trnrs = msgs[0]
-    assert isinstance(trnrs, models.ACCTINFOTRNRS)
-    status = trnrs.status
-    if status.code != 0:
-        msg = "ACCTINFO request failed, code={}, severity={}, message='{}'"
-        raise ValueError(msg.format(status.code, status.severity,
-                                    status.message))
-
-    rs = trnrs.acctinfors
-    assert isinstance(rs, models.ACCTINFORS)
-
-    stmtrqs = []
-    for acctinfo in rs:
-        assert isinstance(acctinfo, models.ACCTINFO)
-        stmtrqs.extend([mkstmtrq(acctinf, args, dt) for acctinf in acctinfo])
-    return stmtrqs
-
-
-@singledispatch
+@functools.singledispatch
 def mkstmtrq(acctinfo, args, dt):
+    msg = "Unknown Aggregate type '{}'"
+    raise ValueError(msg.format(type(acctinfo)))
+
+
+@mkstmtrq.register(models.BANKACCTINFO)
+def _(acctinfo, args, dt):
     acct = acctinfo.bankacctfrom
     return StmtRq(acctid=acct.acctid, accttype=acct.accttype,
-                  dtstart=dt["start"], dtend=dt["end"], inctran=args["inctran"])
+                  dtstart=dt["start"], dtend=dt["end"],
+                  inctran=args["inctran"])
 
 
 @mkstmtrq.register(models.CCACCTINFO)
@@ -532,52 +675,6 @@ def request_stmtend(args):
     print(response.decode())
 
 
-def request_profile(args):
-    """
-    Send PROFRQ
-    """
-    client = init_client(args)
-
-    with client.request_profile(
-        version=args["version"],
-        prettyprint=args["pretty"],
-        close_elements=not args["unclosedelements"],
-        dryrun=args["dryrun"],
-        verify_ssl=not args["unsafe"]
-    ) as f:
-        response = f.read()
-
-    print(response.decode())
-
-
-def request_acctinfo(args):
-    """
-    Send ACCTINFORQ
-    """
-
-    # Use dummy password for dummy request
-    if args["dryrun"]:
-        password = "{:0<32}".format("anonymous")
-    else:
-        password = getpass.getpass()
-
-    print(_request_acctinfo(args, password).read().decode())
-
-
-def _request_acctinfo(args, password):
-    client = init_client(args)
-
-    dtacctup = datetime.datetime(1999, 12, 31, tzinfo=UTC)
-
-    with client.request_accounts(password,
-                                 dtacctup,
-                                 dryrun=args["dryrun"],
-                                 verify_ssl=not args["unsafe"]) as f:
-        response = f.read()
-
-    return BytesIO(response)
-
-
 def request_tax1099(args):
     """
     Send TAX1099RQ
@@ -602,16 +699,6 @@ def request_tax1099(args):
     print(response.decode())
 
 
-# Map args.request choices to request function
-REQUEST_FNS = {"scan": scan_profile,
-               "prof": request_profile,
-               "acctinfo": request_acctinfo,
-               "stmt": request_stmt,
-               "stmtend": request_stmtend,
-               "tax1099": request_tax1099,
-              }
-
-
 def init_client(args):
     """
     Initialize OFXClient with connection info from args
@@ -632,29 +719,6 @@ def init_client(args):
         brokerid=args["brokerid"],
     )
     return client
-
-
-def parse_config(key, value):
-    LISTS = ["checking", "savings", "moneymrkt", "creditline", "creditcard",
-             "investment", "years"]
-    BOOLS = ["dryrun", "unsafe", "pretty", "unclosedelements", "inctran",
-             "incpos", "incbal", "incoo", "all"]
-    INTS = ["version"]
-
-    if key in LISTS:
-        # Allow sequences of acct nos
-        value = [v.strip() for v in value.split(",")]
-    elif key in BOOLS:
-        BOOLY = ConfigParser.BOOLEAN_STATES
-        value_ = BOOLY.get(value, None)
-        if value_ is None:
-            msg = "Can't interpret '{}' as bool; must be in {}"
-            raise ValueError(msg.format(value, list(BOOLY.keys())))
-        value = value_
-    elif key in INTS:
-        value = int(value)
-
-    return value
 
 
 def merge_config(args):
@@ -690,6 +754,38 @@ def merge_config(args):
                                 "brokerid": lookup.brokerid})
 
     return merged
+
+
+def parse_config(key, value):
+    LISTS = ["checking", "savings", "moneymrkt", "creditline", "creditcard",
+             "investment", "years"]
+    BOOLS = ["dryrun", "unsafe", "pretty", "unclosedelements", "inctran",
+             "incpos", "incbal", "incoo", "all"]
+    INTS = ["version"]
+
+    if key in LISTS:
+        # Allow sequences of acct nos
+        value = [v.strip() for v in value.split(",")]
+    elif key in BOOLS:
+        BOOLY = ConfigParser.BOOLEAN_STATES
+        value_ = BOOLY.get(value, None)
+        if value_ is None:
+            msg = "Can't interpret '{}' as bool; must be in {}"
+            raise ValueError(msg.format(value, list(BOOLY.keys())))
+        value = value_
+    elif key in INTS:
+        value = int(value)
+
+    return value
+
+
+REQUEST_FNS = {"scan": scan_profile,
+               "prof": request_profile,
+               "acctinfo": request_acctinfo,
+               "stmt": request_stmt,
+               "stmtend": request_stmtend,
+               "tax1099": request_tax1099,
+              }
 
 
 def main():
