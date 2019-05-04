@@ -58,6 +58,7 @@ class CliTestCase(unittest.TestCase):
             "pretty": False,
             "unsafe": False,
             "all": False,
+            "write": False
         }
 
     def testInitClient(self):
@@ -355,7 +356,7 @@ class MergeConfigTestCase(unittest.TestCase):
 
         default_cfg = configparser.ConfigParser()
         default_cfg["2big2fail"] = {}
-        default_cfg["2big2fail"]["ofxhome_id"] = "417"
+        default_cfg["2big2fail"]["ofxhome"] = "417"
         default_cfg["2big2fail"]["version"] = "203"
         default_cfg["2big2fail"]["pretty"] = "true"
         default_cfg["2big2fail"]["fid"] = "44"

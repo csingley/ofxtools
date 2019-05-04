@@ -13,7 +13,6 @@ import urllib
 import concurrent.futures
 import json
 from io import BytesIO
-import functools
 import itertools
 from operator import attrgetter
 import sys
@@ -38,8 +37,7 @@ USERCONFIGPATH = os.path.join(config.USERCONFIGDIR, "ofxget.cfg")
 UserConfig = ConfigParser()
 UserConfig.read(USERCONFIGPATH)
 
-
-DEFAULTS = {"url": None, "org": None, "fid": None, "version": None,
+DEFAULTS = {"url": None, "org": None, "fid": None, "version": 203,
             "appid": None, "appver": None, "bankid": None, "brokerid": None,
             "user": None, "clientuid": None, "language": None, "dryrun": False,
             "unsafe": False, "unclosedelements": False, "pretty": False,
@@ -54,6 +52,15 @@ def fi_index():
     return sorted(set(UserConfig.sections() + DefaultConfig.sections()))
 
 
+def get_passwd(args):
+    """ Prompt for password; use dummy password from OFX spec for dry run """
+    if args["dryrun"]:
+        password = "{:0<32}".format("anonymous")
+    else:
+        password = getpass.getpass()
+    return password
+
+
 def make_argparser():
     argparser = ArgumentParser(
         description="Download OFX financial data",
@@ -61,7 +68,7 @@ def make_argparser():
     )
     argparser.add_argument(
         "request",
-        choices=list(REQUEST_FNS.keys()),
+        choices=list(REQUEST_HANDLERS.keys()),
         help="Request type")
     argparser.add_argument(
         "server", help="OFX server - URL or FI name from ofxget.cfg/fi.cfg")
@@ -71,6 +78,13 @@ def make_argparser():
         action="store_true",
         default=None,
         help="display OFX request and exit without sending",
+    )
+    argparser.add_argument(
+        "-w",
+        "--write",
+        action="store_true",
+        default=None,
+        help="Write working parametes to config file"
     )
     argparser.add_argument(
         "--unsafe",
@@ -95,9 +109,7 @@ def make_argparser():
     )
 
     scan_group = argparser.add_argument_group(title="Profile Scan Options")
-    scan_group.add_argument("-w", "--write", action="store_true", default=None,
-                            help="Write scan results to config file")
-    scan_group.add_argument("--ofxhome_id", default=None,
+    scan_group.add_argument("--ofxhome", default=None,
                             help="FI id# on http://www.ofxhome.com/")
 
     signon_group = argparser.add_argument_group(title="Signon Options")
@@ -216,7 +228,9 @@ def scan_profiles(start, stop, timeout=None):
     institutions = ofxhome.list_institutions()
     for ofxhome_id in list(institutions.keys())[start:stop]:
         lookup = ofxhome.lookup(ofxhome_id)
-        if lookup is None or ofxhome.ofx_invalid(lookup) or ofxhome.ssl_invalid(lookup):
+        if lookup is None\
+           or ofxhome.ofx_invalid(lookup)\
+           or ofxhome.ssl_invalid(lookup):
             continue
         working = _scan_profile(url=lookup.url,
                                 org=lookup.org,
@@ -247,42 +261,14 @@ def scan_profile(args):
     print(json.dumps(results))
 
     if args["write"]:
-        # Prefer the highest version
-        version = result["versions"].pop()
-
         # Prefer formats with "pretty"/"unclosedelements" False over True
         formats = sorted(result["formats"], key=lambda f: sum(f.values()))
-        fmt = formats[0]
+        extra_args = {k: v for k, v in formats[0].items() if v}
 
-        cfg = mk_server_cfg(args)
+        # Prefer the highest version
+        extra_args["version"] = result["versions"].pop()
 
-        cfg["version"] = str(version)
-        for k, v in fmt.items():
-            if v:
-                cfg[k] = str(v).lower()
-
-        msg = "\nWriting '{}' configs {} to {}..."
-        print(msg.format(args["server"], dict(cfg.items()), USERCONFIGPATH))
-        with open(USERCONFIGPATH, "w") as f:
-            UserConfig.write(f)
-        print("...write OK")
-
-
-def mk_server_cfg(args):
-    server = args["server"]
-    if server == args["url"]:
-        msg = "Please provide a server nickname to write the config"
-        raise ValueError(msg)
-
-    if not UserConfig.has_section(server):
-        UserConfig[server] = {}
-    cfg = UserConfig[server]
-
-    for opt in "url", "ofxhome_id", "org", "fid", "brokerid", "bankid", "user":
-        if (opt in args) and args[opt]:
-            cfg[opt] = str(args[opt])
-
-    return cfg
+        write_config(args, extra_args=extra_args)
 
 
 def _scan_profile(url, org, fid, max_workers=None, timeout=None):
@@ -396,29 +382,21 @@ def request_acctinfo(args):
     Send ACCTINFORQ
     """
 
-    # Use dummy password for dummy request
-    if args["dryrun"]:
-        password = "{:0<32}".format("anonymous")
-    else:
-        password = getpass.getpass()
-
+    password = get_passwd(args)
     acctinfo = _request_acctinfo(args, password)
 
     print(acctinfo.read().decode())
 
     if args["write"]:
-        cfg = mk_server_cfg(args)
         acctinfo.seek(0)
-        acctinfors = extract_acctinfors(acctinfo)
-        cfg.update(configFromAcctinfors(acctinfors))
+        extra_args = extract_acctinfos(acctinfo)
+        extra_args = {k: arg2config(k, v) for k, v in extra_args.items()}
 
-        with open(USERCONFIGPATH, "w") as f:
-            UserConfig.write(f)
+        write_config(args, extra_args=extra_args)
 
 
 def _request_acctinfo(args, password):
     client = init_client(args)
-
     dtacctup = datetime.datetime(1999, 12, 31, tzinfo=UTC)
 
     with client.request_accounts(password,
@@ -430,8 +408,10 @@ def _request_acctinfo(args, password):
     return BytesIO(response)
 
 
-def extract_acctinfors(markup):
-    """ Input seralized OFX; output ofxtools.models.ACCTINFORS """
+def extract_acctinfos(markup):
+    """
+    Input seralized OFX; output dict-like object containing parsed *ACCTINFOs
+    """
     parser = OFXTree()
     parser.parse(markup)
     ofx = parser.convert()
@@ -456,72 +436,53 @@ def extract_acctinfors(markup):
     assert isinstance(trnrs, models.ACCTINFOTRNRS)
     verify_status(trnrs)
 
-    rs = trnrs.acctinfors
-    assert isinstance(rs, models.ACCTINFORS)
-
-    return rs
-
-
-def configFromAcctinfors(acctinfors):
-    acctinfos = itertools.chain.from_iterable(acctinfors)
+    acctinfors = trnrs.acctinfors
+    assert isinstance(acctinfors, models.ACCTINFORS)
 
     # *ACCTINFO classes don't have rich comparison methods;
     # can't sort by class
     sortKey = attrgetter("__class__.__name__")
-    acctinfos = sorted(acctinfos, key=sortKey)
 
-    def _stringifyList(lst):
-        return str(lst).strip("[]").replace("'", "")
+    # ACCTINFOs are ListItems of ACCTINFORS
+    # *ACCTINFOs are ListItems of ACCTINFO
+    # The data we want is in a nested list
+    acctinfos = sorted(itertools.chain.from_iterable(acctinfors), key=sortKey)
 
-    def cfgBANKACCTINFO(acctinfos):
+    def _unique(ids, label):
+        ids = set(ids)
+        if len(ids) > 1:
+            msg = "Multiple {} {}; can't configure automatically"
+            raise ValueError(msg.format(label, list(ids)))
+        return ids.pop()
+
+    def _ready(acctinfo):
+        return acctinfo.svcstatus == "ACTIVE" and acctinfo.suptxdl
+
+    def parse_bank(acctinfos):
         # Transform to list of acctids keyed by accttype
         bankids = []
-        cfg = defaultdict(list)
-        for acctinfo in acctinfos:
-            bankids.append(acctinfo.bankid)
-            cfg[acctinfo.accttype.lower()].append(acctinfo.acctid)
+        args_ = defaultdict(list)
+        for inf in acctinfos:
+            if _ready(inf):
+                bankids.append(inf.bankid)
+                args_[inf.accttype.lower()].append(inf.acctid)
 
-        # INI-friendly string representation of Python list type
-        cfg = {type: _stringifyList(id) for type, id in cfg.items()}
+        args_["bankid"] = _unique(bankids, "BANKIDs")
+        return args_
 
-        bankids = set(bankids)
-        if len(bankids) > 1:
-            msg = "Multiple BANKIDs {}; can't configure automatically"
-            raise ValueError(msg.format(list(bankids)))
-        cfg["bankid"] = bankids.pop()
-
-        return cfg
-
-    def cfgINVACCTINFO(acctinfos):
+    def parse_inv(acctinfos):
         brokerids, acctids = zip(
-            *[(acctinfo.brokerid, acctinfo.acctid) for acctinfo in acctinfos]
-        )
+            *[(inf.brokerid, inf.acctid) for inf in acctinfos if _ready(inf)])
+        return {"investment": acctids, "brokerid": _unique(brokerids)}
 
-        # INI-friendly string representation of Python list type
-        cfg = {"investment": _stringifyList(list(acctids))}
+    def parse_cc(acctinfos):
+        return {"creditcard": [inf.acctid for inf in acctinfos if _ready(inf)]}
 
-        brokerids = set(brokerids)
-        if len(brokerids) > 1:
-            msg = "Multiple BROKERIDs {}; can't configure automatically"
-            raise ValueError(msg.format(list(brokerids)))
-        cfg["brokerid"] = brokerids.pop()
+    dispatcher = {"BANKACCTINFO": parse_bank,
+                  "CCACCTINFO": parse_cc,
+                  "INVACCTINFO": parse_inv}
 
-        return cfg
-
-    def cfgCCACCTINFO(acctinfos):
-        acctids = [acctinfo.acctid for acctinfo in acctinfos]
-        return {"creditcard": _stringifyList(acctids)}
-
-    def cfgBPACCTINFO(acctinfors):
-        return {}
-
-    dispatcher = {"BANKACCTINFO": cfgBANKACCTINFO,
-                  "CCACCTINFO": cfgCCACCTINFO,
-                  "INVACCTINFO": cfgINVACCTINFO,
-                  "BPACCTINFO": cfgBPACCTINFO,
-                 }
-
-    return ChainMap(*[dispatcher[clsName](_acctinfos)
+    return ChainMap(*[dispatcher.get(clsName, lambda x: {})(_acctinfos)
                       for clsName, _acctinfos in itertools.groupby(
                           acctinfos, key=sortKey)])
 
@@ -534,63 +495,31 @@ def request_stmt(args):
     D = DateTime().convert
     dt = {d[2:]: D(args[d]) for d in ("dtstart", "dtend", "dtasof")}
 
-    # Prompt for password
-    if args["dryrun"]:
-        # Use dummy password for dummy request
-        password = "{:0<32}".format("anonymous")
-    else:
-        password = getpass.getpass()
+    password = get_passwd(args)
 
-    # Define statement requests
     if args["all"]:
         acctinfo = _request_acctinfo(args, password)
-        acctinfors = extract_acctinfors(acctinfo)
-        stmtrqs = []
-        for acctinfo in acctinfors:
-            assert isinstance(acctinfo, models.ACCTINFO)
-            stmtrqs.extend([mkstmtrq(acctinf, args, dt) for acctinf in acctinfo])
-        return stmtrqs
-    else:
-        stmtrqs = []
-        # Create *STMTRQ for each account specified by config/args
-        for accttype in ("checking", "savings", "moneymrkt", "creditline"):
-            acctids = args.get(accttype, [])
-            stmtrqs.extend(
-                [
-                    StmtRq(
-                        acctid=acctid,
-                        accttype=accttype.upper(),
-                        dtstart=dt["start"],
-                        dtend=dt["end"],
-                        inctran=args["inctran"],
-                    )
-                    for acctid in acctids
-                ]
-            )
+        args_ = extract_acctinfos(acctinfo)
+        args.maps.insert(1, args_)
 
-        for acctid in args.get("creditcard", []):
-            stmtrqs.append(
-                CcStmtRq(
-                    acctid=acctid,
-                    dtstart=dt["start"],
-                    dtend=dt["end"],
-                    inctran=args["inctran"],
-                )
-            )
+    stmtrqs = []
+    for accttype in ("checking", "savings", "moneymrkt", "creditline"):
+        stmtrqs.extend(
+            [StmtRq(acctid=acctid, accttype=accttype.upper(),
+                    dtstart=dt["start"], dtend=dt["end"],
+                    inctran=args["inctran"]) for acctid in args[accttype]])
 
-        for acctid in args.get("investment", []):
-            stmtrqs.append(
-                InvStmtRq(
-                    acctid=acctid,
-                    dtstart=dt["start"],
-                    dtend=dt["end"],
-                    dtasof=dt["asof"],
-                    inctran=args["inctran"],
-                    incoo=args["incoo"],
-                    incpos=args["incpos"],
-                    incbal=args["incbal"],
-                )
-            )
+    for acctid in args["creditcard"]:
+        stmtrqs.append(
+            CcStmtRq(acctid=acctid, dtstart=dt["start"], dtend=dt["end"],
+                     inctran=args["inctran"]))
+
+    for acctid in args["investment"]:
+        stmtrqs.append(
+            InvStmtRq(acctid=acctid, dtstart=dt["start"], dtend=dt["end"],
+                      dtasof=dt["asof"], inctran=args["inctran"],
+                      incoo=args["incoo"], incpos=args["incpos"],
+                      incbal=args["incbal"]))
 
     client = init_client(args)
     with client.request_statements(
@@ -603,34 +532,8 @@ def request_stmt(args):
 
     print(response.decode())
 
-
-@functools.singledispatch
-def mkstmtrq(acctinfo, args, dt):
-    msg = "Unknown Aggregate type '{}'"
-    raise ValueError(msg.format(type(acctinfo)))
-
-
-@mkstmtrq.register(models.BANKACCTINFO)
-def _(acctinfo, args, dt):
-    acct = acctinfo.bankacctfrom
-    return StmtRq(acctid=acct.acctid, accttype=acct.accttype,
-                  dtstart=dt["start"], dtend=dt["end"],
-                  inctran=args["inctran"])
-
-
-@mkstmtrq.register(models.CCACCTINFO)
-def _(acctinfo, args, dt):
-    acct = acctinfo.ccacctfrom
-    return CcStmtRq(acctid=acct.acctid, dtstart=dt["start"], dtend=dt["end"],
-                    inctran=args["inctran"])
-
-
-@mkstmtrq.register(models.INVACCTINFO)
-def _(acctinfo, args, dt):
-    acct = acctinfo.invacctfrom
-    return InvStmtRq(acctid=acct.acctid, dtstart=dt["start"], dtend=dt["end"],
-                     inctran=args["inctran"], incoo=args["incoo"],
-                     incpos=args["incpos"], incbal=args["incbal"])
+    if args["write"]:
+        write_config(args)
 
 
 def request_stmtend(args):
@@ -641,17 +544,14 @@ def request_stmtend(args):
     D = DateTime().convert
     dt = {d[2:]: D(args[d]) for d in ("dtstart", "dtend", "dtasof")}
 
-    # Prompt for password
-    if args["dryrun"]:
-        # Use dummy password for dummy request
-        password = "{:0<32}".format("anonymous")
-    else:
-        password = getpass.getpass()
+    password = get_passwd(args)
 
-    # Define statement requests
+    if args["all"]:
+        acctinfo = _request_acctinfo(args, password)
+        args_ = extract_acctinfos(acctinfo)
+        args.maps.insert(1, args_)
+
     stmtendrqs = []
-
-    # Create *STMTENDRQ for each account specified by config/args
     for accttype in ("checking", "savings", "moneymrkt", "creditline"):
         acctids = args.get(accttype, [])
         stmtendrqs.extend(
@@ -674,6 +574,9 @@ def request_stmtend(args):
 
     print(response.decode())
 
+    if args["write"]:
+        write_config(args)
+
 
 def request_tax1099(args):
     """
@@ -681,11 +584,7 @@ def request_tax1099(args):
     """
     client = init_client(args)
 
-    # Use dummy password for dummy request
-    if args["dryrun"]:
-        password = "{:0<32}".format("anonymous")
-    else:
-        password = getpass.getpass()
+    password = get_passwd(args)
 
     with client.request_tax1099(password,
                                 *args["years"],
@@ -730,7 +629,7 @@ def merge_config(args):
     server = args["server"]
 
     def read_cfg(cfg, section):
-        return {k: parse_config(k, v)
+        return {k: config2arg(k, v)
                 for k, v in cfg[server].items()} if section in cfg else {}
 
     user_cfg = read_cfg(UserConfig, server)
@@ -738,54 +637,103 @@ def merge_config(args):
 
     merged = ChainMap(args, user_cfg, default_cfg, DEFAULTS)
 
-    # If we don't know URL, try to fall back to OFX Home
-    if merged.get("url", None) is None:
-        if merged.get("ofxhome_id", None) is None:
-            msg = "Unknown server '{}'; please configure 'url' or 'ofxhome_id'"
-            raise ValueError(msg.format(server))
+    if "ofxhome" in merged:
+        lookup = ofxhome.lookup(merged["ofxhome"])
 
-        lookup = ofxhome.lookup(merged["ofxhome_id"])
-
-        # There's no reason why DEFAULTS should have any overlap with
-        # an ofxhome lookup, but on general principles we'll make sure
-        # DEFAULTS comes last in the mapping order
+        # Insert OFX Home lookup ahead of DEFAULTS but after
+        # user configs and library configs
         merged.maps.insert(-1, {"url": lookup.url, "org": lookup.org,
                                 "fid": lookup.fid,
                                 "brokerid": lookup.brokerid})
 
+    if merged.get("url", None) is None:
+        msg = "Unknown server '{}'; please configure 'url' or 'ofxhome'"
+        raise ValueError(msg.format(server))
+
     return merged
 
 
-def parse_config(key, value):
-    LISTS = ["checking", "savings", "moneymrkt", "creditline", "creditcard",
-             "investment", "years"]
-    BOOLS = ["dryrun", "unsafe", "pretty", "unclosedelements", "inctran",
-             "incpos", "incbal", "incoo", "all"]
-    INTS = ["version"]
+def config2arg(key, value):
+    """
+    Transform a config value from ConfigParser format to ArgParser format
+    """
+    default = DEFAULTS.get(key, None)
 
-    if key in LISTS:
+    if type(default) is list:
         # Allow sequences of acct nos
         value = [v.strip() for v in value.split(",")]
-    elif key in BOOLS:
+    elif type(default) is bool:
         BOOLY = ConfigParser.BOOLEAN_STATES
         value_ = BOOLY.get(value, None)
         if value_ is None:
             msg = "Can't interpret '{}' as bool; must be in {}"
             raise ValueError(msg.format(value, list(BOOLY.keys())))
         value = value_
-    elif key in INTS:
+    elif type(default) is int:
         value = int(value)
 
     return value
 
 
-REQUEST_FNS = {"scan": scan_profile,
-               "prof": request_profile,
-               "acctinfo": request_acctinfo,
-               "stmt": request_stmt,
-               "stmtend": request_stmtend,
-               "tax1099": request_tax1099,
-              }
+def arg2config(key, value):
+    """
+    Transform a config value from ArgParser format to ConfigParser format
+    """
+    default = DEFAULTS.get(key, None)
+
+    if type(default) is list:
+        # INI-friendly string representation of Python list type
+        value = str(value).strip("[]").replace("'", "")
+    elif type(default) is bool:
+        value = {True: "true", False: "false", None: ""}[value]
+
+    if value is None:
+        value = ""
+
+    return str(value)
+
+
+def mk_server_cfg(args):
+    """
+    Copy key parameters to UserConfig, under the indicated section
+    """
+    server = args["server"]
+    # args.server might actually be a URL from CLI, not a nickname
+    if (not server) or server == args["url"]:
+        msg = "Please provide a server nickname to write the config"
+        raise ValueError(msg)
+
+    if not UserConfig.has_section(server):
+        UserConfig[server] = {}
+    cfg = UserConfig[server]
+
+    for opt in "url", "ofxhome", "org", "fid", "brokerid", "bankid", "user":
+        if (opt in args) and args[opt]:
+            cfg[opt] = arg2config(args[opt])
+
+    return cfg
+
+def write_config(args, *, extra_args=None):
+    """
+    """
+    args.maps.insert(0, extra_args)
+    cfg = mk_server_cfg(args)
+
+    #  msg = "\nWriting '{}' configs {} to {}..."
+    #  print(msg.format(args["server"], dict(cfg.items()), USERCONFIGPATH))
+
+    with open(USERCONFIGPATH, "w") as f:
+        UserConfig.write(f)
+
+    #  print("...write OK")
+
+# Map "request" arg to handler function
+REQUEST_HANDLERS = {"scan": scan_profile,
+                    "prof": request_profile,
+                    "acctinfo": request_acctinfo,
+                    "stmt": request_stmt,
+                    "stmtend": request_stmtend,
+                    "tax1099": request_tax1099}
 
 
 def main():
@@ -796,11 +744,11 @@ def main():
     server = args.server
     if urllib.parse.urlparse(server).scheme:
         args.url = server
-        args = vars(args)
+        args = ChainMap(vars(args))
     else:
         args = merge_config(args)
 
-    REQUEST_FNS[args["request"]](args)
+    REQUEST_HANDLERS[args["request"]](args)
 
 
 if __name__ == "__main__":
