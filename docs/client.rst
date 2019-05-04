@@ -113,7 +113,7 @@ database id (at the end of the webpage URL), the config looks like this:
 
     # American Express
     [amex]
-    ofxhome_id: 424
+    ofxhome: 424
 
 With either configuration, we can now use the provider nickname to make our
 connection more conveniently:
@@ -262,7 +262,7 @@ an existing server nickname.  If there's a working entry for your FI on
 
 .. code-block:: bash
 
-    $ ofxget scan <server_nickname> --ofxhome <ofxhome_id> --write
+    $ ofxget scan <server_nickname> --ofxhome <ofxhome id> --write
 
 Otherwise, you'll need to source URL/FID/ORG from somewhere else, and
 manually add a section in your ``ofxget.cfg``.  With that in hand, you can
