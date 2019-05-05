@@ -150,7 +150,8 @@ class OFXClient:
         prettyprint=None,
         close_elements=None,
         bankid=None,
-        brokerid=None):
+        brokerid=None,
+    ):
 
         self.url = url
 

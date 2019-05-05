@@ -64,7 +64,6 @@ class MSGSETLIST(Aggregate):
     #  presdlvmsgset = ListItem(PRESDLVMSGSET)
     presdlvmsgset = Unsupported()
     tax1099msgset = ListItem(TAX1099MSGSET)
-    #  tax1099msgset = Unsupported()
 
     @classmethod
     def validate_args(cls, *args, **kwargs):

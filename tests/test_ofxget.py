@@ -9,6 +9,7 @@ from io import BytesIO
 import argparse
 import configparser
 import collections
+import urllib
 
 
 # local imports
@@ -23,6 +24,12 @@ from ofxtools.Client import (
 from ofxtools.utils import UTC
 from ofxtools.scripts import ofxget
 from ofxtools.ofxhome import OFXServer
+from ofxtools import models
+from ofxtools import Parser
+
+# test imports
+import test_models_msgsets
+import test_models_signup
 
 
 class CliTestCase(unittest.TestCase):
@@ -197,7 +204,7 @@ class CliTestCase(unittest.TestCase):
 
             args, kwargs = fake_rq_stmt.call_args
             password, *stmtrqs = args
-            self.assertEqual(password, "{:0<32}".format("anonymous"))
+            self.assertEqual(password, "anonymous00000000000000000000000")
             self.assertEqual(
                 stmtrqs,
                 [
@@ -310,6 +317,84 @@ class CliTestCase(unittest.TestCase):
                               "version": self.args["version"],
                               "prettyprint": self.args["pretty"],
                               "close_elements": not self.args["unclosedelements"]})
+
+
+class _ScanProfileTestCase(unittest.TestCase):
+    """ Unit tests for ofxtools.scripts.ofxget._scan_profile() """
+    ofx = models.OFX(
+        signonmsgsrsv1=test_models_msgsets.Signonmsgsrsv1TestCase.aggregate,
+        profmsgsrsv1=test_models_msgsets.Profmsgsrsv1TestCase.aggregate)
+
+    @property
+    def client(self):
+        return OFXClient("https://ofx.test.com")
+
+    errcount = 0
+
+    def prof_result(self, version, prettyprint, close_elements, **kwargs):
+        errors = (urllib.error.URLError(None, None),
+                  urllib.error.HTTPError(None, None, None, None, None),
+                  ConnectionError(),
+                  OSError(),
+                  Parser.ParseError(),
+                  ValueError())
+        accept = [
+            (102, False, False),
+            (102, True, True),
+            (103, False, False),
+            (103, True, True),
+            (203, False, True),
+            (203, True, True)
+        ]
+        if (version, prettyprint, close_elements) in accept:
+            ofx = self.client.serialize(self.ofx,
+                                        version,
+                                        prettyprint,
+                                        close_elements)
+            return BytesIO(ofx)
+        else:
+            error = errors[self.errcount % len(errors)]
+            self.errcount += 1
+            raise error
+
+    def test_scanProfile(self):
+        with patch("ofxtools.Client.OFXClient.request_profile") as mock_profrq:
+            mock_profrq.side_effect = self.prof_result
+            results = ofxget._scan_profile(None, None, None)
+
+        ofxv1 = collections.OrderedDict([
+            ("versions", [102, 103]),
+            ("formats", [{"pretty": False, "unclosedelements": True},
+                         {"pretty": True, "unclosedelements": False}])])
+
+        ofxv2 = collections.OrderedDict([
+            ("versions", [203]),
+            ("formats", [{"pretty": False},
+                         {"pretty": True}])])
+
+        self.assertEqual(results, (ofxv1, ofxv2))
+
+
+class ExtractAcctInfosTestCase(unittest.TestCase):
+    """ Unit tests for ofxtools.scripts.ofxget.extract_acctinfos() """
+    ofx = models.OFX(
+        signonmsgsrsv1=test_models_msgsets.Signonmsgsrsv1TestCase.aggregate,
+        signupmsgsrsv1=models.SIGNUPMSGSRSV1(
+            test_models_signup.AcctinfotrnrsTestCase.aggregate))
+
+    @property
+    def client(self):
+        return OFXClient("https://ofx.test.com")
+
+    def test_extract_acctinfos(self):
+        ofx = self.client.serialize(self.ofx)
+        results = ofxget.extract_acctinfos(BytesIO(ofx))
+        self.assertEqual(len(results), 5)
+        self.assertEqual(results["bankid"], "111000614")
+        self.assertEqual(results["brokerid"], "111000614")
+        self.assertEqual(results["checking"], ["123456789123456789"])
+        self.assertEqual(results["creditcard"], ["123456789123456789"])
+        self.assertEqual(results["investment"], ["123456789123456789"])
 
 
 class MakeArgParserTestCase(unittest.TestCase):

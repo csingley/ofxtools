@@ -114,7 +114,7 @@ class BankacctinfoTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "SUPTXDL").text = "Y"
         SubElement(root, "XFERSRC").text = "N"
         SubElement(root, "XFERDEST").text = "Y"
-        SubElement(root, "SVCSTATUS").text = "AVAIL"
+        SubElement(root, "SVCSTATUS").text = "ACTIVE"
         return root
 
     @classproperty
@@ -122,7 +122,7 @@ class BankacctinfoTestCase(unittest.TestCase, base.TestAggregate):
     def aggregate(cls):
         return BANKACCTINFO(bankacctfrom=BankacctfromTestCase.aggregate,
                             suptxdl=True, xfersrc=False, xferdest=True,
-                            svcstatus="AVAIL")
+                            svcstatus="ACTIVE")
 
 
 class CcacctfromTestCase(unittest.TestCase, base.TestAggregate):
@@ -179,7 +179,7 @@ class CcacctinfoTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "SUPTXDL").text = "Y"
         SubElement(root, "XFERSRC").text = "N"
         SubElement(root, "XFERDEST").text = "Y"
-        SubElement(root, "SVCSTATUS").text = "PEND"
+        SubElement(root, "SVCSTATUS").text = "ACTIVE"
         return root
 
     @classproperty
@@ -187,7 +187,7 @@ class CcacctinfoTestCase(unittest.TestCase, base.TestAggregate):
     def aggregate(cls):
         return CCACCTINFO(ccacctfrom=CcacctfromTestCase.aggregate,
                           suptxdl=True, xfersrc=False, xferdest=True,
-                          svcstatus="PEND")
+                          svcstatus="ACTIVE")
 
 
 class InctranTestCase(unittest.TestCase, base.TestAggregate):

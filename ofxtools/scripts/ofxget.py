@@ -26,7 +26,7 @@ from ofxtools.Client import (
 from ofxtools.Types import DateTime
 from ofxtools.utils import UTC
 from ofxtools import (utils, ofxhome, config, models)
-from ofxtools.Parser import OFXTree
+from ofxtools.Parser import OFXTree, ParseError
 
 
 CONFIGPATH = os.path.join(config.CONFIGDIR, "fi.cfg")
@@ -311,22 +311,43 @@ def _scan_profile(url, org, fid, max_workers=None, timeout=None):
                 timeout=timeout):
                 (version, prettyprint, True) for version in ofxv2})
 
+    # The only thing we're measuring here is success (indicated by receiving
+    # a valid HTTP response) or failure (indicated by the request's
+    # throwing any of various errors).  We don't examine the actual response
+    # beyond simply parsing it to verify that it's valid OFX.  The data we keep
+    # is actually the metadata (i.e. connection parameters like OFX version
+    # tried for a request) stored as values in the ``futures`` dict.
     working = defaultdict(list)
 
     for future in concurrent.futures.as_completed(futures):
         try:
             response = future.result()
+            parser = OFXTree()
+            parser.parse(response)
+            parser.convert()
         except (urllib.error.URLError,
                 urllib.error.HTTPError,
                 ConnectionError,
-                OSError) as exc:
-            cancelled = future.cancel()
+                OSError,
+                ParseError,
+                ValueError,
+                ) as exc:
+            future.cancel()
             continue
         else:
             (version, prettyprint, close_elements) = futures[future]
             working[version].append((prettyprint, close_elements))
 
     def collate_results(results):
+        """
+        Transform our metadata results (version, prettyprint, close_elements)
+        into a 2-tuple of ([OFX version], [format]) where each format is a dict
+        of {"pretty": bool, "unclosedelements": bool} representing a pair
+        of configs that should successully connect for those versions.
+
+        Input ``results`` needs to be a complete set for either OFXv1 or v2,
+        with no results for the other version admixed.
+        """
         results = list(results)
         if not results:
             return [], []
@@ -342,12 +363,12 @@ def _scan_profile(url, org, fid, max_workers=None, timeout=None):
         # formats and assume it applies to the whole version.
         formats = max(formats, key=len)
         formats.sort()
-        formats = [OrderedDict([("pretty", format[0]),
-                               ("unclosedelements", not format[1])])
-                   for format in formats]
+        formats = [OrderedDict([("pretty", fmt[0]),
+                               ("unclosedelements", not fmt[1])])
+                   for fmt in formats]
         return sorted(list(versions)), formats
 
-    v2, v1 = utils.partition(lambda pair: pair[0] < 200, working.items())
+    v2, v1 = utils.partition(lambda result: result[0] < 200, working.items())
     v1_versions, v1_formats = collate_results(v1)
     v2_versions, v2_formats = collate_results(v2)
 
@@ -453,13 +474,17 @@ def extract_acctinfos(markup):
         if len(ids) > 1:
             msg = "Multiple {} {}; can't configure automatically"
             raise ValueError(msg.format(label, list(ids)))
-        return ids.pop()
+        try:
+            id = ids.pop()
+        except KeyError:
+            msg = "{} is empty"
+            raise ValueError(msg.format(label))
+        return id
 
     def _ready(acctinfo):
-        return acctinfo.svcstatus == "ACTIVE" and acctinfo.suptxdl
+        return acctinfo.svcstatus == "ACTIVE"
 
     def parse_bank(acctinfos):
-        # Transform to list of acctids keyed by accttype
         bankids = []
         args_ = defaultdict(list)
         for inf in acctinfos:
@@ -468,12 +493,19 @@ def extract_acctinfos(markup):
                 args_[inf.accttype.lower()].append(inf.acctid)
 
         args_["bankid"] = _unique(bankids, "BANKIDs")
-        return args_
+        return dict(args_)
 
     def parse_inv(acctinfos):
-        brokerids, acctids = zip(
-            *[(inf.brokerid, inf.acctid) for inf in acctinfos if _ready(inf)])
-        return {"investment": acctids, "brokerid": _unique(brokerids)}
+        brokerids = []
+        args_ = defaultdict(list)
+        for inf in acctinfos:
+            if _ready(inf):
+                acctfrom = inf.invacctfrom
+                brokerids.append(acctfrom.brokerid)
+                args_["investment"].append(acctfrom.acctid)
+
+        args_["brokerid"] = _unique(brokerids, "BROKERIDs")
+        return dict(args_)
 
     def parse_cc(acctinfos):
         return {"creditcard": [inf.acctid for inf in acctinfos if _ready(inf)]}
@@ -628,12 +660,12 @@ def merge_config(args):
     args = {k: v for k, v in vars(args).items() if v is not None}
     server = args["server"]
 
-    def read_cfg(cfg, section):
+    def read_config(cfg, section):
         return {k: config2arg(k, v)
                 for k, v in cfg[server].items()} if section in cfg else {}
 
-    user_cfg = read_cfg(UserConfig, server)
-    default_cfg = read_cfg(DefaultConfig, server)
+    user_cfg = read_config(UserConfig, server)
+    default_cfg = read_config(DefaultConfig, server)
 
     merged = ChainMap(args, user_cfg, default_cfg, DEFAULTS)
 
