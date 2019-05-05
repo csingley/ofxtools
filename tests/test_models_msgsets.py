@@ -1412,10 +1412,10 @@ class MsgsetcoreTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return MSGSETCORE(ver=1,
+        return MSGSETCORE("ENG", ver=1,
                           url="https://ofxs.ameritrade.com/cgi-bin/apps/OFX",
                           ofxsec="NONE", transpsec=True,
-                          signonrealm="AMERITRADE", language="ENG",
+                          signonrealm="AMERITRADE",
                           syncmode="FULL", refreshsupt=False, respfileer=False,
                           spname="Dewey Cheatham & Howe",
                           ofxextension=OfxextensionTestCase.aggregate)

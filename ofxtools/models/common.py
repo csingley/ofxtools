@@ -7,8 +7,8 @@ from copy import deepcopy
 
 
 # local imports
-from ofxtools.Types import String, OneOf, Integer, Decimal, DateTime, Bool, ListItem
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
+from ofxtools.Types import String, OneOf, Integer, Decimal, DateTime, Bool, ListItem, ListElement
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, ElementList
 from ofxtools.models.i18n import CURRENCY, LANG_CODES
 
 
@@ -51,7 +51,7 @@ class OFXEXTENSION(Aggregate):
     ofxelement = ListItem(OFXELEMENT)
 
 
-class MSGSETCORE(Aggregate):
+class MSGSETCORE(ElementList):
     """ OFX section 7.2.1 """
 
     ver = Integer(required=True)
@@ -59,9 +59,17 @@ class MSGSETCORE(Aggregate):
     ofxsec = OneOf("NONE", "TYPE1", required=True)
     transpsec = Bool(required=True)
     signonrealm = String(32, required=True)
-    language = OneOf(*LANG_CODES, required=True)
+    language = ListElement(OneOf(*LANG_CODES))
     syncmode = OneOf("FULL", "LITE", required=True)
     refreshsupt = Bool()
     respfileer = Bool(required=True)
     spname = String(32)
     ofxextension = SubAggregate(OFXEXTENSION)
+
+    @classmethod
+    def validate_args(cls, *args, **kwargs):
+        if len(args) == 0:
+            msg = "{} must contain at least one item"
+            raise ValueError(msg.format(cls.__name__))
+
+        super().validate_args(*args, **kwargs)
