@@ -387,9 +387,6 @@ def request_profile(args):
     client = init_client(args)
 
     with client.request_profile(
-        version=args["version"],
-        prettyprint=args["pretty"],
-        close_elements=not args["unclosedelements"],
         dryrun=args["dryrun"],
         verify_ssl=not args["unsafe"]
     ) as f:
@@ -624,7 +621,7 @@ def request_tax1099(args):
                                 recid=args["recid"],
                                 dryrun=args["dryrun"],
                                 verify_ssl=not args["unsafe"]
-                               ) as f:
+                                ) as f:
         response = f.read()
 
     print(response.decode())
@@ -729,7 +726,7 @@ def mk_server_cfg(args):
     """
     Copy key parameters to UserConfig, under the indicated section
     """
-    server = args["server"]
+    server = args.get("server", None)
     # args.server might actually be a URL from CLI, not a nickname
     if (not server) or server == args["url"]:
         msg = "Please provide a server nickname to write the config"
@@ -739,15 +736,15 @@ def mk_server_cfg(args):
         UserConfig[server] = {}
     cfg = UserConfig[server]
 
-    for opt in "url", "ofxhome", "org", "fid", "brokerid", "bankid", "user":
-        if (opt in args) and args[opt]:
-            cfg[opt] = arg2config(args[opt])
+    for opt in ("url", "version", "ofxhome", "org", "fid", "brokerid",
+                "bankid", "user", "pretty", "unclosedelements"):
+        if (opt in args) and (args[opt] not in (None, [])):
+            cfg[opt] = arg2config(opt, args[opt])
 
     return cfg
 
+
 def write_config(args, *, extra_args=None):
-    """
-    """
     args.maps.insert(0, extra_args)
     cfg = mk_server_cfg(args)
 
@@ -758,6 +755,7 @@ def write_config(args, *, extra_args=None):
         UserConfig.write(f)
 
     #  print("...write OK")
+
 
 # Map "request" arg to handler function
 REQUEST_HANDLERS = {"scan": scan_profile,

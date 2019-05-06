@@ -10,6 +10,7 @@ import argparse
 import configparser
 import collections
 import urllib
+from configparser import ConfigParser
 
 
 # local imports
@@ -30,6 +31,13 @@ from ofxtools import Parser
 # test imports
 import test_models_msgsets
 import test_models_signup
+
+
+class MakeArgParserTestCase(unittest.TestCase):
+    def testMakeArgparser(self):
+        # This is the lamest test ever
+        argparser = ofxget.make_argparser()
+        self.assertGreater(len(argparser._actions), 0)
 
 
 class CliTestCase(unittest.TestCase):
@@ -68,22 +76,77 @@ class CliTestCase(unittest.TestCase):
             "write": False
         }
 
-    def testInitClient(self):
+    def testScanProfile(self):
+        with patch("ofxtools.scripts.ofxget._scan_profile") as mock_scan_prof:
+            with patch("builtins.print") as mock_print:
+                ofxv1 = collections.OrderedDict([
+                    ("versions", [102, 103]),
+                    ("formats", [{"pretty": False, "unclosedelements": True},
+                                 {"pretty": True, "unclosedelements": False}])])
+
+                ofxv2 = collections.OrderedDict([
+                    ("versions", [203]),
+                    ("formats", [{"pretty": False},
+                                 {"pretty": True}])])
+
+                mock_scan_prof.return_value = (ofxv1, ofxv2)
+                result = ofxget.scan_profile(self.args)
+                self.assertIsNone(result, None)
+
+                args, kwargs = mock_scan_prof.call_args
+                self.assertEqual(len(args), 3)
+                url, org, fid = args
+                self.assertEqual(url, self.args["url"])
+                self.assertEqual(org, self.args["org"])
+                self.assertEqual(fid, self.args["fid"])
+                self.assertEqual(len(kwargs), 0)
+
+                args, kwargs = mock_print.call_args
+                self.assertEqual(len(args), 1)
+                self.maxDiff = None
+                self.assertEqual(
+                    args[0],
+                    ('[{"versions": [102, 103], '
+                     '"formats": [{"pretty": false, "unclosedelements": true},'
+                     ' {"pretty": true, "unclosedelements": false}]}, '
+                     '{"versions": [203], "formats": [{"pretty": false}, '
+                     '{"pretty": true}]}]'))
+
+    def testRequestProfile(self):
+        with patch("ofxtools.Client.OFXClient.request_profile") as fake_rq_prof:
+            fake_rq_prof.return_value = BytesIO(b"th-th-th-that's all folks!")
+
+            output = ofxget.request_profile(self.args)
+            self.assertEqual(output, None)
+
+            args, kwargs = fake_rq_prof.call_args
+            self.assertEqual(len(args), 0)
+
+            self.assertEqual(kwargs,
+                             {"dryrun": self.args["dryrun"],
+                              "verify_ssl": not self.args["unsafe"]})
+
+    def test_RequestAcctinfo(self):
+        """ Unit test for ofxtools.scripts.ofxget._request_acctinfo() """
         args = self.args
-        client = ofxget.init_client(args)
-        self.assertIsInstance(client, OFXClient)
-        self.assertEqual(str(client.version), args["version"])
-        for arg in [
-            "url",
-            "org",
-            "fid",
-            "appid",
-            "appver",
-            "language",
-            "bankid",
-            "brokerid",
-        ]:
-            self.assertEqual(getattr(client, arg), args[arg])
+        args["dryrun"] = False
+
+        with patch("ofxtools.Client.OFXClient.request_accounts") as fake_rq_acctinfo:
+            fake_rq_acctinfo.return_value = BytesIO(b"th-th-th-that's all folks!")
+
+            output = ofxget._request_acctinfo(self.args, password="t0ps3kr1t")
+            self.assertEqual(output.read(), (b"th-th-th-that's all folks!"))
+
+            args, kwargs = fake_rq_acctinfo.call_args
+            self.assertEqual(len(args), 2)
+            passwd, dtacctup = args
+            self.assertEqual(passwd, "t0ps3kr1t")
+            self.assertEqual(dtacctup,
+                             datetime(1999, 12, 31, tzinfo=UTC))
+
+            self.assertEqual(kwargs,
+                             {"dryrun": self.args["dryrun"],
+                              "verify_ssl": not self.args["unsafe"]})
 
     def testRequestStmt(self):
         args = self.args
@@ -300,23 +363,102 @@ class CliTestCase(unittest.TestCase):
             )
             self.assertEqual(kwargs, {"dryrun": True, "verify_ssl": True})
 
-    def testRequestProfile(self):
-        with patch("ofxtools.Client.OFXClient.request_profile") as fake_rq_prof:
-            fake_rq_prof.return_value = BytesIO(b"th-th-th-that's all folks!")
+    def testRequestStmtend(self):
+        args = self.args
+        args["dryrun"] = False
 
-            output = ofxget.request_profile(self.args)
+        with patch("getpass.getpass") as fake_getpass:
+            fake_getpass.return_value = "t0ps3kr1t"
+            with patch("ofxtools.Client.OFXClient.request_statements") as fake_rq_stmtend:
+                fake_rq_stmtend.return_value = BytesIO(b"th-th-th-that's all folks!")
+                output = ofxget.request_stmtend(args)
 
-            self.assertEqual(output, None)
+                self.assertEqual(output, None)
 
-            args, kwargs = fake_rq_prof.call_args
-            self.assertEqual(len(args), 0)
+                args, kwargs = fake_rq_stmtend.call_args
+                password, *stmtrqs = args
+                self.assertEqual(password, "t0ps3kr1t")
+                self.assertEqual(
+                    stmtrqs,
+                    [
+                        StmtEndRq(
+                            acctid="123",
+                            accttype="CHECKING",
+                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                        ),
+                        StmtEndRq(
+                            acctid="234",
+                            accttype="CHECKING",
+                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                        ),
+                        StmtEndRq(
+                            acctid="345",
+                            accttype="SAVINGS",
+                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                        ),
+                        StmtEndRq(
+                            acctid="456",
+                            accttype="SAVINGS",
+                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                        ),
+                        StmtEndRq(
+                            acctid="567",
+                            accttype="MONEYMRKT",
+                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                        ),
+                        StmtEndRq(
+                            acctid="678",
+                            accttype="MONEYMRKT",
+                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                        ),
+                        StmtEndRq(
+                            acctid="789",
+                            accttype="CREDITLINE",
+                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                        ),
+                        StmtEndRq(
+                            acctid="890",
+                            accttype="CREDITLINE",
+                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                        ),
+                        CcStmtEndRq(
+                            acctid="111",
+                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                        ),
+                        CcStmtEndRq(
+                            acctid="222",
+                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                        ),
+                    ],
+                )
+                self.assertEqual(kwargs, {"dryrun": False,"verify_ssl": True})
 
-            self.assertEqual(kwargs,
-                             {"dryrun": self.args["dryrun"],
-                              "verify_ssl": not self.args["unsafe"],
-                              "version": self.args["version"],
-                              "prettyprint": self.args["pretty"],
-                              "close_elements": not self.args["unclosedelements"]})
+    def testInitClient(self):
+        args = self.args
+        client = ofxget.init_client(args)
+        self.assertIsInstance(client, OFXClient)
+        self.assertEqual(str(client.version), args["version"])
+        for arg in [
+            "url",
+            "org",
+            "fid",
+            "appid",
+            "appver",
+            "language",
+            "bankid",
+            "brokerid",
+        ]:
+            self.assertEqual(getattr(client, arg), args[arg])
 
 
 class _ScanProfileTestCase(unittest.TestCase):
@@ -395,13 +537,6 @@ class ExtractAcctInfosTestCase(unittest.TestCase):
         self.assertEqual(results["checking"], ["123456789123456789"])
         self.assertEqual(results["creditcard"], ["123456789123456789"])
         self.assertEqual(results["investment"], ["123456789123456789"])
-
-
-class MakeArgParserTestCase(unittest.TestCase):
-    def testMakeArgparser(self):
-        # This is the lamest test ever
-        argparser = ofxget.make_argparser()
-        self.assertGreater(len(argparser._actions), 0)
 
 
 class MergeConfigTestCase(unittest.TestCase):
@@ -541,6 +676,144 @@ class MergeConfigTestCase(unittest.TestCase):
         args = argparse.Namespace(server="3big4fail")
         with self.assertRaises(ValueError):
             ofxget.merge_config(args)
+
+
+class ArgConfigTestCase(unittest.TestCase):
+    """
+    Unit tests for ofxtools.scripts.ofxget.config2arg() and
+    ofxtools.scripts.ofxget.arg2config()
+    """
+    def testList2arg(self):
+        for cfg in ("checking", "savings", "moneymrkt", "creditline",
+                    "creditcard", "investment", "years"):
+            self.assertEqual(ofxget.config2arg(cfg, "123"), ["123"])
+            self.assertEqual(ofxget.config2arg(cfg, "123,456"), ["123", "456"])
+
+            # Surrounding whitespace is stripped
+            self.assertEqual(ofxget.config2arg(cfg, " 123 "), ["123"])
+            self.assertEqual(ofxget.config2arg(cfg, "123, 456"), ["123", "456"])
+
+    def testList2config(self):
+        for cfg in ("checking", "savings", "moneymrkt", "creditline",
+                    "creditcard", "investment", "years"):
+            self.assertEqual(ofxget.arg2config(cfg, ["123"]), "123")
+            self.assertEqual(ofxget.arg2config(cfg, ["123", "456"]), "123, 456")
+
+    def testListRoundtrip(self):
+        for cfg in ("checking", "savings", "moneymrkt", "creditline",
+                    "creditcard", "investment", "years"):
+            self.assertEqual(
+                ofxget.config2arg(cfg, ofxget.arg2config(cfg, ["123", "456"])),
+                ["123", "456"])
+            self.assertEqual(
+                ofxget.arg2config(cfg, ofxget.config2arg(cfg, "123, 456")),
+                "123, 456")
+
+    def testBool2arg(self):
+        for cfg in ("dryrun", "unsafe", "unclosedelements", "pretty",
+                    "inctran", "incbal", "incpos", "incoo", "all", "write"):
+            self.assertEqual(ofxget.config2arg(cfg, "true"), True)
+            self.assertEqual(ofxget.config2arg(cfg, "false"), False)
+            self.assertEqual(ofxget.config2arg(cfg, "yes"), True)
+            self.assertEqual(ofxget.config2arg(cfg, "no"), False)
+            self.assertEqual(ofxget.config2arg(cfg, "on"), True)
+            self.assertEqual(ofxget.config2arg(cfg, "off"), False)
+            self.assertEqual(ofxget.config2arg(cfg, "1"), True)
+            self.assertEqual(ofxget.config2arg(cfg, "0"), False)
+
+    def testBool2config(self):
+        for cfg in ("dryrun", "unsafe", "unclosedelements", "pretty",
+                    "inctran", "incbal", "incpos", "incoo", "all", "write"):
+            self.assertEqual(ofxget.arg2config(cfg, True), "true")
+            self.assertEqual(ofxget.arg2config(cfg, False), "false")
+
+    def testBoolRoundtrip(self):
+        for cfg in ("dryrun", "unsafe", "unclosedelements", "pretty",
+                    "inctran", "incbal", "incpos", "incoo", "all", "write"):
+            self.assertEqual(
+                ofxget.config2arg(cfg, ofxget.arg2config(cfg, True)),
+                True)
+            self.assertEqual(
+                ofxget.config2arg(cfg, ofxget.arg2config(cfg, False)),
+                False)
+            self.assertEqual(
+                ofxget.arg2config(cfg, ofxget.config2arg(cfg, "true")),
+                "true")
+            self.assertEqual(
+                ofxget.arg2config(cfg, ofxget.config2arg(cfg, "false")),
+                "false")
+
+    def testInt2arg(self):
+        for cfg in ("version", ):
+            self.assertEqual(ofxget.config2arg(cfg, "1"), 1)
+
+    def testInt2config(self):
+        for cfg in ("version", ):
+            self.assertEqual(ofxget.arg2config(cfg, 1), "1")
+
+    def testIntRoundtrip(self):
+        for cfg in ("version", ):
+            self.assertEqual(
+                ofxget.config2arg(cfg, ofxget.arg2config(cfg, 1)),
+                1)
+            self.assertEqual(
+                ofxget.arg2config(cfg, ofxget.config2arg(cfg, "1")),
+                "1")
+
+    def testString2arg(self):
+        for cfg in ("url", "org", "fid", "appid", "appver", "bankid",
+                    "brokerid", "user", "clientuid", "language", "acctnum",
+                    "recid"):
+            self.assertEqual(ofxget.config2arg(cfg, "Something"), "Something")
+
+    def testString2config(self):
+        for cfg in ("url", "org", "fid", "appid", "appver", "bankid",
+                    "brokerid", "user", "clientuid", "language", "acctnum",
+                    "recid"):
+            self.assertEqual(ofxget.arg2config(cfg, "Something"), "Something")
+
+    def testStringRoundtrip(self):
+        for cfg in ("url", "org", "fid", "appid", "appver", "bankid",
+                    "brokerid", "user", "clientuid", "language", "acctnum",
+                    "recid"):
+            self.assertEqual(
+                ofxget.config2arg(cfg, ofxget.arg2config(cfg, "Something")),
+                "Something")
+            self.assertEqual(
+                ofxget.arg2config(cfg, ofxget.config2arg(cfg, "Something")),
+                "Something")
+
+
+class MkServerCfgTestCase(unittest.TestCase):
+    """ Unit tests for ofxtools.script.ofxget.mk_server_cfg() """
+    def testMkservercfg(self):
+        with patch("ofxtools.scripts.ofxget.UserConfig", new=ConfigParser()):
+            # Must have "server" arg
+            with self.assertRaises(ValueError):
+                ofxget.mk_server_cfg({"foo": "bar"})
+
+            # "server" arg can't have been sourced from "url" arg
+            with self.assertRaises(ValueError):
+                ofxget.mk_server_cfg({"server": "foo", "url": "foo"})
+
+            results = ofxget.mk_server_cfg(
+                {"server": "myserver", "url": "https://ofxget.test.com",
+                 "version": 203, "ofxhome": "123", "org": "TEST", "fid": "321",
+                 "brokerid": "test.com", "bankid": "11235813",
+                 "user": "porkypig", "pretty": True,
+                 "unclosedelements": False})
+
+            predicted = {
+                "url": "https://ofxget.test.com", "version": "203",
+                "ofxhome": "123", "org": "TEST", "fid": "321",
+                "brokerid": "test.com", "bankid": "11235813",
+                "user": "porkypig", "pretty": "true",
+                "unclosedelements": "false"}
+
+            self.assertEqual(dict(results), predicted)
+
+            for opt, val in predicted.items():
+                self.assertEqual(ofxget.UserConfig["myserver"][opt], val)
 
 
 if __name__ == "__main__":
