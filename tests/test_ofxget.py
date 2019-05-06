@@ -119,18 +119,52 @@ class CliTestCase(unittest.TestCase):
                      #  '{"pretty": true}]}]'))
 
     def testRequestProfile(self):
-        with patch("ofxtools.Client.OFXClient.request_profile") as fake_rq_prof:
-            fake_rq_prof.return_value = BytesIO(b"th-th-th-that's all folks!")
+        with patch("ofxtools.Client.OFXClient.request_profile") as fake_rqprof:
+            with patch("builtins.print") as mock_print:
+                fake_rqprof.return_value = BytesIO(
+                    b"th-th-th-that's all folks!")
 
-            output = ofxget.request_profile(self.args)
-            self.assertEqual(output, None)
+                output = ofxget.request_profile(self.args)
+                self.assertEqual(output, None)
 
-            args, kwargs = fake_rq_prof.call_args
-            self.assertEqual(len(args), 0)
+                args, kwargs = fake_rqprof.call_args
+                self.assertEqual(len(args), 0)
 
-            self.assertEqual(kwargs,
-                             {"dryrun": self.args["dryrun"],
-                              "verify_ssl": not self.args["unsafe"]})
+                self.assertEqual(kwargs,
+                                 {"dryrun": self.args["dryrun"],
+                                  "verify_ssl": not self.args["unsafe"]})
+
+                args, kwargs = mock_print.call_args
+                self.assertEqual(len(args), 1)
+                self.assertEqual(args[0], "th-th-th-that's all folks!")
+                self.assertEqual(len(kwargs), 0)
+
+    def testRequestAcctinfo(self):
+        """ Unit test for ofxtools.scripts.ofxget.request_acctinfo() """
+        args = self.args
+        args["dryrun"] = False
+
+        with patch("ofxtools.scripts.ofxget._request_acctinfo") as fake_rq_acctinfo:
+            with patch("getpass.getpass") as fake_getpass:
+                with patch("builtins.print") as mock_print:
+                    fake_getpass.return_value = "t0ps3kr1t"
+                    fake_rq_acctinfo.return_value = BytesIO(b"th-th-th-that's all folks!")
+
+                    output = ofxget.request_acctinfo(self.args)
+                    self.assertIsNone(output)
+
+                    args, kwargs = fake_rq_acctinfo.call_args
+                    self.assertEqual(len(args), 2)
+                    args, passwd = args
+                    self.assertEqual(args, self.args)
+                    self.assertEqual(passwd, "anonymous00000000000000000000000")
+
+                    self.assertEqual(len(kwargs), 0)
+
+                    args, kwargs = mock_print.call_args
+                    self.assertEqual(len(args), 1)
+                    self.assertEqual(args[0], "th-th-th-that's all folks!")
+                    self.assertEqual(len(kwargs), 0)
 
     def test_RequestAcctinfo(self):
         """ Unit test for ofxtools.scripts.ofxget._request_acctinfo() """
@@ -152,7 +186,7 @@ class CliTestCase(unittest.TestCase):
 
             self.assertEqual(kwargs,
                              {"dryrun": self.args["dryrun"],
-                              "verify_ssl": not self.args["unsafe"]})
+                          "verify_ssl": not self.args["unsafe"]})
 
     def testRequestStmt(self):
         args = self.args
@@ -161,14 +195,126 @@ class CliTestCase(unittest.TestCase):
         with patch("getpass.getpass") as fake_getpass:
             fake_getpass.return_value = "t0ps3kr1t"
             with patch("ofxtools.Client.OFXClient.request_statements") as fake_rq_stmt:
+                with patch("builtins.print") as mock_print:
+                    fake_rq_stmt.return_value = BytesIO(b"th-th-th-that's all folks!")
+                    output = ofxget.request_stmt(args)
+
+                    self.assertEqual(output, None)
+
+                    args, kwargs = fake_rq_stmt.call_args
+                    password, *stmtrqs = args
+                    self.assertEqual(password, "t0ps3kr1t")
+                    self.assertEqual(
+                        stmtrqs,
+                        [
+                            StmtRq(
+                                acctid="123",
+                                accttype="CHECKING",
+                                dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                                dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                                inctran=True,
+                            ),
+                            StmtRq(
+                                acctid="234",
+                                accttype="CHECKING",
+                                dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                                dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                                inctran=True,
+                            ),
+                            StmtRq(
+                                acctid="345",
+                                accttype="SAVINGS",
+                                dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                                dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                                inctran=True,
+                            ),
+                            StmtRq(
+                                acctid="456",
+                                accttype="SAVINGS",
+                                dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                                dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                                inctran=True,
+                            ),
+                            StmtRq(
+                                acctid="567",
+                                accttype="MONEYMRKT",
+                                dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                                dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                                inctran=True,
+                            ),
+                            StmtRq(
+                                acctid="678",
+                                accttype="MONEYMRKT",
+                                dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                                dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                                inctran=True,
+                            ),
+                            StmtRq(
+                                acctid="789",
+                                accttype="CREDITLINE",
+                                dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                                dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                                inctran=True,
+                            ),
+                            StmtRq(
+                                acctid="890",
+                                accttype="CREDITLINE",
+                                dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                                dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                                inctran=True,
+                            ),
+                            CcStmtRq(
+                                acctid="111",
+                                dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                                dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                                inctran=True,
+                            ),
+                            CcStmtRq(
+                                acctid="222",
+                                dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                                dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                                inctran=True,
+                            ),
+                            InvStmtRq(
+                                acctid="333",
+                                dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                                dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                                dtasof=datetime(2007, 12, 31, tzinfo=UTC),
+                                inctran=True,
+                                incoo=False,
+                                incpos=True,
+                                incbal=True,
+                            ),
+                            InvStmtRq(
+                                acctid="444",
+                                dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                                dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                                dtasof=datetime(2007, 12, 31, tzinfo=UTC),
+                                inctran=True,
+                                incoo=False,
+                                incpos=True,
+                                incbal=True,
+                            ),
+                        ],
+                    )
+                    self.assertEqual(kwargs, {"dryrun": False,"verify_ssl": True})
+
+                    args, kwargs = mock_print.call_args
+                    self.assertEqual(len(args), 1)
+                    self.assertEqual(args[0], "th-th-th-that's all folks!")
+                    self.assertEqual(len(kwargs), 0)
+
+    def testRequestStmtDryrun(self):
+        with patch("ofxtools.Client.OFXClient.request_statements") as fake_rq_stmt:
+            with patch("builtins.print") as mock_print:
                 fake_rq_stmt.return_value = BytesIO(b"th-th-th-that's all folks!")
-                output = ofxget.request_stmt(args)
+                output = ofxget.request_stmt(self.args)
 
                 self.assertEqual(output, None)
 
                 args, kwargs = fake_rq_stmt.call_args
                 password, *stmtrqs = args
-                self.assertEqual(password, "t0ps3kr1t")
+                self.assertEqual(password, "anonymous00000000000000000000000")
                 self.assertEqual(
                     stmtrqs,
                     [
@@ -262,192 +408,98 @@ class CliTestCase(unittest.TestCase):
                         ),
                     ],
                 )
-                self.assertEqual(kwargs, {"dryrun": False,"verify_ssl": True})
+                self.assertEqual(kwargs, {"dryrun": True, "verify_ssl": True})
 
-    def testRequestStmtDryrun(self):
-        with patch("ofxtools.Client.OFXClient.request_statements") as fake_rq_stmt:
-            fake_rq_stmt.return_value = BytesIO(b"th-th-th-that's all folks!")
-            output = ofxget.request_stmt(self.args)
-
-            self.assertEqual(output, None)
-
-            args, kwargs = fake_rq_stmt.call_args
-            password, *stmtrqs = args
-            self.assertEqual(password, "anonymous00000000000000000000000")
-            self.assertEqual(
-                stmtrqs,
-                [
-                    StmtRq(
-                        acctid="123",
-                        accttype="CHECKING",
-                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
-                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
-                        inctran=True,
-                    ),
-                    StmtRq(
-                        acctid="234",
-                        accttype="CHECKING",
-                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
-                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
-                        inctran=True,
-                    ),
-                    StmtRq(
-                        acctid="345",
-                        accttype="SAVINGS",
-                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
-                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
-                        inctran=True,
-                    ),
-                    StmtRq(
-                        acctid="456",
-                        accttype="SAVINGS",
-                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
-                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
-                        inctran=True,
-                    ),
-                    StmtRq(
-                        acctid="567",
-                        accttype="MONEYMRKT",
-                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
-                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
-                        inctran=True,
-                    ),
-                    StmtRq(
-                        acctid="678",
-                        accttype="MONEYMRKT",
-                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
-                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
-                        inctran=True,
-                    ),
-                    StmtRq(
-                        acctid="789",
-                        accttype="CREDITLINE",
-                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
-                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
-                        inctran=True,
-                    ),
-                    StmtRq(
-                        acctid="890",
-                        accttype="CREDITLINE",
-                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
-                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
-                        inctran=True,
-                    ),
-                    CcStmtRq(
-                        acctid="111",
-                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
-                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
-                        inctran=True,
-                    ),
-                    CcStmtRq(
-                        acctid="222",
-                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
-                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
-                        inctran=True,
-                    ),
-                    InvStmtRq(
-                        acctid="333",
-                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
-                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
-                        dtasof=datetime(2007, 12, 31, tzinfo=UTC),
-                        inctran=True,
-                        incoo=False,
-                        incpos=True,
-                        incbal=True,
-                    ),
-                    InvStmtRq(
-                        acctid="444",
-                        dtstart=datetime(2007, 1, 1, tzinfo=UTC),
-                        dtend=datetime(2007, 12, 31, tzinfo=UTC),
-                        dtasof=datetime(2007, 12, 31, tzinfo=UTC),
-                        inctran=True,
-                        incoo=False,
-                        incpos=True,
-                        incbal=True,
-                    ),
-                ],
-            )
-            self.assertEqual(kwargs, {"dryrun": True, "verify_ssl": True})
+                args, kwargs = mock_print.call_args
+                self.assertEqual(len(args), 1)
+                self.assertEqual(args[0], "th-th-th-that's all folks!")
+                self.assertEqual(len(kwargs), 0)
 
     def testRequestStmtend(self):
         args = self.args
         args["dryrun"] = False
 
         with patch("getpass.getpass") as fake_getpass:
-            fake_getpass.return_value = "t0ps3kr1t"
-            with patch("ofxtools.Client.OFXClient.request_statements") as fake_rq_stmtend:
-                fake_rq_stmtend.return_value = BytesIO(b"th-th-th-that's all folks!")
-                output = ofxget.request_stmtend(args)
+            with patch("builtins.print") as mock_print:
+                fake_getpass.return_value = "t0ps3kr1t"
+                with patch("ofxtools.Client.OFXClient.request_statements") as fake_rq_stmtend:
+                    fake_rq_stmtend.return_value = BytesIO(b"th-th-th-that's all folks!")
+                    output = ofxget.request_stmtend(args)
 
-                self.assertEqual(output, None)
+                    self.assertEqual(output, None)
 
-                args, kwargs = fake_rq_stmtend.call_args
-                password, *stmtrqs = args
-                self.assertEqual(password, "t0ps3kr1t")
-                self.assertEqual(
-                    stmtrqs,
-                    [
-                        StmtEndRq(
-                            acctid="123",
-                            accttype="CHECKING",
-                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
-                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
-                        ),
-                        StmtEndRq(
-                            acctid="234",
-                            accttype="CHECKING",
-                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
-                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
-                        ),
-                        StmtEndRq(
-                            acctid="345",
-                            accttype="SAVINGS",
-                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
-                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
-                        ),
-                        StmtEndRq(
-                            acctid="456",
-                            accttype="SAVINGS",
-                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
-                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
-                        ),
-                        StmtEndRq(
-                            acctid="567",
-                            accttype="MONEYMRKT",
-                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
-                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
-                        ),
-                        StmtEndRq(
-                            acctid="678",
-                            accttype="MONEYMRKT",
-                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
-                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
-                        ),
-                        StmtEndRq(
-                            acctid="789",
-                            accttype="CREDITLINE",
-                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
-                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
-                        ),
-                        StmtEndRq(
-                            acctid="890",
-                            accttype="CREDITLINE",
-                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
-                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
-                        ),
-                        CcStmtEndRq(
-                            acctid="111",
-                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
-                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
-                        ),
-                        CcStmtEndRq(
-                            acctid="222",
-                            dtstart=datetime(2007, 1, 1, tzinfo=UTC),
-                            dtend=datetime(2007, 12, 31, tzinfo=UTC),
-                        ),
-                    ],
-                )
-                self.assertEqual(kwargs, {"dryrun": False,"verify_ssl": True})
+                    args, kwargs = fake_rq_stmtend.call_args
+                    password, *stmtrqs = args
+                    self.assertEqual(password, "t0ps3kr1t")
+                    self.assertEqual(
+                        stmtrqs,
+                        [
+                            StmtEndRq(
+                                acctid="123",
+                                accttype="CHECKING",
+                                dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                                dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                            ),
+                            StmtEndRq(
+                                acctid="234",
+                                accttype="CHECKING",
+                                dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                                dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                            ),
+                            StmtEndRq(
+                                acctid="345",
+                                accttype="SAVINGS",
+                                dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                                dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                            ),
+                            StmtEndRq(
+                                acctid="456",
+                                accttype="SAVINGS",
+                                dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                                dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                            ),
+                            StmtEndRq(
+                                acctid="567",
+                                accttype="MONEYMRKT",
+                                dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                                dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                            ),
+                            StmtEndRq(
+                                acctid="678",
+                                accttype="MONEYMRKT",
+                                dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                                dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                            ),
+                            StmtEndRq(
+                                acctid="789",
+                                accttype="CREDITLINE",
+                                dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                                dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                            ),
+                            StmtEndRq(
+                                acctid="890",
+                                accttype="CREDITLINE",
+                                dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                                dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                            ),
+                            CcStmtEndRq(
+                                acctid="111",
+                                dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                                dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                            ),
+                            CcStmtEndRq(
+                                acctid="222",
+                                dtstart=datetime(2007, 1, 1, tzinfo=UTC),
+                                dtend=datetime(2007, 12, 31, tzinfo=UTC),
+                            ),
+                        ],
+                    )
+                    self.assertEqual(kwargs, {"dryrun": False,"verify_ssl": True})
+
+                    args, kwargs = mock_print.call_args
+                    self.assertEqual(len(args), 1)
+                    self.assertEqual(args[0], "th-th-th-that's all folks!")
+                    self.assertEqual(len(kwargs), 0)
 
     def testInitClient(self):
         args = self.args
@@ -480,12 +532,12 @@ class _ScanProfileTestCase(unittest.TestCase):
     errcount = 0
 
     def prof_result(self, version, prettyprint, close_elements, **kwargs):
+        # Sequence of errors caught for futures.result() in _scan_profile()
         errors = (urllib.error.URLError(None, None),
                   urllib.error.HTTPError(None, None, None, None, None),
                   ConnectionError(),
                   OSError(),
-                  Parser.ParseError(),
-                  ValueError())
+                  )
         accept = [
             (102, False, False),
             (102, True, True),

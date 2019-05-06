@@ -219,6 +219,9 @@ def make_argparser():
     return argparser
 
 
+###############################################################################
+# CLI METHODS
+###############################################################################
 def scan_profiles(start, stop, timeout=None):
     """
     Scan OFX Home's list of FIs for working connection configs.
@@ -271,115 +274,6 @@ def scan_profile(args):
         write_config(args, extra_args=extra_args)
 
 
-def _scan_profile(url, org, fid, max_workers=None, timeout=None):
-    """
-    Report permutations of OFX version/prettyprint/unclosedelements that
-    successfully download OFX profile from server.
-
-    Returns a pair of (OFXv1 results, OFXv2 results), each type(dict).
-    dict values provide ``ofxget`` configs that will work to connect.
-    """
-    if timeout is None:
-        timeout = 5
-
-    if max_workers is None:
-        max_workers = 5
-
-    ofxv1 = [102, 103, 151, 160]
-    ofxv2 = [200, 201, 202, 203, 210, 211, 220]
-
-    futures = {}
-    client = OFXClient(url, org=org, fid=fid)
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        for prettyprint in (False, True):
-            for close_elements in (False, True):
-                futures.update({executor.submit(
-                    client.request_profile,
-                    version=version,
-                    prettyprint=prettyprint,
-                    close_elements=close_elements,
-                    timeout=timeout):
-                    (version, prettyprint, close_elements)
-                    for version in ofxv1})
-
-            futures.update({executor.submit(
-                client.request_profile,
-                version=version,
-                prettyprint=prettyprint,
-                close_elements=True,
-                timeout=timeout):
-                (version, prettyprint, True) for version in ofxv2})
-
-    # The only thing we're measuring here is success (indicated by receiving
-    # a valid HTTP response) or failure (indicated by the request's
-    # throwing any of various errors).  We don't examine the actual response
-    # beyond simply parsing it to verify that it's valid OFX.  The data we keep
-    # is actually the metadata (i.e. connection parameters like OFX version
-    # tried for a request) stored as values in the ``futures`` dict.
-    working = defaultdict(list)
-
-    for future in concurrent.futures.as_completed(futures):
-        try:
-            response = future.result()
-            parser = OFXTree()
-            parser.parse(response)
-            parser.convert()
-        except (urllib.error.URLError,
-                urllib.error.HTTPError,
-                ConnectionError,
-                OSError,
-                ParseError,
-                ValueError,
-                ) as exc:
-            future.cancel()
-            continue
-        else:
-            (version, prettyprint, close_elements) = futures[future]
-            working[version].append((prettyprint, close_elements))
-
-    def collate_results(results):
-        """
-        Transform our metadata results (version, prettyprint, close_elements)
-        into a 2-tuple of ([OFX version], [format]) where each format is a dict
-        of {"pretty": bool, "unclosedelements": bool} representing a pair
-        of configs that should successully connect for those versions.
-
-        Input ``results`` needs to be a complete set for either OFXv1 or v2,
-        with no results for the other version admixed.
-        """
-        results = list(results)
-        if not results:
-            return [], []
-        versions, formats = zip(*results)
-
-        # Assumption: the same formatting requirements apply to all
-        # sub-versions (e.g. 1.0.2 and 1.0.3, or 2.0.3 and 2.2.0).
-        # If a (pretty, close_elements) pair succeeds on most sub-versions
-        # but fails on a few, we'll chalk it up to network transmission
-        # errors and ignore it.
-        #
-        # Translation: just pick the longest sequence of successful
-        # formats and assume it applies to the whole version.
-        formats = max(formats, key=len)
-        formats.sort()
-        formats = [OrderedDict([("pretty", fmt[0]),
-                               ("unclosedelements", not fmt[1])])
-                   for fmt in formats]
-        return sorted(list(versions)), formats
-
-    v2, v1 = utils.partition(lambda result: result[0] < 200, working.items())
-    v1_versions, v1_formats = collate_results(v1)
-    v2_versions, v2_formats = collate_results(v2)
-
-    # V2 always has closing tags for elements; just report prettyprint
-    for format in v2_formats:
-        del format["unclosedelements"]
-
-    return (OrderedDict([("versions", v1_versions), ("formats", v1_formats)]),
-            OrderedDict([("versions", v2_versions), ("formats", v2_formats)]))
-
-
 def request_profile(args):
     """
     Send PROFRQ
@@ -424,96 +318,6 @@ def _request_acctinfo(args, password):
         response = f.read()
 
     return BytesIO(response)
-
-
-def extract_acctinfos(markup):
-    """
-    Input seralized OFX; output dict-like object containing parsed *ACCTINFOs
-    """
-    parser = OFXTree()
-    parser.parse(markup)
-    ofx = parser.convert()
-
-    def verify_status(trnrs):
-        status = trnrs.status
-        if status.code != 0:
-            msg = ("{cls}: Request failed, code={code}, "
-                   "severity={severity}, message='{msg}'")
-            raise ValueError(msg.format(cls=trnrs.__class__.__name__,
-                                        code=status.code,
-                                        severity=status.severity,
-                                        msg=status.message))
-
-    sonrs = ofx.signonmsgsrsv1.sonrs
-    assert isinstance(sonrs, models.SONRS)
-    verify_status(sonrs)
-
-    msgs = ofx.signupmsgsrsv1
-    assert msgs is not None and len(msgs) == 1
-    trnrs = msgs[0]
-    assert isinstance(trnrs, models.ACCTINFOTRNRS)
-    verify_status(trnrs)
-
-    acctinfors = trnrs.acctinfors
-    assert isinstance(acctinfors, models.ACCTINFORS)
-
-    # *ACCTINFO classes don't have rich comparison methods;
-    # can't sort by class
-    sortKey = attrgetter("__class__.__name__")
-
-    # ACCTINFOs are ListItems of ACCTINFORS
-    # *ACCTINFOs are ListItems of ACCTINFO
-    # The data we want is in a nested list
-    acctinfos = sorted(itertools.chain.from_iterable(acctinfors), key=sortKey)
-
-    def _unique(ids, label):
-        ids = set(ids)
-        if len(ids) > 1:
-            msg = "Multiple {} {}; can't configure automatically"
-            raise ValueError(msg.format(label, list(ids)))
-        try:
-            id = ids.pop()
-        except KeyError:
-            msg = "{} is empty"
-            raise ValueError(msg.format(label))
-        return id
-
-    def _ready(acctinfo):
-        return acctinfo.svcstatus == "ACTIVE"
-
-    def parse_bank(acctinfos):
-        bankids = []
-        args_ = defaultdict(list)
-        for inf in acctinfos:
-            if _ready(inf):
-                bankids.append(inf.bankid)
-                args_[inf.accttype.lower()].append(inf.acctid)
-
-        args_["bankid"] = _unique(bankids, "BANKIDs")
-        return dict(args_)
-
-    def parse_inv(acctinfos):
-        brokerids = []
-        args_ = defaultdict(list)
-        for inf in acctinfos:
-            if _ready(inf):
-                acctfrom = inf.invacctfrom
-                brokerids.append(acctfrom.brokerid)
-                args_["investment"].append(acctfrom.acctid)
-
-        args_["brokerid"] = _unique(brokerids, "BROKERIDs")
-        return dict(args_)
-
-    def parse_cc(acctinfos):
-        return {"creditcard": [inf.acctid for inf in acctinfos if _ready(inf)]}
-
-    dispatcher = {"BANKACCTINFO": parse_bank,
-                  "CCACCTINFO": parse_cc,
-                  "INVACCTINFO": parse_inv}
-
-    return ChainMap(*[dispatcher.get(clsName, lambda x: {})(_acctinfos)
-                      for clsName, _acctinfos in itertools.groupby(
-                          acctinfos, key=sortKey)])
 
 
 def request_stmt(args):
@@ -627,6 +431,9 @@ def request_tax1099(args):
     print(response.decode())
 
 
+###############################################################################
+# ARGUMENT/CONFIG HANDLERS
+###############################################################################
 def init_client(args):
     """
     Initialize OFXClient with connection info from args
@@ -755,6 +562,239 @@ def write_config(args, *, extra_args=None):
         UserConfig.write(f)
 
     #  print("...write OK")
+
+
+###############################################################################
+# HEAVY LIFTING
+###############################################################################
+def _scan_profile(url, org, fid, max_workers=None, timeout=None):
+    """
+    Report permutations of OFX version/prettyprint/unclosedelements that
+    successfully download OFX profile from server.
+
+    Returns a pair of (OFXv1 results, OFXv2 results), each type(dict).
+    dict values provide ``ofxget`` configs that will work to connect.
+    """
+    if timeout is None:
+        timeout = 5
+
+    if max_workers is None:
+        max_workers = 5
+
+    ofxv1 = [102, 103, 151, 160]
+    ofxv2 = [200, 201, 202, 203, 210, 211, 220]
+
+    futures = {}
+    client = OFXClient(url, org=org, fid=fid)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        for prettyprint in (False, True):
+            for close_elements in (False, True):
+                futures.update({executor.submit(
+                    client.request_profile,
+                    version=version,
+                    prettyprint=prettyprint,
+                    close_elements=close_elements,
+                    timeout=timeout):
+                    (version, prettyprint, close_elements)
+                    for version in ofxv1})
+
+            futures.update({executor.submit(
+                client.request_profile,
+                version=version,
+                prettyprint=prettyprint,
+                close_elements=True,
+                timeout=timeout):
+                (version, prettyprint, True) for version in ofxv2})
+
+    # The only thing we're measuring here is success (indicated by receiving
+    # a valid HTTP response) or failure (indicated by the request's
+    # throwing any of various errors).  We don't examine the actual response
+    # beyond simply parsing it to verify that it's valid OFX.  The data we keep
+    # is actually the metadata (i.e. connection parameters like OFX version
+    # tried for a request) stored as values in the ``futures`` dict.
+    working = defaultdict(list)
+
+    for future in concurrent.futures.as_completed(futures):
+        try:
+            response = future.result()
+        except (urllib.error.URLError,
+                urllib.error.HTTPError,
+                ConnectionError,
+                OSError,
+                ) as exc:
+            future.cancel()
+            continue
+
+        signoninfos = extract_signoninfos(response)
+
+        (version, prettyprint, close_elements) = futures[future]
+        working[version].append((prettyprint, close_elements))
+
+        def collate_results(results):
+            """
+            Transform our metadata results (version, prettyprint, close_elements)
+            into a 2-tuple of ([OFX version], [format]) where each format is a dict
+            of {"pretty": bool, "unclosedelements": bool} representing a pair
+            of configs that should successully connect for those versions.
+
+            Input ``results`` needs to be a complete set for either OFXv1 or v2,
+            with no results for the other version admixed.
+            """
+            results = list(results)
+            if not results:
+                return [], []
+            versions, formats = zip(*results)
+
+            # Assumption: the same formatting requirements apply to all
+            # sub-versions (e.g. 1.0.2 and 1.0.3, or 2.0.3 and 2.2.0).
+            # If a (pretty, close_elements) pair succeeds on most sub-versions
+            # but fails on a few, we'll chalk it up to network transmission
+            # errors and ignore it.
+            #
+            # Translation: just pick the longest sequence of successful
+            # formats and assume it applies to the whole version.
+            formats = max(formats, key=len)
+            formats.sort()
+            formats = [OrderedDict([("pretty", fmt[0]),
+                                   ("unclosedelements", not fmt[1])])
+                       for fmt in formats]
+            return sorted(list(versions)), formats
+
+    v2, v1 = utils.partition(lambda result: result[0] < 200, working.items())
+    v1_versions, v1_formats = collate_results(v1)
+    v2_versions, v2_formats = collate_results(v2)
+
+    # V2 always has closing tags for elements; just report prettyprint
+    for format in v2_formats:
+        del format["unclosedelements"]
+
+    return (OrderedDict([("versions", v1_versions), ("formats", v1_formats)]),
+            OrderedDict([("versions", v2_versions), ("formats", v2_formats)]))
+
+
+def verify_status(trnrs):
+    """
+    Input a models.Aggregate instance representing a transaction wrapper.
+    """
+    status = trnrs.status
+    if status.code != 0:
+        msg = ("{cls}: Request failed, code={code}, "
+               "severity={severity}, message='{msg}'")
+        raise ValueError(msg.format(cls=trnrs.__class__.__name__,
+                                    code=status.code,
+                                    severity=status.severity,
+                                    msg=status.message))
+
+
+def extract_signoninfos(markup):
+    """
+    Input seralized OFX containing PROFRS
+    Output list of ofxtools.models.SIGNONINFO instances
+    """
+    parser = OFXTree()
+    parser.parse(markup)
+    ofx = parser.convert()
+
+    sonrs = ofx.signonmsgsrsv1.sonrs
+    assert isinstance(sonrs, models.SONRS)
+    verify_status(sonrs)
+
+    msgs = ofx.profmsgsrsv1
+    assert msgs is not None
+
+    def extract_signoninfo(trnrs):
+        assert isinstance(trnrs, models.PROFTRNRS)
+        verify_status(trnrs)
+        rs = trnrs.profrs
+        assert rs is not None
+
+        list_ = rs.signoninfolist
+        assert list_ is not None
+        return itertools.chain.from_iterable(list_)
+
+    return [extract_signoninfo(trnrs) for trnrs in msgs]
+
+
+def extract_acctinfos(markup):
+    """
+    Input seralized OFX containing ACCTINFORS
+    Output dict-like object containing parsed *ACCTINFOs
+    """
+    parser = OFXTree()
+    parser.parse(markup)
+    ofx = parser.convert()
+
+    sonrs = ofx.signonmsgsrsv1.sonrs
+    assert isinstance(sonrs, models.SONRS)
+    verify_status(sonrs)
+
+    msgs = ofx.signupmsgsrsv1
+    assert msgs is not None and len(msgs) == 1
+    trnrs = msgs[0]
+    assert isinstance(trnrs, models.ACCTINFOTRNRS)
+    verify_status(trnrs)
+
+    acctinfors = trnrs.acctinfors
+    assert isinstance(acctinfors, models.ACCTINFORS)
+
+    # *ACCTINFO classes don't have rich comparison methods;
+    # can't sort by class
+    sortKey = attrgetter("__class__.__name__")
+
+    # ACCTINFOs are ListItems of ACCTINFORS
+    # *ACCTINFOs are ListItems of ACCTINFO
+    # The data we want is in a nested list
+    acctinfos = sorted(itertools.chain.from_iterable(acctinfors), key=sortKey)
+
+    def _unique(ids, label):
+        ids = set(ids)
+        if len(ids) > 1:
+            msg = "Multiple {} {}; can't configure automatically"
+            raise ValueError(msg.format(label, list(ids)))
+        try:
+            id = ids.pop()
+        except KeyError:
+            msg = "{} is empty"
+            raise ValueError(msg.format(label))
+        return id
+
+    def _ready(acctinfo):
+        return acctinfo.svcstatus == "ACTIVE"
+
+    def parse_bank(acctinfos):
+        bankids = []
+        args_ = defaultdict(list)
+        for inf in acctinfos:
+            if _ready(inf):
+                bankids.append(inf.bankid)
+                args_[inf.accttype.lower()].append(inf.acctid)
+
+        args_["bankid"] = _unique(bankids, "BANKIDs")
+        return dict(args_)
+
+    def parse_inv(acctinfos):
+        brokerids = []
+        args_ = defaultdict(list)
+        for inf in acctinfos:
+            if _ready(inf):
+                acctfrom = inf.invacctfrom
+                brokerids.append(acctfrom.brokerid)
+                args_["investment"].append(acctfrom.acctid)
+
+        args_["brokerid"] = _unique(brokerids, "BROKERIDs")
+        return dict(args_)
+
+    def parse_cc(acctinfos):
+        return {"creditcard": [inf.acctid for inf in acctinfos if _ready(inf)]}
+
+    dispatcher = {"BANKACCTINFO": parse_bank,
+                  "CCACCTINFO": parse_cc,
+                  "INVACCTINFO": parse_inv}
+
+    return ChainMap(*[dispatcher.get(clsName, lambda x: {})(_acctinfos)
+                      for clsName, _acctinfos in itertools.groupby(
+                          acctinfos, key=sortKey)])
 
 
 # Map "request" arg to handler function
