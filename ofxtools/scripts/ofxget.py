@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 """
+Configurable CLI front end for ``ofxtools.Client``
 """
 # stdlib imports
 import os
@@ -16,7 +17,14 @@ from io import BytesIO
 import itertools
 from operator import attrgetter
 import sys
+import warnings
 
+# 3rd party imports
+try:
+    import keyring
+    HAS_KEYRING = True
+except ImportError:
+    HAS_KEYRING = False
 
 # local imports
 from ofxtools.Client import (
@@ -43,9 +51,13 @@ DEFAULTS = {"url": None, "org": None, "fid": None, "version": 203,
             "unsafe": False, "unclosedelements": False, "pretty": False,
             "checking": [], "savings": [], "moneymrkt": [], "creditline": [],
             "creditcard": [], "investment": [], "dtstart": None, "dtend": None,
-            "dtasof": None, "inctran": True,
-            "incbal": True, "incpos": True, "incoo": False, "all": False,
-            "years": [], "acctnum": None, "recid": None, "write": False}
+            "dtasof": None, "inctran": True, "incbal": True, "incpos": True,
+            "incoo": False, "all": False, "years": [], "acctnum": None,
+            "recid": None, "write": False, "savepass": False}
+
+
+class OfxgetWarning(UserWarning):
+    """ Base class for warnings in this module """
 
 
 def fi_index():
@@ -53,12 +65,35 @@ def fi_index():
 
 
 def get_passwd(args):
-    """ Prompt for password; use dummy password from OFX spec for dry run """
+    """
+    1.  For dry run, use dummy password from OFX spec
+    2.  If python-keyring is installed and --savepass is unset, try to use it
+    3.  Prompt for password in terminal
+    """
     if args["dryrun"]:
         password = "{:0<32}".format("anonymous")
     else:
-        password = getpass.getpass()
+        password = None
+        if HAS_KEYRING and not args["savepass"]:
+            password = keyring.get_password("ofxtools", args["server"])
+        if password is None:
+            password = getpass.getpass()
     return password
+
+
+def save_passwd(args, password):
+    if args["dryrun"]:
+        msg = "Dry run; won't store password"
+        warnings.warn(msg, category=OfxgetWarning)
+    if not HAS_KEYRING:
+        msg = "You must install https://pypi.org/project/keyring"
+        raise RuntimeError(msg)
+    if not password:
+        msg = "Empty password; won't store"
+        warnings.warn(msg, category=OfxgetWarning)
+
+    assert isinstance(password, str)
+    keyring.set_password("ofxtools", args["server"], password)
 
 
 def make_argparser():
@@ -77,14 +112,20 @@ def make_argparser():
         "--dryrun",
         action="store_true",
         default=None,
-        help="display OFX request and exit without sending",
+        help="Display OFX request and exit without sending",
     )
     argparser.add_argument(
         "-w",
         "--write",
         action="store_true",
         default=None,
-        help="Write working parametes to config file"
+        help="Write working parameters to config file"
+    )
+    argparser.add_argument(
+        "--savepass",
+        action="store_true",
+        default=None,
+        help="Store password in system keyring (requires python-keyring)",
     )
     argparser.add_argument(
         "--unsafe",
@@ -249,29 +290,43 @@ def scan_profile(args):
     """
     Report working connection parameters
     """
-    results = _scan_profile(args["url"], args["org"], args["fid"])
+    scan_results = _scan_profile(args["url"], args["org"], args["fid"])
 
-    v1, v2 = results
-    if v2["versions"]:
-        result = v2
-    elif v1["versions"]:
-        result = v1
-    else:
+    v1, v2 = scan_results
+    if (not v2["versions"]) and (not v1["versions"]):
         msg = "Scan found no working formats for {}"
         print(msg.format(args["url"]))
         sys.exit()
 
-    print(json.dumps(results))
+    print(json.dumps(scan_results))
 
     if args["write"]:
-        # Prefer formats with "pretty"/"unclosedelements" False over True
-        formats = sorted(result["formats"], key=lambda f: sum(f.values()))
-        extra_args = {k: v for k, v in formats[0].items() if v}
-
-        # Prefer the highest version
-        extra_args["version"] = result["versions"].pop()
+        extra_args = _best_scan_format(scan_results)
 
         write_config(args, extra_args=extra_args)
+
+
+def _best_scan_format(scan_results):
+    """
+    Given the results of _scan_profile(), choose the best parameters;
+    return as dict (compatible with ArgParser/ ChainMap).
+
+    "Best" here means highest working version with the minimal configuration
+    delta, i.e. we prefer formats with "pretty"/"unclosedelements" given as
+    False (the default) over True.
+    """
+    v1, v2 = scan_results
+    if v2["versions"]:
+        result = v2
+    elif v1["versions"]:
+        result = v1
+
+    formats = sorted(result["formats"], key=lambda f: sum(f.values()))
+    args = {k: v for k, v in formats[0].items() if v}
+
+    args["version"] = result["versions"].pop()
+
+    return args
 
 
 def request_profile(args):
@@ -305,6 +360,9 @@ def request_acctinfo(args):
         extra_args = {k: arg2config(k, v) for k, v in extra_args.items()}
 
         write_config(args, extra_args=extra_args)
+
+    if args["savepass"]:
+        save_passwd(args, password)
 
 
 def _request_acctinfo(args, password):
@@ -368,6 +426,9 @@ def request_stmt(args):
     if args["write"]:
         write_config(args)
 
+    if args["savepass"]:
+        save_passwd(args, password)
+
 
 def request_stmtend(args):
     """
@@ -409,6 +470,9 @@ def request_stmtend(args):
 
     if args["write"]:
         write_config(args)
+
+    if args["savepass"]:
+        save_passwd(args, password)
 
 
 def request_tax1099(args):
