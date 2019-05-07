@@ -44,6 +44,7 @@ class CliTestCase(unittest.TestCase):
     @property
     def args(self):
         return {
+            "server": "2big2fail",
             "url": "http://example.com",
             "org": "Example",
             "fid": "666",
@@ -73,7 +74,8 @@ class CliTestCase(unittest.TestCase):
             "pretty": False,
             "unsafe": False,
             "all": False,
-            "write": False
+            "write": False,
+            "savepass": False,
         }
 
     def testScanProfile(self):
