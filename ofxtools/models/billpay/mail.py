@@ -2,11 +2,6 @@
 """
 Payment mail - OFX Section 12.8
 """
-from ofxtools.Types import Bool, String, Decimal, ListItem
-from ofxtools.models.base import Aggregate, SubAggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
-from ofxtools.models.email import MAIL
-from ofxtools.models.billpay.common import PMTINFO
 
 
 __all__ = [
@@ -14,6 +9,13 @@ __all__ = [
     "PMTMAILTRNRQ", "PMTMAILTRNRS",
     "PMTMAILSYNCRQ", "PMTMAILSYNCRS",
 ]
+
+
+from ofxtools.Types import Bool, String, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
+from ofxtools.models.email import MAIL
+from ofxtools.models.billpay.common import PMTINFO
 
 
 class PMTMAILRQ(Aggregate):
@@ -33,10 +35,12 @@ class PMTMAILRS(Aggregate):
 
 
 class PMTMAILTRNRQ(TrnRq):
+    """ OFX Section 12.8.1.1 """
     pmtmailrq = SubAggregate(PMTMAILRQ, required=True)
 
 
 class PMTMAILTRNRS(TrnRs):
+    """ OFX Section 12.8.1.2 """
     pmtmailrs = SubAggregate(PMTMAILRS)
 
 

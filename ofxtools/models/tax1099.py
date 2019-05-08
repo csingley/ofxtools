@@ -2,26 +2,57 @@
 """
 Tax form 1099 - as of TY2018
 """
-# local imports
-from ofxtools.Types import String, Bool, Integer, Decimal, OneOf, DateTime, ListItem
-from ofxtools.models.base import Aggregate, SubAggregate, ElementList, ListElement
-from ofxtools.models.wrapperbases import TrnRq, TrnRs
-from ofxtools.models.common import MSGSETCORE
 
 
 __all__ = [
-    "PAYERADDR", "RECADDR",
-    "ADDLSTTAXWHAGG", "STTAXWHAGG", "LCLTAXWHAGG",
-    "PROCDET_V100", "PROCSUM_V100",
-    "EXTDBINFO_V100", "STKBND",
-    "FORINCOME", "FIDIRECTDEPOSITINFO",
-    "ORIGSTATE", "ADDLSTATETAXWHAGG",
-    "TAX1099MISC_V100", "TAX1099R_V100", "TAX1099B_V100",
-    "TAX1099INT_V100", "TAX1099DIV_V100", "TAX1099OID_V100",
-    "TAX1099RQ", "TAX1099RS", "TAX1099TRNRQ", "TAX1099TRNRS",
-    "TAX1099MSGSRQV1", "TAX1099MSGSRSV1",
-    "TAX1099MSGSETV1", "TAX1099MSGSET"
+    "PAYERADDR",
+    "RECADDR",
+    "ADDLSTTAXWHAGG",
+    "STTAXWHAGG",
+    "LCLTAXWHAGG",
+    "PROCDET_V100",
+    "PROCSUM_V100",
+    "EXTDBINFO_V100",
+    "STKBND",
+    "FORINCOME",
+    "FIDIRECTDEPOSITINFO",
+    "ORIGSTATE",
+    "ADDLSTATETAXWHAGG",
+    "TAX1099MISC_V100",
+    "TAX1099R_V100",
+    "TAX1099B_V100",
+    "TAX1099INT_V100",
+    "TAX1099DIV_V100",
+    "TAX1099OID_V100",
+    "TAX1099RQ",
+    "TAX1099RS",
+    "TAX1099TRNRQ",
+    "TAX1099TRNRS",
+    "TAX1099MSGSRQV1",
+    "TAX1099MSGSRSV1",
+    "TAX1099MSGSETV1",
+    "TAX1099MSGSET",
 ]
+
+
+# local imports
+from ofxtools.Types import (
+    String,
+    Bool,
+    Integer,
+    Decimal,
+    OneOf,
+    DateTime,
+    ListItem,
+)
+from ofxtools.models.base import (
+    Aggregate,
+    SubAggregate,
+    ElementList,
+    ListElement,
+)
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.models.common import MSGSETCORE
 
 
 class PAYERADDR(Aggregate):
@@ -107,7 +138,9 @@ class PROCDET_V100(Aggregate):
     statetaxwheld2 = Decimal()
     fatca = Bool()
 
-    requiredMutexes = [("dtaqd", "dtvar")]
+    requiredMutexes = [
+        ["dtaqd", "dtvar"],
+    ]
 
 
 class PROCSUM_V100(Aggregate):
@@ -193,7 +226,9 @@ class TAX1099MISC_V100(Aggregate):
     tinnot = Bool()
     fatca = Bool()
 
-    optionalMutexes = [("sttaxwh", "addlsttaxwhagg")]
+    optionalMutexes = [
+        ["sttaxwh", "addlsttaxwhagg"],
+    ]
 
     @classmethod
     def validate_args(cls, *args, **kwargs):
@@ -310,10 +345,10 @@ class TAX1099INT_V100(Aggregate):
     fatca = Bool()
 
     optionalMutexes = [
-        ('forcnt', 'forincome'),
-        ('statecode', 'addlstatetaxwhagg'),
-        ('stateidnum', 'addlstatetaxwhagg'),
-        ('statetaxwheld', 'addlstatetaxwhagg'),
+        ['forcnt', 'forincome'],
+        ['statecode', 'addlstatetaxwhagg'],
+        ['stateidnum', 'addlstatetaxwhagg'],
+        ['statetaxwheld', 'addlstatetaxwhagg'],
     ]
 
 
@@ -355,8 +390,8 @@ class TAX1099DIV_V100(Aggregate):
     fatca = Bool()
 
     optionalMutexes = [
-        ('forcnt', 'forincome'),
-        ('statetaxwheld', 'addlstatetaxwhagg'),
+        ['forcnt', 'forincome'],
+        ['statetaxwheld', 'addlstatetaxwhagg'],
     ]
 
 
@@ -392,9 +427,9 @@ class TAX1099OID_V100(Aggregate):
     fatca = Bool()
 
     optionalMutexes = [
-        ('statecode', 'addlstatetaxwhagg'),
-        ('stateidnum', 'addlstatetaxwhagg'),
-        ('statetaxwheld', 'addlstatetaxwhagg'),
+        ['statecode', 'addlstatetaxwhagg'],
+        ['stateidnum', 'addlstatetaxwhagg'],
+        ['statetaxwheld', 'addlstatetaxwhagg'],
     ]
 
 

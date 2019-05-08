@@ -4,10 +4,6 @@ Common payments aggregates - OFX Section 12.5
 
 PAYEE is defined in ``ofxtools.models.bank.stmt`` to avoid circular imports.
 """
-from ofxtools.Types import String, OneOf, Integer, Decimal, DateTime, ListItem
-from ofxtools.models.base import Aggregate, SubAggregate
-from ofxtools.models.common import SVCSTATUSES
-from ofxtools.models.bank.stmt import BANKACCTFROM, BANKACCTTO, PAYEE
 
 
 __all__ = [
@@ -23,6 +19,12 @@ __all__ = [
     "EXTDPAYEE",
     "PMTPRCSTS",
 ]
+
+
+from ofxtools.Types import String, OneOf, Integer, Decimal, DateTime, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.models.common import SVCSTATUSES
+from ofxtools.models.bank.stmt import BANKACCTFROM, BANKACCTTO, PAYEE
 
 
 #  PAYEE is defined in ``ofxtools.models.bank.stmt`` to avoid circular imports.
@@ -112,7 +114,9 @@ class PMTINFO(Aggregate):
     billrefinfo = String(80)
     billpubinfo = SubAggregate(BILLPUBINFO)
 
-    requiredMutexes = [("payeeid", "payee")]
+    requiredMutexes = [
+        ["payeeid", "payee" ],
+    ]
 
 
 class EXTDPAYEE(Aggregate):

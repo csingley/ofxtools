@@ -2,6 +2,43 @@
 """
 Investments - OFX Section 13
 """
+
+
+__all__ = [
+    "BUYTYPES",
+    "SELLTYPES",
+    "OPTBUYTYPES",
+    "OPTSELLTYPES",
+    "INCOMETYPES",
+    "INVBANKTRAN",
+    "INVTRAN",
+    "INVBUY",
+    "INVSELL",
+    "BUYDEBT",
+    "BUYMF",
+    "BUYOPT",
+    "BUYOTHER",
+    "BUYSTOCK",
+    "SELLDEBT",
+    "SELLMF",
+    "SELLOPT",
+    "SELLOTHER",
+    "SELLSTOCK",
+    "REINVEST",
+    "RETOFCAP",
+    "SPLIT",
+    "TRANSFER",
+    "CLOSUREOPT",
+    "INCOME",
+    "INVEXPENSE",
+    "JRNLFUND",
+    "JRNLSEC",
+    "MARGININTEREST",
+    "INVTRANLIST",
+]
+
+
+# Local imports
 from ofxtools.Types import Bool, String, OneOf, Integer, Decimal, DateTime, ListItem
 from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TranList
@@ -9,17 +46,6 @@ from ofxtools.models.invest.acct import INVSUBACCTS, INVACCTFROM
 from ofxtools.models.invest.securities import SECID
 from ofxtools.models.bank import STMTTRN, INV401KSOURCES
 from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, Origcurrency
-
-
-__all__ = [
-    "BUYTYPES", "SELLTYPES", "OPTBUYTYPES", "OPTSELLTYPES", "INCOMETYPES",
-    "INVBANKTRAN", "INVTRAN", "INVBUY", "INVSELL",
-    "BUYDEBT", "BUYMF", "BUYOPT", "BUYOTHER", "BUYSTOCK",
-    "SELLDEBT", "SELLMF", "SELLOPT", "SELLOTHER", "SELLSTOCK",
-    "REINVEST", "RETOFCAP", "SPLIT", "TRANSFER", "CLOSUREOPT",
-    "INCOME", "INVEXPENSE", "JRNLFUND", "JRNLSEC", "MARGININTEREST",
-    "INVTRANLIST",
-]
 
 
 BUYTYPES = ("BUY", "BUYTOCOVER")

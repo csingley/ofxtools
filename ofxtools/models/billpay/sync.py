@@ -1,23 +1,27 @@
 # coding: utf-8
 """
-email - OFX Section 9
+Data synchronization for payments - OFX Section 12.10
 """
-# stdlib imports
-from copy import deepcopy
-
-# local imports
-from ofxtools.Types import Bool, String, DateTime, ListItem
-from ofxtools.models.base import Aggregate, SubAggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
-from ofxtools.models.bank.stmt import BANKACCTFROM
-from ofxtools.models.billpay import (
-    PMTTRNRQ, PMTTRNRS, RECPMTTRNRQ, RECPMTTRNRS, PAYEETRNRQ, PAYEETRNRS,
-)
 
 
 __all__ = [
-    "PMTSYNCRQ", "PMTSYNCRS", "RECPMTSYNCRQ", "RECPMTSYNCRS", "PAYEESYNCRQ", "PAYEESYNCRS",
+    "PMTSYNCRQ",
+    "PMTSYNCRS",
+    "RECPMTSYNCRQ",
+    "RECPMTSYNCRS",
+    "PAYEESYNCRQ",
+    "PAYEESYNCRS",
 ]
+
+
+# local imports
+from ofxtools.Types import ListItem
+from ofxtools.models.base import SubAggregate
+from ofxtools.models.wrapperbases import SyncRqList, SyncRsList
+from ofxtools.models.bank.stmt import BANKACCTFROM
+from ofxtools.models.billpay.pmt import PMTTRNRQ, PMTTRNRS
+from ofxtools.models.billpay.recur import RECPMTTRNRQ, RECPMTTRNRS
+from ofxtools.models.billpay.list import PAYEETRNRQ, PAYEETRNRS
 
 
 class PMTSYNCRQ(SyncRqList):

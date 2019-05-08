@@ -2,25 +2,39 @@
 """
 Investments - OFX Section 13
 """
-from ofxtools.Types import Bool, String, OneOf, Decimal, DateTime, ListItem
-from ofxtools.models.base import Aggregate, SubAggregate
-from ofxtools.models.invest.acct import INVSUBACCTS
-from ofxtools.models.invest.transactions import (
-    BUYTYPES, SELLTYPES, OPTBUYTYPES, OPTSELLTYPES
-)
-from ofxtools.models.invest.securities import SECID
-from ofxtools.models.bank import INV401KSOURCES
-from ofxtools.models.i18n import CURRENCY
 
 
 __all__ = [
     "UNITTYPES",
     "OO",
-    "OOBUYDEBT", "OOBUYMF", "OOBUYOPT", "OOBUYOTHER", "OOBUYSTOCK",
-    "OOSELLDEBT", "OOSELLMF", "OOSELLOPT", "OOSELLOTHER", "OOSELLSTOCK",
+    "OOBUYDEBT",
+    "OOBUYMF",
+    "OOBUYOPT",
+    "OOBUYOTHER",
+    "OOBUYSTOCK",
+    "OOSELLDEBT",
+    "OOSELLMF",
+    "OOSELLOPT",
+    "OOSELLOTHER",
+    "OOSELLSTOCK",
     "SWITCHMF",
     "INVOOLIST",
 ]
+
+
+# Local imports
+from ofxtools.Types import Bool, String, OneOf, Decimal, DateTime, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.models.invest.acct import INVSUBACCTS
+from ofxtools.models.invest.transactions import (
+    BUYTYPES,
+    SELLTYPES,
+    OPTBUYTYPES,
+    OPTSELLTYPES,
+)
+from ofxtools.models.invest.securities import SECID
+from ofxtools.models.bank import INV401KSOURCES
+from ofxtools.models.i18n import CURRENCY
 
 
 UNITTYPES = ("SHARES", "CURRENCY")

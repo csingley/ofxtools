@@ -2,15 +2,26 @@
 """
 Investment positions - OFX Section 13.9.2.6
 """
+
+
+__all__ = [
+    "INVPOS",
+    "POSDEBT",
+    "POSMF",
+    "POSOPT",
+    "POSOTHER",
+    "POSSTOCK",
+    "INVPOSLIST",
+]
+
+
+# Local imports
 from ofxtools.Types import Bool, String, OneOf, Decimal, DateTime, ListItem
 from ofxtools.models.base import Aggregate, SubAggregate
-from ofxtools.models.invest import INVSUBACCTS
+from ofxtools.models.invest.acct import INVSUBACCTS
 from ofxtools.models.invest.securities import SECID
 from ofxtools.models.bank import INV401KSOURCES
 from ofxtools.models.i18n import CURRENCY
-
-
-__all__ = ["INVPOS", "POSDEBT", "POSMF", "POSOPT", "POSOTHER", "POSSTOCK", "INVPOSLIST"]
 
 
 class INVPOS(Aggregate):

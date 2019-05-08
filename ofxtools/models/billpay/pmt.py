@@ -2,11 +2,6 @@
 """
 Payments Functions - OFX Section 12.6
 """
-from ofxtools.Types import String, OneOf
-from ofxtools.models.base import Aggregate, SubAggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs
-from ofxtools.models.i18n import CURRENCY_CODES
-from ofxtools.models.billpay.common import PMTINFO, EXTDPAYEE, PMTPRCSTS
 
 
 __all__ = [
@@ -17,6 +12,13 @@ __all__ = [
     "PMTINQRQ", "PMTINQRS",
     "PMTINQTRNRQ", "PMTINQTRNRS",
 ]
+
+
+from ofxtools.Types import String, OneOf
+from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.models.i18n import CURRENCY_CODES
+from ofxtools.models.billpay.common import PMTINFO, EXTDPAYEE, PMTPRCSTS
 
 
 class PMTRQ(Aggregate):
@@ -64,7 +66,9 @@ class PMTTRNRQ(TrnRq):
     pmtmodrq = SubAggregate(PMTMODRQ)
     pmtcancrq = SubAggregate(PMTCANCRQ)
 
-    requiredMutexes = [('pmtrq', 'pmtmodrq', 'pmtcancrq')]
+    requiredMutexes = [
+        ['pmtrq', 'pmtmodrq', 'pmtcancrq'],
+    ]
 
 
 class PMTTRNRS(TrnRs):
@@ -72,7 +76,9 @@ class PMTTRNRS(TrnRs):
     pmtmodrs = SubAggregate(PMTMODRS)
     pmtcancrs = SubAggregate(PMTCANCRS)
 
-    optionalMutexes = [('pmtrs', 'pmtmodrs', 'pmtcancrs')]
+    optionalMutexes = [
+        ['pmtrs', 'pmtmodrs', 'pmtcancrs'],
+    ]
 
 
 class PMTINQRQ(Aggregate):

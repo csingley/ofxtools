@@ -2,12 +2,6 @@
 """
 Bank email & customer notification - OFX Section 11.11
 """
-# local imports
-from ofxtools.Types import String, Decimal, DateTime, Bool
-from ofxtools.models.base import Aggregate, SubAggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
-from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM
-from ofxtools.models.email import MAIL
 
 
 __all__ = [
@@ -20,6 +14,14 @@ __all__ = [
 ]
 
 
+# local imports
+from ofxtools.Types import String, Decimal, DateTime
+from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM
+from ofxtools.models.email import MAIL
+
+
 class BANKMAILRQ(Aggregate):
     """ OFX section 11.11.1.1 """
 
@@ -27,7 +29,9 @@ class BANKMAILRQ(Aggregate):
     ccacctfrom = SubAggregate(CCACCTFROM)
     mail = SubAggregate(MAIL, required=True)
 
-    requiredMutexes = [("bankacctfrom", "ccacctfrom")]
+    requiredMutexes = [
+        ["bankacctfrom", "ccacctfrom"],
+    ]
 
 
 class BANKMAILRS(Aggregate):
@@ -37,7 +41,9 @@ class BANKMAILRS(Aggregate):
     ccacctfrom = SubAggregate(CCACCTFROM)
     mail = SubAggregate(MAIL, required=True)
 
-    requiredMutexes = [("bankacctfrom", "ccacctfrom")]
+    requiredMutexes = [
+        ["bankacctfrom", "ccacctfrom"],
+    ]
 
 
 class CHKMAILRS(Aggregate):
@@ -74,4 +80,6 @@ class BANKMAILTRNRS(TrnRs):
     chkmailrs = SubAggregate(CHKMAILRS)
     depmailrs = SubAggregate(DEPMAILRS)
 
-    optionalMutexes = [("bankmailrs", "chkmailrs", "depmailrs")]
+    optionalMutexes = [
+        ["bankmailrs", "chkmailrs", "depmailrs"],
+    ]

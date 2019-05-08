@@ -2,12 +2,6 @@
 """
 Recurring funds transfer - OFX Section 11.10
 """
-# local imports
-from ofxtools.Types import String, Integer, OneOf, Bool
-from ofxtools.models.base import Aggregate, SubAggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs
-from ofxtools.models.bank.xfer import INTRARQ, INTRARS
-from ofxtools.models.bank.interxfer import INTERRQ, INTERRS
 
 
 __all__ = [
@@ -30,6 +24,14 @@ __all__ = [
     "RECINTERTRNRQ",
     "RECINTERTRNRS",
 ]
+
+
+# local imports
+from ofxtools.Types import String, Integer, OneOf, Bool
+from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.models.bank.xfer import INTRARQ, INTRARS
+from ofxtools.models.bank.interxfer import INTERRQ, INTERRS
 
 
 FREQUENCIES = (
@@ -106,7 +108,9 @@ class RECINTRATRNRQ(TrnRq):
     recintramodrq = SubAggregate(RECINTRAMODRQ)
     recintracanrq = SubAggregate(RECINTRACANRQ)
 
-    requiredMutexes = [("recintrarq", "recintramodrq", "recintracanrq")]
+    requiredMutexes = [
+        ["recintrarq", "recintramodrq", "recintracanrq"],
+    ]
 
 
 class RECINTRATRNRS(TrnRs):
@@ -116,7 +120,9 @@ class RECINTRATRNRS(TrnRs):
     recintramodrs = SubAggregate(RECINTRAMODRS)
     recintracanrs = SubAggregate(RECINTRACANRS)
 
-    optionalMutexes = [("recintrars", "recintramodrs", "recintracanrs")]
+    optionalMutexes = [
+        ["recintrars", "recintramodrs", "recintracanrs"],
+    ]
 
 
 class RECINTERRQ(Aggregate):
@@ -173,7 +179,9 @@ class RECINTERTRNRQ(TrnRq):
     recintermodrq = SubAggregate(RECINTERMODRQ)
     recintercanrq = SubAggregate(RECINTERCANRQ)
 
-    requiredMutexes = [("recinterrq", "recintermodrq", "recintercanrq")]
+    requiredMutexes = [
+        ["recinterrq", "recintermodrq", "recintercanrq"],
+    ]
 
 
 class RECINTERTRNRS(TrnRs):
@@ -183,4 +191,6 @@ class RECINTERTRNRS(TrnRs):
     recintermodrs = SubAggregate(RECINTERMODRS)
     recintercanrs = SubAggregate(RECINTERCANRS)
 
-    optionalMutexes = [("recinterrs", "recintermodrs", "recintercanrs")]
+    optionalMutexes = [
+        ["recinterrs", "recintermodrs", "recintercanrs"],
+    ]

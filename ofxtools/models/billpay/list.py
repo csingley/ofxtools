@@ -2,15 +2,6 @@
 """
 Payee lists - OFX Section 12.9
 """
-from ofxtools.Types import String, ListItem, ListElement
-from ofxtools.models.base import Aggregate, SubAggregate, ElementList
-from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
-from ofxtools.models.bank.stmt import PAYEE, BANKACCTTO
-from ofxtools.models.billpay import (
-    EXTDPAYEE,
-    #  PAYEETRNRQ,
-    #  PAYEETRNRS,
-)
 
 
 __all__ = [
@@ -22,9 +13,14 @@ __all__ = [
     "PAYEEDELRS",
     "PAYEETRNRQ",
     "PAYEETRNRS",
-    #  "PAYEESYNCRQ",
-    #  "PAYEESYNCRS",
 ]
+
+
+from ofxtools.Types import String, ListElement
+from ofxtools.models.base import Aggregate, SubAggregate, ElementList
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.models.bank.stmt import PAYEE, BANKACCTTO
+from ofxtools.models.billpay import EXTDPAYEE
 
 
 class PAYEERQ(ElementList):
@@ -34,7 +30,9 @@ class PAYEERQ(ElementList):
     bankacctto = SubAggregate(BANKACCTTO)
     payacct = ListElement(String(32))
 
-    requiredMutexes = [("payeeid", "payee")]
+    requiredMutexes = [
+        ["payeeid", "payee"],
+    ]
 
 
 class PAYEERS(ElementList):
@@ -78,7 +76,9 @@ class PAYEETRNRQ(TrnRq):
     payeemodrq = SubAggregate(PAYEEMODRQ)
     payeedelrq = SubAggregate(PAYEEDELRQ)
 
-    requiredMutexes = [('payeerq', 'payeemodrq', 'payeedelrq')]
+    requiredMutexes = [
+        ['payeerq', 'payeemodrq', 'payeedelrq'],
+    ]
 
 
 class PAYEETRNRS(TrnRs):
@@ -86,4 +86,6 @@ class PAYEETRNRS(TrnRs):
     payeemodrs = SubAggregate(PAYEEMODRS)
     payeedelrs = SubAggregate(PAYEEDELRS)
 
-    optionalMutexes = [('payeers', 'payeemodrs', 'payeedelrs')]
+    optionalMutexes = [
+        ['payeers', 'payeemodrs', 'payeedelrs'],
+    ]

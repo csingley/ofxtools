@@ -2,12 +2,20 @@
 """
 International support - OFX Section 5
 """
+
+
+__all__ = [
+    "LANG_CODES",
+    "CURRENCY_CODES",
+    "COUNTRY_CODES",
+    "CURRENCY",
+    "ORIGCURRENCY",
+]
+
+
 # local imports
 from ofxtools.Types import OneOf, Decimal
 from ofxtools.models.base import Aggregate
-
-
-__all__ = ["CURRENCY", "ORIGCURRENCY"]
 
 
 # 3-letter language codes
@@ -1197,7 +1205,9 @@ class ORIGCURRENCY(Aggregate):
 class Origcurrency:
     """ Mixin providing property aliases and CURRENCY/ORIGCURRENCY mutex """
 
-    optionalMutexes = [("currency", "origcurrency")]
+    optionalMutexes = [
+        ["currency", "origcurrency"],
+    ]
 
     @property
     def curtype(self):

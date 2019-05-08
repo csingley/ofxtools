@@ -2,38 +2,6 @@
 """
 Banking message sets
 """
-# local imports
-from ofxtools.Types import Bool, OneOf, Integer, Decimal, Time, ListItem, ListElement
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, ElementList
-from ofxtools.models.common import MSGSETCORE
-from ofxtools.models.bank.stmt import (
-    ACCTTYPES, STMTTRNRQ, STMTTRNRS, CCSTMTTRNRQ, CCSTMTTRNRS,
-)
-from ofxtools.models.bank.stmtend import STMTENDTRNRQ, STMTENDTRNRS
-from ofxtools.models.bank.stpchk import STPCHKTRNRQ, STPCHKTRNRS
-from ofxtools.models.bank.xfer import INTRATRNRQ, INTRATRNRS
-from ofxtools.models.bank.interxfer import INTERTRNRQ, INTERTRNRS
-from ofxtools.models.bank.wire import WIRETRNRQ, WIRETRNRS
-from ofxtools.models.bank.recur import (
-    RECINTRATRNRQ, RECINTRATRNRS, RECINTERTRNRQ, RECINTERTRNRS,
-)
-from ofxtools.models.bank.sync import (
-    INTRASYNCRQ,
-    INTRASYNCRS,
-    INTERSYNCRQ,
-    INTERSYNCRS,
-    WIRESYNCRQ,
-    WIRESYNCRS,
-    STPCHKSYNCRQ,
-    STPCHKSYNCRS,
-    RECINTRASYNCRQ,
-    RECINTRASYNCRS,
-    RECINTERSYNCRQ,
-    RECINTERSYNCRS,
-    BANKMAILSYNCRQ,
-    BANKMAILSYNCRS,
-)
-from ofxtools.models.bank.mail import BANKMAILTRNRQ, BANKMAILTRNRS
 
 
 __all__ = [
@@ -59,7 +27,67 @@ __all__ = [
 ]
 
 
-DAYS = ("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY")
+# local imports
+from ofxtools.Types import (
+    Bool,
+    OneOf,
+    Integer,
+    Decimal,
+    Time,
+    ListItem,
+    ListElement,
+)
+from ofxtools.models.base import (
+    Aggregate,
+    SubAggregate,
+    Unsupported,
+    ElementList,
+)
+from ofxtools.models.common import MSGSETCORE
+from ofxtools.models.bank.stmt import (
+    ACCTTYPES,
+    STMTTRNRQ,
+    STMTTRNRS,
+    CCSTMTTRNRQ,
+    CCSTMTTRNRS,
+)
+from ofxtools.models.bank.stmtend import STMTENDTRNRQ, STMTENDTRNRS
+from ofxtools.models.bank.stpchk import STPCHKTRNRQ, STPCHKTRNRS
+from ofxtools.models.bank.xfer import INTRATRNRQ, INTRATRNRS
+from ofxtools.models.bank.interxfer import INTERTRNRQ, INTERTRNRS
+from ofxtools.models.bank.wire import WIRETRNRQ, WIRETRNRS
+from ofxtools.models.bank.recur import (
+    RECINTRATRNRQ,
+    RECINTRATRNRS,
+    RECINTERTRNRQ,
+    RECINTERTRNRS,
+)
+from ofxtools.models.bank.sync import (
+    INTRASYNCRQ,
+    INTRASYNCRS,
+    INTERSYNCRQ,
+    INTERSYNCRS,
+    WIRESYNCRQ,
+    WIRESYNCRS,
+    STPCHKSYNCRQ,
+    STPCHKSYNCRS,
+    RECINTRASYNCRQ,
+    RECINTRASYNCRS,
+    RECINTERSYNCRQ,
+    RECINTERSYNCRS,
+    BANKMAILSYNCRQ,
+    BANKMAILSYNCRS,
+)
+from ofxtools.models.bank.mail import BANKMAILTRNRQ, BANKMAILTRNRS
+
+
+DAYS = ("MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY",
+        "SATURDAY",
+        "SUNDAY")
 
 
 class BANKMSGSRQV1(Aggregate):

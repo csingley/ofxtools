@@ -2,6 +2,20 @@
 """
 Bill pay message sets
 """
+
+
+__all__ = [
+    "INVSTMTMSGSRQV1",
+    "INVSTMTMSGSRSV1",
+    "INVSTMTMSGSETV1",
+    "INVSTMTMSGSET",
+    "SECLISTMSGSRQV1",
+    "SECLISTMSGSRSV1",
+    "SECLISTMSGSETV1",
+    "SECLISTMSGSET",
+]
+
+
 # local imports
 from ofxtools.Types import Bool, ListItem
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
@@ -21,12 +35,6 @@ from ofxtools.models.invest.securities import (
     SECLISTTRNRQ,
     SECLISTTRNRS,
 )
-
-
-__all__ = [
-    "INVSTMTMSGSRQV1", "INVSTMTMSGSRSV1", "INVSTMTMSGSETV1", "INVSTMTMSGSET",
-    "SECLISTMSGSRQV1", "SECLISTMSGSRSV1", "SECLISTMSGSETV1", "SECLISTMSGSET",
-]
 
 
 class INVSTMTMSGSRQV1(Aggregate):

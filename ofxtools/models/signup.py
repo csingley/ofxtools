@@ -2,21 +2,6 @@
 """
 Activation and Account Information - OFX Section 8
 """
-# stdlib imports
-import operator
-import itertools
-
-# local imports
-from ofxtools.Types import Bool, String, OneOf, DateTime, ListItem
-from ofxtools.models.base import Aggregate, SubAggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
-from ofxtools.models.common import SVCSTATUSES, MSGSETCORE
-from ofxtools.models.i18n import COUNTRY_CODES
-from ofxtools.models.bank import (
-    BANKACCTFROM, BANKACCTTO, BANKACCTINFO, CCACCTFROM, CCACCTTO, CCACCTINFO,
-)
-from ofxtools.models.billpay import BPACCTINFO
-from ofxtools.models.invest import INVACCTFROM, INVACCTTO, INVACCTINFO
 
 
 __all__ = [
@@ -54,6 +39,29 @@ __all__ = [
 ]
 
 
+# stdlib imports
+import operator
+import itertools
+
+
+# local imports
+from ofxtools.Types import Bool, String, OneOf, DateTime, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
+from ofxtools.models.common import SVCSTATUSES, MSGSETCORE
+from ofxtools.models.i18n import COUNTRY_CODES
+from ofxtools.models.bank import (
+    BANKACCTFROM,
+    BANKACCTTO,
+    BANKACCTINFO,
+    CCACCTFROM,
+    CCACCTTO,
+    CCACCTINFO,
+)
+from ofxtools.models.billpay import BPACCTINFO
+from ofxtools.models.invest import INVACCTFROM, INVACCTTO, INVACCTINFO
+
+
 # Enums used in aggregate validation
 SVCS = ("BANKSVC", "BPSVC", "INVSVC", "PRESSVC")
 
@@ -83,9 +91,9 @@ class ENROLLRQ(Aggregate):
     invacctfrom = SubAggregate(INVACCTFROM)
 
     optionalMutexes = [
-        ("bankacctfrom", "ccacctfrom"),
-        ("bankacctfrom", "invacctfrom"),
-        ("ccacctfrom", "invacctfrom"),
+        ["bankacctfrom", "ccacctfrom"],
+        ["bankacctfrom", "invacctfrom"],
+        ["ccacctfrom", "invacctfrom"],
     ]
 
 
@@ -199,7 +207,9 @@ class SVCADD(Aggregate):
     ccacctto = SubAggregate(CCACCTTO)
     invacctto = SubAggregate(INVACCTTO)
 
-    requiredMutexes = [("bankacctto", "ccacctto", "invacctto")]
+    requiredMutexes = [
+        ["bankacctto", "ccacctto", "invacctto"],
+    ]
 
 
 class SVCCHG(Aggregate):
@@ -213,8 +223,8 @@ class SVCCHG(Aggregate):
     invacctto = SubAggregate(INVACCTTO)
 
     requiredMutexes = [
-        ("bankacctfrom", "ccacctfrom", "invacctfrom"),
-        ("bankacctto", "ccacctto", "invacctto"),
+        ["bankacctfrom", "ccacctfrom", "invacctfrom"],
+        ["bankacctto", "ccacctto", "invacctto"],
     ]
 
 
@@ -225,7 +235,9 @@ class SVCDEL(Aggregate):
     ccacctfrom = SubAggregate(CCACCTFROM)
     invacctfrom = SubAggregate(INVACCTFROM)
 
-    requiredMutexes = [("bankacctfrom", "ccacctfrom", "invacctfrom")]
+    requiredMutexes = [
+        ["bankacctfrom", "ccacctfrom", "invacctfrom"],
+    ]
 
 
 class ACCTRQ(Aggregate):
@@ -236,7 +248,9 @@ class ACCTRQ(Aggregate):
     svcdel = SubAggregate(SVCDEL)
     svc = OneOf(*SVCS, required=True)
 
-    requiredMutexes = [("svcadd", "svcchg", "svcdel")]
+    requiredMutexes = [
+        ["svcadd", "svcchg", "svcdel"],
+    ]
 
 
 class ACCTRS(Aggregate):
@@ -248,7 +262,9 @@ class ACCTRS(Aggregate):
     svc = OneOf(*SVCS, required=True)
     svcstatus = OneOf(*SVCSTATUSES, required=True)
 
-    requiredMutexes = [("svcadd", "svcchg", "svcdel")]
+    requiredMutexes = [
+        ["svcadd", "svcchg", "svcdel"],
+    ]
 
 
 class ACCTTRNRQ(TrnRq):
@@ -384,9 +400,9 @@ class SIGNUPMSGSETV1(Aggregate):
     clientactreq = Bool(required=True)
 
     optionalMutexes = [
-        ("clientenroll", "webenroll"),
-        ("clientenroll", "otherenroll"),
-        ("webenroll", "otherenroll"),
+        ["clientenroll", "webenroll"],
+        ["clientenroll", "otherenroll"],
+        ["webenroll", "otherenroll"],
     ]
 
 

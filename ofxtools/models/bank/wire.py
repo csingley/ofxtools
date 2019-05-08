@@ -2,12 +2,6 @@
 """
 Wire fund transfers - OFX Section 11.9
 """
-# local imports
-from ofxtools.Types import String, Decimal, OneOf, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs
-from ofxtools.models.bank.stmt import BANKACCTFROM, BANKACCTTO
-from ofxtools.models.i18n import CURRENCY_CODES, COUNTRY_CODES
 
 __all__ = [
     "WIREBENEFICIARY",
@@ -20,6 +14,14 @@ __all__ = [
     "WIRETRNRQ",
     "WIRETRNRS",
 ]
+
+
+# local imports
+from ofxtools.Types import String, Decimal, OneOf, DateTime
+from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.models.bank.stmt import BANKACCTFROM, BANKACCTTO
+from ofxtools.models.i18n import CURRENCY_CODES, COUNTRY_CODES
 
 
 class WIREBENEFICIARY(Aggregate):
@@ -78,7 +80,9 @@ class WIRERS(Aggregate):
     fee = Decimal()
     confmsg = String(255)
 
-    optionalMutexes = [("dtxferprj", "dtposted")]
+    optionalMutexes = [
+        ["dtxferprj", "dtposted"],
+    ]
 
 
 class WIRECANRQ(Aggregate):
@@ -99,7 +103,9 @@ class WIRETRNRQ(TrnRq):
     wirerq = SubAggregate(WIRERQ)
     wirecanrq = SubAggregate(WIRECANRQ)
 
-    requiredMutexes = [("wirerq", "wirecanrq")]
+    requiredMutexes = [
+        ["wirerq", "wirecanrq"],
+    ]
 
 
 class WIRETRNRS(TrnRs):
@@ -108,4 +114,6 @@ class WIRETRNRS(TrnRs):
     wirers = SubAggregate(WIRERS)
     wirecanrs = SubAggregate(WIRECANRS)
 
-    optionalMutexes = [("wirers", "wirecanrs")]
+    optionalMutexes = [
+        ["wirers", "wirecanrs"],
+    ]

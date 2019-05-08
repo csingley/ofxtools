@@ -5,13 +5,15 @@ Base classes for OFX message wrappers
 These can't be defined in models.base because models.common.STATUS would
 create circular imports.
 """
+
+
+__all__ = ["TrnRq", "TrnRs", "SyncRqList", "SyncRsList"]
+
+
 # local imports
 from ofxtools.Types import Bool, String, DateTime
 from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.common import STATUS, OFXEXTENSION
-
-
-__all__ = ["TrnRq", "TrnRs", "SyncRqList", "SyncRsList"]
 
 
 class TrnRq(Aggregate):
@@ -64,7 +66,9 @@ class SyncRqList(Aggregate):
     refresh = Bool()
     rejectifmissing = Bool(required=True)
 
-    requiredMutexes = [("token", "tokenonly", "refresh")]
+    requiredMutexes = [
+        ["token", "tokenonly", "refresh"],
+    ]
 
 
 class SyncRsList(Aggregate):

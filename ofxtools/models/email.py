@@ -2,14 +2,6 @@
 """
 email - OFX Section 9
 """
-# stdlib imports
-from copy import deepcopy
-
-# local imports
-from ofxtools.Types import Bool, String, DateTime, ListItem
-from ofxtools.models.base import Aggregate, SubAggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
-from ofxtools.models.common import MSGSETCORE
 
 
 __all__ = [
@@ -29,6 +21,17 @@ __all__ = [
     "EMAILMSGSETV1",
     "EMAILMSGSET",
 ]
+
+
+# stdlib imports
+from copy import deepcopy
+
+
+# local imports
+from ofxtools.Types import Bool, String, DateTime, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
+from ofxtools.models.common import MSGSETCORE
 
 
 class MAIL(Aggregate):

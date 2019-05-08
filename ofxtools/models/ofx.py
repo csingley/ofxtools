@@ -3,6 +3,11 @@
 Python object model for fundamental data aggregates such as transactions,
 balances, and securities.
 """
+
+
+__all__ = ["OFX"]
+
+
 # local imports
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
 from ofxtools.models.signon import SIGNONMSGSRQV1, SIGNONMSGSRSV1
@@ -21,15 +26,16 @@ from ofxtools.models.bank.msgsets import (
 )
 from ofxtools.models.billpay.msgsets import BILLPAYMSGSRQV1, BILLPAYMSGSRSV1
 from ofxtools.models.invest.msgsets import (
-    INVSTMTMSGSRQV1, INVSTMTMSGSRSV1, SECLISTMSGSRQV1, SECLISTMSGSRSV1,
+    INVSTMTMSGSRQV1,
+    INVSTMTMSGSRSV1,
+    SECLISTMSGSRQV1,
+    SECLISTMSGSRSV1,
 )
 from ofxtools.models.tax1099 import (
-    TAX1099MSGSRQV1, TAX1099MSGSRSV1,
+    TAX1099MSGSRQV1,
+    TAX1099MSGSRSV1,
 )
 from ofxtools.utils import all_equal
-
-
-__all__ = ["OFX"]
 
 
 class OFX(Aggregate):
@@ -73,7 +79,9 @@ class OFX(Aggregate):
     tax1095msgsrqv1 = Unsupported()
     tax1095msgsrsv1 = Unsupported()
 
-    requiredMutexes = [("signonmsgsrqv1", "signonmsgsrsv1")]
+    requiredMutexes = [
+        ["signonmsgsrqv1", "signonmsgsrsv1"],
+    ]
 
     @classmethod
     def validate_args(cls, *args, **kwargs):

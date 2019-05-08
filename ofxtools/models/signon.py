@@ -2,15 +2,6 @@
 """
 Client signon - OFX Section 2.5
 """
-# stdlib imports
-from copy import deepcopy
-
-# local imports
-from ofxtools.Types import String, OneOf, DateTime, Bool, ListItem
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
-from ofxtools.models.wrapperbases import TrnRq, TrnRs
-from ofxtools.models.common import STATUS, MSGSETCORE
-from ofxtools.models.i18n import LANG_CODES
 
 
 __all__ = [
@@ -36,6 +27,17 @@ __all__ = [
     "SIGNONMSGSETV1",
     "SIGNONMSGSET",
 ]
+
+
+# stdlib imports
+from copy import deepcopy
+
+# local imports
+from ofxtools.Types import String, OneOf, DateTime, Bool, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.models.common import STATUS, MSGSETCORE
+from ofxtools.models.i18n import LANG_CODES
 
 
 MFAPHRASEIDS = {

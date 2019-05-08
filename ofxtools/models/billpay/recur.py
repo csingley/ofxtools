@@ -2,12 +2,6 @@
 """
 Recurring payments - OFX Section 12.7
 """
-from ofxtools.Types import Bool, String, Decimal, OneOf
-from ofxtools.models.base import Aggregate, SubAggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs
-from ofxtools.models.i18n import CURRENCY_CODES
-from ofxtools.models.billpay.common import PMTINFO, EXTDPAYEE
-from ofxtools.models.bank.recur import RECURRINST
 
 
 __all__ = [
@@ -16,6 +10,14 @@ __all__ = [
     "RECPMTCANCRQ", "RECPMTCANCRS",
     "RECPMTTRNRQ", "RECPMTTRNRS",
 ]
+
+
+from ofxtools.Types import Bool, String, Decimal, OneOf
+from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.models.i18n import CURRENCY_CODES
+from ofxtools.models.billpay.common import PMTINFO, EXTDPAYEE
+from ofxtools.models.bank.recur import RECURRINST
 
 
 class RECPMTRQ(Aggregate):
@@ -76,7 +78,9 @@ class RECPMTTRNRQ(TrnRq):
     recpmtmodrq = SubAggregate(RECPMTMODRQ)
     recpmtcancrq = SubAggregate(RECPMTCANCRQ)
 
-    requiredMutexes = [('recpmtrq', 'recpmtmodrq', 'recpmtcancrq')]
+    requiredMutexes = [
+        ['recpmtrq', 'recpmtmodrq', 'recpmtcancrq'],
+    ]
 
 
 class RECPMTTRNRS(TrnRs):
@@ -85,4 +89,6 @@ class RECPMTTRNRS(TrnRs):
     recpmtmodrs = SubAggregate(RECPMTMODRS)
     recpmtcancrs = SubAggregate(RECPMTCANCRS)
 
-    optionalMutexes = [('recpmtrs', 'recpmtmodrs', 'recpmtcancrs')]
+    optionalMutexes = [
+        ['recpmtrs', 'recpmtmodrs', 'recpmtcancrs'],
+    ]

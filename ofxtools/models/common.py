@@ -2,17 +2,31 @@
 """
 Common Aggregates (OFX Section 3.1); message extensions (OFX Section 2.7)
 """
-# stdlib imports
-from copy import deepcopy
+
+
+__all__ = [
+    "SVCSTATUSES",
+    "STATUS",
+    "BAL",
+    "OFXELEMENT",
+    "OFXEXTENSION",
+    "MSGSETCORE",
+]
 
 
 # local imports
-from ofxtools.Types import String, OneOf, Integer, Decimal, DateTime, Bool, ListItem, ListElement
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, ElementList
+from ofxtools.Types import (
+    String,
+    OneOf,
+    Integer,
+    Decimal,
+    DateTime,
+    Bool,
+    ListItem,
+    ListElement,
+)
+from ofxtools.models.base import Aggregate, SubAggregate, ElementList
 from ofxtools.models.i18n import CURRENCY, LANG_CODES
-
-
-__all__ = ["SVCSTATUSES", "STATUS", "BAL", "OFXELEMENT", "OFXEXTENSION", "MSGSETCORE"]
 
 
 SVCSTATUSES = ["AVAIL", "PEND", "ACTIVE"]

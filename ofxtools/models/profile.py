@@ -1,22 +1,5 @@
 # coding: utf-8
 """ FI Profile - OFX Section 7 """
-# stdlib imports
-from copy import deepcopy
-
-# local imports
-from ofxtools.Types import Bool, String, OneOf, Integer, DateTime, ListItem
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
-from ofxtools.models.wrapperbases import TrnRq, TrnRs
-from ofxtools.models.common import MSGSETCORE
-from ofxtools.models.i18n import COUNTRY_CODES
-from ofxtools.models.signon import SIGNONMSGSET
-from ofxtools.models.signup import SIGNUPMSGSET
-from ofxtools.models.bank.msgsets import (
-    BANKMSGSET, CREDITCARDMSGSET, INTERXFERMSGSET, WIREXFERMSGSET,
-)
-from ofxtools.models.billpay.msgsets import BILLPAYMSGSET
-from ofxtools.models.invest.msgsets import INVSTMTMSGSET, SECLISTMSGSET
-from ofxtools.models.tax1099 import TAX1099MSGSETV1, TAX1099MSGSET
 
 
 __all__ = [
@@ -32,6 +15,22 @@ __all__ = [
     "PROFMSGSET",
     "MSGSETLIST",
 ]
+
+
+# local imports
+from ofxtools.Types import Bool, String, OneOf, Integer, DateTime, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.models.common import MSGSETCORE
+from ofxtools.models.i18n import COUNTRY_CODES
+from ofxtools.models.signon import SIGNONMSGSET
+from ofxtools.models.signup import SIGNUPMSGSET
+from ofxtools.models.bank.msgsets import (
+    BANKMSGSET, CREDITCARDMSGSET, INTERXFERMSGSET, WIREXFERMSGSET,
+)
+from ofxtools.models.billpay.msgsets import BILLPAYMSGSET
+from ofxtools.models.invest.msgsets import INVSTMTMSGSET, SECLISTMSGSET
+from ofxtools.models.tax1099 import TAX1099MSGSET
 
 
 class PROFMSGSETV1(Aggregate):

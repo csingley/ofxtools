@@ -2,16 +2,9 @@
 """
 Intrabank funds transfer  - OFX Section 11.6
 """
-# local imports
-from ofxtools.Types import String, Decimal, OneOf, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs
-from ofxtools.models.bank.stmt import BANKACCTFROM, BANKACCTTO, CCACCTFROM, CCACCTTO
-from ofxtools.models.i18n import CURRENCY_CODES
 
 
 __all__ = [
-    "FREQUENCIES",
     "XFERINFO",
     "XFERPRCSTS",
     "INTRARQ",
@@ -25,17 +18,17 @@ __all__ = [
 ]
 
 
-FREQUENCIES = (
-    "WEEKLY",
-    "BIWEEKLY",
-    "TWICEMONTHLY",
-    "MONTHLY",
-    "FOURWEEKS",
-    "BIMONTHLY",
-    "QUARTERLY",
-    "SEMIANNUALLY",
-    "ANNUALLY",
+# local imports
+from ofxtools.Types import String, Decimal, OneOf, DateTime
+from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.models.bank.stmt import (
+    BANKACCTFROM,
+    BANKACCTTO,
+    CCACCTFROM,
+    CCACCTTO,
 )
+from ofxtools.models.i18n import CURRENCY_CODES
 
 
 class XFERINFO(Aggregate):
@@ -48,7 +41,10 @@ class XFERINFO(Aggregate):
     trnamt = Decimal(required=True)
     dtdue = DateTime()
 
-    requiredMutexes = [("bankacctfrom", "ccacctfrom"), ("bankacctto", "ccacctto")]
+    requiredMutexes = [
+        ["bankacctfrom", "ccacctfrom"],
+        ["bankacctto", "ccacctto"],
+    ]
 
 
 class INTRARQ(Aggregate):
@@ -82,7 +78,9 @@ class INTRARS(Aggregate):
     recsrvrtid = String(10)
     xferprcsts = SubAggregate(XFERPRCSTS)
 
-    optionalMutexes = [("dtxferprj", "dtposted")]
+    optionalMutexes = [
+        ["dtxferprj", "dtposted"],
+    ]
 
 
 class INTRAMODRQ(Aggregate):
@@ -119,7 +117,9 @@ class INTRATRNRQ(TrnRq):
     intramodrq = SubAggregate(INTRAMODRQ)
     intracanrq = SubAggregate(INTRACANRQ)
 
-    requiredMutexes = [("intrarq", "intramodrq", "intracanrq")]
+    requiredMutexes = [
+        ["intrarq", "intramodrq", "intracanrq"],
+    ]
 
 
 class INTRATRNRS(TrnRs):
@@ -129,4 +129,6 @@ class INTRATRNRS(TrnRs):
     intramodrs = SubAggregate(INTRAMODRS)
     intracanrs = SubAggregate(INTRACANRS)
 
-    optionalMutexes = [("intrars", "intramodrs", "intracanrs")]
+    optionalMutexes = [
+        ["intrars", "intramodrs", "intracanrs"],
+    ]

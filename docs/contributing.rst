@@ -68,8 +68,8 @@ Here's how we translate the spec info Python.
         dtdue = DateTime()
 
         requiredMutexes = [
-            ("bankacctfrom", "ccacctfrom"),
-            ("bankacctto", "ccacctto"),
+            ["bankacctfrom", "ccacctfrom"],
+            ["bankacctto", "ccacctto"],
         ]
 
 We create a subclass of ``ofxtools.models.base.Aggregate``, where the class
@@ -93,9 +93,9 @@ which is clearly not right.  Instead of attribute-level validation, these
 kinds of class-level constraints are enforced by separate class attributes.
 
 In this case, we employ the awkwardly-named
-``ofxtools.models.base.Aggregate.requiredMutexes``, which requires that one
-of each tuple must appear.  Note the lower-case naming; this validation is
-performed by ``Aggregate.__init__()`` and refers to instance attributes.
+``ofxtools.models.base.Aggregate.requiredMutexes``, which requires that
+exactly one of each sequence of attribute names must be passed to
+``Aggregate.__init__()``.  Note the lower-case naming.
 
 With ``XFERINFO`` in hand, defining the request aggregate (``INTRARQ``) is simple.
 
@@ -155,7 +155,9 @@ again using lower-cae attribute names within.
         recsrvrtid = String(10)
         xferprcsts = SubAggregate(XFERPRCSTS)
 
-        optionalMutexes = [("dtxferprj", "dtposted")]
+        optionalMutexes = [
+            ["dtxferprj", "dtposted"],
+        ]
 
 The definition of *currsymbol* type refers to the three-letter currency codes
 in ISO-4217.  Happily we've already defined them in ``ofxtools.models.i18n``.
@@ -249,7 +251,9 @@ allows empty ``*TRNRS`` wrappers, so we set ``requiredMutexes`` and
         intramodrq = SubAggregate(INTRAMODRQ)
         intracanrq = SubAggregate(INTRACANRQ)
 
-        requiredMutexes = [("intrarq", "intramodrq", "intracanrq")]
+        requiredMutexes = [
+            ["intrarq", "intramodrq", "intracanrq"],
+        ]
 
 
     class INTRATRNRS(TrnRs):
@@ -260,14 +264,12 @@ allows empty ``*TRNRS`` wrappers, so we set ``requiredMutexes`` and
         intracanrs = SubAggregate(INTRACANRS)
 
         optionalMutexes = [
-            (
-                "intrars",
-                "intramodrs",
-                "intracanrs",
-                "intermodrs",
-                "intercanrs",
-                "intermodrs",
-            )
+            ["intrars",
+            "intramodrs",
+            "intracanrs",
+            "intermodrs",
+            "intercanrs",
+            "intermodrs"],
         ]
 
 Recurring Requests
@@ -352,7 +354,9 @@ transfers.  This just repeats the pattern of ``INTRARQ`` and ``INTRARS``.
         recintramodrq = SubAggregate(RECINTRAMODRQ)
         recintracanrq = SubAggregate(RECINTRACANRQ)
 
-        requiredMutexes = [("recintrarq", "recintramodrq", "recintracanrq")]
+        requiredMutexes = [
+            ["recintrarq", "recintramodrq", "recintracanrq"],
+        ]
 
 .. image:: recintratrnrs.png
 
@@ -365,7 +369,9 @@ transfers.  This just repeats the pattern of ``INTRARQ`` and ``INTRARS``.
         recintramodrs = SubAggregate(RECINTRAMODRS)
         recintracanrs = SubAggregate(RECINTRACANRS)
 
-        optionalMutexes = [("recintrars", "recintramodrs", "recintracanrs")]
+        optionalMutexes = [
+            ["recintrars", "recintramodrs", "recintracanrs"],
+        ]
 
 
 Synchronization
@@ -407,8 +413,8 @@ Here's how it looks in ``ofxtools.models.bank.sync``.
         intratrnrq = ListItem(INTRATRNRQ)
 
         requiredMutexes = [
-            ("token", "tokenonly", "refresh"),
-            ("bankacctfrom", "ccacctfrom")
+            ["token", "tokenonly", "refresh"],
+            ["bankacctfrom", "ccacctfrom"]
         ]
 
 
@@ -420,7 +426,9 @@ Here's how it looks in ``ofxtools.models.bank.sync``.
         ccacctfrom = SubAggregate(CCACCTFROM)
         intratrnrs = ListItem(INTRATRNRS)
 
-        requiredMutexes = [ ("bankacctfrom", "ccacctfrom") ]
+        requiredMutexes = [
+            ["bankacctfrom", "ccacctfrom"],
+        ]
 
 
     class RECINTRASYNCRQ(Aggregate):
@@ -435,8 +443,8 @@ Here's how it looks in ``ofxtools.models.bank.sync``.
         recintratrnrq = ListItem(RECINTRATRNRQ)
 
         requiredMutexes = [
-            ("token", "tokenonly", "refresh"),
-            ("bankacctfrom", "ccacctfrom")
+            ["token", "tokenonly", "refresh"],
+            ["bankacctfrom", "ccacctfrom"],
         ]
 
 
@@ -449,7 +457,9 @@ Here's how it looks in ``ofxtools.models.bank.sync``.
         ccacctfrom = SubAggregate(CCACCTFROM)
         recintratrnrs = ListItem(RECINTRATRNRS)
 
-        requiredMutexes = [("bankacctfrom", "ccacctfrom")]
+        requiredMutexes = [
+            ["bankacctfrom", "ccacctfrom"],
+        ]
 
 Extending the Message Set
 -------------------------

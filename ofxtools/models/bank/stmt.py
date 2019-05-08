@@ -2,14 +2,6 @@
 """
 Bank statement download - OFX Section 11.4
 """
-# local imports
-from ofxtools.Types import Bool, String, NagString, OneOf, Integer, Decimal, DateTime, ListItem
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
-from ofxtools.models.common import SVCSTATUSES, BAL
-from ofxtools.models.wrapperbases import TrnRq, TrnRs, TranList
-from ofxtools.models.i18n import (
-    CURRENCY, ORIGCURRENCY, Origcurrency, CURRENCY_CODES, COUNTRY_CODES
-)
 
 
 __all__ = [
@@ -39,6 +31,29 @@ __all__ = [
     "CCSTMTTRNRQ",
     "CCSTMTTRNRS",
 ]
+
+
+# local imports
+from ofxtools.Types import (
+    Bool,
+    String,
+    NagString,
+    OneOf,
+    Integer,
+    Decimal,
+    DateTime,
+    ListItem,
+)
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
+from ofxtools.models.common import SVCSTATUSES, BAL
+from ofxtools.models.wrapperbases import TrnRq, TrnRs, TranList
+from ofxtools.models.i18n import (
+    CURRENCY,
+    ORIGCURRENCY,
+    Origcurrency,
+    CURRENCY_CODES,
+    COUNTRY_CODES,
+)
 
 
 # Enums used in aggregate validation
@@ -189,9 +204,9 @@ class STMTTRN(Aggregate, Origcurrency):
     inv401ksource = OneOf(*INV401KSOURCES)
 
     optionalMutexes = [
-        ("name", "payee"),
-        ("ccacctto", "bankacctto"),
-        ("currency", "origcurrency"),
+        ["name", "payee"],
+        ["ccacctto", "bankacctto"],
+        ["currency", "origcurrency"],
     ]
 
 

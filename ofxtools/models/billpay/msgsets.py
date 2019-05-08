@@ -2,6 +2,16 @@
 """
 Bill pay message sets - OFX Section 12.11
 """
+
+
+__all__ = [
+    "BILLPAYMSGSRQV1",
+    "BILLPAYMSGSRSV1",
+    "BILLPAYMSGSETV1",
+    "BILLPAYMSGSET",
+]
+
+
 # local imports
 from ofxtools.Types import Bool, Integer, Time, OneOf, ListItem, ListElement
 from ofxtools.models.base import Aggregate, SubAggregate, ElementList
@@ -37,12 +47,13 @@ from ofxtools.models.billpay.list import (
 )
 
 
-__all__ = [
-    "BILLPAYMSGSRQV1", "BILLPAYMSGSRSV1", "BILLPAYMSGSETV1", "BILLPAYMSGSET",
-]
-
-
-DAYS = ("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY")
+DAYS = ("MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY",
+        "SATURDAY",
+        "SUNDAY")
 
 
 class BILLPAYMSGSRQV1(Aggregate):

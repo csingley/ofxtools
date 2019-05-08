@@ -2,9 +2,6 @@
 """
 Investment accounts - OFX Section 13.6
 """
-from ofxtools.Types import Bool, String, OneOf
-from ofxtools.models.base import Aggregate, SubAggregate
-from ofxtools.models.common import SVCSTATUSES
 
 
 __all__ = [
@@ -17,12 +14,27 @@ __all__ = [
 ]
 
 
+# Local imports
+from ofxtools.Types import Bool, String, OneOf
+from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.models.common import SVCSTATUSES
+
+
 # Section 13.6.2
 INVACCTTYPES = ("INDIVIDUAL", "JOINT", "TRUST", "CORPORATE")
 # Section 13.6.2.1
 USPRODUCTTYPES = (
-    "401K", "403B", "IRA", "KEOGH", "OTHER", "SARSEP", "SIMPLE",
-    "NORMAL", "TDA", "TRUST", "UGMA",
+    "401K",
+    "403B",
+    "IRA",
+    "KEOGH",
+    "OTHER",
+    "SARSEP",
+    "SIMPLE",
+    "NORMAL",
+    "TDA",
+    "TRUST",
+    "UGMA",
 )
 INVSUBACCTS = ("CASH", "MARGIN", "SHORT", "OTHER")
 

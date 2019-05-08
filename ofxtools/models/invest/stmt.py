@@ -2,21 +2,10 @@
 """
 Investments - OFX Section 13
 """
-from ofxtools.Types import Bool, String, Integer, OneOf, Decimal, DateTime, ListItem
-from ofxtools.models.base import Aggregate, SubAggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs
-from ofxtools.models.invest.acct import INVACCTFROM
-from ofxtools.models.invest.transactions import INVTRANLIST
-from ofxtools.models.invest.positions import INVPOSLIST
-from ofxtools.models.invest.securities import SECID
-from ofxtools.models.invest.openorders import INVOOLIST
-from ofxtools.models.bank.stmt import INCTRAN, BALLIST
-from ofxtools.models.i18n import CURRENCY_CODES
-from ofxtools.utils import all_equal
 
 
 __all__ = [
-    "FREQUENCIES",
+    "LOANPMTFREQUENCIES",
     "INCPOS",
     "INVSTMTRQ",
     "INVBAL",
@@ -40,7 +29,29 @@ __all__ = [
 ]
 
 
-FREQUENCIES = (
+from ofxtools.Types import (
+    Bool,
+    String,
+    Integer,
+    OneOf,
+    Decimal,
+    DateTime,
+    ListItem,
+)
+from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.models.invest.acct import INVACCTFROM
+from ofxtools.models.invest.transactions import INVTRANLIST
+from ofxtools.models.invest.positions import INVPOSLIST
+from ofxtools.models.invest.securities import SECID
+from ofxtools.models.invest.openorders import INVOOLIST
+from ofxtools.models.bank.stmt import INCTRAN, BALLIST
+from ofxtools.models.i18n import CURRENCY_CODES
+from ofxtools.utils import all_equal
+
+
+#  OFX section 13.9.3
+LOANPMTFREQUENCIES = (
     "WEEKLY",
     "BIWEEKLY",
     "TWICEMONTHLY",
@@ -181,7 +192,7 @@ class LOANINFO(Aggregate):
     dtasof = DateTime(required=True)
     loanrate = Decimal()
     loanpmtamt = Decimal()
-    loanpmtfreq = OneOf(*FREQUENCIES)
+    loanpmtfreq = OneOf(*LOANPMTFREQUENCIES)
     loanpmtsinitial = Integer(5)
     loanpmtsremaining = Integer(5)
     loanmaturitydate = DateTime()

@@ -2,15 +2,6 @@
 """
 Security information - OFX section 13.7.2
 """
-# stdlib imports
-from copy import deepcopy
-
-
-# local imports
-from ofxtools.Types import String, NagString, OneOf, Integer, Decimal, DateTime, ListItem
-from ofxtools.models.base import Aggregate, SubAggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs
-from ofxtools.models.i18n import CURRENCY
 
 
 __all__ = [
@@ -32,6 +23,25 @@ __all__ = [
     "SECLISTTRNRQ",
     "SECLISTTRNRS",
 ]
+
+
+# stdlib imports
+from copy import deepcopy
+
+
+# local imports
+from ofxtools.Types import (
+    String,
+    NagString,
+    OneOf,
+    Integer,
+    Decimal,
+    DateTime,
+    ListItem,
+)
+from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.models.i18n import CURRENCY
 
 
 ASSETCLASSES = (
@@ -59,7 +69,9 @@ class SECRQ(Aggregate):
     ticker = String(32)
     fiid = String(32)
 
-    requiredMutexes = [("secid", "ticker", "fiid")]
+    requiredMutexes = [
+        ["secid", "ticker", "fiid"],
+    ]
 
 
 class SECLISTRQ(Aggregate):
