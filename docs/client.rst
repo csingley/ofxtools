@@ -54,6 +54,47 @@ The third command is the kind of thing you'd run on a regular basis; it
 requests statements for each account listed in your config file for a given
 server nickname.
 
+Storing ofxget passwords in the system keyring
+----------------------------------------------
+** Note: this feature is experimental.  Expect bugs; kindly report them. **
+
+Rather than typing them in each time, you can securely store your passwords
+in the system keyring (if one is available) and have ``ofxget`` retrieve them
+for you.  Examples of such keyring software include:
+
+    * Windows Credential Locker
+    * Mac Keychain
+    * Freedesktop Secret Service (used by GNOME et al.)
+    * KWallet (used by KDE)
+
+To use these services, you will need to clutter up your nice clean ``ofxtools``
+by installing the `python-keyring`_ package.
+
+.. code-block:: bash
+
+    $ pip install --user keyring
+
+Additionally, KDE users will need to install `dbus-python`_.  Note the
+recommendation in the ``python-keyring`` docs to install it systemwide via
+your package manager.
+
+Once these dependencies have been satisfied, you can pass the ``--savepass``
+option to ``ofxget`` anywhere it wants a password, e.g.
+
+.. code-block:: bash
+
+    $ ofxget acctinfo <server_nickname> -u <your_username> --write --savepass
+
+That should set you up to download statements easily.
+
+To overwrite an existing password, simply add the  ``--savepass`` option
+again and you will be prompted for a new password.
+
+To delete a password entirely, you'll need to use your OS facilities for
+managing these passwords (they are stored under "ofxtools", with an entry
+for each server nickname).
+
+
 Using ofxget - in depth 
 -----------------------
 ``ofxget`` takes two mandatory positional arguments - the request type and
@@ -334,3 +375,5 @@ Other methods available:
 .. _DTC number: http://www.dtcc.com/client-center/dtc-directories
 .. _getfidata.sh: https://web.archive.org/web/20070120102800/http://www.jongsma.org/gc/bankinfo/getfidata.sh.gz
 .. _GnuCash: https://wiki.gnucash.org/wiki/OFX_Direct_Connect_Bank_Settings
+.. _python-keyring: https://pypi.org/project/keyring/
+.. _dbus-python: https://pypi.org/project/dbus-python/

@@ -34,7 +34,7 @@ for Mac users to instead employ `pip`:
 
 .. code-block:: bash
 
-    pip install certifi
+    $ pip install certifi
 
 
 Standard installation
@@ -44,13 +44,13 @@ special needs, you should probably install the most recent release on `PyPI`_:
 
 .. code-block:: bash
 
-    pip install --user ofxtools
+    $ pip install --user ofxtools
 
 Or if you want to install it systemwide, as root just run:
 
 .. code-block:: bash
 
-    pip install ofxtools
+    $ pip install ofxtools
 
 
 Bleeding edge installation
@@ -61,7 +61,7 @@ via the included setup file:
 
 .. code-block:: bash
 
-    pip install --user .
+    $ pip install --user .
 
 
 Developer's installation
@@ -71,9 +71,9 @@ is in `development mode`_:
 
 .. code-block:: bash
 
-    git clone https://github.com/csingley/ofxtools.git
-    pip install -e .
-    pip install -r ofxtools/requirements-development.txt
+    $ git clone https://github.com/csingley/ofxtools.git
+    $ pip install -e .
+    $ pip install -r ofxtools/requirements-development.txt
 
 
 Extra goodies
