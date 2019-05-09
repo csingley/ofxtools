@@ -12,7 +12,7 @@ the package (the normal situation).
 
 Installation dependencies
 -------------------------
-You need to install Python 3 (at least version 3.4) in order to use ``ofxtools``.
+You need to install Python 3 (at least version 3.6) in order to use ``ofxtools``.
 It won't work at all under Python 2.
 
 In order to use the OFX client to download OFX files, your Python 3 installation
@@ -85,7 +85,7 @@ the package.
 
 
 .. _virtual environment: https://packaging.python.org/tutorials/installing-packages/#creating-virtual-environments
-.. _user intall: https://pip.pypa.io/en/stable/user_guide/#user-installs
+.. _user install: https://pip.pypa.io/en/stable/user_guide/#user-installs
 .. _PyPI: https://pypi.python.org/pypi/ofxtools
 .. _current master: https://github.com/csingley/ofxtools/archive/master.zip
 .. _development mode: https://setuptools.readthedocs.io/en/latest/setuptools.html?highlight=development%20mode#develop-deploy-the-project-source-in-development-mode

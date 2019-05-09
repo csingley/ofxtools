@@ -10,3 +10,4 @@ pylint
 ipdb
 ipdbplugin
 coveralls
+mypy

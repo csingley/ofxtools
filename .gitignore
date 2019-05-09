@@ -16,3 +16,4 @@ build
 dist
 reg_settings.py
 docs/_build/
+.mypy_cache/

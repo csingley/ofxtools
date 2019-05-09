@@ -86,7 +86,7 @@ class OtherenrollTestCase(unittest.TestCase, base.TestAggregate):
 class AcctinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    optionalElements = ("DESC", "PHONE")
+    optionalElements = ["DESC", "PHONE"]
 
     @classproperty
     @classmethod
@@ -369,7 +369,7 @@ class EnrollrqTestCase(unittest.TestCase, base.TestAggregate):
 class EnrollrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    optionalElements = ("TEMPPASS", "USERID", "DTEXPIRE")
+    optionalElements = ["TEMPPASS", "USERID", "DTEXPIRE"]
 
     @classproperty
     @classmethod
@@ -875,21 +875,20 @@ class AcctsyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
 class ChguserinforqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    optionalElements = (
-        "FIRSTNAME",
-        "MIDDLENAME",
-        "LASTNAME",
-        "ADDR1",
-        "ADDR2",
-        "ADDR3",
-        "CITY",
-        "STATE",
-        "POSTALCODE",
-        "COUNTRY",
-        "DAYPHONE",
-        "EVEPHONE",
-        "EMAIL",
-    )
+    optionalElements = ["FIRSTNAME",
+                        "MIDDLENAME",
+                        "LASTNAME",
+                        "ADDR1",
+                        "ADDR2",
+                        "ADDR3",
+                        "CITY",
+                        "STATE",
+                        "POSTALCODE",
+                        "COUNTRY",
+                        "DAYPHONE",
+                        "EVEPHONE",
+                        "EMAIL",
+                        ]
 
     @classproperty
     @classmethod

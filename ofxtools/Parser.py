@@ -25,10 +25,11 @@ https://stackoverflow.com/questions/1732348/regex-match-open-tags-except-xhtml-s
 # stdlib imports
 import re
 import xml.etree.ElementTree as ET
+from typing import Any, Tuple, IO, Union, Optional, Dict, Callable, Text
 
 
 # local imports
-from ofxtools.header import parse_header
+from ofxtools.header import parse_header, OFXHeaderType
 from ofxtools.models.base import Aggregate
 
 
@@ -59,7 +60,7 @@ class OFXTree(ET.ElementTree):
     the root node of the hierarchy.
     """
 
-    def parse(self, source, parser=None):
+    def parse(self, source, parser=None) -> ET.Element:
         """
         Deserialize OFX document into tree of `ElementTree.Element` instances.
 
@@ -72,7 +73,8 @@ class OFXTree(ET.ElementTree):
         self.header, message = self._read(source)
 
         # If no parser specified, create default `ofxtools.Parser.TreeBuilder`
-        parser = parser or TreeBuilder()
+        if parser is None:
+            parser = TreeBuilder()
         parser.feed(message)
 
         # ElementTree.TreeBuilder.close() returns the root.
@@ -80,24 +82,34 @@ class OFXTree(ET.ElementTree):
         # ElementTree methods e.g. find() work normally on our subclass).
         self._root = parser.close()
 
+        return self._root
+
     @staticmethod
-    def _read(source):
+    def _read(source) -> Tuple[OFXHeaderType, str]:
         """
         Validate/convert OFX header and return it as an instance of
         `ofxtools.header.OFXHeader{V1, V2}`, along with message body as `str`.
 
         Factored out from `parse()` to facilitate unit testing.
         """
+        close_source = False
         if not hasattr(source, "read"):
             source = open(source, "rb")
+            close_source = True
 
-        if hasattr(source, "mode") and "b" not in source.mode:
-            raise ValueError("Source must be opened in binary mode")
+        if hasattr(source, "mode"):
+            if "b" not in source.mode:
+                raise ValueError("Source must be opened in binary mode")
 
-        header, message = parse_header(source)
+        try:
+            header, message = parse_header(source)
+        finally:
+            if close_source and hasattr(source, "close"):
+                source.close()
+
         return header, message
 
-    def convert(self):
+    def convert(self) -> Aggregate:
         """
         Transform tree of `ElementTree.Element` instances into hierarchy of
         `ofxtools.models.base.Aggregate` & `ofxtools.Types.Element` instances.
@@ -128,7 +140,7 @@ class TreeBuilder(ET.TreeBuilder):
         re.VERBOSE,
     )
 
-    def feed(self, data):
+    def feed(self, data: str) -> None:
         """
         Iterate through all tags matched by regex.
         """
@@ -151,7 +163,11 @@ class TreeBuilder(ET.TreeBuilder):
                 msg += " - position=[{}:{}]".format(match.start(), match.end())
                 raise ParseError(msg)
 
-    def _feedmatch(self, tag, text, closetag):
+    def _feedmatch(self,
+                   tag: str,
+                   text: Optional[str],
+                   closetag: Optional[str],
+                   ) -> None:
         """
         Route individual regex matches to _start()/_end() according to tag.
 
@@ -167,7 +183,10 @@ class TreeBuilder(ET.TreeBuilder):
         else:
             self._start(tag, text, closetag)
 
-    def _start(self, tag, text, closetag):
+    def _start(self,
+               tag: str,
+               text: Optional[str],
+               closetag: Optional[str]) -> None:
         """
         Push a new Element to the stack.
 
@@ -187,11 +206,13 @@ class TreeBuilder(ET.TreeBuilder):
             self.end(tag)
 
     @staticmethod
-    def _groomstring(string):
+    def _groomstring(string: str) -> Optional[str]:
         """ Strips whitespace and returns None for empty string """
         # Can't strip() None
         string = (string or "").strip()
-        return string or None
+        if string:
+            return string
+        return None
 
 
 def main(*files):

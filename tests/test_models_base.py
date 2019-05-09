@@ -31,8 +31,8 @@ class TESTAGGREGATE(Aggregate):
     testsubaggregate = SubAggregate(TESTSUBAGGREGATE)
     dontuse = Unsupported()
 
-    optionalMutexes = [("option00", "option01"), ("option10", "option11")]
-    requiredMutexes = [("req00", "req01"), ("req10", "req11")]
+    optionalMutexes = [["option00", "option01"], ["option10", "option11"]]
+    requiredMutexes = [["req00", "req01"], ["req10", "req11"]]
 
 
 class TESTAGGREGATE2(Aggregate):

@@ -52,7 +52,7 @@ class TranList(Aggregate):
     dtstart = DateTime(required=True)
     dtend = DateTime(required=True)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<{} dtstart='{}' dtend='{}' len={}>".format(
             self.__class__.__name__, self.dtstart, self.dtend, len(self)
         )

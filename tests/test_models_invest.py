@@ -180,7 +180,7 @@ class InvbalTestCase(unittest.TestCase, base.TestAggregate):
 class Inv401kbalTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("TOTAL",)
+    requiredElements = ["TOTAL",]
     optionalElements = [
         "CASHBAL",
         "PRETAX",

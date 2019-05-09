@@ -8,6 +8,24 @@ data content.  The subclasses implement the data types described in OFX
 section 3.2.8.
 """
 
+
+__all__ = [
+    "OFXTypeWarning",
+    "InstanceCounterMixin",
+    "Element",
+    "Bool",
+    "String",
+    "NagString",
+    "OneOf",
+    "Integer",
+    "Decimal",
+    "DateTime",
+    "Time",
+    "ListItem",
+    "ListElement",
+]
+
+
 # stdlib imports
 import itertools
 import functools
@@ -17,6 +35,8 @@ import re
 import warnings
 from collections import defaultdict
 from xml.sax import saxutils
+from typing import Any
+
 
 # local imports
 from .utils import UTC
@@ -40,7 +60,7 @@ class InstanceCounterMixin:
     _element_counter = itertools.count()
 
     @classmethod
-    def _next_counter(cls):
+    def _next_counter(cls) -> int:
         return next(cls._element_counter)
 
     def __init__(self):
@@ -80,11 +100,11 @@ class Element(InstanceCounterMixin):
         # first argument of a function, so we can't use decorator syntax on
         # a method (unless it's a staticmethod).  Instead we use it in
         # functional form on a bound method.
-        self.convert = functools.singledispatch(self.convert)
+        self.convert = functools.singledispatch(self._convert)
         self.convert.register(type(None), self._convert_none)
         self.convert.register(str, self._convert_str)
 
-        self.unconvert = functools.singledispatch(self.unconvert)
+        self.unconvert = functools.singledispatch(self._unconvert)
         self.unconvert.register(type(None), self._unconvert_none)
 
         self._init(*args, **kwargs)
@@ -104,7 +124,7 @@ class Element(InstanceCounterMixin):
         if parent is not None:
             return self.data[parent]
 
-    def __set__(self, parent, value):
+    def __set__(self, parent, value) -> None:
         """ Perform validation and type conversion before setting value """
         value = self.convert(value)
         self.data[parent] = value
@@ -116,7 +136,7 @@ class Element(InstanceCounterMixin):
 
         return value
 
-    def convert(self, value):
+    def _convert(self, value):
         """ Convert OFX to Python data type """
         return self._convert_default(value)
 
@@ -140,7 +160,7 @@ class Element(InstanceCounterMixin):
             return self._convert_none(value)
         return self._convert_default(value)
 
-    def unconvert(self, value):
+    def _unconvert(self, value):
         """ Convert Python data type to OFX """
         return self._unconvert_default(value)
 
@@ -149,12 +169,12 @@ class Element(InstanceCounterMixin):
         msg = "{} is not an instance of {}"
         raise ValueError(msg.format(value, self.__class__.__name__))
 
-    def _unconvert_none(self, value):
+    def _unconvert_none(self, value: None) -> None:
         """ Dispatch unconvert() for type(None) """
         # Pass through None, unless value is required
         return self.enforce_required(value)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         repr = "<{} required={}>"
         return repr.format(self.__class__.__name__, self.required)
 
@@ -212,7 +232,7 @@ class String(Element):
         msg = "'{}' is not a str"
         raise ValueError(msg.format(value))
 
-    def enforce_length(self, value):
+    def enforce_length(self, value: str) -> str:
         if self.length is not None and len(value) > self.length:
             if self.strict:
                 msg = "'{}' is too long; max length={}"
@@ -287,7 +307,7 @@ class Integer(Element):
 
         super()._init(*args[1:], **kwargs)
 
-    def enforce_length(self, value):
+    def enforce_length(self, value: int) -> int:
         if self.length is not None and value >= 10 ** self.length:
             msg = "'{}' has too many digits; max digits={}"
             raise ValueError(msg.format(value, self.length))
@@ -381,7 +401,7 @@ class DateTime(Element):
     (\[[\+\-]?.+(:.+)?\])?
     """
 
-    type = datetime.datetime
+    type: Any = datetime.datetime
     # Valid datetime formats given by OFX spec
     #
     # WORKAROUND
@@ -453,7 +473,10 @@ class DateTime(Element):
         value = self.type(**matchdict)
         return self.normalize_to_gmt(value, gmt_offset)
 
-    def parse_gmt_offset(self, gmt_offset_hours, gmt_offset_minutes, tz_name):
+    def parse_gmt_offset(self,
+                         gmt_offset_hours,
+                         gmt_offset_minutes,
+                         tz_name):
         "Returns GMT offset in seconds"
         gmt_offset_hours = gmt_offset_hours or 0
         gmt_offset_minutes = gmt_offset_minutes or 0
@@ -485,7 +508,9 @@ class DateTime(Element):
 
         return datetime.timedelta(minutes=gmt_offset)
 
-    def normalize_to_gmt(self, value, gmt_offset):
+    def normalize_to_gmt(self,
+                         value,
+                         gmt_offset):
         # Adjust timezone to GMT/UTC
         return (value - gmt_offset).replace(tzinfo=UTC)
 
@@ -553,7 +578,9 @@ class Time(DateTime):
 
         super()._init(*args, **kwargs)
 
-    def normalize_to_gmt(self, value, gmt_offset):
+    def normalize_to_gmt(self,
+                         value,
+                         gmt_offset):
         # Adjust timezone to GMT/UTC
         # Can't directly add datetime.time and datetime.timedelta
         dt = datetime.datetime(

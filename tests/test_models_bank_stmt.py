@@ -8,6 +8,7 @@ from xml.etree.ElementTree import Element, SubElement
 from datetime import datetime
 from decimal import Decimal
 from copy import deepcopy
+from typing import List
 
 
 # local imports
@@ -520,7 +521,7 @@ class BallistTestCase(unittest.TestCase, base.TestAggregate):
 
     __test__ = True
 
-    optionalElements = ()  # FIXME - how to handle multiple BALs?
+    optionalElements: List[str] = [] # FIXME - how to handle multiple BALs?
 
     def testListItems(self):
         # BALLLIST may only contain BAL

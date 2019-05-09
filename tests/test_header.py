@@ -6,12 +6,8 @@ import unittest
 import uuid
 from io import BytesIO
 from xml.etree.ElementTree import Element
-
-try:
-    from unittest.mock import patch
-except ImportError:
-    # Python < 3.3 depends on external mock package
-    from mock import patch
+from unittest.mock import patch
+from typing import Optional, Union, Mapping, Any, Type
 
 # local imports
 import ofxtools
@@ -19,10 +15,11 @@ import ofxtools
 
 class OFXHeaderTestMixin(object):
     # Override in subclass
-    headerClass = None
-    defaultVersion = None
-    valid = None
-    invalid = None
+    headerClass:  Optional[Union[Type[ofxtools.header.OFXHeaderV1],
+                                 Type[ofxtools.header.OFXHeaderV2]]] = None
+    defaultVersion: Optional[int] = None
+    valid: Optional[Mapping[str, Any]] = None
+    invalid: Optional[Mapping[str, Any]] = None
 
     body = """
     <OFX>

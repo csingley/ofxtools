@@ -16,11 +16,19 @@ Names of all Aggregate classes must be ALL CAPS, following the convention of
 the OFX spec, to be found in the package namespace by
 ``Aggregate.from_etree()`` which is called by the ``ofxtools.Parser``.
 """
+
+
+__all__ = ["Aggregate", "SubAggregate", "Unsupported", "ElementList"]
+
+
 # stdlib imports
 import xml.etree.ElementTree as ET
-from collections import OrderedDict
+from collections import OrderedDict, ChainMap
 from copy import deepcopy
-from typing import List
+from typing import (
+    Any, List, Dict, Tuple, Callable, Sequence, Mapping,
+    Union, Optional,
+)
 
 
 # local imports
@@ -36,8 +44,6 @@ class Aggregate(list):
     """
 
     # Validation constraints used by ``validate_args()``.
-    # Sequences of tuples (type str) defining mutually exclusive child tags.
-
     # Aggregate MAY have at most child from  `optionalMutexes``
     optionalMutexes: List[List[str]] = []
     # Aggregate MUST contain exactly one child from ``requiredMutexes``
@@ -68,25 +74,30 @@ class Aggregate(list):
         self._apply_residual_kwargs(**kwargs)
 
     @classmethod
-    def validate_args(cls, *args, **kwargs):
+    def validate_args(cls, *args, **kwargs) -> None:
         """
         Extra class-level validation constraints from the OFX spec not captured
         by class attribute validators.
         """
 
-        def enforce_count(cls, args, kwargs, errMsg, **extra_kwargs):
+        def enforce_count(cls,
+                          args: tuple,
+                          kwargs: Dict[str, Any],
+                          errMsg: str,
+                          **extra_kwargs: Any,
+                          ):
             assert "mutexes" in extra_kwargs
             assert "predicate" in extra_kwargs
 
             for mutex in extra_kwargs["mutexes"]:
                 count = sum([kwargs.get(i, None) is not None for i in mutex])
                 if not extra_kwargs["predicate"](count):
-                    kwargs = ", ".join(
+                    kwargs_ = ", ".join(
                         ["{}={}".format(i, kwargs.get(i, None)) for i in mutex]
                     )
                     errFields = {
                         "cls": cls.__name__,
-                        "kwargs": kwargs,
+                        "kwargs": kwargs_,
                         "mutex": mutex,
                         "count": count,
                     }
@@ -102,7 +113,7 @@ class Aggregate(list):
                               "[{mutex}] (not {count})"),
                       mutexes=cls.requiredMutexes, predicate=lambda x: x == 1)
 
-    def _apply_args(self, *args):
+    def _apply_args(self, *args: "Aggregate") -> None:
         # Interpret positional args as contained list items (of variable #)
         for member in args:
             cls_name = member.__class__.__name__.lower()
@@ -112,7 +123,7 @@ class Aggregate(list):
                                             cls_name, member))
             self.append(member)
 
-    def _apply_residual_kwargs(self, **kwargs):
+    def _apply_residual_kwargs(self, **kwargs) -> None:
         # Check that all kwargs have been consumed
         if kwargs:
             args = {k: v for k, v in kwargs.items() if k in self.listitems}
@@ -128,7 +139,7 @@ class Aggregate(list):
             raise ValueError(msg)
 
     @classmethod
-    def from_etree(cls, elem):
+    def from_etree(cls, elem: ET.Element) -> "Aggregate":
         """
         Instantiate from ``xml.etree.ElementTree.Element``.
 
@@ -152,12 +163,12 @@ class Aggregate(list):
         return instance
 
     @classmethod
-    def _convert(cls, elem):
+    def _convert(cls, elem: ET.Element) -> "Aggregate":
         if len(elem) == 0:
             return cls()
-        args = []
-        kwargs = {}
-        specIndices = []
+        args: List = []
+        kwargs: Dict = {}
+        specIndices: List = []
 
         for subelem in elem:
             cls._mapArgs(subelem, args, kwargs, specIndices)
@@ -176,7 +187,12 @@ class Aggregate(list):
         return cls(*args, **kwargs)
 
     @classmethod
-    def _mapArgs(cls, elem, args, kwargs, specIndices):
+    def _mapArgs(cls,
+                 elem: ET.Element,
+                 args: List[Any],
+                 kwargs: Dict[Any, Any],
+                 specIndices: List[Any],
+                 ) -> None:
         spec = list(cls.spec)
 
         key = elem.tag.lower()
@@ -189,7 +205,7 @@ class Aggregate(list):
         # If child contains text data, it's an Element; return text data.
         # Otherwise it's an Aggregate - perform type conversion
         if key in cls.unsupported:
-            value = None
+            value: Optional[Union[str, Aggregate]] = None
         elif elem.text:
             value = elem.text
         else:
@@ -262,32 +278,30 @@ class Aggregate(list):
 
     @classproperty
     @classmethod
-    def _superdict(cls):
+    def _superdict(cls) -> Mapping:
         """
         Consolidate cls.__dict__ with that of all superclasses.
-
-        Traverse the method resolution order in reverse so that attributes
-        defined on subclass override attributes defined on superclass.
         """
-        d = OrderedDict()
-        for base in reversed(cls.mro()):
-            d.update(base.__dict__)
-        return d
+        #  d = OrderedDict()
+        #  for base in reversed(cls.mro()):
+            #  d.update(base.__dict__)
+        #  return d
+        return ChainMap(*[base.__dict__ for base in cls.mro()])
 
     @staticmethod
-    def ungroom(elem):
+    def ungroom(elem: ET.Element) -> ET.Element:
         """
         Reverse groom() when converting back to ElementTree.
 
         Override in subclass.
 
         N.B. make sure to perform modifications on a copy.deepcopy(), in order
-        to keep the input free of side effects!
+        to keep the input free of side effects.
         """
         return elem
 
     @classmethod
-    def _ordered_attrs(cls, predicate):
+    def _ordered_attrs(cls, predicate: Callable) -> OrderedDict:
         """
         Filter class attributes for items matching the given predicate.
 
@@ -304,7 +318,7 @@ class Aggregate(list):
 
     @classproperty
     @classmethod
-    def spec(cls):
+    def spec(cls) -> OrderedDict:
         """
         OrderedDict of all class attributes that are
         Elements/SubAggregates/Unsupported.
@@ -316,7 +330,7 @@ class Aggregate(list):
 
     @classproperty
     @classmethod
-    def spec_no_listitems(cls):
+    def spec_no_listitems(cls) -> OrderedDict:
         """
         OrderedDict of all class attributes that are
         Elements/SubAggregates/Unsupported, excluding ListItems/ListElements
@@ -327,7 +341,7 @@ class Aggregate(list):
 
     @classproperty
     @classmethod
-    def elements(cls):
+    def elements(cls) -> OrderedDict:
         """
         OrderedDict of all class attributes that are Elements but not
         SubAggregates.
@@ -339,7 +353,7 @@ class Aggregate(list):
 
     @classproperty
     @classmethod
-    def subaggregates(cls):
+    def subaggregates(cls) -> OrderedDict:
         """
         OrderedDict of all class attributes that are SubAggregates.
         """
@@ -347,7 +361,7 @@ class Aggregate(list):
 
     @classproperty
     @classmethod
-    def unsupported(cls):
+    def unsupported(cls) -> OrderedDict:
         """
         OrderedDict of all class attributes that are Unsupported.
         """
@@ -355,14 +369,14 @@ class Aggregate(list):
 
     @classproperty
     @classmethod
-    def listitems(cls):
+    def listitems(cls) -> OrderedDict:
         """
         OrderedDict of all class attributes that are ListItems.
         """
         return cls._ordered_attrs(lambda v: isinstance(v, ListItem))
 
     @property
-    def _spec_repr(self):
+    def _spec_repr(self) -> Sequence[Tuple[str, Any]]:
         """
         Sequence of (name, repr()) for each non-empty attribute in the
         class ``_spec`` (see property above).
@@ -377,14 +391,14 @@ class Aggregate(list):
         ]
         return attrs
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """
         HACK - as a subclass of list, List is unhashable, but we need to
         use it as a dict key in Type.Element.{__get__, __set__}
         """
         return object.__hash__(self)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         attrs = ["{}={}".format(*attr) for attr in self._spec_repr]
         instance_repr = "{}({})".format(
             self.__class__.__name__, ", ".join(attrs))
@@ -440,13 +454,13 @@ class Unsupported(InstanceCounterMixin):
     Null Aggregate/Element - not implemented (yet)
     """
 
-    def __get__(self, instance, type_):
+    def __get__(self, instance, type_) -> None:
         pass
 
-    def __set__(self, instance, value):
+    def __set__(self, instance, value) -> None:
         pass
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<Unsupported>"
 
 
@@ -456,20 +470,20 @@ class ElementList(Aggregate):
     """
     @classproperty
     @classmethod
-    def listitems(cls):
+    def listitems(cls) -> OrderedDict:
         """
-        ElementList.listitems returns ListElemeents instead of ListItems
+        ElementList.listitems returns ListElements instead of ListItems
         """
         return cls._ordered_attrs(lambda v: isinstance(v, ListElement))
 
-    def _apply_args(self, *args):
+    def _apply_args(self, *args) -> None:
         # Interpret positional args as contained list items (of variable #)
         assert len(self.listitems) == 1
         converter = list(self.listitems.values())[0]
         for member in args:
             self.append(converter.convert(member))
 
-    def _listAppend(self, root, member):
+    def _listAppend(self, root: ET.Element, member) -> None:
         assert len(self.listitems) == 1
         spec = list(self.listitems.items())[0]
         attr, converter = spec

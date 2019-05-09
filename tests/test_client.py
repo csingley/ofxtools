@@ -6,6 +6,7 @@ import unittest
 from unittest.mock import patch, DEFAULT, sentinel, ANY
 from datetime import datetime
 import xml.etree.ElementTree as ET
+import socket
 
 
 # local imports
@@ -197,7 +198,8 @@ class OFXClientV1TestCase(unittest.TestCase):
                     self.assertEqual(kwargs["headers"], self.client.http_headers)
 
                     mock_urlopen.assert_called_once_with(
-                        sentinel.REQUEST, context=ANY, timeout=None)
+                        sentinel.REQUEST, context=ANY,
+                        timeout = socket._GLOBAL_DEFAULT_TIMEOUT)
                     self.assertEqual(output, sentinel.RESPONSE)
 
                     return kwargs["data"].decode("utf_8")

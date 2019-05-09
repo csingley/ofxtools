@@ -6,6 +6,7 @@ import unittest
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 import itertools
+from typing import List, Dict, Sequence
 
 # local imports
 from ofxtools.Types import ListItem, ListElement
@@ -21,10 +22,10 @@ class TestAggregate:
 
     # Here "Element" refers to ``xml.etree.ElementTree.Element``,
     # not ``ofxtools.Types.Element`` (i.e. includes both Aggregates & Elements)
-    requiredElements = []
-    optionalElements = []
-    oneOfs = {}
-    unsupported = []
+    requiredElements: List[str] = []
+    optionalElements: List[str] = []
+    oneOfs: Dict[str, Sequence[str]] = {}
+    unsupported: List[str] = []
 
     etree = NotImplemented
     aggregate = NotImplemented
@@ -155,8 +156,8 @@ class TestAggregate:
 class StatusTestCase(unittest.TestCase, TestAggregate):
     __test__ = True
 
-    requiredElements = ("CODE", "SEVERITY")
-    optionalElements = ("MESSAGE",)
+    requiredElements = ["CODE", "SEVERITY"]
+    optionalElements = ["MESSAGE"]
     oneOfs = {"SEVERITY": ("INFO", "WARN", "ERROR")}
 
     @classproperty

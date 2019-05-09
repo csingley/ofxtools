@@ -184,31 +184,35 @@ class LastpmtinfoTestCase(unittest.TestCase, base.TestAggregate):
 class CcclosingTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("FITID", "DTCLOSE", "BALCLOSE", "DTPOSTSTART", "DTPOSTEND")
-    optionalElements = (
-        "DTOPEN",
-        "DTNEXT",
-        "BALOPEN",
-        "INTYTD",
-        "DTPMTDUE",
-        "MINPMTDUE",
-        "PASTDUEAMT",
-        "LATEFEEAMT",
-        "FINCHG",
-        "INTRATEPURCH",
-        "INTRATECASH",
-        "INTRATEXFER",
-        "PAYANDCREDIT",
-        "PURANDADV",
-        "DEBADJ",
-        "CREDITLIMIT",
-        "CASHADVCREDITLIMIT",
-        "AUTOPAY",
-        "LASTPMTINFO",
-        "REWARDINFO",
-        "MKTGINFO",
-        "CURRENCY",
-    )
+    requiredElements = ["FITID",
+                        "DTCLOSE",
+                        "BALCLOSE",
+                        "DTPOSTSTART",
+                        "DTPOSTEND",
+                        ]
+    optionalElements = ["DTOPEN",
+                        "DTNEXT",
+                        "BALOPEN",
+                        "INTYTD",
+                        "DTPMTDUE",
+                        "MINPMTDUE",
+                        "PASTDUEAMT",
+                        "LATEFEEAMT",
+                        "FINCHG",
+                        "INTRATEPURCH",
+                        "INTRATECASH",
+                        "INTRATEXFER",
+                        "PAYANDCREDIT",
+                        "PURANDADV",
+                        "DEBADJ",
+                        "CREDITLIMIT",
+                        "CASHADVCREDITLIMIT",
+                        "AUTOPAY",
+                        "LASTPMTINFO",
+                        "REWARDINFO",
+                        "MKTGINFO",
+                        "CURRENCY",
+                        ]
     unsupported = ["imagedata"]
 
     @classproperty
@@ -275,8 +279,8 @@ class CcclosingTestCase(unittest.TestCase, base.TestAggregate):
 class CcstmtendrqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("CCACCTFROM",)
-    optionalElements = ("DTSTART", "DTEND", "INCSTMTIMG")
+    requiredElements = ["CCACCTFROM",]
+    optionalElements = ["DTSTART", "DTEND", "INCSTMTIMG"]
 
     @classproperty
     @classmethod
@@ -302,8 +306,8 @@ class CcstmtendrqTestCase(unittest.TestCase, base.TestAggregate):
 class CcstmtendrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("CURDEF", "CCACCTFROM")
-    optionalElements = ("CCCLOSING",)
+    requiredElements = ["CURDEF", "CCACCTFROM"]
+    optionalElements = ["CCCLOSING"]
 
     @classproperty
     @classmethod

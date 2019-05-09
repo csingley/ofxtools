@@ -19,7 +19,7 @@ import base
 class CurrencyTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("CURRATE", "CURSYM")
+    requiredElements = ["CURRATE", "CURSYM"]
     oneOfs = {"CURSYM": CURRENCY_CODES}
 
     @classproperty

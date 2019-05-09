@@ -28,7 +28,7 @@ import test_models_i18n as i18n
 class SecidTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("UNIQUEID", "UNIQUEIDTYPE")
+    requiredElements = ["UNIQUEID", "UNIQUEIDTYPE"]
 
     @classproperty
     @classmethod
@@ -47,8 +47,14 @@ class SecidTestCase(unittest.TestCase, base.TestAggregate):
 class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("SECID", "SECNAME")
-    optionalElements = ("TICKER", "FIID", "RATING", "UNITPRICE", "DTASOF", "CURRENCY")
+    requiredElements = ["SECID", "SECNAME"]
+    optionalElements = ["TICKER",
+                        "FIID",
+                        "RATING",
+                        "UNITPRICE",
+                        "DTASOF",
+                        "CURRENCY",
+                        ]
 
     @classproperty
     @classmethod
@@ -161,21 +167,20 @@ class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
 class DebtinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("SECINFO", "PARVALUE", "DEBTTYPE")
-    optionalElements = (
-        "DEBTCLASS",
-        "COUPONRT",
-        "DTCOUPON",
-        "COUPONFREQ",
-        "CALLPRICE",
-        "YIELDTOCALL",
-        "DTCALL",
-        "CALLTYPE",
-        "YIELDTOMAT",
-        "DTMAT",
-        "ASSETCLASS",
-        "FIASSETCLASS",
-    )
+    requiredElements = ["SECINFO", "PARVALUE", "DEBTTYPE"]
+    optionalElements = ["DEBTCLASS",
+                        "COUPONRT",
+                        "DTCOUPON",
+                        "COUPONFREQ",
+                        "CALLPRICE",
+                        "YIELDTOCALL",
+                        "DTCALL",
+                        "CALLTYPE",
+                        "YIELDTOMAT",
+                        "DTMAT",
+                        "ASSETCLASS",
+                        "FIASSETCLASS",
+                        ]
     oneOfs = {"DEBTTYPE": ("COUPON", "ZERO"),
               "DEBTCLASS": ("TREASURY", "MUNICIPAL", "CORPORATE", "OTHER"),
               "COUPONFREQ": ("MONTHLY", "QUARTERLY", "SEMIANNUAL", "ANNUAL", "OTHER"),
@@ -305,14 +310,13 @@ class FimfassetclassTestCase(unittest.TestCase, base.TestAggregate):
 class MfinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("SECINFO",)
-    optionalElements = (
-        "MFTYPE",
-        "YIELD",
-        "DTYIELDASOF",
-        "MFASSETCLASS",
-        "FIMFASSETCLASS",
-    )
+    requiredElements = ["SECINFO"]
+    optionalElements = ["MFTYPE",
+                        "YIELD",
+                        "DTYIELDASOF",
+                        "MFASSETCLASS",
+                        "FIMFASSETCLASS",
+                        ]
     oneOfs = {"MFTYPE": ("OPENEND", "CLOSEEND", "OTHER")}
 
     @classproperty
@@ -345,8 +349,13 @@ class MfinfoTestCase(unittest.TestCase, base.TestAggregate):
 class OptinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("SECINFO", "OPTTYPE", "STRIKEPRICE", "DTEXPIRE", "SHPERCTRCT")
-    optionalElements = ("SECID", "ASSETCLASS", "FIASSETCLASS")
+    requiredElements = ["SECINFO",
+                        "OPTTYPE",
+                        "STRIKEPRICE",
+                        "DTEXPIRE",
+                        "SHPERCTRCT",
+                        ]
+    optionalElements = ["SECID", "ASSETCLASS", "FIASSETCLASS"]
 
     @classproperty
     @classmethod
@@ -380,8 +389,8 @@ class OptinfoTestCase(unittest.TestCase, base.TestAggregate):
 class OtherinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("SECINFO",)
-    optionalElements = ("TYPEDESC", "ASSETCLASS", "FIASSETCLASS")
+    requiredElements = ["SECINFO"]
+    optionalElements = ["TYPEDESC", "ASSETCLASS", "FIASSETCLASS"]
     oneOfs = {"ASSETCLASS": ASSETCLASSES}
 
     @classproperty
@@ -411,14 +420,13 @@ class OtherinfoTestCase(unittest.TestCase, base.TestAggregate):
 class StockinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("SECINFO",)
-    optionalElements = (
-        "STOCKTYPE",
-        "YIELD",
-        "DTYIELDASOF",
-        "ASSETCLASS",
-        "FIASSETCLASS",
-    )
+    requiredElements = ["SECINFO"]
+    optionalElements = ["STOCKTYPE",
+                        "YIELD",
+                        "DTYIELDASOF",
+                        "ASSETCLASS",
+                        "FIASSETCLASS",
+                        ]
     oneOfs = {"ASSETCLASS": ASSETCLASSES}
 
     @classproperty

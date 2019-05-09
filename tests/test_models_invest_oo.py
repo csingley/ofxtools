@@ -212,7 +212,6 @@ class OoselldebtTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["OO"]
-    optionalElements = []
 
     @classproperty
     @classmethod
@@ -231,7 +230,6 @@ class OosellmfTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["OO", "SELLTYPE", "UNITTYPE", "SELLALL"]
-    optionalElements = []
     oneOfs = {"SELLTYPE": SELLTYPES, "UNITTYPE": UNITTYPES}
 
     @classproperty
@@ -255,7 +253,6 @@ class OoselloptTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["OO", "OPTSELLTYPE"]
-    optionalElements = []
     oneOfs = {"OPTSELLTYPE": OPTSELLTYPES}
 
     @classproperty
@@ -276,7 +273,6 @@ class OosellotherTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["OO", "UNITTYPE"]
-    optionalElements = []
     oneOfs = {"UNITTYPE": UNITTYPES}
 
     @classproperty
@@ -297,7 +293,6 @@ class OosellstockTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["OO", "SELLTYPE"]
-    optionalElements = []
     oneOfs = {"SELLTYPE": SELLTYPES}
 
     @classproperty
@@ -318,7 +313,6 @@ class SwitchmfTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["OO", "SECID", "UNITTYPE", "SWITCHALL"]
-    optionalElements = []
     oneOfs = {"UNITTYPE": UNITTYPES}
 
     @classproperty

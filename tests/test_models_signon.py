@@ -205,16 +205,15 @@ class SonrqTestCase(unittest.TestCase, base.TestAggregate):
 class SonrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ("STATUS", "DTSERVER")
-    optionalElements = (
-        "USERKEY",
-        "TSKEYEXPIRE",
-        "DTPROFUP",
-        "DTACCTUP",
-        "FI",
-        "SESSCOOKIE",
-        "ACCESSKEY",
-    )
+    requiredElements = ["STATUS", "DTSERVER"]
+    optionalElements = ["USERKEY",
+                        "TSKEYEXPIRE",
+                        "DTPROFUP",
+                        "DTACCTUP",
+                        "FI",
+                        "SESSCOOKIE",
+                        "ACCESSKEY",
+                        ]
     oneOfs = {"LANGUAGE": LANG_CODES}
 
     @classproperty

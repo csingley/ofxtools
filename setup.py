@@ -1,6 +1,6 @@
 """
 Release process:
-    1. Update ofxtools.__version__.__version
+    1. Update ofxtools.__version__.__version__
     2. Change download_url below
     3. Commit changes & push
     4. `git tag` the release
@@ -57,8 +57,6 @@ setup(
         "Natural Language :: English",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
     ],

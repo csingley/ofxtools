@@ -4,13 +4,7 @@
 # stdlib imports
 import unittest
 from unittest import TestCase
-
-try:
-    from unittest.mock import MagicMock, call, patch, sentinel
-except ImportError:
-    # Python < 3.3 depends on external mock package
-    from mock import MagicMock, call, patch, sentinel
-
+from unittest.mock import MagicMock, call, patch, sentinel
 from xml.etree.ElementTree import Element
 from io import BytesIO, StringIO
 from tempfile import NamedTemporaryFile

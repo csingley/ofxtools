@@ -5,12 +5,14 @@ Configurable CLI front end for ``ofxtools.Client``
 """
 # stdlib imports
 import os
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
+import configparser
 from configparser import ConfigParser
 import datetime
 from collections import defaultdict, OrderedDict, ChainMap
 import getpass
 import urllib
+from urllib.error import HTTPError, URLError
 import concurrent.futures
 import json
 from io import BytesIO
@@ -18,10 +20,20 @@ import itertools
 from operator import attrgetter
 import sys
 import warnings
+import typing
+from typing import (
+    Union,
+    Optional,
+    Tuple,
+    List,
+    Any,
+    Mapping,
+)
 
 # 3rd party imports
 try:
-    import keyring
+    # No library stub file for module 'keyring'
+    import keyring  # type: ignore
     HAS_KEYRING = True
 except ImportError:
     HAS_KEYRING = False
@@ -45,58 +57,26 @@ USERCONFIGPATH = os.path.join(config.USERCONFIGDIR, "ofxget.cfg")
 UserConfig = ConfigParser()
 UserConfig.read(USERCONFIGPATH)
 
-DEFAULTS = {"url": None, "org": None, "fid": None, "version": 203,
-            "appid": None, "appver": None, "bankid": None, "brokerid": None,
-            "user": None, "clientuid": None, "language": None, "dryrun": False,
+DEFAULTS = {"url": "", "org": "", "fid": "", "version": 203,
+            "appid": "", "appver": "", "bankid": "", "brokerid": "",
+            "user": "", "clientuid": "", "language": "", "dryrun": False,
             "unsafe": False, "unclosedelements": False, "pretty": False,
             "checking": [], "savings": [], "moneymrkt": [], "creditline": [],
-            "creditcard": [], "investment": [], "dtstart": None, "dtend": None,
-            "dtasof": None, "inctran": True, "incbal": True, "incpos": True,
-            "incoo": False, "all": False, "years": [], "acctnum": None,
-            "recid": None, "write": False, "savepass": False}
+            "creditcard": [], "investment": [], "dtstart": "", "dtend": "",
+            "dtasof": "", "inctran": True, "incbal": True, "incpos": True,
+            "incoo": False, "all": False, "years": [], "acctnum": "",
+            "recid": "", "ofxhome": "", "write": False, "savepass": False}
 
 
 class OfxgetWarning(UserWarning):
     """ Base class for warnings in this module """
 
 
-def fi_index():
-    return sorted(set(UserConfig.sections() + DefaultConfig.sections()))
+ArgType = typing.ChainMap[str, Any]  # Type alias for loaded Argparser args
+ScanResult = Mapping[str, Union[list, dict]]  # Type alias for scan result
 
 
-def get_passwd(args):
-    """
-    1.  For dry run, use dummy password from OFX spec
-    2.  If python-keyring is installed and --savepass is unset, try to use it
-    3.  Prompt for password in terminal
-    """
-    if args["dryrun"]:
-        password = "{:0<32}".format("anonymous")
-    else:
-        password = None
-        if HAS_KEYRING and not args["savepass"]:
-            password = keyring.get_password("ofxtools", args["server"])
-        if password is None:
-            password = getpass.getpass()
-    return password
-
-
-def save_passwd(args, password):
-    if args["dryrun"]:
-        msg = "Dry run; won't store password"
-        warnings.warn(msg, category=OfxgetWarning)
-    if not HAS_KEYRING:
-        msg = "You must install https://pypi.org/project/keyring"
-        raise RuntimeError(msg)
-    if not password:
-        msg = "Empty password; won't store"
-        warnings.warn(msg, category=OfxgetWarning)
-
-    assert isinstance(password, str)
-    keyring.set_password("ofxtools", args["server"], password)
-
-
-def make_argparser():
+def make_argparser() -> ArgumentParser:
     argparser = ArgumentParser(
         description="Download OFX financial data",
         epilog="FIs configured: {}".format(fi_index()),
@@ -150,7 +130,7 @@ def make_argparser():
     )
 
     scan_group = argparser.add_argument_group(title="Profile Scan Options")
-    scan_group.add_argument("--ofxhome", default=None,
+    scan_group.add_argument("--ofxhome",
                             help="FI id# on http://www.ofxhome.com/")
 
     signon_group = argparser.add_argument_group(title="Signon Options")
@@ -161,33 +141,33 @@ def make_argparser():
     signon_group.add_argument("--fid", help="FI.FID")
     signon_group.add_argument("--appid", help="OFX client app identifier")
     signon_group.add_argument("--appver", help="OFX client app version")
-    signon_group.add_argument("--language", default=None, help="OFX language")
+    signon_group.add_argument("--language", help="OFX language")
 
     stmt_group = argparser.add_argument_group(title="Statement Options")
     stmt_group.add_argument("--bankid", help="ABA routing#")
     stmt_group.add_argument("--brokerid", help="Broker ID string")
     stmt_group.add_argument(
-        "-C", "--checking", metavar="#", action="append", default=None,
+        "-C", "--checking", metavar="#", action="append",
         help="Account number (option can be repeated)"
     )
     stmt_group.add_argument(
-        "-S", "--savings", metavar="#", action="append", default=None,
+        "-S", "--savings", metavar="#", action="append",
         help="Account number (option can be repeated)"
     )
     stmt_group.add_argument(
-        "-M", "--moneymrkt", metavar="#", action="append", default=None,
+        "-M", "--moneymrkt", metavar="#", action="append",
         help="Account number (option can be repeated)"
     )
     stmt_group.add_argument(
-        "-L", "--creditline", metavar="#", action="append", default=None,
+        "-L", "--creditline", metavar="#", action="append",
         help="Account number (option can be repeated)"
     )
     stmt_group.add_argument(
-        "-c", "--creditcard", "--cc", metavar="#", action="append", default=None,
+        "-c", "--creditcard", "--cc", metavar="#", action="append",
         help="Account number (option can be repeated)"
     )
     stmt_group.add_argument(
-        "-i", "--investment", metavar="#", action="append", default=None,
+        "-i", "--investment", metavar="#", action="append",
         help="Account number (option can be repeated)"
     )
     stmt_group.add_argument(
@@ -241,19 +221,17 @@ def make_argparser():
     tax_group = argparser.add_argument_group(title="Tax Form Options")
     tax_group.add_argument(
         "-y", "--year", metavar="YEAR", dest="years",
-        type=int, action="append", default=None,
+        type=int, action="append",
         help="(YYYY) Tax year (option can be repeated)",
     )
     tax_group.add_argument(
         "--acctnum",
         dest="acctnum",
-        default=None,
         help="Account # of recipient, if different than tax ID",
     )
     tax_group.add_argument(
         "--recid",
         dest="recid",
-        default=None,
         help="ID of recipient",
     )
 
@@ -286,7 +264,7 @@ def scan_profiles(start, stop, timeout=None):
     return results
 
 
-def scan_profile(args):
+def scan_profile(args: ArgType) -> None:
     """
     Report working connection parameters
     """
@@ -302,11 +280,12 @@ def scan_profile(args):
 
     if args["write"]:
         extra_args = _best_scan_format(scan_results)
+        args.maps.insert(0, extra_args)
 
-        write_config(args, extra_args=extra_args)
+        write_config(args)
 
 
-def _best_scan_format(scan_results):
+def _best_scan_format(scan_results: Tuple[ScanResult, ScanResult]):
     """
     Given the results of _scan_profile(), choose the best parameters;
     return as dict (compatible with ArgParser/ ChainMap).
@@ -320,16 +299,18 @@ def _best_scan_format(scan_results):
         result = v2
     elif v1["versions"]:
         result = v1
+    else:
+        return {}
 
     formats = sorted(result["formats"], key=lambda f: sum(f.values()))
     args = {k: v for k, v in formats[0].items() if v}
 
-    args["version"] = result["versions"].pop()
+    args["version"] = result["versions"][-1]
 
     return args
 
 
-def request_profile(args):
+def request_profile(args: ArgType) -> None:
     """
     Send PROFRQ
     """
@@ -344,7 +325,7 @@ def request_profile(args):
     print(response.decode())
 
 
-def request_acctinfo(args):
+def request_acctinfo(args: ArgType) -> None:
     """
     Send ACCTINFORQ
     """
@@ -360,16 +341,17 @@ def request_acctinfo(args):
 
     if args["write"]:
         acctinfo.seek(0)
-        extra_args = extract_acctinfos(acctinfo)
+        extra_args = dict(extract_acctinfos(acctinfo))
         extra_args = {k: arg2config(k, v) for k, v in extra_args.items()}
+        args.maps.insert(0, extra_args)
 
-        write_config(args, extra_args=extra_args)
+        write_config(args)
 
     if args["savepass"]:
         save_passwd(args, password)
 
 
-def _request_acctinfo(args, password):
+def _request_acctinfo(args: ArgType, password: str) -> BytesIO:
     client = init_client(args)
     dtacctup = datetime.datetime(1999, 12, 31, tzinfo=UTC)
 
@@ -382,7 +364,7 @@ def _request_acctinfo(args, password):
     return BytesIO(response)
 
 
-def request_stmt(args):
+def request_stmt(args: ArgType) -> None:
     """
     Send *STMTRQ
     """
@@ -397,7 +379,7 @@ def request_stmt(args):
         args_ = extract_acctinfos(acctinfo)
         args.maps.insert(1, args_)
 
-    stmtrqs = []
+    stmtrqs: List[Union[StmtRq, CcStmtRq, InvStmtRq]] = []
     for accttype in ("checking", "savings", "moneymrkt", "creditline"):
         stmtrqs.extend(
             [StmtRq(acctid=acctid, accttype=accttype.upper(),
@@ -434,7 +416,7 @@ def request_stmt(args):
         save_passwd(args, password)
 
 
-def request_stmtend(args):
+def request_stmtend(args: ArgType) -> None:
     """
     Send *STMTENDRQ
     """
@@ -449,15 +431,15 @@ def request_stmtend(args):
         args_ = extract_acctinfos(acctinfo)
         args.maps.insert(1, args_)
 
-    stmtendrqs = []
+    stmtendrqs: List[Union[StmtEndRq, CcStmtEndRq]] = []
     for accttype in ("checking", "savings", "moneymrkt", "creditline"):
-        acctids = args.get(accttype, [])
+        acctids = args[accttype]
         stmtendrqs.extend(
             [StmtEndRq(acctid=acctid, accttype=accttype.upper(),
                        dtstart=dt["start"], dtend=dt["end"])
              for acctid in acctids])
 
-    for acctid in args.get("creditcard", []):
+    for acctid in args["creditcard"]:
         stmtendrqs.append(
             CcStmtEndRq(acctid=acctid, dtstart=dt["start"], dtend=dt["end"]))
 
@@ -479,7 +461,7 @@ def request_stmtend(args):
         save_passwd(args, password)
 
 
-def request_tax1099(args):
+def request_tax1099(args: ArgType) -> None:
     """
     Send TAX1099RQ
     """
@@ -502,7 +484,7 @@ def request_tax1099(args):
 ###############################################################################
 # ARGUMENT/CONFIG HANDLERS
 ###############################################################################
-def init_client(args):
+def init_client(args: ArgType) -> OFXClient:
     """
     Initialize OFXClient with connection info from args
     """
@@ -524,13 +506,14 @@ def init_client(args):
     return client
 
 
-def merge_config(args):
+def merge_config(args: Namespace) -> ArgType:
     """
     Merge CLI args > user config > library config > OFX Home > defaults
     """
-    # dict of all ArgumentParser args that have a value set
-    args = {k: v for k, v in vars(args).items() if v is not None}
-    server = args["server"]
+    # All ArgumentParser args that have a value set
+    _args = {k: v for k, v in vars(args).items() if v is not None}
+
+    server = _args["server"]
 
     def read_config(cfg, section):
         return {k: config2arg(k, v)
@@ -539,65 +522,87 @@ def merge_config(args):
     user_cfg = read_config(UserConfig, server)
     default_cfg = read_config(DefaultConfig, server)
 
-    merged = ChainMap(args, user_cfg, default_cfg, DEFAULTS)
+    merged = ChainMap(_args, user_cfg, default_cfg, DEFAULTS)
 
-    if "ofxhome" in merged:
-        lookup = ofxhome.lookup(merged["ofxhome"])
+    ofxhome_id = merged["ofxhome"]
+    if ofxhome_id:
+        lookup = ofxhome.lookup(ofxhome_id)
 
-        # Insert OFX Home lookup ahead of DEFAULTS but after
-        # user configs and library configs
-        merged.maps.insert(-1, {"url": lookup.url, "org": lookup.org,
-                                "fid": lookup.fid,
-                                "brokerid": lookup.brokerid})
+        if lookup is not None:
+            # Insert OFX Home lookup ahead of DEFAULTS but after
+            # user configs and library configs
+            merged.maps.insert(-1, {"url": lookup.url, "org": lookup.org,
+                                    "fid": lookup.fid,
+                                    "brokerid": lookup.brokerid})
 
-    if merged.get("url", None) is None:
+    if not merged["url"]:
         msg = "Unknown server '{}'; please configure 'url' or 'ofxhome'"
         raise ValueError(msg.format(server))
 
     return merged
 
 
-def config2arg(key, value):
+def config2arg(key: str, value: str) -> Union[List[str], bool, int, str]:
     """
     Transform a config value from ConfigParser format to ArgParser format
     """
-    default = DEFAULTS.get(key, None)
+    def passString(string_: str) -> str:
+        return string_
 
-    if type(default) is list:
-        # Allow sequences of acct nos
-        value = [v.strip() for v in value.split(",")]
-    elif type(default) is bool:
-        BOOLY = ConfigParser.BOOLEAN_STATES
-        value_ = BOOLY.get(value, None)
-        if value_ is None:
-            msg = "Can't interpret '{}' as bool; must be in {}"
-            raise ValueError(msg.format(value, list(BOOLY.keys())))
-        value = value_
-    elif type(default) is int:
-        value = int(value)
+    def makeBool(string: str) -> bool:
+        BOOLY = ConfigParser.BOOLEAN_STATES  # type: ignore
+        if string not in BOOLY:
+            msg = "Can't interpret '{}' as bool; must be one of {}"
+            raise ValueError(msg.format(string, list(BOOLY.keys())))
+        return BOOLY[string]
+
+    def makeList(string: str) -> List[str]:
+        return [sub.strip() for sub in string.split(",")]
+
+    def makeInt(string: str) -> int:
+        return int(value)
+
+    if key not in DEFAULTS:
+        msg = "Don't know type of {}; define in ofxget.DEFAULTS"
+        raise ValueError(msg.format(key))
+
+    cfg_type = type(DEFAULTS[key])
+
+    handlers = {str: passString,
+                bool: makeBool,
+                list: makeList,
+                int: makeInt}
+
+    if cfg_type not in handlers:
+        msg = "Config key {}: no handler defined for type '{}'"
+        raise ValueError(msg.format(key, cfg_type))
+
+    return handlers[cfg_type](value)  # type: ignore
+
+
+def arg2config(key: str, value: Union[list, bool, int, str]) -> str:
+    """
+    Transform a config value from ArgParser format to ConfigParser format
+    """
+    default_type = type(DEFAULTS[key])
+
+    if default_type is list:
+        # INI-friendly string representation of Python list type
+        value = str(value).strip("[]").replace("'", "")
+    elif default_type is bool:
+        assert isinstance(value, bool)
+        value = {True: "true", False: "false"}[value]
+    elif default_type is int:
+        assert isinstance(value, int)
+        value = str(value)
+    else:
+        assert default_type is str
+        assert isinstance(value, str)
 
     return value
 
 
-def arg2config(key, value):
-    """
-    Transform a config value from ArgParser format to ConfigParser format
-    """
-    default = DEFAULTS.get(key, None)
-
-    if type(default) is list:
-        # INI-friendly string representation of Python list type
-        value = str(value).strip("[]").replace("'", "")
-    elif type(default) is bool:
-        value = {True: "true", False: "false", None: ""}[value]
-
-    if value is None:
-        value = ""
-
-    return str(value)
-
-
-def mk_server_cfg(args):
+def mk_server_cfg(args: ArgType) -> configparser.SectionProxy:
     """
     Copy key parameters to UserConfig, under the indicated section
     """
@@ -613,15 +618,14 @@ def mk_server_cfg(args):
 
     for opt in ("url", "version", "ofxhome", "org", "fid", "brokerid",
                 "bankid", "user", "pretty", "unclosedelements"):
-        if (opt in args) and (args[opt] not in (None, [])):
+        if args[opt] != DEFAULTS[opt]:
             cfg[opt] = arg2config(opt, args[opt])
 
     return cfg
 
 
-def write_config(args, *, extra_args=None):
-    args.maps.insert(0, extra_args)
-    cfg = mk_server_cfg(args)
+def write_config(args: ArgType) -> None:
+    mk_server_cfg(args)
 
     #  msg = "\nWriting '{}' configs {} to {}..."
     #  print(msg.format(args["server"], dict(cfg.items()), USERCONFIGPATH))
@@ -635,7 +639,11 @@ def write_config(args, *, extra_args=None):
 ###############################################################################
 # HEAVY LIFTING
 ###############################################################################
-def _scan_profile(url, org, fid, max_workers=None, timeout=None):
+def _scan_profile(url: str,
+                  org: str,
+                  fid: str,
+                  max_workers: Optional[int] = None,
+                  timeout: Optional[int] = None) -> Tuple[ScanResult, ScanResult]:
     """
     Report permutations of OFX version/prettyprint/unclosedelements that
     successfully download OFX profile from server.
@@ -681,25 +689,24 @@ def _scan_profile(url, org, fid, max_workers=None, timeout=None):
     # beyond simply parsing it to verify that it's valid OFX.  The data we keep
     # is actually the metadata (i.e. connection parameters like OFX version
     # tried for a request) stored as values in the ``futures`` dict.
-    working = defaultdict(list)
+    working: Mapping[int, List[tuple]] = defaultdict(list)
 
     for future in concurrent.futures.as_completed(futures):
         try:
             response = future.result()
-        except (urllib.error.URLError,
-                urllib.error.HTTPError,
+        except (URLError,
+                HTTPError,
                 ConnectionError,
                 OSError,
                 ) as exc:
             future.cancel()
             continue
 
-
         # ``response`` is an HTTPResponse; doesn't have seek() method used by
         # ``header.parse_header()``.  Repackage as a BytesIO for parsing.
         try:
             signoninfos = extract_signoninfos(BytesIO(response.read()))
-        except ValueError:
+        except (ParseError, ValueError):
             signoninfos = []
 
         (version, prettyprint, close_elements) = futures[future]
@@ -741,13 +748,14 @@ def _scan_profile(url, org, fid, max_workers=None, timeout=None):
 
     # V2 always has closing tags for elements; just report prettyprint
     for format in v2_formats:
+        assert not format["unclosedelements"]
         del format["unclosedelements"]
 
     return (OrderedDict([("versions", v1_versions), ("formats", v1_formats)]),
             OrderedDict([("versions", v2_versions), ("formats", v2_formats)]))
 
 
-def verify_status(trnrs):
+def verify_status(trnrs: models.Aggregate) -> None:
     """
     Input a models.Aggregate instance representing a transaction wrapper.
     """
@@ -761,7 +769,7 @@ def verify_status(trnrs):
                                     msg=status.message))
 
 
-def extract_signoninfos(markup):
+def extract_signoninfos(markup: BytesIO) -> List[models.SIGNONINFO]:
     """
     Input seralized OFX containing PROFRS
     Output list of ofxtools.models.SIGNONINFO instances
@@ -790,7 +798,7 @@ def extract_signoninfos(markup):
     return [extract_signoninfo(trnrs) for trnrs in msgs]
 
 
-def extract_acctinfos(markup):
+def extract_acctinfos(markup: BytesIO) -> ChainMap:
     """
     Input seralized OFX containing ACCTINFORS
     Output dict-like object containing parsed *ACCTINFOs
@@ -878,6 +886,42 @@ REQUEST_HANDLERS = {"scan": scan_profile,
                     "stmt": request_stmt,
                     "stmtend": request_stmtend,
                     "tax1099": request_tax1099}
+
+
+def fi_index():
+    return sorted(set(UserConfig.sections() + DefaultConfig.sections()))
+
+
+def get_passwd(args: ArgType) -> str:
+    """
+    1.  For dry run, use dummy password from OFX spec
+    2.  If python-keyring is installed and --savepass is unset, try to use it
+    3.  Prompt for password in terminal
+    """
+    if args["dryrun"]:
+        password = "{:0<32}".format("anonymous")
+    else:
+        password = ""
+        if HAS_KEYRING and not args["savepass"]:
+            password = keyring.get_password("ofxtools", args["server"]) or ""
+        if not password:
+            password = getpass.getpass()
+    return password
+
+
+def save_passwd(args: ArgType, password: str) -> None:
+    if args["dryrun"]:
+        msg = "Dry run; won't store password"
+        warnings.warn(msg, category=OfxgetWarning)
+    if not HAS_KEYRING:
+        msg = "You must install https://pypi.org/project/keyring"
+        raise RuntimeError(msg)
+    if not password:
+        msg = "Empty password; won't store"
+        warnings.warn(msg, category=OfxgetWarning)
+
+    assert isinstance(password, str)
+    keyring.set_password("ofxtools", args["server"], password)
 
 
 def main():

@@ -5,6 +5,8 @@
 import datetime
 import os
 import itertools
+import xml.etree.ElementTree as ET
+from typing import Optional
 
 
 # local imports
@@ -18,7 +20,7 @@ class classproperty(property):
         return self.fget.__get__(None, owner)()
 
 
-def fixpath(path):
+def fixpath(path: str) -> str:
     """Makes paths do the right thing."""
     path = os.path.expanduser(path)
     path = os.path.normpath(path)
@@ -59,7 +61,7 @@ def partition(pred, iterable):
     return itertools.filterfalse(pred, t1), filter(pred, t2)
 
 
-def indent(elem, level=0):
+def indent(elem: ET.Element, level: int = 0) -> None:
     """
     Indent xml.etree.ElementTree.Element.text by nesting level.
 
@@ -80,7 +82,7 @@ def indent(elem, level=0):
             elem.tail = i
 
 
-def tostring_unclosed_elements(elem):
+def tostring_unclosed_elements(elem: ET.Element) -> bytes:
     """
     SGML-style string representation of xml.etree.ElementTree, without closing tags.
 
@@ -96,7 +98,7 @@ def tostring_unclosed_elements(elem):
     return output
 
 
-def cusip_checksum(base):
+def cusip_checksum(base: str) -> str:
     """
     Compute the check digit for a base Committee on Uniform Security
     Identification Procedures (CUSIP) securities identifier.
@@ -111,11 +113,11 @@ def cusip_checksum(base):
 
     assert len(base) == 8
     check = "".join([encode(index, char) for index, char in enumerate(base)])
-    check = sum([int(digit) for digit in check])
-    return str((10 - (check % 10)) % 10)
+    check_ = sum([int(digit) for digit in check])
+    return str((10 - (check_ % 10)) % 10)
 
 
-def validate_cusip(cusip):
+def validate_cusip(cusip: str) -> bool:
     """
     Validate a CUSIP
     """
@@ -125,7 +127,7 @@ def validate_cusip(cusip):
         return False
 
 
-def sedol_checksum(base):
+def sedol_checksum(base: str) -> str:
     """
     Stock Exchange Daily Official List (SEDOL)
     http://goo.gl/HxFWL
@@ -139,7 +141,7 @@ def sedol_checksum(base):
     return str((10 - (check % 10)) % 10)
 
 
-def isin_checksum(base):
+def isin_checksum(base: str) -> str:
     """
     Compute the check digit for a base International Securities Identification
     Number (ISIN).  Input an 11-char alphanum str, output a single-char str.
@@ -154,7 +156,7 @@ def isin_checksum(base):
     return str((10 - sum([int(d) for d in check]) % 10) % 10)
 
 
-def validate_isin(isin):
+def validate_isin(isin: str) -> bool:
     """
     Validate an ISIN
     """
@@ -168,7 +170,7 @@ def validate_isin(isin):
         return False
 
 
-def cusip2isin(cusip, nation=None):
+def cusip2isin(cusip: str, nation: Optional[str] = None) -> str:
     # Validate inputs
     if not validate_cusip(cusip):
         raise ValueError("'%s' is not a valid CUSIP" % cusip)
@@ -182,7 +184,7 @@ def cusip2isin(cusip, nation=None):
     return base + isin_checksum(base)
 
 
-def sedol2isin(sedol, nation=None):
+def sedol2isin(sedol, nation=None) -> str:
     nation = nation or "GB"
     assert len(sedol) == 7
     assert sedol_checksum(sedol[:6]) == sedol[6]
@@ -336,19 +338,25 @@ try:
     # If pytz is installed then use that.
     import pytz
 
-    UTC = pytz.UTC
+    UTC = pytz.UTC  # type: ignore
 except ImportError:
     # Otherwise create our own UTC tzinfo.
     class _UTC(datetime.tzinfo):
-        def tzname(self, dt):
+        def tzname(self,
+                   dt: Optional[datetime.datetime],
+                   ) -> Optional[str]:
             """datetime -> string name of time zone."""
             return "UTC"
 
-        def utcoffset(self, dt):
+        def utcoffset(self,
+                      dt: Optional[datetime.datetime],
+                      ) -> Optional[datetime.timedelta]:
             """datetime -> minutes east of UTC (negative for west of UTC)"""
             return datetime.timedelta(0)
 
-        def dst(self, dt):
+        def dst(self,
+                dt: Optional[datetime.datetime],
+                ) -> Optional[datetime.timedelta]:
             """datetime -> DST offset in minutes east of UTC.
 
             Return 0 if DST not in effect.  utcoffset() must include the DST
@@ -356,7 +364,7 @@ except ImportError:
             """
             return datetime.timedelta(0)
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             return "<UTC>"
 
-    UTC = _UTC()
+    UTC = _UTC()  # type: ignore

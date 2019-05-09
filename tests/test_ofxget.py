@@ -727,10 +727,10 @@ class MergeConfigTestCase(unittest.TestCase):
                       "inctran", "incbal", "incpos", "incoo", "all", "write"):
             self.assertIsInstance(merged[boole], bool)
 
-        # We have default value of None for all unset string configs
+        # We have default empty string for all unset string configs
         for string in ("appid", "appver", "bankid", "clientuid", "language",
                        "acctnum", "recid"):
-            self.assertIsNone(merged[string])
+            self.assertEqual(merged[string], "")
 
     def testMergeConfigUnknownFiArg(self):
         args = argparse.Namespace(server="3big4fail")
@@ -863,12 +863,11 @@ class MkServerCfgTestCase(unittest.TestCase):
                  "user": "porkypig", "pretty": True,
                  "unclosedelements": False})
 
+            # args equal to defaults are omitted from the results
             predicted = {
-                "url": "https://ofxget.test.com", "version": "203",
-                "ofxhome": "123", "org": "TEST", "fid": "321",
-                "brokerid": "test.com", "bankid": "11235813",
-                "user": "porkypig", "pretty": "true",
-                "unclosedelements": "false"}
+                "url": "https://ofxget.test.com", "ofxhome": "123",
+                "org": "TEST", "fid": "321", "brokerid": "test.com",
+                "bankid": "11235813", "user": "porkypig", "pretty": "true"}
 
             self.assertEqual(dict(results), predicted)
 
