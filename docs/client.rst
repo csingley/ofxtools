@@ -17,8 +17,12 @@ The ``ofxget`` shell script should have been installed by ``pip`` along with
 the ``ofxtools`` library.  If the install location isn't already in your
 ``$PATH``, you'll likely want to add it.
 
-A user installation drops ``ofxget`` under ``~/.local/bin`` on Linux or Mac,
+A user installation drops ``ofxget`` under ``~/.local/bin`` on Linux,
+``~/Library/PythonX.Y/bin/ofxget`` on Mac,
 and ``AppData\Roaming\Python\PythonXY\Scripts`` for Windows.
+
+A system installation places ``ofxget`` under ``/usr/local/bin`` on Linux,
+and ``/Library/Frameworks/Python.framework/Versions/X.Y/bin/`` on Mac.
 
 If all else fails, you can execute
 ``</path/to/ofxtools>/ofxtools/scripts/ofxget.py``.
@@ -254,7 +258,7 @@ Copy these configs in your ``ofxget.cfg`` like so:
     pretty: true
 
 
-In reality, though, it'd probaby be better just to use OFX 2.0.2 for USAA.
+In reality, though, it'd probably be better just to use OFX 2.0.2 for USAA.
 
 If your FI is not already known to ``ofxget``, you won't be able to use
 an existing server nickname.  If there's a working entry for your FI on
