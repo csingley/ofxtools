@@ -32,7 +32,7 @@ from typing import (
 
 
 # local imports
-from ofxtools.Types import Element, InstanceCounterMixin, ListItem, ListElement
+from ofxtools.Types import Element, ListItem, ListElement
 import ofxtools.models
 from ofxtools.utils import classproperty, pairwise
 
@@ -282,10 +282,6 @@ class Aggregate(list):
         """
         Consolidate cls.__dict__ with that of all superclasses.
         """
-        #  d = OrderedDict()
-        #  for base in reversed(cls.mro()):
-            #  d.update(base.__dict__)
-        #  return d
         return ChainMap(*[base.__dict__ for base in cls.mro()])
 
     @staticmethod
@@ -311,10 +307,8 @@ class Aggregate(list):
         N.B. predicate tests *values* of cls._superdict
              (not keys i.e. attribute names)
         """
-        match_items = [(k, v) for k, v in cls._superdict.items()
-                       if predicate(v)]
-        match_items.sort(key=lambda it: it[1]._counter)
-        return OrderedDict(match_items)
+        return OrderedDict([(k, v) for k, v in cls._superdict.items()
+                            if predicate(v)])
 
     @classproperty
     @classmethod
@@ -449,7 +443,7 @@ class SubAggregate(Element):
     #  return "<{}>".format(self.type.__name__)
 
 
-class Unsupported(InstanceCounterMixin):
+class Unsupported:
     """
     Null Aggregate/Element - not implemented (yet)
     """
