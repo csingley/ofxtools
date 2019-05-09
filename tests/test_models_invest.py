@@ -12,7 +12,7 @@ from ofxtools.models.base import Aggregate
 from ofxtools.models.common import SVCSTATUSES
 from ofxtools.models.bank.stmt import INV401KSOURCES
 from ofxtools.models.invest import (
-    USPRODUCTTYPES, INVACCTTYPES, INVSUBACCTS, FREQUENCIES,
+    USPRODUCTTYPES, INVACCTTYPES, INVSUBACCTS, LOANPMTFREQUENCIES,
     INVPOS, POSDEBT, POSMF, POSOPT, POSOTHER, POSSTOCK,
     INVTRANLIST, INVPOSLIST, INCPOS, INVACCTFROM, INVACCTTO, INVACCTINFO,
     INVBAL, INV401KBAL,
@@ -430,7 +430,7 @@ class LoaninfoTestCase(unittest.TestCase, base.TestAggregate):
                         "LOANPMTSINITIAL", "LOANPMTSREMAINING",
                         "LOANMATURITYDATE", "LOANTOTALPROJINTEREST",
                         "LOANINTERESTTODATE", "LOANNEXTPMTDATE"]
-    oneOfs = {"LOANPMTFREQ": FREQUENCIES}
+    oneOfs = {"LOANPMTFREQ": LOANPMTFREQUENCIES}
 
     @classproperty
     @classmethod
