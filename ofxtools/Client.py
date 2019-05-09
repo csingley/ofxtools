@@ -32,11 +32,16 @@ For example:
 >>> c0 = CcStmtEndRq(acctid="3", dtstart=dtstart, dtend=dtend)
 >>> response = client.request_statements("t0ps3kr1t", s0, s1, c0)
 """
+
+
+__all__ = ["AUTH_PLACEHOLDER", "StmtRq", "CcStmtRq", "InvStmtRq", "StmtEndRq",
+           "CcStmtEndRq", "OFXClient", "wrap_stmtrq"]
+
+
 # stdlib imports
 import datetime
 import uuid
 import xml.etree.ElementTree as ET
-from collections import namedtuple
 import ssl
 import urllib.request as urllib_request
 from http.client import HTTPResponse
@@ -45,7 +50,7 @@ from io import BytesIO
 import itertools
 from operator import attrgetter, itemgetter
 from functools import singledispatch
-from typing import Dict, Union, Optional, Tuple, Iterator
+from typing import Dict, Union, Optional, Tuple, Iterator, NamedTuple
 
 
 # local imports
@@ -86,23 +91,63 @@ from ofxtools.utils import UTC
 from ofxtools import utils
 
 
+AUTH_PLACEHOLDER = "{:0<32}".format("anonymous")
+
+
 # Statement request data containers
 # Pass instances of these containers as args to OFXClient.request_statement()
-StmtRq = namedtuple("StmtRq", "acctid accttype dtstart dtend inctran")
-StmtRq.__new__.__defaults__ = (None, None, None, None, True)  # type: ignore
+class StmtRq(NamedTuple):
+    """
+    Parameters of a bank statement request
+    """
+    acctid: Optional[str] = None
+    accttype: Optional[str] = None
+    dtstart: Optional[datetime.datetime] = None
+    dtend: Optional[datetime.datetime] = None
+    inctran: Optional[bool] = True
 
-CcStmtRq = namedtuple("CcStmtRq", ["acctid", "dtstart", "dtend", "inctran"])
-CcStmtRq.__new__.__defaults__ = (None, None, None, True)  # type: ignore
 
-InvStmtRq = namedtuple("InvStmtRq", ["acctid", "dtstart", "dtend", "dtasof",
-                                     "inctran", "incoo", "incpos", "incbal"])
-InvStmtRq.__new__.__defaults__ = (None, None, None, None, True, False, True, True)  # type: ignore
+class CcStmtRq(NamedTuple):
+    """
+    Parameters of a credit cardstatement request
+    """
+    acctid: Optional[str] = None
+    dtstart: Optional[datetime.datetime] = None
+    dtend: Optional[datetime.datetime] = None
+    inctran: Optional[bool] = True
 
-StmtEndRq = namedtuple("StmtEndRq", ["acctid", "accttype", "dtstart", "dtend"])
-StmtEndRq.__new__.__defaults__ = (None, None, None, None)  # type: ignore
 
-CcStmtEndRq = namedtuple("CcStmtEndRq", ["acctid", "dtstart", "dtend"])
-CcStmtEndRq.__new__.__defaults__ = (None, None, None, )  # type: ignore
+class InvStmtRq(NamedTuple):
+    """
+    Parameters of an investment account statement request
+    """
+    acctid: Optional[str] = None
+    dtstart: Optional[datetime.datetime] = None
+    dtend: Optional[datetime.datetime] = None
+    dtasof: Optional[datetime.datetime] = None
+    inctran: Optional[bool] = True
+    incoo: Optional[bool] = False
+    incpos: Optional[bool] = True
+    incbal: Optional[bool] = True
+
+
+class StmtEndRq(NamedTuple):
+    """
+    Parameters of a bank statement ending balance request
+    """
+    acctid: Optional[str] = None
+    accttype: Optional[str] = None
+    dtstart: Optional[datetime.datetime] = None
+    dtend: Optional[datetime.datetime] = None
+
+
+class CcStmtEndRq(NamedTuple):
+    """
+    Parameters of a credit card statement ending balance request
+    """
+    acctid: Optional[str] = None
+    dtstart: Optional[datetime.datetime] = None
+    dtend: Optional[datetime.datetime] = None
 
 
 class OFXClient:
@@ -111,22 +156,22 @@ class OFXClient:
     """
 
     # OFX header/signon defaults
-    userid = "{:0<32}".format("anonymous")
-    clientuid = None
-    org = None
-    fid = None
-    version = 203
-    appid = "QWIN"
-    appver = "2700"
-    language = "ENG"
+    userid: str = "{:0<32}".format("anonymous")
+    clientuid: Optional[str] = None
+    org: Optional[str] = None
+    fid: Optional[str] = None
+    version: int = 203
+    appid: str = "QWIN"
+    appver: str = "2700"
+    language: str = "ENG"
 
     # Formatting defaults
-    prettyprint = False
-    close_elements = True
+    prettyprint: bool = False
+    close_elements: bool = True
 
     # Stmt request
-    bankid = None
-    brokerid = None
+    bankid: Optional[str] = None
+    brokerid: Optional[str] = None
 
     def __repr__(self) -> str:
         r = ("{cls}(url='{url}', userid='{userid}', clientuid='{clientuid}', "
@@ -145,7 +190,7 @@ class OFXClient:
                  clientuid: Optional[str] = None,
                  org: Optional[str] = None,
                  fid: Optional[str] = None,
-                 version: Optional[Union[int, str]] = None,
+                 version: Optional[int] = None,
                  appid: Optional[str] = None,
                  appver: Optional[str] = None,
                  language: Optional[str] = None,
@@ -157,39 +202,16 @@ class OFXClient:
 
         self.url = url
 
-        # Signon
-        if userid is not None:
-            self.userid = userid
-        self.clientuid = clientuid
-        self.org = org
-        self.fid = fid
-        if version:
-            self.version = int(version)
-        if appid:
-            self.appid = appid
-        if appver:
-            self.appver = str(appver)
-        if language:
-            self.language = language
+        for attr in ["userid", "clientuid", "org", "fid", "version", "appid",
+                     "appver", "language", "prettyprint", "close_elements",
+                     "bankid", "brokerid"]:
+            value = locals()[attr]
+            if value is not None:
+                setattr(self, attr, value)
 
-        # Formatting
-        if prettyprint is not None:
-            if type(prettyprint) is not bool:
-                msg = "'prettyprint' must be type(bool), not '{}'"
-                raise ValueError(msg.format(prettyprint))
-            self.prettyprint = prettyprint
-        if close_elements is not None:
-            if type(close_elements) is not bool:
-                msg = "'close_elements' must be type(bool), not '{}'"
-                raise ValueError(msg.format(close_elements))
-            if (not close_elements) and self.version >= 200:
-                msg = "OFX version {} must close all tags"
-                raise ValueError(msg.format(self.version))
-            self.close_elements = close_elements
-
-        # Statements
-        self.bankid = bankid
-        self.brokerid = brokerid
+        if (not self.close_elements) and self.version >= 200:
+            msg = "OFX version {} must close all tags"
+            raise ValueError(msg.format(self.version))
 
     @property
     def uuid(self) -> str:
