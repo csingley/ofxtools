@@ -617,8 +617,10 @@ def mk_server_cfg(args: ArgType) -> configparser.SectionProxy:
     cfg = UserConfig[server]
 
     for opt in ("url", "version", "ofxhome", "org", "fid", "brokerid",
-                "bankid", "user", "pretty", "unclosedelements"):
-        if args[opt] != DEFAULTS[opt]:
+                "bankid", "user", "checking", "savings", "moneymrkt",
+                "creditline", "creditcard", "investment", "pretty",
+                "unclosedelements"):
+        if opt in args and args[opt] != DEFAULTS[opt]:
             cfg[opt] = arg2config(opt, args[opt])
 
     return cfg
