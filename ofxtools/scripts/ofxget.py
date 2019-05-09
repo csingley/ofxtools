@@ -349,6 +349,10 @@ def request_acctinfo(args):
     Send ACCTINFORQ
     """
 
+    if not args["user"]:
+        msg = "Please configure 'user'"
+        raise ValueError(msg.format(msg))
+
     password = get_passwd(args)
     acctinfo = _request_acctinfo(args, password)
 
@@ -690,40 +694,46 @@ def _scan_profile(url, org, fid, max_workers=None, timeout=None):
             future.cancel()
             continue
 
-        signoninfos = extract_signoninfos(response)
+
+        # ``response`` is an HTTPResponse; doesn't have seek() method used by
+        # ``header.parse_header()``.  Repackage as a BytesIO for parsing.
+        try:
+            signoninfos = extract_signoninfos(BytesIO(response.read()))
+        except ValueError:
+            signoninfos = []
 
         (version, prettyprint, close_elements) = futures[future]
         working[version].append((prettyprint, close_elements))
 
-        def collate_results(results):
-            """
-            Transform our metadata results (version, prettyprint, close_elements)
-            into a 2-tuple of ([OFX version], [format]) where each format is a dict
-            of {"pretty": bool, "unclosedelements": bool} representing a pair
-            of configs that should successully connect for those versions.
+    def collate_results(results):
+        """
+        Transform our metadata results (version, prettyprint, close_elements)
+        into a 2-tuple of ([OFX version], [format]) where each format is a dict
+        of {"pretty": bool, "unclosedelements": bool} representing a pair
+        of configs that should successully connect for those versions.
 
-            Input ``results`` needs to be a complete set for either OFXv1 or v2,
-            with no results for the other version admixed.
-            """
-            results = list(results)
-            if not results:
-                return [], []
-            versions, formats = zip(*results)
+        Input ``results`` needs to be a complete set for either OFXv1 or v2,
+        with no results for the other version admixed.
+        """
+        results = list(results)
+        if not results:
+            return [], []
+        versions, formats = zip(*results)
 
-            # Assumption: the same formatting requirements apply to all
-            # sub-versions (e.g. 1.0.2 and 1.0.3, or 2.0.3 and 2.2.0).
-            # If a (pretty, close_elements) pair succeeds on most sub-versions
-            # but fails on a few, we'll chalk it up to network transmission
-            # errors and ignore it.
-            #
-            # Translation: just pick the longest sequence of successful
-            # formats and assume it applies to the whole version.
-            formats = max(formats, key=len)
-            formats.sort()
-            formats = [OrderedDict([("pretty", fmt[0]),
-                                   ("unclosedelements", not fmt[1])])
-                       for fmt in formats]
-            return sorted(list(versions)), formats
+        # Assumption: the same formatting requirements apply to all
+        # sub-versions (e.g. 1.0.2 and 1.0.3, or 2.0.3 and 2.2.0).
+        # If a (pretty, close_elements) pair succeeds on most sub-versions
+        # but fails on a few, we'll chalk it up to network transmission
+        # errors and ignore it.
+        #
+        # Translation: just pick the longest sequence of successful
+        # formats and assume it applies to the whole version.
+        formats = max(formats, key=len)
+        formats.sort()
+        formats = [OrderedDict([("pretty", fmt[0]),
+                               ("unclosedelements", not fmt[1])])
+                   for fmt in formats]
+        return sorted(list(versions)), formats
 
     v2, v1 = utils.partition(lambda result: result[0] < 200, working.items())
     v1_versions, v1_formats = collate_results(v1)
