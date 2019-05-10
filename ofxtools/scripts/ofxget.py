@@ -489,19 +489,19 @@ def init_client(args: ArgType) -> OFXClient:
     Initialize OFXClient with connection info from args
     """
     client = OFXClient(
-        args["url"],
-        userid=args["user"],
-        clientuid=args["clientuid"],
-        org=args["org"],
-        fid=args["fid"],
+        args["url"] or None,
+        userid=args["user"] or None,
+        clientuid=args["clientuid"] or None,
+        org=args["org"] or None,
+        fid=args["fid"] or None,
         version=args["version"],
-        appid=args["appid"],
-        appver=args["appver"],
-        language=args["language"],
+        appid=args["appid"] or None,
+        appver=args["appver"] or None,
+        language=args["language"] or None,
         prettyprint=args["pretty"],
         close_elements=not args["unclosedelements"],
-        bankid=args["bankid"],
-        brokerid=args["brokerid"],
+        bankid=args["bankid"] or None,
+        brokerid=args["brokerid"] or None,
     )
     return client
 
