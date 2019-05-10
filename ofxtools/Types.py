@@ -35,15 +35,109 @@ import re
 import warnings
 from collections import defaultdict
 from xml.sax import saxutils
-from typing import Any
+from typing import Any, Optional
 
 
 # local imports
-from .utils import UTC
+from ofxtools import utils
 
 
 class OFXTypeWarning(UserWarning):
     """ Base class for warnings in this module """
+
+
+# Valid datetime formats per the OFX spec (in OFX_Common.xsd):
+#  [0-9]{4}
+#  ((0[1-9])|(1[0-2]))
+#  ((0[1-9])|([1-2][0-9])|(3[0-1]))|
+
+#  [0-9]{4}
+#  ((0[1-9])|(1[0-2]))
+#  ((0[1-9])|([1-2][0-9])|(3[0-1]))
+#  (([0-1][0-9])|(2[0-3]))
+#  [0-5][0-9]
+#  (([0-5][0-9])|(60))|
+
+#  [0-9]{4}
+#  ((0[1-9])|(1[0-2]))
+#  ((0[1-9])|([1-2][0-9])|(3[0-1]))
+#  (([0-1][0-9])|(2[0-3]))
+#  [0-5][0-9]
+#  (([0-5][0-9])|(60))
+#  \.[0-9]{3}|
+
+#  [0-9]{4}
+#  ((0[1-9])|(1[0-2]))
+#  ((0[1-9])|([1-2][0-9])|(3[0-1]))
+#  (([0-1][0-9])|(2[0-3]))
+#  [0-5][0-9]
+#  (([0-5][0-9])|(60))
+#  \.[0-9]{3}
+#  (\[[\+\-]?.+(:.+)?\])?
+#
+# WORKAROUND
+# JPM sends DTPOSTED formatted as YYYYMMDDHHMMSS[offset], which isn't
+# valid per the spec.  We allow it.
+DT_REGEX = re.compile(
+    r"""
+    ^
+    (?P<year>[0-9]{4})
+    (?P<month>(0[1-9])|(1[0-2]))
+    (?P<day>(0[1-9])|([1-2][0-9])|(3[0-1]))
+    (
+        (
+            (?P<hour>([0-1][0-9])|(2[0-3]))
+            (?P<minute>[0-5][0-9])
+            (?P<second>([0-5][0-9])|(60))
+            (
+                (\.(?P<millisecond>[0-9]{3}))?
+                (
+                    \[(?P<gmt_offset_hours>[0-9-+]+)
+                    (
+                        (.(?P<gmt_offset_minutes>\d\d))?
+                        (:(?P<tz_name>.*))?
+                    )?
+                    \]
+                )?
+            )?
+        )?
+    )?
+    $
+    """, re.VERBOSE)
+
+
+# Valid time formats given by OFX spec (in OFX_Common.xsd):
+#  (([0-1][0-9])|(2[0-3]))
+#  [0-5][0-9]
+#  (([0-5][0-9])|(60))
+#  (\.[0-9]{3})?
+#  (\[[\+\-]?.+(:.+)?\])?
+#
+# N.B. the language from section 3.2.8.3 gives the format as:
+# HHMMSS.XXX[gmt offset[:tz name]]
+# This is inconsistent with the regex from the schema.  We follow the
+# schema rather than the human language version
+TIME_REGEX = re.compile(
+    r"""
+    ^
+    (?P<hour>([0-1][0-9])|(2[0-3]))
+    (?P<minute>[0-5][0-9])
+    (?P<second>([0-5][0-9])|(60))
+    (
+        (\.(?P<millisecond>[0-9]{3}))?
+        (
+            \[(?P<gmt_offset_hours>[0-9-+]+)
+            (
+                (.(?P<gmt_offset_minutes>\d\d))?
+                (:(?P<tz_name>.*))?
+            )?
+            \]
+        )?
+    )?
+    $
+    """,
+    re.VERBOSE,
+)
 
 
 class InstanceCounterMixin:
@@ -239,7 +333,8 @@ class String(Element):
                 raise ValueError(msg.format(value, self.length))
             else:
                 msg = "Value '{}' exceeds length={}"
-                warnings.warn(msg.format(value, self.length), category=OFXTypeWarning)
+                warnings.warn(msg.format(value, self.length),
+                              category=OFXTypeWarning)
         return value
 
     def _convert_str(self, value):
@@ -250,7 +345,9 @@ class String(Element):
         # Unescape '&amp;' '&lt;' '&gt;' '&nbsp;' per OFX section 2.3
         # Also go ahead and unescape other XML control characters,
         # because FIs tend to mix &amp; match...
-        value = saxutils.unescape(value, {"&nbsp;": " ", "&apos;": "'", "&quot;": '"'})
+        value = saxutils.unescape(value, {"&nbsp;": " ",
+                                          "&apos;": "'",
+                                          "&quot;": '"'})
         return self.enforce_length(value)
 
     def _unconvert_str(self, value):
@@ -367,74 +464,10 @@ class Decimal(Element):
 
 
 class DateTime(Element):
-    """
-    OFX Section 3.2.8.2
-
-    The regex given by the spec (in OFX_Common.xsd):
-
-    [0-9]{4}
-    ((0[1-9])|(1[0-2]))
-    ((0[1-9])|([1-2][0-9])|(3[0-1]))|
-
-    [0-9]{4}
-    ((0[1-9])|(1[0-2]))
-    ((0[1-9])|([1-2][0-9])|(3[0-1]))
-    (([0-1][0-9])|(2[0-3]))
-    [0-5][0-9]
-    (([0-5][0-9])|(60))|
-
-    [0-9]{4}
-    ((0[1-9])|(1[0-2]))
-    ((0[1-9])|([1-2][0-9])|(3[0-1]))
-    (([0-1][0-9])|(2[0-3]))
-    [0-5][0-9]
-    (([0-5][0-9])|(60))
-    \.[0-9]{3}|
-
-    [0-9]{4}
-    ((0[1-9])|(1[0-2]))
-    ((0[1-9])|([1-2][0-9])|(3[0-1]))
-    (([0-1][0-9])|(2[0-3]))
-    [0-5][0-9]
-    (([0-5][0-9])|(60))
-    \.[0-9]{3}
-    (\[[\+\-]?.+(:.+)?\])?
-    """
+    """ OFX Section 3.2.8.2 """
 
     type: Any = datetime.datetime
-    # Valid datetime formats given by OFX spec
-    #
-    # WORKAROUND
-    # JPM sends DTPOSTED formatted as YYYYMMDDHHMMSS[offset], which isn't
-    # valid per the spec.  We allow it.
-    regex = re.compile(
-        r"""
-        ^
-        (?P<year>[0-9]{4})
-        (?P<month>(0[1-9])|(1[0-2]))
-        (?P<day>(0[1-9])|([1-2][0-9])|(3[0-1]))
-        (
-            (
-                (?P<hour>([0-1][0-9])|(2[0-3]))
-                (?P<minute>[0-5][0-9])
-                (?P<second>([0-5][0-9])|(60))
-                (
-                    (\.(?P<millisecond>[0-9]{3}))?
-                    (
-                        \[(?P<gmt_offset_hours>[0-9-+]+)
-                        (
-                            (.(?P<gmt_offset_minutes>\d\d))?
-                            (:(?P<tz_name>.*))?
-                        )?
-                        \]
-                    )?
-                )?
-            )?
-        )?
-        $
-        """,
-        re.VERBOSE,
-    )
+    regex = DT_REGEX
 
     def _init(self, *args, **kwargs):
         self.convert.register(datetime.datetime, self._convert_datetime)
@@ -443,7 +476,9 @@ class DateTime(Element):
 
     def _convert_default(self, value):
         msg = "'{}' is type '{}'; can't convert to {}"
-        raise ValueError(msg.format(value, value.__class__.__name__, self.type))
+        raise ValueError(msg.format(value,
+                                    value.__class__.__name__,
+                                    self.type))
 
     def _convert_datetime(self, value):
         if value.utcoffset() is None:
@@ -465,54 +500,38 @@ class DateTime(Element):
             matchdict.pop("tz_name"),
         )
 
-        matchdict = {k: int(v or 0) for k, v in matchdict.items()}
+        intmatches = {k: int(v or 0) for k, v in matchdict.items()}
 
-        # OFX time formats give milliseconds, but datetime.datetime wants microseconds
-        matchdict["microsecond"] = 1000 * matchdict.pop("millisecond")
-
-        value = self.type(**matchdict)
-        return self.normalize_to_gmt(value, gmt_offset)
+        # OFX time formats give milliseconds,
+        # but datetime.datetime wants microseconds
+        intmatches["microsecond"] = 1000 * intmatches.pop("millisecond")
+        return self.normalize_to_gmt(self.type(**intmatches), gmt_offset)
 
     def parse_gmt_offset(self,
-                         gmt_offset_hours,
-                         gmt_offset_minutes,
-                         tz_name):
-        "Returns GMT offset in seconds"
-        gmt_offset_hours = gmt_offset_hours or 0
-        gmt_offset_minutes = gmt_offset_minutes or 0
+                         hours: Optional[str],
+                         minutes: Optional[str],
+                         tz_name: Optional[str],
+                         ) -> datetime.timedelta:
         try:
-            gmt_offset_hours = int(gmt_offset_hours)
+            gmt_offset_hours = int(hours or 0)
         except ValueError:
-            tz_kludge = {
-                "EST": -5,
-                "EDT": -4,
-                "CST": -6,
-                "CDT": -5,
-                "MST": -7,
-                "MDT": -6,
-                "PST": -8,
-                "PDT": -7,
-            }
-            try:
-                gmt_offset_hours = tz_kludge[tz_name]
-            except KeyError:
+            # Interactive Brokers sends invalid date/time data formatted like
+            #  YYYYMMDDHHMMSS.XXX[-:TZ]
+            # If we can't parse hours, try to infer from TZ name
+            if tz_name not in utils.TZS:
                 msg = "Can't parse timezone '{}' into a valid GMT offset"
                 raise ValueError(msg.format(tz_name))
 
-        gmt_offset = 60 * gmt_offset_hours
-        gmt_offset_minutes = int(gmt_offset_minutes or 0)
-        if gmt_offset < 0:
-            gmt_offset -= gmt_offset_minutes
-        else:
-            gmt_offset += gmt_offset_minutes
+            gmt_offset_hours = utils.TZS[tz_name]
 
-        return datetime.timedelta(minutes=gmt_offset)
+        return utils.gmt_offset(gmt_offset_hours, int(minutes or 0))
 
     def normalize_to_gmt(self,
                          value,
                          gmt_offset):
         # Adjust timezone to GMT/UTC
-        return (value - gmt_offset).replace(tzinfo=UTC)
+        self.unconvert.register(datetime.datetime, self._unconvert_datetime)
+        return (value - gmt_offset).replace(tzinfo=utils.UTC)
 
     def _unconvert_datetime(self, value):
         if not hasattr(value, "utcoffset") or value.utcoffset() is None:
@@ -522,65 +541,27 @@ class DateTime(Element):
             raise ValueError(msg)
 
         # Transform to GMT
-        value = value.astimezone(UTC)
+        value = value.astimezone(utils.UTC)
         milliseconds = "{0:03d}".format((value.microsecond + 500) // 1000)
         fmt = "%Y%m%d%H%M%S.{}[0:GMT]".format(milliseconds)
         return value.strftime(fmt)
 
 
 class Time(DateTime):
-    """
-    OFX Section 3.2.8.3
-
-    The regex given by the spec schema (in OFX_Common.xsd):
-
-    (([0-1][0-9])|(2[0-3]))
-    [0-5][0-9]
-    (([0-5][0-9])|(60))
-    (\.[0-9]{3})?
-    (\[[\+\-]?.+(:.+)?\])?
-    """
+    """ OFX Section 3.2.8.3 """
 
     type = datetime.time
-    # Valid time formats given by OFX spec
-    #
-    # N.B. the language from section 3.2.8.3 gives the format as:
-    # HHMMSS.XXX[gmt offset[:tz name]]
-    # This is inconsistent with the regex from the schema.  We follow the
-    # schema rather than the human language version
-    regex = re.compile(
-        r"""
-        ^
-        (?P<hour>([0-1][0-9])|(2[0-3]))
-        (?P<minute>[0-5][0-9])
-        (?P<second>([0-5][0-9])|(60))
-        (
-            (\.(?P<millisecond>[0-9]{3}))?
-            (
-                \[(?P<gmt_offset_hours>[0-9-+]+)
-                (
-                    (.(?P<gmt_offset_minutes>\d\d))?
-                    (:(?P<tz_name>.*))?
-                )?
-                \]
-            )?
-        )?
-        $
-        """,
-        re.VERBOSE,
-    )
+    regex = TIME_REGEX
 
     def _init(self, *args, **kwargs):
-        self.convert.register(datetime.datetime, self._convert_datetime)
         self.convert.register(datetime.time, self._convert_time)
-        self.unconvert.register(datetime.datetime, self._unconvert_datetime)
         self.unconvert.register(datetime.time, self._unconvert_time)
 
         super()._init(*args, **kwargs)
 
     def normalize_to_gmt(self,
-                         value,
-                         gmt_offset):
+                         value: datetime.time,
+                         gmt_offset: datetime.timedelta) -> datetime.time:
         # Adjust timezone to GMT/UTC
         # Can't directly add datetime.time and datetime.timedelta
         dt = datetime.datetime(
@@ -592,7 +573,7 @@ class Time(DateTime):
             value.second,
             microsecond=value.microsecond,
         )
-        return (dt - gmt_offset).time().replace(tzinfo=UTC)
+        return (dt - gmt_offset).time().replace(tzinfo=utils.UTC)
 
     def _convert_time(self, value):
         if value.utcoffset() is None:

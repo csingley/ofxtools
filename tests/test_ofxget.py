@@ -91,7 +91,13 @@ class CliTestCase(unittest.TestCase):
                     ("formats", [{"pretty": False},
                                  {"pretty": True}])])
 
-                mock_scan_prof.return_value = (ofxv1, ofxv2)
+                signoninfo = collections.OrderedDict([
+                    ('chgpinfirst', False),
+                    ('clientuidreq', False),
+                    ('authtokenfirst', False),
+                    ('mfachallengefirst', False)])
+
+                mock_scan_prof.return_value = (ofxv1, ofxv2, signoninfo)
                 result = ofxget.scan_profile(self.args)
                 self.assertIsNone(result, None)
 
@@ -574,7 +580,13 @@ class _ScanProfileTestCase(unittest.TestCase):
             ("formats", [{"pretty": False},
                          {"pretty": True}])])
 
-        self.assertEqual(results, (ofxv1, ofxv2))
+        signoninfo = collections.OrderedDict([
+            ('chgpinfirst', False),
+            ('clientuidreq', False),
+            ('authtokenfirst', False),
+            ('mfachallengefirst', False)])
+
+        self.assertEqual(results, (ofxv1, ofxv2, signoninfo))
 
 
 class ExtractAcctInfosTestCase(unittest.TestCase):

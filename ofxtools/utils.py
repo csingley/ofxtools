@@ -7,6 +7,7 @@ import os
 import itertools
 import xml.etree.ElementTree as ET
 from typing import Optional
+import math
 
 
 # local imports
@@ -29,23 +30,39 @@ def fixpath(path: str) -> str:
     return path
 
 
-def pairwise(iterable):
-    """
-    s -> (s0,s1), (s1,s2), (s2, s3), ...
+###############################################################################
+#  date/time utilities
+###############################################################################
+def gmt_offset(hours: int, minutes: int) -> datetime.timedelta:
+    assert hours in range(-12, 15)
+    assert minutes >= 0
+    offset_minutes = math.copysign(60 * abs(hours) + minutes, hours)
+    return datetime.timedelta(minutes=offset_minutes)
 
-    https://docs.python.org/2/library/itertools.html#recipes
-    """
+
+TZS = {"EST": -5,
+       "EDT": -4,
+       "CST": -6,
+       "CDT": -5,
+       "MST": -7,
+       "MDT": -6,
+       "PST": -8,
+       "PDT": -7}
+
+
+###############################################################################
+#  itertools recipes
+#  https://docs.python.org/2/library/itertools.html#recipes
+###############################################################################
+def pairwise(iterable):
+    """ s -> (s0,s1), (s1,s2), (s2, s3), ...  """
     a, b = itertools.tee(iterable)
     next(b, None)
     return zip(a, b)
 
 
 def all_equal(iterable):
-    """
-    Returns True if all the elements are equal to each other
-
-    https://docs.python.org/2/library/itertools.html#recipes
-    """
+    """ Returns True if all the elements are equal to each other """
     g = itertools.groupby(iterable)
     return next(g, True) and not next(g, False)
 
@@ -53,14 +70,15 @@ def all_equal(iterable):
 def partition(pred, iterable):
     """
     Use a predicate to partition entries into false entries and true entries
-
-    https://docs.python.org/2/library/itertools.html#recipes
     """
     # partition(is_odd, range(10)) --> 0 2 4 6 8   and  1 3 5 7 9
     t1, t2 = itertools.tee(iterable)
     return itertools.filterfalse(pred, t1), filter(pred, t2)
 
 
+###############################################################################
+#  ElementTree utilities
+###############################################################################
 def indent(elem: ET.Element, level: int = 0) -> None:
     """
     Indent xml.etree.ElementTree.Element.text by nesting level.
@@ -82,14 +100,17 @@ def indent(elem: ET.Element, level: int = 0) -> None:
             elem.tail = i
 
 
+# FIXME - this doesn't work quite right
 def tostring_unclosed_elements(elem: ET.Element) -> bytes:
     """
-    SGML-style string representation of xml.etree.ElementTree, without closing tags.
+    SGML-style string representation of xml.etree.ElementTree, without
+    closing tags.
 
     Drop-in replacement for xml.etree.ElementTree.tostring().
     """
     if len(elem) == 0:
-        output = bytes("<{}>{}{}".format(elem.tag, elem.text or "", elem.tail or ""), "utf_8")
+        text = "<{}>{}{}".format(elem.tag, elem.text or "", elem.tail or "")
+        output = bytes(text, "utf_8")
     else:
         output = bytes("<{}>{}".format(elem.tag, elem.tail or ""), "utf_8")
         for child in elem:
@@ -98,6 +119,9 @@ def tostring_unclosed_elements(elem: ET.Element) -> bytes:
     return output
 
 
+###############################################################################
+#  Securities identifier utilities (CUSIP, ISIN, etc.)
+###############################################################################
 def cusip_checksum(base: str) -> str:
     """
     Compute the check digit for a base Committee on Uniform Security
@@ -190,6 +214,43 @@ def sedol2isin(sedol, nation=None) -> str:
     assert sedol_checksum(sedol[:6]) == sedol[6]
     base = nation + sedol.zfill(9)
     return base + isin_checksum(base)
+
+
+# TESTME
+try:
+    # If pytz is installed then use that.
+    import pytz
+
+    UTC = pytz.UTC  # type: ignore
+except ImportError:
+    # Otherwise create our own UTC tzinfo.
+    class _UTC(datetime.tzinfo):
+        def tzname(self,
+                   dt: Optional[datetime.datetime],
+                   ) -> Optional[str]:
+            """datetime -> string name of time zone."""
+            return "UTC"
+
+        def utcoffset(self,
+                      dt: Optional[datetime.datetime],
+                      ) -> Optional[datetime.timedelta]:
+            """datetime -> minutes east of UTC (negative for west of UTC)"""
+            return datetime.timedelta(0)
+
+        def dst(self,
+                dt: Optional[datetime.datetime],
+                ) -> Optional[datetime.timedelta]:
+            """datetime -> DST offset in minutes east of UTC.
+
+            Return 0 if DST not in effect.  utcoffset() must include the DST
+            offset.
+            """
+            return datetime.timedelta(0)
+
+        def __repr__(self) -> str:
+            return "<UTC>"
+
+    UTC = _UTC()  # type: ignore
 
 
 #  def settleDate(dt):
@@ -331,40 +392,3 @@ def sedol2isin(sedol, nation=None) -> str:
 #  d = 1 + (p + 27 + (p + 6) / 40) % 31
 #  m = 3 + (p + 26) / 30
 #  return datetime.date(y, m, d)
-
-
-# TESTME
-try:
-    # If pytz is installed then use that.
-    import pytz
-
-    UTC = pytz.UTC  # type: ignore
-except ImportError:
-    # Otherwise create our own UTC tzinfo.
-    class _UTC(datetime.tzinfo):
-        def tzname(self,
-                   dt: Optional[datetime.datetime],
-                   ) -> Optional[str]:
-            """datetime -> string name of time zone."""
-            return "UTC"
-
-        def utcoffset(self,
-                      dt: Optional[datetime.datetime],
-                      ) -> Optional[datetime.timedelta]:
-            """datetime -> minutes east of UTC (negative for west of UTC)"""
-            return datetime.timedelta(0)
-
-        def dst(self,
-                dt: Optional[datetime.datetime],
-                ) -> Optional[datetime.timedelta]:
-            """datetime -> DST offset in minutes east of UTC.
-
-            Return 0 if DST not in effect.  utcoffset() must include the DST
-            offset.
-            """
-            return datetime.timedelta(0)
-
-        def __repr__(self) -> str:
-            return "<UTC>"
-
-    UTC = _UTC()  # type: ignore

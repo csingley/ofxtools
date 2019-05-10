@@ -270,7 +270,7 @@ def scan_profile(args: ArgType) -> None:
     """
     scan_results = _scan_profile(args["url"], args["org"], args["fid"])
 
-    v1, v2 = scan_results
+    v1, v2, signoninfo = scan_results
     if (not v2["versions"]) and (not v1["versions"]):
         msg = "Scan found no working formats for {}"
         print(msg.format(args["url"]))
@@ -285,7 +285,10 @@ def scan_profile(args: ArgType) -> None:
         write_config(args)
 
 
-def _best_scan_format(scan_results: Tuple[ScanResult, ScanResult]):
+def _best_scan_format(scan_results: Tuple[ScanResult,
+                                          ScanResult,
+                                          Mapping[str, bool],
+                                          ]):
     """
     Given the results of _scan_profile(), choose the best parameters;
     return as dict (compatible with ArgParser/ ChainMap).
@@ -294,7 +297,7 @@ def _best_scan_format(scan_results: Tuple[ScanResult, ScanResult]):
     delta, i.e. we prefer formats with "pretty"/"unclosedelements" given as
     False (the default) over True.
     """
-    v1, v2 = scan_results
+    v1, v2, signoninfo = scan_results
     if v2["versions"]:
         result = v2
     elif v1["versions"]:
@@ -489,7 +492,7 @@ def init_client(args: ArgType) -> OFXClient:
     Initialize OFXClient with connection info from args
     """
     client = OFXClient(
-        args["url"] or None,
+        args["url"],
         userid=args["user"] or None,
         clientuid=args["clientuid"] or None,
         org=args["org"] or None,
@@ -645,7 +648,10 @@ def _scan_profile(url: str,
                   org: str,
                   fid: str,
                   max_workers: Optional[int] = None,
-                  timeout: Optional[int] = None) -> Tuple[ScanResult, ScanResult]:
+                  timeout: Optional[int] = None) -> Tuple[ScanResult,
+                                                          ScanResult,
+                                                          Mapping[str, bool],
+                                                          ]:
     """
     Report permutations of OFX version/prettyprint/unclosedelements that
     successfully download OFX profile from server.
@@ -692,6 +698,7 @@ def _scan_profile(url: str,
     # is actually the metadata (i.e. connection parameters like OFX version
     # tried for a request) stored as values in the ``futures`` dict.
     working: Mapping[int, List[tuple]] = defaultdict(list)
+    signoninfo: Mapping[str, bool] = OrderedDict()
 
     for future in concurrent.futures.as_completed(futures):
         try:
@@ -704,12 +711,22 @@ def _scan_profile(url: str,
             future.cancel()
             continue
 
-        # ``response`` is an HTTPResponse; doesn't have seek() method used by
-        # ``header.parse_header()``.  Repackage as a BytesIO for parsing.
-        try:
-            signoninfos = extract_signoninfos(BytesIO(response.read()))
-        except (ParseError, ValueError):
-            signoninfos = []
+        if not signoninfo:
+            # ``response`` is an HTTPResponse; doesn't have seek() method used
+            # by ``header.parse_header()``.  Repackage as BytesIO for parsing.
+            try:
+                signoninfos = extract_signoninfos(BytesIO(response.read()))
+                assert len(signoninfos) > 0
+                info = signoninfos[0]
+                bool_attrs = ("chgpinfirst",
+                              "clientuidreq",
+                              "authtokenfirst",
+                              "mfachallengefirst",
+                              )
+                signoninfo = OrderedDict([(attr, getattr(info, attr, False))
+                                          for attr in bool_attrs])
+            except (ValueError, ):
+                pass
 
         (version, prettyprint, close_elements) = futures[future]
         working[version].append((prettyprint, close_elements))
@@ -754,7 +771,9 @@ def _scan_profile(url: str,
         del format["unclosedelements"]
 
     return (OrderedDict([("versions", v1_versions), ("formats", v1_formats)]),
-            OrderedDict([("versions", v2_versions), ("formats", v2_formats)]))
+            OrderedDict([("versions", v2_versions), ("formats", v2_formats)]),
+            signoninfo,
+            )
 
 
 def verify_status(trnrs: models.Aggregate) -> None:
