@@ -32,7 +32,7 @@ from typing import (
 
 
 # local imports
-from ofxtools.Types import Element, ListItem, ListElement
+from ofxtools.Types import Element, InstanceCounterMixin, ListItem, ListElement
 import ofxtools.models
 from ofxtools.utils import classproperty, pairwise
 
@@ -84,7 +84,7 @@ class Aggregate(list):
                           args: tuple,
                           kwargs: Dict[str, Any],
                           errMsg: str,
-                          **extra_kwargs: Any,
+                          **extra_kwargs,
                           ):
             assert "mutexes" in extra_kwargs
             assert "predicate" in extra_kwargs
@@ -307,8 +307,10 @@ class Aggregate(list):
         N.B. predicate tests *values* of cls._superdict
              (not keys i.e. attribute names)
         """
-        return OrderedDict([(k, v) for k, v in cls._superdict.items()
-                            if predicate(v)])
+        match_items = [(k, v) for k, v in cls._superdict.items()
+                       if predicate(v)]
+        match_items.sort(key=lambda it: it[1]._counter)
+        return OrderedDict(match_items)
 
     @classproperty
     @classmethod
@@ -443,7 +445,7 @@ class SubAggregate(Element):
     #  return "<{}>".format(self.type.__name__)
 
 
-class Unsupported:
+class Unsupported(InstanceCounterMixin):
     """
     Null Aggregate/Element - not implemented (yet)
     """
@@ -464,20 +466,20 @@ class ElementList(Aggregate):
     """
     @classproperty
     @classmethod
-    def listitems(cls) -> OrderedDict:
+    def listitems(cls):
         """
         ElementList.listitems returns ListElements instead of ListItems
         """
         return cls._ordered_attrs(lambda v: isinstance(v, ListElement))
 
-    def _apply_args(self, *args) -> None:
+    def _apply_args(self, *args):
         # Interpret positional args as contained list items (of variable #)
         assert len(self.listitems) == 1
         converter = list(self.listitems.values())[0]
         for member in args:
             self.append(converter.convert(member))
 
-    def _listAppend(self, root: ET.Element, member) -> None:
+    def _listAppend(self, root, member):
         assert len(self.listitems) == 1
         spec = list(self.listitems.items())[0]
         attr, converter = spec
