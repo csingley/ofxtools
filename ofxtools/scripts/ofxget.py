@@ -656,8 +656,10 @@ def _scan_profile(url: str,
     Report permutations of OFX version/prettyprint/unclosedelements that
     successfully download OFX profile from server.
 
-    Returns a pair of (OFXv1 results, OFXv2 results), each type(dict).
-    dict values provide ``ofxget`` configs that will work to connect.
+    Returns a 3-tuple of (OFXv1 results, OFXv2 results, signoninfo), each
+    type(dict).  OFX results provide ``ofxget`` configs that will work to
+    make a basic OFX connection. SIGNONINFO provides further auth information
+    that may be needed to succssfully log in.
     """
     if timeout is None:
         timeout = 5
@@ -698,7 +700,7 @@ def _scan_profile(url: str,
     # is actually the metadata (i.e. connection parameters like OFX version
     # tried for a request) stored as values in the ``futures`` dict.
     working: Mapping[int, List[tuple]] = defaultdict(list)
-    signoninfo: Mapping[str, bool] = OrderedDict()
+    signoninfos: Mapping[str, defaultdict] = defaultdict(OrderedDict)
 
     for future in concurrent.futures.as_completed(futures):
         try:
@@ -711,25 +713,34 @@ def _scan_profile(url: str,
             future.cancel()
             continue
 
-        if not signoninfo:
-            # ``response`` is an HTTPResponse; doesn't have seek() method used
-            # by ``header.parse_header()``.  Repackage as BytesIO for parsing.
+        (version, prettyprint, close_elements) = futures[future]
+        working[version].append((prettyprint, close_elements))
+
+        # ``response`` is an HTTPResponse; doesn't have seek() method used
+        # by ``header.parse_header()``.  Repackage as BytesIO for parsing.
+        if not signoninfos[version]:
             try:
-                signoninfos = extract_signoninfos(BytesIO(response.read()))
-                assert len(signoninfos) > 0
-                info = signoninfos[0]
+                signoninfos_ = extract_signoninfos(BytesIO(response.read()))
+                assert len(signoninfos_) > 0
+                info = signoninfos_[0]
                 bool_attrs = ("chgpinfirst",
                               "clientuidreq",
                               "authtokenfirst",
                               "mfachallengefirst",
                               )
-                signoninfo = OrderedDict([(attr, getattr(info, attr, False))
-                                          for attr in bool_attrs])
+                signoninfo_ = OrderedDict([
+                    (attr, getattr(info, attr, None) or False)
+                    for attr in bool_attrs])
+                signoninfos[version] = signoninfo_
             except (ValueError, ):
                 pass
 
-        (version, prettyprint, close_elements) = futures[future]
-        working[version].append((prettyprint, close_elements))
+    signoninfos = {k: v for k, v in signoninfos.items() if v}
+    if signoninfos:
+        highest_version = max(signoninfos.keys())
+        signoninfo = signoninfos[highest_version]
+    else:
+        signoninfo = OrderedDict()
 
     def collate_results(results):
         """
@@ -814,9 +825,10 @@ def extract_signoninfos(markup: BytesIO) -> List[models.SIGNONINFO]:
 
         list_ = rs.signoninfolist
         assert list_ is not None
-        return itertools.chain.from_iterable(list_)
+        return list_[:]
 
-    return [extract_signoninfo(trnrs) for trnrs in msgs]
+    return list(itertools.chain.from_iterable(
+        [extract_signoninfo(trnrs) for trnrs in msgs]))
 
 
 def extract_acctinfos(markup: BytesIO) -> ChainMap:
