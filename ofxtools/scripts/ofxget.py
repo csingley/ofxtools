@@ -28,6 +28,7 @@ from typing import (
     List,
     Any,
     Mapping,
+    MutableMapping,
 )
 
 # 3rd party imports
@@ -700,7 +701,7 @@ def _scan_profile(url: str,
     # is actually the metadata (i.e. connection parameters like OFX version
     # tried for a request) stored as values in the ``futures`` dict.
     working: Mapping[int, List[tuple]] = defaultdict(list)
-    signoninfos: Mapping[str, defaultdict] = defaultdict(OrderedDict)
+    signoninfos: MutableMapping[int, Any] = defaultdict(OrderedDict)
 
     for future in concurrent.futures.as_completed(futures):
         try:
@@ -742,7 +743,9 @@ def _scan_profile(url: str,
     else:
         signoninfo = OrderedDict()
 
-    def collate_results(results):
+    def collate_results(
+        results: Tuple[int, Tuple[bool, bool]]
+    ) -> Tuple[List[int], List[MutableMapping[str, bool]]]:
         """
         Transform our metadata results (version, prettyprint, close_elements)
         into a 2-tuple of ([OFX version], [format]) where each format is a dict
@@ -752,10 +755,10 @@ def _scan_profile(url: str,
         Input ``results`` needs to be a complete set for either OFXv1 or v2,
         with no results for the other version admixed.
         """
-        results = list(results)
+        results_ = list(results)
         if not results:
             return [], []
-        versions, formats = zip(*results)
+        versions, formats = zip(*results_)  # type: ignore
 
         # Assumption: the same formatting requirements apply to all
         # sub-versions (e.g. 1.0.2 and 1.0.3, or 2.0.3 and 2.2.0).
