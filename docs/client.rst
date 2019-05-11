@@ -262,11 +262,11 @@ Here's how to use it.
 .. code-block:: bash
 
     $ ofxget scan etrade  
-    [{"versions": [102], "formats": [{"pretty": false, "unclosed_elements": true}, {"pretty": false, "unclosed_elements": false}]}, {"versions": [], "formats": []}]
+    [{"versions": [102], "formats": [{"pretty": false, "unclosedelements": true}, {"pretty": false, "unclosedelements": false}]}, {"versions": [], "formats": []}, {"chgpinfirst": false, "clientuidreq": false, "authtokenfirst": false, "mfachallengefirst": false}]
     $ ofxget scan usaa
-    [{"versions": [102, 151], "formats": [{"pretty": false, "unclosed_elements": true}, {"pretty": true, "unclosed_elements": true}]}, {"versions": [200, 202], "formats": [{"pretty": false}, {"pretty": true}]}]
+    [{"versions": [102, 151], "formats": [{"pretty": false, "unclosedelements": true}, {"pretty": true, "unclosedelements": true}]}, {"versions": [200, 202], "formats": [{"pretty": false}, {"pretty": true}]}, {"chgpinfirst": false, "clientuidreq": false, "authtokenfirst": false, "mfachallengefirst": false}]
     $ ofxget scan vanguard
-    [{"versions": [102, 103, 151, 160], "formats": [{"pretty": false, "unclosed_elements": true}, {"pretty": true, "unclosed_elements": true}, {"pretty": true, "unclosed_elements": false}]}, {"versions": [200, 201, 202, 203, 210, 211, 220], "formats": [{"pretty": true}]}]
+    [{"versions": [102, 103, 151, 160], "formats": [{"pretty": false, "unclosed_elements": true}, {"pretty": true, "unclosed_elements": true}, {"pretty": true, "unclosed_elements": false}]}, {"versions": [200, 201, 202, 203, 210, 211, 220], "formats": [{"pretty": true}]}, {}]
 
 (Try to exercise restraint with this command.  Each invocation sends several
 dozen HTTP requests to the server; you can get your IP throttled or blocked.)
@@ -296,10 +296,29 @@ Copy these configs in your ``ofxget.cfg`` like so:
 
     [vanguard]
     version: 203
-    pretty: true
+    jjjjjjjjjkjjjjjjjjjjjjjkpretty: true
 
 
 In reality, though, it'd probably be better just to use OFX 2.0.2 for USAA.
+
+The last set of configs, after OFXv1 and OFXv2, contains information extracted
+from the SIGNONINFO in the profile.  For the above institutions, this has
+contained nothing interesting - all fields are false, except in the case of
+Vanguard, which is blank because they deviate from the OFX spec and require
+an authenticated login in order to return a profile.  However, in some cases
+there's some important information in the SIGNONINFO.
+
+.. code-block:: bash
+
+    $ ofxget scan bofa
+    [{"versions": [102], "formats": [{"pretty": false, "unclosedelements": true}, {"pretty": false, "unclosedelements": false}, {"pretty": true, "unclosedelements": true}, {"pretty": true, "unclosedelements": false}]}, {"versions": [], "formats": []}, {"chgpinfirst": false, "clientuidreq": true, "authtokenfirst": false, "mfachallengefirst": false}]
+    $ ofxget scan chase
+    [{"versions": [], "formats": []}, {"versions": [200, 201, 202, 203, 210, 211, 220], "formats": [{"pretty": false}, {"pretty": true}]}, {"chgpinfirst": false, "clientuidreq": true, "authtokenfirst": false, "mfachallengefirst": false}]
+
+Both Chase and BofA have the CLIENTUIDREQ flag set, which means you'll need to
+set ``clientuid`` (a valid UUID4 value) in your ``ofxget.cfg``.  However,
+in both cases you'll need to log into the bank's website in order to set this
+up.
 
 If your FI is not already known to ``ofxget``, you won't be able to use
 an existing server nickname.  If there's a working entry for your FI on
