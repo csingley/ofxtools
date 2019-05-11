@@ -30,6 +30,7 @@ from ofxtools.models.bank.msgsets import (
 )
 from ofxtools.models.billpay.msgsets import BILLPAYMSGSET
 from ofxtools.models.invest.msgsets import INVSTMTMSGSET, SECLISTMSGSET
+from ofxtools.models.email import EMAILMSGSET
 from ofxtools.models.tax1099 import TAX1099MSGSET
 
 
@@ -50,18 +51,19 @@ class MSGSETLIST(Aggregate):
 
     signonmsgset = ListItem(SIGNONMSGSET)
     signupmsgset = ListItem(SIGNUPMSGSET)
-    profmsgset = ListItem(PROFMSGSET)
     bankmsgset = ListItem(BANKMSGSET)
     creditcardmsgset = ListItem(CREDITCARDMSGSET)
+    invstmtmsgset = ListItem(INVSTMTMSGSET)
     interxfermsgset = ListItem(INTERXFERMSGSET)
     wirexfermsgset = ListItem(WIREXFERMSGSET)
-    invstmtmsgset = ListItem(INVSTMTMSGSET)
-    seclistmsgset = ListItem(SECLISTMSGSET)
     billpaymsgset = ListItem(BILLPAYMSGSET)
+    emailmsgset = ListItem(EMAILMSGSET)
+    seclistmsgset = ListItem(SECLISTMSGSET)
     #  presdirmsgset = ListItem(PRESDIRMSGSET)
     presdirmsgset = Unsupported()
     #  presdlvmsgset = ListItem(PRESDLVMSGSET)
     presdlvmsgset = Unsupported()
+    profmsgset = ListItem(PROFMSGSET)
     tax1099msgset = ListItem(TAX1099MSGSET)
 
     @classmethod
