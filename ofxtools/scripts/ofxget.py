@@ -292,7 +292,7 @@ def scan_profile(args: ArgType) -> None:
 
     print(json.dumps(scan_results))
 
-    if args["write"]:
+    if args["write"] and not args["dryrun"]:
         extra_args = _best_scan_format(scan_results)
         args.maps.insert(0, extra_args)
 
@@ -356,7 +356,7 @@ def request_acctinfo(args: ArgType) -> None:
 
     print(acctinfo.read().decode())
 
-    if args["write"]:
+    if args["write"] and not args["dryrun"]:
         acctinfo.seek(0)
         extra_args = dict(extract_acctinfos(acctinfo))
         extra_args = {k: arg2config(k, v) for k, v in extra_args.items()}
@@ -364,7 +364,7 @@ def request_acctinfo(args: ArgType) -> None:
 
         write_config(args)
 
-    if args["savepass"]:
+    if args["savepass"] and not args["dryrun"]:
         save_passwd(args, password)
 
 
@@ -426,10 +426,10 @@ def request_stmt(args: ArgType) -> None:
 
     print(response.decode())
 
-    if args["write"]:
+    if args["write"] and not args["dryrun"]:
         write_config(args)
 
-    if args["savepass"]:
+    if args["savepass"] and not args["dryrun"]:
         save_passwd(args, password)
 
 
@@ -471,10 +471,10 @@ def request_stmtend(args: ArgType) -> None:
 
     print(response.decode())
 
-    if args["write"]:
+    if args["write"] and not args["dryrun"]:
         write_config(args)
 
-    if args["savepass"]:
+    if args["savepass"] and not args["dryrun"]:
         save_passwd(args, password)
 
 
