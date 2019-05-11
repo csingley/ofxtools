@@ -559,7 +559,7 @@ class XferprofTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "PROCENDTM").text = "170000.000[0:GMT]"
         SubElement(root, "CANSCHED").text = "Y"
         SubElement(root, "CANRECUR").text = "Y"
-        SubElement(root, "CANMODXFER").text = "N"
+        SubElement(root, "CANMODXFERS").text = "N"
         SubElement(root, "CANMODMDLS").text = "Y"
         SubElement(root, "MODELWND").text = "3"
         SubElement(root, "DAYSWITH").text = "2"
@@ -571,7 +571,7 @@ class XferprofTestCase(unittest.TestCase, base.TestAggregate):
     def aggregate(cls):
         return XFERPROF("SUNDAY",
                         procendtm=time(17, 0, 0, tzinfo=UTC), cansched=True,
-                        canrecur=True, canmodxfer=False, canmodmdls=True,
+                        canrecur=True, canmodxfers=False, canmodmdls=True,
                         modelwnd=3, dayswith=2, dfltdaystopay=4)
 
 
@@ -1441,14 +1441,15 @@ class MsgsetlistTestCase(unittest.TestCase, base.TestAggregate):
         msgsets = [
             SignonmsgsetTestCase.etree,
             SignupmsgsetTestCase.etree,
-            ProfmsgsetTestCase.etree,
             BankmsgsetTestCase.etree,
             CreditcardmsgsetTestCase.etree,
+            InvstmtmsgsetTestCase.etree,
             InterxfermsgsetTestCase.etree,
             WirexfermsgsetTestCase.etree,
-            InvstmtmsgsetTestCase.etree,
+            EmailmsgsetTestCase.etree,
             SeclistmsgsetTestCase.etree,
             #  BillpaymsgsetTestCase.etree,
+            ProfmsgsetTestCase.etree,
             Tax1099msgsetTestCase.etree,
         ]
         root = Element("MSGSETLIST")
@@ -1467,11 +1468,11 @@ class MsgsetlistTestCase(unittest.TestCase, base.TestAggregate):
         # MSGSETLIST may only contain
         # ["SIGNONMSGSET", "SIGNUPMSGSET", "PROFMSGSET", "BANKMSGSET",
         # "CREDITCARDMSGSET", "INTERXFERMSGSET", "WIREXFERMSGSET",
-        # "INVSTMTMSGSET", "SECLISTMSGSET", "BILLPAYMSGSET", "PRESDIRMSGSET",
-        # "PRESDLVMSGSET", "TAX1099MSGSET"]
+        # "EMAILMSGSET", "INVSTMTMSGSET", "SECLISTMSGSET", "BILLPAYMSGSET",
+        # "PRESDIRMSGSET", "PRESDLVMSGSET", "TAX1099MSGSET"]
         listitems = MSGSETLIST.listitems
         #  cls.assertEqual(len(listitems), 13)
-        self.assertEqual(len(listitems), 11)
+        self.assertEqual(len(listitems), 12)
         root = self.etree
         root.append(bk_stmt.StmttrnrsTestCase.etree)
 
