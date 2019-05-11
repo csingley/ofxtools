@@ -87,7 +87,7 @@ from ofxtools.models.tax1099 import (
     TAX1099TRNRQ,
     TAX1099MSGSRQV1,
 )
-from ofxtools.utils import UTC
+from ofxtools.utils import classproperty, UTC
 from ofxtools import utils
 
 
@@ -213,8 +213,9 @@ class OFXClient:
             msg = "OFX version {} must close all tags"
             raise ValueError(msg.format(self.version))
 
-    @property
-    def uuid(self) -> str:
+    @classproperty
+    @classmethod
+    def uuid(cls) -> str:
         """ Returns a new UUID each time called """
         return str(uuid.uuid4())
 

@@ -316,9 +316,22 @@ there's some important information in the SIGNONINFO.
     [{"versions": [], "formats": []}, {"versions": [200, 201, 202, 203, 210, 211, 220], "formats": [{"pretty": false}, {"pretty": true}]}, {"chgpinfirst": false, "clientuidreq": true, "authtokenfirst": false, "mfachallengefirst": false}]
 
 Both Chase and BofA have the CLIENTUIDREQ flag set, which means you'll need to
-set ``clientuid`` (a valid UUID4 value) in your ``ofxget.cfg``.  However,
-in both cases you'll need to log into the bank's website in order to set this
-up.
+set ``clientuid`` (a valid UUID4 value) in your ``ofxget.cfg``.  You can
+accomplish this conveniently by passing the ``--clientuid`` option, e.g.:
+
+.. code-block:: bash
+    $ ofxget scan chase --write
+    $ ofxget acctinfo chase -u <username> --savepass --clientuid --write
+
+Note: you really want to be sure to pass the ``--write`` option in that last
+command in order to save the CLIENTUID to your config file.  It is important
+that the CLIENTUID be consistent across sessions.
+
+In the returned ACCTINFO response, heed the ``<SONRS><STATUS>``.  It has a
+nonzero ``<CODE>``, and the ``<MESSAGE>`` instructs you to verify your identity
+within 7 days.  To do this, you need to log into the bank's website and perform
+some sort of verification process.  In Chase's case, they want you to click a
+link in their secure messaging facility and enter a code sent via SMS/email.
 
 If your FI is not already known to ``ofxget``, you won't be able to use
 an existing server nickname.  If there's a working entry for your FI on

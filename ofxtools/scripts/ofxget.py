@@ -5,7 +5,7 @@ Configurable CLI front end for ``ofxtools.Client``
 """
 # stdlib imports
 import os
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser, Namespace, Action
 import configparser
 from configparser import ConfigParser
 import datetime
@@ -48,15 +48,18 @@ from ofxtools.Types import DateTime
 from ofxtools.utils import UTC
 from ofxtools import (utils, ofxhome, config, models)
 from ofxtools.Parser import OFXTree, ParseError
+from ofxtools.__version__ import __version__
 
 
 CONFIGPATH = os.path.join(config.CONFIGDIR, "fi.cfg")
 DefaultConfig = ConfigParser()
 DefaultConfig.read(CONFIGPATH)
 
+
 USERCONFIGPATH = os.path.join(config.USERCONFIGDIR, "ofxget.cfg")
 UserConfig = ConfigParser()
 UserConfig.read(USERCONFIGPATH)
+
 
 DEFAULTS = {"url": "", "org": "", "fid": "", "version": 203,
             "appid": "", "appver": "", "bankid": "", "brokerid": "",
@@ -77,10 +80,17 @@ ArgType = typing.ChainMap[str, Any]  # Type alias for loaded Argparser args
 ScanResult = Mapping[str, Union[list, dict]]  # Type alias for scan result
 
 
+class UuidAction(Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        uuid = OFXClient.uuid
+        setattr(namespace, self.dest, uuid)
+
+
 def make_argparser() -> ArgumentParser:
     argparser = ArgumentParser(
         description="Download OFX financial data",
         epilog="FIs configured: {}".format(fi_index()),
+        prog="ofxget",
     )
     argparser.add_argument(
         "request",
@@ -136,8 +146,11 @@ def make_argparser() -> ArgumentParser:
 
     signon_group = argparser.add_argument_group(title="Signon Options")
     signon_group.add_argument("-u", "--user", help="FI login username")
-    signon_group.add_argument("--clientuid", metavar="UUID4",
-                              help="OFX client UID")
+    signon_group.add_argument("--clientuid",
+                              nargs=0,
+                              action=UuidAction,
+                              metavar="UUID4",
+                              help="Generate random valid CLIENTUID")
     signon_group.add_argument("--org", help="FI.ORG")
     signon_group.add_argument("--fid", help="FI.FID")
     signon_group.add_argument("--appid", help="OFX client app identifier")
@@ -621,9 +634,9 @@ def mk_server_cfg(args: ArgType) -> configparser.SectionProxy:
     cfg = UserConfig[server]
 
     for opt in ("url", "version", "ofxhome", "org", "fid", "brokerid",
-                "bankid", "user", "checking", "savings", "moneymrkt",
-                "creditline", "creditcard", "investment", "pretty",
-                "unclosedelements"):
+                "bankid", "user", "clientuid", "checking", "savings",
+                "moneymrkt", "creditline", "creditcard", "investment",
+                "pretty", "unclosedelements"):
         if opt in args and args[opt] != DEFAULTS[opt]:
             cfg[opt] = arg2config(opt, args[opt])
 
@@ -756,7 +769,7 @@ def _scan_profile(url: str,
         with no results for the other version admixed.
         """
         results_ = list(results)
-        if not results:
+        if not results_:
             return [], []
         versions, formats = zip(*results_)  # type: ignore
 
