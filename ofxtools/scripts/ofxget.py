@@ -385,10 +385,7 @@ def request_stmt(args: ArgType) -> None:
     """
     Send *STMTRQ
     """
-    # Convert dtstart/dtend/dtasof to Python datetime type
-    D = DateTime().convert
-    dt = {d[2:]: D(args[d]) for d in ("dtstart", "dtend", "dtasof")}
-
+    dt = convert_datetime(args)
     password = get_passwd(args)
 
     if args["all"]:
@@ -437,10 +434,7 @@ def request_stmtend(args: ArgType) -> None:
     """
     Send *STMTENDRQ
     """
-    # Convert dtstart/dtend/dtasof to Python datetime type
-    D = DateTime().convert
-    dt = {d[2:]: D(args[d]) for d in ("dtstart", "dtend", "dtasof")}
-
+    dt = convert_datetime(args)
     password = get_passwd(args)
 
     if args["all"]:
@@ -937,8 +931,16 @@ REQUEST_HANDLERS = {"scan": scan_profile,
                     "tax1099": request_tax1099}
 
 
-def fi_index():
+def fi_index() -> List[str]:
+    """ All FIs known to ofxget """
     return sorted(set(UserConfig.sections() + DefaultConfig.sections()))
+
+
+def convert_datetime(args: ArgType) -> Mapping[str,
+                                               Optional[datetime.datetime]]:
+    """ Convert dtstart/dtend/dtasof to Python datetime type for request """
+    D = DateTime().convert
+    return {d[2:]: D(args[d] or None) for d in ("dtstart", "dtend", "dtasof")}
 
 
 def get_passwd(args: ArgType) -> str:
