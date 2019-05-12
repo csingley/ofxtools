@@ -316,16 +316,22 @@ there's some important information in the SIGNONINFO.
     [{"versions": [], "formats": []}, {"versions": [200, 201, 202, 203, 210, 211, 220], "formats": [{"pretty": false}, {"pretty": true}]}, {"chgpinfirst": false, "clientuidreq": true, "authtokenfirst": false, "mfachallengefirst": false}]
 
 Both Chase and BofA have the CLIENTUIDREQ flag set, which means you'll need to
-set ``clientuid`` (a valid UUID4 value) in your ``ofxget.cfg``.  You can
+set ``clientuid`` (a valid UUID4 value) in your ``ofxget.cfg``.  ``ofxget``
+will set a global default CLIENTUID for you if you have it ``--write``  a 
+configuration.  You can override this global 
+You can
 accomplish this conveniently by passing the ``--clientuid`` option, e.g.:
 
 .. code-block:: bash
+    # The following generates a global default CLIENTUID
     $ ofxget scan chase --write
+    # The following additionally generates a Chase-specific CLIENTUID
     $ ofxget acctinfo chase -u <username> --savepass --clientuid --write
 
-Note: you really want to be sure to pass the ``--write`` option in that last
-command in order to save the CLIENTUID to your config file.  It is important
-that the CLIENTUID be consistent across sessions.
+Note: if you choose to use an FI-specific CLIENTUID, as in that last command,
+then you really want to be sure to pass the ``--write`` option in order to save
+it to your config file.  It is important that the CLIENTUID be consistent
+across sessions.
 
 In the returned ACCTINFO response, heed the ``<SONRS><STATUS>``.  It has a
 nonzero ``<CODE>``, and the ``<MESSAGE>`` instructs you to verify your identity

@@ -26,7 +26,6 @@ from ofxtools.utils import UTC
 from ofxtools.scripts import ofxget
 from ofxtools.ofxhome import OFXServer
 from ofxtools import models
-from ofxtools import Parser
 
 # test imports
 import test_models_msgsets
@@ -113,7 +112,7 @@ class CliTestCase(unittest.TestCase):
                 self.assertEqual(len(args), 1)
 
                 # FIXME - the string output of dicts in json.dumps() appears
-                # not to be stable; below is for Py 3.5 - 3.7, whereas 
+                # not to be stable; below is for Py 3.5 - 3.7, whereas
                 # Py 3.4 looks like this:
                 #[{"versions": [102, 103], "formats": [{"unclosedelements": true, "pretty": false}, {"unclosedelements": false, "pretty": true}]}, {"versions": [203], "formats": [{"pretty": false}, {"pretty": true}]}]
 
@@ -637,34 +636,36 @@ class MergeConfigTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        # Monkey-patch ofxget.UserConfig, ofxget.DefaultConfig
-        user_cfg = configparser.ConfigParser()
-        user_cfg["2big2fail"] = {}
-        user_cfg["2big2fail"]["fid"] = "33"
-        user_cfg["2big2fail"]["user"] = "porkypig"
-        user_cfg["2big2fail"]["savings"] = "111"
-        user_cfg["2big2fail"]["checking"] = "222, 333"
-        user_cfg["2big2fail"]["creditcard"] = "444, 555"
+        # Monkey-patch ofxget.UserConfig
+        default_cfg = """
+        [2big2fail]
+        ofxhome = 417
+        version = 203
+        pretty = true
+        fid = 44
+        org = 2big2fail
+        """
 
-        default_cfg = configparser.ConfigParser()
-        default_cfg["2big2fail"] = {}
-        default_cfg["2big2fail"]["ofxhome"] = "417"
-        default_cfg["2big2fail"]["version"] = "203"
-        default_cfg["2big2fail"]["pretty"] = "true"
-        default_cfg["2big2fail"]["fid"] = "44"
-        default_cfg["2big2fail"]["org"] = "2big2fail"
+        user_cfg = """
+        [2big2fail]
+        fid = 33
+        user = porkypig
+        savings = 111
+        checking = 222, 333
+        creditcard = 444, 555
+        """
+
+        cfg = configparser.ConfigParser()
+        cfg.read_string(default_cfg)
+        cfg.read_string(user_cfg)
 
         cls._UserConfig = ofxget.UserConfig
-        ofxget.UserConfig = user_cfg
-
-        cls._DefaultConfig = ofxget.DefaultConfig
-        ofxget.DefaultConfig = default_cfg
+        ofxget.UserConfig = cfg
 
     @classmethod
     def tearDownClass(cls):
-        # Undo monkey patches for ofxget.UserConfig, ofxget.DefaultConfig
+        # Undo monkey patches for ofxget.UserConfig
         ofxget.UserConfig = cls._UserConfig
-        ofxget.DefaultConfig = cls._DefaultConfig
 
     def testMergeConfig(self):
         args = argparse.Namespace(
@@ -678,21 +679,20 @@ class MergeConfigTestCase(unittest.TestCase):
                 id="1", name="Two Big Two Fail", fid="22", org="2BIG2FAIL",
                 url="https://ofx.test.com", brokerid="2big2fail.com")
 
-            merged = ofxget.merge_config(args)
+            merged = ofxget.merge_config(args, ofxget.UserConfig)
 
         # None of args/usercfg/defaultcfg has the URL,
         # so there should have been an OFX Home lookup
         ofxhome_lookup.assert_called_once_with("417")
 
-        # ChainMap(args, user_cfg, default_cfg, ofxhome_lookup, DEFAULTS)
+        # ChainMap(args, user_cfg, ofxhome_lookup, DEFAULTS)
         self.assertIsInstance(merged, collections.ChainMap)
         maps = merged.maps
-        self.assertEqual(len(maps), 5)
+        self.assertEqual(len(maps), 4)
         self.assertEqual(maps[0]["user"], "daffyduck")
         self.assertEqual(maps[1]["user"], "porkypig")
-        self.assertEqual(maps[2]["org"], "2big2fail")
-        self.assertEqual(maps[3]["org"], "2BIG2FAIL")
-        self.assertEqual(maps[4], ofxget.DEFAULTS)
+        self.assertEqual(maps[2]["org"], "2BIG2FAIL")
+        self.assertEqual(maps[3], ofxget.DEFAULTS)
 
         # Args passed from the CLI trump everything
         self.assertEqual(merged["user"], "daffyduck")
@@ -727,7 +727,7 @@ class MergeConfigTestCase(unittest.TestCase):
         self.assertEqual(maps[1]["checking"], ["222", "333"])
 
         # INI int conversion works
-        self.assertEqual(maps[2]["version"], 203)
+        self.assertEqual(maps[1]["version"], 203)
 
         # We have proper types for all lists, even absent configuration
         for lst in ("checking", "savings", "moneymrkt", "creditline",
@@ -747,7 +747,7 @@ class MergeConfigTestCase(unittest.TestCase):
     def testMergeConfigUnknownFiArg(self):
         args = argparse.Namespace(server="3big4fail")
         with self.assertRaises(ValueError):
-            ofxget.merge_config(args)
+            ofxget.merge_config(args, ofxget.UserConfig)
 
 
 class ArgConfigTestCase(unittest.TestCase):
@@ -860,6 +860,9 @@ class MkServerCfgTestCase(unittest.TestCase):
     """ Unit tests for ofxtools.script.ofxget.mk_server_cfg() """
     def testMkservercfg(self):
         with patch("ofxtools.scripts.ofxget.UserConfig", new=ConfigParser()):
+            # FIXME - patching the classproperty isn't working
+            #  with patch("ofxtools.Client.OFXClient.uuid", new="DEADBEEF"):
+
             # Must have "server" arg
             with self.assertRaises(ValueError):
                 ofxget.mk_server_cfg({"foo": "bar"})
@@ -868,12 +871,17 @@ class MkServerCfgTestCase(unittest.TestCase):
             with self.assertRaises(ValueError):
                 ofxget.mk_server_cfg({"server": "foo", "url": "foo"})
 
-            results = ofxget.mk_server_cfg(
+            results = dict(ofxget.mk_server_cfg(
                 {"server": "myserver", "url": "https://ofxget.test.com",
                  "version": 203, "ofxhome": "123", "org": "TEST", "fid": "321",
                  "brokerid": "test.com", "bankid": "11235813",
                  "user": "porkypig", "pretty": True,
-                 "unclosedelements": False})
+                 "unclosedelements": False}))
+
+            self.assertIn("clientuid", results)
+
+            # FIXME - patching the classproperty isn't working
+            del results["clientuid"]
 
             # args equal to defaults are omitted from the results
             predicted = {

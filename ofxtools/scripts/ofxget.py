@@ -5,7 +5,8 @@ Configurable CLI front end for ``ofxtools.Client``
 """
 # stdlib imports
 import os
-from argparse import ArgumentParser, Namespace, Action
+import argparse
+from argparse import ArgumentParser, Action
 import configparser
 from configparser import ConfigParser
 import datetime
@@ -29,6 +30,7 @@ from typing import (
     Any,
     Mapping,
     MutableMapping,
+    Dict,
 )
 
 # 3rd party imports
@@ -47,18 +49,13 @@ from ofxtools.Client import (
 from ofxtools.Types import DateTime
 from ofxtools.utils import UTC
 from ofxtools import (utils, ofxhome, config, models)
-from ofxtools.Parser import OFXTree, ParseError
-from ofxtools.__version__ import __version__
+from ofxtools.Parser import OFXTree
 
 
 CONFIGPATH = os.path.join(config.CONFIGDIR, "fi.cfg")
-DefaultConfig = ConfigParser()
-DefaultConfig.read(CONFIGPATH)
-
-
 USERCONFIGPATH = os.path.join(config.USERCONFIGDIR, "ofxget.cfg")
 UserConfig = ConfigParser()
-UserConfig.read(USERCONFIGPATH)
+UserConfig.read([CONFIGPATH, USERCONFIGPATH])
 
 
 DEFAULTS = {"url": "", "org": "", "fid": "", "version": 203,
@@ -150,7 +147,7 @@ def make_argparser() -> ArgumentParser:
                               nargs=0,
                               action=UuidAction,
                               metavar="UUID4",
-                              help="Generate random valid CLIENTUID")
+                              help="Override default CLIENTUID with random #")
     signon_group.add_argument("--org", help="FI.ORG")
     signon_group.add_argument("--fid", help="FI.FID")
     signon_group.add_argument("--appid", help="OFX client app identifier")
@@ -255,7 +252,11 @@ def make_argparser() -> ArgumentParser:
 ###############################################################################
 # CLI METHODS
 ###############################################################################
-def scan_profiles(start, stop, timeout=None):
+def scan_profiles(start: int,
+                  stop: int,
+                  timeout: Optional[float] = None
+                  ) -> Dict[str,
+                            Tuple[ScanResult, ScanResult, Mapping[str, bool]]]:
     """
     Scan OFX Home's list of FIs for working connection configs.
     """
@@ -302,7 +303,7 @@ def scan_profile(args: ArgType) -> None:
 def _best_scan_format(scan_results: Tuple[ScanResult,
                                           ScanResult,
                                           Mapping[str, bool],
-                                          ]):
+                                          ]) -> MutableMapping:
     """
     Given the results of _scan_profile(), choose the best parameters;
     return as dict (compatible with ArgParser/ ChainMap).
@@ -517,7 +518,13 @@ def init_client(args: ArgType) -> OFXClient:
     return client
 
 
-def merge_config(args: Namespace) -> ArgType:
+def read_config(cfg, section):
+    return {k: config2arg(k, v)
+            for k, v in cfg[section].items()} if section in cfg else {}
+
+
+def merge_config(args: argparse.Namespace,
+                 config: configparser.ConfigParser) -> ArgType:
     """
     Merge CLI args > user config > library config > OFX Home > defaults
     """
@@ -525,15 +532,8 @@ def merge_config(args: Namespace) -> ArgType:
     _args = {k: v for k, v in vars(args).items() if v is not None}
 
     server = _args["server"]
-
-    def read_config(cfg, section):
-        return {k: config2arg(k, v)
-                for k, v in cfg[server].items()} if section in cfg else {}
-
-    user_cfg = read_config(UserConfig, server)
-    default_cfg = read_config(DefaultConfig, server)
-
-    merged = ChainMap(_args, user_cfg, default_cfg, DEFAULTS)
+    user_cfg = read_config(config, server)
+    merged = ChainMap(_args, user_cfg, DEFAULTS)
 
     ofxhome_id = merged["ofxhome"]
     if ofxhome_id:
@@ -557,32 +557,32 @@ def config2arg(key: str, value: str) -> Union[List[str], bool, int, str]:
     """
     Transform a config value from ConfigParser format to ArgParser format
     """
-    def passString(string_: str) -> str:
-        return string_
+    def read_string(string: str) -> str:
+        return string
 
-    def makeBool(string: str) -> bool:
+    def read_int(string: str) -> int:
+        return int(value)
+
+    def read_bool(string: str) -> bool:
         BOOLY = ConfigParser.BOOLEAN_STATES  # type: ignore
         if string not in BOOLY:
             msg = "Can't interpret '{}' as bool; must be one of {}"
             raise ValueError(msg.format(string, list(BOOLY.keys())))
         return BOOLY[string]
 
-    def makeList(string: str) -> List[str]:
+    def read_list(string: str) -> List[str]:
         return [sub.strip() for sub in string.split(",")]
 
-    def makeInt(string: str) -> int:
-        return int(value)
+    handlers = {str: read_string,
+                bool: read_bool,
+                list: read_list,
+                int: read_int}
 
     if key not in DEFAULTS:
         msg = "Don't know type of {}; define in ofxget.DEFAULTS"
         raise ValueError(msg.format(key))
 
     cfg_type = type(DEFAULTS[key])
-
-    handlers = {str: passString,
-                bool: makeBool,
-                list: makeList,
-                int: makeInt}
 
     if cfg_type not in handlers:
         msg = "Config key {}: no handler defined for type '{}'"
@@ -595,28 +595,45 @@ def arg2config(key: str, value: Union[list, bool, int, str]) -> str:
     """
     Transform a config value from ArgParser format to ConfigParser format
     """
-    default_type = type(DEFAULTS[key])
+    def write_string(value: str) -> str:
+        return value
 
-    if default_type is list:
+    def write_int(value: int) -> str:
+        return str(value)
+
+    def write_bool(value: bool) -> str:
+        return {True: "true", False: "false"}[value]
+
+    def write_list(value: list) -> str:
         # INI-friendly string representation of Python list type
-        value = str(value).strip("[]").replace("'", "")
-    elif default_type is bool:
-        assert isinstance(value, bool)
-        value = {True: "true", False: "false"}[value]
-    elif default_type is int:
-        assert isinstance(value, int)
-        value = str(value)
-    else:
-        assert default_type is str
-        assert isinstance(value, str)
+        return str(value).strip("[]").replace("'", "")
 
-    return value
+    handlers = {str: write_string,
+                bool: write_bool,
+                list: write_list,
+                int: write_int}
+
+    if key not in DEFAULTS:
+        msg = "Don't know type of {}; define in ofxget.DEFAULTS"
+        raise ValueError(msg.format(key))
+
+    cfg_type = type(DEFAULTS[key])
+
+    return handlers[cfg_type](value)  # type: ignore
 
 
 def mk_server_cfg(args: ArgType) -> configparser.SectionProxy:
     """
-    Copy key parameters to UserConfig, under the indicated section
+    Load user config from disk; apply key args to the section corresponding to
+    the server nickname.
     """
+    UserConfig.clear()
+    UserConfig.read(USERCONFIGPATH)
+
+    defaults = UserConfig[UserConfig.default_section]  # type: ignore
+    if "clientuid" not in defaults:
+        defaults["clientuid"] = OFXClient.uuid
+
     server = args.get("server", None)
     # args.server might actually be a URL from CLI, not a nickname
     if (not server) or server == args["url"]:
@@ -627,12 +644,22 @@ def mk_server_cfg(args: ArgType) -> configparser.SectionProxy:
         UserConfig[server] = {}
     cfg = UserConfig[server]
 
+    LibraryConfig = ConfigParser()
+    LibraryConfig.read(CONFIGPATH)
+    lib_cfg = read_config(LibraryConfig, server)
+
     for opt in ("url", "version", "ofxhome", "org", "fid", "brokerid",
-                "bankid", "user", "clientuid", "checking", "savings",
-                "moneymrkt", "creditline", "creditcard", "investment",
-                "pretty", "unclosedelements"):
-        if opt in args and args[opt] != DEFAULTS[opt]:
-            cfg[opt] = arg2config(opt, args[opt])
+                "bankid", "user", "checking", "savings", "moneymrkt",
+                "creditline", "creditcard", "investment", "pretty",
+                "unclosedelements"):
+        if opt in args:
+            value = args[opt]
+            default_value = lib_cfg.get(opt, DEFAULTS[opt])
+            if value != default_value:
+                cfg[opt] = arg2config(opt, args[opt])
+
+    if "clientuid" in args:
+        cfg["clientuid"] = args["clientuid"]
 
     return cfg
 
@@ -656,10 +683,10 @@ def _scan_profile(url: str,
                   org: str,
                   fid: str,
                   max_workers: Optional[int] = None,
-                  timeout: Optional[int] = None) -> Tuple[ScanResult,
-                                                          ScanResult,
-                                                          Mapping[str, bool],
-                                                          ]:
+                  timeout: Optional[float] = None) -> Tuple[ScanResult,
+                                                            ScanResult,
+                                                            Mapping[str, bool],
+                                                           ]:
     """
     Report permutations of OFX version/prettyprint/unclosedelements that
     successfully download OFX profile from server.
@@ -670,7 +697,7 @@ def _scan_profile(url: str,
     that may be needed to succssfully log in.
     """
     if timeout is None:
-        timeout = 5
+        timeout = 5.0
 
     if max_workers is None:
         max_workers = 5
@@ -922,18 +949,9 @@ def extract_acctinfos(markup: BytesIO) -> ChainMap:
                           acctinfos, key=sortKey)])
 
 
-# Map "request" arg to handler function
-REQUEST_HANDLERS = {"scan": scan_profile,
-                    "prof": request_profile,
-                    "acctinfo": request_acctinfo,
-                    "stmt": request_stmt,
-                    "stmtend": request_stmtend,
-                    "tax1099": request_tax1099}
-
-
 def fi_index() -> List[str]:
     """ All FIs known to ofxget """
-    return sorted(set(UserConfig.sections() + DefaultConfig.sections()))
+    return sorted(UserConfig.sections())
 
 
 def convert_datetime(args: ArgType) -> Mapping[str,
@@ -975,7 +993,16 @@ def save_passwd(args: ArgType, password: str) -> None:
     keyring.set_password("ofxtools", args["server"], password)
 
 
-def main():
+# Map "request" arg to handler function
+REQUEST_HANDLERS = {"scan": scan_profile,
+                    "prof": request_profile,
+                    "acctinfo": request_acctinfo,
+                    "stmt": request_stmt,
+                    "stmtend": request_stmtend,
+                    "tax1099": request_tax1099}
+
+
+def main() -> None:
     argparser = make_argparser()
     args = argparser.parse_args()
 
@@ -983,11 +1010,11 @@ def main():
     server = args.server
     if urllib.parse.urlparse(server).scheme:
         args.url = server
-        args = ChainMap(vars(args))
+        args_ = ChainMap(vars(args))
     else:
-        args = merge_config(args)
+        args_ = merge_config(args, UserConfig)
 
-    REQUEST_HANDLERS[args["request"]](args)
+    REQUEST_HANDLERS[args_["request"]](args_)
 
 
 if __name__ == "__main__":
