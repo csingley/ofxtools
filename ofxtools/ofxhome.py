@@ -2,6 +2,12 @@
 """
 Interface with http://ofxhome.com API
 """
+
+
+__all__ = ["URL", "VALID_DAYS", "OFXServer", "list_institutions", "lookup",
+           "ofx_invalid", "ssl_invalid"]
+
+
 # stdlib imports
 from collections import OrderedDict, namedtuple
 import datetime
@@ -11,11 +17,7 @@ import urllib.error as urllib_error
 import urllib.parse as urllib_parse
 from xml.sax import saxutils
 import re
-from typing import Optional, Union
-
-
-__all__ = ["URL", "VALID_DAYS", "OFXServer", "list_institutions", "lookup",
-           "ofx_invalid", "ssl_invalid"]
+from typing import Dict, NamedTuple, Optional, Union
 
 
 URL = "http://www.ofxhome.com/api.php"
@@ -24,11 +26,19 @@ VALID_DAYS = 90
 FID_REGEX = re.compile(r"<fid>([^<]*)</fid>")
 
 
-OFXServer = namedtuple("OFXServer",
-                       ["id", "name", "fid", "org", "url", "brokerid",
-                        "ofxfail", "sslfail", "lastofxvalidation",
-                        "lastsslvalidation", "profile"])
-OFXServer.__new__.__defaults__ = (None, ) * len(OFXServer._fields)  # type: ignore
+class OFXServer(NamedTuple):
+    """ Container for an OFX Home FI record """
+    id: Optional[str] = None
+    name: Optional[str] = None
+    fid: Optional[str] = None
+    org: Optional[str] = None
+    url: Optional[str] = None
+    brokerid: Optional[str] = None
+    ofxfail: Optional[bool] = True
+    sslfail: Optional[bool] = True
+    lastofxvalidation: Optional[datetime.datetime] = None
+    lastsslvalidation: Optional[datetime.datetime] = None
+    profile: Optional[Dict[str, Union[str, bool]]] = None
 
 
 def list_institutions() -> OrderedDict:
@@ -41,35 +51,46 @@ def list_institutions() -> OrderedDict:
 
 
 def lookup(id: str) -> Optional[OFXServer]:
+    etree = fetch_fi_xml(id)
+    if etree is None:
+        return None
+
+    converters = {"ofxfail": _convert_bool,
+                  "sslfail": _convert_bool,
+                  "lastofxvalidation": _convert_dt,
+                  "lastsslvalidation": _convert_dt,
+                  "profile": _convert_profile}
+
+    # mypy doesn't accept NamedTuple(**kwargs); use OrderedDict as workaround
+    attrs = [(e.tag, converters.get(e.tag, _convert_str)(e)) for e in etree]
+    attrs.insert(0, ("id", etree.attrib["id"]))
+    return OFXServer(**OrderedDict(attrs))
+
+
+def fetch_fi_xml(id: str) -> Optional[ET.Element]:
     query = _make_query(lookup=id)
     try:
         with urllib.request.urlopen(query) as f:
             response = f.read()
-            try:
-                etree = ET.fromstring(response)
-            except ET.ParseError:
-                # OFX Home fails to escape XML control characters for <FID>
-                response_ = FID_REGEX.sub(_escape_fid, response.decode())
-                etree = ET.fromstring(response_)
-    except urllib_error.URLError as exc:
+    except urllib_error.URLError:
         return None
 
-    reader = {"ofxfail": _read_bool,
-              "sslfail": _read_bool,
-              "lastofxvalidation": _read_date,
-              "lastsslvalidation": _read_date,
-              "profile": _read_profile}
-
-    attrs = {e.tag: reader.get(e.tag, _read)(e) for e in etree}
-    attrs["id"] = etree.attrib["id"]
-    return OFXServer(**attrs)
+    try:
+        etree = ET.fromstring(response)
+    except ET.ParseError:
+        # OFX Home fails to escape XML control characters for <FID>
+        response_ = FID_REGEX.sub(_escape_fid, response.decode())
+        etree = ET.fromstring(response_)
+    return etree
 
 
 def ofx_invalid(srvr: OFXServer, valid_days: Optional[int] = None) -> bool:
     if srvr.ofxfail:
         return True
-
-    valid_days = valid_days or VALID_DAYS
+    if srvr.lastofxvalidation is None:
+        return True
+    if valid_days is None:
+        valid_days = VALID_DAYS
     now = datetime.datetime.now()
     if (now - srvr.lastofxvalidation) > datetime.timedelta(days=valid_days):
         return True
@@ -80,8 +101,10 @@ def ofx_invalid(srvr: OFXServer, valid_days: Optional[int] = None) -> bool:
 def ssl_invalid(srvr: OFXServer, valid_days: Optional[int] = None) -> bool:
     if srvr.sslfail:
         return True
-
-    valid_days = valid_days or VALID_DAYS
+    if srvr.lastsslvalidation is None:
+        return True
+    if valid_days is None:
+        valid_days = VALID_DAYS
     now = datetime.datetime.now()
     if (now - srvr.lastsslvalidation) > datetime.timedelta(days=valid_days):
         return True
@@ -94,34 +117,34 @@ def _make_query(**kwargs: str) -> str:
     return "{}?{}".format(URL, params)
 
 
-def _read(elem: ET.Element) -> Optional[str]:
+def _convert_str(elem: ET.Element) -> Optional[str]:
     text = elem.text
     if text:
         return saxutils.unescape(text)
     return None
 
 
-def _read_date(elem: ET.Element) -> Optional[datetime.datetime]:
+def _convert_dt(elem: ET.Element) -> Optional[datetime.datetime]:
     text = elem.text
     if text:
         return datetime.datetime.strptime(text, "%Y-%m-%d %H:%M:%S")
     return None
 
 
-def _read_bool(elem: ET.Element) -> Optional[bool]:
+def _convert_bool(elem: ET.Element) -> Optional[bool]:
     text = elem.text
     if text:
         return bool(int(text))
     return None
 
 
-def _read_profile(elem: ET.Element) -> dict:
-    def convert_bool(key: str, val: str) -> Union[str, bool]:
+def _convert_profile(elem: ET.Element) -> Dict[str, Union[str, bool]]:
+    def convert_maybe_bool(key: str, val: str) -> Union[str, bool]:
         if key.endswith("msgset"):
             return {"true": True, "false": False}[val]
-        return val
+        return saxutils.unescape(val)
 
-    return {k: convert_bool(k, v) for k, v in elem.attrib.items()}
+    return {k: convert_maybe_bool(k, v) for k, v in elem.attrib.items()}
 
 
 def _escape_fid(match) -> str:

@@ -58,15 +58,16 @@ UserConfig = ConfigParser()
 UserConfig.read([CONFIGPATH, USERCONFIGPATH])
 
 
-DEFAULTS = {"url": "", "org": "", "fid": "", "version": 203,
-            "appid": "", "appver": "", "bankid": "", "brokerid": "",
-            "user": "", "clientuid": "", "language": "", "dryrun": False,
-            "unsafe": False, "unclosedelements": False, "pretty": False,
-            "checking": [], "savings": [], "moneymrkt": [], "creditline": [],
-            "creditcard": [], "investment": [], "dtstart": "", "dtend": "",
-            "dtasof": "", "inctran": True, "incbal": True, "incpos": True,
-            "incoo": False, "all": False, "years": [], "acctnum": "",
-            "recid": "", "ofxhome": "", "write": False, "savepass": False}
+DEFAULTS: Dict[str, Union[str, int, bool, list]] = {
+    "url": "", "org": "", "fid": "", "version": 203, "appid": "", "appver": "",
+    "bankid": "", "brokerid": "", "user": "", "clientuid": "", "language": "",
+    "dryrun": False, "unsafe": False, "unclosedelements": False,
+    "pretty": False, "checking": [], "savings": [], "moneymrkt": [],
+    "creditline": [], "creditcard": [], "investment": [], "dtstart": "",
+    "dtend": "", "dtasof": "", "inctran": True, "incbal": True, "incpos": True,
+    "incoo": False, "all": False, "years": [], "acctnum": "", "recid": "",
+    "ofxhome": "", "write": False, "savepass": False,
+}
 
 
 class OfxgetWarning(UserWarning):
@@ -266,6 +267,7 @@ def scan_profiles(start: int,
     for ofxhome_id in list(institutions.keys())[start:stop]:
         lookup = ofxhome.lookup(ofxhome_id)
         if lookup is None\
+           or lookup.url is None\
            or ofxhome.ofx_invalid(lookup)\
            or ofxhome.ssl_invalid(lookup):
             continue
@@ -655,11 +657,13 @@ def mk_server_cfg(args: ArgType) -> configparser.SectionProxy:
         if opt in args:
             value = args[opt]
             default_value = lib_cfg.get(opt, DEFAULTS[opt])
-            if value != default_value:
-                cfg[opt] = arg2config(opt, args[opt])
+            if value != default_value and value not in [None, "", []]:
+                cfg[opt] = arg2config(opt, value)
 
     if "clientuid" in args:
-        cfg["clientuid"] = args["clientuid"]
+        value = args["clientuid"]
+        if value not in [None, "", []]:
+            cfg["clientuid"] = value
 
     return cfg
 
@@ -680,13 +684,13 @@ def write_config(args: ArgType) -> None:
 # HEAVY LIFTING
 ###############################################################################
 def _scan_profile(url: str,
-                  org: str,
-                  fid: str,
+                  org: Optional[str],
+                  fid: Optional[str],
                   max_workers: Optional[int] = None,
                   timeout: Optional[float] = None) -> Tuple[ScanResult,
                                                             ScanResult,
                                                             Mapping[str, bool],
-                                                           ]:
+                                                            ]:
     """
     Report permutations of OFX version/prettyprint/unclosedelements that
     successfully download OFX profile from server.
