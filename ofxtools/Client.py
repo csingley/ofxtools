@@ -109,7 +109,7 @@ class StmtRq(NamedTuple):
 
 class CcStmtRq(NamedTuple):
     """
-    Parameters of a credit cardstatement request
+    Parameters of a credit card statement request
     """
     acctid: Optional[str] = None
     dtstart: Optional[datetime.datetime] = None

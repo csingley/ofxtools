@@ -12,7 +12,7 @@ from configparser import ConfigParser
 import datetime
 from collections import defaultdict, OrderedDict, ChainMap
 import getpass
-import urllib
+from urllib import parse as urllib_parse
 from urllib.error import HTTPError, URLError
 import concurrent.futures
 import json
@@ -1008,7 +1008,7 @@ def main() -> None:
 
     # If positional arg is FI name (not URL), then merge config
     server = args.server
-    if urllib.parse.urlparse(server).scheme:
+    if urllib_parse.urlparse(server).scheme:
         args.url = server
         args_ = ChainMap(vars(args))
     else:
