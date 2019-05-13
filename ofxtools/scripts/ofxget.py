@@ -16,6 +16,7 @@ from urllib import parse as urllib_parse
 from urllib.error import HTTPError, URLError
 import concurrent.futures
 import json
+import xml.etree.ElementTree as ET
 from io import BytesIO
 import itertools
 from operator import attrgetter
@@ -23,6 +24,7 @@ import sys
 import warnings
 import typing
 from typing import (
+    TYPE_CHECKING,
     Union,
     Optional,
     Tuple,
@@ -41,14 +43,16 @@ try:
 except ImportError:
     HAS_KEYRING = False
 
+
 # local imports
+from ofxtools import (utils, ofxhome, config, models)
 from ofxtools.Client import (
     OFXClient, StmtRq, CcStmtRq, InvStmtRq,
     StmtEndRq, CcStmtEndRq,
 )
 from ofxtools.Types import DateTime
 from ofxtools.utils import UTC
-from ofxtools import (utils, ofxhome, config, models)
+from ofxtools.header import OFXHeaderError
 from ofxtools.Parser import OFXTree
 
 
@@ -74,8 +78,12 @@ class OfxgetWarning(UserWarning):
     """ Base class for warnings in this module """
 
 
-ArgType = typing.ChainMap[str, Any]  # Type alias for loaded Argparser args
-ScanResult = Mapping[str, Union[list, dict]]  # Type alias for scan result
+# Type alias for loaded Argparser args
+ArgType = typing.ChainMap[str, Any]
+# Type alias for scan result of a single OFX protocol version
+ScanVersionResult = Mapping[str, Union[list, dict]]
+# Type alias for a full set of profile scan results
+ScanResults = Tuple[ScanVersionResult, ScanVersionResult, Mapping[str, bool]]
 
 
 class UuidAction(Action):
@@ -256,8 +264,7 @@ def make_argparser() -> ArgumentParser:
 def scan_profiles(start: int,
                   stop: int,
                   timeout: Optional[float] = None
-                  ) -> Dict[str,
-                            Tuple[ScanResult, ScanResult, Mapping[str, bool]]]:
+                  ) -> Dict[str, ScanResults]:
     """
     Scan OFX Home's list of FIs for working connection configs.
     """
@@ -271,12 +278,12 @@ def scan_profiles(start: int,
            or ofxhome.ofx_invalid(lookup)\
            or ofxhome.ssl_invalid(lookup):
             continue
-        working = _scan_profile(url=lookup.url,
-                                org=lookup.org,
-                                fid=lookup.fid,
-                                timeout=timeout)
-        if working:
-            results[ofxhome_id] = working
+        scan_results = _scan_profile(url=lookup.url,
+                                     org=lookup.org,
+                                     fid=lookup.fid,
+                                     timeout=timeout)
+        if scan_results:
+            results[ofxhome_id] = scan_results
 
     return results
 
@@ -302,10 +309,7 @@ def scan_profile(args: ArgType) -> None:
         write_config(args)
 
 
-def _best_scan_format(scan_results: Tuple[ScanResult,
-                                          ScanResult,
-                                          Mapping[str, bool],
-                                          ]) -> MutableMapping:
+def _best_scan_format(scan_results: ScanResults) -> MutableMapping:
     """
     Given the results of _scan_profile(), choose the best parameters;
     return as dict (compatible with ArgParser/ ChainMap).
@@ -358,12 +362,10 @@ def request_acctinfo(args: ArgType) -> None:
     acctinfo = _request_acctinfo(args, password)
 
     print(acctinfo.read().decode())
+    acctinfo.seek(0)
 
     if args["write"] and not args["dryrun"]:
-        acctinfo.seek(0)
-        extra_args = dict(extract_acctinfos(acctinfo))
-        extra_args = {k: arg2config(k, v) for k, v in extra_args.items()}
-        args.maps.insert(0, extra_args)
+        _merge_acctinfo(args, acctinfo)
 
         write_config(args)
 
@@ -393,8 +395,7 @@ def request_stmt(args: ArgType) -> None:
 
     if args["all"]:
         acctinfo = _request_acctinfo(args, password)
-        args_ = extract_acctinfos(acctinfo)
-        args.maps.insert(1, args_)
+        _merge_acctinfo(args, acctinfo)
 
     stmtrqs: List[Union[StmtRq, CcStmtRq, InvStmtRq]] = []
     for accttype in ("checking", "savings", "moneymrkt", "creditline"):
@@ -442,8 +443,7 @@ def request_stmtend(args: ArgType) -> None:
 
     if args["all"]:
         acctinfo = _request_acctinfo(args, password)
-        args_ = extract_acctinfos(acctinfo)
-        args.maps.insert(1, args_)
+        _merge_acctinfo(args, acctinfo)
 
     stmtendrqs: List[Union[StmtEndRq, CcStmtEndRq]] = []
     for accttype in ("checking", "savings", "moneymrkt", "creditline"):
@@ -687,10 +687,7 @@ def _scan_profile(url: str,
                   org: Optional[str],
                   fid: Optional[str],
                   max_workers: Optional[int] = None,
-                  timeout: Optional[float] = None) -> Tuple[ScanResult,
-                                                            ScanResult,
-                                                            Mapping[str, bool],
-                                                            ]:
+                  timeout: Optional[float] = None) -> ScanResults:
     """
     Report permutations of OFX version/prettyprint/unclosedelements that
     successfully download OFX profile from server.
@@ -700,19 +697,13 @@ def _scan_profile(url: str,
     make a basic OFX connection. SIGNONINFO provides further auth information
     that may be needed to succssfully log in.
     """
-    if timeout is None:
-        timeout = 5.0
-
-    if max_workers is None:
-        max_workers = 5
-
     ofxv1 = [102, 103, 151, 160]
     ofxv2 = [200, 201, 202, 203, 210, 211, 220]
 
     futures = {}
     client = OFXClient(url, org=org, fid=fid)
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers) as executor:
         for prettyprint in (False, True):
             for close_elements in (False, True):
                 futures.update({executor.submit(
@@ -743,6 +734,7 @@ def _scan_profile(url: str,
 
     for future in concurrent.futures.as_completed(futures):
         try:
+            # ``future.result()`` returns an http.client.HTTPResponse
             response = future.result()
         except (URLError,
                 HTTPError,
@@ -758,8 +750,13 @@ def _scan_profile(url: str,
         # ``response`` is an HTTPResponse; doesn't have seek() method used
         # by ``header.parse_header()``.  Repackage as BytesIO for parsing.
         if not signoninfos[version]:
+            with response as f:
+                response_ = f.read()
             try:
-                signoninfos_ = extract_signoninfos(BytesIO(response.read()))
+                if not response_:
+                    continue
+
+                signoninfos_ = extract_signoninfos(BytesIO(response_))
                 assert len(signoninfos_) > 0
                 info = signoninfos_[0]
                 bool_attrs = ("chgpinfirst",
@@ -771,7 +768,11 @@ def _scan_profile(url: str,
                     (attr, getattr(info, attr, None) or False)
                     for attr in bool_attrs])
                 signoninfos[version] = signoninfo_
+            except (ET.ParseError, OFXHeaderError):
+                # We didn't receive valid OFX in the response
+                continue
             except (ValueError, ):
+                # We received OFX, but not a valid PROFRS
                 pass
 
     signoninfos = {k: v for k, v in signoninfos.items() if v}
@@ -872,7 +873,7 @@ def extract_signoninfos(markup: BytesIO) -> List[models.SIGNONINFO]:
         [extract_signoninfo(trnrs) for trnrs in msgs]))
 
 
-def extract_acctinfos(markup: BytesIO) -> ChainMap:
+def extract_acctinfos(markup: BytesIO) -> Mapping:
     """
     Input seralized OFX containing ACCTINFORS
     Output dict-like object containing parsed *ACCTINFOs
@@ -951,6 +952,11 @@ def extract_acctinfos(markup: BytesIO) -> ChainMap:
     return ChainMap(*[dispatcher.get(clsName, lambda x: {})(_acctinfos)
                       for clsName, _acctinfos in itertools.groupby(
                           acctinfos, key=sortKey)])
+
+
+def _merge_acctinfo(args: ArgType, markup: BytesIO) -> None:
+    # Insert extracted ACCTINFO after CLI commands, but before config files
+    args.maps.insert(1, extract_acctinfos(markup))
 
 
 def fi_index() -> List[str]:

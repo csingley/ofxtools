@@ -50,7 +50,16 @@ from io import BytesIO
 import itertools
 from operator import attrgetter, itemgetter
 from functools import singledispatch
-from typing import Dict, Union, Optional, Tuple, Iterator, NamedTuple
+from typing import (
+    TYPE_CHECKING,
+    Dict,
+    Union,
+    Optional,
+    Tuple,
+    Iterator,
+    NamedTuple,
+    BinaryIO,
+)
 
 
 # local imports
@@ -156,7 +165,7 @@ class OFXClient:
     """
 
     # OFX header/signon defaults
-    userid: str = "{:0<32}".format("anonymous")
+    userid: str = AUTH_PLACEHOLDER
     clientuid: Optional[str] = None
     org: Optional[str] = None
     fid: Optional[str] = None
@@ -246,7 +255,7 @@ class OFXClient:
                            dryrun: bool = False,
                            verify_ssl: bool = True,
                            timeout: Optional[float] = None,
-                           ) -> Union[HTTPResponse, BytesIO]:
+                           ) -> BinaryIO:
         """
         Package and send OFX statement requests
         (STMTRQ/CCSTMTRQ/INVSTMTRQ/STMTENDRQ/CCSTMTENDRQ).
@@ -300,7 +309,7 @@ class OFXClient:
                         dryrun: bool = False,
                         verify_ssl: bool = True,
                         timeout: Optional[float] = None,
-                        ) -> Union[HTTPResponse, BytesIO]:
+                        ) -> BinaryIO:
         """
         Package and send OFX profile requests (PROFRQ).
 
@@ -311,7 +320,7 @@ class OFXClient:
         profrq = PROFRQ(clientrouting="NONE", dtprofup=dtprofup)
         proftrnrq = PROFTRNRQ(trnuid=self.uuid, profrq=profrq)
 
-        user = password = "{:0<32}".format("anonymous")
+        user = password = AUTH_PLACEHOLDER
         signon = self.signon(password, userid=user)
 
         ofx = OFX(signonmsgsrqv1=signon, profmsgsrqv1=PROFMSGSRQV1(proftrnrq))
@@ -333,7 +342,7 @@ class OFXClient:
                          version: Optional[int] = None,
                          verify_ssl: bool = True,
                          timeout: Optional[float] = None,
-                         ) -> Union[HTTPResponse, BytesIO]:
+                         ) -> BinaryIO:
         """
         Package and send OFX account info requests (ACCTINFORQ)
         """
@@ -359,7 +368,7 @@ class OFXClient:
                         dryrun: bool = False,
                         verify_ssl: bool = True,
                         timeout: Optional[float] = None,
-                        ) -> Union[HTTPResponse, BytesIO]:
+                        ) -> BinaryIO:
         """
         Request US federal income tax form 1099 (TAX1099RQ)
         """
@@ -487,7 +496,7 @@ class OFXClient:
                  dryrun: bool = False,
                  verify_ssl: bool = True,
                  timeout: Optional[float] = None,
-                 ) -> Union[HTTPResponse, BytesIO]:
+                 ) -> BinaryIO:
         """
         Package complete OFX tree and POST to server.
 
@@ -516,7 +525,7 @@ class OFXClient:
         timeout = timeout or socket._GLOBAL_DEFAULT_TIMEOUT
         response = urllib_request.urlopen(req, timeout=timeout,
                                           context=ssl_context)
-        return response  # type: ignore
+        return response
 
     def serialize(self,
                   ofx: OFX,
