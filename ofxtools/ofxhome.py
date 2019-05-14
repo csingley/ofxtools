@@ -9,19 +9,27 @@ __all__ = ["URL", "VALID_DAYS", "OFXServer", "list_institutions", "lookup",
 
 
 # stdlib imports
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
 import datetime
 import xml.etree.ElementTree as ET
+from xml.sax import saxutils
 import urllib
 import urllib.error as urllib_error
 import urllib.parse as urllib_parse
-from xml.sax import saxutils
 import re
-from typing import Dict, NamedTuple, Optional, Union
+from typing import (
+    Dict,
+    NamedTuple,
+    Optional,
+    Union,
+    Mapping,
+    Match,
+)
 
 
 URL = "http://www.ofxhome.com/api.php"
 VALID_DAYS = 90
+
 
 FID_REGEX = re.compile(r"<fid>([^<]*)</fid>")
 
@@ -41,7 +49,7 @@ class OFXServer(NamedTuple):
     profile: Optional[Dict[str, Union[str, bool]]] = None
 
 
-def list_institutions() -> OrderedDict:
+def list_institutions() -> Mapping[str, str]:
     query = _make_query(all="yes")
     with urllib.request.urlopen(query) as f:
         response = f.read()
@@ -147,6 +155,6 @@ def _convert_profile(elem: ET.Element) -> Dict[str, Union[str, bool]]:
     return {k: convert_maybe_bool(k, v) for k, v in elem.attrib.items()}
 
 
-def _escape_fid(match) -> str:
+def _escape_fid(match: Match) -> str:
     fid = saxutils.escape(match.group(1))
     return "<fid>{}</fid>".format(fid)

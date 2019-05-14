@@ -26,8 +26,15 @@ import xml.etree.ElementTree as ET
 from collections import OrderedDict, ChainMap
 from copy import deepcopy
 from typing import (
-    Any, List, Dict, Tuple, Callable, Sequence, Mapping,
-    Union, Optional,
+    Any,
+    List,
+    Dict,
+    Tuple,
+    Callable,
+    Sequence,
+    Mapping,
+    Union,
+    Optional,
 )
 
 
@@ -44,10 +51,13 @@ class Aggregate(list):
     """
 
     # Validation constraints used by ``validate_args()``.
+
     # Aggregate MAY have at most child from  `optionalMutexes``
     optionalMutexes: List[List[str]] = []
+    #  optionalMutexes: Sequence[Sequence[str]] = []
+
     # Aggregate MUST contain exactly one child from ``requiredMutexes``
-    requiredMutexes: List[List[str]] = []
+    requiredMutexes: Sequence[Sequence[str]] = []
 
     def __init__(self, *args, **kwargs):
         """
@@ -81,19 +91,17 @@ class Aggregate(list):
         """
 
         def enforce_count(cls,
-                          args: tuple,
                           kwargs: Dict[str, Any],
                           errMsg: str,
-                          **extra_kwargs,
-                          ):
-            assert "mutexes" in extra_kwargs
-            assert "predicate" in extra_kwargs
+                          mutexes: Sequence[Sequence[str]],
+                          predicate: Callable[[int], bool],
+                          ) -> None:
 
-            for mutex in extra_kwargs["mutexes"]:
-                count = sum([kwargs.get(i, None) is not None for i in mutex])
-                if not extra_kwargs["predicate"](count):
+            for mutex in mutexes:
+                count = sum([kwargs.get(m, None) is not None for m in mutex])
+                if not predicate(count):
                     kwargs_ = ", ".join(
-                        ["{}={}".format(i, kwargs.get(i, None)) for i in mutex]
+                        ["{}={}".format(m, kwargs.get(m, None)) for m in mutex]
                     )
                     errFields = {
                         "cls": cls.__name__,
@@ -103,12 +111,12 @@ class Aggregate(list):
                     }
                     raise ValueError(errMsg.format(**errFields))
 
-        enforce_count(cls, args, kwargs,
+        enforce_count(cls, kwargs,
                       errMsg=("{cls}({kwargs}): must contain at most 1 of "
                               "[{mutex}] (not {count})"),
                       mutexes=cls.optionalMutexes, predicate=lambda x: x <= 1)
 
-        enforce_count(cls, args, kwargs,
+        enforce_count(cls, kwargs,
                       errMsg=("{cls}({kwargs}): must contain exactly 1 of "
                               "[{mutex}] (not {count})"),
                       mutexes=cls.requiredMutexes, predicate=lambda x: x == 1)

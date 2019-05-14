@@ -13,6 +13,10 @@ __all__ = [
 ]
 
 
+# stdlib imports
+from typing import Sequence
+
+
 # local imports
 from ofxtools.Types import OneOf, Decimal
 from ofxtools.models.base import Aggregate
@@ -1205,6 +1209,7 @@ class ORIGCURRENCY(Aggregate):
 class Origcurrency:
     """ Mixin providing property aliases and CURRENCY/ORIGCURRENCY mutex """
 
+    #  optionalMutexes: Sequence[Sequence[str]] = [
     optionalMutexes = [
         ["currency", "origcurrency"],
     ]

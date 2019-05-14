@@ -6,7 +6,7 @@ Configurable CLI front end for ``ofxtools.Client``
 # stdlib imports
 import os
 import argparse
-from argparse import ArgumentParser, Action
+from argparse import ArgumentParser, ArgumentError, Action
 import configparser
 from configparser import ConfigParser
 import datetime
@@ -22,9 +22,9 @@ import itertools
 from operator import attrgetter
 import sys
 import warnings
+import pydoc
 import typing
 from typing import (
-    TYPE_CHECKING,
     Union,
     Optional,
     Tuple,
@@ -33,6 +33,7 @@ from typing import (
     Mapping,
     MutableMapping,
     Dict,
+    Sequence,
 )
 
 # 3rd party imports
@@ -95,7 +96,7 @@ class UuidAction(Action):
 def make_argparser() -> ArgumentParser:
     argparser = ArgumentParser(
         description="Download OFX financial data",
-        epilog="FIs configured: {}".format(fi_index()),
+        #  epilog="FIs configured: {}".format(fi_index()),
         prog="ofxget",
     )
     argparser.add_argument(
@@ -103,7 +104,8 @@ def make_argparser() -> ArgumentParser:
         choices=list(REQUEST_HANDLERS.keys()),
         help="Request type")
     argparser.add_argument(
-        "server", help="OFX server - URL or FI name from ofxget.cfg/fi.cfg")
+        "server", nargs="?",
+        help="OFX server - URL or FI name from ofxget.cfg/fi.cfg")
     argparser.add_argument(
         "-n",
         "--dryrun",
@@ -959,9 +961,47 @@ def _merge_acctinfo(args: ArgType, markup: BytesIO) -> None:
     args.maps.insert(1, extract_acctinfos(markup))
 
 
-def fi_index() -> List[str]:
+def list_fis(args: ArgType) -> None:
+    server = args["server"]
+    if server is None:
+        entries = ["{:<40}{:<30}{:<8}".format(*srv) for srv in fi_index()]
+        entries.insert(0, " ".join(("=" * 39, "=" * 29, "=" * 8)))
+        entries.insert(0, "{:^40}{:^30}{:^8}".format("Name",
+                                                     "Nickname",
+                                                     "OFX Home"))
+        pydoc.pager("\n".join(entries))
+    elif server not in UserConfig:
+        msg = ""  # FIXME
+        raise ValueError(msg)
+    else:
+        ofxhome = UserConfig[server].get("ofxhome", "")
+        name = UserConfig["NAMES"].get(ofxhome, "")
+        config = [" = ".join(pair) for pair in UserConfig[server].items()]
+        print()
+        if name:
+            print(name)
+        print("\n".join(config))
+        print()
+
+
+def fi_index() -> Sequence[Tuple[str, str, str]]:
     """ All FIs known to ofxget """
-    return sorted(UserConfig.sections())
+    names = {id_: name for id_, name in UserConfig["NAMES"].items()}
+    cfg_default_sect = UserConfig.default_section  # type: ignore
+    servers = [(names.get(sct.get("ofxhome", None), ""),
+                nick,
+                sct.get("ofxhome", "--"))
+               for nick, sct in UserConfig.items()
+               if nick not in (cfg_default_sect, "NAMES")]
+
+    def sortkey(srv):
+        key = srv[0].lower()
+        if key.startswith("the "):
+            key = key[4:]
+        return key
+
+    servers.sort(key=sortkey)
+    return servers
 
 
 def convert_datetime(args: ArgType) -> Mapping[str,
@@ -1004,7 +1044,8 @@ def save_passwd(args: ArgType, password: str) -> None:
 
 
 # Map "request" arg to handler function
-REQUEST_HANDLERS = {"scan": scan_profile,
+REQUEST_HANDLERS = {"list": list_fis,
+                    "scan": scan_profile,
                     "prof": request_profile,
                     "acctinfo": request_acctinfo,
                     "stmt": request_stmt,
@@ -1016,13 +1057,19 @@ def main() -> None:
     argparser = make_argparser()
     args = argparser.parse_args()
 
-    # If positional arg is FI name (not URL), then merge config
-    server = args.server
-    if urllib_parse.urlparse(server).scheme:
-        args.url = server
+    if args.request == "list":
         args_ = ChainMap(vars(args))
     else:
-        args_ = merge_config(args, UserConfig)
+        server = args.server
+        if server is None:
+            msg = "the following arguments are required: server"
+            raise ArgumentError(None, msg)
+        # If positional arg is FI name (not URL), then merge config
+        if urllib_parse.urlparse(server).scheme:
+            args.url = server
+            args_ = ChainMap(vars(args))
+        else:
+            args_ = merge_config(args, UserConfig)
 
     REQUEST_HANDLERS[args_["request"]](args_)
 
