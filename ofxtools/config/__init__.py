@@ -1,6 +1,8 @@
 # coding: utf-8
 # stdlib imports
+import sys
 import os
+from pathlib import Path
 
 # local imports
 from ofxtools import utils
@@ -12,12 +14,21 @@ CONFIGDIR = utils.fixpath(os.path.dirname(__file__))
 
 
 # Cross-platform specification of user configuration directory
-if "APPDATA" in os.environ:  # Windows
-    CONFIGHOME = os.environ["APPDATA"]
-elif "XDG_CONFIG_HOME" in os.environ:  # Linux
-    CONFIGHOME = os.environ["XDG_CONFIG_HOME"]
-else:
-    CONFIGHOME = os.path.join(os.environ["HOME"], ".config")
+system = sys.platform.lower()
+environ = os.environ
+
+if system.startswith("win"):  # Windows
+    if "APPDATA" in environ:
+        CONFIGHOME = Path(environ["APPDATA"])
+    else:
+        CONFIGHOME = Path.home().joinpath("AppData").joinpath("Roaming")
+elif system.startswith("darwin"):  # Mac
+    CONFIGHOME = Path.home().joinpath("Library").joinpath("Preferences")
+else:  # Linux
+    if "XDG_CONFIG_HOME" in os.environ:
+        CONFIGHOME = Path(environ["XDG_CONFIG_HOME"])
+    else:
+        CONFIGHOME = Path.home().joinpath(".config")
 
 
-USERCONFIGDIR = os.path.join(utils.fixpath(CONFIGHOME), "ofxtools")
+USERCONFIGDIR = CONFIGHOME.joinpath("ofxtools")

@@ -17,46 +17,53 @@ The ``ofxget`` shell script should have been installed by ``pip`` along with
 the ``ofxtools`` library.  If the install location isn't already in your
 ``$PATH``, you'll likely want to add it.
 
-A user installation drops ``ofxget`` under ``~/.local/bin`` on Linux,
-``~/Library/PythonX.Y/bin/ofxget`` on Mac,
-and ``AppData\Roaming\Python\PythonXY\Scripts`` for Windows.
+    **User installation**
+    - Mac: ``~/Library/PythonX.Y/bin/ofxget``
+    - Windows: ``AppData\Roaming\Python\PythonXY\Scripts\ofxget``
+    - Linux/BSD/etc.: ``~/.local/bin/ofxget``
 
-A system installation places ``ofxget`` under ``/usr/local/bin`` on Linux,
-and ``/Library/Frameworks/Python.framework/Versions/X.Y/bin/`` on Mac.
+    **Site installation**
+    - Mac: ``/Library/Frameworks/Python.framework/Versions/X.Y/bin/ofxget``
+    - Windows: Good question; anybody know?
+    - Linux/BSD/etc.: ``/usr/local/bin/ofxget``
 
-If all else fails, you can execute
-``</path/to/ofxtools>/ofxtools/scripts/ofxget.py``.
+If all else fails, you can execute ``</path/to/ofxtools>/scripts/ofxget.py``.
 
 Using ofxget  - TL;DR
 ---------------------
-If your financial institution has working connection parameters posted on
-`OFX Home`_ , then the quickest way to get your hands on some OFX data
-is to say:
+Find your financial institution's nickname:
+
+.. code-block:: bash
+    $ ofxget list
+
+If your financial institution is listed, then the quickest way to get your
+hands on some OFX data is to say:
 
 .. code-block:: bash
 
-    $ ofxget scan <server_nickname> --ofxhome <ofxhome_id> --write
-    $ ofxget acctinfo <server_nickname> -u <your_username> --write
-    $ ofxget stmt <server_nickname>
+    $ ofxget acctinfo <server_nickname> -u <your_username> --all
 
 Enter your password when prompted.
 
-The first command finds working OFX connection parameters for your FI,
-and saves them to a config file in your user home directory (referenced by
-a nickname of your choice).
+However, you really won't want to set the ``--all`` option every time you
+download a statement; it's very inefficient.  Slightly more verbosely, you
+might say :
 
-The second command requests a list of accounts and updates your config file
-accordingly.
+.. code-block:: bash
 
-These are in the nature of first-time setup chores.
+    $ ofxget acctinfo <server_nickname> -u <your_username> --write
+    $ ofxget stmt <server_nickname>
 
-The third command is the kind of thing you'd run on a regular basis; it
+The first command requests a list of accounts and saves it to your config file
+along with your user name.  This is in the nature of a first-time setup chore.
+
+The second command is the kind of thing you'd run on a regular basis; it
 requests statements for each account listed in your config file for a given
 server nickname.
 
 Storing ofxget passwords in the system keyring
 ----------------------------------------------
-** Note: this feature is experimental.  Expect bugs; kindly report them. **
+**Note: this feature is experimental.  Expect bugs; kindly report them.**
 
 Rather than typing them in each time, you can securely store your passwords
 in the system keyring (if one is available) and have ``ofxget`` retrieve them
@@ -97,19 +104,21 @@ for each server nickname).
 
 Using ofxget - in depth 
 -----------------------
-``ofxget`` takes two mandatory positional arguments - the request type and
-the server URL or nickname - along with a bunch of optional keyword arguments.
+``ofxget`` takes two positional arguments - the request type and the server
+URL or nickname - along with a bunch of optional keyword arguments.
 
 See the ``--help`` for explanation of the script options.
 
-Available request types (as indicated in the ``--help``) are ``scan``,
+Available request types (as indicated in the ``--help``) are ``list`` ``scan``,
 ``prof``, ``acctinfo``, ``stmt``, and ``tax1099``.  We'll work through most of
 these in an example of bootstrapping a full configuration for American Express.
 
-We must know the OFX server URL in order to connect at all.  The best place
-to find this (along with other useful connection information) is the
-`OFX Home`_ website.  You can also try the fine folks at `GnuCash`_, who share
-the struggle.
+We must know the OFX server URL in order to connect at all.  ``ofxtools``
+contains a database of all US financial institutions listed on the
+`OFX Home`_ website that I could get to talk OFX with me.  If you can't find
+your bank in ``ofxget`` (or if you're having a hard time configuring a
+connection), `OFX Home`_ should be your first stop.  You can also try the fine
+folks at `GnuCash`_, who share the struggle.
 
 OFX Home has a listing for AmEx, giving a URL plus the ``ORG``/``FID`` pair
 (i.e. ``<FI><ORG>`` and ``<FI><FID>`` in the signon request.)  This aggregate
@@ -128,19 +137,25 @@ authenticating a login.
     $ ofxget --org AMEX --fid 3101 prof https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do\?request_type\=nl_ofxdownload
 
 This works just fine, dumping a load of markup on the screen telling us
-what OFX services are available and some parameters for using them.
+what OFX services are available and some parameters for accessing them.
 
 If it doesn't work, see below for on scanning version and format parameters.
 
 We probably don't want to keep typing all that out every time we want to
-connect, so we'll create a configuration file to store it for reuse.  Inside
-our user home directory, the config file needs to be located at
-``.config/ofxtools/ofxget.cfg`` (for Linux and Mac), or
-``AppData\Roaming\ofxtools\ofxget.cfg`` (for Windows).  It's easy to create
-one from scratch (in simple INI format), or you can find a sample at
-``</path/to/ofxtools>/config/ofxget_example.cfg`` (including some hints in the
-comments).  Our config just copies the script args above, tagging them with a
-nickname for reference:
+connect, so we'll create a configuration file to store it for reuse.
+
+    - Windows: ``<userhome>\AppData\Roaming\ofxtools\ofxget.cfg``
+    - Mac: ``<userhome>/Library/Preferences/ofxtools/ofxget.cfg``
+    - Linux/BSD/etc.: ``<userhome>/.config/ofxtools/ofxget.cfg``
+
+(Of course, these locations may differ if you have exported nondefault
+environment variables for ``APPDATA`` or ``XDG_CONFIG_HOME``)
+
+
+It's easy to create a config file from scratch (in simple INI format),
+or you can find a sample at ``</path/to/ofxtools>/config/ofxget_example.cfg``
+(including some hints in the comments).  Our config just copies the script args
+we supplied above, tagging them with a nickname for reference:
 
 .. code-block:: ini
 
@@ -150,7 +165,7 @@ nickname for reference:
     org: AMEX
     fid: 3101
 
-Alternatively, since AmEx has working parameters listed on OFX Home, you can
+Alternatively, since AmEx has working parameters listed on OFX Home, you could
 just use the OFX Home API to look them up for each request.  Using the OFX Home
 database id (at the end of the webpage URL), the config looks like this:
 
@@ -227,7 +242,7 @@ argument:
 
 .. code-block:: bash
 
-    $ ofxget stmt --all amex
+    $ ofxget stmt amex --user <username> --all
 
 This tells ``ofxget`` to generate an ACCTINFO request as above, parse the
 response, and generate a STMT request for each account listed therein.
@@ -246,22 +261,27 @@ ISO-8601 (YYYY-mm-dd).
 
 Scanning for OFX connection formats
 -----------------------------------
-If you can't make an OFX connection...  well, Quicken hasn't yet updated
-to OFX version 2, so your bank may require a lower protocol version in order to
-connect.  The ``version`` argument is used for this purpose.
+What if you can't make an OFX connection?  Your bank isn't in ``ofxtools``; it
+isn't at `OFX Home`_ but you can't make it work; or you're trying to connect
+to a non-US institution and all you have is the URL.
+
+Quicken hasn't yet updated to OFX version 2, so your bank may require a lower
+protocol version in order to connect.  The ``--version`` argument is used for
+this purpose.
 
 As well, some financial institutions are picky about formatting.  They may
-fail to parse OFXv1 that includes closing tags - the ``unclosedelements``
+fail to parse OFXv1 that includes closing tags - the ``--unclosedelements``
 argument comes in handy here.  They may require that OFX requests either
 must have or can't have tags separated by newlines - try setting or
-unsetting the ``prettyprint`` argument.
+unsetting the ``--prettyprint`` argument.
 
 ``ofxget`` includes a ``scan`` option to help you discover these requirements.
 Here's how to use it.
 
 .. code-block:: bash
 
-    $ ofxget scan etrade  
+    $ # E*Trade
+    $ ofxget scan https://ofx.etrade.com/cgi-ofx/etradeofx
     [{"versions": [102], "formats": [{"pretty": false, "unclosedelements": true}, {"pretty": false, "unclosedelements": false}]}, {"versions": [], "formats": []}, {"chgpinfirst": false, "clientuidreq": false, "authtokenfirst": false, "mfachallengefirst": false}]
     $ ofxget scan usaa
     [{"versions": [102, 151], "formats": [{"pretty": false, "unclosedelements": true}, {"pretty": true, "unclosedelements": true}]}, {"versions": [200, 202], "formats": [{"pretty": false}, {"pretty": true}]}, {"chgpinfirst": false, "clientuidreq": false, "authtokenfirst": false, "mfachallengefirst": false}]
@@ -283,29 +303,48 @@ Vanguard is a little funkier.  They accept all versions of OFX, but version
 2 must have newlines.  For version 1, you must either insert newlines or
 leave element tags unclosed (or both).  Closing tags will fail without newlines.
 
-Copy these configs in your ``ofxget.cfg`` like so:
+Copyng these configs into your ``ofxget.cfg`` manually, they would look like
+this:
 
 .. code-block:: ini
 
     [etrade]
-    version: 102
+    version = 102
 
     [usaa]
-    version: 151
-    unclosedelements: true
+    version = 151
+    unclosedelements = true
 
     [vanguard]
-    version: 203
-    jjjjjjjjjkjjjjjjjjjjjjjkpretty: true
+    version = 203
+    pretty = true
 
+(In reality, though, it'd probably be better just to use OFX 2.0.2 for USAA)
 
-In reality, though, it'd probably be better just to use OFX 2.0.2 for USAA.
+``ofxget`` does not at this time provide a way to specify both a server
+nickname and a URL from the command line, so you'll need to get in there with
+a text editor at least to bind the URL to nickname, like so:
 
-The last set of configs, after OFXv1 and OFXv2, contains information extracted
-from the SIGNONINFO in the profile.  For the above institutions, this has
-contained nothing interesting - all fields are false, except in the case of
-Vanguard, which is blank because they deviate from the OFX spec and require
-an authenticated login in order to return a profile.  However, in some cases
+.. code-block:: ini
+
+    [mybanknickname]
+    url = https://ofx.mybank.com/download
+
+If you do that, and you trust the software (you DO trust the software, don't
+you?) then you don't need to peer through the JSON dump and suffer more typos;
+you can just ask ``ofxget`` to choose parameters and write them to your config
+file for you:
+
+.. code-block:: bash
+
+    $ ofxget scan mybanknickname --write
+
+Returning to the JSON screen dump from the ``scan`` output - the last set of
+configs, after OFXv1 and OFXv2, contains information extracted from the
+SIGNONINFO in the profile.  For the above institutions, this has contained
+nothing interesting - all fields are false, except in the case of Vanguard,
+which is blank because they deviate from the OFX spec and require an
+authenticated login in order to return a profile.  However, in some cases
 there's some important information in the SIGNONINFO.
 
 .. code-block:: bash
@@ -316,11 +355,13 @@ there's some important information in the SIGNONINFO.
     [{"versions": [], "formats": []}, {"versions": [200, 201, 202, 203, 210, 211, 220], "formats": [{"pretty": false}, {"pretty": true}]}, {"chgpinfirst": false, "clientuidreq": true, "authtokenfirst": false, "mfachallengefirst": false}]
 
 Both Chase and BofA have the CLIENTUIDREQ flag set, which means you'll need to
-set ``clientuid`` (a valid UUID4 value) in your ``ofxget.cfg``.  ``ofxget``
-will set a global default CLIENTUID for you if you have it ``--write``  a 
-configuration.  You can override this global 
-You can
-accomplish this conveniently by passing the ``--clientuid`` option, e.g.:
+set ``clientuid`` (a valid UUID4 value) in your ``ofxget.cfg``.
+
+Not to worry.  ``ofxget`` will automatically set a global default CLIENTUID for
+you if you have it ``--write`` a configuration.  You can override this global 
+default by setting a ``clientuid`` value under a server section in your config
+file (in UUID4 format).  More conveniently, you can just pass ``ofxget``
+the ``--clientuid`` option, e.g.:
 
 .. code-block:: bash
     # The following generates a global default CLIENTUID
@@ -333,44 +374,33 @@ then you really want to be sure to pass the ``--write`` option in order to save
 it to your config file.  It is important that the CLIENTUID be consistent
 across sessions.
 
-In the returned ACCTINFO response, heed the ``<SONRS><STATUS>``.  It has a
-nonzero ``<CODE>``, and the ``<MESSAGE>`` instructs you to verify your identity
-within 7 days.  To do this, you need to log into the bank's website and perform
-some sort of verification process.  In Chase's case, they want you to click a
-link in their secure messaging facility and enter a code sent via SMS/email.
-
-If your FI is not already known to ``ofxget``, you won't be able to use
-an existing server nickname.  If there's a working entry for your FI on
-`OFX Home`_ , then it's easiest to use the command shown above in the TL;DR:
-
-.. code-block:: bash
-
-    $ ofxget scan <server_nickname> --ofxhome <ofxhome id> --write
-
-Otherwise, you'll need to source URL/FID/ORG from somewhere else, and
-manually add a section in your ``ofxget.cfg``.  With that in hand, you can
-proceed with the connection scan:
-
-.. code-block:: bash
-
-    $ ofxget scan <server_nickname> --write
+After setting CLIENTUID, in the ACCTINFO response returned by Chase, heed the
+``<SONRS><STATUS>``.  It has a nonzero ``<CODE>``, and the ``<MESSAGE>``
+instructs you to verify your identity within 7 days.  To do this, you need to
+log into the bank's website and perform some sort of verification process.
+In Chase's case, they want you to click a link in their secure messaging
+facility and enter a code sent via SMS/email.  Other banks make you jump
+through slightly different hoops, but they usually involve logging into the
+bank's website and performing some sort of high-hassle/low-security MFA
+routine for first-time access.
 
 The master configs for OFX connection parameters are located in
-``ofxtools/config/fi.cfg`` - if you get something working, edit it there and
+``ofxtools/config/fi.cfg`` - if you get a new server working, edit it there and
 submit a pull request to share it with others.
 
-Finally, many banks configure their servers to reject any connections that
-aren't from Quicken.  It's usually safest to tell them you're a recent version
-of Quicken for Windows.  ``OFXClient`` does this by default, so you probably
-don't need to worry about it.  If you do need to fiddle with it, use the
-``appid`` and ``appver`` arguments, either from the command line or in your
-``ofxget.cfg``.
+Many banks configure their servers to reject any connections that aren't from
+Quicken.  It's usually safest to tell them you're a recent version of Quicken
+for Windows.  ``ofxget`` does this by default, so you probably don't need to
+worry about it.  If you do need to fiddle with it, use the ``appid`` and
+``appver`` arguments, either from the command line or in your ``ofxget.cfg``.
 
 We've also had some problems with FIs checking the ``User-Agent`` header in
-HTTP requests, so it's been blanked out.  If some motivated user wants to send
-along a packet capture showing what Quicken sends for ``User_Agent``, it might
-be a good idea to spoof that as well.
+HTTP requests, so it's been blanked out.  If we can figure out what Quicken
+sends for ``User_Agent``, it might be a good idea to spoof that as well.
 
+What I'd really like to do is set up a packet sniffer on a PC running
+Quicken and pull down a current list of working URLs.  If that sounds like
+your idea of a fun time, drop me a line.
 
 Using OFXClient in Another Program
 ==================================
