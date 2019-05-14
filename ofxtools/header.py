@@ -94,17 +94,21 @@ class OFXHeaderV1(OFXHeaderBase):
     oldfileuid = Types.String(36)
     newfileuid = Types.String(36)
 
+    # NOTE: Although the OFX spec requires formatting OFX headers as
+    # "HEADER:VALUE", apparently some FIs are inserting whitespace between
+    # the colon and the header value.  We'll allow this noncompliant
+    # format, because it's pretty harmless.
     regex = re.compile(
         r"""\s*
-            OFXHEADER:(?P<OFXHEADER>\d+)\s+
-            DATA:(?P<DATA>[A-Z]+)\s+
-            VERSION:(?P<VERSION>\d+)\s+
-            SECURITY:(?P<SECURITY>[\w]+)\s+
-            ENCODING:(?P<ENCODING>[A-Z0-9-]+)\s+
-            CHARSET:(?P<CHARSET>[\w-]+)\s+
-            COMPRESSION:(?P<COMPRESSION>[A-Z]+)\s+
-            OLDFILEUID:(?P<OLDFILEUID>[\w-]+)\s+
-            NEWFILEUID:(?P<NEWFILEUID>[\w-]+)\s+
+            OFXHEADER:\s*(?P<OFXHEADER>\d+)\s+
+            DATA:\s*(?P<DATA>[A-Z]+)\s+
+            VERSION:\s*(?P<VERSION>\d+)\s+
+            SECURITY:\s*(?P<SECURITY>[\w]+)\s+
+            ENCODING:\s*(?P<ENCODING>[A-Z0-9-]+)\s+
+            CHARSET:\s*(?P<CHARSET>[\w-]+)\s+
+            COMPRESSION:\s*(?P<COMPRESSION>[A-Z]+)\s+
+            OLDFILEUID:\s*(?P<OLDFILEUID>[\w-]+)\s+
+            NEWFILEUID:\s*(?P<NEWFILEUID>[\w-]+)\s+
         """,
         re.VERBOSE,
     )
@@ -246,7 +250,7 @@ def parse_header(source: BinaryIO) -> Tuple[OFXHeaderType, str]:
     # Skip any empty lines at the beginning
     while True:
         # OFX header is read by nice clean machines, not meatbags -
-        # should not contain emoji, 漢字, or what have you.
+        # should not contain 💩, 漢字, or what have you.
         line = source.readline().decode("ascii")
         if line.strip():
             break

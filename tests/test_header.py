@@ -306,6 +306,35 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
 
         self.assertEqual(body, self.body)
 
+    def testExtraWhitespaceHeaderDemarc(self):
+        # Even though it breaks with the OFX spec, some FIs insert whitespace
+        # after the colon demarc between an OFX header field and its value.
+        # We allow this.
+        header = ("OFXHEADER:  100\r\n"
+                  "DATA:  OFXSGML\r\n"
+                  "VERSION:  103\r\n"
+                  "SECURITY:  NONE\r\n"
+                  "ENCODING:  USASCII\r\n"
+                  "CHARSET:  NONE\r\n"
+                  "COMPRESSION:  NONE\r\n"
+                  "OLDFILEUID:  NONE\r\n"
+                  "NEWFILEUID:  NONE\r\n")
+        ofx = header + self.body
+        ofx = BytesIO(ofx.encode("utf8"))
+        ofxheader, body = ofxtools.header.parse_header(ofx)
+
+        self.assertEqual(ofxheader.ofxheader, 100)
+        self.assertEqual(ofxheader.data, "OFXSGML")
+        self.assertEqual(ofxheader.version, 103)
+        self.assertEqual(ofxheader.security, "NONE")
+        self.assertEqual(ofxheader.encoding, "USASCII")
+        self.assertEqual(ofxheader.charset, "NONE")
+        self.assertEqual(ofxheader.compression, "NONE")
+        self.assertEqual(ofxheader.oldfileuid, "NONE")
+        self.assertEqual(ofxheader.newfileuid, "NONE")
+
+        self.assertEqual(body, self.body)
+
 
 class OFXHeaderV2TestCase(unittest.TestCase, OFXHeaderTestMixin):
     headerClass = ofxtools.header.OFXHeaderV2
