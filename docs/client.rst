@@ -17,19 +17,20 @@ The ``ofxget`` shell script should have been installed by ``pip`` along with
 the ``ofxtools`` library.  If the install location isn't already in your
 ``$PATH``, you'll likely want to add it.
 
-    * User installation
+    **User installation**
 
-        * Mac: ``~/Library/PythonX.Y/bin/ofxget``
-        * Windows: ``AppData\Roaming\Python\PythonXY\Scripts\ofxget``
-        * Linux/BSD/etc.: ``~/.local/bin/ofxget``
+    * Mac: ``~/Library/PythonX.Y/bin/ofxget``
+    * Windows: ``AppData\Roaming\Python\PythonXY\Scripts\ofxget``
+    * Linux/BSD/etc.: ``~/.local/bin/ofxget``
 
-    * Site installation
+    **Site installation**
 
-        * Mac: ``/Library/Frameworks/Python.framework/Versions/X.Y/bin/ofxget``
-        * Windows: Good question; anybody know?
-        * Linux/BSD/etc.: ``/usr/local/bin/ofxget``
+    * Mac: ``/Library/Frameworks/Python.framework/Versions/X.Y/bin/ofxget``
+    * Windows: Good question; anybody know?
+    * Linux/BSD/etc.: ``/usr/local/bin/ofxget``
 
-    * Virtual environment installation: ``</path/to/venv/root>/bin/ofxget``
+    **Virtual environment installation**
+    * ``</path/to/venv/root>/bin/ofxget``
 
 If all else fails, you can execute ``</path/to/ofxtools>/scripts/ofxget.py``.
 
@@ -115,8 +116,9 @@ URL or nickname - along with a bunch of optional keyword arguments.
 See the ``--help`` for explanation of the script options.
 
 Available request types (as indicated in the ``--help``) are ``list``, ``scan``,
-``prof``, ``acctinfo``, ``stmt``, and ``tax1099``.  We'll work through most of
-these in an example of bootstrapping a full configuration for American Express.
+``prof``, ``acctinfo``, ``stmt``, ``stmtend`` and ``tax1099``.  We'll work
+through most of these in an example of bootstrapping a full configuration for
+American Express.
 
 We must know the OFX server URL in order to connect at all.  ``ofxtools``
 contains a database of all US financial institutions listed on the
@@ -144,7 +146,7 @@ authenticating a login.
 This works just fine, dumping a load of markup on the screen telling us
 what OFX services are available and some parameters for accessing them.
 
-If it doesn't work, see below for a discussio of scanning version and format
+If it doesn't work, see below for a discussion of scanning version and format
 parameters.
 
 We probably don't want to keep typing all that out every time we want to
@@ -156,7 +158,6 @@ connect, so we'll create a configuration file to store it for reuse.
 
 (Of course, these locations may differ if you have exported nondefault
 environment variables for ``APPDATA`` or ``XDG_CONFIG_HOME``)
-
 
 It's easy to create a config file from scratch (in simple INI format),
 or you can find a sample at ``</path/to/ofxtools>/config/ofxget_example.cfg``
@@ -378,6 +379,9 @@ this:
     version = 203
     pretty = true
 
+The config for USAA is just an example to show the syntax; in reality you'd be
+better off just setting ``version = 202``.
+
 ``ofxget`` does not at this time provide a way to specify both a server
 nickname and a URL from the command line, so you'll need to get in there with
 a text editor at least to bind the URL to nickname, like so:
@@ -387,10 +391,10 @@ a text editor at least to bind the URL to nickname, like so:
     [mybanknickname]
     url = https://ofx.mybank.com/download
 
-If you do that, and you trust the software (you *do* trust the software, don't
-you?) then you don't need to peer through the JSON dump and suffer more typos;
-you can just ask ``ofxget`` to choose parameters and write them to your config
-file for you:
+If you do that, and you trust the software (you *do* trust the software,
+right?) then you don't need to peer through the JSON dump and suffer more
+typos; you can just ask ``ofxget`` to choose parameters and write them to your
+config file for you:
 
 .. code-block:: bash
 
