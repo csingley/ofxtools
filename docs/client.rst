@@ -18,14 +18,17 @@ the ``ofxtools`` library.  If the install location isn't already in your
 ``$PATH``, you'll likely want to add it.
 
     **User installation**
-    - Mac: ``~/Library/PythonX.Y/bin/ofxget``
-    - Windows: ``AppData\Roaming\Python\PythonXY\Scripts\ofxget``
-    - Linux/BSD/etc.: ``~/.local/bin/ofxget``
+    * Mac: ``~/Library/PythonX.Y/bin/ofxget``
+    * Windows: ``AppData\Roaming\Python\PythonXY\Scripts\ofxget``
+    * Linux/BSD/etc.: ``~/.local/bin/ofxget``
 
     **Site installation**
-    - Mac: ``/Library/Frameworks/Python.framework/Versions/X.Y/bin/ofxget``
-    - Windows: Good question; anybody know?
-    - Linux/BSD/etc.: ``/usr/local/bin/ofxget``
+    * Mac: ``/Library/Frameworks/Python.framework/Versions/X.Y/bin/ofxget``
+    * Windows: Good question; anybody know?
+    * Linux/BSD/etc.: ``/usr/local/bin/ofxget``
+
+    **Virtual environment installation**
+    * ``<venv_root>/bin/ofxget``
 
 If all else fails, you can execute ``</path/to/ofxtools>/scripts/ofxget.py``.
 
@@ -34,6 +37,7 @@ Using ofxget  - TL;DR
 Find your financial institution's nickname:
 
 .. code-block:: bash
+
     $ ofxget list
 
 If your financial institution is listed, then the quickest way to get your
@@ -41,7 +45,7 @@ hands on some OFX data is to say:
 
 .. code-block:: bash
 
-    $ ofxget acctinfo <server_nickname> -u <your_username> --all
+    $ ofxget stmt <server_nickname> -u <your_username> --all
 
 Enter your password when prompted.
 
@@ -57,7 +61,7 @@ might say :
 The first command requests a list of accounts and saves it to your config file
 along with your user name.  This is in the nature of a first-time setup chore.
 
-The second command is the kind of thing you'd run on a regular basis; it
+The second command is the kind of thing you'd run on a regular basis.  It
 requests statements for each account listed in your config file for a given
 server nickname.
 
@@ -109,7 +113,7 @@ URL or nickname - along with a bunch of optional keyword arguments.
 
 See the ``--help`` for explanation of the script options.
 
-Available request types (as indicated in the ``--help``) are ``list`` ``scan``,
+Available request types (as indicated in the ``--help``) are ``list``, ``scan``,
 ``prof``, ``acctinfo``, ``stmt``, and ``tax1099``.  We'll work through most of
 these in an example of bootstrapping a full configuration for American Express.
 
@@ -139,14 +143,15 @@ authenticating a login.
 This works just fine, dumping a load of markup on the screen telling us
 what OFX services are available and some parameters for accessing them.
 
-If it doesn't work, see below for on scanning version and format parameters.
+If it doesn't work, see below for a discussio of scanning version and format
+parameters.
 
 We probably don't want to keep typing all that out every time we want to
 connect, so we'll create a configuration file to store it for reuse.
 
-    - Windows: ``<userhome>\AppData\Roaming\ofxtools\ofxget.cfg``
-    - Mac: ``<userhome>/Library/Preferences/ofxtools/ofxget.cfg``
-    - Linux/BSD/etc.: ``<userhome>/.config/ofxtools/ofxget.cfg``
+    * Windows: ``<userhome>\AppData\Roaming\ofxtools\ofxget.cfg``
+    * Mac: ``<userhome>/Library/Preferences/ofxtools/ofxget.cfg``
+    * Linux/BSD/etc.: ``<userhome>/.config/ofxtools/ofxget.cfg``
 
 (Of course, these locations may differ if you have exported nondefault
 environment variables for ``APPDATA`` or ``XDG_CONFIG_HOME``)
@@ -226,7 +231,7 @@ we'll go ahead and include this information in our ``ofxget.cfg``:
     user: <username>
     creditcard: 888888888888888,999999999999999
 
-Note that multiple accounts are specified as a comma-separated list.
+Note that multiple accounts are specified as a comma-separated sequence.
 
 To spare your eyes from looking through all that tag soup, you can just tell
 ``ofxget`` to download the ACCTINFO response and try to update your config
@@ -262,8 +267,8 @@ ISO-8601 (YYYY-mm-dd).
 Scanning for OFX connection formats
 -----------------------------------
 What if you can't make an OFX connection?  Your bank isn't in ``ofxtools``; it
-isn't at `OFX Home`_ but you can't make it work; or you're trying to connect
-to a non-US institution and all you have is the URL.
+isn't at `OFX Home`_; it is in OFX Home but you can't request a profile; or
+you're trying to connect to a non-US institution and all you have is the URL.
 
 Quicken hasn't yet updated to OFX version 2, so your bank may require a lower
 protocol version in order to connect.  The ``--version`` argument is used for
@@ -319,8 +324,6 @@ this:
     version = 203
     pretty = true
 
-(In reality, though, it'd probably be better just to use OFX 2.0.2 for USAA)
-
 ``ofxget`` does not at this time provide a way to specify both a server
 nickname and a URL from the command line, so you'll need to get in there with
 a text editor at least to bind the URL to nickname, like so:
@@ -330,7 +333,7 @@ a text editor at least to bind the URL to nickname, like so:
     [mybanknickname]
     url = https://ofx.mybank.com/download
 
-If you do that, and you trust the software (you DO trust the software, don't
+If you do that, and you trust the software (you *do* trust the software, don't
 you?) then you don't need to peer through the JSON dump and suffer more typos;
 you can just ask ``ofxget`` to choose parameters and write them to your config
 file for you:
@@ -364,6 +367,7 @@ file (in UUID4 format).  More conveniently, you can just pass ``ofxget``
 the ``--clientuid`` option, e.g.:
 
 .. code-block:: bash
+
     # The following generates a global default CLIENTUID
     $ ofxget scan chase --write
     # The following additionally generates a Chase-specific CLIENTUID
@@ -385,7 +389,7 @@ bank's website and performing some sort of high-hassle/low-security MFA
 routine for first-time access.
 
 The master configs for OFX connection parameters are located in
-``ofxtools/config/fi.cfg`` - if you get a new server working, edit it there and
+``ofxtools/config/fi.cfg``.  If you get a new server working, edit it there and
 submit a pull request to share it with others.
 
 Many banks configure their servers to reject any connections that aren't from
@@ -411,9 +415,9 @@ instance with the relevant connection parameters.
 Using the configured ``OFXClient`` instance, make a request by calling the
 relevant method, e.g. ``OFXClient.request_statements()``.  Provide the password
 as the first positional argument; any remaining positional arguments are parsed
-as requests.  Simple data containers for each statement (``StmtRq``,
-``CcStmtRq``, etc.) are provided for this purpose.  Options follow as keyword
-arguments.
+as requests.  Simple data containers for each statement type (``StmtRq``,
+``CcStmtRq``, ``InvStmtRq``, ``StmtEndRq``, ``CcStmtEndRq`` are provided for 
+this purpose.  Options follow as keyword arguments.
 
 The method call therefore looks like this:
 
@@ -436,7 +440,7 @@ The method call therefore looks like this:
 Other methods available:
     * ``OFXClient.request_profile()`` - PROFRQ
     * ``OFXClient.request_accounts()``- ACCTINFORQ
-    * ``OFXClient.request_tax1099()``- TAX1099RQ
+    * ``OFXClient.request_tax1099()``- TAX1099RQ (still a WIP)
 
 .. _OFX Home: http://www.ofxhome.com/
 .. _ABA routing number: http://routingnumber.aba.com/default1.aspx
