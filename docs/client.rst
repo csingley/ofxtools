@@ -332,7 +332,7 @@ like this:
     $ unset URL
 
 This is for a credit card statement; for a bank statement you will also need
-to pass in ``--bankid`` (usually the bank's ABA routing number), and for a
+to pass in ``--bankid`` (usually the bank's `ABA routing number`_), and for a
 brokerage statement you will need to pass in ``--brokerid`` (usually the
 broker's DNS domain).
 
@@ -357,6 +357,10 @@ ISO-8601 (YYYY-mm-dd).
 You can also pass``--asof`` to set the reporting date for balances and/or
 investment positions, although it tends to be ignored for the latter.
 
+There are additional statement options for omitting transactions, balances,
+and/or investment positions if you so desire, or including open securities
+orders as of the statement end date.  See the ``--help`` for more details.
+
 
 Scanning for OFX connection formats
 -----------------------------------
@@ -374,7 +378,7 @@ argument comes in handy here.  They may require that OFX requests either
 must have or can't have tags separated by newlines - try setting or
 unsetting the ``--prettyprint`` argument.
 
-``ofxget`` includes a ``scan`` option to help you discover these requirements.
+``ofxget`` includes a ``scan`` command to help you discover these requirements.
 Here's how to use it.
 
 .. code-block:: bash
@@ -439,6 +443,9 @@ config file for you:
 
     $ ofxget scan mybanknickname --write
 
+Setting CLIENTUID
+^^^^^^^^^^^^^^^^^
+
 Returning to the JSON screen dump from the ``scan`` output - the last set of
 configs, after OFXv1 and OFXv2, contains information extracted from the
 SIGNONINFO in the profile.  For the above institutions, this has contained
@@ -454,8 +461,21 @@ there's some important information in the SIGNONINFO.
     $ ofxget scan chase
     [{"versions": [], "formats": []}, {"versions": [200, 201, 202, 203, 210, 211, 220], "formats": [{"pretty": false}, {"pretty": true}]}, {"chgpinfirst": false, "clientuidreq": true, "authtokenfirst": false, "mfachallengefirst": false}]
 
+Of the 3 JSON objects included in the output, here we are focused on the last
+(reformatted for readability):
+
+.. code-block:: json
+
+    {
+        "chgpinfirst": false,
+        "clientuidreq": true,
+        "authtokenfirst": false,
+        "mfachallengefirst": false
+    }
+
 Both Chase and BofA have the CLIENTUIDREQ flag set, which means you'll need to
-set ``clientuid`` (a valid UUID4 value) in your ``ofxget.cfg``.
+set ``clientuid`` (a valid `UUID v4`_ value) either from the command line or in
+your ``ofxget.cfg``.
 
 Not to worry!  ``ofxget`` will automatically set a global default CLIENTUID for
 you if you ask it to ``--write`` a configuration.  You can override this global 
@@ -475,10 +495,12 @@ then you really want to be sure to pass the ``--write`` option in order to save
 it to your config file.  It is important that the CLIENTUID be consistent
 across sessions.
 
-After setting CLIENTUID, in the ACCTINFO response returned by Chase, heed the
-``<SONRS><STATUS>``.  It has a nonzero ``<CODE>``, and the ``<MESSAGE>``
-instructs you to verify your identity within 7 days.  To do this, you need to
-log into the bank's website and perform some sort of verification process.
+After setting CLIENTUID, heed the ``<SONRS><STATUS>`` in the ACCTINFO response
+returned by Chase.  It has a nonzero ``<CODE>`` (indicating a problem), and the
+``<MESSAGE>`` instructs you to verify your identity within 7 days.  To do this,
+you need to log into the bank's website and perform some sort of verification
+process.
+
 In Chase's case, they want you to click a link in their secure messaging
 facility and enter a code sent via SMS/email.  Other banks make you jump
 through slightly different hoops, but they usually involve logging into the
@@ -541,8 +563,8 @@ Other methods available:
 
 .. _OFX Home: http://www.ofxhome.com/
 .. _ABA routing number: http://routingnumber.aba.com/default1.aspx
-.. _DTC number: http://www.dtcc.com/client-center/dtc-directories
 .. _getfidata.sh: https://web.archive.org/web/20070120102800/http://www.jongsma.org/gc/bankinfo/getfidata.sh.gz
 .. _GnuCash: https://wiki.gnucash.org/wiki/OFX_Direct_Connect_Bank_Settings
 .. _python-keyring: https://pypi.org/project/keyring/
 .. _dbus-python: https://pypi.org/project/dbus-python/
+.. _UUID v4: https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_(random)
