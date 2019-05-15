@@ -118,8 +118,8 @@ for each server nickname).
 
 Using ofxget - in depth 
 -----------------------
-``ofxget`` takes two positional arguments - the request type and the server
-URL or nickname - along with a bunch of optional keyword arguments.
+``ofxget`` takes two positional arguments - request type (mandatory) and server
+nickname (optional) - along with a bunch of optional keyword arguments.
 
 See the ``--help`` for explanation of the script options.
 
@@ -135,7 +135,9 @@ We must know the OFX server URL in order to connect at all.  ``ofxtools``
 contains a database of all US financial institutions listed on the
 `OFX Home`_ website that I could get to speak OFX with me.  If you can't find
 your bank in ``ofxget`` (or if you're having a hard time configuring a
-connection), `OFX Home`_ should be your first stop.  You can also try the fine
+connection), `OFX Home`_ should be your first stop.  If you prefer, the
+`OFX Blog` also makes the same data available in a different format.  Be sure
+to review user-posted comments on either site.  You can also try the fine
 folks at `GnuCash`_, who share the struggle.
 
 OFX Home has a listing for AmEx, giving a URL plus the ``ORG``/``FID`` pair
@@ -152,9 +154,24 @@ authenticating a login.
 
 .. code-block:: bash
 
-    $ ofxget --org AMEX --fid 3101 prof https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do\?request_type\=nl_ofxdownload
+    $ ofxget prof --org AMEX --fid 3101 --url https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do\?request_type\=nl_ofxdownload
 
-This works just fine, dumping a load of markup on the screen telling us
+This hairy beast of a command can be used for any arbitrary OFX server.
+If the server is already known to ``ofxget``, then you can just use
+its nickname instead:
+
+.. code-block:: bash
+
+    $ ofxget prof amex
+
+Or, if the server is known to OFX Home, then you can just use its database
+ID (the end part of its `institution page on OFX Home`_):
+
+.. code-block:: bash
+
+    $ ofxget prof --ofxhome 424
+
+Any of these work just fine, dumping a load of markup on the screen telling us
 what OFX services are available and some parameters for accessing them.
 
 If it doesn't work, see below for a discussion of scanning version and format
@@ -163,8 +180,31 @@ parameters.
 Creating a configuration file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-We probably don't want to keep typing all that out every time we want to
-connect, so we'll create a configuration file to store it for reuse.
+We probably don't want to keep typing out multiline commands every time,
+so we'll create a configuration file to store these parameters for reuse.
+
+The simplest way to accomplish this is just to tell ``ofxget`` to save the
+arguments you've passed on the command line to the config file.  To do that,
+append the "--write" option to your CLI invocation.  You'll also need to
+provide a server nickname.
+
+.. code-block:: bash
+
+    $ ofxget prof myfi --write --org AMEX --fid 3101 --url https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do\?request_type\=nl_ofxdownload
+
+If your server is up on OFX Home, this works as well:
+
+.. code-block:: bash
+
+    ofxget prof myfi --ofxhome 424 --write
+
+It's also easy to write a configuration file manually in a text editor - it's
+just the command line options in simple INI format, with a server nicknames as
+section headers.  You can find a sample at 
+``</path/to/ofxtools>/config/ofxget_example.cfg``, including some hints in the
+comments.
+
+The location of the the config file depends on the platform.
 
     * Windows: ``<userhome>\AppData\Roaming\ofxtools\ofxget.cfg``
     * Mac: ``<userhome>/Library/Preferences/ofxtools/ofxget.cfg``
@@ -181,10 +221,8 @@ file by opening a Python interpreter and saying:
     >>> from ofxtools.scripts import ofxget
     >>> print(ofxget.USERCONFIGPATH)
 
-It's easy to create a config file from scratch (in simple INI format),
-or you can find a sample at ``</path/to/ofxtools>/config/ofxget_example.cfg``
-(including some hints in the comments).  Our config just copies the script args
-we supplied above, tagging them with a nickname for reference:
+
+Our configuration file will look like this:
 
 .. code-block:: ini
 
@@ -314,7 +352,7 @@ we'll go ahead and include this information in our ``ofxget.cfg``:
 Note that multiple accounts are specified as a comma-separated sequence.
 
 To spare your eyes from looking through all that tag soup, you can just tell
-``ofxget`` to download the ACCTINFO response and try to update your config
+``ofxget`` to download the ACCTINFO response and update your config
 file automatically:
 
 .. code-block:: bash
@@ -343,7 +381,7 @@ like this:
 .. code-block:: bash
 
     $ export URL="https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do\?request_type\=nl_ofxdownload"
-    $ ofxget stmt $URL --org AMEX --fid 3101 -u <username> -c 888888888888888 -c 999999999999999
+    $ ofxget stmt --url $URL --org AMEX --fid 3101 -u <username> -c 888888888888888 -c 999999999999999
     $ unset URL
 
 This is for a credit card statement; for a bank statement you will also need
@@ -440,23 +478,12 @@ this:
 The config for USAA is just an example to show the syntax; in reality you'd be
 better off just setting ``version = 202``.
 
-``ofxget`` does not at this time provide a way to specify both a server
-nickname and a URL from the command line, so you'll need to get in there with
-a text editor at least to bind the URL to nickname, like so:
-
-.. code-block:: ini
-
-    [mybanknickname]
-    url = https://ofx.mybank.com/download
-
-If you do that, and you trust the software (you *do* trust the software,
-right?) then you don't need to peer through the JSON dump and suffer more
-typos; you can just ask ``ofxget`` to choose parameters and write them to your
-config file for you:
+As before, instead of manually editing the config file, you can also just ask
+``ofxget`` to do it for you:
 
 .. code-block:: bash
 
-    $ ofxget scan mybanknickname --write
+    $ ofxget scan myfi --write --url https://ofx.mybank.com/download
 
 Setting CLIENTUID
 ^^^^^^^^^^^^^^^^^
@@ -502,6 +529,8 @@ the ``--clientuid`` option, e.g.:
 
     # The following generates a global default CLIENTUID
     $ ofxget scan chase --write
+    # So does this
+    $ ofxget prof chase --write
     # The following additionally generates a Chase-specific CLIENTUID
     $ ofxget acctinfo chase -u <username> --savepass --clientuid --write
 
@@ -577,6 +606,8 @@ Other methods available:
     * ``OFXClient.request_tax1099()``- TAX1099RQ (still a WIP)
 
 .. _OFX Home: http://www.ofxhome.com/
+.. _institution page on OFX Home: http://www.ofxhome.com/index.php/institution/view/424
+.. _OFX Blog: https://ofxblog.wordpress.com/
 .. _ABA routing number: http://routingnumber.aba.com/default1.aspx
 .. _getfidata.sh: https://web.archive.org/web/20070120102800/http://www.jongsma.org/gc/bankinfo/getfidata.sh.gz
 .. _GnuCash: https://wiki.gnucash.org/wiki/OFX_Direct_Connect_Bank_Settings
