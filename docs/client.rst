@@ -33,7 +33,14 @@ the ``ofxtools`` library.  If the install location isn't already in your
 
     * ``</path/to/venv/root>/bin/ofxget``
 
-If all else fails, you can execute ``</path/to/ofxtools>/scripts/ofxget.py``.
+If all else fails, you can execute ``python -m ofxtools.scripts.ofxget``, or
+directly run ``python </path/to/ofxtools>/scripts/ofxget.py``.  You can
+check where exactly that is by opening a Python interpreter and saying:
+
+.. code-block:: python 
+
+    >>> from ofxtools.scripts import ofxget
+    >>> print(ofxget.__file__)
 
 Using ofxget  - TL;DR
 ---------------------
@@ -165,6 +172,14 @@ connect, so we'll create a configuration file to store it for reuse.
 
 (Of course, these locations may differ if you have exported nondefault
 environment variables for ``APPDATA`` or ``XDG_CONFIG_HOME``)
+
+You can verify where precisely ``ofxget`` is looking for its configuration
+file by opening a Python interpreter and saying:
+
+.. code-block:: python 
+
+    >>> from ofxtools.scripts import ofxget
+    >>> print(ofxget.USERCONFIGPATH)
 
 It's easy to create a config file from scratch (in simple INI format),
 or you can find a sample at ``</path/to/ofxtools>/config/ofxget_example.cfg``
