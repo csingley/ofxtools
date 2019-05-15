@@ -64,14 +64,14 @@ UserConfig.read([CONFIGPATH, USERCONFIGPATH])
 
 
 DEFAULTS: Dict[str, Union[str, int, bool, list]] = {
-    "url": "", "org": "", "fid": "", "version": 203, "appid": "", "appver": "",
-    "bankid": "", "brokerid": "", "user": "", "clientuid": "", "language": "",
-    "dryrun": False, "unsafe": False, "unclosedelements": False,
-    "pretty": False, "checking": [], "savings": [], "moneymrkt": [],
-    "creditline": [], "creditcard": [], "investment": [], "dtstart": "",
-    "dtend": "", "dtasof": "", "inctran": True, "incbal": True, "incpos": True,
+    "server": "", "url": "", "ofxhome": "", "version": 203, "org": "", "fid": "",
+    "appid": "", "appver": "", "language": "", "bankid": "", "brokerid": "",
+    "unclosedelements": False, "pretty": False, "user": "", "clientuid": "",
+    "checking": [], "savings": [], "moneymrkt": [], "creditline": [],
+    "creditcard": [], "investment": [], "dtstart": "", "dtend": "",
+    "dtasof": "", "inctran": True, "incbal": True, "incpos": True,
     "incoo": False, "all": False, "years": [], "acctnum": "", "recid": "",
-    "ofxhome": "", "write": False, "savepass": False,
+    "dryrun": False, "unsafe": False, "write": False, "savepass": False,
 }
 
 
@@ -106,6 +106,9 @@ def make_argparser() -> ArgumentParser:
     argparser.add_argument(
         "server", nargs="?",
         help="OFX server - URL or FI name from ofxget.cfg/fi.cfg")
+    argparser.add_argument("--url", help="OFX server URL")
+    argparser.add_argument("--ofxhome", metavar="ID#",
+                           help="FI id# on http://www.ofxhome.com/")
     argparser.add_argument(
         "-n",
         "--dryrun",
@@ -147,10 +150,6 @@ def make_argparser() -> ArgumentParser:
         default=None,
         help="Insert newlines and whitespace indentation",
     )
-
-    scan_group = argparser.add_argument_group(title="Profile Scan Options")
-    scan_group.add_argument("--ofxhome",
-                            help="FI id# on http://www.ofxhome.com/")
 
     signon_group = argparser.add_argument_group(title="Signon Options")
     signon_group.add_argument("-u", "--user", help="FI login username")
@@ -350,6 +349,9 @@ def request_profile(args: ArgType) -> None:
 
     print(response.decode())
 
+    if args["write"] and not args["dryrun"]:
+        write_config(args)
+
 
 def request_acctinfo(args: ArgType) -> None:
     """
@@ -535,8 +537,10 @@ def merge_config(args: argparse.Namespace,
     # All ArgumentParser args that have a value set
     _args = {k: v for k, v in vars(args).items() if v is not None}
 
-    server = _args["server"]
-    user_cfg = read_config(config, server)
+    if "server" in _args:
+        user_cfg = read_config(config, _args["server"])
+    else:
+        user_cfg = {}
     merged = ChainMap(_args, user_cfg, DEFAULTS)
 
     ofxhome_id = merged["ofxhome"]
@@ -550,9 +554,23 @@ def merge_config(args: argparse.Namespace,
                                     "fid": lookup.fid,
                                     "brokerid": lookup.brokerid})
 
-    if not merged["url"]:
-        msg = "Unknown server '{}'; please configure 'url' or 'ofxhome'"
-        raise ValueError(msg.format(server))
+    if not (merged["url"] or args.request == "list" or args.dryrun):
+        err = "Missing URL"
+
+        if "server" not in _args:
+            msg = (f"{err} - please provide a server nickname, "
+                   "or configure 'url' / 'ofxhome'")
+            raise ValueError(msg)
+
+        server = _args["server"]
+        # Allow sloppy CLI args - passing URL as "server" positional arg
+        if urllib_parse.urlparse(server).scheme:
+            merged["url"] = server
+            merged["server"] = None
+        else:
+            msg = (f"{err} - please configure 'url' or 'ofxhome' "
+                   f"for server '{server}'")
+            raise ValueError(msg)
 
     return merged
 
@@ -963,7 +981,7 @@ def _merge_acctinfo(args: ArgType, markup: BytesIO) -> None:
 
 def list_fis(args: ArgType) -> None:
     server = args["server"]
-    if server is None:
+    if server in (None, ""):
         entries = ["{:<40}{:<30}{:<8}".format(*srv) for srv in fi_index()]
         entries.insert(0, " ".join(("=" * 39, "=" * 29, "=" * 8)))
         entries.insert(0, "{:^40}{:^30}{:^8}".format("Name",
@@ -971,7 +989,7 @@ def list_fis(args: ArgType) -> None:
                                                      "OFX Home"))
         pydoc.pager("\n".join(entries))
     elif server not in UserConfig:
-        msg = ""  # FIXME
+        msg = f"Unknown server '{server}'"
         raise ValueError(msg)
     else:
         ofxhome = UserConfig[server].get("ofxhome", "")
@@ -1055,23 +1073,8 @@ REQUEST_HANDLERS = {"list": list_fis,
 
 def main() -> None:
     argparser = make_argparser()
-    args = argparser.parse_args()
-
-    if args.request == "list":
-        args_ = ChainMap(vars(args))
-    else:
-        server = args.server
-        if server is None:
-            msg = "the following arguments are required: server"
-            raise ArgumentError(None, msg)
-        # If positional arg is FI name (not URL), then merge config
-        if urllib_parse.urlparse(server).scheme:
-            args.url = server
-            args_ = ChainMap(vars(args))
-        else:
-            args_ = merge_config(args, UserConfig)
-
-    REQUEST_HANDLERS[args_["request"]](args_)
+    args = merge_config(argparser.parse_args(), UserConfig)
+    REQUEST_HANDLERS[args["request"]](args)
 
 
 if __name__ == "__main__":
