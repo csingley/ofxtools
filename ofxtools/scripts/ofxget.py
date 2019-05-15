@@ -75,6 +75,8 @@ DEFAULTS: Dict[str, Union[str, int, bool, list]] = {
 }
 
 
+NULL_ARGS = [None, "", []]
+
 class OfxgetWarning(UserWarning):
     """ Base class for warnings in this module """
 
@@ -680,9 +682,11 @@ def mk_server_cfg(args: ArgType) -> configparser.SectionProxy:
             if value != default_value and value not in [None, "", []]:
                 cfg[opt] = arg2config(opt, value)
 
+    # Don't include CLIENTUID in the server section if it's sourced from
+    # UserConfig.default_section
     if "clientuid" in args:
         value = args["clientuid"]
-        if value not in [None, "", []]:
+        if value not in NULL_ARGS and value != defaults["clientuid"]:
             cfg["clientuid"] = value
 
     return cfg
