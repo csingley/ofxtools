@@ -17,18 +17,19 @@ The ``ofxget`` shell script should have been installed by ``pip`` along with
 the ``ofxtools`` library.  If the install location isn't already in your
 ``$PATH``, you'll likely want to add it.
 
-    **User installation**
-    * Mac: ``~/Library/PythonX.Y/bin/ofxget``
-    * Windows: ``AppData\Roaming\Python\PythonXY\Scripts\ofxget``
-    * Linux/BSD/etc.: ``~/.local/bin/ofxget``
+    * User installation
 
-    **Site installation**
-    * Mac: ``/Library/Frameworks/Python.framework/Versions/X.Y/bin/ofxget``
-    * Windows: Good question; anybody know?
-    * Linux/BSD/etc.: ``/usr/local/bin/ofxget``
+        * Mac: ``~/Library/PythonX.Y/bin/ofxget``
+        * Windows: ``AppData\Roaming\Python\PythonXY\Scripts\ofxget``
+        * Linux/BSD/etc.: ``~/.local/bin/ofxget``
 
-    **Virtual environment installation**
-    * ``<venv_root>/bin/ofxget``
+    * Site installation
+
+        * Mac: ``/Library/Frameworks/Python.framework/Versions/X.Y/bin/ofxget``
+        * Windows: Good question; anybody know?
+        * Linux/BSD/etc.: ``/usr/local/bin/ofxget``
+
+    * Virtual environment installation: ``</path/to/venv/root>/bin/ofxget``
 
 If all else fails, you can execute ``</path/to/ofxtools>/scripts/ofxget.py``.
 
@@ -200,7 +201,60 @@ After passing authentication, a successful result looks like this:
 
     <?xml version="1.0" encoding="UTF-8" standalone="no"?>
     <?OFX OFXHEADER="200" VERSION="203" SECURITY="NONE" OLDFILEUID="NONE" NEWFILEUID="e1259eaf-b54e-46de-be22-fe07a9172b79"?>
-    <OFX><SIGNONMSGSRSV1><SONRS><STATUS><CODE>0</CODE><SEVERITY>INFO</SEVERITY><MESSAGE>Login successful</MESSAGE></STATUS><DTSERVER>20190430093324.000[-7:MST]</DTSERVER><LANGUAGE>ENG</LANGUAGE><FI><ORG>AMEX</ORG><FID>3101</FID></FI><ORIGIN.ID>FMPWeb</ORIGIN.ID><CUSTOMER.TYPE>BCM</CUSTOMER.TYPE><START.TIME>20190430093324</START.TIME></SONRS></SIGNONMSGSRSV1><SIGNUPMSGSRSV1><ACCTINFOTRNRS><TRNUID>2a3cbf11-23da-4e77-9a55-2359caf82afe</TRNUID><STATUS><CODE>0</CODE><SEVERITY>INFO</SEVERITY></STATUS><ACCTINFORS><DTACCTUP>20190430093324.150[-7:MST]</DTACCTUP><ACCTINFO><CCACCTINFO><CCACCTFROM><ACCTID>888888888888888</ACCTID><CYCLECUT.INDICATOR>false</CYCLECUT.INDICATOR><PURGE.INDICATOR>false</PURGE.INDICATOR><INTL.INDICATOR>false</INTL.INDICATOR></CCACCTFROM><SUPTXDL>Y</SUPTXDL><XFERSRC>N</XFERSRC><XFERDEST>N</XFERDEST><SVCSTATUS>ACTIVE</SVCSTATUS></CCACCTINFO></ACCTINFO><ACCTINFO><CCACCTINFO><CCACCTFROM><ACCTID>999999999999999</ACCTID><CYCLECUT.INDICATOR>false</CYCLECUT.INDICATOR><PURGE.INDICATOR>false</PURGE.INDICATOR><INTL.INDICATOR>false</INTL.INDICATOR></CCACCTFROM><SUPTXDL>Y</SUPTXDL><XFERSRC>N</XFERSRC><XFERDEST>N</XFERDEST><SVCSTATUS>ACTIVE</SVCSTATUS></CCACCTINFO></ACCTINFO></ACCTINFORS></ACCTINFOTRNRS></SIGNUPMSGSRSV1></OFX>
+    <OFX>
+        <SIGNONMSGSRSV1>
+            <SONRS>
+                <STATUS>
+                    <CODE>0</CODE>
+                    <SEVERITY>INFO</SEVERITY>
+                    <MESSAGE>Login successful</MESSAGE>
+                </STATUS>
+                <DTSERVER>20190430093324.000[-7:MST]</DTSERVER>
+                <LANGUAGE>ENG</LANGUAGE>
+                <FI>
+                    <ORG>AMEX</ORG>
+                    <FID>3101</FID>
+                </FI>
+            </SONRS>
+        </SIGNONMSGSRSV1>
+        <SIGNUPMSGSRSV1>
+            <ACCTINFOTRNRS>
+                <TRNUID>2a3cbf11-23da-4e77-9a55-2359caf82afe</TRNUID>
+                <STATUS>
+                    <CODE>0</CODE>
+                    <SEVERITY>INFO</SEVERITY>
+                </STATUS>
+                <ACCTINFORS>
+                    <DTACCTUP>20190430093324.150[-7:MST]</DTACCTUP>
+                    <ACCTINFO>
+                        <CCACCTINFO>
+                            <CCACCTFROM>
+                                <ACCTID>888888888888888</ACCTID>
+                            </CCACCTFROM>
+                            <SUPTXDL>Y</SUPTXDL>
+                            <XFERSRC>N</XFERSRC>
+                            <XFERDEST>N</XFERDEST>
+                            <SVCSTATUS>ACTIVE</SVCSTATUS>
+                        </CCACCTINFO>
+                    </ACCTINFO>
+                    <ACCTINFO>
+                        <CCACCTINFO>
+                            <CCACCTFROM>
+                                <ACCTID>999999999999999</ACCTID>
+                            </CCACCTFROM>
+                            <SUPTXDL>Y</SUPTXDL>
+                            <XFERSRC>N</XFERSRC>
+                            <XFERDEST>N</XFERDEST>
+                            <SVCSTATUS>ACTIVE</SVCSTATUS>
+                        </CCACCTINFO>
+                    </ACCTINFO>
+                </ACCTINFORS>
+            </ACCTINFOTRNRS>
+        </SIGNUPMSGSRSV1>
+    </OFX>
+
+(Indentation applied and Intuit proprietary extension tags removed to improve
+readability)
 
 Within all that markup, the part we're looking for is this:
 
@@ -360,8 +414,8 @@ there's some important information in the SIGNONINFO.
 Both Chase and BofA have the CLIENTUIDREQ flag set, which means you'll need to
 set ``clientuid`` (a valid UUID4 value) in your ``ofxget.cfg``.
 
-Not to worry.  ``ofxget`` will automatically set a global default CLIENTUID for
-you if you have it ``--write`` a configuration.  You can override this global 
+Not to worry!  ``ofxget`` will automatically set a global default CLIENTUID for
+you if you ask it to ``--write`` a configuration.  You can override this global 
 default by setting a ``clientuid`` value under a server section in your config
 file (in UUID4 format).  More conveniently, you can just pass ``ofxget``
 the ``--clientuid`` option, e.g.:
