@@ -694,7 +694,10 @@ class MergeConfigTestCase(unittest.TestCase):
         self.assertEqual(maps[2]["org"], "2BIG2FAIL")
         self.assertEqual(maps[3], ofxget.DEFAULTS)
 
-        # Args passed from the CLI trump everything
+        # Any arg from the the CLI should be available in the merged map.
+        self.assertEqual(merged["server"], "2big2fail")
+
+        # Args passed from the CLI trump the same args from any other source.
         self.assertEqual(merged["user"], "daffyduck")
 
         # For list-type configs, higher-priority config overrides
