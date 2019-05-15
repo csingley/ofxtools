@@ -12,7 +12,7 @@ Downloading OFX Data With ofxget
 ================================
 
 Locating ofxget
---------------------------
+---------------
 The ``ofxget`` shell script should have been installed by ``pip`` along with
 the ``ofxtools`` library.  If the install location isn't already in your
 ``$PATH``, you'll likely want to add it.
@@ -30,6 +30,7 @@ the ``ofxtools`` library.  If the install location isn't already in your
     * Linux/BSD/etc.: ``/usr/local/bin/ofxget``
 
     **Virtual environment installation**
+
     * ``</path/to/venv/root>/bin/ofxget``
 
 If all else fails, you can execute ``</path/to/ofxtools>/scripts/ofxget.py``.
@@ -120,9 +121,12 @@ Available request types (as indicated in the ``--help``) are ``list``, ``scan``,
 through most of these in an example of bootstrapping a full configuration for
 American Express.
 
+Basic connectivity: requesting an OFX profile
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 We must know the OFX server URL in order to connect at all.  ``ofxtools``
 contains a database of all US financial institutions listed on the
-`OFX Home`_ website that I could get to talk OFX with me.  If you can't find
+`OFX Home`_ website that I could get to speak OFX with me.  If you can't find
 your bank in ``ofxget`` (or if you're having a hard time configuring a
 connection), `OFX Home`_ should be your first stop.  You can also try the fine
 folks at `GnuCash`_, who share the struggle.
@@ -148,6 +152,9 @@ what OFX services are available and some parameters for accessing them.
 
 If it doesn't work, see below for a discussion of scanning version and format
 parameters.
+
+Creating a configuration file
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We probably don't want to keep typing all that out every time we want to
 connect, so we'll create a configuration file to store it for reuse.
@@ -188,6 +195,9 @@ connection more conveniently:
 .. code-block:: bash
 
     $ ofxget prof amex
+
+Logging in and requesting account information
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The next step is to log into the OFX server with our username & password,
 and get a list of accounts for which we can download statements.
@@ -305,7 +315,33 @@ argument:
     $ ofxget stmt amex --user <username> --all
 
 This tells ``ofxget`` to generate an ACCTINFO request as above, parse the
-response, and generate a STMT request for each account listed therein.
+response, and generate a STMT request for each account listed therein.  You
+might as well tack on a ``--write`` to save these parameters to your config
+file, so you don't have to do all that again next time.
+
+Requesting statements
+^^^^^^^^^^^^^^^^^^^^^
+
+To rehash, a full statement request constructed entirely through the CLI looks
+like this:
+
+.. code-block:: bash
+
+    $ export URL="https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do\?request_type\=nl_ofxdownload"
+    $ ofxget stmt $URL --org AMEX --fid 3101 -u <username> -c 888888888888888 -c 999999999999999
+    $ unset URL
+
+This is for a credit card statement; for a bank statement you will also need
+to pass in ``--bankid`` (usually the bank's ABA routing number), and for a
+brokerage statement you will need to pass in ``--brokerid`` (usually the
+broker's DNS domain).
+
+Presumably you will have migrated most/all of these parameters to your config
+file as described above, so you can instead just say this:
+
+.. code-block:: bash
+
+    $ ofxget stmt amex
 
 By default, a statement request asks for all transaction activity available
 from the server.  To restrict the statement to a certain time period, we
@@ -317,6 +353,9 @@ use the ``--start`` and ``--end`` arguments:
 
 Please note that the CLI accepts OFX-formatted dates (YYYYmmdd) rather than
 ISO-8601 (YYYY-mm-dd).
+
+You can also pass``--asof`` to set the reporting date for balances and/or
+investment positions, although it tends to be ignored for the latter.
 
 
 Scanning for OFX connection formats
