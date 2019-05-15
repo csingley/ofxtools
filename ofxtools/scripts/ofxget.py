@@ -202,7 +202,7 @@ def make_argparser() -> ArgumentParser:
     )
     stmt_group.add_argument(
         "-a", "--asof", metavar="DATE", dest="dtasof",
-        help="(YYYYmmdd) As-of date for investment positions",
+        help="(YYYYmmdd) As-of date for balances and investment positions",
     )
     stmt_group.add_argument(
         "--no-transactions",
