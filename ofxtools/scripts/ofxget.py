@@ -361,8 +361,7 @@ def request_acctinfo(args: ArgType) -> None:
     """
 
     if not args["user"]:
-        msg = "Please configure 'user'"
-        raise ValueError(msg.format(msg))
+        raise ValueError("Please configure 'user'")
 
     password = get_passwd(args)
     acctinfo = _request_acctinfo(args, password)
@@ -556,7 +555,9 @@ def merge_config(args: argparse.Namespace,
                                     "fid": lookup.fid,
                                     "brokerid": lookup.brokerid})
 
-    if not (merged["url"] or args.request == "list" or args.dryrun):
+    if not (merged.get("url", None)
+            or merged.get("dryrun", False)
+            or merged.get("request", None) == "list"):
         err = "Missing URL"
 
         if "server" not in _args:
@@ -589,9 +590,10 @@ def config2arg(key: str, value: str) -> Union[List[str], bool, int, str]:
 
     def read_bool(string: str) -> bool:
         BOOLY = ConfigParser.BOOLEAN_STATES  # type: ignore
+        keys = list(BOOLY.keys())
         if string not in BOOLY:
-            msg = "Can't interpret '{}' as bool; must be one of {}"
-            raise ValueError(msg.format(string, list(BOOLY.keys())))
+            msg = f"Can't interpret '{list}' as bool; must be one of {keys}"
+            raise ValueError(msg)
         return BOOLY[string]
 
     def read_list(string: str) -> List[str]:
@@ -603,14 +605,14 @@ def config2arg(key: str, value: str) -> Union[List[str], bool, int, str]:
                 int: read_int}
 
     if key not in DEFAULTS:
-        msg = "Don't know type of {}; define in ofxget.DEFAULTS"
-        raise ValueError(msg.format(key))
+        msg = f"Don't know type of {key}; define in ofxget.DEFAULTS"
+        raise ValueError(msg)
 
     cfg_type = type(DEFAULTS[key])
 
     if cfg_type not in handlers:
-        msg = "Config key {}: no handler defined for type '{}'"
-        raise ValueError(msg.format(key, cfg_type))
+        msg = f"Config key {key}: no handler defined for type '{cfg_type}'"
+        raise ValueError(msg)
 
     return handlers[cfg_type](value)  # type: ignore
 
@@ -638,8 +640,8 @@ def arg2config(key: str, value: Union[list, bool, int, str]) -> str:
                 int: write_int}
 
     if key not in DEFAULTS:
-        msg = "Don't know type of {}; define in ofxget.DEFAULTS"
-        raise ValueError(msg.format(key))
+        msg = f"Don't know type of {key}; define in ofxget.DEFAULTS"
+        raise ValueError(msg)
 
     cfg_type = type(DEFAULTS[key])
 
@@ -859,12 +861,10 @@ def verify_status(trnrs: models.Aggregate) -> None:
     """
     status = trnrs.status
     if status.code != 0:
-        msg = ("{cls}: Request failed, code={code}, "
-               "severity={severity}, message='{msg}'")
-        raise ValueError(msg.format(cls=trnrs.__class__.__name__,
-                                    code=status.code,
-                                    severity=status.severity,
-                                    msg=status.message))
+        cls = trnrs.__class__.__name__
+        msg = (f"{cls}: Request failed, code={status.code}, "
+               f"severity={status.severity}, message='{status.message}'")
+        raise ValueError(msg)
 
 
 def extract_signoninfos(markup: BytesIO) -> List[models.SIGNONINFO]:
@@ -931,13 +931,12 @@ def extract_acctinfos(markup: BytesIO) -> Mapping:
     def _unique(ids, label):
         ids = set(ids)
         if len(ids) > 1:
-            msg = "Multiple {} {}; can't configure automatically"
-            raise ValueError(msg.format(label, list(ids)))
+            msg = f"Multiple {label} {list(ids)}; can't configure automatically"
+            raise ValueError(msg)
         try:
             id = ids.pop()
         except KeyError:
-            msg = "{} is empty"
-            raise ValueError(msg.format(label))
+            raise ValueError("{label} is empty")
         return id
 
     def _ready(acctinfo):
