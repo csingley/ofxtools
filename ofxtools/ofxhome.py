@@ -54,7 +54,7 @@ def list_institutions() -> Mapping[str, str]:
     with urllib.request.urlopen(query) as f:
         response = f.read()
 
-    return OrderedDict((fi.get("id"), fi.get("name"))
+    return OrderedDict((fi.get("id").strip(), fi.get("name").strip())
                        for fi in ET.fromstring(response))
 
 
@@ -128,7 +128,7 @@ def _make_query(**kwargs: str) -> str:
 def _convert_str(elem: ET.Element) -> Optional[str]:
     text = elem.text
     if text:
-        return saxutils.unescape(text)
+        return saxutils.unescape(text).strip()
     return None
 
 
