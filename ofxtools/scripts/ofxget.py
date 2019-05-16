@@ -14,6 +14,7 @@ from collections import defaultdict, OrderedDict, ChainMap
 import getpass
 from urllib import parse as urllib_parse
 from urllib.error import HTTPError, URLError
+import socket
 import concurrent.futures
 import json
 import xml.etree.ElementTree as ET
@@ -681,7 +682,7 @@ def mk_server_cfg(args: ArgType) -> configparser.SectionProxy:
         if opt in args:
             value = args[opt]
             default_value = lib_cfg.get(opt, DEFAULTS[opt])
-            if value != default_value and value not in [None, "", []]:
+            if value != default_value and value not in NULL_ARGS:
                 cfg[opt] = arg2config(opt, value)
 
     # Don't include CLIENTUID in the server section if it's sourced from
@@ -766,6 +767,7 @@ def _scan_profile(url: str,
                 HTTPError,
                 ConnectionError,
                 OSError,
+                socket.timeout,
                 ) as exc:
             future.cancel()
             continue
