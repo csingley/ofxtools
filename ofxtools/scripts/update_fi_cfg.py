@@ -23,6 +23,9 @@ from ofxtools.scripts import ofxget
 LibraryConfig = ConfigParser()
 LibraryConfig.read(ofxget.CONFIGPATH)
 
+if not LibraryConfig.has_section("NAMES"):
+    LibraryConfig["NAMES"] = {}
+
 # Map ofxhome_id: server_nick for all configs in library
 known_servers = {LibraryConfig[sct]["ofxhome"]: sct for sct in LibraryConfig
                  if "ofxhome" in LibraryConfig[sct]}
@@ -76,12 +79,23 @@ def main():
         org = lookup.org
         fid = lookup.fid
 
+        lookup_name = saxutils.unescape(lookup.name)
+        srvr_nick = known_servers.get(ofxhome_id, lookup_name)
+
+        ofxhome_id = lookup.id
+        assert ofxhome_id
+        names = LibraryConfig["NAMES"]
+        if ofxhome_id not in names:
+            names[ofxhome_id] = lookup_name
+
         scan_results: ofxget.ScanResults = ofxget._scan_profile(
             url=url, org=org, fid=fid, timeout=10.0
         )
 
         v1, v2, signoninfo = scan_results
         if (not v2["versions"]) and (not v1["versions"]):
+            # If no OFX response, blank the server config
+            LibraryConfig[srvr_nick] = {"ofxhome": ofxhome_id}
             continue
 
         format = ofxget._best_scan_format(scan_results)
@@ -92,22 +106,8 @@ def main():
                           "fid": fid,
                           "brokerid": lookup.brokerid}
 
-        lookup_name = saxutils.unescape(lookup.name)
-        srvr_nick = known_servers.get(ofxhome_id, lookup_name)
-
         args = ChainMap({"server": srvr_nick}, looked_up_data, format)
-
         write_config(args)
-
-        if not LibraryConfig.has_section("NAMES"):
-            LibraryConfig["NAMES"] = {}
-        names = LibraryConfig["NAMES"]
-
-        ofxhome_id = args["ofxhome"]
-        assert ofxhome_id
-
-        if ofxhome_id not in names:
-            names[ofxhome_id] = lookup_name
 
 
 if __name__ == "__main__":
