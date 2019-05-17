@@ -55,7 +55,7 @@ from ofxtools.Client import (
 from ofxtools.Types import DateTime
 from ofxtools.utils import UTC
 from ofxtools.header import OFXHeaderError
-from ofxtools.Parser import OFXTree
+from ofxtools.Parser import OFXTree, ParseError
 
 
 CONFIGPATH = os.path.join(config.CONFIGDIR, "fi.cfg")
@@ -807,7 +807,10 @@ def test_scan_response(future, version, signoninfos):
                 (attr, getattr(info, attr, None) or False)
                 for attr in bool_attrs])
             signoninfos[version] = signoninfo_
-        except (ET.ParseError, OFXHeaderError):
+        except (socket.timeout, ):
+            # We didn't receive a response at all
+            return False
+        except (ParseError, ET.ParseError, OFXHeaderError):
             # We didn't receive valid OFX in the response
             return False
         except (ValueError, ):
