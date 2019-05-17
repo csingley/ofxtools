@@ -84,10 +84,17 @@ class OfxgetWarning(UserWarning):
 
 # Type alias for loaded Argparser args
 ArgType = typing.ChainMap[str, Any]
+
 # Type alias for scan result of a single OFX protocol version
 ScanVersionResult = Mapping[str, Union[list, dict]]
+
 # Type alias for a full set of profile scan results
 ScanResults = Tuple[ScanVersionResult, ScanVersionResult, Mapping[str, bool]]
+
+# Type alias 
+FormatType = Tuple[bool, bool]
+FormatConfig = MutableMapping[str, bool]
+
 
 
 class UuidAction(Action):
@@ -724,12 +731,97 @@ def _scan_profile(url: str,
     make a basic OFX connection. SIGNONINFO provides further auth information
     that may be needed to succssfully log in.
     """
+    client = OFXClient(url, org=org, fid=fid)
+    futures = schedule_scan(client, max_workers, timeout)
+
+    # The only thing we're measuring here is success (indicated by receiving
+    # a valid HTTP response) or failure (indicated by the request's
+    # throwing any of various errors).  We don't examine the actual response
+    # beyond simply parsing it to verify that it's valid OFX.  The data we keep
+    # is actually the metadata (i.e. connection parameters like OFX version
+    # tried for a request) stored as values in the ``futures`` dict.
+    working: Mapping[int, List[FormatType]] = defaultdict(list)
+    signoninfos: MutableMapping[int, Any] = defaultdict(OrderedDict)
+
+    for future in concurrent.futures.as_completed(futures):
+        (version, prettyprint, close_elements) = futures[future]
+
+        if not test_scan_response(future, version, signoninfos):
+            continue
+
+        working[version].append((prettyprint, close_elements))
+
+    signoninfos = {k: v for k, v in signoninfos.items() if v}
+    if signoninfos:
+        highest_version = max(signoninfos.keys())
+        signoninfo = signoninfos[highest_version]
+    else:
+        signoninfo = OrderedDict()
+
+    v2, v1 = utils.partition(lambda result: result[0] < 200, working.items())
+    v1_versions, v1_formats = collate_results(v1)
+    v2_versions, v2_formats = collate_results(v2)
+
+    # V2 always has closing tags for elements; just report prettyprint
+    for format in v2_formats:
+        assert not format["unclosedelements"]
+        del format["unclosedelements"]
+
+    return (OrderedDict([("versions", v1_versions), ("formats", v1_formats)]),
+            OrderedDict([("versions", v2_versions), ("formats", v2_formats)]),
+            signoninfo,
+            )
+
+
+def test_scan_response(future, version, signoninfos):
+    try:
+        # ``future.result()`` returns an http.client.HTTPResponse
+        response = future.result()
+    except (URLError,
+            HTTPError,
+            ConnectionError,
+            OSError,
+            socket.timeout,
+            ) as exc:
+        future.cancel()
+        return False
+
+    # ``response`` is an HTTPResponse; doesn't have seek() method used
+    # by ``header.parse_header()``.  Repackage as BytesIO for parsing.
+    if not signoninfos[version]:
+        with response as f:
+            response_ = f.read()
+        try:
+            if not response_:
+                return False
+
+            signoninfos_ = extract_signoninfos(BytesIO(response_))
+            assert len(signoninfos_) > 0
+            info = signoninfos_[0]
+            bool_attrs = ("chgpinfirst",
+                          "clientuidreq",
+                          "authtokenfirst",
+                          "mfachallengefirst",
+                          )
+            signoninfo_ = OrderedDict([
+                (attr, getattr(info, attr, None) or False)
+                for attr in bool_attrs])
+            signoninfos[version] = signoninfo_
+        except (ET.ParseError, OFXHeaderError):
+            # We didn't receive valid OFX in the response
+            return False
+        except (ValueError, ):
+            # We received OFX, but not a valid PROFRS
+            pass
+
+    return True
+
+
+def schedule_scan(client, max_workers, timeout):
     ofxv1 = [102, 103, 151, 160]
     ofxv2 = [200, 201, 202, 203, 210, 211, 220]
 
     futures = {}
-    client = OFXClient(url, org=org, fid=fid)
-
     with concurrent.futures.ThreadPoolExecutor(max_workers) as executor:
         for prettyprint in (False, True):
             for close_elements in (False, True):
@@ -750,111 +842,41 @@ def _scan_profile(url: str,
                 timeout=timeout):
                 (version, prettyprint, True) for version in ofxv2})
 
-    # The only thing we're measuring here is success (indicated by receiving
-    # a valid HTTP response) or failure (indicated by the request's
-    # throwing any of various errors).  We don't examine the actual response
-    # beyond simply parsing it to verify that it's valid OFX.  The data we keep
-    # is actually the metadata (i.e. connection parameters like OFX version
-    # tried for a request) stored as values in the ``futures`` dict.
-    working: Mapping[int, List[tuple]] = defaultdict(list)
-    signoninfos: MutableMapping[int, Any] = defaultdict(OrderedDict)
+    return futures
 
-    for future in concurrent.futures.as_completed(futures):
-        try:
-            # ``future.result()`` returns an http.client.HTTPResponse
-            response = future.result()
-        except (URLError,
-                HTTPError,
-                ConnectionError,
-                OSError,
-                socket.timeout,
-                ) as exc:
-            future.cancel()
-            continue
 
-        (version, prettyprint, close_elements) = futures[future]
-        working[version].append((prettyprint, close_elements))
+def collate_results(
+    results: Tuple[int, FormatType]
+) -> Tuple[List[int], List[FormatConfig]]:
+    """
+    Transform the metadata (version, prettyprint, close_elements) tagged onto a
+    concurrent.futures.Future instance for a successful run of
+    OFXClient.request_profile(). Returns a 2-tuple of ([OFX version], [format])
+    where each format is a dict of {"pretty": bool, "unclosedelements": bool}
+    representing configs that successully connect for those versions.
 
-        # ``response`` is an HTTPResponse; doesn't have seek() method used
-        # by ``header.parse_header()``.  Repackage as BytesIO for parsing.
-        if not signoninfos[version]:
-            with response as f:
-                response_ = f.read()
-            try:
-                if not response_:
-                    continue
+    Input ``results`` needs to be a complete set for either OFXv1 or v2,
+    with no results for the other version admixed.
+    """
+    results_ = list(results)
+    if not results_:
+        return [], []
+    versions, formats = zip(*results_)  # type: ignore
 
-                signoninfos_ = extract_signoninfos(BytesIO(response_))
-                assert len(signoninfos_) > 0
-                info = signoninfos_[0]
-                bool_attrs = ("chgpinfirst",
-                              "clientuidreq",
-                              "authtokenfirst",
-                              "mfachallengefirst",
-                              )
-                signoninfo_ = OrderedDict([
-                    (attr, getattr(info, attr, None) or False)
-                    for attr in bool_attrs])
-                signoninfos[version] = signoninfo_
-            except (ET.ParseError, OFXHeaderError):
-                # We didn't receive valid OFX in the response
-                continue
-            except (ValueError, ):
-                # We received OFX, but not a valid PROFRS
-                pass
-
-    signoninfos = {k: v for k, v in signoninfos.items() if v}
-    if signoninfos:
-        highest_version = max(signoninfos.keys())
-        signoninfo = signoninfos[highest_version]
-    else:
-        signoninfo = OrderedDict()
-
-    def collate_results(
-        results: Tuple[int, Tuple[bool, bool]]
-    ) -> Tuple[List[int], List[MutableMapping[str, bool]]]:
-        """
-        Transform our metadata results (version, prettyprint, close_elements)
-        into a 2-tuple of ([OFX version], [format]) where each format is a dict
-        of {"pretty": bool, "unclosedelements": bool} representing a pair
-        of configs that should successully connect for those versions.
-
-        Input ``results`` needs to be a complete set for either OFXv1 or v2,
-        with no results for the other version admixed.
-        """
-        results_ = list(results)
-        if not results_:
-            return [], []
-        versions, formats = zip(*results_)  # type: ignore
-
-        # Assumption: the same formatting requirements apply to all
-        # sub-versions (e.g. 1.0.2 and 1.0.3, or 2.0.3 and 2.2.0).
-        # If a (pretty, close_elements) pair succeeds on most sub-versions
-        # but fails on a few, we'll chalk it up to network transmission
-        # errors and ignore it.
-        #
-        # Translation: just pick the longest sequence of successful
-        # formats and assume it applies to the whole version.
-        formats = max(formats, key=len)
-        formats.sort()
-        formats = [OrderedDict([("pretty", fmt[0]),
-                               ("unclosedelements", not fmt[1])])
-                   for fmt in formats]
-        return sorted(list(versions)), formats
-
-    v2, v1 = utils.partition(lambda result: result[0] < 200, working.items())
-    v1_versions, v1_formats = collate_results(v1)
-    v2_versions, v2_formats = collate_results(v2)
-
-    # V2 always has closing tags for elements; just report prettyprint
-    for format in v2_formats:
-        assert not format["unclosedelements"]
-        del format["unclosedelements"]
-
-    return (OrderedDict([("versions", v1_versions), ("formats", v1_formats)]),
-            OrderedDict([("versions", v2_versions), ("formats", v2_formats)]),
-            signoninfo,
-            )
+    # Assumption: the same formatting requirements apply to all
+    # sub-versions (e.g. 1.0.2 and 1.0.3, or 2.0.3 and 2.2.0).
+    # If a (pretty, close_elements) pair succeeds on most sub-versions
+    # but fails on a few, we'll chalk it up to network transmission
+    # errors and ignore it.
+    #
+    # Translation: just pick the longest sequence of successful
+    # formats and assume it applies to the whole version.
+    formats = max(formats, key=len)
+    formats.sort()
+    formats = [OrderedDict([("pretty", fmt[0]),
+                           ("unclosedelements", not fmt[1])])
+               for fmt in formats]
+    return sorted(list(versions)), formats
 
 
 def verify_status(trnrs: models.Aggregate) -> None:
@@ -1015,7 +1037,8 @@ def fi_index() -> Sequence[Tuple[str, str, str]]:
                 nick,
                 sct.get("ofxhome", "--"))
                for nick, sct in UserConfig.items()
-               if nick not in (cfg_default_sect, "NAMES")]
+               if nick not in (cfg_default_sect, "NAMES")
+               and "url" in sct]
 
     def sortkey(srv):
         key = srv[0].lower()
