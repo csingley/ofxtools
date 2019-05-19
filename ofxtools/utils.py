@@ -6,7 +6,14 @@ import datetime
 import os
 import itertools
 import xml.etree.ElementTree as ET
-from typing import Optional
+from typing import (
+    Any,
+    Optional,
+    Tuple,
+    Callable,
+    Iterable,
+    Sequence,
+)
 import math
 
 
@@ -28,6 +35,22 @@ def fixpath(path: str) -> str:
     path = os.path.normcase(path)
     path = os.path.abspath(path)
     return path
+
+
+def collapseToSingle(items: Sequence, label: str):
+    """
+    Given a sequence of repeated items, return the item that's repeated.
+    Throw an error if sequence is empty or contains >1 distinct item.
+
+    ``label`` is the name used in error reporting.
+    """
+    items_ = set(items)
+    if len(items_) == 0:
+        raise ValueError("{label} is empty")
+    if len(items_) > 1:
+        raise ValueError((f"Multiple {label} {list(items)}; "
+                          "can't configure automatically"))
+    return items_.pop()
 
 
 ###############################################################################
@@ -54,7 +77,7 @@ TZS = {"EST": -5,
 #  itertools recipes
 #  https://docs.python.org/2/library/itertools.html#recipes
 ###############################################################################
-def pairwise(iterable):
+def pairwise(iterable: Iterable) -> Iterable[Tuple[Any, Any]]:
     """ s -> (s0,s1), (s1,s2), (s2, s3), ...  """
     a, b = itertools.tee(iterable)
     next(b, None)
@@ -67,7 +90,7 @@ def all_equal(iterable):
     return next(g, True) and not next(g, False)
 
 
-def partition(pred, iterable):
+def partition(pred: Callable, iterable: Iterable) -> Tuple[Iterable, Iterable]:
     """
     Use a predicate to partition entries into false entries and true entries
     """

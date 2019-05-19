@@ -6,9 +6,7 @@ Configurable CLI front end for ``ofxtools.Client``
 # stdlib imports
 import os
 import argparse
-from argparse import ArgumentParser, ArgumentError, Action
 import configparser
-from configparser import ConfigParser
 import datetime
 from collections import defaultdict, OrderedDict, ChainMap
 import getpass
@@ -21,7 +19,6 @@ import xml.etree.ElementTree as ET
 from io import BytesIO
 import itertools
 from operator import attrgetter
-import sys
 import warnings
 import pydoc
 import typing
@@ -35,6 +32,7 @@ from typing import (
     MutableMapping,
     Dict,
     Sequence,
+    Iterable,
 )
 
 # 3rd party imports
@@ -58,55 +56,62 @@ from ofxtools.header import OFXHeaderError
 from ofxtools.Parser import OFXTree, ParseError
 
 
-CONFIGPATH = os.path.join(config.CONFIGDIR, "fi.cfg")
-USERCONFIGPATH = os.path.join(config.USERCONFIGDIR, "ofxget.cfg")
-UserConfig = ConfigParser()
-UserConfig.read([CONFIGPATH, USERCONFIGPATH])
-
-
-DEFAULTS: Dict[str, Union[str, int, bool, list]] = {
-    "server": "", "url": "", "ofxhome": "", "version": 203, "org": "", "fid": "",
-    "appid": "", "appver": "", "language": "", "bankid": "", "brokerid": "",
-    "unclosedelements": False, "pretty": False, "user": "", "clientuid": "",
-    "checking": [], "savings": [], "moneymrkt": [], "creditline": [],
-    "creditcard": [], "investment": [], "dtstart": "", "dtend": "",
-    "dtasof": "", "inctran": True, "incbal": True, "incpos": True,
-    "incoo": False, "all": False, "years": [], "acctnum": "", "recid": "",
-    "dryrun": False, "unsafe": False, "write": False, "savepass": False,
-}
-
-
-NULL_ARGS = [None, "", []]
-
 class OfxgetWarning(UserWarning):
     """ Base class for warnings in this module """
 
 
-# Type alias for loaded Argparser args
+###############################################################################
+# TYPE ALIASES
+###############################################################################
+# Loaded Argparser args
 ArgType = typing.ChainMap[str, Any]
 
-# Type alias for scan result of a single OFX protocol version
+# OFX connection params (OFX version, prettyprint, close_elements) tagged onto
+# the OFXClient.request_profile() job submitted to the ThreadPoolExecutor
+# during a profile scan
+OFXVersion = int
+
+ScanMetadata = Tuple[OFXVersion, bool, bool]
+
+# ScanMetadata without OFX version, i.e. (prettyprint, close_elements)
+FormatArgs = Tuple[bool, bool]
+
+# All working FormatArgs for a given OFX version
+FormatMap = Mapping[OFXVersion, List[FormatArgs]]
+
+# FormatArgs made ArgType-compatible, i.e. (pretty, unclosedelements)
+FormatConfig = OrderedDict
+
+# Scan result of a single OFX protocol version
 ScanVersionResult = Mapping[str, Union[list, dict]]
 
-# Type alias for a full set of profile scan results
-ScanResults = Tuple[ScanVersionResult, ScanVersionResult, Mapping[str, bool]]
+# Auth information parsed out of SIGNONINFO during a profile scan -
+# CLIENTUIDREQ et al.
+SignoninfoReport = Mapping[str, bool]
 
-# Type alias 
-FormatType = Tuple[bool, bool]
-FormatConfig = MutableMapping[str, bool]
+# Full set of profile scan results
+ScanResults = Tuple[ScanVersionResult, ScanVersionResult, SignoninfoReport]
+
+AcctInfo = Union[models.BANKACCTINFO, models.CCACCTINFO, models.INVACCTINFO]
+
+ParsedAcctinfo = Mapping[str, Union[str, list]]
 
 
-
-class UuidAction(Action):
+###############################################################################
+# DEFINE CLI
+###############################################################################
+class UuidAction(argparse.Action):
+    """
+    Generates a random UUID4 each time called
+    """
     def __call__(self, parser, namespace, values, option_string=None):
         uuid = OFXClient.uuid
         setattr(namespace, self.dest, uuid)
 
 
-def make_argparser() -> ArgumentParser:
-    argparser = ArgumentParser(
+def make_argparser() -> argparse.ArgumentParser:
+    argparser = argparse.ArgumentParser(
         description="Download OFX financial data",
-        #  epilog="FIs configured: {}".format(fi_index()),
         prog="ofxget",
     )
     argparser.add_argument(
@@ -272,33 +277,6 @@ def make_argparser() -> ArgumentParser:
 ###############################################################################
 # CLI METHODS
 ###############################################################################
-def scan_profiles(start: int,
-                  stop: int,
-                  timeout: Optional[float] = None
-                  ) -> Dict[str, ScanResults]:
-    """
-    Scan OFX Home's list of FIs for working connection configs.
-    """
-    results = {}
-
-    institutions = ofxhome.list_institutions()
-    for ofxhome_id in list(institutions.keys())[start:stop]:
-        lookup = ofxhome.lookup(ofxhome_id)
-        if lookup is None\
-           or lookup.url is None\
-           or ofxhome.ofx_invalid(lookup)\
-           or ofxhome.ssl_invalid(lookup):
-            continue
-        scan_results = _scan_profile(url=lookup.url,
-                                     org=lookup.org,
-                                     fid=lookup.fid,
-                                     timeout=timeout)
-        if scan_results:
-            results[ofxhome_id] = scan_results
-
-    return results
-
-
 def scan_profile(args: ArgType) -> None:
     """
     Report working connection parameters
@@ -309,15 +287,14 @@ def scan_profile(args: ArgType) -> None:
     if (not v2["versions"]) and (not v1["versions"]):
         msg = "Scan found no working formats for {}"
         print(msg.format(args["url"]))
-        sys.exit()
+    else:
+        print(json.dumps(scan_results))
 
-    print(json.dumps(scan_results))
-
-    if args["write"] and not args["dryrun"]:
-        extra_args = _best_scan_format(scan_results)
-        args.maps.insert(0, extra_args)
-
-        write_config(args)
+        if args["write"] and not args["dryrun"]:
+            extra_args = _best_scan_format(scan_results)
+            #  args.maps.insert(0, extra_args)
+            #  write_config(args)
+            write_config(ChainMap(extra_args, dict(args)))
 
 
 def _best_scan_format(scan_results: ScanResults) -> MutableMapping:
@@ -397,6 +374,27 @@ def _request_acctinfo(args: ArgType, password: str) -> BytesIO:
         response = f.read()
 
     return BytesIO(response)
+
+
+def _merge_acctinfo(args: ArgType, markup: BytesIO) -> None:
+    # *ACCTINFO classes don't have rich comparison methods;
+    # can't sort by class
+    sortKey = attrgetter("__class__.__name__")
+    acctinfos: List[AcctInfo] = sorted(extract_acctinfos(markup), key=sortKey)
+
+    def parse_acctinfos(clsName, acctinfos):
+        dispatcher = {"BANKACCTINFO": parse_bankacctinfos,
+                      "CCACCTINFO": parse_ccacctinfos,
+                      "INVACCTINFO": parse_invacctinfos}
+        parser = dispatcher.get(clsName, lambda x: {})
+        return parser(acctinfos)
+
+    parsed_args: List[ParsedAcctinfo] = [parse_acctinfos(clsnm, infos)
+                                         for clsnm, infos in itertools.groupby(
+                                             acctinfos, key=sortKey)]
+
+    # Insert extracted ACCTINFO after CLI commands, but before config files
+    args.maps.insert(1, ChainMap(*parsed_args))
 
 
 def request_stmt(args: ArgType) -> None:
@@ -511,31 +509,158 @@ def request_tax1099(args: ArgType) -> None:
 ###############################################################################
 # ARGUMENT/CONFIG HANDLERS
 ###############################################################################
-def init_client(args: ArgType) -> OFXClient:
-    """
-    Initialize OFXClient with connection info from args
-    """
-    client = OFXClient(
-        args["url"],
-        userid=args["user"] or None,
-        clientuid=args["clientuid"] or None,
-        org=args["org"] or None,
-        fid=args["fid"] or None,
-        version=args["version"],
-        appid=args["appid"] or None,
-        appver=args["appver"] or None,
-        language=args["language"] or None,
-        prettyprint=args["pretty"],
-        close_elements=not args["unclosedelements"],
-        bankid=args["bankid"] or None,
-        brokerid=args["brokerid"] or None,
-    )
-    return client
+CONFIGPATH = os.path.join(config.CONFIGDIR, "fi.cfg")
+USERCONFIGPATH = os.path.join(config.USERCONFIGDIR, "ofxget.cfg")
+UserConfig = configparser.ConfigParser()
+UserConfig.read([CONFIGPATH, USERCONFIGPATH])
+
+
+DEFAULTS: Dict[str, Union[str, int, bool, list]] = {
+    "server": "", "url": "", "ofxhome": "", "version": 203, "org": "", "fid": "",
+    "appid": "", "appver": "", "language": "", "bankid": "", "brokerid": "",
+    "unclosedelements": False, "pretty": False, "user": "", "clientuid": "",
+    "checking": [], "savings": [], "moneymrkt": [], "creditline": [],
+    "creditcard": [], "investment": [], "dtstart": "", "dtend": "",
+    "dtasof": "", "inctran": True, "incbal": True, "incpos": True,
+    "incoo": False, "all": False, "years": [], "acctnum": "", "recid": "",
+    "dryrun": False, "unsafe": False, "write": False, "savepass": False,
+}
+
+
+NULL_ARGS = [None, "", []]
 
 
 def read_config(cfg, section):
     return {k: config2arg(k, v)
             for k, v in cfg[section].items()} if section in cfg else {}
+
+
+def config2arg(key: str, value: str) -> Union[List[str], bool, int, str]:
+    """
+    Transform a config value from ConfigParser format to ArgParser format
+    """
+    def read_string(string: str) -> str:
+        return string
+
+    def read_int(string: str) -> int:
+        return int(value)
+
+    def read_bool(string: str) -> bool:
+        BOOLY = configparser.ConfigParser.BOOLEAN_STATES  # type: ignore
+        keys = list(BOOLY.keys())
+        if string not in BOOLY:
+            msg = f"Can't interpret '{list}' as bool; must be one of {keys}"
+            raise ValueError(msg)
+        return BOOLY[string]
+
+    def read_list(string: str) -> List[str]:
+        return [sub.strip() for sub in string.split(",")]
+
+    handlers = {str: read_string,
+                bool: read_bool,
+                list: read_list,
+                int: read_int}
+
+    if key not in DEFAULTS:
+        msg = f"Don't know type of {key}; define in ofxget.DEFAULTS"
+        raise ValueError(msg)
+
+    cfg_type = type(DEFAULTS[key])
+
+    if cfg_type not in handlers:
+        msg = f"Config key {key}: no handler defined for type '{cfg_type}'"
+        raise ValueError(msg)
+
+    return handlers[cfg_type](value)  # type: ignore
+
+
+def write_config(args: ArgType) -> None:
+    mk_server_cfg(args)
+
+    #  msg = "\nWriting '{}' configs {} to {}..."
+    #  print(msg.format(args["server"], dict(cfg.items()), USERCONFIGPATH))
+
+    with open(USERCONFIGPATH, "w") as f:
+        UserConfig.write(f)
+
+    #  print("...write OK")
+
+
+def mk_server_cfg(args: ArgType) -> configparser.SectionProxy:
+    """
+    Load user config from disk; apply key args to the section corresponding to
+    the server nickname.
+    """
+    UserConfig.clear()
+    UserConfig.read(USERCONFIGPATH)
+
+    defaults = UserConfig[UserConfig.default_section]  # type: ignore
+    if "clientuid" not in defaults:
+        defaults["clientuid"] = OFXClient.uuid
+
+    server = args.get("server", None)
+    # args.server might actually be a URL from CLI, not a nickname
+    if (not server) or server == args["url"]:
+        msg = "Please provide a server nickname to write the config"
+        raise ValueError(msg)
+
+    if not UserConfig.has_section(server):
+        UserConfig[server] = {}
+    cfg = UserConfig[server]
+
+    LibraryConfig = configparser.ConfigParser()
+    LibraryConfig.read(CONFIGPATH)
+    lib_cfg = read_config(LibraryConfig, server)
+
+    for opt in ("url", "version", "ofxhome", "org", "fid", "brokerid",
+                "bankid", "user", "checking", "savings", "moneymrkt",
+                "creditline", "creditcard", "investment", "pretty",
+                "unclosedelements"):
+        if opt in args:
+            value = args[opt]
+            default_value = lib_cfg.get(opt, DEFAULTS[opt])
+            if value != default_value and value not in NULL_ARGS:
+                cfg[opt] = arg2config(opt, value)
+
+    # Don't include CLIENTUID in the server section if it's sourced from
+    # UserConfig.default_section
+    if "clientuid" in args:
+        value = args["clientuid"]
+        if value not in NULL_ARGS and value != defaults["clientuid"]:
+            cfg["clientuid"] = value
+
+    return cfg
+
+
+def arg2config(key: str, value: Union[list, bool, int, str]) -> str:
+    """
+    Transform a config value from ArgParser format to ConfigParser format
+    """
+    def write_string(value: str) -> str:
+        return value
+
+    def write_int(value: int) -> str:
+        return str(value)
+
+    def write_bool(value: bool) -> str:
+        return {True: "true", False: "false"}[value]
+
+    def write_list(value: list) -> str:
+        # INI-friendly string representation of Python list type
+        return str(value).strip("[]").replace("'", "")
+
+    handlers = {str: write_string,
+                bool: write_bool,
+                list: write_list,
+                int: write_int}
+
+    if key not in DEFAULTS:
+        msg = f"Don't know type of {key}; define in ofxget.DEFAULTS"
+        raise ValueError(msg)
+
+    cfg_type = type(DEFAULTS[key])
+
+    return handlers[cfg_type](value)  # type: ignore
 
 
 def merge_config(args: argparse.Namespace,
@@ -586,136 +711,30 @@ def merge_config(args: argparse.Namespace,
     return merged
 
 
-def config2arg(key: str, value: str) -> Union[List[str], bool, int, str]:
+def init_client(args: ArgType) -> OFXClient:
     """
-    Transform a config value from ConfigParser format to ArgParser format
+    Initialize OFXClient with connection info from args
     """
-    def read_string(string: str) -> str:
-        return string
-
-    def read_int(string: str) -> int:
-        return int(value)
-
-    def read_bool(string: str) -> bool:
-        BOOLY = ConfigParser.BOOLEAN_STATES  # type: ignore
-        keys = list(BOOLY.keys())
-        if string not in BOOLY:
-            msg = f"Can't interpret '{list}' as bool; must be one of {keys}"
-            raise ValueError(msg)
-        return BOOLY[string]
-
-    def read_list(string: str) -> List[str]:
-        return [sub.strip() for sub in string.split(",")]
-
-    handlers = {str: read_string,
-                bool: read_bool,
-                list: read_list,
-                int: read_int}
-
-    if key not in DEFAULTS:
-        msg = f"Don't know type of {key}; define in ofxget.DEFAULTS"
-        raise ValueError(msg)
-
-    cfg_type = type(DEFAULTS[key])
-
-    if cfg_type not in handlers:
-        msg = f"Config key {key}: no handler defined for type '{cfg_type}'"
-        raise ValueError(msg)
-
-    return handlers[cfg_type](value)  # type: ignore
-
-
-def arg2config(key: str, value: Union[list, bool, int, str]) -> str:
-    """
-    Transform a config value from ArgParser format to ConfigParser format
-    """
-    def write_string(value: str) -> str:
-        return value
-
-    def write_int(value: int) -> str:
-        return str(value)
-
-    def write_bool(value: bool) -> str:
-        return {True: "true", False: "false"}[value]
-
-    def write_list(value: list) -> str:
-        # INI-friendly string representation of Python list type
-        return str(value).strip("[]").replace("'", "")
-
-    handlers = {str: write_string,
-                bool: write_bool,
-                list: write_list,
-                int: write_int}
-
-    if key not in DEFAULTS:
-        msg = f"Don't know type of {key}; define in ofxget.DEFAULTS"
-        raise ValueError(msg)
-
-    cfg_type = type(DEFAULTS[key])
-
-    return handlers[cfg_type](value)  # type: ignore
-
-
-def mk_server_cfg(args: ArgType) -> configparser.SectionProxy:
-    """
-    Load user config from disk; apply key args to the section corresponding to
-    the server nickname.
-    """
-    UserConfig.clear()
-    UserConfig.read(USERCONFIGPATH)
-
-    defaults = UserConfig[UserConfig.default_section]  # type: ignore
-    if "clientuid" not in defaults:
-        defaults["clientuid"] = OFXClient.uuid
-
-    server = args.get("server", None)
-    # args.server might actually be a URL from CLI, not a nickname
-    if (not server) or server == args["url"]:
-        msg = "Please provide a server nickname to write the config"
-        raise ValueError(msg)
-
-    if not UserConfig.has_section(server):
-        UserConfig[server] = {}
-    cfg = UserConfig[server]
-
-    LibraryConfig = ConfigParser()
-    LibraryConfig.read(CONFIGPATH)
-    lib_cfg = read_config(LibraryConfig, server)
-
-    for opt in ("url", "version", "ofxhome", "org", "fid", "brokerid",
-                "bankid", "user", "checking", "savings", "moneymrkt",
-                "creditline", "creditcard", "investment", "pretty",
-                "unclosedelements"):
-        if opt in args:
-            value = args[opt]
-            default_value = lib_cfg.get(opt, DEFAULTS[opt])
-            if value != default_value and value not in NULL_ARGS:
-                cfg[opt] = arg2config(opt, value)
-
-    # Don't include CLIENTUID in the server section if it's sourced from
-    # UserConfig.default_section
-    if "clientuid" in args:
-        value = args["clientuid"]
-        if value not in NULL_ARGS and value != defaults["clientuid"]:
-            cfg["clientuid"] = value
-
-    return cfg
-
-
-def write_config(args: ArgType) -> None:
-    mk_server_cfg(args)
-
-    #  msg = "\nWriting '{}' configs {} to {}..."
-    #  print(msg.format(args["server"], dict(cfg.items()), USERCONFIGPATH))
-
-    with open(USERCONFIGPATH, "w") as f:
-        UserConfig.write(f)
-
-    #  print("...write OK")
+    client = OFXClient(
+        args["url"],
+        userid=args["user"] or None,
+        clientuid=args["clientuid"] or None,
+        org=args["org"] or None,
+        fid=args["fid"] or None,
+        version=args["version"],
+        appid=args["appid"] or None,
+        appver=args["appver"] or None,
+        language=args["language"] or None,
+        prettyprint=args["pretty"],
+        close_elements=not args["unclosedelements"],
+        bankid=args["bankid"] or None,
+        brokerid=args["brokerid"] or None,
+    )
+    return client
 
 
 ###############################################################################
-# HEAVY LIFTING
+# PROFILE SCAN
 ###############################################################################
 def _scan_profile(url: str,
                   org: Optional[str],
@@ -728,39 +747,36 @@ def _scan_profile(url: str,
 
     Returns a 3-tuple of (OFXv1 results, OFXv2 results, signoninfo), each
     type(dict).  OFX results provide ``ofxget`` configs that will work to
-    make a basic OFX connection. SIGNONINFO provides further auth information
-    that may be needed to succssfully log in.
+    make a basic OFX connection. SIGNONINFO reports further information
+    that may be helpful to authenticate successfully.
     """
     client = OFXClient(url, org=org, fid=fid)
-    futures = schedule_scan(client, max_workers, timeout)
+    futures = _queue_scans(client, max_workers, timeout)
 
-    # The only thing we're measuring here is success (indicated by receiving
-    # a valid HTTP response) or failure (indicated by the request's
-    # throwing any of various errors).  We don't examine the actual response
-    # beyond simply parsing it to verify that it's valid OFX.  The data we keep
-    # is actually the metadata (i.e. connection parameters like OFX version
-    # tried for a request) stored as values in the ``futures`` dict.
-    working: Mapping[int, List[FormatType]] = defaultdict(list)
-    signoninfos: MutableMapping[int, Any] = defaultdict(OrderedDict)
+    # The primary data we keep is actually the metadata (i.e. connection
+    # parameters - OFX version; prettyprint; unclosedelements) tagged on
+    # the Future by _queue_scans() that gave us a successful OFX connection.
+    success_params: FormatMap = defaultdict(list)
+    # If possible, we also parse out some data from SIGNONINFO included in
+    # the PROFRS.
+    signoninfo: SignoninfoReport = {}
 
+    # Assume that SIGNONINFO is the same for each successful OFX PROFRS.
+    # Tell _read_scan_response() to stop parsing out SIGNONINFO once
+    # it's successfully extracted one.
     for future in concurrent.futures.as_completed(futures):
         (version, prettyprint, close_elements) = futures[future]
+        valid, signoninfo_ = _read_scan_response(future, not signoninfo)
 
-        if not test_scan_response(future, version, signoninfos):
+        if not valid:
             continue
+        if not signoninfo and signoninfo_:
+            signoninfo = signoninfo_
+        success_params[version].append((prettyprint, close_elements))
 
-        working[version].append((prettyprint, close_elements))
-
-    signoninfos = {k: v for k, v in signoninfos.items() if v}
-    if signoninfos:
-        highest_version = max(signoninfos.keys())
-        signoninfo = signoninfos[highest_version]
-    else:
-        signoninfo = OrderedDict()
-
-    v2, v1 = utils.partition(lambda result: result[0] < 200, working.items())
-    v1_versions, v1_formats = collate_results(v1)
-    v2_versions, v2_formats = collate_results(v2)
+    v2, v1 = utils.partition(lambda it: it[0] < 200, success_params.items())
+    v1_versions, v1_formats = collate_scan_results(v1)
+    v2_versions, v2_formats = collate_scan_results(v2)
 
     # V2 always has closing tags for elements; just report prettyprint
     for format in v2_formats:
@@ -769,102 +785,110 @@ def _scan_profile(url: str,
 
     return (OrderedDict([("versions", v1_versions), ("formats", v1_formats)]),
             OrderedDict([("versions", v2_versions), ("formats", v2_formats)]),
-            signoninfo,
-            )
+            signoninfo)
 
 
-def test_scan_response(future, version, signoninfos):
-    try:
-        # ``future.result()`` returns an http.client.HTTPResponse
-        response = future.result()
-    except (URLError,
-            HTTPError,
-            ConnectionError,
-            OSError,
-            socket.timeout,
-            ) as exc:
-        future.cancel()
-        return False
-
-    # ``response`` is an HTTPResponse; doesn't have seek() method used
-    # by ``header.parse_header()``.  Repackage as BytesIO for parsing.
-    if not signoninfos[version]:
-        with response as f:
-            response_ = f.read()
-        try:
-            if not response_:
-                return False
-
-            signoninfos_ = extract_signoninfos(BytesIO(response_))
-            assert len(signoninfos_) > 0
-            info = signoninfos_[0]
-            bool_attrs = ("chgpinfirst",
-                          "clientuidreq",
-                          "authtokenfirst",
-                          "mfachallengefirst",
-                          )
-            signoninfo_ = OrderedDict([
-                (attr, getattr(info, attr, None) or False)
-                for attr in bool_attrs])
-            signoninfos[version] = signoninfo_
-        except (socket.timeout, ):
-            # We didn't receive a response at all
-            return False
-        except (ParseError, ET.ParseError, OFXHeaderError):
-            # We didn't receive valid OFX in the response
-            return False
-        except (ValueError, ):
-            # We received OFX, but not a valid PROFRS
-            pass
-
-    return True
-
-
-def schedule_scan(client, max_workers, timeout):
+def _queue_scans(client: OFXClient,
+                 max_workers: Optional[int],
+                 timeout: Optional[float],
+                 ) -> Dict[concurrent.futures.Future, ScanMetadata]:
     ofxv1 = [102, 103, 151, 160]
     ofxv2 = [200, 201, 202, 203, 210, 211, 220]
 
+    BOOLS = (False, True)
+
     futures = {}
     with concurrent.futures.ThreadPoolExecutor(max_workers) as executor:
-        for prettyprint in (False, True):
-            for close_elements in (False, True):
-                futures.update({executor.submit(
-                    client.request_profile,
-                    version=version,
-                    prettyprint=prettyprint,
-                    close_elements=close_elements,
-                    timeout=timeout):
-                    (version, prettyprint, close_elements)
-                    for version in ofxv1})
+        for version, pretty, close in itertools.product(ofxv1, BOOLS, BOOLS):
+            future = executor.submit(client.request_profile,
+                                     version=version,
+                                     prettyprint=pretty,
+                                     close_elements=close,
+                                     timeout=timeout)
+            futures[future] = (version, pretty, close)
 
-            futures.update({executor.submit(
-                client.request_profile,
-                version=version,
-                prettyprint=prettyprint,
-                close_elements=True,
-                timeout=timeout):
-                (version, prettyprint, True) for version in ofxv2})
+        for version, pretty in itertools.product(ofxv2, BOOLS):
+            future = executor.submit(client.request_profile,
+                                     version=version,
+                                     prettyprint=pretty,
+                                     close_elements=True,
+                                     timeout=timeout)
+            futures[future] = (version, pretty, True)
 
     return futures
 
 
-def collate_results(
-    results: Tuple[int, FormatType]
-) -> Tuple[List[int], List[FormatConfig]]:
+def _read_scan_response(future: concurrent.futures.Future,
+                        read_signoninfo: bool = False,
+                        ) -> Tuple[bool, SignoninfoReport]:
+    valid: bool = False
+    signoninfo: SignoninfoReport = {}
+
+    try:
+        # ``future.result()`` returns an http.client.HTTPResponse
+        response = future.result()
+    except (URLError, HTTPError, ConnectionError, OSError, socket.timeout):
+        future.cancel()
+        return valid, signoninfo
+
+    # ``response`` is an HTTPResponse; doesn't have seek() method used
+    # by ``header.parse_header()``.  Repackage as BytesIO for parsing.
+    if read_signoninfo:
+        with response as f:
+            response_ = f.read()
+        try:
+            if not response_:
+                return valid, signoninfo
+
+            signoninfos: List[models.SIGNONINFO] \
+                = extract_signoninfos(BytesIO(response_))
+
+            assert len(signoninfos) > 0
+            valid = True
+            info = signoninfos[0]
+            bool_attrs = ("chgpinfirst",
+                          "clientuidreq",
+                          "authtokenfirst",
+                          "mfachallengefirst")
+            signoninfo = OrderedDict([
+                (attr, getattr(info, attr, None) or False)
+                for attr in bool_attrs])
+        except (socket.timeout, ):
+            # We didn't receive a response at all
+            valid = False
+        except (ParseError, ET.ParseError, OFXHeaderError):
+            # We didn't receive valid OFX in the response
+            valid = False
+        except (ValueError, ):
+            # We received OFX, but not a valid PROFRS
+            valid = True
+    else:
+        # IF we're not parsing the PROFRS, then we interpret receiving a good
+        # HTTP response as valid.
+        valid = True
+
+    return valid, signoninfo
+
+
+def collate_scan_results(
+    scan_results: Iterable[Tuple[OFXVersion, FormatArgs]]
+) -> Tuple[List[OFXVersion], List[FormatConfig]]:
     """
     Transform the metadata (version, prettyprint, close_elements) tagged onto a
     concurrent.futures.Future instance for a successful run of
-    OFXClient.request_profile(). Returns a 2-tuple of ([OFX version], [format])
-    where each format is a dict of {"pretty": bool, "unclosedelements": bool}
-    representing configs that successully connect for those versions.
+    OFXClient.request_profile().
 
-    Input ``results`` needs to be a complete set for either OFXv1 or v2,
+    Returns a 2-tuple of ([OFX version], [format]) where each format is a dict
+    of {"pretty": bool, "unclosedelements": bool} representing configs that
+    successully connect for those versions.
+
+    Input ``scan_results`` needs to be a complete set for either OFXv1 or v2,
     with no results for the other version admixed.
     """
-    results_ = list(results)
+    results_ = list(scan_results)
     if not results_:
         return [], []
-    versions, formats = zip(*results_)  # type: ignore
+    versions, formats = zip(*results_)
 
     # Assumption: the same formatting requirements apply to all
     # sub-versions (e.g. 1.0.2 and 1.0.3, or 2.0.3 and 2.2.0).
@@ -875,13 +899,16 @@ def collate_results(
     # Translation: just pick the longest sequence of successful
     # formats and assume it applies to the whole version.
     formats = max(formats, key=len)
-    formats.sort()
-    formats = [OrderedDict([("pretty", fmt[0]),
-                           ("unclosedelements", not fmt[1])])
-               for fmt in formats]
-    return sorted(list(versions)), formats
+
+    formats_ = [OrderedDict([("pretty", fmt[0]),
+                             ("unclosedelements", not fmt[1])])
+                for fmt in sorted(formats, key=lambda x: (x[0], not x[1]))]
+    return sorted(list(versions)), formats_
 
 
+###############################################################################
+# OFX PARSING
+###############################################################################
 def verify_status(trnrs: models.Aggregate) -> None:
     """
     Input a models.Aggregate instance representing a transaction wrapper.
@@ -892,6 +919,10 @@ def verify_status(trnrs: models.Aggregate) -> None:
         msg = (f"{cls}: Request failed, code={status.code}, "
                f"severity={status.severity}, message='{status.message}'")
         raise ValueError(msg)
+
+
+def _acctIsActive(acctinfo: AcctInfo) -> bool:
+    return acctinfo.svcstatus == "ACTIVE"
 
 
 def extract_signoninfos(markup: BytesIO) -> List[models.SIGNONINFO]:
@@ -910,8 +941,7 @@ def extract_signoninfos(markup: BytesIO) -> List[models.SIGNONINFO]:
     msgs = ofx.profmsgsrsv1
     assert msgs is not None
 
-    def extract_signoninfo(trnrs):
-        assert isinstance(trnrs, models.PROFTRNRS)
+    def extract_signoninfo(trnrs: models.PROFTRNRS) -> List[models.SIGNONINFO]:
         verify_status(trnrs)
         rs = trnrs.profrs
         assert rs is not None
@@ -920,11 +950,15 @@ def extract_signoninfos(markup: BytesIO) -> List[models.SIGNONINFO]:
         assert list_ is not None
         return list_[:]
 
+    #  return list(itertools.chain.from_iterable(
+        #  [extract_signoninfo(trnrs) for trnrs in msgs]))
     return list(itertools.chain.from_iterable(
-        [extract_signoninfo(trnrs) for trnrs in msgs]))
+        extract_signoninfo(trnrs) for trnrs in msgs))
 
 
-def extract_acctinfos(markup: BytesIO) -> Mapping:
+def extract_acctinfos(
+    markup: BytesIO
+) -> Iterable[AcctInfo]:
     """
     Input seralized OFX containing ACCTINFORS
     Output dict-like object containing parsed *ACCTINFOs
@@ -946,69 +980,50 @@ def extract_acctinfos(markup: BytesIO) -> Mapping:
     acctinfors = trnrs.acctinfors
     assert isinstance(acctinfors, models.ACCTINFORS)
 
-    # *ACCTINFO classes don't have rich comparison methods;
-    # can't sort by class
-    sortKey = attrgetter("__class__.__name__")
-
     # ACCTINFOs are ListItems of ACCTINFORS
     # *ACCTINFOs are ListItems of ACCTINFO
     # The data we want is in a nested list
-    acctinfos = sorted(itertools.chain.from_iterable(acctinfors), key=sortKey)
-
-    def _unique(ids, label):
-        ids = set(ids)
-        if len(ids) > 1:
-            msg = f"Multiple {label} {list(ids)}; can't configure automatically"
-            raise ValueError(msg)
-        try:
-            id = ids.pop()
-        except KeyError:
-            raise ValueError("{label} is empty")
-        return id
-
-    def _ready(acctinfo):
-        return acctinfo.svcstatus == "ACTIVE"
-
-    def parse_bank(acctinfos):
-        bankids = []
-        args_ = defaultdict(list)
-        for inf in acctinfos:
-            if _ready(inf):
-                bankids.append(inf.bankid)
-                args_[inf.accttype.lower()].append(inf.acctid)
-
-        args_["bankid"] = _unique(bankids, "BANKIDs")
-        return dict(args_)
-
-    def parse_inv(acctinfos):
-        brokerids = []
-        args_ = defaultdict(list)
-        for inf in acctinfos:
-            if _ready(inf):
-                acctfrom = inf.invacctfrom
-                brokerids.append(acctfrom.brokerid)
-                args_["investment"].append(acctfrom.acctid)
-
-        args_["brokerid"] = _unique(brokerids, "BROKERIDs")
-        return dict(args_)
-
-    def parse_cc(acctinfos):
-        return {"creditcard": [inf.acctid for inf in acctinfos if _ready(inf)]}
-
-    dispatcher = {"BANKACCTINFO": parse_bank,
-                  "CCACCTINFO": parse_cc,
-                  "INVACCTINFO": parse_inv}
-
-    return ChainMap(*[dispatcher.get(clsName, lambda x: {})(_acctinfos)
-                      for clsName, _acctinfos in itertools.groupby(
-                          acctinfos, key=sortKey)])
+    return itertools.chain.from_iterable(acctinfors)
 
 
-def _merge_acctinfo(args: ArgType, markup: BytesIO) -> None:
-    # Insert extracted ACCTINFO after CLI commands, but before config files
-    args.maps.insert(1, extract_acctinfos(markup))
+def parse_bankacctinfos(
+    acctinfos: Sequence[models.BANKACCTINFO]
+) -> ParsedAcctinfo:
+    bankids = []
+    args_: MutableMapping = defaultdict(list)
+    for inf in acctinfos:
+        if _acctIsActive(inf):
+            bankids.append(inf.bankid)
+            args_[inf.accttype.lower()].append(inf.acctid)
+
+    args_["bankid"] = utils.collapseToSingle(bankids, "BANKIDs")
+    return dict(args_)
 
 
+def parse_invacctinfos(
+    acctinfos: Sequence[models.INVACCTINFO]
+) -> ParsedAcctinfo:
+    brokerids = []
+    args_: MutableMapping = defaultdict(list)
+    for inf in acctinfos:
+        if _acctIsActive(inf):
+            acctfrom = inf.invacctfrom
+            brokerids.append(acctfrom.brokerid)
+            args_["investment"].append(acctfrom.acctid)
+
+    args_["brokerid"] = utils.collapseToSingle(brokerids, "BROKERIDs")
+    return dict(args_)
+
+
+def parse_ccacctinfos(
+    acctinfos: Sequence[models.CCACCTINFO]
+) -> ParsedAcctinfo:
+    return {"creditcard": [i.acctid for i in acctinfos if _acctIsActive(i)]}
+
+
+###############################################################################
+# CLI UTILITIES
+###############################################################################
 def list_fis(args: ArgType) -> None:
     server = args["server"]
     if server in (None, ""):
