@@ -77,14 +77,14 @@ ScanMetadata = Tuple[OFXVersion, MarkupFormat]
 FormatMap = Mapping[OFXVersion, List[MarkupFormat]]
 
 # Scan result of a single OFX protocol version
-ScanVersionResult = Mapping[str, Union[list, dict]]
+ScanResult = Mapping[str, Union[list, dict]]
 
 # Auth information parsed out of SIGNONINFO during a profile scan -
 # CLIENTUIDREQ et al.
 SignoninfoReport = Mapping[str, bool]
 
 # Full set of profile scan results
-ScanResults = Tuple[ScanVersionResult, ScanVersionResult, SignoninfoReport]
+ScanResults = Tuple[ScanResult, ScanResult, SignoninfoReport]
 
 AcctInfo = Union[models.BANKACCTINFO, models.CCACCTINFO, models.INVACCTINFO]
 ParsedAcctinfo = Mapping[str, Union[str, list]]
@@ -776,9 +776,11 @@ def _scan_profile(url: str,
         assert not format["unclosedelements"]
         del format["unclosedelements"]
 
-    return (OrderedDict([("versions", v1_versions), ("formats", v1_formats)]),
-            OrderedDict([("versions", v2_versions), ("formats", v2_formats)]),
-            signoninfo)
+    v1_result: ScanResult = OrderedDict([("versions", v1_versions),
+                                         ("formats", v1_formats)])
+    v2_result: ScanResult = OrderedDict([("versions", v2_versions),
+                                         ("formats", v2_formats)])
+    return (v1_result, v2_result, signoninfo)
 
 
 def _queue_scans(client: OFXClient,
@@ -1014,7 +1016,7 @@ def parse_ccacctinfos(
 ###############################################################################
 def list_fis(args: ArgType) -> None:
     server = args["server"]
-    if server in (None, ""):
+    if server in NULL_ARGS:
         entries = ["{:<40}{:<30}{:<8}".format(*srv) for srv in fi_index()]
         entries.insert(0, " ".join(("=" * 39, "=" * 29, "=" * 8)))
         entries.insert(0, "{:^40}{:^30}{:^8}".format("Name",
