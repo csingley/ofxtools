@@ -66,21 +66,15 @@ class OfxgetWarning(UserWarning):
 # Loaded Argparser args
 ArgType = typing.ChainMap[str, Any]
 
-# OFX connection params (OFX version, prettyprint, close_elements) tagged onto
-# the OFXClient.request_profile() job submitted to the ThreadPoolExecutor
+# OFX connection params (OFX version, prettyprint, unclosedelements) tagged
+# onto the OFXClient.request_profile() job submitted to the ThreadPoolExecutor
 # during a profile scan
 OFXVersion = int
-
-ScanMetadata = Tuple[OFXVersion, bool, bool]
-
-# ScanMetadata without OFX version, i.e. (prettyprint, close_elements)
-FormatArgs = Tuple[bool, bool]
+MarkupFormat = OrderedDict  # keys are "pretty", "unclosedelements"
+ScanMetadata = Tuple[OFXVersion, MarkupFormat]
 
 # All working FormatArgs for a given OFX version
-FormatMap = Mapping[OFXVersion, List[FormatArgs]]
-
-# FormatArgs made ArgType-compatible, i.e. (pretty, unclosedelements)
-FormatConfig = OrderedDict
+FormatMap = Mapping[OFXVersion, List[MarkupFormat]]
 
 # Scan result of a single OFX protocol version
 ScanVersionResult = Mapping[str, Union[list, dict]]
@@ -93,7 +87,6 @@ SignoninfoReport = Mapping[str, bool]
 ScanResults = Tuple[ScanVersionResult, ScanVersionResult, SignoninfoReport]
 
 AcctInfo = Union[models.BANKACCTINFO, models.CCACCTINFO, models.INVACCTINFO]
-
 ParsedAcctinfo = Mapping[str, Union[str, list]]
 
 
@@ -765,14 +758,14 @@ def _scan_profile(url: str,
     # Tell _read_scan_response() to stop parsing out SIGNONINFO once
     # it's successfully extracted one.
     for future in concurrent.futures.as_completed(futures):
-        (version, prettyprint, close_elements) = futures[future]
+        version, format = futures[future]
         valid, signoninfo_ = _read_scan_response(future, not signoninfo)
 
         if not valid:
             continue
         if not signoninfo and signoninfo_:
             signoninfo = signoninfo_
-        success_params[version].append((prettyprint, close_elements))
+        success_params[version].append(format)
 
     v2, v1 = utils.partition(lambda it: it[0] < 200, success_params.items())
     v1_versions, v1_formats = collate_scan_results(v1)
@@ -805,7 +798,10 @@ def _queue_scans(client: OFXClient,
                                      prettyprint=pretty,
                                      close_elements=close,
                                      timeout=timeout)
-            futures[future] = (version, pretty, close)
+            #  futures[future] = (version, pretty, True)
+            futures[future] = (version,
+                               OrderedDict([("pretty", pretty),
+                                            ("unclosedelements", not close)]))
 
         for version, pretty in itertools.product(ofxv2, BOOLS):
             future = executor.submit(client.request_profile,
@@ -813,7 +809,10 @@ def _queue_scans(client: OFXClient,
                                      prettyprint=pretty,
                                      close_elements=True,
                                      timeout=timeout)
-            futures[future] = (version, pretty, True)
+            #  futures[future] = (version, pretty, True)
+            futures[future] = (version,
+                               OrderedDict([("pretty", pretty),
+                                            ("unclosedelements", not close)]))
 
     return futures
 
@@ -871,17 +870,9 @@ def _read_scan_response(future: concurrent.futures.Future,
 
 
 def collate_scan_results(
-    scan_results: Iterable[Tuple[OFXVersion, FormatArgs]]
-) -> Tuple[List[OFXVersion], List[FormatConfig]]:
+    scan_results: Iterable[Tuple[OFXVersion, MarkupFormat]]
+) -> Tuple[List[OFXVersion], List[MarkupFormat]]:
     """
-    Transform the metadata (version, prettyprint, close_elements) tagged onto a
-    concurrent.futures.Future instance for a successful run of
-    OFXClient.request_profile().
-
-    Returns a 2-tuple of ([OFX version], [format]) where each format is a dict
-    of {"pretty": bool, "unclosedelements": bool} representing configs that
-    successully connect for those versions.
-
     Input ``scan_results`` needs to be a complete set for either OFXv1 or v2,
     with no results for the other version admixed.
     """
@@ -890,20 +881,17 @@ def collate_scan_results(
         return [], []
     versions, formats = zip(*results_)
 
-    # Assumption: the same formatting requirements apply to all
-    # sub-versions (e.g. 1.0.2 and 1.0.3, or 2.0.3 and 2.2.0).
-    # If a (pretty, close_elements) pair succeeds on most sub-versions
-    # but fails on a few, we'll chalk it up to network transmission
-    # errors and ignore it.
+    # Assumption: the same markup formatting requirements apply to all
+    # versions (e.g. 1.0.2 and 1.0.3, or 2.0.3 and 2.2.0).
+    # If markup format succeeds on some versions but fails on others,
+    # we'll chalk it up to network transmission errors.
     #
     # Translation: just pick the longest sequence of successful
-    # formats and assume it applies to the whole version.
+    # formats and assume it applies for all versions.
     formats = max(formats, key=len)
+    formats.sort(key=lambda f: (f["pretty"], f["unclosedelements"]))
 
-    formats_ = [OrderedDict([("pretty", fmt[0]),
-                             ("unclosedelements", not fmt[1])])
-                for fmt in sorted(formats, key=lambda x: (x[0], not x[1]))]
-    return sorted(list(versions)), formats_
+    return sorted(versions), formats
 
 
 ###############################################################################

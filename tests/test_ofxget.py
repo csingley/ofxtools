@@ -998,12 +998,15 @@ class ScanProfileTestCase(unittest.TestCase):
 
         for future, format in futures.items():
             self.assertIsInstance(future, concurrent.futures.Future)
-            self.assertEqual(len(format), 3)
+            self.assertEqual(len(format), 2)
+            version, format = format
             self.assertIn(
-                format[0],
+                version,
                 [102, 103, 151, 160, 200, 201, 202, 203, 210, 211, 220])
-            self.assertIsInstance(format[1], bool)
-            self.assertIsInstance(format[2], bool)
+            self.assertIsInstance(format, collections.OrderedDict)
+            self.assertEqual(len(format), 2)
+            self.assertIsInstance(format["pretty"], bool)
+            self.assertIsInstance(format["unclosedelements"], bool)
 
 
 class ReadScanResponseTestCase(unittest.TestCase):
@@ -1089,14 +1092,19 @@ class ReadScanResponseTestCase(unittest.TestCase):
 
 class CollateScanResultsTestCase(unittest.TestCase):
     def testCollateScanResults(self):
-        v1 = [(160, [(True, False), (False, True), (False, False)]),
-              (102, [(True, False), (False, True), (False, False)]),
-              (103, [(True, False), (False, True), (False, False)]),
-              ]
-        versions, formats = ofxget.collate_scan_results(v1)
+        formats_in = [
+            collections.OrderedDict([("pretty", True), ("unclosedelements", True)]),
+            collections.OrderedDict([("pretty", False), ("unclosedelements", True)]),
+            collections.OrderedDict([("pretty", False), ("unclosedelements", False)]),
+        ]
+
+        v1 = [(160, formats_in),
+              (102, formats_in),
+              (103, formats_in)]
+        versions, formats_out = ofxget.collate_scan_results(v1)
         self.assertEqual(versions, [102, 103, 160])
 
-        self.assertEqual(formats, [
+        self.assertEqual(formats_out, [
             collections.OrderedDict([("pretty", False), ("unclosedelements", False)]),
             collections.OrderedDict([("pretty", False), ("unclosedelements", True)]),
             collections.OrderedDict([("pretty", True), ("unclosedelements", True)]),
