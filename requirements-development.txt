@@ -11,3 +11,4 @@ ipdb
 ipdbplugin
 coveralls
 mypy
+black

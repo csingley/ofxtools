@@ -1,5 +1,6 @@
 test:
 	coverage erase
+	black --check .
 	mypy ofxtools
 	mypy tests
 	python `which nosetests` -dsv --with-coverage --cover-package ofxtools tests/*.py
