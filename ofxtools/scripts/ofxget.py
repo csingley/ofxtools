@@ -699,16 +699,22 @@ def merge_config(args: argparse.Namespace,
         user_cfg = {}
     merged = ChainMap(_args, user_cfg, DEFAULTS)
 
-    ofxhome_id = merged["ofxhome"]
-    if ofxhome_id:
-        lookup = ofxhome.lookup(ofxhome_id)
-
-        if lookup is not None:
-            # Insert OFX Home lookup ahead of DEFAULTS but after
-            # user configs and library configs
-            merged.maps.insert(-1, {"url": lookup.url, "org": lookup.org,
-                                    "fid": lookup.fid,
-                                    "brokerid": lookup.brokerid})
+    # Try to perform an OFX Home lookup if:
+    # - it's configured from the CLI
+    # - it's configured in ofxget.cfg
+    # - we don't have a URL
+    if "ofxhome" in _args \
+       or "ofxhome" in user_cfg \
+       or (not merged["url"]):
+        ofxhome_id = merged["ofxhome"]
+        if ofxhome_id:
+            lookup = ofxhome.lookup(ofxhome_id)
+            if lookup:
+                # Insert OFX Home lookup ahead of DEFAULTS but after
+                # user configs and library configs
+                merged.maps.insert(-1, {"url": lookup.url, "org": lookup.org,
+                                        "fid": lookup.fid,
+                                        "brokerid": lookup.brokerid})
 
     if not (merged.get("url", None)
             or merged.get("dryrun", False)
