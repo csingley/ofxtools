@@ -56,9 +56,9 @@ focus of ``ofxtools`` is full support of the OFX investment message set,
 which has been somewhat neglected by the Python community.
 
 The major item remaining on the ``ofxtools`` "to do" list is to implement the
-tax schemas.  It's currently a low priority to implement Section 14 (bill pay)
-or the extensions contained in OFX versions beyond 2.03, but you're welcome to
-contribute code if you need these.
+tax schemas.  It's currently a low priority to implement Section 14 (bill
+presentment) or the extensions contained in OFX versions beyond 2.03, but
+you're welcome to contribute code if you need these.
 
 Some care has been taken with the data model to make it easily maintainable
 and extensible.  The ``ofxtools.models`` subpackage contains simple, direct
