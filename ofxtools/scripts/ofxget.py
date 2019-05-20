@@ -135,7 +135,7 @@ def make_argparser() -> argparse.ArgumentParser:
     subparsers["tax1099"] = add_subparser(subparsers_, "tax1099", tax=True,
                                           help=("(EXPERIMENTAL) Download US "
                                                 "income tax data on f1099"))
-    main_parser.subparsers = subparsers
+    main_parser.subparsers = subparsers  # type: ignore
     return main_parser
 
 
@@ -816,7 +816,7 @@ def merge_config(args: argparse.Namespace,
             print(msg)
             parser = make_argparser()
             command = merged["request"]
-            parser.subparsers[command].print_help()
+            parser.subparsers[command].print_help()  # type: ignore
             sys.exit()
 
         server = _args["server"]
