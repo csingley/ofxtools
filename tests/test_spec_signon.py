@@ -25,6 +25,7 @@ class PinchRequestTestCase(base.OfxTestCase, unittest.TestCase):
     User requests a password change
     (only pin change transaction portion is shown)
     """
+
     ofx = """
     <PINCHTRNRQ>
         <TRNUID>888</TRNUID>
@@ -38,14 +39,16 @@ class PinchRequestTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return models.PINCHTRNRQ(trnuid="888", pinchrq=models.PINCHRQ(
-            userid="12345", newuserpass="5321"))
+        return models.PINCHTRNRQ(
+            trnuid="888", pinchrq=models.PINCHRQ(userid="12345", newuserpass="5321")
+        )
 
 
 class PinchResponseTestCase(base.OfxTestCase, unittest.TestCase):
     """
     The server responds with:
     """
+
     ofx = """
     <PINCHTRNRS>
         <TRNUID>888</TRNUID>
@@ -62,14 +65,16 @@ class PinchResponseTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return models.PINCHTRNRS(trnuid="888", status=OK_STATUS,
-                                 pinchrs=models.PINCHRS(userid="12345"))
+        return models.PINCHTRNRS(
+            trnuid="888", status=OK_STATUS, pinchrs=models.PINCHRS(userid="12345")
+        )
 
 
 class ExtraCredentialsRequestTestCase(base.OfxTestCase, unittest.TestCase):
     """
     Signon in OFX 2.0.3 which includes CLIENTUID and both additional credential tags
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRQV1>
@@ -95,13 +100,22 @@ class ExtraCredentialsRequestTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return models.OFX(signonmsgsrqv1=models.SIGNONMSGSRQV1(
-            sonrq=models.SONRQ(
-                dtclient=datetime(2006, 3, 21, 8, 30, 10, tzinfo=UTC),
-                userid="12345", userpass="MyPassword", language="ENG",
-                fi=FI, appid="MyApp", appver="1600",
-                clientuid="22576921-8E39-4A82-9E3E-EDDB121ADDEE",
-                usercred1="MyPin", usercred2="MyID")))
+        return models.OFX(
+            signonmsgsrqv1=models.SIGNONMSGSRQV1(
+                sonrq=models.SONRQ(
+                    dtclient=datetime(2006, 3, 21, 8, 30, 10, tzinfo=UTC),
+                    userid="12345",
+                    userpass="MyPassword",
+                    language="ENG",
+                    fi=FI,
+                    appid="MyApp",
+                    appver="1600",
+                    clientuid="22576921-8E39-4A82-9E3E-EDDB121ADDEE",
+                    usercred1="MyPin",
+                    usercred2="MyID",
+                )
+            )
+        )
 
 
 class NeedsAuthtokenRequestTestCase(base.OfxTestCase, unittest.TestCase):
@@ -113,6 +127,7 @@ class NeedsAuthtokenRequestTestCase(base.OfxTestCase, unittest.TestCase):
 
     Client sends OFX request to server.
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRQV1>
@@ -136,18 +151,27 @@ class NeedsAuthtokenRequestTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return models.OFX(signonmsgsrqv1=models.SIGNONMSGSRQV1(
-            sonrq=models.SONRQ(
-                dtclient=datetime(2006, 3, 21, 8, 30, 10, tzinfo=UTC),
-                userid="12345", userpass="MyPassword", language="ENG",
-                fi=FI, appid="MyApp", appver="1600",
-                clientuid="22576921-8E39-4A82-9E3E-EDDB121ADDEE")))
+        return models.OFX(
+            signonmsgsrqv1=models.SIGNONMSGSRQV1(
+                sonrq=models.SONRQ(
+                    dtclient=datetime(2006, 3, 21, 8, 30, 10, tzinfo=UTC),
+                    userid="12345",
+                    userpass="MyPassword",
+                    language="ENG",
+                    fi=FI,
+                    appid="MyApp",
+                    appver="1600",
+                    clientuid="22576921-8E39-4A82-9E3E-EDDB121ADDEE",
+                )
+            )
+        )
 
 
 class NeedsAuthtokenResponseTestCase(base.OfxTestCase, unittest.TestCase):
     """
     Server accepts credentials but wants one-time token.
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -171,12 +195,20 @@ class NeedsAuthtokenResponseTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return models.OFX(signonmsgsrsv1=models.SIGNONMSGSRSV1(
-            sonrs=models.SONRS(status=models.STATUS(
-                code="15512", severity="ERROR",
-                message="Please provide Authentication Token"),
-                dtserver=datetime(2006, 3, 21, 8, 30, 15, tzinfo=UTC),
-                language="ENG", fi=FI)))
+        return models.OFX(
+            signonmsgsrsv1=models.SIGNONMSGSRSV1(
+                sonrs=models.SONRS(
+                    status=models.STATUS(
+                        code="15512",
+                        severity="ERROR",
+                        message="Please provide Authentication Token",
+                    ),
+                    dtserver=datetime(2006, 3, 21, 8, 30, 15, tzinfo=UTC),
+                    language="ENG",
+                    fi=FI,
+                )
+            )
+        )
 
 
 class HasAuthtokenRequestTestCase(base.OfxTestCase, unittest.TestCase):
@@ -184,6 +216,7 @@ class HasAuthtokenRequestTestCase(base.OfxTestCase, unittest.TestCase):
     Client collects the answers and returns them to server along with
     the original request.
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRQV1>
@@ -208,19 +241,28 @@ class HasAuthtokenRequestTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return models.OFX(signonmsgsrqv1=models.SIGNONMSGSRQV1(
-            sonrq=models.SONRQ(
-                dtclient=datetime(2006, 3, 21, 8, 34, 15, tzinfo=UTC),
-                userid="12345", userpass="MyPassword", language="ENG",
-                fi=FI, appid="MyApp", appver="1600",
-                clientuid="22576921-8E39-4A82-9E3E-EDDB121ADDEE",
-                authtoken="1234567890")))
+        return models.OFX(
+            signonmsgsrqv1=models.SIGNONMSGSRQV1(
+                sonrq=models.SONRQ(
+                    dtclient=datetime(2006, 3, 21, 8, 34, 15, tzinfo=UTC),
+                    userid="12345",
+                    userpass="MyPassword",
+                    language="ENG",
+                    fi=FI,
+                    appid="MyApp",
+                    appver="1600",
+                    clientuid="22576921-8E39-4A82-9E3E-EDDB121ADDEE",
+                    authtoken="1234567890",
+                )
+            )
+        )
 
 
 class HasAuthtokenResponseTestCase(base.OfxTestCase, unittest.TestCase):
     """
     Server accepts requests and returns an ACCESSKEY.
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -245,12 +287,17 @@ class HasAuthtokenResponseTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return models.OFX(signonmsgsrsv1=models.SIGNONMSGSRSV1(
-            sonrs=models.SONRS(
-                status=SUCCESS_STATUS,
-                dtserver=datetime(2006, 3, 21, 8, 34, 45, tzinfo=UTC),
-                language="ENG", fi=FI,
-                accesskey="EE225228-38E6-4E35-8266-CD69B5370675")))
+        return models.OFX(
+            signonmsgsrsv1=models.SIGNONMSGSRSV1(
+                sonrs=models.SONRS(
+                    status=SUCCESS_STATUS,
+                    dtserver=datetime(2006, 3, 21, 8, 34, 45, tzinfo=UTC),
+                    language="ENG",
+                    fi=FI,
+                    accesskey="EE225228-38E6-4E35-8266-CD69B5370675",
+                )
+            )
+        )
 
 
 class NeedsMfachallengeRequestTestCase(base.OfxTestCase, unittest.TestCase):
@@ -260,6 +307,7 @@ class NeedsMfachallengeRequestTestCase(base.OfxTestCase, unittest.TestCase):
 
     Client sends OFX request to server.
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRQV1>
@@ -283,18 +331,27 @@ class NeedsMfachallengeRequestTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return models.OFX(signonmsgsrqv1=models.SIGNONMSGSRQV1(
-            sonrq=models.SONRQ(
-                dtclient=datetime(2006, 3, 21, 8, 30, 10, tzinfo=UTC),
-                userid="12345", userpass="MyPassword", language="ENG",
-                fi=FI, appid="MyApp", appver="1600",
-                clientuid="22576921-8E39-4A82-9E3E-EDDB121ADDEE")))
+        return models.OFX(
+            signonmsgsrqv1=models.SIGNONMSGSRQV1(
+                sonrq=models.SONRQ(
+                    dtclient=datetime(2006, 3, 21, 8, 30, 10, tzinfo=UTC),
+                    userid="12345",
+                    userpass="MyPassword",
+                    language="ENG",
+                    fi=FI,
+                    appid="MyApp",
+                    appver="1600",
+                    clientuid="22576921-8E39-4A82-9E3E-EDDB121ADDEE",
+                )
+            )
+        )
 
 
 class NeedsMfachallengeResponseTestCase(base.OfxTestCase, unittest.TestCase):
     """
     Server accepts credentials but wants additional challenge data.
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -318,18 +375,27 @@ class NeedsMfachallengeResponseTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return models.OFX(signonmsgsrsv1=models.SIGNONMSGSRSV1(
-            sonrs=models.SONRS(status=models.STATUS(
-                code="3000", severity="ERROR",
-                message="Further information required"),
-                dtserver=datetime(2006, 3, 21, 8, 30, 15, tzinfo=UTC),
-                language="ENG", fi=FI)))
+        return models.OFX(
+            signonmsgsrsv1=models.SIGNONMSGSRSV1(
+                sonrs=models.SONRS(
+                    status=models.STATUS(
+                        code="3000",
+                        severity="ERROR",
+                        message="Further information required",
+                    ),
+                    dtserver=datetime(2006, 3, 21, 8, 30, 15, tzinfo=UTC),
+                    language="ENG",
+                    fi=FI,
+                )
+            )
+        )
 
 
 class MfachallengeRequestTestCase(base.OfxTestCase, unittest.TestCase):
     """
     Client requests challenge questions.
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRQV1>
@@ -359,16 +425,26 @@ class MfachallengeRequestTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return models.OFX(signonmsgsrqv1=models.SIGNONMSGSRQV1(
-            sonrq=models.SONRQ(
-                dtclient=datetime(2006, 3, 21, 8, 30, 20, tzinfo=UTC),
-                userid="12345", userpass="MyPassword", language="ENG",
-                fi=FI, appid="MyApp", appver="1600",
-                clientuid="22576921-8E39-4A82-9E3E-EDDB121ADDEE"),
-            mfachallengetrnrq=models.MFACHALLENGETRNRQ(
-                trnuid="66D3749F-5B3B-4DC3-87A3-8F795EA59EDB",
-                mfachallengerq=models.MFACHALLENGERQ(
-                    dtclient=datetime(2006, 3, 21, 8, 30, 20, tzinfo=UTC)))))
+        return models.OFX(
+            signonmsgsrqv1=models.SIGNONMSGSRQV1(
+                sonrq=models.SONRQ(
+                    dtclient=datetime(2006, 3, 21, 8, 30, 20, tzinfo=UTC),
+                    userid="12345",
+                    userpass="MyPassword",
+                    language="ENG",
+                    fi=FI,
+                    appid="MyApp",
+                    appver="1600",
+                    clientuid="22576921-8E39-4A82-9E3E-EDDB121ADDEE",
+                ),
+                mfachallengetrnrq=models.MFACHALLENGETRNRQ(
+                    trnuid="66D3749F-5B3B-4DC3-87A3-8F795EA59EDB",
+                    mfachallengerq=models.MFACHALLENGERQ(
+                        dtclient=datetime(2006, 3, 21, 8, 30, 20, tzinfo=UTC)
+                    ),
+                ),
+            )
+        )
 
 
 class MfachallengeResponseTestCase(base.OfxTestCase, unittest.TestCase):
@@ -378,6 +454,7 @@ class MfachallengeResponseTestCase(base.OfxTestCase, unittest.TestCase):
     * Enumerated phrase ID requiring only client response
     * Custom question.
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -421,31 +498,38 @@ class MfachallengeResponseTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return models.OFX(signonmsgsrsv1=models.SIGNONMSGSRSV1(
-            sonrs=models.SONRS(
-                status=OK_STATUS,
-                dtserver=datetime(2006, 3, 21, 8, 30, 25, tzinfo=UTC),
-                language="ENG", fi=FI),
-            mfachallengetrnrs=models.MFACHALLENGETRNRS(
-                trnuid="66D3749F-5B3B-4DC3-87A3-8F795EA59EDB",
-                status=SUCCESS_STATUS, mfachallengers=models.MFACHALLENGERS(
-                    models.MFACHALLENGE(
-                        mfaphraseid="MFA13",
-                        mfaphraselabel="Please enter the last four digits of your social security number"),
-                    models.MFACHALLENGE(
-                        mfaphraseid="MFA107"),
-                    models.MFACHALLENGE(
-                        mfaphraseid="123",
-                        mfaphraselabel="With which branch is your account associated?"),
-                )
+        return models.OFX(
+            signonmsgsrsv1=models.SIGNONMSGSRSV1(
+                sonrs=models.SONRS(
+                    status=OK_STATUS,
+                    dtserver=datetime(2006, 3, 21, 8, 30, 25, tzinfo=UTC),
+                    language="ENG",
+                    fi=FI,
+                ),
+                mfachallengetrnrs=models.MFACHALLENGETRNRS(
+                    trnuid="66D3749F-5B3B-4DC3-87A3-8F795EA59EDB",
+                    status=SUCCESS_STATUS,
+                    mfachallengers=models.MFACHALLENGERS(
+                        models.MFACHALLENGE(
+                            mfaphraseid="MFA13",
+                            mfaphraselabel="Please enter the last four digits of your social security number",
+                        ),
+                        models.MFACHALLENGE(mfaphraseid="MFA107"),
+                        models.MFACHALLENGE(
+                            mfaphraseid="123",
+                            mfaphraselabel="With which branch is your account associated?",
+                        ),
+                    ),
+                ),
             )
-        ))
+        )
 
 
 class HasMfachallengeaRequestTestCase(base.OfxTestCase, unittest.TestCase):
     """
     Client collects the answers and returns them to server along with the original request.
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRQV1>
@@ -481,24 +565,32 @@ class HasMfachallengeaRequestTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return models.OFX(signonmsgsrqv1=models.SIGNONMSGSRQV1(
-            sonrq=models.SONRQ(
-                models.MFACHALLENGEA(
-                    mfaphraseid="MFA13", mfaphrasea="1234"),
-                models.MFACHALLENGEA(
-                    mfaphraseid="MFA107", mfaphrasea="ClientUserAgent"),
-                models.MFACHALLENGEA(
-                    mfaphraseid="123", mfaphrasea="Anytown"),
-                dtclient=datetime(2006, 3, 21, 8, 34, 15, tzinfo=UTC),
-                userid="12345", userpass="MyPassword", language="ENG",
-                fi=FI, appid="MyApp", appver="1600",
-                clientuid="22576921-8E39-4A82-9E3E-EDDB121ADDEE")))
+        return models.OFX(
+            signonmsgsrqv1=models.SIGNONMSGSRQV1(
+                sonrq=models.SONRQ(
+                    models.MFACHALLENGEA(mfaphraseid="MFA13", mfaphrasea="1234"),
+                    models.MFACHALLENGEA(
+                        mfaphraseid="MFA107", mfaphrasea="ClientUserAgent"
+                    ),
+                    models.MFACHALLENGEA(mfaphraseid="123", mfaphrasea="Anytown"),
+                    dtclient=datetime(2006, 3, 21, 8, 34, 15, tzinfo=UTC),
+                    userid="12345",
+                    userpass="MyPassword",
+                    language="ENG",
+                    fi=FI,
+                    appid="MyApp",
+                    appver="1600",
+                    clientuid="22576921-8E39-4A82-9E3E-EDDB121ADDEE",
+                )
+            )
+        )
 
 
 class HasMfachallengeaResponseTestCase(base.OfxTestCase, unittest.TestCase):
     """
     Server accepts requests and returns an ACCESSKEY.
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -523,12 +615,17 @@ class HasMfachallengeaResponseTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return models.OFX(signonmsgsrsv1=models.SIGNONMSGSRSV1(
-            sonrs=models.SONRS(
-                status=SUCCESS_STATUS,
-                dtserver=datetime(2006, 3, 21, 8, 34, 45, tzinfo=UTC),
-                language="ENG", fi=FI,
-                accesskey="EE225228-38E6-4E35-8266-CD69B5370675")))
+        return models.OFX(
+            signonmsgsrsv1=models.SIGNONMSGSRSV1(
+                sonrs=models.SONRS(
+                    status=SUCCESS_STATUS,
+                    dtserver=datetime(2006, 3, 21, 8, 34, 45, tzinfo=UTC),
+                    language="ENG",
+                    fi=FI,
+                    accesskey="EE225228-38E6-4E35-8266-CD69B5370675",
+                )
+            )
+        )
 
 
 if __name__ == "__main__":

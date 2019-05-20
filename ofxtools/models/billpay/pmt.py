@@ -5,12 +5,18 @@ Payments Functions - OFX Section 12.6
 
 
 __all__ = [
-    "PMTRQ", "PMTRS",
-    "PMTMODRQ", "PMTMODRS",
-    "PMTCANCRQ", "PMTCANCRS",
-    "PMTTRNRQ", "PMTTRNRS",
-    "PMTINQRQ", "PMTINQRS",
-    "PMTINQTRNRQ", "PMTINQTRNRS",
+    "PMTRQ",
+    "PMTRS",
+    "PMTMODRQ",
+    "PMTMODRS",
+    "PMTCANCRQ",
+    "PMTCANCRS",
+    "PMTTRNRQ",
+    "PMTTRNRS",
+    "PMTINQRQ",
+    "PMTINQRS",
+    "PMTINQTRNRQ",
+    "PMTINQTRNRS",
 ]
 
 
@@ -23,11 +29,13 @@ from ofxtools.models.billpay.common import PMTINFO, EXTDPAYEE, PMTPRCSTS
 
 class PMTRQ(Aggregate):
     """ OFX section 12.6.1.1 """
+
     pmtinfo = SubAggregate(PMTINFO, required=True)
 
 
 class PMTRS(Aggregate):
     """ OFX section 12.6.1.2 """
+
     srvrtid = String(10, required=True)
     payeelstid = String(12, required=True)
     curdef = OneOf(*CURRENCY_CODES, required=True)
@@ -40,12 +48,14 @@ class PMTRS(Aggregate):
 
 class PMTMODRQ(Aggregate):
     """ OFX section 12.6.2.2 """
+
     srvrtid = String(10, required=True)
     pmtinfo = SubAggregate(PMTINFO, required=True)
 
 
 class PMTMODRS(Aggregate):
     """ OFX section 12.6.2.3 """
+
     srvrtid = String(10, required=True)
     pmtinfo = SubAggregate(PMTINFO, required=True)
     pmtprcsts = SubAggregate(PMTPRCSTS)
@@ -53,11 +63,13 @@ class PMTMODRS(Aggregate):
 
 class PMTCANCRQ(Aggregate):
     """ OFX section 12.6.3.1 """
+
     srvrtid = String(10, required=True)
 
 
 class PMTCANCRS(Aggregate):
     """ OFX section 12.6.3.2 """
+
     srvrtid = String(10, required=True)
 
 
@@ -66,9 +78,7 @@ class PMTTRNRQ(TrnRq):
     pmtmodrq = SubAggregate(PMTMODRQ)
     pmtcancrq = SubAggregate(PMTCANCRQ)
 
-    requiredMutexes = [
-        ['pmtrq', 'pmtmodrq', 'pmtcancrq'],
-    ]
+    requiredMutexes = [["pmtrq", "pmtmodrq", "pmtcancrq"]]
 
 
 class PMTTRNRS(TrnRs):
@@ -76,18 +86,18 @@ class PMTTRNRS(TrnRs):
     pmtmodrs = SubAggregate(PMTMODRS)
     pmtcancrs = SubAggregate(PMTCANCRS)
 
-    optionalMutexes = [
-        ['pmtrs', 'pmtmodrs', 'pmtcancrs'],
-    ]
+    optionalMutexes = [["pmtrs", "pmtmodrs", "pmtcancrs"]]
 
 
 class PMTINQRQ(Aggregate):
     """ OFX section 12.6.4.1 """
+
     srvrtid = String(10, required=True)
 
 
 class PMTINQRS(Aggregate):
     """ OFX section 12.6.4.2 """
+
     srvrtid = String(10, required=True)
     pmtprcsts = SubAggregate(PMTPRCSTS, required=True)
     checknum = String(12)

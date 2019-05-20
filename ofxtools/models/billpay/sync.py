@@ -54,9 +54,11 @@ class RECPMTSYNCRS(SyncRsList):
 
 class PAYEESYNCRQ(SyncRqList):
     """ OFX Section 12.9.4.1 """
+
     payeetrnrq = ListItem(PAYEETRNRQ)
 
 
 class PAYEESYNCRS(SyncRsList):
     """ OFX Section 12.9.4.2 """
+
     payeetrnrs = ListItem(PAYEETRNRS)

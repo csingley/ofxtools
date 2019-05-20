@@ -19,12 +19,13 @@ appropriate header class based on OFX version #.  It's used by
 """
 
 
-__all__ = ["OFXHeaderError",
-           "OFXHeaderV1",
-           "OFXHeaderV2",
-           "parse_header",
-           "make_header",
-           ]
+__all__ = [
+    "OFXHeaderError",
+    "OFXHeaderV1",
+    "OFXHeaderV2",
+    "parse_header",
+    "make_header",
+]
 
 
 # stdlib imports
@@ -58,9 +59,9 @@ class OFXHeaderBase:
         super().__init__()
 
     @classmethod
-    def parse(cls, rawheader: str) -> Tuple[
-            Union["OFXHeaderBase", "OFXHeaderV1", "OFXHeaderV2"],
-            int]:
+    def parse(
+        cls, rawheader: str
+    ) -> Tuple[Union["OFXHeaderBase", "OFXHeaderV1", "OFXHeaderV2"], int]:
         """
         Instantiate from string.
 
@@ -161,9 +162,7 @@ class OFXHeaderV1(OFXHeaderBase):
             ("OLDFILEUID", self.oldfileuid),
             ("NEWFILEUID", self.newfileuid),
         )
-        lines = "\r\n".join(
-            [":".join(field) for field in fields]
-        )
+        lines = "\r\n".join([":".join(field) for field in fields])
         # More recent versions of the OFXv1 spec require newlines to demarcate
         # the message header from the message body
         lines += "\r\n" * 2
@@ -289,10 +288,12 @@ def parse_header(source: BinaryIO) -> Tuple[OFXHeaderType, str]:
     return header, message.strip()
 
 
-def make_header(version: Union[int, str],
-                security: Optional[str] = None,
-                oldfileuid: Optional[str] = None,
-                newfileuid: Optional[str] = None) -> OFXHeaderType:
+def make_header(
+    version: Union[int, str],
+    security: Optional[str] = None,
+    oldfileuid: Optional[str] = None,
+    newfileuid: Optional[str] = None,
+) -> OFXHeaderType:
     """
     Route to OFXHeaderV1 / OFXHeaderV2 according to the input OFX version #,
     and return an instance of the appropriate class.
@@ -309,5 +310,6 @@ def make_header(version: Union[int, str],
     except KeyError:
         msg = "OFX version {} not version 1 or version 2"
         raise OFXHeaderError(msg.format(version))
-    return HeaderClass(version, security=security, oldfileuid=oldfileuid,
-                       newfileuid=newfileuid)
+    return HeaderClass(
+        version, security=security, oldfileuid=oldfileuid, newfileuid=newfileuid
+    )

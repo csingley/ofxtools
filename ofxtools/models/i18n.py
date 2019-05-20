@@ -4,13 +4,7 @@ International support - OFX Section 5
 """
 
 
-__all__ = [
-    "LANG_CODES",
-    "CURRENCY_CODES",
-    "COUNTRY_CODES",
-    "CURRENCY",
-    "ORIGCURRENCY",
-]
+__all__ = ["LANG_CODES", "CURRENCY_CODES", "COUNTRY_CODES", "CURRENCY", "ORIGCURRENCY"]
 
 
 # stdlib imports
@@ -1210,9 +1204,7 @@ class Origcurrency:
     """ Mixin providing property aliases and CURRENCY/ORIGCURRENCY mutex """
 
     #  optionalMutexes: Sequence[Sequence[str]] = [
-    optionalMutexes = [
-        ["currency", "origcurrency"],
-    ]
+    optionalMutexes = [["currency", "origcurrency"]]
 
     @property
     def curtype(self):

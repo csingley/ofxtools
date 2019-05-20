@@ -103,7 +103,9 @@ DT_REGEX = re.compile(
         )?
     )?
     $
-    """, re.VERBOSE)
+    """,
+    re.VERBOSE,
+)
 
 
 # Valid time formats given by OFX spec (in OFX_Common.xsd):
@@ -333,8 +335,7 @@ class String(Element):
                 raise ValueError(msg.format(value, self.length))
             else:
                 msg = "Value '{}' exceeds length={}"
-                warnings.warn(msg.format(value, self.length),
-                              category=OFXTypeWarning)
+                warnings.warn(msg.format(value, self.length), category=OFXTypeWarning)
         return value
 
     def _convert_str(self, value):
@@ -345,9 +346,7 @@ class String(Element):
         # Unescape '&amp;' '&lt;' '&gt;' '&nbsp;' per OFX section 2.3
         # Also go ahead and unescape other XML control characters,
         # because FIs tend to mix &amp; match...
-        value = saxutils.unescape(value, {"&nbsp;": " ",
-                                          "&apos;": "'",
-                                          "&quot;": '"'})
+        value = saxutils.unescape(value, {"&nbsp;": " ", "&apos;": "'", "&quot;": '"'})
         return self.enforce_length(value)
 
     def _unconvert_str(self, value):
@@ -476,9 +475,7 @@ class DateTime(Element):
 
     def _convert_default(self, value):
         msg = "'{}' is type '{}'; can't convert to {}"
-        raise ValueError(msg.format(value,
-                                    value.__class__.__name__,
-                                    self.type))
+        raise ValueError(msg.format(value, value.__class__.__name__, self.type))
 
     def _convert_datetime(self, value):
         if value.utcoffset() is None:
@@ -507,11 +504,9 @@ class DateTime(Element):
         intmatches["microsecond"] = 1000 * intmatches.pop("millisecond")
         return self.normalize_to_gmt(self.type(**intmatches), gmt_offset)
 
-    def parse_gmt_offset(self,
-                         hours: Optional[str],
-                         minutes: Optional[str],
-                         tz_name: Optional[str],
-                         ) -> datetime.timedelta:
+    def parse_gmt_offset(
+        self, hours: Optional[str], minutes: Optional[str], tz_name: Optional[str]
+    ) -> datetime.timedelta:
         try:
             gmt_offset_hours = int(hours or 0)
         except ValueError:
@@ -526,9 +521,7 @@ class DateTime(Element):
 
         return utils.gmt_offset(gmt_offset_hours, int(minutes or 0))
 
-    def normalize_to_gmt(self,
-                         value,
-                         gmt_offset):
+    def normalize_to_gmt(self, value, gmt_offset):
         # Adjust timezone to GMT/UTC
         self.unconvert.register(datetime.datetime, self._unconvert_datetime)
         return (value - gmt_offset).replace(tzinfo=utils.UTC)
@@ -559,9 +552,9 @@ class Time(DateTime):
 
         super()._init(*args, **kwargs)
 
-    def normalize_to_gmt(self,
-                         value: datetime.time,
-                         gmt_offset: datetime.timedelta) -> datetime.time:
+    def normalize_to_gmt(
+        self, value: datetime.time, gmt_offset: datetime.timedelta
+    ) -> datetime.time:
         # Adjust timezone to GMT/UTC
         # Can't directly add datetime.time and datetime.timedelta
         dt = datetime.datetime(

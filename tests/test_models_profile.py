@@ -41,8 +41,9 @@ class ProfrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PROFRQ(clientrouting="SERVICE",
-                      dtprofup=datetime(2001, 4, 1, tzinfo=UTC))
+        return PROFRQ(
+            clientrouting="SERVICE", dtprofup=datetime(2001, 4, 1, tzinfo=UTC)
+        )
 
 
 class SignoninfoTestCase(unittest.TestCase, base.TestAggregate):
@@ -63,7 +64,9 @@ class SignoninfoTestCase(unittest.TestCase, base.TestAggregate):
     # 'AUTHTOKENINFOURL', 'MFACHALLENGESUPT',
     # 'MFACHALLENGEFIRST', 'ACCESSTOKENREQ', ]
 
-    oneOfs = {"CHARTYPE": ("ALPHAONLY", "NUMERICONLY", "ALPHAORNUMERIC", "ALPHAANDNUMERIC")}
+    oneOfs = {
+        "CHARTYPE": ("ALPHAONLY", "NUMERICONLY", "ALPHAORNUMERIC", "ALPHAANDNUMERIC")
+    }
 
     @classproperty
     @classmethod
@@ -92,10 +95,17 @@ class SignoninfoTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return SIGNONINFO(signonrealm="AMERITRADE", min=4, max=32,
-                          chartype="ALPHAORNUMERIC", casesen=True,
-                          special=False, spaces=False, pinch=False,
-                          chgpinfirst=False)
+        return SIGNONINFO(
+            signonrealm="AMERITRADE",
+            min=4,
+            max=32,
+            chartype="ALPHAORNUMERIC",
+            casesen=True,
+            special=False,
+            spaces=False,
+            pinch=False,
+            chgpinfirst=False,
+        )
         #  usercred1label='What is your name?',
         #  usercred2label='What is your favorite color?',
         #  clientuidreq=False,
@@ -115,7 +125,7 @@ class SignoninfolistTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("SIGNONINFOLIST")
         for i in range(2):
-        #  for i in range(1):
+            #  for i in range(1):
             signoninfo = SignoninfoTestCase.etree
             root.append(signoninfo)
         return root
@@ -123,8 +133,9 @@ class SignoninfolistTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return SIGNONINFOLIST(SignoninfoTestCase.aggregate,
-                              SignoninfoTestCase.aggregate)
+        return SIGNONINFOLIST(
+            SignoninfoTestCase.aggregate, SignoninfoTestCase.aggregate
+        )
 
 
 class ProfrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -161,7 +172,9 @@ class ProfrsTestCase(unittest.TestCase, base.TestAggregate):
         signonmsgsetv1 = SubElement(signonmsgset, "SIGNONMSGSETV1")
         msgsetcore = SubElement(signonmsgsetv1, "MSGSETCORE")
         SubElement(msgsetcore, "VER").text = "1"
-        SubElement(msgsetcore, "URL").text = "https://ofxs.ameritrade.com/cgi-bin/apps/OFX"
+        SubElement(
+            msgsetcore, "URL"
+        ).text = "https://ofxs.ameritrade.com/cgi-bin/apps/OFX"
         SubElement(msgsetcore, "OFXSEC").text = "NONE"
         SubElement(msgsetcore, "TRANSPSEC").text = "Y"
         SubElement(msgsetcore, "SIGNONREALM").text = "AMERITRADE"
@@ -198,16 +211,24 @@ class ProfrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PROFRS(msgsetlist=Aggregate.from_etree(cls.msgsetlist),
-                      signoninfolist=SignoninfolistTestCase.aggregate,
-                      dtprofup=datetime(2001, 4, 1, tzinfo=UTC),
-                      finame="Dewey Cheatham & Howe", addr1="3717 N Clark St",
-                      addr2="Dugout Box, Aisle 19", addr3="Seat A1",
-                      city="Chicago", state="IL", postalcode="60613",
-                      country="USA", csphone="(773) 309-1027",
-                      tsphone="(773) 309-1028", faxphone="(773) 309-1029",
-                      url="http://www.ameritrade.com",
-                      email="support@ameritrade.com")
+        return PROFRS(
+            msgsetlist=Aggregate.from_etree(cls.msgsetlist),
+            signoninfolist=SignoninfolistTestCase.aggregate,
+            dtprofup=datetime(2001, 4, 1, tzinfo=UTC),
+            finame="Dewey Cheatham & Howe",
+            addr1="3717 N Clark St",
+            addr2="Dugout Box, Aisle 19",
+            addr3="Seat A1",
+            city="Chicago",
+            state="IL",
+            postalcode="60613",
+            country="USA",
+            csphone="(773) 309-1027",
+            tsphone="(773) 309-1028",
+            faxphone="(773) 309-1029",
+            url="http://www.ameritrade.com",
+            email="support@ameritrade.com",
+        )
 
     def testConvertRemoveProprietaryTag(self):
         # Make sure SONRS.from_etree() removes proprietary tags
@@ -245,8 +266,12 @@ class ProftrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PROFTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                         profrq=ProfrqTestCase.aggregate)
+        return PROFTRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            profrq=ProfrqTestCase.aggregate,
+        )
 
 
 class ProftrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -257,10 +282,12 @@ class ProftrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PROFTRNRS(trnuid="DEADBEEF",
-                         status=base.StatusTestCase.aggregate,
-                         cltcookie="B00B135",
-                         profrs=ProfrsTestCase.aggregate)
+        return PROFTRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            profrs=ProfrsTestCase.aggregate,
+        )
 
     def testPropertyAliases(self):
         instance = Aggregate.from_etree(self.etree)

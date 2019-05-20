@@ -69,13 +69,12 @@ class SECRQ(Aggregate):
     ticker = String(32)
     fiid = String(32)
 
-    requiredMutexes = [
-        ["secid", "ticker", "fiid"],
-    ]
+    requiredMutexes = [["secid", "ticker", "fiid"]]
 
 
 class SECLISTRQ(Aggregate):
     """ OFX section 13.8.2.2 """
+
     secrq = ListItem(SECRQ)
 
 
@@ -124,6 +123,7 @@ class PORTION(Aggregate):
 
 class MFASSETCLASS(Aggregate):  # pylint: disable=too-many-ancestors
     """ OFX section 13.8.5.3 """
+
     portion = ListItem(PORTION)
 
 

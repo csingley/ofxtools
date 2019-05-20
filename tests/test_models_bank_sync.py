@@ -59,10 +59,13 @@ class StpchksyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     @classproperty
     @classmethod
     def aggregate(self):
-        return STPCHKSYNCRQ(stpchk.StpchktrnrqTestCase.aggregate,
-                            stpchk.StpchktrnrqTestCase.aggregate,
-                            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
-                            token="DEADBEEF", rejectifmissing=True)
+        return STPCHKSYNCRQ(
+            stpchk.StpchktrnrqTestCase.aggregate,
+            stpchk.StpchktrnrqTestCase.aggregate,
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+            token="DEADBEEF",
+            rejectifmissing=True,
+        )
 
     @classproperty
     @classmethod
@@ -126,10 +129,13 @@ class StpchksyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     @classproperty
     @classmethod
     def aggregate(self):
-        return STPCHKSYNCRS(stpchk.StpchktrnrsTestCase.aggregate,
-                            stpchk.StpchktrnrsTestCase.aggregate,
-                            token="DEADBEEF", lostsync=True,
-                            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate)
+        return STPCHKSYNCRS(
+            stpchk.StpchktrnrsTestCase.aggregate,
+            stpchk.StpchktrnrsTestCase.aggregate,
+            token="DEADBEEF",
+            lostsync=True,
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -193,8 +199,11 @@ class IntrasyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     @classproperty
     @classmethod
     def aggregate(self):
-        return INTRASYNCRQ(token="DEADBEEF", rejectifmissing=True,
-                           bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate)
+        return INTRASYNCRQ(
+            token="DEADBEEF",
+            rejectifmissing=True,
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -282,8 +291,11 @@ class IntrasyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     @classproperty
     @classmethod
     def aggregate(self):
-        return INTRASYNCRS(token="DEADBEEF", lostsync=True,
-                           bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate)
+        return INTRASYNCRS(
+            token="DEADBEEF",
+            lostsync=True,
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -371,8 +383,11 @@ class IntersyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     @classproperty
     @classmethod
     def aggregate(self):
-        return INTERSYNCRQ(token="DEADBEEF", rejectifmissing=True,
-                           bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate)
+        return INTERSYNCRQ(
+            token="DEADBEEF",
+            rejectifmissing=True,
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -460,8 +475,11 @@ class IntersyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     @classproperty
     @classmethod
     def aggregate(self):
-        return INTERSYNCRS(token="DEADBEEF", lostsync=True,
-                           bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate)
+        return INTERSYNCRS(
+            token="DEADBEEF",
+            lostsync=True,
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -553,10 +571,13 @@ class WiresyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     @classproperty
     @classmethod
     def aggregate(self):
-        return WIRESYNCRQ(wire.WiretrnrqTestCase.aggregate,
-                          wire.WiretrnrqTestCase.aggregate,
-                          token="DEADBEEF", rejectifmissing=True,
-                          bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate)
+        return WIRESYNCRQ(
+            wire.WiretrnrqTestCase.aggregate,
+            wire.WiretrnrqTestCase.aggregate,
+            token="DEADBEEF",
+            rejectifmissing=True,
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -621,10 +642,13 @@ class WiresyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     @classproperty
     @classmethod
     def aggregate(self):
-        return WIRESYNCRS(wire.WiretrnrsTestCase.aggregate,
-                          wire.WiretrnrsTestCase.aggregate,
-                          token="DEADBEEF", lostsync=True,
-                          bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate)
+        return WIRESYNCRS(
+            wire.WiretrnrsTestCase.aggregate,
+            wire.WiretrnrsTestCase.aggregate,
+            token="DEADBEEF",
+            lostsync=True,
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -694,8 +718,11 @@ class RecintrasyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     @classproperty
     @classmethod
     def aggregate(self):
-        return RECINTRASYNCRQ(token="DEADBEEF", rejectifmissing=True,
-                              bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate)
+        return RECINTRASYNCRQ(
+            token="DEADBEEF",
+            rejectifmissing=True,
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -758,8 +785,11 @@ class RecintrasyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     @classproperty
     @classmethod
     def aggregate(self):
-        return RECINTRASYNCRS(token="DEADBEEF", lostsync=True,
-                              bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate)
+        return RECINTRASYNCRS(
+            token="DEADBEEF",
+            lostsync=True,
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -828,8 +858,11 @@ class RecintersyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     @classproperty
     @classmethod
     def aggregate(self):
-        return RECINTERSYNCRQ(token="DEADBEEF", rejectifmissing=True,
-                              bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate)
+        return RECINTERSYNCRQ(
+            token="DEADBEEF",
+            rejectifmissing=True,
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -892,8 +925,11 @@ class RecintersyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     @classproperty
     @classmethod
     def aggregate(self):
-        return RECINTERSYNCRS(token="DEADBEEF", lostsync=True,
-                              bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate)
+        return RECINTERSYNCRS(
+            token="DEADBEEF",
+            lostsync=True,
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -969,9 +1005,13 @@ class BankmailsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     @classproperty
     @classmethod
     def aggregate(self):
-        return BANKMAILSYNCRQ(token="DEADBEEF", rejectifmissing=True,
-                              incimages=True, usehtml=False,
-                              bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate)
+        return BANKMAILSYNCRQ(
+            token="DEADBEEF",
+            rejectifmissing=True,
+            incimages=True,
+            usehtml=False,
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -1038,8 +1078,11 @@ class BankmailsyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     @classproperty
     @classmethod
     def aggregate(self):
-        return BANKMAILSYNCRS(token="DEADBEEF", lostsync=True,
-                              bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate)
+        return BANKMAILSYNCRS(
+            token="DEADBEEF",
+            lostsync=True,
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod

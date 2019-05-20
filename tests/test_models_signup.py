@@ -11,13 +11,34 @@ import itertools
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import SVCSTATUSES
 from ofxtools.models.signup import (
-    ACCTINFO, ACCTINFORQ, ACCTINFORS, ACCTINFOTRNRQ, ACCTINFOTRNRS,
-    ENROLLRQ, ENROLLRS, ENROLLTRNRQ, ENROLLTRNRS,
-    SVCS, SVCADD, SVCCHG, SVCDEL,
-    ACCTRQ, ACCTRS, ACCTTRNRQ, ACCTTRNRS, ACCTSYNCRQ, ACCTSYNCRS,
-    CHGUSERINFORQ, CHGUSERINFORS, CHGUSERINFOTRNRQ, CHGUSERINFOTRNRS,
-    CHGUSERINFOSYNCRQ, CHGUSERINFOSYNCRS,
-    CLIENTENROLL, WEBENROLL, OTHERENROLL,
+    ACCTINFO,
+    ACCTINFORQ,
+    ACCTINFORS,
+    ACCTINFOTRNRQ,
+    ACCTINFOTRNRS,
+    ENROLLRQ,
+    ENROLLRS,
+    ENROLLTRNRQ,
+    ENROLLTRNRS,
+    SVCS,
+    SVCADD,
+    SVCCHG,
+    SVCDEL,
+    ACCTRQ,
+    ACCTRS,
+    ACCTTRNRQ,
+    ACCTTRNRS,
+    ACCTSYNCRQ,
+    ACCTSYNCRS,
+    CHGUSERINFORQ,
+    CHGUSERINFORS,
+    CHGUSERINFOTRNRQ,
+    CHGUSERINFOTRNRS,
+    CHGUSERINFOSYNCRQ,
+    CHGUSERINFOSYNCRS,
+    CLIENTENROLL,
+    WEBENROLL,
+    OTHERENROLL,
 )
 from ofxtools.utils import UTC, classproperty
 from ofxtools.models.i18n import COUNTRY_CODES
@@ -105,16 +126,23 @@ class AcctinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return ACCTINFO(bk_stmt.BankacctinfoTestCase.aggregate,
-                        bk_stmt.CcacctinfoTestCase.aggregate,
-                        invest.InvacctinfoTestCase.aggregate,
-                        desc="All accounts", phone="8675309")
+        return ACCTINFO(
+            bk_stmt.BankacctinfoTestCase.aggregate,
+            bk_stmt.CcacctinfoTestCase.aggregate,
+            invest.InvacctinfoTestCase.aggregate,
+            desc="All accounts",
+            phone="8675309",
+        )
 
     @classproperty
     @classmethod
     def validSoup(cls):
         # Any order of *ACCTINFO is OK
-        acctinfos = [bk_stmt.BankacctinfoTestCase, bk_stmt.CcacctinfoTestCase, invest.InvacctinfoTestCase]
+        acctinfos = [
+            bk_stmt.BankacctinfoTestCase,
+            bk_stmt.CcacctinfoTestCase,
+            invest.InvacctinfoTestCase,
+        ]
         for seq in itertools.permutations(acctinfos):
             root = Element("ACCTINFO")
             SubElement(root, "DESC").text = "All accounts"
@@ -132,7 +160,11 @@ class AcctinfoTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "PHONE").text = "8675309"
         yield root
 
-        acctinfos = [bk_stmt.BankacctinfoTestCase, bk_stmt.CcacctinfoTestCase, invest.InvacctinfoTestCase]
+        acctinfos = [
+            bk_stmt.BankacctinfoTestCase,
+            bk_stmt.CcacctinfoTestCase,
+            invest.InvacctinfoTestCase,
+        ]
 
         # Two of the same *ACCTINFO
         for seq in itertools.permutations(acctinfos):
@@ -224,7 +256,9 @@ class AcctinforsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return ACCTINFORS(AcctinfoTestCase.aggregate, dtacctup=datetime(2012, 3, 14, tzinfo=UTC))
+        return ACCTINFORS(
+            AcctinfoTestCase.aggregate, dtacctup=datetime(2012, 3, 14, tzinfo=UTC)
+        )
 
     def testRepr(self):
         rep = repr(Aggregate.from_etree(self.etree))
@@ -239,8 +273,12 @@ class AcctinfotrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return ACCTINFOTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                             acctinforq=AcctinforqTestCase.aggregate)
+        return ACCTINFOTRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            acctinforq=AcctinforqTestCase.aggregate,
+        )
 
 
 class AcctinfotrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -251,10 +289,12 @@ class AcctinfotrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return ACCTINFOTRNRS(trnuid="DEADBEEF",
-                             status=base.StatusTestCase.aggregate,
-                             cltcookie="B00B135",
-                             acctinfors=AcctinforsTestCase.aggregate)
+        return ACCTINFOTRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            acctinfors=AcctinforsTestCase.aggregate,
+        )
 
 
 class EnrollrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -316,22 +356,37 @@ class EnrollrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return ENROLLRQ(firstname="Porky", middlename="D.", lastname="Pig",
-                        addr1="3717 N Clark St", addr2="Dugout Box, Aisle 19",
-                        addr3="Seat A1", city="Chicago", state="IL",
-                        postalcode="60613", country="USA",
-                        dayphone="(773) 309-1027", evephone="867-5309",
-                        email="spam@null.void", userid="bacon2b",
-                        taxid="123456789", securityname="Petunia",
-                        datebirth=datetime(2016, 7, 5, tzinfo=UTC),
-                        bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate)
+        return ENROLLRQ(
+            firstname="Porky",
+            middlename="D.",
+            lastname="Pig",
+            addr1="3717 N Clark St",
+            addr2="Dugout Box, Aisle 19",
+            addr3="Seat A1",
+            city="Chicago",
+            state="IL",
+            postalcode="60613",
+            country="USA",
+            dayphone="(773) 309-1027",
+            evephone="867-5309",
+            email="spam@null.void",
+            userid="bacon2b",
+            taxid="123456789",
+            securityname="Petunia",
+            datebirth=datetime(2016, 7, 5, tzinfo=UTC),
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
     def validSoup(cls):
         root = cls.emptyBase
         yield root
-        for acctfrom in bk_stmt.BankacctfromTestCase, bk_stmt.CcacctfromTestCase, invest.InvacctfromTestCase:
+        for acctfrom in (
+            bk_stmt.BankacctfromTestCase,
+            bk_stmt.CcacctfromTestCase,
+            invest.InvacctfromTestCase,
+        ):
             root = cls.emptyBase
             root.append(acctfrom.etree)
             yield root
@@ -340,11 +395,15 @@ class EnrollrqTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def invalidSoup(cls):
         #  optionalMutexes = [
-            #  ("bankacctfrom", "ccacctfrom"),
-            #  ("bankacctfrom", "invacctfrom"),
-            #  ("ccacctfrom", "invacctfrom"),
+        #  ("bankacctfrom", "ccacctfrom"),
+        #  ("bankacctfrom", "invacctfrom"),
+        #  ("ccacctfrom", "invacctfrom"),
         #  ]
-        acctfroms = [bk_stmt.BankacctfromTestCase, bk_stmt.CcacctfromTestCase, invest.InvacctfromTestCase]
+        acctfroms = [
+            bk_stmt.BankacctfromTestCase,
+            bk_stmt.CcacctfromTestCase,
+            invest.InvacctfromTestCase,
+        ]
         # Two of the same *ACCTFROM
         for acctfrom in acctfroms:
             root = cls.emptyBase
@@ -383,8 +442,11 @@ class EnrollrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return ENROLLRS(temppass="t0ps3kr1t", userid="bacon2b",
-                        dtexpire=datetime(2016, 7, 5, tzinfo=UTC))
+        return ENROLLRS(
+            temppass="t0ps3kr1t",
+            userid="bacon2b",
+            dtexpire=datetime(2016, 7, 5, tzinfo=UTC),
+        )
 
 
 class EnrolltrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
@@ -405,8 +467,12 @@ class EnrolltrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return ENROLLTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                           enrollrq=EnrollrqTestCase.aggregate)
+        return ENROLLTRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            enrollrq=EnrollrqTestCase.aggregate,
+        )
 
 
 class EnrolltrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -427,10 +493,12 @@ class EnrolltrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return ENROLLTRNRS(trnuid="DEADBEEF",
-                           status=base.StatusTestCase.aggregate,
-                           cltcookie="B00B135",
-                           enrollrs=EnrollrsTestCase.aggregate)
+        return ENROLLTRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            enrollrs=EnrollrsTestCase.aggregate,
+        )
 
 
 class SvcaddTestCase(unittest.TestCase, base.TestAggregate):
@@ -450,7 +518,11 @@ class SvcaddTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def validSoup(cls):
-        accttos = [bk_stmt.BankaccttoTestCase, bk_stmt.CcaccttoTestCase, invest.InvaccttoTestCase]
+        accttos = [
+            bk_stmt.BankaccttoTestCase,
+            bk_stmt.CcaccttoTestCase,
+            invest.InvaccttoTestCase,
+        ]
         for acctto in accttos:
             root = Element("SVCADD")
             root.append(acctto.etree)
@@ -465,7 +537,11 @@ class SvcaddTestCase(unittest.TestCase, base.TestAggregate):
         yield Element("SVCADD")
 
         # Two of the same *ACCTTO
-        accttos = [bk_stmt.BankaccttoTestCase, bk_stmt.CcaccttoTestCase, invest.InvaccttoTestCase]
+        accttos = [
+            bk_stmt.BankaccttoTestCase,
+            bk_stmt.CcaccttoTestCase,
+            invest.InvaccttoTestCase,
+        ]
         for acctto in accttos:
             root = Element("SVCADD")
             root.append(acctto.etree)
@@ -498,14 +574,24 @@ class SvcchgTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return SVCCHG(bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
-                      bankacctto=bk_stmt.BankaccttoTestCase.aggregate)
+        return SVCCHG(
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+            bankacctto=bk_stmt.BankaccttoTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
     def validSoup(cls):
-        acctfroms = [bk_stmt.BankacctfromTestCase, bk_stmt.CcacctfromTestCase, invest.InvacctfromTestCase]
-        accttos = [bk_stmt.BankaccttoTestCase, bk_stmt.CcaccttoTestCase, invest.InvaccttoTestCase]
+        acctfroms = [
+            bk_stmt.BankacctfromTestCase,
+            bk_stmt.CcacctfromTestCase,
+            invest.InvacctfromTestCase,
+        ]
+        accttos = [
+            bk_stmt.BankaccttoTestCase,
+            bk_stmt.CcaccttoTestCase,
+            invest.InvaccttoTestCase,
+        ]
         for acctfrom in acctfroms:
             for acctto in accttos:
                 root = Element("SVCCHG")
@@ -517,15 +603,23 @@ class SvcchgTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def invalidSoup(cls):
         #  requiredMutexes = [
-            #  ("bankacctfrom", "ccacctfrom", "invacctfrom"),
-            #  ("bankacctto", "ccacctto", "invacctto"),
+        #  ("bankacctfrom", "ccacctfrom", "invacctfrom"),
+        #  ("bankacctto", "ccacctto", "invacctto"),
         #  ]
 
         # No *ACCTFROM or *ACCTTO
         yield Element("SVCCHG")
 
-        acctfroms = [bk_stmt.BankacctfromTestCase, bk_stmt.CcacctfromTestCase, invest.InvacctfromTestCase]
-        accttos = [bk_stmt.BankaccttoTestCase, bk_stmt.CcaccttoTestCase, invest.InvaccttoTestCase]
+        acctfroms = [
+            bk_stmt.BankacctfromTestCase,
+            bk_stmt.CcacctfromTestCase,
+            invest.InvacctfromTestCase,
+        ]
+        accttos = [
+            bk_stmt.BankaccttoTestCase,
+            bk_stmt.CcaccttoTestCase,
+            invest.InvaccttoTestCase,
+        ]
 
         # *ACCTFROM with no *ACCTTO
         for acctfrom in acctfroms:
@@ -550,7 +644,7 @@ class SvcchgTestCase(unittest.TestCase, base.TestAggregate):
                 yield root
 
         # Two of the same *ACCTTO
-        for acctfrom  in [None] + acctfroms:
+        for acctfrom in [None] + acctfroms:
             root = Element("SVCCHG")
             if acctfrom is not None:
                 root.append(acctfrom.etree)
@@ -613,7 +707,11 @@ class SvcdelTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def validSoup(cls):
-        acctfroms = [bk_stmt.BankacctfromTestCase, bk_stmt.CcacctfromTestCase, invest.InvacctfromTestCase]
+        acctfroms = [
+            bk_stmt.BankacctfromTestCase,
+            bk_stmt.CcacctfromTestCase,
+            invest.InvacctfromTestCase,
+        ]
         for acctfrom in acctfroms:
             root = Element("SVCDEL")
             root.append(acctfrom.etree)
@@ -628,7 +726,11 @@ class SvcdelTestCase(unittest.TestCase, base.TestAggregate):
         yield Element("SVCDEL")
 
         # Two of the same *ACCTFROM
-        acctfroms = [bk_stmt.BankacctfromTestCase, bk_stmt.CcacctfromTestCase, invest.InvacctfromTestCase]
+        acctfroms = [
+            bk_stmt.BankacctfromTestCase,
+            bk_stmt.CcacctfromTestCase,
+            invest.InvacctfromTestCase,
+        ]
         for acctfrom in acctfroms:
             root = Element("SVCDEL")
             root.append(acctfrom.etree)
@@ -730,8 +832,7 @@ class AcctrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return ACCTRS(svcadd=SvcaddTestCase.aggregate, svc="BANKSVC",
-                      svcstatus="AVAIL")
+        return ACCTRS(svcadd=SvcaddTestCase.aggregate, svc="BANKSVC", svcstatus="AVAIL")
 
     @classproperty
     @classmethod
@@ -790,8 +891,12 @@ class AccttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return ACCTTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                         acctrq=AcctrqTestCase.aggregate)
+        return ACCTTRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            acctrq=AcctrqTestCase.aggregate,
+        )
 
 
 class AccttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -802,10 +907,12 @@ class AccttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return ACCTTRNRS(trnuid="DEADBEEF",
-                         status=base.StatusTestCase.aggregate,
-                         cltcookie="B00B135",
-                         acctrs=AcctrsTestCase.aggregate)
+        return ACCTTRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            acctrs=AcctrsTestCase.aggregate,
+        )
 
 
 class AcctsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
@@ -824,9 +931,12 @@ class AcctsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return ACCTSYNCRQ(AccttrnrqTestCase.aggregate,
-                          AccttrnrqTestCase.aggregate,
-                          token="DEADBEEF", rejectifmissing=True)
+        return ACCTSYNCRQ(
+            AccttrnrqTestCase.aggregate,
+            AccttrnrqTestCase.aggregate,
+            token="DEADBEEF",
+            rejectifmissing=True,
+        )
 
     @classproperty
     @classmethod
@@ -851,14 +961,17 @@ class AcctsyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
         SubElement(root, "LOSTSYNC").text = "Y"
         root.append(AccttrnrsTestCase.etree)
         root.append(AccttrnrsTestCase.etree)
-        return root 
+        return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return ACCTSYNCRS(AccttrnrsTestCase.aggregate,
-                          AccttrnrsTestCase.aggregate,
-                          token="DEADBEEF", lostsync=True)
+        return ACCTSYNCRS(
+            AccttrnrsTestCase.aggregate,
+            AccttrnrsTestCase.aggregate,
+            token="DEADBEEF",
+            lostsync=True,
+        )
 
     @classproperty
     @classmethod
@@ -875,20 +988,21 @@ class AcctsyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
 class ChguserinforqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    optionalElements = ["FIRSTNAME",
-                        "MIDDLENAME",
-                        "LASTNAME",
-                        "ADDR1",
-                        "ADDR2",
-                        "ADDR3",
-                        "CITY",
-                        "STATE",
-                        "POSTALCODE",
-                        "COUNTRY",
-                        "DAYPHONE",
-                        "EVEPHONE",
-                        "EMAIL",
-                        ]
+    optionalElements = [
+        "FIRSTNAME",
+        "MIDDLENAME",
+        "LASTNAME",
+        "ADDR1",
+        "ADDR2",
+        "ADDR3",
+        "CITY",
+        "STATE",
+        "POSTALCODE",
+        "COUNTRY",
+        "DAYPHONE",
+        "EVEPHONE",
+        "EMAIL",
+    ]
 
     @classproperty
     @classmethod
@@ -912,12 +1026,21 @@ class ChguserinforqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CHGUSERINFORQ(firstname="Mary", middlename="J.",
-                             lastname="Blige", addr1="3717 N Clark St",
-                             addr2="Dugout Box, Aisle 19", addr3="Seat A1",
-                             city="Chicago", state="IL", postalcode="60613",
-                             country="USA", dayphone="(773) 309-1027",
-                             evephone="867-5309", email="test@example.com")
+        return CHGUSERINFORQ(
+            firstname="Mary",
+            middlename="J.",
+            lastname="Blige",
+            addr1="3717 N Clark St",
+            addr2="Dugout Box, Aisle 19",
+            addr3="Seat A1",
+            city="Chicago",
+            state="IL",
+            postalcode="60613",
+            country="USA",
+            dayphone="(773) 309-1027",
+            evephone="867-5309",
+            email="test@example.com",
+        )
 
 
 class ChguserinforsTestCase(unittest.TestCase, base.TestAggregate):
@@ -963,13 +1086,22 @@ class ChguserinforsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CHGUSERINFORS(firstname="Mary", middlename="J.",
-                             lastname="Blige", addr1="3717 N Clark St",
-                             addr2="Dugout Box, Aisle 19", addr3="Seat A1",
-                             city="Chicago", state="IL", postalcode="60613",
-                             country="USA", dayphone="(773) 309-1027",
-                             evephone="867-5309", email="test@example.com",
-                             dtinfochg=datetime(2014, 11, 22, tzinfo=UTC))
+        return CHGUSERINFORS(
+            firstname="Mary",
+            middlename="J.",
+            lastname="Blige",
+            addr1="3717 N Clark St",
+            addr2="Dugout Box, Aisle 19",
+            addr3="Seat A1",
+            city="Chicago",
+            state="IL",
+            postalcode="60613",
+            country="USA",
+            dayphone="(773) 309-1027",
+            evephone="867-5309",
+            email="test@example.com",
+            dtinfochg=datetime(2014, 11, 22, tzinfo=UTC),
+        )
 
 
 class ChguserinfotrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
@@ -980,9 +1112,12 @@ class ChguserinfotrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CHGUSERINFOTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135",
-                                tan="B16B00B5",
-                                chguserinforq=ChguserinforqTestCase.aggregate)
+        return CHGUSERINFOTRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            chguserinforq=ChguserinforqTestCase.aggregate,
+        )
 
 
 class ChguserinfotrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -993,10 +1128,12 @@ class ChguserinfotrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CHGUSERINFOTRNRS(trnuid="DEADBEEF",
-                                status=base.StatusTestCase.aggregate,
-                                cltcookie="B00B135",
-                                chguserinfors=ChguserinforsTestCase.aggregate)
+        return CHGUSERINFOTRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            chguserinfors=ChguserinforsTestCase.aggregate,
+        )
 
 
 class ChguserinfosyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
@@ -1015,9 +1152,12 @@ class ChguserinfosyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CHGUSERINFOSYNCRQ(ChguserinfotrnrqTestCase.aggregate,
-                                 ChguserinfotrnrqTestCase.aggregate,
-                                 token="DEADBEEF", rejectifmissing=True)
+        return CHGUSERINFOSYNCRQ(
+            ChguserinfotrnrqTestCase.aggregate,
+            ChguserinfotrnrqTestCase.aggregate,
+            token="DEADBEEF",
+            rejectifmissing=True,
+        )
 
     @classproperty
     @classmethod
@@ -1047,9 +1187,12 @@ class ChguserinfosyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CHGUSERINFOSYNCRS(ChguserinfotrnrsTestCase.aggregate,
-                                 ChguserinfotrnrsTestCase.aggregate,
-                                 token="DEADBEEF", lostsync=True)
+        return CHGUSERINFOSYNCRS(
+            ChguserinfotrnrsTestCase.aggregate,
+            ChguserinfotrnrsTestCase.aggregate,
+            token="DEADBEEF",
+            lostsync=True,
+        )
 
     @classproperty
     @classmethod

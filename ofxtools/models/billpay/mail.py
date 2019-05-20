@@ -5,9 +5,12 @@ Payment mail - OFX Section 12.8
 
 
 __all__ = [
-    "PMTMAILRQ", "PMTMAILRS",
-    "PMTMAILTRNRQ", "PMTMAILTRNRS",
-    "PMTMAILSYNCRQ", "PMTMAILSYNCRS",
+    "PMTMAILRQ",
+    "PMTMAILRS",
+    "PMTMAILTRNRQ",
+    "PMTMAILTRNRS",
+    "PMTMAILSYNCRQ",
+    "PMTMAILSYNCRS",
 ]
 
 
@@ -36,11 +39,13 @@ class PMTMAILRS(Aggregate):
 
 class PMTMAILTRNRQ(TrnRq):
     """ OFX Section 12.8.1.1 """
+
     pmtmailrq = SubAggregate(PMTMAILRQ, required=True)
 
 
 class PMTMAILTRNRS(TrnRs):
     """ OFX Section 12.8.1.2 """
+
     pmtmailrs = SubAggregate(PMTMAILRS)
 
 

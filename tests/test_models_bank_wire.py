@@ -44,9 +44,11 @@ class WirebeneficiaryTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return WIREBENEFICIARY(name="Elmer Fudd",
-                               bankacctto=bk_stmt.BankaccttoTestCase.aggregate,
-                               memo="For hunting wabbits")
+        return WIREBENEFICIARY(
+            name="Elmer Fudd",
+            bankacctto=bk_stmt.BankaccttoTestCase.aggregate,
+            memo="For hunting wabbits",
+        )
 
     @classproperty
     @classmethod
@@ -78,11 +80,18 @@ class ExtbankdescTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return EXTBANKDESC(name="Lakov Trust", bankid="123456789",
-                           addr1="123 Main St", addr2="Suite 200",
-                           addr3="Attn: Transfer Dept", city="Dime Box",
-                           state="TX", postalcode="77853", country="USA",
-                           phone="8675309")
+        return EXTBANKDESC(
+            name="Lakov Trust",
+            bankid="123456789",
+            addr1="123 Main St",
+            addr2="Suite 200",
+            addr3="Attn: Transfer Dept",
+            city="Dime Box",
+            state="TX",
+            postalcode="77853",
+            country="USA",
+            phone="8675309",
+        )
 
     @classproperty
     @classmethod
@@ -147,12 +156,14 @@ class WirerqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return WIRERQ(bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
-                      wirebeneficiary=WirebeneficiaryTestCase.aggregate,
-                      wiredestbank=WiredestbankTestCase.aggregate,
-                      trnamt=Decimal("123.45"),
-                      dtdue=datetime(1776, 7, 4, tzinfo=UTC),
-                      payinstruct="Fold until all sharp corners")
+        return WIRERQ(
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+            wirebeneficiary=WirebeneficiaryTestCase.aggregate,
+            wiredestbank=WiredestbankTestCase.aggregate,
+            trnamt=Decimal("123.45"),
+            dtdue=datetime(1776, 7, 4, tzinfo=UTC),
+            payinstruct="Fold until all sharp corners",
+        )
 
 
 class WirersTestCase(unittest.TestCase, base.TestAggregate):
@@ -175,15 +186,19 @@ class WirersTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return WIRERS(curdef="USD", srvrtid="DEADBEEF",
-                      bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
-                      wirebeneficiary=WirebeneficiaryTestCase.aggregate,
-                      wiredestbank=WiredestbankTestCase.aggregate,
-                      trnamt=Decimal("123.45"),
-                      dtdue=datetime(1776, 7, 4, tzinfo=UTC),
-                      payinstruct="Fold until all sharp corners",
-                      dtxferprj=datetime(1776, 7, 4, tzinfo=UTC),
-                      fee=Decimal("123.45"), confmsg="You're good!")
+        return WIRERS(
+            curdef="USD",
+            srvrtid="DEADBEEF",
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+            wirebeneficiary=WirebeneficiaryTestCase.aggregate,
+            wiredestbank=WiredestbankTestCase.aggregate,
+            trnamt=Decimal("123.45"),
+            dtdue=datetime(1776, 7, 4, tzinfo=UTC),
+            payinstruct="Fold until all sharp corners",
+            dtxferprj=datetime(1776, 7, 4, tzinfo=UTC),
+            fee=Decimal("123.45"),
+            confmsg="You're good!",
+        )
 
     @classproperty
     @classmethod
@@ -281,8 +296,12 @@ class WiretrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return WIRETRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                         wirerq=WirerqTestCase.aggregate)
+        return WIRETRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            wirerq=WirerqTestCase.aggregate,
+        )
 
 
 class WiretrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -293,10 +312,12 @@ class WiretrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return WIRETRNRS(trnuid="DEADBEEF",
-                         status=base.StatusTestCase.aggregate,
-                         cltcookie="B00B135",
-                         wirers=WirersTestCase.aggregate)
+        return WIRETRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            wirers=WirersTestCase.aggregate,
+        )
 
 
 if __name__ == "__main__":

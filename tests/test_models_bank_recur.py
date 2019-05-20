@@ -76,8 +76,10 @@ class RecintrarqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return RECINTRARQ(recurrinst=RecurrinstTestCase.aggregate,
-                          intrarq=xfer.IntrarqTestCase.aggregate)
+        return RECINTRARQ(
+            recurrinst=RecurrinstTestCase.aggregate,
+            intrarq=xfer.IntrarqTestCase.aggregate,
+        )
 
 
 class RecintrarsTestCase(unittest.TestCase, base.TestAggregate):
@@ -97,9 +99,11 @@ class RecintrarsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return RECINTRARS(recsrvrtid="DEADBEEF",
-                          recurrinst=RecurrinstTestCase.aggregate,
-                          intrars=xfer.IntrarsTestCase.aggregate)
+        return RECINTRARS(
+            recsrvrtid="DEADBEEF",
+            recurrinst=RecurrinstTestCase.aggregate,
+            intrars=xfer.IntrarsTestCase.aggregate,
+        )
 
 
 class RecintramodrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -120,10 +124,12 @@ class RecintramodrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return RECINTRAMODRQ(recsrvrtid="DEADBEEF",
-                             recurrinst=RecurrinstTestCase.aggregate,
-                             intrarq=xfer.IntrarqTestCase.aggregate,
-                             modpending=False)
+        return RECINTRAMODRQ(
+            recsrvrtid="DEADBEEF",
+            recurrinst=RecurrinstTestCase.aggregate,
+            intrarq=xfer.IntrarqTestCase.aggregate,
+            modpending=False,
+        )
 
 
 class RecintramodrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -144,10 +150,12 @@ class RecintramodrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return RECINTRAMODRS(recsrvrtid="DEADBEEF",
-                             recurrinst=RecurrinstTestCase.aggregate,
-                             intrars=xfer.IntrarsTestCase.aggregate,
-                             modpending=False)
+        return RECINTRAMODRS(
+            recsrvrtid="DEADBEEF",
+            recurrinst=RecurrinstTestCase.aggregate,
+            intrars=xfer.IntrarsTestCase.aggregate,
+            modpending=False,
+        )
 
 
 class RecintracanrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -193,12 +201,15 @@ class RecintratrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
 
     wraps = RecintrarqTestCase
 
-
     @classproperty
     @classmethod
     def aggregate(cls):
-        return RECINTRATRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                             recintrarq=RecintrarqTestCase.aggregate)
+        return RECINTRATRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            recintrarq=RecintrarqTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -268,10 +279,12 @@ class RecintratrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return RECINTRATRNRS(trnuid="DEADBEEF",
-                             status=base.StatusTestCase.aggregate,
-                             cltcookie="B00B135",
-                             recintrars=RecintrarsTestCase.aggregate)
+        return RECINTRATRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            recintrars=RecintrarsTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -347,8 +360,10 @@ class RecinterrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return RECINTERRQ(recurrinst=RecurrinstTestCase.aggregate,
-                          interrq=interxfer.InterrqTestCase.aggregate)
+        return RECINTERRQ(
+            recurrinst=RecurrinstTestCase.aggregate,
+            interrq=interxfer.InterrqTestCase.aggregate,
+        )
 
 
 class RecinterrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -369,9 +384,11 @@ class RecinterrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return RECINTERRS(recsrvrtid="DEADBEEF",
-                          recurrinst=RecurrinstTestCase.aggregate,
-                          interrs=interxfer.InterrsTestCase.aggregate)
+        return RECINTERRS(
+            recsrvrtid="DEADBEEF",
+            recurrinst=RecurrinstTestCase.aggregate,
+            interrs=interxfer.InterrsTestCase.aggregate,
+        )
 
 
 class RecintermodrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -392,10 +409,12 @@ class RecintermodrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return RECINTERMODRQ(recsrvrtid="DEADBEEF",
-                             recurrinst=RecurrinstTestCase.aggregate,
-                             interrq=interxfer.InterrqTestCase.aggregate,
-                             modpending=False)
+        return RECINTERMODRQ(
+            recsrvrtid="DEADBEEF",
+            recurrinst=RecurrinstTestCase.aggregate,
+            interrq=interxfer.InterrqTestCase.aggregate,
+            modpending=False,
+        )
 
 
 class RecintermodrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -416,10 +435,12 @@ class RecintermodrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return RECINTERMODRS(recsrvrtid="DEADBEEF",
-                             recurrinst=RecurrinstTestCase.aggregate,
-                             interrs=interxfer.InterrsTestCase.aggregate,
-                             modpending=False)
+        return RECINTERMODRS(
+            recsrvrtid="DEADBEEF",
+            recurrinst=RecurrinstTestCase.aggregate,
+            interrs=interxfer.InterrsTestCase.aggregate,
+            modpending=False,
+        )
 
 
 class RecintercanrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -468,8 +489,12 @@ class RecintertrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return RECINTERTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                             recinterrq=RecinterrqTestCase.aggregate)
+        return RECINTERTRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            recinterrq=RecinterrqTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -539,10 +564,12 @@ class RecintertrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return RECINTERTRNRS(trnuid="DEADBEEF",
-                             status=base.StatusTestCase.aggregate,
-                             cltcookie="B00B135",
-                             recinterrs=RecinterrsTestCase.aggregate)
+        return RECINTERTRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            recinterrs=RecinterrsTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod

@@ -60,48 +60,53 @@ class MailTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return MAIL(userid="somebody",
-                    dtcreated=datetime(1999, 9, 9, 11, tzinfo=UTC),
-                    # FROM (reserved Python keyword) renamed to "frm"
-                    frm="rolltide420@yahoo.com", to="support@ubs.com",
-                    subject="I've got a problem", msgbody="All my money is gone",
-                    incimages=False, usehtml=False)
+        return MAIL(
+            userid="somebody",
+            dtcreated=datetime(1999, 9, 9, 11, tzinfo=UTC),
+            # FROM (reserved Python keyword) renamed to "frm"
+            frm="rolltide420@yahoo.com",
+            to="support@ubs.com",
+            subject="I've got a problem",
+            msgbody="All my money is gone",
+            incimages=False,
+            usehtml=False,
+        )
 
     #  def testToEtree(cls):
-        #  # "frm" gets translated back to FROM in etree
-        #  root = MAIL(
-            #  userid="somebody",
-            #  dtcreated=datetime(1999, 9, 9, 11, tzinfo=UTC),
-            #  frm="rolltide420@yahoo.com",
-            #  to="support@ubs.com",
-            #  subject="I've got a problem",
-            #  msgbody="All my money is gone",
-            #  incimages=False,
-            #  usehtml=False,
-        #  )
-        #  root = root.to_etree()
-        #  #  frm = root.find("./FROM")
-        #  #  cls.assertIsNotNone(frm)
-        #  #  cls.assertEqual(frm.text, "rolltide420@yahoo.com")
-        #  #  frm = root.find("./FRM")
-        #  #  cls.assertIsNone(frm)
-        #  ofx = ET.tostring(root).decode()
-        #  cls.maxDiff = None
-        #  cls.assertEqual(
-            #  ofx,
-            #  (
-                #  "<MAIL>"
-                #  "<USERID>somebody</USERID>"
-                #  "<DTCREATED>19990909110000.000[0:GMT]</DTCREATED>"
-                #  "<FROM>rolltide420@yahoo.com</FROM>"
-                #  "<TO>support@ubs.com</TO>"
-                #  "<SUBJECT>I've got a problem</SUBJECT>"
-                #  "<MSGBODY>All my money is gone</MSGBODY>"
-                #  "<INCIMAGES>N</INCIMAGES>"
-                #  "<USEHTML>N</USEHTML>"
-                #  "</MAIL>"
-            #  ),
-        #  )
+    #  # "frm" gets translated back to FROM in etree
+    #  root = MAIL(
+    #  userid="somebody",
+    #  dtcreated=datetime(1999, 9, 9, 11, tzinfo=UTC),
+    #  frm="rolltide420@yahoo.com",
+    #  to="support@ubs.com",
+    #  subject="I've got a problem",
+    #  msgbody="All my money is gone",
+    #  incimages=False,
+    #  usehtml=False,
+    #  )
+    #  root = root.to_etree()
+    #  #  frm = root.find("./FROM")
+    #  #  cls.assertIsNotNone(frm)
+    #  #  cls.assertEqual(frm.text, "rolltide420@yahoo.com")
+    #  #  frm = root.find("./FRM")
+    #  #  cls.assertIsNone(frm)
+    #  ofx = ET.tostring(root).decode()
+    #  cls.maxDiff = None
+    #  cls.assertEqual(
+    #  ofx,
+    #  (
+    #  "<MAIL>"
+    #  "<USERID>somebody</USERID>"
+    #  "<DTCREATED>19990909110000.000[0:GMT]</DTCREATED>"
+    #  "<FROM>rolltide420@yahoo.com</FROM>"
+    #  "<TO>support@ubs.com</TO>"
+    #  "<SUBJECT>I've got a problem</SUBJECT>"
+    #  "<MSGBODY>All my money is gone</MSGBODY>"
+    #  "<INCIMAGES>N</INCIMAGES>"
+    #  "<USEHTML>N</USEHTML>"
+    #  "</MAIL>"
+    #  ),
+    #  )
 
 
 class MailrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -148,8 +153,12 @@ class MailtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return MAILTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                         mailrq=MailrqTestCase.aggregate)
+        return MAILTRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            mailrq=MailrqTestCase.aggregate,
+        )
 
 
 class MailtrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -160,10 +169,12 @@ class MailtrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return MAILTRNRS(trnuid="DEADBEEF",
-                         status=base.StatusTestCase.aggregate,
-                         cltcookie="B00B135",
-                         mailrs=MailrsTestCase.aggregate)
+        return MAILTRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            mailrs=MailrsTestCase.aggregate,
+        )
 
 
 class MailsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
@@ -186,10 +197,14 @@ class MailsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return MAILSYNCRQ(MailtrnrqTestCase.aggregate,
-                          MailtrnrqTestCase.aggregate,
-                          token="DEADBEEF", rejectifmissing=True,
-                          incimages=True, usehtml=False)
+        return MAILSYNCRQ(
+            MailtrnrqTestCase.aggregate,
+            MailtrnrqTestCase.aggregate,
+            token="DEADBEEF",
+            rejectifmissing=True,
+            incimages=True,
+            usehtml=False,
+        )
 
     @classproperty
     @classmethod
@@ -270,9 +285,12 @@ class MailsyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return MAILSYNCRS(MailtrnrsTestCase.aggregate,
-                          MailtrnrsTestCase.aggregate,
-                          token="DEADBEEF", lostsync=True)
+        return MAILSYNCRS(
+            MailtrnrsTestCase.aggregate,
+            MailtrnrsTestCase.aggregate,
+            token="DEADBEEF",
+            lostsync=True,
+        )
 
     @classproperty
     @classmethod
@@ -350,8 +368,12 @@ class GetmimetrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return GETMIMETRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                            getmimerq=GetmimerqTestCase.aggregate)
+        return GETMIMETRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            getmimerq=GetmimerqTestCase.aggregate,
+        )
 
 
 class GetmimetrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -362,10 +384,12 @@ class GetmimetrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return GETMIMETRNRS(trnuid="DEADBEEF",
-                            status=base.StatusTestCase.aggregate,
-                            cltcookie="B00B135",
-                            getmimers=GetmimersTestCase.aggregate)
+        return GETMIMETRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            getmimers=GetmimersTestCase.aggregate,
+        )
 
 
 if __name__ == "__main__":

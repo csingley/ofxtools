@@ -25,17 +25,7 @@ __all__ = ["Aggregate", "SubAggregate", "Unsupported", "ElementList"]
 import xml.etree.ElementTree as ET
 from collections import OrderedDict, ChainMap
 from copy import deepcopy
-from typing import (
-    Any,
-    List,
-    Dict,
-    Tuple,
-    Callable,
-    Sequence,
-    Mapping,
-    Union,
-    Optional,
-)
+from typing import Any, List, Dict, Tuple, Callable, Sequence, Mapping, Union, Optional
 
 
 # local imports
@@ -90,12 +80,13 @@ class Aggregate(list):
         by class attribute validators.
         """
 
-        def enforce_count(cls,
-                          kwargs: Dict[str, Any],
-                          errMsg: str,
-                          mutexes: Sequence[Sequence[str]],
-                          predicate: Callable[[int], bool],
-                          ) -> None:
+        def enforce_count(
+            cls,
+            kwargs: Dict[str, Any],
+            errMsg: str,
+            mutexes: Sequence[Sequence[str]],
+            predicate: Callable[[int], bool],
+        ) -> None:
 
             for mutex in mutexes:
                 count = sum([kwargs.get(m, None) is not None for m in mutex])
@@ -111,15 +102,25 @@ class Aggregate(list):
                     }
                     raise ValueError(errMsg.format(**errFields))
 
-        enforce_count(cls, kwargs,
-                      errMsg=("{cls}({kwargs}): must contain at most 1 of "
-                              "[{mutex}] (not {count})"),
-                      mutexes=cls.optionalMutexes, predicate=lambda x: x <= 1)
+        enforce_count(
+            cls,
+            kwargs,
+            errMsg=(
+                "{cls}({kwargs}): must contain at most 1 of " "[{mutex}] (not {count})"
+            ),
+            mutexes=cls.optionalMutexes,
+            predicate=lambda x: x <= 1,
+        )
 
-        enforce_count(cls, kwargs,
-                      errMsg=("{cls}({kwargs}): must contain exactly 1 of "
-                              "[{mutex}] (not {count})"),
-                      mutexes=cls.requiredMutexes, predicate=lambda x: x == 1)
+        enforce_count(
+            cls,
+            kwargs,
+            errMsg=(
+                "{cls}({kwargs}): must contain exactly 1 of " "[{mutex}] (not {count})"
+            ),
+            mutexes=cls.requiredMutexes,
+            predicate=lambda x: x == 1,
+        )
 
     def _apply_args(self, *args: "Aggregate") -> None:
         # Interpret positional args as contained list items (of variable #)
@@ -127,8 +128,7 @@ class Aggregate(list):
             cls_name = member.__class__.__name__.lower()
             if cls_name not in self.listitems:
                 msg = "{} can't contain {} as list item: {}"
-                raise ValueError(msg.format(self.__class__.__name__,
-                                            cls_name, member))
+                raise ValueError(msg.format(self.__class__.__name__, cls_name, member))
             self.append(member)
 
     def _apply_residual_kwargs(self, **kwargs) -> None:
@@ -136,8 +136,7 @@ class Aggregate(list):
         if kwargs:
             args = {k: v for k, v in kwargs.items() if k in self.listitems}
             if args:
-                msg = "{}: pass ListItems as args, not kwargs".format(
-                    list(args.keys()))
+                msg = "{}: pass ListItems as args, not kwargs".format(list(args.keys()))
             else:
                 msg = "Aggregate {} does not define {} (spec={})".format(
                     self.__class__.__name__,
@@ -187,20 +186,19 @@ class Aggregate(list):
             # Relative order of ListItems doesn't matter, but position of
             # ListItems relative to non-ListItems (and that of non-ListItems
             # relative to other non-ListItems) does matter.
-            if idx1 <= idx0 and (attr0 not in listitems
-                                 or attr1 not in listitems):
+            if idx1 <= idx0 and (attr0 not in listitems or attr1 not in listitems):
                 msg = "{} SubElements out of order: {}"
-                raise ValueError(msg.format(cls.__name__,
-                                            [el.tag for el in elem]))
+                raise ValueError(msg.format(cls.__name__, [el.tag for el in elem]))
         return cls(*args, **kwargs)
 
     @classmethod
-    def _mapArgs(cls,
-                 elem: ET.Element,
-                 args: List[Any],
-                 kwargs: Dict[Any, Any],
-                 specIndices: List[Any],
-                 ) -> None:
+    def _mapArgs(
+        cls,
+        elem: ET.Element,
+        args: List[Any],
+        kwargs: Dict[Any, Any],
+        specIndices: List[Any],
+    ) -> None:
         spec = list(cls.spec)
 
         key = elem.tag.lower()
@@ -315,8 +313,7 @@ class Aggregate(list):
         N.B. predicate tests *values* of cls._superdict
              (not keys i.e. attribute names)
         """
-        match_items = [(k, v) for k, v in cls._superdict.items()
-                       if predicate(v)]
+        match_items = [(k, v) for k, v in cls._superdict.items() if predicate(v)]
         match_items.sort(key=lambda it: it[1]._counter)
         return OrderedDict(match_items)
 
@@ -329,8 +326,7 @@ class Aggregate(list):
 
         N.B. SubAggregate is a subclass of Element.
         """
-        return cls._ordered_attrs(
-            lambda v: isinstance(v, (Element, Unsupported)))
+        return cls._ordered_attrs(lambda v: isinstance(v, (Element, Unsupported)))
 
     @classproperty
     @classmethod
@@ -341,7 +337,8 @@ class Aggregate(list):
         """
         return cls._ordered_attrs(
             lambda v: isinstance(v, (Element, Unsupported))
-            and not isinstance(v, (ListItem, ListElement)))
+            and not isinstance(v, (ListItem, ListElement))
+        )
 
     @classproperty
     @classmethod
@@ -351,8 +348,7 @@ class Aggregate(list):
         SubAggregates.
         """
         return cls._ordered_attrs(
-            lambda v: isinstance(v, Element) and not isinstance(v,
-                                                                SubAggregate)
+            lambda v: isinstance(v, Element) and not isinstance(v, SubAggregate)
         )
 
     @classproperty
@@ -404,8 +400,7 @@ class Aggregate(list):
 
     def __repr__(self) -> str:
         attrs = ["{}={}".format(*attr) for attr in self._spec_repr]
-        instance_repr = "{}({})".format(
-            self.__class__.__name__, ", ".join(attrs))
+        instance_repr = "{}({})".format(self.__class__.__name__, ", ".join(attrs))
         num_list_elements = len(self)
         if num_list_elements != 0:
             instance_repr += ", len={}".format(num_list_elements)
@@ -472,6 +467,7 @@ class ElementList(Aggregate):
     """
     Aggregate whose sequence contents are ListElements instead of ListItems
     """
+
     @classproperty
     @classmethod
     def listitems(cls):

@@ -61,9 +61,7 @@ class INTRASYNCRQ(SyncRqList):
     ccacctfrom = SubAggregate(CCACCTFROM)
     intratrnrq = ListItem(INTRATRNRQ)
 
-    requiredMutexes = SyncRqList.requiredMutexes + [
-        ["bankacctfrom", "ccacctfrom"],
-    ]
+    requiredMutexes = SyncRqList.requiredMutexes + [["bankacctfrom", "ccacctfrom"]]
 
 
 class INTRASYNCRS(SyncRsList):
@@ -73,9 +71,7 @@ class INTRASYNCRS(SyncRsList):
     ccacctfrom = SubAggregate(CCACCTFROM)
     intratrnrs = ListItem(INTRATRNRS)
 
-    requiredMutexes = [
-        ["bankacctfrom", "ccacctfrom"],
-    ]
+    requiredMutexes = [["bankacctfrom", "ccacctfrom"]]
 
 
 class INTERSYNCRQ(SyncRqList):
@@ -85,9 +81,7 @@ class INTERSYNCRQ(SyncRqList):
     ccacctfrom = SubAggregate(CCACCTFROM)
     intertrnrq = ListItem(INTERTRNRQ)
 
-    requiredMutexes = SyncRqList.requiredMutexes + [
-        ["bankacctfrom", "ccacctfrom"],
-    ]
+    requiredMutexes = SyncRqList.requiredMutexes + [["bankacctfrom", "ccacctfrom"]]
 
 
 class INTERSYNCRS(SyncRsList):
@@ -97,9 +91,7 @@ class INTERSYNCRS(SyncRsList):
     ccacctfrom = SubAggregate(CCACCTFROM)
     intertrnrs = ListItem(INTERTRNRS)
 
-    requiredMutexes = [
-        ["bankacctfrom", "ccacctfrom"],
-    ]
+    requiredMutexes = [["bankacctfrom", "ccacctfrom"]]
 
 
 class WIRESYNCRQ(SyncRqList):
@@ -123,9 +115,7 @@ class RECINTRASYNCRQ(SyncRqList):
     ccacctfrom = SubAggregate(CCACCTFROM)
     recintratrnrq = ListItem(RECINTRATRNRQ)
 
-    requiredMutexes = SyncRqList.requiredMutexes + [
-        ["bankacctfrom", "ccacctfrom"],
-    ]
+    requiredMutexes = SyncRqList.requiredMutexes + [["bankacctfrom", "ccacctfrom"]]
 
 
 class RECINTRASYNCRS(SyncRsList):
@@ -135,9 +125,7 @@ class RECINTRASYNCRS(SyncRsList):
     ccacctfrom = SubAggregate(CCACCTFROM)
     recintratrnrs = ListItem(RECINTRATRNRS)
 
-    requiredMutexes = [
-        ["bankacctfrom", "ccacctfrom"],
-    ]
+    requiredMutexes = [["bankacctfrom", "ccacctfrom"]]
 
 
 class RECINTERSYNCRQ(SyncRqList):
@@ -147,9 +135,7 @@ class RECINTERSYNCRQ(SyncRqList):
     ccacctfrom = SubAggregate(CCACCTFROM)
     recintertrnrq = ListItem(RECINTERTRNRQ)
 
-    requiredMutexes = SyncRqList.requiredMutexes + [
-        ["bankacctfrom", "ccacctfrom"],
-    ]
+    requiredMutexes = SyncRqList.requiredMutexes + [["bankacctfrom", "ccacctfrom"]]
 
 
 class RECINTERSYNCRS(SyncRsList):
@@ -159,9 +145,7 @@ class RECINTERSYNCRS(SyncRsList):
     ccacctfrom = SubAggregate(CCACCTFROM)
     recintertrnrs = ListItem(RECINTERTRNRS)
 
-    requiredMutexes = [
-        ["bankacctfrom", "ccacctfrom"],
-    ]
+    requiredMutexes = [["bankacctfrom", "ccacctfrom"]]
 
 
 class BANKMAILSYNCRQ(SyncRqList):
@@ -173,9 +157,7 @@ class BANKMAILSYNCRQ(SyncRqList):
     ccacctfrom = SubAggregate(CCACCTFROM)
     bankmailtrnrq = ListItem(BANKMAILTRNRQ)
 
-    requiredMutexes = SyncRqList.requiredMutexes + [
-        ["bankacctfrom", "ccacctfrom"],
-    ]
+    requiredMutexes = SyncRqList.requiredMutexes + [["bankacctfrom", "ccacctfrom"]]
 
 
 class BANKMAILSYNCRS(SyncRsList):
@@ -185,6 +167,4 @@ class BANKMAILSYNCRS(SyncRsList):
     ccacctfrom = SubAggregate(CCACCTFROM)
     bankmailtrnrs = ListItem(BANKMAILTRNRS)
 
-    requiredMutexes = [
-        ["bankacctfrom", "ccacctfrom"],
-    ]
+    requiredMutexes = [["bankacctfrom", "ccacctfrom"]]

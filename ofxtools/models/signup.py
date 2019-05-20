@@ -207,9 +207,7 @@ class SVCADD(Aggregate):
     ccacctto = SubAggregate(CCACCTTO)
     invacctto = SubAggregate(INVACCTTO)
 
-    requiredMutexes = [
-        ["bankacctto", "ccacctto", "invacctto"],
-    ]
+    requiredMutexes = [["bankacctto", "ccacctto", "invacctto"]]
 
 
 class SVCCHG(Aggregate):
@@ -235,9 +233,7 @@ class SVCDEL(Aggregate):
     ccacctfrom = SubAggregate(CCACCTFROM)
     invacctfrom = SubAggregate(INVACCTFROM)
 
-    requiredMutexes = [
-        ["bankacctfrom", "ccacctfrom", "invacctfrom"],
-    ]
+    requiredMutexes = [["bankacctfrom", "ccacctfrom", "invacctfrom"]]
 
 
 class ACCTRQ(Aggregate):
@@ -248,9 +244,7 @@ class ACCTRQ(Aggregate):
     svcdel = SubAggregate(SVCDEL)
     svc = OneOf(*SVCS, required=True)
 
-    requiredMutexes = [
-        ["svcadd", "svcchg", "svcdel"],
-    ]
+    requiredMutexes = [["svcadd", "svcchg", "svcdel"]]
 
 
 class ACCTRS(Aggregate):
@@ -262,9 +256,7 @@ class ACCTRS(Aggregate):
     svc = OneOf(*SVCS, required=True)
     svcstatus = OneOf(*SVCSTATUSES, required=True)
 
-    requiredMutexes = [
-        ["svcadd", "svcchg", "svcdel"],
-    ]
+    requiredMutexes = [["svcadd", "svcchg", "svcdel"]]
 
 
 class ACCTTRNRQ(TrnRq):

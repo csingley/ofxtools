@@ -67,14 +67,18 @@ class MfachallengeTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("MFACHALLENGE")
         SubElement(root, "MFAPHRASEID").text = "MFA13"
-        SubElement(root, "MFAPHRASELABEL").text = "Please enter the last four digits of your social security number"
+        SubElement(
+            root, "MFAPHRASELABEL"
+        ).text = "Please enter the last four digits of your social security number"
         return root
 
     @classproperty
     @classmethod
     def aggregate(cls):
-        return MFACHALLENGE(mfaphraseid="MFA13",
-                            mfaphraselabel="Please enter the last four digits of your social security number")
+        return MFACHALLENGE(
+            mfaphraseid="MFA13",
+            mfaphraselabel="Please enter the last four digits of your social security number",
+        )
 
 
 class MfachallengeaTestCase(unittest.TestCase, base.TestAggregate):
@@ -93,8 +97,7 @@ class MfachallengeaTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return MFACHALLENGEA(mfaphraseid="MFA13",
-                             mfaphrasea="1234")
+        return MFACHALLENGEA(mfaphraseid="MFA13", mfaphrasea="1234")
 
 
 class SonrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -137,13 +140,22 @@ class SonrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return SONRQ(dtclient=datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC),
-                     userkey="DEADBEEF", genuserkey=False, language="ENG",
-                     fi=FiTestCase.aggregate, sesscookie="BADA55",
-                     appid="QWIN", appver="1500", appkey="CAFEBABE",
-                     clientuid="DEADBEEF", usercred1="Something",
-                     usercred2="Something else", authtoken="line noise",
-                     accesskey="CAFEBABE")
+        return SONRQ(
+            dtclient=datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC),
+            userkey="DEADBEEF",
+            genuserkey=False,
+            language="ENG",
+            fi=FiTestCase.aggregate,
+            sesscookie="BADA55",
+            appid="QWIN",
+            appver="1500",
+            appkey="CAFEBABE",
+            clientuid="DEADBEEF",
+            usercred1="Something",
+            usercred2="Something else",
+            authtoken="line noise",
+            accesskey="CAFEBABE",
+        )
 
     @classproperty
     @classmethod
@@ -206,14 +218,15 @@ class SonrsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["STATUS", "DTSERVER"]
-    optionalElements = ["USERKEY",
-                        "TSKEYEXPIRE",
-                        "DTPROFUP",
-                        "DTACCTUP",
-                        "FI",
-                        "SESSCOOKIE",
-                        "ACCESSKEY",
-                        ]
+    optionalElements = [
+        "USERKEY",
+        "TSKEYEXPIRE",
+        "DTPROFUP",
+        "DTACCTUP",
+        "FI",
+        "SESSCOOKIE",
+        "ACCESSKEY",
+    ]
     oneOfs = {"LANGUAGE": LANG_CODES}
 
     @classproperty
@@ -235,14 +248,18 @@ class SonrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return SONRS(status=base.StatusTestCase.aggregate,
-                     dtserver=datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC),
-                     userkey="DEADBEEF",
-                     tskeyexpire=datetime(2005, 12, 31, tzinfo=UTC),
-                     language="ENG", dtprofup=datetime(2005, 1, 1, tzinfo=UTC),
-                     dtacctup=datetime(2005, 1, 2, tzinfo=UTC),
-                     fi=FiTestCase.aggregate, sesscookie="BADA55",
-                     accesskey="CAFEBABE")
+        return SONRS(
+            status=base.StatusTestCase.aggregate,
+            dtserver=datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC),
+            userkey="DEADBEEF",
+            tskeyexpire=datetime(2005, 12, 31, tzinfo=UTC),
+            language="ENG",
+            dtprofup=datetime(2005, 1, 1, tzinfo=UTC),
+            dtacctup=datetime(2005, 1, 2, tzinfo=UTC),
+            fi=FiTestCase.aggregate,
+            sesscookie="BADA55",
+            accesskey="CAFEBABE",
+        )
 
     def testConvertRemoveProprietaryTag(cls):
         # Make sure SONRS.from_etree() removes proprietary tags
@@ -287,8 +304,7 @@ class PinchrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PINCHRQ(userid="12345",
-                       newuserpass="5321")
+        return PINCHRQ(userid="12345", newuserpass="5321")
 
 
 class PinchrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -308,8 +324,7 @@ class PinchrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PINCHRS(userid="12345",
-                       dtchanged=datetime(2011, 1, 1, tzinfo=UTC))
+        return PINCHRS(userid="12345", dtchanged=datetime(2011, 1, 1, tzinfo=UTC))
 
 
 class PinchtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
@@ -320,8 +335,12 @@ class PinchtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PINCHTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                          pinchrq=PinchrqTestCase.aggregate)
+        return PINCHTRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            pinchrq=PinchrqTestCase.aggregate,
+        )
 
 
 class PinchtrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -332,10 +351,12 @@ class PinchtrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PINCHTRNRS(trnuid="DEADBEEF",
-                          status=base.StatusTestCase.aggregate,
-                          cltcookie="B00B135",
-                          pinchrs=PinchrsTestCase.aggregate)
+        return PINCHTRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            pinchrs=PinchrsTestCase.aggregate,
+        )
 
 
 class ChallengerqTestCase(unittest.TestCase, base.TestAggregate):
@@ -386,9 +407,12 @@ class ChallengetrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CHALLENGETRNRQ(trnuid="DEADBEEF", cltcookie="B00B135",
-                              tan="B16B00B5",
-                              challengerq=ChallengerqTestCase.aggregate)
+        return CHALLENGETRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            challengerq=ChallengerqTestCase.aggregate,
+        )
 
 
 class ChallengetrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -399,10 +423,12 @@ class ChallengetrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CHALLENGETRNRS(trnuid="DEADBEEF",
-                              status=base.StatusTestCase.aggregate,
-                              cltcookie="B00B135",
-                              challengers=ChallengersTestCase.aggregate)
+        return CHALLENGETRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            challengers=ChallengersTestCase.aggregate,
+        )
 
 
 class MfachallengerqTestCase(unittest.TestCase, base.TestAggregate):
@@ -455,9 +481,12 @@ class MfachallengetrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return MFACHALLENGETRNRQ(trnuid="DEADBEEF", cltcookie="B00B135",
-                                 tan="B16B00B5",
-                                 mfachallengerq=MfachallengerqTestCase.aggregate)
+        return MFACHALLENGETRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            mfachallengerq=MfachallengerqTestCase.aggregate,
+        )
 
 
 class MfachallengetrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -468,10 +497,12 @@ class MfachallengetrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return MFACHALLENGETRNRS(trnuid="DEADBEEF",
-                                 status=base.StatusTestCase.aggregate,
-                                 cltcookie="B00B135",
-                                 mfachallengers=MfachallengersTestCase.aggregate)
+        return MFACHALLENGETRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            mfachallengers=MfachallengersTestCase.aggregate,
+        )
 
 
 if __name__ == "__main__":

@@ -29,9 +29,7 @@ class BANKMAILRQ(Aggregate):
     ccacctfrom = SubAggregate(CCACCTFROM)
     mail = SubAggregate(MAIL, required=True)
 
-    requiredMutexes = [
-        ["bankacctfrom", "ccacctfrom"],
-    ]
+    requiredMutexes = [["bankacctfrom", "ccacctfrom"]]
 
 
 class BANKMAILRS(Aggregate):
@@ -41,9 +39,7 @@ class BANKMAILRS(Aggregate):
     ccacctfrom = SubAggregate(CCACCTFROM)
     mail = SubAggregate(MAIL, required=True)
 
-    requiredMutexes = [
-        ["bankacctfrom", "ccacctfrom"],
-    ]
+    requiredMutexes = [["bankacctfrom", "ccacctfrom"]]
 
 
 class CHKMAILRS(Aggregate):
@@ -80,6 +76,4 @@ class BANKMAILTRNRS(TrnRs):
     chkmailrs = SubAggregate(CHKMAILRS)
     depmailrs = SubAggregate(DEPMAILRS)
 
-    optionalMutexes = [
-        ["bankmailrs", "chkmailrs", "depmailrs"],
-    ]
+    optionalMutexes = [["bankmailrs", "chkmailrs", "depmailrs"]]

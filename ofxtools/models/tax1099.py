@@ -36,27 +36,15 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import (
-    String,
-    Bool,
-    Integer,
-    Decimal,
-    OneOf,
-    DateTime,
-    ListItem,
-)
-from ofxtools.models.base import (
-    Aggregate,
-    SubAggregate,
-    ElementList,
-    ListElement,
-)
+from ofxtools.Types import String, Bool, Integer, Decimal, OneOf, DateTime, ListItem
+from ofxtools.models.base import Aggregate, SubAggregate, ElementList, ListElement
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.common import MSGSETCORE
 
 
 class PAYERADDR(Aggregate):
     """ OFX tax extensions section 2.2.7 """
+
     payername1 = String(32, required=True)
     payername2 = String(32)
     addr1 = String(32, required=True)
@@ -70,6 +58,7 @@ class PAYERADDR(Aggregate):
 
 class RECADDR(Aggregate):
     """ OFX tax extensions section 2.2.8 """
+
     recname1 = String(32, required=True)
     recname2 = String(32)
     addr1 = String(32, required=True)
@@ -110,6 +99,7 @@ class LCLTAXWHAGG(Aggregate):
 
 class PROCDET_V100(Aggregate):
     """ OFX tax extensions section 2.2.11.2 """
+
     form8949code = String(1)
     dtaqd = DateTime()
     dtvar = Bool()
@@ -138,13 +128,12 @@ class PROCDET_V100(Aggregate):
     statetaxwheld2 = Decimal()
     fatca = Bool()
 
-    requiredMutexes = [
-        ["dtaqd", "dtvar"],
-    ]
+    requiredMutexes = [["dtaqd", "dtvar"]]
 
 
 class PROCSUM_V100(Aggregate):
     """ OFX tax extensions section 2.2.11.3 """
+
     form8949code = String(1, required=True)
     adjcode = String(9)
     sumcostbasis = Decimal()
@@ -155,12 +144,14 @@ class PROCSUM_V100(Aggregate):
 
 class EXTDBINFO_V100(Aggregate):
     """ OFX tax extensions section 2.2.11.1 """
+
     procsum_v100 = ListItem(PROCSUM_V100)
     procdet_v100 = ListItem(PROCDET_V100)
 
 
 class STKBND(Aggregate):
     """ OFX tax extensions section 2.2.11 """
+
     stkbndamt = Decimal(required=True)
     sbgros = Bool()
     sbgrosless = Bool()
@@ -168,12 +159,14 @@ class STKBND(Aggregate):
 
 class FORINCOME(Aggregate):
     """ OFX tax extensions section 2.2.12 """
+
     countrystring = String(32, required=True)
     forincomeallocamt = Decimal()
 
 
 class FIDIRECTDEPOSITINFO(Aggregate):
     """ OFX tax extensions section 2.2.16 """
+
     finame_directdeposit = String(32, required=True)
     firoutingnum = Integer(9, required=True)
     fiacctnum = String(22, required=True)
@@ -182,12 +175,14 @@ class FIDIRECTDEPOSITINFO(Aggregate):
 
 class ORIGSTATE(Aggregate):
     """ OFX tax extensions section 2.2.12 """
+
     origstatecode = String(2, required=True)
     origstateallocamt = Decimal()
 
 
 class ADDLSTATETAXWHAGG(Aggregate):
     """ OFX tax extensions section 2.2.12 """
+
     statecode = String(2, required=True)
     stateidnum = String(32)
     statetaxwheld = Decimal(required=True)
@@ -195,6 +190,7 @@ class ADDLSTATETAXWHAGG(Aggregate):
 
 class TAX1099MISC_V100(Aggregate):
     """ OFX tax extensions section 2.2.9 """
+
     srvrtid = String(10, required=True)
     taxyear = Integer(4, required=True)
     void = Bool()
@@ -226,9 +222,7 @@ class TAX1099MISC_V100(Aggregate):
     tinnot = Bool()
     fatca = Bool()
 
-    optionalMutexes = [
-        ["sttaxwh", "addlsttaxwhagg"],
-    ]
+    optionalMutexes = [["sttaxwh", "addlsttaxwhagg"]]
 
     @classmethod
     def validate_args(cls, *args, **kwargs):
@@ -240,6 +234,7 @@ class TAX1099MISC_V100(Aggregate):
 
 class TAX1099R_V100(Aggregate):
     """ OFX tax extensions section 2.2.10 """
+
     srvrtid = String(10, required=True)
     taxyear = Integer(4, required=True)
     void = Bool()
@@ -278,7 +273,9 @@ class TAX1099R_V100(Aggregate):
         has_irasepsimp = "irasepsimp" in kwargs
         for tag in ("grossdist", "taxamt", "fedtaxwh", "sttaxwh", "lcltaxwh"):
             if tag in kwargs and not has_irasepsimp:
-                msg = "{}.__init__(): irasepsimp must also be provided if {} is provided"
+                msg = (
+                    "{}.__init__(): irasepsimp must also be provided if {} is provided"
+                )
                 raise ValueError(msg.format(cls.__name__, tag))
 
         super().validate_args(*args, **kwargs)
@@ -286,6 +283,7 @@ class TAX1099R_V100(Aggregate):
 
 class TAX1099B_V100(Aggregate):
     """ OFX tax extensions section 2.2.11 """
+
     srvrtid = String(10, required=True)
     taxyear = Integer(4, required=True)
     void = Bool()
@@ -311,6 +309,7 @@ class TAX1099B_V100(Aggregate):
 
 class TAX1099INT_V100(Aggregate):
     """ OFX tax extensions section 2.2.12 """
+
     srvrtid = String(10, required=True)
     taxyear = Integer(4, required=True)
     void = Bool()
@@ -345,15 +344,16 @@ class TAX1099INT_V100(Aggregate):
     fatca = Bool()
 
     optionalMutexes = [
-        ['forcnt', 'forincome'],
-        ['statecode', 'addlstatetaxwhagg'],
-        ['stateidnum', 'addlstatetaxwhagg'],
-        ['statetaxwheld', 'addlstatetaxwhagg'],
+        ["forcnt", "forincome"],
+        ["statecode", "addlstatetaxwhagg"],
+        ["stateidnum", "addlstatetaxwhagg"],
+        ["statetaxwheld", "addlstatetaxwhagg"],
     ]
 
 
 class TAX1099DIV_V100(Aggregate):
     """ OFX tax extensions section 2.2.13 """
+
     srvrtid = String(10, required=True)
     taxyear = Integer(4, required=True)
     void = Bool()
@@ -389,14 +389,12 @@ class TAX1099DIV_V100(Aggregate):
     tinnot = Bool()
     fatca = Bool()
 
-    optionalMutexes = [
-        ['forcnt', 'forincome'],
-        ['statetaxwheld', 'addlstatetaxwhagg'],
-    ]
+    optionalMutexes = [["forcnt", "forincome"], ["statetaxwheld", "addlstatetaxwhagg"]]
 
 
 class TAX1099OID_V100(Aggregate):
     """ OFX tax extensions section 2.2.14 """
+
     srvrtid = String(10, required=True)
     taxyear = Integer(4, required=True)
     void = Bool()
@@ -427,14 +425,15 @@ class TAX1099OID_V100(Aggregate):
     fatca = Bool()
 
     optionalMutexes = [
-        ['statecode', 'addlstatetaxwhagg'],
-        ['stateidnum', 'addlstatetaxwhagg'],
-        ['statetaxwheld', 'addlstatetaxwhagg'],
+        ["statecode", "addlstatetaxwhagg"],
+        ["stateidnum", "addlstatetaxwhagg"],
+        ["statetaxwheld", "addlstatetaxwhagg"],
     ]
 
 
 class TAX1099RQ(ElementList):
     """ OFX tax extensions section 2.2.5 """
+
     acctnum = String(32)
     recid = String(32)
     taxyear = ListElement(Integer(4))
@@ -442,6 +441,7 @@ class TAX1099RQ(ElementList):
 
 class TAX1099RS(Aggregate):
     """ OFX tax extensions section 2.2.6 """
+
     acctnum = String(32)
     recid = String(32)
     fidirectdepositinfo = ListItem(FIDIRECTDEPOSITINFO)
@@ -457,7 +457,7 @@ class TAX1099RS(Aggregate):
         # Must contain at least one TAX1099x_Vy
         if len([a for a in args if a.__class__.__name__.startswith("TAX1099")]) == 0:
             mandatory = list(cls.listitems.keys())
-            mandatory.remove('fidirectdepositinfo')
+            mandatory.remove("fidirectdepositinfo")
             msg = "{} must contain at least one of {}"
             raise ValueError(msg.format(cls.__name__, mandatory))
 
@@ -466,11 +466,13 @@ class TAX1099RS(Aggregate):
 
 class TAX1099TRNRQ(TrnRq):
     """ OFX tax extensions section 2.2.3 """
+
     tax1099rq = SubAggregate(TAX1099RQ, required=True)
 
 
 class TAX1099TRNRS(TrnRs):
     """ OFX tax extensions section 2.2.4 """
+
     tax1099rs = SubAggregate(TAX1099RS)
 
 
@@ -484,8 +486,7 @@ class TAX1099MSGSRQV1(Aggregate):
         # Must contain at least one TAX1099TRNRQ
         if len(args) == 0:
             msg = "{} must contain at least one of {}"
-            raise ValueError(msg.format(cls.__name__,
-                                        list(cls.listitems.keys())))
+            raise ValueError(msg.format(cls.__name__, list(cls.listitems.keys())))
 
         super().validate_args(*args, **kwargs)
 
@@ -500,8 +501,7 @@ class TAX1099MSGSRSV1(Aggregate):
         # Must contain at least one TAX1099TRNRS
         if len(args) == 0:
             msg = "{} must contain at least one of {}"
-            raise ValueError(msg.format(cls.__name__,
-                                        list(cls.listitems.keys())))
+            raise ValueError(msg.format(cls.__name__, list(cls.listitems.keys())))
 
         super().validate_args(*args, **kwargs)
 
@@ -519,12 +519,12 @@ class TAX1099MSGSETV1(ElementList):
         # Must contain at least one TAXYEARSUPPORTED
         if len(args) == 0:
             msg = "{} must contain at least one of {}"
-            raise ValueError(msg.format(cls.__name__,
-                                        list(cls.listitems.keys())))
+            raise ValueError(msg.format(cls.__name__, list(cls.listitems.keys())))
 
         super().validate_args(*args, **kwargs)
 
 
 class TAX1099MSGSET(Aggregate):
     """ OFX tax extensions section 2.1 """
+
     tax1099msgsetv1 = SubAggregate(TAX1099MSGSETV1, required=True)

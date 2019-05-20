@@ -66,9 +66,7 @@ class SyncRqList(Aggregate):
     refresh = Bool()
     rejectifmissing = Bool(required=True)
 
-    requiredMutexes = [
-        ["token", "tokenonly", "refresh"],
-    ]
+    requiredMutexes = [["token", "tokenonly", "refresh"]]
 
 
 class SyncRsList(Aggregate):

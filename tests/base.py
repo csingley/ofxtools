@@ -204,7 +204,9 @@ class TrnrqTestCase(TestAggregate):
     def aggregate(cls):
         tag = cls.wraps.__name__.replace("TestCase", "").upper()
         Model = getattr(ofxtools.models, tag)
-        return Model(cls.wraps.aggregate, trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5")
+        return Model(
+            cls.wraps.aggregate, trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5"
+        )
 
     @classproperty
     @classmethod

@@ -40,16 +40,21 @@ from typing import (
 try:
     # No library stub file for module 'keyring'
     import keyring  # type: ignore
+
     HAS_KEYRING = True
 except ImportError:
     HAS_KEYRING = False
 
 
 # local imports
-from ofxtools import (utils, ofxhome, config, models)
+from ofxtools import utils, ofxhome, config, models
 from ofxtools.Client import (
-    OFXClient, StmtRq, CcStmtRq, InvStmtRq,
-    StmtEndRq, CcStmtEndRq,
+    OFXClient,
+    StmtRq,
+    CcStmtRq,
+    InvStmtRq,
+    StmtEndRq,
+    CcStmtEndRq,
 )
 from ofxtools.Types import DateTime
 from ofxtools.utils import UTC
@@ -98,6 +103,7 @@ class UuidAction(argparse.Action):
     """
     Generates a random UUID4 each time called
     """
+
     def __call__(self, parser, namespace, values, option_string=None):
         uuid = OFXClient.uuid
         setattr(namespace, self.dest, uuid)
@@ -105,55 +111,70 @@ class UuidAction(argparse.Action):
 
 def make_argparser() -> argparse.ArgumentParser:
     main_parser = argparse.ArgumentParser(
-        description="Download OFX financial data",
-        prog="ofxget",
+        description="Download OFX financial data", prog="ofxget"
     )
     subparsers_ = main_parser.add_subparsers(
-        title="commands",
-        description=None,
-        help=None,
+        title="commands", description=None, help=None
     )
     subparsers = {}
 
-    subparsers["list"] = add_subparser(subparsers_, "list",
-                                       help="List known reachable OFX servers")
-    subparsers["scan"] = add_subparser(subparsers_, "scan", server=True,
-                                       help=("Probe OFX server for working "
-                                             "connection parameters"))
-    subparsers["prof"] = add_subparser(subparsers_, "prof", format=True,
-                                       help=("Download OFX service profile "
-                                             "for server"))
-    subparsers["acctinfo"] = add_subparser(subparsers_, "acctinfo", signon=True,
-                                           help=("Download account information "
-                                                 "for a user login"))
-    subparsers["stmt"] = add_subparser(subparsers_, "stmt", stmt=True,
-                                       help=("Download statement(s) for "
-                                             "bank/CC/investment acct(s)"))
-    subparsers["stmtend"] = add_subparser(subparsers_, "stmtend", stmtend=True,
-                                          help=("Download closing statement(s) "
-                                                "for bank/CC account(s)"))
-    subparsers["tax1099"] = add_subparser(subparsers_, "tax1099", tax=True,
-                                          help=("(EXPERIMENTAL) Download US "
-                                                "income tax data on f1099"))
+    subparsers["list"] = add_subparser(
+        subparsers_, "list", help="List known reachable OFX servers"
+    )
+    subparsers["scan"] = add_subparser(
+        subparsers_,
+        "scan",
+        server=True,
+        help=("Probe OFX server for working " "connection parameters"),
+    )
+    subparsers["prof"] = add_subparser(
+        subparsers_,
+        "prof",
+        format=True,
+        help=("Download OFX service profile " "for server"),
+    )
+    subparsers["acctinfo"] = add_subparser(
+        subparsers_,
+        "acctinfo",
+        signon=True,
+        help=("Download account information " "for a user login"),
+    )
+    subparsers["stmt"] = add_subparser(
+        subparsers_,
+        "stmt",
+        stmt=True,
+        help=("Download statement(s) for " "bank/CC/investment acct(s)"),
+    )
+    subparsers["stmtend"] = add_subparser(
+        subparsers_,
+        "stmtend",
+        stmtend=True,
+        help=("Download closing statement(s) " "for bank/CC account(s)"),
+    )
+    subparsers["tax1099"] = add_subparser(
+        subparsers_,
+        "tax1099",
+        tax=True,
+        help=("(EXPERIMENTAL) Download US " "income tax data on f1099"),
+    )
     main_parser.subparsers = subparsers  # type: ignore
     return main_parser
 
 
-def add_subparser(subparsers,
-                  cmd,
-                  server=False,
-                  format=False,
-                  signon=False,
-                  stmtend=False,
-                  stmt=False,
-                  tax=False,
-                  help=None,
-                  ):
+def add_subparser(
+    subparsers,
+    cmd,
+    server=False,
+    format=False,
+    signon=False,
+    stmtend=False,
+    stmt=False,
+    tax=False,
+    help=None,
+):
     parser = subparsers.add_parser(cmd, help=help, description=help)
     parser.set_defaults(request=cmd)
-    parser.add_argument(
-        "server", nargs="?",
-        help="OFX server nickname")
+    parser.add_argument("server", nargs="?", help="OFX server nickname")
 
     # Higher-level configs (e.g. account #s)
     # imply lower-level configs (e.g. username/passwd)
@@ -168,14 +189,15 @@ def add_subparser(subparsers,
 
     if server:
         parser.add_argument("--url", help="OFX server URL")
-        parser.add_argument("--ofxhome", metavar="ID#",
-                            help="FI id# on http://www.ofxhome.com/")
+        parser.add_argument(
+            "--ofxhome", metavar="ID#", help="FI id# on http://www.ofxhome.com/"
+        )
         parser.add_argument(
             "-w",
             "--write",
             action="store_true",
             default=None,
-            help="Write working parameters to config file"
+            help="Write working parameters to config file",
         )
         parser.add_argument(
             "--unsafe",
@@ -239,11 +261,13 @@ def add_format_group(parser):
 def add_signon_group(parser):
     group = parser.add_argument_group(title="signon options")
     group.add_argument("-u", "--user", help="FI login username")
-    group.add_argument("--clientuid",
-                       nargs=0,
-                       action=UuidAction,
-                       metavar="UUID4",
-                       help="Override default CLIENTUID with random number")
+    group.add_argument(
+        "--clientuid",
+        nargs=0,
+        action=UuidAction,
+        metavar="UUID4",
+        help="Override default CLIENTUID with random number",
+    )
     group.add_argument("--org", help="FI.ORG")
     group.add_argument("--fid", help="FI.FID")
     group.add_argument("--appid", help="OFX client app identifier")
@@ -257,24 +281,40 @@ def add_bank_acct_group(parser):
     group = parser.add_argument_group(title="bank/CC account options")
     group.add_argument("--bankid", help="ABA routing#")
     group.add_argument(
-        "-C", "--checking", metavar="#", action="append",
-        help="Account number (option can be repeated)"
+        "-C",
+        "--checking",
+        metavar="#",
+        action="append",
+        help="Account number (option can be repeated)",
     )
     group.add_argument(
-        "-S", "--savings", metavar="#", action="append",
-        help="Account number (option can be repeated)"
+        "-S",
+        "--savings",
+        metavar="#",
+        action="append",
+        help="Account number (option can be repeated)",
     )
     group.add_argument(
-        "-M", "--moneymrkt", metavar="#", action="append",
-        help="Account number (option can be repeated)"
+        "-M",
+        "--moneymrkt",
+        metavar="#",
+        action="append",
+        help="Account number (option can be repeated)",
     )
     group.add_argument(
-        "-L", "--creditline", metavar="#", action="append",
-        help="Account number (option can be repeated)"
+        "-L",
+        "--creditline",
+        metavar="#",
+        action="append",
+        help="Account number (option can be repeated)",
     )
     group.add_argument(
-        "-c", "--creditcard", "--cc", metavar="#", action="append",
-        help="Account number (option can be repeated)"
+        "-c",
+        "--creditcard",
+        "--cc",
+        metavar="#",
+        action="append",
+        help="Account number (option can be repeated)",
     )
     group.add_argument(
         "--all",
@@ -292,19 +332,28 @@ def add_stmt_group(parser):
         title="general statement options (both bank and investment)"
     )
     group.add_argument(
-        "-s", "--start", metavar="DATE", dest="dtstart",
-        help="(YYYYmmdd) Transactions list start date"
+        "-s",
+        "--start",
+        metavar="DATE",
+        dest="dtstart",
+        help="(YYYYmmdd) Transactions list start date",
     )
     group.add_argument(
-        "-e", "--end", metavar="DATE", dest="dtend",
-        help="(YYYYmmdd) Transactions list end date"
+        "-e",
+        "--end",
+        metavar="DATE",
+        dest="dtend",
+        help="(YYYYmmdd) Transactions list end date",
     )
     return group
 
 
 def add_stmt_args(group):
     group.add_argument(
-        "-a", "--asof", metavar="DATE", dest="dtasof",
+        "-a",
+        "--asof",
+        metavar="DATE",
+        dest="dtasof",
         help="(YYYYmmdd) As-of date for balances and investment positions",
     )
     group.add_argument(
@@ -329,8 +378,11 @@ def add_inv_acct_group(parser):
     group = parser.add_argument_group(title="investment account options")
     group.add_argument("--brokerid", help="Broker ID string")
     group.add_argument(
-        "-i", "--investment", metavar="#", action="append",
-        help="Account number (option can be repeated)"
+        "-i",
+        "--investment",
+        metavar="#",
+        action="append",
+        help="Account number (option can be repeated)",
     )
     return group
 
@@ -357,8 +409,12 @@ def add_inv_stmt_group(parser):
 def add_tax_group(parser):
     group = parser.add_argument_group(title="tax form options")
     group.add_argument(
-        "-y", "--year", metavar="YEAR", dest="years",
-        type=int, action="append",
+        "-y",
+        "--year",
+        metavar="YEAR",
+        dest="years",
+        type=int,
+        action="append",
         help="(YYYY) Tax year (option can be repeated)",
     )
     group.add_argument(
@@ -366,11 +422,7 @@ def add_tax_group(parser):
         dest="acctnum",
         help="Account # of recipient, if different than tax ID",
     )
-    group.add_argument(
-        "--recid",
-        dest="recid",
-        help="ID of recipient",
-    )
+    group.add_argument("--recid", dest="recid", help="ID of recipient")
 
     return group
 
@@ -428,8 +480,7 @@ def request_profile(args: ArgType) -> None:
     client = init_client(args)
 
     with client.request_profile(
-        dryrun=args["dryrun"],
-        verify_ssl=not args["unsafe"]
+        dryrun=args["dryrun"], verify_ssl=not args["unsafe"]
     ) as f:
         response = f.read()
 
@@ -466,10 +517,9 @@ def _request_acctinfo(args: ArgType, password: str) -> BytesIO:
     client = init_client(args)
     dtacctup = datetime.datetime(1999, 12, 31, tzinfo=UTC)
 
-    with client.request_accounts(password,
-                                 dtacctup,
-                                 dryrun=args["dryrun"],
-                                 verify_ssl=not args["unsafe"]) as f:
+    with client.request_accounts(
+        password, dtacctup, dryrun=args["dryrun"], verify_ssl=not args["unsafe"]
+    ) as f:
         response = f.read()
 
     return BytesIO(response)
@@ -482,15 +532,18 @@ def _merge_acctinfo(args: ArgType, markup: BytesIO) -> None:
     acctinfos: List[AcctInfo] = sorted(extract_acctinfos(markup), key=sortKey)
 
     def parse_acctinfos(clsName, acctinfos):
-        dispatcher = {"BANKACCTINFO": parse_bankacctinfos,
-                      "CCACCTINFO": parse_ccacctinfos,
-                      "INVACCTINFO": parse_invacctinfos}
+        dispatcher = {
+            "BANKACCTINFO": parse_bankacctinfos,
+            "CCACCTINFO": parse_ccacctinfos,
+            "INVACCTINFO": parse_invacctinfos,
+        }
         parser = dispatcher.get(clsName, lambda x: {})
         return parser(acctinfos)
 
-    parsed_args: List[ParsedAcctinfo] = [parse_acctinfos(clsnm, infos)
-                                         for clsnm, infos in itertools.groupby(
-                                             acctinfos, key=sortKey)]
+    parsed_args: List[ParsedAcctinfo] = [
+        parse_acctinfos(clsnm, infos)
+        for clsnm, infos in itertools.groupby(acctinfos, key=sortKey)
+    ]
 
     # Insert extracted ACCTINFO after CLI commands, but before config files
     args.maps.insert(1, ChainMap(*parsed_args))
@@ -510,34 +563,57 @@ def request_stmt(args: ArgType) -> None:
     stmtrqs: List[Union[StmtRq, CcStmtRq, InvStmtRq]] = []
     for accttype in ("checking", "savings", "moneymrkt", "creditline"):
         stmtrqs.extend(
-            [StmtRq(acctid=acctid, accttype=accttype.upper(),
-                    dtstart=dt["start"], dtend=dt["end"],
-                    inctran=args["inctran"]) for acctid in args[accttype]])
+            [
+                StmtRq(
+                    acctid=acctid,
+                    accttype=accttype.upper(),
+                    dtstart=dt["start"],
+                    dtend=dt["end"],
+                    inctran=args["inctran"],
+                )
+                for acctid in args[accttype]
+            ]
+        )
 
     for acctid in args["creditcard"]:
         stmtrqs.append(
-            CcStmtRq(acctid=acctid, dtstart=dt["start"], dtend=dt["end"],
-                     inctran=args["inctran"]))
+            CcStmtRq(
+                acctid=acctid,
+                dtstart=dt["start"],
+                dtend=dt["end"],
+                inctran=args["inctran"],
+            )
+        )
 
     for acctid in args["investment"]:
         stmtrqs.append(
-            InvStmtRq(acctid=acctid, dtstart=dt["start"], dtend=dt["end"],
-                      dtasof=dt["asof"], inctran=args["inctran"],
-                      incoo=args["incoo"], incpos=args["incpos"],
-                      incbal=args["incbal"]))
+            InvStmtRq(
+                acctid=acctid,
+                dtstart=dt["start"],
+                dtend=dt["end"],
+                dtasof=dt["asof"],
+                inctran=args["inctran"],
+                incoo=args["incoo"],
+                incpos=args["incpos"],
+                incbal=args["incbal"],
+            )
+        )
 
     if not stmtrqs:
-        accttypes = ['checking', 'savings', 'moneymrkt', 'creditline',
-                     'creditcard', 'investment']
+        accttypes = [
+            "checking",
+            "savings",
+            "moneymrkt",
+            "creditline",
+            "creditcard",
+            "investment",
+        ]
         msg = f"No accounts specified; configure at least one of {accttypes}"
         warnings.warn(msg, category=OfxgetWarning)
 
     client = init_client(args)
     with client.request_statements(
-        password,
-        *stmtrqs,
-        dryrun=args["dryrun"],
-        verify_ssl=not args["unsafe"]
+        password, *stmtrqs, dryrun=args["dryrun"], verify_ssl=not args["unsafe"]
     ) as f:
         response = f.read()
 
@@ -565,26 +641,30 @@ def request_stmtend(args: ArgType) -> None:
     for accttype in ("checking", "savings", "moneymrkt", "creditline"):
         acctids = args[accttype]
         stmtendrqs.extend(
-            [StmtEndRq(acctid=acctid, accttype=accttype.upper(),
-                       dtstart=dt["start"], dtend=dt["end"])
-             for acctid in acctids])
+            [
+                StmtEndRq(
+                    acctid=acctid,
+                    accttype=accttype.upper(),
+                    dtstart=dt["start"],
+                    dtend=dt["end"],
+                )
+                for acctid in acctids
+            ]
+        )
 
     for acctid in args["creditcard"]:
         stmtendrqs.append(
-            CcStmtEndRq(acctid=acctid, dtstart=dt["start"], dtend=dt["end"]))
+            CcStmtEndRq(acctid=acctid, dtstart=dt["start"], dtend=dt["end"])
+        )
 
     if not stmtendrqs:
-        accttypes = ['checking', 'savings', 'moneymrkt', 'creditline',
-                     'creditcard']
+        accttypes = ["checking", "savings", "moneymrkt", "creditline", "creditcard"]
         msg = f"No accounts specified; configure at least one of {accttypes}"
         warnings.warn(msg, category=OfxgetWarning)
 
     client = init_client(args)
     with client.request_statements(
-        password,
-        *stmtendrqs,
-        dryrun=args["dryrun"],
-        verify_ssl=not args["unsafe"]
+        password, *stmtendrqs, dryrun=args["dryrun"], verify_ssl=not args["unsafe"]
     ) as f:
         response = f.read()
 
@@ -605,13 +685,14 @@ def request_tax1099(args: ArgType) -> None:
 
     password = get_passwd(args)
 
-    with client.request_tax1099(password,
-                                *args["years"],
-                                acctnum=args["acctnum"],
-                                recid=args["recid"],
-                                dryrun=args["dryrun"],
-                                verify_ssl=not args["unsafe"]
-                                ) as f:
+    with client.request_tax1099(
+        password,
+        *args["years"],
+        acctnum=args["acctnum"],
+        recid=args["recid"],
+        dryrun=args["dryrun"],
+        verify_ssl=not args["unsafe"],
+    ) as f:
         response = f.read()
 
     print(response.decode())
@@ -627,14 +708,42 @@ UserConfig.read([CONFIGPATH, USERCONFIGPATH])
 
 
 DEFAULTS: Dict[str, Union[str, int, bool, list]] = {
-    "server": "", "url": "", "ofxhome": "", "version": 203, "org": "", "fid": "",
-    "appid": "", "appver": "", "language": "", "bankid": "", "brokerid": "",
-    "unclosedelements": False, "pretty": False, "user": "", "clientuid": "",
-    "checking": [], "savings": [], "moneymrkt": [], "creditline": [],
-    "creditcard": [], "investment": [], "dtstart": "", "dtend": "",
-    "dtasof": "", "inctran": True, "incbal": True, "incpos": True,
-    "incoo": False, "all": False, "years": [], "acctnum": "", "recid": "",
-    "dryrun": False, "unsafe": False, "write": False, "savepass": False,
+    "server": "",
+    "url": "",
+    "ofxhome": "",
+    "version": 203,
+    "org": "",
+    "fid": "",
+    "appid": "",
+    "appver": "",
+    "language": "",
+    "bankid": "",
+    "brokerid": "",
+    "unclosedelements": False,
+    "pretty": False,
+    "user": "",
+    "clientuid": "",
+    "checking": [],
+    "savings": [],
+    "moneymrkt": [],
+    "creditline": [],
+    "creditcard": [],
+    "investment": [],
+    "dtstart": "",
+    "dtend": "",
+    "dtasof": "",
+    "inctran": True,
+    "incbal": True,
+    "incpos": True,
+    "incoo": False,
+    "all": False,
+    "years": [],
+    "acctnum": "",
+    "recid": "",
+    "dryrun": False,
+    "unsafe": False,
+    "write": False,
+    "savepass": False,
 }
 
 
@@ -642,14 +751,16 @@ NULL_ARGS = [None, "", []]
 
 
 def read_config(cfg, section):
-    return {k: config2arg(k, v)
-            for k, v in cfg[section].items()} if section in cfg else {}
+    return (
+        {k: config2arg(k, v) for k, v in cfg[section].items()} if section in cfg else {}
+    )
 
 
 def config2arg(key: str, value: str) -> Union[List[str], bool, int, str]:
     """
     Transform a config value from ConfigParser format to ArgParser format
     """
+
     def read_string(string: str) -> str:
         return string
 
@@ -667,10 +778,7 @@ def config2arg(key: str, value: str) -> Union[List[str], bool, int, str]:
     def read_list(string: str) -> List[str]:
         return [sub.strip() for sub in string.split(",")]
 
-    handlers = {str: read_string,
-                bool: read_bool,
-                list: read_list,
-                int: read_int}
+    handlers = {str: read_string, bool: read_bool, list: read_list, int: read_int}
 
     if key not in DEFAULTS:
         msg = f"Don't know type of {key}; define in ofxget.DEFAULTS"
@@ -723,10 +831,24 @@ def mk_server_cfg(args: ArgType) -> configparser.SectionProxy:
     LibraryConfig.read(CONFIGPATH)
     lib_cfg = read_config(LibraryConfig, server)
 
-    for opt in ("url", "version", "ofxhome", "org", "fid", "brokerid",
-                "bankid", "user", "checking", "savings", "moneymrkt",
-                "creditline", "creditcard", "investment", "pretty",
-                "unclosedelements"):
+    for opt in (
+        "url",
+        "version",
+        "ofxhome",
+        "org",
+        "fid",
+        "brokerid",
+        "bankid",
+        "user",
+        "checking",
+        "savings",
+        "moneymrkt",
+        "creditline",
+        "creditcard",
+        "investment",
+        "pretty",
+        "unclosedelements",
+    ):
         if opt in args:
             value = args[opt]
             default_value = lib_cfg.get(opt, DEFAULTS[opt])
@@ -747,6 +869,7 @@ def arg2config(key: str, value: Union[list, bool, int, str]) -> str:
     """
     Transform a config value from ArgParser format to ConfigParser format
     """
+
     def write_string(value: str) -> str:
         return value
 
@@ -760,10 +883,7 @@ def arg2config(key: str, value: Union[list, bool, int, str]) -> str:
         # INI-friendly string representation of Python list type
         return str(value).strip("[]").replace("'", "")
 
-    handlers = {str: write_string,
-                bool: write_bool,
-                list: write_list,
-                int: write_int}
+    handlers = {str: write_string, bool: write_bool, list: write_list, int: write_int}
 
     if key not in DEFAULTS:
         msg = f"Don't know type of {key}; define in ofxget.DEFAULTS"
@@ -774,8 +894,9 @@ def arg2config(key: str, value: Union[list, bool, int, str]) -> str:
     return handlers[cfg_type](value)  # type: ignore
 
 
-def merge_config(args: argparse.Namespace,
-                 config: configparser.ConfigParser) -> ArgType:
+def merge_config(
+    args: argparse.Namespace, config: configparser.ConfigParser
+) -> ArgType:
     """
     Merge CLI args > user config > library config > OFX Home > defaults
     """
@@ -792,27 +913,35 @@ def merge_config(args: argparse.Namespace,
     # - it's configured from the CLI
     # - it's configured in ofxget.cfg
     # - we don't have a URL
-    if "ofxhome" in _args \
-       or "ofxhome" in user_cfg \
-       or (not merged["url"]):
+    if "ofxhome" in _args or "ofxhome" in user_cfg or (not merged["url"]):
         ofxhome_id = merged["ofxhome"]
         if ofxhome_id:
             lookup = ofxhome.lookup(ofxhome_id)
             if lookup:
                 # Insert OFX Home lookup ahead of DEFAULTS but after
                 # user configs and library configs
-                merged.maps.insert(-1, {"url": lookup.url, "org": lookup.org,
-                                        "fid": lookup.fid,
-                                        "brokerid": lookup.brokerid})
+                merged.maps.insert(
+                    -1,
+                    {
+                        "url": lookup.url,
+                        "org": lookup.org,
+                        "fid": lookup.fid,
+                        "brokerid": lookup.brokerid,
+                    },
+                )
 
-    if not (merged.get("url", None)
-            or merged.get("dryrun", False)
-            or merged.get("request", None) == "list"):
+    if not (
+        merged.get("url", None)
+        or merged.get("dryrun", False)
+        or merged.get("request", None) == "list"
+    ):
         err = "Missing URL"
 
         if "server" not in _args:
-            msg = (f"{err} - please provide a server nickname, "
-                   "or configure 'url' / 'ofxhome'\n")
+            msg = (
+                f"{err} - please provide a server nickname, "
+                "or configure 'url' / 'ofxhome'\n"
+            )
             print(msg)
             parser = make_argparser()
             command = merged["request"]
@@ -825,8 +954,9 @@ def merge_config(args: argparse.Namespace,
             merged["url"] = server
             merged["server"] = None
         else:
-            msg = (f"{err} - please configure 'url' or 'ofxhome' "
-                   f"for server '{server}'")
+            msg = (
+                f"{err} - please configure 'url' or 'ofxhome' " f"for server '{server}'"
+            )
             raise ValueError(msg)
 
     return merged
@@ -857,11 +987,13 @@ def init_client(args: ArgType) -> OFXClient:
 ###############################################################################
 # PROFILE SCAN
 ###############################################################################
-def _scan_profile(url: str,
-                  org: Optional[str],
-                  fid: Optional[str],
-                  max_workers: Optional[int] = None,
-                  timeout: Optional[float] = None) -> ScanResults:
+def _scan_profile(
+    url: str,
+    org: Optional[str],
+    fid: Optional[str],
+    max_workers: Optional[int] = None,
+    timeout: Optional[float] = None,
+) -> ScanResults:
     """
     Report permutations of OFX version/prettyprint/unclosedelements that
     successfully download OFX profile from server.
@@ -904,17 +1036,18 @@ def _scan_profile(url: str,
         assert not format["unclosedelements"]
         del format["unclosedelements"]
 
-    v1_result: ScanResult = OrderedDict([("versions", v1_versions),
-                                         ("formats", v1_formats)])
-    v2_result: ScanResult = OrderedDict([("versions", v2_versions),
-                                         ("formats", v2_formats)])
+    v1_result: ScanResult = OrderedDict(
+        [("versions", v1_versions), ("formats", v1_formats)]
+    )
+    v2_result: ScanResult = OrderedDict(
+        [("versions", v2_versions), ("formats", v2_formats)]
+    )
     return (v1_result, v2_result, signoninfo)
 
 
-def _queue_scans(client: OFXClient,
-                 max_workers: Optional[int],
-                 timeout: Optional[float],
-                 ) -> Dict[concurrent.futures.Future, ScanMetadata]:
+def _queue_scans(
+    client: OFXClient, max_workers: Optional[int], timeout: Optional[float]
+) -> Dict[concurrent.futures.Future, ScanMetadata]:
     ofxv1 = [102, 103, 151, 160]
     ofxv2 = [200, 201, 202, 203, 210, 211, 220]
 
@@ -923,33 +1056,39 @@ def _queue_scans(client: OFXClient,
     futures = {}
     with concurrent.futures.ThreadPoolExecutor(max_workers) as executor:
         for version, pretty, close in itertools.product(ofxv1, BOOLS, BOOLS):
-            future = executor.submit(client.request_profile,
-                                     version=version,
-                                     prettyprint=pretty,
-                                     close_elements=close,
-                                     timeout=timeout)
+            future = executor.submit(
+                client.request_profile,
+                version=version,
+                prettyprint=pretty,
+                close_elements=close,
+                timeout=timeout,
+            )
             #  futures[future] = (version, pretty, True)
-            futures[future] = (version,
-                               OrderedDict([("pretty", pretty),
-                                            ("unclosedelements", not close)]))
+            futures[future] = (
+                version,
+                OrderedDict([("pretty", pretty), ("unclosedelements", not close)]),
+            )
 
         for version, pretty in itertools.product(ofxv2, BOOLS):
-            future = executor.submit(client.request_profile,
-                                     version=version,
-                                     prettyprint=pretty,
-                                     close_elements=True,
-                                     timeout=timeout)
+            future = executor.submit(
+                client.request_profile,
+                version=version,
+                prettyprint=pretty,
+                close_elements=True,
+                timeout=timeout,
+            )
             #  futures[future] = (version, pretty, True)
-            futures[future] = (version,
-                               OrderedDict([("pretty", pretty),
-                                            ("unclosedelements", not close)]))
+            futures[future] = (
+                version,
+                OrderedDict([("pretty", pretty), ("unclosedelements", not close)]),
+            )
 
     return futures
 
 
-def _read_scan_response(future: concurrent.futures.Future,
-                        read_signoninfo: bool = False,
-                        ) -> Tuple[bool, SignoninfoReport]:
+def _read_scan_response(
+    future: concurrent.futures.Future, read_signoninfo: bool = False
+) -> Tuple[bool, SignoninfoReport]:
     valid: bool = False
     signoninfo: SignoninfoReport = {}
 
@@ -969,26 +1108,29 @@ def _read_scan_response(future: concurrent.futures.Future,
             if not response_:
                 return valid, signoninfo
 
-            signoninfos: List[models.SIGNONINFO] \
-                = extract_signoninfos(BytesIO(response_))
+            signoninfos: List[models.SIGNONINFO] = extract_signoninfos(
+                BytesIO(response_)
+            )
 
             assert len(signoninfos) > 0
             valid = True
             info = signoninfos[0]
-            bool_attrs = ("chgpinfirst",
-                          "clientuidreq",
-                          "authtokenfirst",
-                          "mfachallengefirst")
-            signoninfo = OrderedDict([
-                (attr, getattr(info, attr, None) or False)
-                for attr in bool_attrs])
-        except (socket.timeout, ):
+            bool_attrs = (
+                "chgpinfirst",
+                "clientuidreq",
+                "authtokenfirst",
+                "mfachallengefirst",
+            )
+            signoninfo = OrderedDict(
+                [(attr, getattr(info, attr, None) or False) for attr in bool_attrs]
+            )
+        except (socket.timeout,):
             # We didn't receive a response at all
             valid = False
         except (ParseError, ET.ParseError, OFXHeaderError):
             # We didn't receive valid OFX in the response
             valid = False
-        except (ValueError, ):
+        except (ValueError,):
             # We received OFX, but not a valid PROFRS
             valid = True
     else:
@@ -1034,8 +1176,10 @@ def verify_status(trnrs: models.Aggregate) -> None:
     status = trnrs.status
     if status.code != 0:
         cls = trnrs.__class__.__name__
-        msg = (f"{cls}: Request failed, code={status.code}, "
-               f"severity={status.severity}, message='{status.message}'")
+        msg = (
+            f"{cls}: Request failed, code={status.code}, "
+            f"severity={status.severity}, message='{status.message}'"
+        )
         raise ValueError(msg)
 
 
@@ -1069,14 +1213,13 @@ def extract_signoninfos(markup: BytesIO) -> List[models.SIGNONINFO]:
         return list_[:]
 
     #  return list(itertools.chain.from_iterable(
-        #  [extract_signoninfo(trnrs) for trnrs in msgs]))
-    return list(itertools.chain.from_iterable(
-        extract_signoninfo(trnrs) for trnrs in msgs))
+    #  [extract_signoninfo(trnrs) for trnrs in msgs]))
+    return list(
+        itertools.chain.from_iterable(extract_signoninfo(trnrs) for trnrs in msgs)
+    )
 
 
-def extract_acctinfos(
-    markup: BytesIO
-) -> Iterable[AcctInfo]:
+def extract_acctinfos(markup: BytesIO) -> Iterable[AcctInfo]:
     """
     Input seralized OFX containing ACCTINFORS
     Output dict-like object containing parsed *ACCTINFOs
@@ -1104,9 +1247,7 @@ def extract_acctinfos(
     return itertools.chain.from_iterable(acctinfors)
 
 
-def parse_bankacctinfos(
-    acctinfos: Sequence[models.BANKACCTINFO]
-) -> ParsedAcctinfo:
+def parse_bankacctinfos(acctinfos: Sequence[models.BANKACCTINFO]) -> ParsedAcctinfo:
     bankids = []
     args_: MutableMapping = defaultdict(list)
     for inf in acctinfos:
@@ -1118,9 +1259,7 @@ def parse_bankacctinfos(
     return dict(args_)
 
 
-def parse_invacctinfos(
-    acctinfos: Sequence[models.INVACCTINFO]
-) -> ParsedAcctinfo:
+def parse_invacctinfos(acctinfos: Sequence[models.INVACCTINFO]) -> ParsedAcctinfo:
     brokerids = []
     args_: MutableMapping = defaultdict(list)
     for inf in acctinfos:
@@ -1133,9 +1272,7 @@ def parse_invacctinfos(
     return dict(args_)
 
 
-def parse_ccacctinfos(
-    acctinfos: Sequence[models.CCACCTINFO]
-) -> ParsedAcctinfo:
+def parse_ccacctinfos(acctinfos: Sequence[models.CCACCTINFO]) -> ParsedAcctinfo:
     return {"creditcard": [i.acctid for i in acctinfos if _acctIsActive(i)]}
 
 
@@ -1147,9 +1284,7 @@ def list_fis(args: ArgType) -> None:
     if server in NULL_ARGS:
         entries = ["{:<40}{:<30}{:<8}".format(*srv) for srv in fi_index()]
         entries.insert(0, " ".join(("=" * 39, "=" * 29, "=" * 8)))
-        entries.insert(0, "{:^40}{:^30}{:^8}".format("Name",
-                                                     "Nickname",
-                                                     "OFX Home"))
+        entries.insert(0, "{:^40}{:^30}{:^8}".format("Name", "Nickname", "OFX Home"))
         pydoc.pager("\n".join(entries))
     elif server not in UserConfig:
         msg = f"Unknown server '{server}'"
@@ -1169,12 +1304,11 @@ def fi_index() -> Sequence[Tuple[str, str, str]]:
     """ All FIs known to ofxget """
     names = {id_: name for id_, name in UserConfig["NAMES"].items()}
     cfg_default_sect = UserConfig.default_section  # type: ignore
-    servers = [(names.get(sct.get("ofxhome", None), ""),
-                nick,
-                sct.get("ofxhome", "--"))
-               for nick, sct in UserConfig.items()
-               if nick not in (cfg_default_sect, "NAMES")
-               and "url" in sct]
+    servers = [
+        (names.get(sct.get("ofxhome", None), ""), nick, sct.get("ofxhome", "--"))
+        for nick, sct in UserConfig.items()
+        if nick not in (cfg_default_sect, "NAMES") and "url" in sct
+    ]
 
     def sortkey(srv):
         key = srv[0].lower()
@@ -1186,8 +1320,7 @@ def fi_index() -> Sequence[Tuple[str, str, str]]:
     return servers
 
 
-def convert_datetime(args: ArgType) -> Mapping[str,
-                                               Optional[datetime.datetime]]:
+def convert_datetime(args: ArgType) -> Mapping[str, Optional[datetime.datetime]]:
     """ Convert dtstart/dtend/dtasof to Python datetime type for request """
     D = DateTime().convert
     return {d[2:]: D(args[d] or None) for d in ("dtstart", "dtend", "dtasof")}
@@ -1226,13 +1359,15 @@ def save_passwd(args: ArgType, password: str) -> None:
 
 
 # Map "request" arg to handler function
-REQUEST_HANDLERS = {"list": list_fis,
-                    "scan": scan_profile,
-                    "prof": request_profile,
-                    "acctinfo": request_acctinfo,
-                    "stmt": request_stmt,
-                    "stmtend": request_stmtend,
-                    "tax1099": request_tax1099}
+REQUEST_HANDLERS = {
+    "list": list_fis,
+    "scan": scan_profile,
+    "prof": request_profile,
+    "acctinfo": request_acctinfo,
+    "stmt": request_stmt,
+    "stmtend": request_stmtend,
+    "tax1099": request_tax1099,
+}
 
 
 def main() -> None:

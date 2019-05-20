@@ -16,33 +16,41 @@ import base
 
 
 # Common aggregates used across tests
-SONRQ = models.SONRQ(dtclient=datetime(2005, 10, 29, 10, 10, tzinfo=UTC),
-                     userid="12345", userpass="MyPassword", language="ENG",
-                     fi=models.FI(org="NCH", fid="1001"),
-                     appid="MyApp", appver="0500")
+SONRQ = models.SONRQ(
+    dtclient=datetime(2005, 10, 29, 10, 10, tzinfo=UTC),
+    userid="12345",
+    userpass="MyPassword",
+    language="ENG",
+    fi=models.FI(org="NCH", fid="1001"),
+    appid="MyApp",
+    appver="0500",
+)
 SIGNONMSGSRQV1 = models.SIGNONMSGSRQV1(sonrq=SONRQ)
 
 
 STATUS = models.STATUS(code=0, severity="INFO")
 
 
-SONRS = models.SONRS(status=STATUS,
-                     dtserver=datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC),
-                     language="ENG",
-                     dtprofup=datetime(2004, 10, 29, 10, 10, 3, tzinfo=UTC),
-                     dtacctup=datetime(2004, 10, 29, 10, 10, 3, tzinfo=UTC),
-                     fi=models.FI(org="NCH", fid="1001"))
+SONRS = models.SONRS(
+    status=STATUS,
+    dtserver=datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC),
+    language="ENG",
+    dtprofup=datetime(2004, 10, 29, 10, 10, 3, tzinfo=UTC),
+    dtacctup=datetime(2004, 10, 29, 10, 10, 3, tzinfo=UTC),
+    fi=models.FI(org="NCH", fid="1001"),
+)
 SIGNONMSGSRSV1 = models.SIGNONMSGSRSV1(sonrs=SONRS)
 
 
-BANKACCTFROM = models.BANKACCTFROM(bankid="123432123", acctid="516273",
-                                   accttype="CHECKING")
+BANKACCTFROM = models.BANKACCTFROM(
+    bankid="123432123", acctid="516273", accttype="CHECKING"
+)
 
-BANKACCTFROM2 = models.BANKACCTFROM(bankid="555432180", acctid="763984",
-                                    accttype="CHECKING")
+BANKACCTFROM2 = models.BANKACCTFROM(
+    bankid="555432180", acctid="763984", accttype="CHECKING"
+)
 
-BANKACCTTO = models.BANKACCTTO(bankid="121099999", acctid="999977",
-                               accttype="SAVINGS")
+BANKACCTTO = models.BANKACCTTO(bankid="121099999", acctid="999977", accttype="SAVINGS")
 
 
 class PaymentRequestTestCase(base.OfxTestCase, unittest.TestCase):
@@ -52,6 +60,7 @@ class PaymentRequestTestCase(base.OfxTestCase, unittest.TestCase):
     Create a payment to "J.C. Counts" for $123.45 to be paid on October 1, 2005
     using funds in a checking account
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRQV1>
@@ -100,17 +109,24 @@ class PaymentRequestTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        pmtinfo = models.PMTINFO(bankacctfrom=BANKACCTFROM,
-                                 trnamt=Decimal("123.45"),
-                                 payee=models.PAYEE(
-                                     name="J. C. Counts", addr1="100 Main St.",
-                                     city="Turlock", state="CA",
-                                     postalcode="90101", phone="415.987.6543"),
-                                 payacct="10101",
-                                 dtdue=datetime(2005, 10, 1, tzinfo=UTC),
-                                 memo="payment #3")
-        billpay = models.BILLPAYMSGSRQV1(models.PMTTRNRQ(
-            trnuid="1001", pmtrq=models.PMTRQ(pmtinfo=pmtinfo)))
+        pmtinfo = models.PMTINFO(
+            bankacctfrom=BANKACCTFROM,
+            trnamt=Decimal("123.45"),
+            payee=models.PAYEE(
+                name="J. C. Counts",
+                addr1="100 Main St.",
+                city="Turlock",
+                state="CA",
+                postalcode="90101",
+                phone="415.987.6543",
+            ),
+            payacct="10101",
+            dtdue=datetime(2005, 10, 1, tzinfo=UTC),
+            memo="payment #3",
+        )
+        billpay = models.BILLPAYMSGSRQV1(
+            models.PMTTRNRQ(trnuid="1001", pmtrq=models.PMTRQ(pmtinfo=pmtinfo))
+        )
         return models.OFX(signonmsgsrqv1=SIGNONMSGSRQV1, billpaymsgsrqv1=billpay)
 
 
@@ -121,6 +137,7 @@ class PaymentResponseTestCase(base.OfxTestCase, unittest.TestCase):
     The server responds, indicating that it will make the payment on the date
     requested and that the payee is a standard payee
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -189,27 +206,42 @@ class PaymentResponseTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        pmtinfo = models.PMTINFO(bankacctfrom=BANKACCTFROM,
-                                 trnamt=Decimal("123.45"),
-                                 payee=models.PAYEE(
-                                     name="J. C. Counts", addr1="100 Main St.",
-                                     city="Turlock", state="CA",
-                                     postalcode="90101", phone="415.987.6543"),
-                                 payeelstid="123214", payacct="10101",
-                                 dtdue=datetime(2005, 10, 1, tzinfo=UTC),
-                                 memo="payment #3")
-        trnrs = models.PMTTRNRS(trnuid="1001", status=STATUS,
-                                pmtrs=models.PMTRS(
-                                    srvrtid="1030155", payeelstid="123214",
-                                    curdef="USD", pmtinfo=pmtinfo,
-                                    extdpayee=models.EXTDPAYEE(
-                                        payeeid="9076", idscope="USER",
-                                        name="J. C. Counts", daystopay=3),
-                                    pmtprcsts=models.PMTPRCSTS(
-                                        pmtprccode="WILLPROCESSON",
-                                        dtpmtprc=datetime(2005, 9, 28, tzinfo=UTC))))
-        return models.OFX(signonmsgsrsv1=SIGNONMSGSRSV1,
-                          billpaymsgsrsv1=models.BILLPAYMSGSRSV1(trnrs))
+        pmtinfo = models.PMTINFO(
+            bankacctfrom=BANKACCTFROM,
+            trnamt=Decimal("123.45"),
+            payee=models.PAYEE(
+                name="J. C. Counts",
+                addr1="100 Main St.",
+                city="Turlock",
+                state="CA",
+                postalcode="90101",
+                phone="415.987.6543",
+            ),
+            payeelstid="123214",
+            payacct="10101",
+            dtdue=datetime(2005, 10, 1, tzinfo=UTC),
+            memo="payment #3",
+        )
+        trnrs = models.PMTTRNRS(
+            trnuid="1001",
+            status=STATUS,
+            pmtrs=models.PMTRS(
+                srvrtid="1030155",
+                payeelstid="123214",
+                curdef="USD",
+                pmtinfo=pmtinfo,
+                extdpayee=models.EXTDPAYEE(
+                    payeeid="9076", idscope="USER", name="J. C. Counts", daystopay=3
+                ),
+                pmtprcsts=models.PMTPRCSTS(
+                    pmtprccode="WILLPROCESSON",
+                    dtpmtprc=datetime(2005, 9, 28, tzinfo=UTC),
+                ),
+            ),
+        )
+        return models.OFX(
+            signonmsgsrsv1=SIGNONMSGSRSV1, billpaymsgsrsv1=models.BILLPAYMSGSRSV1(trnrs)
+        )
 
 
 class PayeeidRequestTestCase(base.OfxTestCase, unittest.TestCase):
@@ -219,6 +251,7 @@ class PayeeidRequestTestCase(base.OfxTestCase, unittest.TestCase):
     Create a second payment to the payee, using the payee ID returned in the
     previous example
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRQV1>
@@ -261,14 +294,18 @@ class PayeeidRequestTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        pmtinfo = models.PMTINFO(bankacctfrom=BANKACCTFROM,
-                                 trnamt=Decimal("123.45"),
-                                 payeeid="9076", payeelstid="123214",
-                                 payacct="10101",
-                                 dtdue=datetime(2005, 11, 1, tzinfo=UTC),
-                                 memo="Payment #4")
-        billpay = models.BILLPAYMSGSRQV1(models.PMTTRNRQ(
-            trnuid="1002", pmtrq=models.PMTRQ(pmtinfo=pmtinfo)))
+        pmtinfo = models.PMTINFO(
+            bankacctfrom=BANKACCTFROM,
+            trnamt=Decimal("123.45"),
+            payeeid="9076",
+            payeelstid="123214",
+            payacct="10101",
+            dtdue=datetime(2005, 11, 1, tzinfo=UTC),
+            memo="Payment #4",
+        )
+        billpay = models.BILLPAYMSGSRQV1(
+            models.PMTTRNRQ(trnuid="1002", pmtrq=models.PMTRQ(pmtinfo=pmtinfo))
+        )
         return models.OFX(signonmsgsrqv1=SIGNONMSGSRQV1, billpaymsgsrqv1=billpay)
 
 
@@ -279,6 +316,7 @@ class PayeeidResponseTestCase(base.OfxTestCase, unittest.TestCase):
     The server responds, indicating that it will make the payment on the date
     requested
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -340,24 +378,35 @@ class PayeeidResponseTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        pmtinfo = models.PMTINFO(bankacctfrom=BANKACCTFROM,
-                                 trnamt=Decimal("123.45"),
-                                 payeeid="9076", payeelstid="123214",
-                                 payacct="10101",
-                                 dtdue=datetime(2005, 11, 1, tzinfo=UTC),
-                                 memo="payment #4")
-        trnrs = models.PMTTRNRS(trnuid="1002", status=STATUS,
-                                pmtrs=models.PMTRS(
-                                    srvrtid="1068405", payeelstid="123214",
-                                    curdef="USD", pmtinfo=pmtinfo,
-                                    extdpayee=models.EXTDPAYEE(
-                                        payeeid="9076", idscope="USER",
-                                        name="J. C. Counts", daystopay=3),
-                                    pmtprcsts=models.PMTPRCSTS(
-                                        pmtprccode="WILLPROCESSON",
-                                        dtpmtprc=datetime(2005, 10, 29, tzinfo=UTC))))
-        return models.OFX(signonmsgsrsv1=SIGNONMSGSRSV1,
-                          billpaymsgsrsv1=models.BILLPAYMSGSRSV1(trnrs))
+        pmtinfo = models.PMTINFO(
+            bankacctfrom=BANKACCTFROM,
+            trnamt=Decimal("123.45"),
+            payeeid="9076",
+            payeelstid="123214",
+            payacct="10101",
+            dtdue=datetime(2005, 11, 1, tzinfo=UTC),
+            memo="payment #4",
+        )
+        trnrs = models.PMTTRNRS(
+            trnuid="1002",
+            status=STATUS,
+            pmtrs=models.PMTRS(
+                srvrtid="1068405",
+                payeelstid="123214",
+                curdef="USD",
+                pmtinfo=pmtinfo,
+                extdpayee=models.EXTDPAYEE(
+                    payeeid="9076", idscope="USER", name="J. C. Counts", daystopay=3
+                ),
+                pmtprcsts=models.PMTPRCSTS(
+                    pmtprccode="WILLPROCESSON",
+                    dtpmtprc=datetime(2005, 10, 29, tzinfo=UTC),
+                ),
+            ),
+        )
+        return models.OFX(
+            signonmsgsrsv1=SIGNONMSGSRSV1, billpaymsgsrsv1=models.BILLPAYMSGSRSV1(trnrs)
+        )
 
 
 class PmtmodAmountRequestTestCase(base.OfxTestCase, unittest.TestCase):
@@ -366,6 +415,7 @@ class PmtmodAmountRequestTestCase(base.OfxTestCase, unittest.TestCase):
 
     Change the amount of the first payment to $125.99
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRQV1>
@@ -409,15 +459,21 @@ class PmtmodAmountRequestTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        pmtinfo = models.PMTINFO(bankacctfrom=BANKACCTFROM,
-                                 trnamt=Decimal("125.99"),
-                                 payeeid="9076", payeelstid="123214",
-                                 payacct="10101",
-                                 dtdue=datetime(2005, 10, 1, tzinfo=UTC),
-                                 memo="payment #3")
-        billpay = models.BILLPAYMSGSRQV1(models.PMTTRNRQ(
-            trnuid="1021", pmtmodrq=models.PMTMODRQ(srvrtid="1030155",
-                                                    pmtinfo=pmtinfo)))
+        pmtinfo = models.PMTINFO(
+            bankacctfrom=BANKACCTFROM,
+            trnamt=Decimal("125.99"),
+            payeeid="9076",
+            payeelstid="123214",
+            payacct="10101",
+            dtdue=datetime(2005, 10, 1, tzinfo=UTC),
+            memo="payment #3",
+        )
+        billpay = models.BILLPAYMSGSRQV1(
+            models.PMTTRNRQ(
+                trnuid="1021",
+                pmtmodrq=models.PMTMODRQ(srvrtid="1030155", pmtinfo=pmtinfo),
+            )
+        )
         return models.OFX(signonmsgsrqv1=SIGNONMSGSRQV1, billpaymsgsrqv1=billpay)
 
 
@@ -427,6 +483,7 @@ class PmtmodAmountResponseTestCase(base.OfxTestCase, unittest.TestCase):
 
     The server responds
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -480,20 +537,30 @@ class PmtmodAmountResponseTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        pmtinfo = models.PMTINFO(bankacctfrom=BANKACCTFROM,
-                                 trnamt=Decimal("125.99"),
-                                 payeeid="9076", payeelstid="123214",
-                                 payacct="10101",
-                                 dtdue=datetime(2005, 10, 1, tzinfo=UTC),
-                                 memo="payment #3")
-        trnrs = models.PMTTRNRS(trnuid="1021", status=STATUS,
-                                pmtmodrs=models.PMTMODRS(
-                                    srvrtid="1030155", pmtinfo=pmtinfo,
-                                    pmtprcsts=models.PMTPRCSTS(
-                                        pmtprccode="WILLPROCESSON",
-                                        dtpmtprc=datetime(2005, 9, 28, tzinfo=UTC))))
-        return models.OFX(signonmsgsrsv1=SIGNONMSGSRSV1,
-                          billpaymsgsrsv1=models.BILLPAYMSGSRSV1(trnrs))
+        pmtinfo = models.PMTINFO(
+            bankacctfrom=BANKACCTFROM,
+            trnamt=Decimal("125.99"),
+            payeeid="9076",
+            payeelstid="123214",
+            payacct="10101",
+            dtdue=datetime(2005, 10, 1, tzinfo=UTC),
+            memo="payment #3",
+        )
+        trnrs = models.PMTTRNRS(
+            trnuid="1021",
+            status=STATUS,
+            pmtmodrs=models.PMTMODRS(
+                srvrtid="1030155",
+                pmtinfo=pmtinfo,
+                pmtprcsts=models.PMTPRCSTS(
+                    pmtprccode="WILLPROCESSON",
+                    dtpmtprc=datetime(2005, 9, 28, tzinfo=UTC),
+                ),
+            ),
+        )
+        return models.OFX(
+            signonmsgsrsv1=SIGNONMSGSRSV1, billpaymsgsrsv1=models.BILLPAYMSGSRSV1(trnrs)
+        )
 
 
 class PmtmodDateRequestTestCase(base.OfxTestCase, unittest.TestCase):
@@ -502,6 +569,7 @@ class PmtmodDateRequestTestCase(base.OfxTestCase, unittest.TestCase):
 
     Change the date of the same payment to December 12, 2005
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRQV1>
@@ -545,15 +613,21 @@ class PmtmodDateRequestTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        pmtinfo = models.PMTINFO(bankacctfrom=BANKACCTFROM,
-                                 trnamt=Decimal("125.99"),
-                                 payeeid="9076", payeelstid="123214",
-                                 payacct="10101",
-                                 dtdue=datetime(2005, 12, 12, tzinfo=UTC),
-                                 memo="payment #3")
-        billpay = models.BILLPAYMSGSRQV1(models.PMTTRNRQ(
-            trnuid="32456", pmtmodrq=models.PMTMODRQ(srvrtid="1030155",
-                                                     pmtinfo=pmtinfo)))
+        pmtinfo = models.PMTINFO(
+            bankacctfrom=BANKACCTFROM,
+            trnamt=Decimal("125.99"),
+            payeeid="9076",
+            payeelstid="123214",
+            payacct="10101",
+            dtdue=datetime(2005, 12, 12, tzinfo=UTC),
+            memo="payment #3",
+        )
+        billpay = models.BILLPAYMSGSRQV1(
+            models.PMTTRNRQ(
+                trnuid="32456",
+                pmtmodrq=models.PMTMODRQ(srvrtid="1030155", pmtinfo=pmtinfo),
+            )
+        )
         return models.OFX(signonmsgsrqv1=SIGNONMSGSRQV1, billpaymsgsrqv1=billpay)
 
 
@@ -563,6 +637,7 @@ class PmtmodDateResponseTestCase(base.OfxTestCase, unittest.TestCase):
 
     The server responds
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -616,20 +691,30 @@ class PmtmodDateResponseTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        pmtinfo = models.PMTINFO(bankacctfrom=BANKACCTFROM,
-                                 trnamt=Decimal("125.99"),
-                                 payeeid="9076", payeelstid="123214",
-                                 payacct="10101",
-                                 dtdue=datetime(2005, 12, 12, tzinfo=UTC),
-                                 memo="payment #3")
-        trnrs = models.PMTTRNRS(trnuid="32456", status=STATUS,
-                                pmtmodrs=models.PMTMODRS(
-                                    srvrtid="1030155", pmtinfo=pmtinfo,
-                                    pmtprcsts=models.PMTPRCSTS(
-                                        pmtprccode="WILLPROCESSON",
-                                        dtpmtprc=datetime(2005, 12, 9, tzinfo=UTC))))
-        return models.OFX(signonmsgsrsv1=SIGNONMSGSRSV1,
-                          billpaymsgsrsv1=models.BILLPAYMSGSRSV1(trnrs))
+        pmtinfo = models.PMTINFO(
+            bankacctfrom=BANKACCTFROM,
+            trnamt=Decimal("125.99"),
+            payeeid="9076",
+            payeelstid="123214",
+            payacct="10101",
+            dtdue=datetime(2005, 12, 12, tzinfo=UTC),
+            memo="payment #3",
+        )
+        trnrs = models.PMTTRNRS(
+            trnuid="32456",
+            status=STATUS,
+            pmtmodrs=models.PMTMODRS(
+                srvrtid="1030155",
+                pmtinfo=pmtinfo,
+                pmtprcsts=models.PMTPRCSTS(
+                    pmtprccode="WILLPROCESSON",
+                    dtpmtprc=datetime(2005, 12, 9, tzinfo=UTC),
+                ),
+            ),
+        )
+        return models.OFX(
+            signonmsgsrsv1=SIGNONMSGSRSV1, billpaymsgsrsv1=models.BILLPAYMSGSRSV1(trnrs)
+        )
 
 
 class PmtcancRequestTestCase(base.OfxTestCase, unittest.TestCase):
@@ -638,6 +723,7 @@ class PmtcancRequestTestCase(base.OfxTestCase, unittest.TestCase):
 
     Cancel a payment
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRQV1>
@@ -668,10 +754,12 @@ class PmtcancRequestTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        trnrq = models.PMTTRNRQ(trnuid="54601", pmtcancrq=models.PMTCANCRQ(
-            srvrtid="1030155"))
-        return models.OFX(signonmsgsrqv1=SIGNONMSGSRQV1,
-                          billpaymsgsrqv1=models.BILLPAYMSGSRQV1(trnrq))
+        trnrq = models.PMTTRNRQ(
+            trnuid="54601", pmtcancrq=models.PMTCANCRQ(srvrtid="1030155")
+        )
+        return models.OFX(
+            signonmsgsrqv1=SIGNONMSGSRQV1, billpaymsgsrqv1=models.BILLPAYMSGSRQV1(trnrq)
+        )
 
 
 class PmtcancResponseTestCase(base.OfxTestCase, unittest.TestCase):
@@ -680,6 +768,7 @@ class PmtcancResponseTestCase(base.OfxTestCase, unittest.TestCase):
 
     The server responds
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -716,11 +805,12 @@ class PmtcancResponseTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        trnrs = models.PMTTRNRS(trnuid="54601", status=STATUS,
-                                pmtcancrs=models.PMTCANCRS(
-                                    srvrtid="1030155"))
-        return models.OFX(signonmsgsrsv1=SIGNONMSGSRSV1,
-                          billpaymsgsrsv1=models.BILLPAYMSGSRSV1(trnrs))
+        trnrs = models.PMTTRNRS(
+            trnuid="54601", status=STATUS, pmtcancrs=models.PMTCANCRS(srvrtid="1030155")
+        )
+        return models.OFX(
+            signonmsgsrsv1=SIGNONMSGSRSV1, billpaymsgsrsv1=models.BILLPAYMSGSRSV1(trnrs)
+        )
 
 
 class PmtinqRequestTestCase(base.OfxTestCase, unittest.TestCase):
@@ -729,6 +819,7 @@ class PmtinqRequestTestCase(base.OfxTestCase, unittest.TestCase):
 
     Update payment status
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRQV1>
@@ -759,10 +850,12 @@ class PmtinqRequestTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        trnrq = models.PMTINQTRNRQ(trnuid="7865", pmtinqrq=models.PMTINQRQ(
-            srvrtid="565321"))
-        return models.OFX(signonmsgsrqv1=SIGNONMSGSRQV1,
-                          billpaymsgsrqv1=models.BILLPAYMSGSRQV1(trnrq))
+        trnrq = models.PMTINQTRNRQ(
+            trnuid="7865", pmtinqrq=models.PMTINQRQ(srvrtid="565321")
+        )
+        return models.OFX(
+            signonmsgsrqv1=SIGNONMSGSRQV1, billpaymsgsrqv1=models.BILLPAYMSGSRQV1(trnrq)
+        )
 
 
 class PmtinqResponseTestCase(base.OfxTestCase, unittest.TestCase):
@@ -771,6 +864,7 @@ class PmtinqResponseTestCase(base.OfxTestCase, unittest.TestCase):
 
     The server responds with updated status and check number
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -812,15 +906,20 @@ class PmtinqResponseTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        trnrs = models.PMTINQTRNRS(trnuid="7865", status=STATUS,
-                                   pmtinqrs=models.PMTINQRS(
-                                       srvrtid="565321",
-                                       pmtprcsts=models.PMTPRCSTS(
-                                           pmtprccode="PROCESSEDON",
-                                           dtpmtprc=datetime(2005, 2, 1, tzinfo=UTC)),
-                                       checknum="6017"))
-        return models.OFX(signonmsgsrsv1=SIGNONMSGSRSV1,
-                          billpaymsgsrsv1=models.BILLPAYMSGSRSV1(trnrs))
+        trnrs = models.PMTINQTRNRS(
+            trnuid="7865",
+            status=STATUS,
+            pmtinqrs=models.PMTINQRS(
+                srvrtid="565321",
+                pmtprcsts=models.PMTPRCSTS(
+                    pmtprccode="PROCESSEDON", dtpmtprc=datetime(2005, 2, 1, tzinfo=UTC)
+                ),
+                checknum="6017",
+            ),
+        )
+        return models.OFX(
+            signonmsgsrsv1=SIGNONMSGSRSV1, billpaymsgsrsv1=models.BILLPAYMSGSRSV1(trnrs)
+        )
 
 
 class RecpmtRequestTestCase(base.OfxTestCase, unittest.TestCase):
@@ -830,6 +929,7 @@ class RecpmtRequestTestCase(base.OfxTestCase, unittest.TestCase):
     Create a recurring payment of 36 monthly payments of $395 to a (previously
     known) standard payee. The first payment will be on November 15, 2005
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRQV1>
@@ -876,16 +976,24 @@ class RecpmtRequestTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        pmtinfo = models.PMTINFO(bankacctfrom=BANKACCTFROM2,
-                                 trnamt=Decimal("395.00"), payeeid="77810",
-                                 payeelstid="27983", payacct="444-78-97572",
-                                 dtdue=datetime(2005, 11, 15, tzinfo=UTC),
-                                 memo="Auto loan payment")
-        trnrq = models.RECPMTTRNRQ(trnuid="12354", recpmtrq=models.RECPMTRQ(
-            recurrinst=models.RECURRINST(ninsts=36, freq="MONTHLY"),
-            pmtinfo=pmtinfo))
-        return models.OFX(signonmsgsrqv1=SIGNONMSGSRQV1,
-                          billpaymsgsrqv1=models.BILLPAYMSGSRQV1(trnrq))
+        pmtinfo = models.PMTINFO(
+            bankacctfrom=BANKACCTFROM2,
+            trnamt=Decimal("395.00"),
+            payeeid="77810",
+            payeelstid="27983",
+            payacct="444-78-97572",
+            dtdue=datetime(2005, 11, 15, tzinfo=UTC),
+            memo="Auto loan payment",
+        )
+        trnrq = models.RECPMTTRNRQ(
+            trnuid="12354",
+            recpmtrq=models.RECPMTRQ(
+                recurrinst=models.RECURRINST(ninsts=36, freq="MONTHLY"), pmtinfo=pmtinfo
+            ),
+        )
+        return models.OFX(
+            signonmsgsrqv1=SIGNONMSGSRQV1, billpaymsgsrqv1=models.BILLPAYMSGSRQV1(trnrq)
+        )
 
 
 class RecpmtResponseTestCase(base.OfxTestCase, unittest.TestCase):
@@ -894,6 +1002,7 @@ class RecpmtResponseTestCase(base.OfxTestCase, unittest.TestCase):
 
     The server responds with the assigned server transaction ID
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -955,24 +1064,32 @@ class RecpmtResponseTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        pmtinfo = models.PMTINFO(bankacctfrom=BANKACCTFROM2,
-                                 trnamt=Decimal("395.00"), payeeid="77810",
-                                 payeelstid="27983", payacct="444-78-97572",
-                                 dtdue=datetime(2005, 11, 15, tzinfo=UTC),
-                                 memo="Auto loan payment")
-        trnrs = models.RECPMTTRNRS(trnuid="12345", status=STATUS,
-                                   recpmtrs=models.RECPMTRS(
-                                       recsrvrtid="387687138",
-                                       payeelstid="27983", curdef="USD",
-                                       recurrinst=models.RECURRINST(
-                                           ninsts=36, freq="MONTHLY"),
-                                       pmtinfo=pmtinfo,
-                                       extdpayee=models.EXTDPAYEE(
-                                           payeeid="77810", idscope="USER",
-                                           name="Mel's Used Cars",
-                                           daystopay=3)))
-        return models.OFX(signonmsgsrsv1=SIGNONMSGSRSV1,
-                          billpaymsgsrsv1=models.BILLPAYMSGSRSV1(trnrs))
+        pmtinfo = models.PMTINFO(
+            bankacctfrom=BANKACCTFROM2,
+            trnamt=Decimal("395.00"),
+            payeeid="77810",
+            payeelstid="27983",
+            payacct="444-78-97572",
+            dtdue=datetime(2005, 11, 15, tzinfo=UTC),
+            memo="Auto loan payment",
+        )
+        trnrs = models.RECPMTTRNRS(
+            trnuid="12345",
+            status=STATUS,
+            recpmtrs=models.RECPMTRS(
+                recsrvrtid="387687138",
+                payeelstid="27983",
+                curdef="USD",
+                recurrinst=models.RECURRINST(ninsts=36, freq="MONTHLY"),
+                pmtinfo=pmtinfo,
+                extdpayee=models.EXTDPAYEE(
+                    payeeid="77810", idscope="USER", name="Mel's Used Cars", daystopay=3
+                ),
+            ),
+        )
+        return models.OFX(
+            signonmsgsrsv1=SIGNONMSGSRSV1, billpaymsgsrsv1=models.BILLPAYMSGSRSV1(trnrs)
+        )
 
 
 class RecpmtmodRequestTestCase(base.OfxTestCase, unittest.TestCase):
@@ -981,6 +1098,7 @@ class RecpmtmodRequestTestCase(base.OfxTestCase, unittest.TestCase):
 
     Change the amount of a recurring payment
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRQV1>
@@ -1029,19 +1147,27 @@ class RecpmtmodRequestTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        pmtinfo = models.PMTINFO(bankacctfrom=BANKACCTFROM2,
-                                 trnamt=Decimal("399.95"), payeeid="77810",
-                                 payeelstid="27983", payacct="444-78-97572",
-                                 dtdue=datetime(2005, 11, 15, tzinfo=UTC),
-                                 memo="Auto loan payment")
-        trnrq = models.RECPMTTRNRQ(trnuid="98765",
-                                   recpmtmodrq=models.RECPMTMODRQ(
-                                       recsrvrtid="387687138",
-                                       recurrinst=models.RECURRINST(
-                                           ninsts=36, freq="MONTHLY"),
-                                       pmtinfo=pmtinfo, modpending=False))
-        return models.OFX(signonmsgsrqv1=SIGNONMSGSRQV1,
-                          billpaymsgsrqv1=models.BILLPAYMSGSRQV1(trnrq))
+        pmtinfo = models.PMTINFO(
+            bankacctfrom=BANKACCTFROM2,
+            trnamt=Decimal("399.95"),
+            payeeid="77810",
+            payeelstid="27983",
+            payacct="444-78-97572",
+            dtdue=datetime(2005, 11, 15, tzinfo=UTC),
+            memo="Auto loan payment",
+        )
+        trnrq = models.RECPMTTRNRQ(
+            trnuid="98765",
+            recpmtmodrq=models.RECPMTMODRQ(
+                recsrvrtid="387687138",
+                recurrinst=models.RECURRINST(ninsts=36, freq="MONTHLY"),
+                pmtinfo=pmtinfo,
+                modpending=False,
+            ),
+        )
+        return models.OFX(
+            signonmsgsrqv1=SIGNONMSGSRQV1, billpaymsgsrqv1=models.BILLPAYMSGSRQV1(trnrq)
+        )
 
 
 class RecpmtmodResponseTestCase(base.OfxTestCase, unittest.TestCase):
@@ -1050,6 +1176,7 @@ class RecpmtmodResponseTestCase(base.OfxTestCase, unittest.TestCase):
 
     The server responds
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -1104,19 +1231,28 @@ class RecpmtmodResponseTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        pmtinfo = models.PMTINFO(bankacctfrom=BANKACCTFROM2,
-                                 trnamt=Decimal("399.95"), payeeid="77810",
-                                 payeelstid="27983", payacct="444-78-97572",
-                                 dtdue=datetime(2005, 11, 15, tzinfo=UTC),
-                                 memo="Auto loan payment")
-        trnrs = models.RECPMTTRNRS(trnuid="98765", status=STATUS,
-                                   recpmtmodrs=models.RECPMTMODRS(
-                                       recsrvrtid="387687138",
-                                       recurrinst=models.RECURRINST(
-                                           ninsts=36, freq="MONTHLY"),
-                                       pmtinfo=pmtinfo, modpending=False))
-        return models.OFX(signonmsgsrsv1=SIGNONMSGSRSV1,
-                          billpaymsgsrsv1=models.BILLPAYMSGSRSV1(trnrs))
+        pmtinfo = models.PMTINFO(
+            bankacctfrom=BANKACCTFROM2,
+            trnamt=Decimal("399.95"),
+            payeeid="77810",
+            payeelstid="27983",
+            payacct="444-78-97572",
+            dtdue=datetime(2005, 11, 15, tzinfo=UTC),
+            memo="Auto loan payment",
+        )
+        trnrs = models.RECPMTTRNRS(
+            trnuid="98765",
+            status=STATUS,
+            recpmtmodrs=models.RECPMTMODRS(
+                recsrvrtid="387687138",
+                recurrinst=models.RECURRINST(ninsts=36, freq="MONTHLY"),
+                pmtinfo=pmtinfo,
+                modpending=False,
+            ),
+        )
+        return models.OFX(
+            signonmsgsrsv1=SIGNONMSGSRSV1, billpaymsgsrsv1=models.BILLPAYMSGSRSV1(trnrs)
+        )
 
 
 class RecpmtcancRequestTestCase(base.OfxTestCase, unittest.TestCase):
@@ -1125,6 +1261,7 @@ class RecpmtcancRequestTestCase(base.OfxTestCase, unittest.TestCase):
 
     Cancel a recurring payment
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRQV1>
@@ -1156,12 +1293,13 @@ class RecpmtcancRequestTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        trnrq = models.RECPMTTRNRQ(trnuid="11122",
-                                   recpmtcancrq=models.RECPMTCANCRQ(
-                                       recsrvrtid="387687138",
-                                       canpending=True))
-        return models.OFX(signonmsgsrqv1=SIGNONMSGSRQV1,
-                          billpaymsgsrqv1=models.BILLPAYMSGSRQV1(trnrq))
+        trnrq = models.RECPMTTRNRQ(
+            trnuid="11122",
+            recpmtcancrq=models.RECPMTCANCRQ(recsrvrtid="387687138", canpending=True),
+        )
+        return models.OFX(
+            signonmsgsrqv1=SIGNONMSGSRQV1, billpaymsgsrqv1=models.BILLPAYMSGSRQV1(trnrq)
+        )
 
 
 class RecpmtcancResponseTestCase(base.OfxTestCase, unittest.TestCase):
@@ -1170,6 +1308,7 @@ class RecpmtcancResponseTestCase(base.OfxTestCase, unittest.TestCase):
 
     The server responds
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -1207,12 +1346,14 @@ class RecpmtcancResponseTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        trnrs = models.RECPMTTRNRS(trnuid="11122", status=STATUS,
-                                   recpmtcancrs=models.RECPMTCANCRS(
-                                       recsrvrtid="387687138",
-                                       canpending=True))
-        return models.OFX(signonmsgsrsv1=SIGNONMSGSRSV1,
-                          billpaymsgsrsv1=models.BILLPAYMSGSRSV1(trnrs))
+        trnrs = models.RECPMTTRNRS(
+            trnuid="11122",
+            status=STATUS,
+            recpmtcancrs=models.RECPMTCANCRS(recsrvrtid="387687138", canpending=True),
+        )
+        return models.OFX(
+            signonmsgsrsv1=SIGNONMSGSRSV1, billpaymsgsrsv1=models.BILLPAYMSGSRSV1(trnrs)
+        )
 
 
 class PayeeRequestTestCase(base.OfxTestCase, unittest.TestCase):
@@ -1221,6 +1362,7 @@ class PayeeRequestTestCase(base.OfxTestCase, unittest.TestCase):
 
     The user sends a request to add a payee to the user’s payee list
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRQV1>
@@ -1260,15 +1402,21 @@ class PayeeRequestTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        payee = models.PAYEE(name="ACME Rocket Works", addr1="101 Spring St.",
-                             addr2="Suite 503", city="Watkins Glen",
-                             state="NY", postalcode="12345-6789",
-                             phone="888.555.1212")
-        trnrq = models.PAYEETRNRQ(trnuid="127677",
-                                  payeerq=models.PAYEERQ("1001-99-8876",
-                                                         payee=payee))
-        return models.OFX(signonmsgsrqv1=SIGNONMSGSRQV1,
-                          billpaymsgsrqv1=models.BILLPAYMSGSRQV1(trnrq))
+        payee = models.PAYEE(
+            name="ACME Rocket Works",
+            addr1="101 Spring St.",
+            addr2="Suite 503",
+            city="Watkins Glen",
+            state="NY",
+            postalcode="12345-6789",
+            phone="888.555.1212",
+        )
+        trnrq = models.PAYEETRNRQ(
+            trnuid="127677", payeerq=models.PAYEERQ("1001-99-8876", payee=payee)
+        )
+        return models.OFX(
+            signonmsgsrqv1=SIGNONMSGSRQV1, billpaymsgsrqv1=models.BILLPAYMSGSRQV1(trnrq)
+        )
 
 
 class PayeeResponseTestCase(base.OfxTestCase, unittest.TestCase):
@@ -1277,6 +1425,7 @@ class PayeeResponseTestCase(base.OfxTestCase, unittest.TestCase):
 
     The server responds
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -1329,19 +1478,33 @@ class PayeeResponseTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        payee = models.PAYEE(name="ACME Rocket Works", addr1="101 Spring St.",
-                             addr2="Suite 503", city="Watkins Glen",
-                             state="NY", postalcode="12345-6789",
-                             phone="888.555.1212")
-        trnrs = models.PAYEETRNRS(trnuid="127677", status=STATUS,
-                                  payeers=models.PAYEERS(
-                                      "1001-99-8876", payeelstid="78096786",
-                                      payee=payee, extdpayee=models.EXTDPAYEE(
-                                          payeeid="88878", idscope="GLOBAL",
-                                          name="ACME Rocket Works, Inc.",
-                                          daystopay=2)))
-        return models.OFX(signonmsgsrsv1=SIGNONMSGSRSV1,
-                          billpaymsgsrsv1=models.BILLPAYMSGSRSV1(trnrs))
+        payee = models.PAYEE(
+            name="ACME Rocket Works",
+            addr1="101 Spring St.",
+            addr2="Suite 503",
+            city="Watkins Glen",
+            state="NY",
+            postalcode="12345-6789",
+            phone="888.555.1212",
+        )
+        trnrs = models.PAYEETRNRS(
+            trnuid="127677",
+            status=STATUS,
+            payeers=models.PAYEERS(
+                "1001-99-8876",
+                payeelstid="78096786",
+                payee=payee,
+                extdpayee=models.EXTDPAYEE(
+                    payeeid="88878",
+                    idscope="GLOBAL",
+                    name="ACME Rocket Works, Inc.",
+                    daystopay=2,
+                ),
+            ),
+        )
+        return models.OFX(
+            signonmsgsrsv1=SIGNONMSGSRSV1, billpaymsgsrsv1=models.BILLPAYMSGSRSV1(trnrs)
+        )
 
 
 class PmtsyncRequestTestCase(base.OfxTestCase, unittest.TestCase):
@@ -1351,6 +1514,7 @@ class PmtsyncRequestTestCase(base.OfxTestCase, unittest.TestCase):
     A client wishes to obtain all Payments active on the server for a
     particular account
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRQV1>
@@ -1384,10 +1548,12 @@ class PmtsyncRequestTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        rq = models.PMTSYNCRQ(refresh=True, rejectifmissing=False,
-                              bankacctfrom=BANKACCTFROM)
-        return models.OFX(signonmsgsrqv1=SIGNONMSGSRQV1,
-                          billpaymsgsrqv1=models.BILLPAYMSGSRQV1(rq))
+        rq = models.PMTSYNCRQ(
+            refresh=True, rejectifmissing=False, bankacctfrom=BANKACCTFROM
+        )
+        return models.OFX(
+            signonmsgsrqv1=SIGNONMSGSRQV1, billpaymsgsrqv1=models.BILLPAYMSGSRQV1(rq)
+        )
 
 
 class PmtsyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
@@ -1398,6 +1564,7 @@ class PmtsyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
     created above, the server responds with one payment since the other payment
     was cancelled. The server also includes the current <TOKEN> value.
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -1467,26 +1634,38 @@ class PmtsyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        pmtinfo = models.PMTINFO(bankacctfrom=BANKACCTFROM,
-                                 trnamt=Decimal("123.45"),
-                                 payeeid="9076", payeelstid="123214",
-                                 payacct="10101",
-                                 dtdue=datetime(2005, 10, 1, tzinfo=UTC),
-                                 memo="payment #4")
-        trnrs = models.PMTTRNRS(trnuid="0", status=STATUS,
-                                pmtrs=models.PMTRS(
-                                    srvrtid="1068405", payeelstid="123214",
-                                    curdef="USD", pmtinfo=pmtinfo,
-                                    extdpayee=models.EXTDPAYEE(
-                                        payeeid="9076", idscope="USER",
-                                        name="J. C. Counts", daystopay=3),
-                                    pmtprcsts=models.PMTPRCSTS(
-                                        pmtprccode="WILLPROCESSON",
-                                        dtpmtprc=datetime(2005, 10, 1, tzinfo=UTC))))
-        return models.OFX(signonmsgsrsv1=SIGNONMSGSRSV1,
-                          billpaymsgsrsv1=models.BILLPAYMSGSRSV1(
-                              models.PMTSYNCRS(trnrs, token="3247989384",
-                                               bankacctfrom=BANKACCTFROM)))
+        pmtinfo = models.PMTINFO(
+            bankacctfrom=BANKACCTFROM,
+            trnamt=Decimal("123.45"),
+            payeeid="9076",
+            payeelstid="123214",
+            payacct="10101",
+            dtdue=datetime(2005, 10, 1, tzinfo=UTC),
+            memo="payment #4",
+        )
+        trnrs = models.PMTTRNRS(
+            trnuid="0",
+            status=STATUS,
+            pmtrs=models.PMTRS(
+                srvrtid="1068405",
+                payeelstid="123214",
+                curdef="USD",
+                pmtinfo=pmtinfo,
+                extdpayee=models.EXTDPAYEE(
+                    payeeid="9076", idscope="USER", name="J. C. Counts", daystopay=3
+                ),
+                pmtprcsts=models.PMTPRCSTS(
+                    pmtprccode="WILLPROCESSON",
+                    dtpmtprc=datetime(2005, 10, 1, tzinfo=UTC),
+                ),
+            ),
+        )
+        return models.OFX(
+            signonmsgsrsv1=SIGNONMSGSRSV1,
+            billpaymsgsrsv1=models.BILLPAYMSGSRSV1(
+                models.PMTSYNCRS(trnrs, token="3247989384", bankacctfrom=BANKACCTFROM)
+            ),
+        )
 
 
 if __name__ == "__main__":

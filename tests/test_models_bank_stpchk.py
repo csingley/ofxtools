@@ -12,7 +12,13 @@ from copy import deepcopy
 
 # local imports
 from ofxtools.models.bank.stpchk import (
-    CHKRANGE, CHKDESC, STPCHKNUM, STPCHKRQ, STPCHKRS, STPCHKTRNRQ, STPCHKTRNRS,
+    CHKRANGE,
+    CHKDESC,
+    STPCHKNUM,
+    STPCHKRQ,
+    STPCHKRS,
+    STPCHKTRNRQ,
+    STPCHKTRNRS,
 )
 from ofxtools.utils import UTC, classproperty
 
@@ -62,9 +68,12 @@ class ChkdescTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CHKDESC(name="Bucky Beaver", chknum="125",
-                       dtuser=datetime(2005, 11, 22, tzinfo=UTC),
-                       trnamt=Decimal("2533"))
+        return CHKDESC(
+            name="Bucky Beaver",
+            chknum="125",
+            dtuser=datetime(2005, 11, 22, tzinfo=UTC),
+            trnamt=Decimal("2533"),
+        )
 
 
 class StpchkrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -80,8 +89,10 @@ class StpchkrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return STPCHKRQ(bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
-                        chkrange=ChkrangeTestCase.aggregate)
+        return STPCHKRQ(
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+            chkrange=ChkrangeTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -133,10 +144,14 @@ class StpchknumTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return STPCHKNUM(checknum="123", name="Buckaroo Banzai",
-                         dtuser=datetime(1776, 7, 4, tzinfo=UTC),
-                         trnamt=Decimal("4500.00"), chkstatus="0",
-                         chkerror="Stop check succeeded")
+        return STPCHKNUM(
+            checknum="123",
+            name="Buckaroo Banzai",
+            dtuser=datetime(1776, 7, 4, tzinfo=UTC),
+            trnamt=Decimal("4500.00"),
+            chkstatus="0",
+            chkerror="Stop check succeeded",
+        )
 
     @classproperty
     @classmethod
@@ -195,10 +210,14 @@ class StpchkrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return STPCHKRS(StpchknumTestCase.aggregate,
-                        StpchknumTestCase.aggregate, curdef="CAD",
-                        bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
-                        fee=Decimal("25"), feemsg="Shit's expensive yo")
+        return STPCHKRS(
+            StpchknumTestCase.aggregate,
+            StpchknumTestCase.aggregate,
+            curdef="CAD",
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+            fee=Decimal("25"),
+            feemsg="Shit's expensive yo",
+        )
 
 
 class StpchktrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
@@ -209,8 +228,12 @@ class StpchktrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return STPCHKTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                           stpchkrq=StpchkrqTestCase.aggregate)
+        return STPCHKTRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            stpchkrq=StpchkrqTestCase.aggregate,
+        )
 
 
 class StpchktrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -221,10 +244,12 @@ class StpchktrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return STPCHKTRNRS(trnuid="DEADBEEF",
-                           status=base.StatusTestCase.aggregate,
-                           cltcookie="B00B135",
-                           stpchkrs=StpchkrsTestCase.aggregate)
+        return STPCHKTRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            stpchkrs=StpchkrsTestCase.aggregate,
+        )
 
 
 if __name__ == "__main__":

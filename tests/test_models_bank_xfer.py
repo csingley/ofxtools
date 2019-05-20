@@ -47,10 +47,12 @@ class XferinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return XFERINFO(bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
-                        bankacctto=bk_stmt.BankaccttoTestCase.aggregate,
-                        trnamt=Decimal("257.53"),
-                        dtdue=datetime(2008, 9, 30, tzinfo=UTC))
+        return XFERINFO(
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+            bankacctto=bk_stmt.BankaccttoTestCase.aggregate,
+            trnamt=Decimal("257.53"),
+            dtdue=datetime(2008, 9, 30, tzinfo=UTC),
+        )
 
     @classproperty
     @classmethod
@@ -113,7 +115,15 @@ class XferprcstsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["XFERPRCCODE", "DTXFERPRC"]
-    oneOfs = {"XFERPRCCODE": ["WILLPROCESSON", "POSTEDON", "NOFUNDSON", "CANCELEDON", "FAILEDON"]}
+    oneOfs = {
+        "XFERPRCCODE": [
+            "WILLPROCESSON",
+            "POSTEDON",
+            "NOFUNDSON",
+            "CANCELEDON",
+            "FAILEDON",
+        ]
+    }
 
     @classproperty
     @classmethod
@@ -126,8 +136,9 @@ class XferprcstsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return XFERPRCSTS(xferprccode="POSTEDON",
-                          dtxferprc=datetime(2007, 12, 31, tzinfo=UTC))
+        return XFERPRCSTS(
+            xferprccode="POSTEDON", dtxferprc=datetime(2007, 12, 31, tzinfo=UTC)
+        )
 
 
 class IntrarqTestCase(unittest.TestCase, base.TestAggregate):
@@ -169,9 +180,13 @@ class IntrarsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INTRARS(curdef="EUR", srvrtid="DEADBEEF",
-                       xferinfo=XferinfoTestCase.aggregate, recsrvrtid="B16B00B5",
-                       xferprcsts=XferprcstsTestCase.aggregate)
+        return INTRARS(
+            curdef="EUR",
+            srvrtid="DEADBEEF",
+            xferinfo=XferinfoTestCase.aggregate,
+            recsrvrtid="B16B00B5",
+            xferprcsts=XferprcstsTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -268,8 +283,11 @@ class IntramodrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INTRAMODRS(srvrtid="DEADBEEF", xferinfo=XferinfoTestCase.aggregate,
-                          xferprcsts=XferprcstsTestCase.aggregate)
+        return INTRAMODRS(
+            srvrtid="DEADBEEF",
+            xferinfo=XferinfoTestCase.aggregate,
+            xferprcsts=XferprcstsTestCase.aggregate,
+        )
 
 
 class IntracanrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -298,8 +316,12 @@ class IntratrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INTRATRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                          intrarq=IntrarqTestCase.aggregate)
+        return INTRATRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            intrarq=IntrarqTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -371,10 +393,12 @@ class IntratrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INTRATRNRS(trnuid="DEADBEEF",
-                          status=base.StatusTestCase.aggregate,
-                          cltcookie="B00B135",
-                          intrars=IntrarsTestCase.aggregate)
+        return INTRATRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            intrars=IntrarsTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod

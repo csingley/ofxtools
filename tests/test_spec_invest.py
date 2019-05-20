@@ -16,22 +16,29 @@ import base
 
 
 # Common aggregates used across tests
-SONRQ = models.SONRQ(dtclient=datetime(2005, 10, 29, 10, 10, tzinfo=UTC),
-                     userid="12345", userpass="MyPassword", language="ENG",
-                     fi=models.FI(org="NCH", fid="1001"),
-                     appid="MyApp", appver="0500")
+SONRQ = models.SONRQ(
+    dtclient=datetime(2005, 10, 29, 10, 10, tzinfo=UTC),
+    userid="12345",
+    userpass="MyPassword",
+    language="ENG",
+    fi=models.FI(org="NCH", fid="1001"),
+    appid="MyApp",
+    appver="0500",
+)
 SIGNONMSGSRQV1 = models.SIGNONMSGSRQV1(sonrq=SONRQ)
 
 
 STATUS = models.STATUS(code=0, severity="INFO")
 
 
-SONRS = models.SONRS(status=STATUS,
-                     dtserver=datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC),
-                     language="ENG",
-                     dtprofup=datetime(2004, 10, 29, 10, 10, 3, tzinfo=UTC),
-                     dtacctup=datetime(2004, 10, 29, 10, 10, 3, tzinfo=UTC),
-                     fi=models.FI(org="NCH", fid="1001"))
+SONRS = models.SONRS(
+    status=STATUS,
+    dtserver=datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC),
+    language="ENG",
+    dtprofup=datetime(2004, 10, 29, 10, 10, 3, tzinfo=UTC),
+    dtacctup=datetime(2004, 10, 29, 10, 10, 3, tzinfo=UTC),
+    fi=models.FI(org="NCH", fid="1001"),
+)
 SIGNONMSGSRSV1 = models.SIGNONMSGSRSV1(sonrs=SONRS)
 
 
@@ -50,6 +57,7 @@ class InvstmtRequestTestCase(base.OfxTestCase, unittest.TestCase):
     This example is for a user who requests an investment statement download
     for a single account
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRQV1>
@@ -92,15 +100,21 @@ class InvstmtRequestTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        rq = models.INVSTMTRQ(invacctfrom=INVACCTFROM,
-                              inctran=models.INCTRAN(
-                                  dtstart=datetime(2005, 8, 24, 13, 1, 5, tzinfo=UTC),
-                                  include=True), incoo=True,
-                              incpos=models.INCPOS(include=True),
-                              incbal=True)
-        return models.OFX(signonmsgsrqv1=SIGNONMSGSRQV1,
-                          invstmtmsgsrqv1=models.INVSTMTMSGSRQV1(
-                              models.INVSTMTTRNRQ( trnuid="1001", invstmtrq=rq)))
+        rq = models.INVSTMTRQ(
+            invacctfrom=INVACCTFROM,
+            inctran=models.INCTRAN(
+                dtstart=datetime(2005, 8, 24, 13, 1, 5, tzinfo=UTC), include=True
+            ),
+            incoo=True,
+            incpos=models.INCPOS(include=True),
+            incbal=True,
+        )
+        return models.OFX(
+            signonmsgsrqv1=SIGNONMSGSRQV1,
+            invstmtmsgsrqv1=models.INVSTMTMSGSRQV1(
+                models.INVSTMTTRNRQ(trnuid="1001", invstmtrq=rq)
+            ),
+        )
 
 
 class InvstmtResponseTestCase(base.OfxTestCase, unittest.TestCase):
@@ -115,6 +129,7 @@ class InvstmtResponseTestCase(base.OfxTestCase, unittest.TestCase):
     had 100 shares of Acme and now has 200 shares. The user also has one option
     contract to sell Lucky Airlines shares, bought before this download.
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -307,91 +322,151 @@ class InvstmtResponseTestCase(base.OfxTestCase, unittest.TestCase):
     @classmethod
     def aggregate(cls):
         invtranlist = models.INVTRANLIST(
-            models.BUYSTOCK(invbuy=models.INVBUY(invtran=models.INVTRAN(
-                fitid="23321", dttrade=datetime(2005, 8, 25, tzinfo=UTC),
-                dtsettle=datetime(2005, 8, 28, tzinfo=UTC)),
-                secid=STOCK_SECID, units=Decimal("100"), unitprice=Decimal("50.00"),
-                commission=Decimal("25.00"), total=Decimal("-5025.00"),
-                subacctsec="CASH", subacctfund="CASH"), buytype="BUY"),
-            models.INVBANKTRAN(stmttrn=models.STMTTRN(
-                trntype="CREDIT",
-                dtposted=datetime(2005, 8, 25, tzinfo=UTC),
-                dtuser=datetime(2005, 8, 25, tzinfo=UTC),
-                trnamt=Decimal("1000.00"),
-                fitid="12345", name="Customer deposit",
-                memo="Your check #1034"),
-                subacctfund="CASH"),
+            models.BUYSTOCK(
+                invbuy=models.INVBUY(
+                    invtran=models.INVTRAN(
+                        fitid="23321",
+                        dttrade=datetime(2005, 8, 25, tzinfo=UTC),
+                        dtsettle=datetime(2005, 8, 28, tzinfo=UTC),
+                    ),
+                    secid=STOCK_SECID,
+                    units=Decimal("100"),
+                    unitprice=Decimal("50.00"),
+                    commission=Decimal("25.00"),
+                    total=Decimal("-5025.00"),
+                    subacctsec="CASH",
+                    subacctfund="CASH",
+                ),
+                buytype="BUY",
+            ),
+            models.INVBANKTRAN(
+                stmttrn=models.STMTTRN(
+                    trntype="CREDIT",
+                    dtposted=datetime(2005, 8, 25, tzinfo=UTC),
+                    dtuser=datetime(2005, 8, 25, tzinfo=UTC),
+                    trnamt=Decimal("1000.00"),
+                    fitid="12345",
+                    name="Customer deposit",
+                    memo="Your check #1034",
+                ),
+                subacctfund="CASH",
+            ),
             dtstart=datetime(2005, 8, 24, 13, 1, 5, tzinfo=UTC),
-            dtend=datetime(2005, 8, 28, 10, 10, tzinfo=UTC))
+            dtend=datetime(2005, 8, 28, 10, 10, tzinfo=UTC),
+        )
 
         invposlist = models.INVPOSLIST(
-            models.POSSTOCK(invpos=models.INVPOS(
-                secid=STOCK_SECID, heldinacct="CASH", postype="LONG",
-                units=Decimal("200"), unitprice=Decimal("49.50"),
-                mktval=Decimal("9900.00"),
-                dtpriceasof=datetime(2005, 8, 27, 1, tzinfo=UTC),
-                memo="Next dividend payable Sept 1")),
-            models.POSOPT(invpos=models.INVPOS(
-                secid=OPT_SECID, heldinacct="CASH", postype="LONG",
-                units=Decimal("1"), unitprice=Decimal("5"),
-                mktval=Decimal("500"),
-                dtpriceasof=datetime(2005, 8, 27, 1, tzinfo=UTC),
-                memo="Option is in the money")))
+            models.POSSTOCK(
+                invpos=models.INVPOS(
+                    secid=STOCK_SECID,
+                    heldinacct="CASH",
+                    postype="LONG",
+                    units=Decimal("200"),
+                    unitprice=Decimal("49.50"),
+                    mktval=Decimal("9900.00"),
+                    dtpriceasof=datetime(2005, 8, 27, 1, tzinfo=UTC),
+                    memo="Next dividend payable Sept 1",
+                )
+            ),
+            models.POSOPT(
+                invpos=models.INVPOS(
+                    secid=OPT_SECID,
+                    heldinacct="CASH",
+                    postype="LONG",
+                    units=Decimal("1"),
+                    unitprice=Decimal("5"),
+                    mktval=Decimal("500"),
+                    dtpriceasof=datetime(2005, 8, 27, 1, tzinfo=UTC),
+                    memo="Option is in the money",
+                )
+            ),
+        )
 
-        invbal = models.INVBAL(availcash=Decimal("200.00"),
-                               marginbalance=Decimal("-50.00"),
-                               shortbalance=Decimal("0"),
-                               ballist=models.BALLIST(
-                                   models.BAL(
-                                       name="Margin Interest Rate",
-                                       desc="Current interest rate on margin balances",
-                                       baltype="PERCENT",
-                                       value=Decimal("7.85"),
-                                       dtasof=datetime(2005, 8, 27, 1, tzinfo=UTC))))
+        invbal = models.INVBAL(
+            availcash=Decimal("200.00"),
+            marginbalance=Decimal("-50.00"),
+            shortbalance=Decimal("0"),
+            ballist=models.BALLIST(
+                models.BAL(
+                    name="Margin Interest Rate",
+                    desc="Current interest rate on margin balances",
+                    baltype="PERCENT",
+                    value=Decimal("7.85"),
+                    dtasof=datetime(2005, 8, 27, 1, tzinfo=UTC),
+                )
+            ),
+        )
 
         invoolist = models.INVOOLIST(
-            models.OOBUYSTOCK(oo=models.OO(fitid="23321",
-                                           secid=models.SECID(
-                                               uniqueid="666678578",
-                                               uniqueidtype="CUSIP"),
-                                           dtplaced=datetime(2005, 6, 24, 3, 15, 5, tzinfo=UTC),
-                                           units=Decimal("100"),
-                                           subacct="CASH",
-                                           duration="GOODTILCANCEL",
-                                           restriction="NONE",
-                                           limitprice=Decimal("50.00")),
-                              buytype="BUY"))
+            models.OOBUYSTOCK(
+                oo=models.OO(
+                    fitid="23321",
+                    secid=models.SECID(uniqueid="666678578", uniqueidtype="CUSIP"),
+                    dtplaced=datetime(2005, 6, 24, 3, 15, 5, tzinfo=UTC),
+                    units=Decimal("100"),
+                    subacct="CASH",
+                    duration="GOODTILCANCEL",
+                    restriction="NONE",
+                    limitprice=Decimal("50.00"),
+                ),
+                buytype="BUY",
+            )
+        )
 
-        rs = models.INVSTMTRS(dtasof=datetime(2005, 8, 27, 1, tzinfo=UTC),
-                              curdef="USD", invacctfrom=INVACCTFROM,
-                              invtranlist=invtranlist, invposlist=invposlist,
-                              invbal=invbal, invoolist=invoolist)
+        rs = models.INVSTMTRS(
+            dtasof=datetime(2005, 8, 27, 1, tzinfo=UTC),
+            curdef="USD",
+            invacctfrom=INVACCTFROM,
+            invtranlist=invtranlist,
+            invposlist=invposlist,
+            invbal=invbal,
+            invoolist=invoolist,
+        )
 
         seclist = models.SECLIST(
             models.STOCKINFO(
                 secinfo=models.SECINFO(
-                    secid=STOCK_SECID, secname="Acme Development, Inc.",
-                    ticker="ACME", fiid="1024"),
-                yld=Decimal("10"), assetclass="SMALLSTOCK"),
-            models.STOCKINFO(secinfo=models.SECINFO(
-                secid=models.SECID(uniqueid="666678578", uniqueidtype="CUSIP"),
-                secname="Hackson Unlimited, Inc.", ticker="HACK", fiid="1027"),
-                yld=Decimal("17"), assetclass="SMALLSTOCK"),
-            models.OPTINFO(secinfo=models.SECINFO(
-                secid=OPT_SECID, secname="Lucky Airlines Jan 97 Put",
-                ticker="LUAXX", fiid="0013"),
-                opttype="PUT", strikeprice=Decimal("35.00"),
+                    secid=STOCK_SECID,
+                    secname="Acme Development, Inc.",
+                    ticker="ACME",
+                    fiid="1024",
+                ),
+                yld=Decimal("10"),
+                assetclass="SMALLSTOCK",
+            ),
+            models.STOCKINFO(
+                secinfo=models.SECINFO(
+                    secid=models.SECID(uniqueid="666678578", uniqueidtype="CUSIP"),
+                    secname="Hackson Unlimited, Inc.",
+                    ticker="HACK",
+                    fiid="1027",
+                ),
+                yld=Decimal("17"),
+                assetclass="SMALLSTOCK",
+            ),
+            models.OPTINFO(
+                secinfo=models.SECINFO(
+                    secid=OPT_SECID,
+                    secname="Lucky Airlines Jan 97 Put",
+                    ticker="LUAXX",
+                    fiid="0013",
+                ),
+                opttype="PUT",
+                strikeprice=Decimal("35.00"),
                 dtexpire=datetime(2005, 1, 21, tzinfo=UTC),
                 shperctrct=Decimal("100"),
                 secid=models.SECID(uniqueid="000342200", uniqueidtype="CUSIP"),
-                assetclass="LARGESTOCK")
-            )
+                assetclass="LARGESTOCK",
+            ),
+        )
 
-        return models.OFX(signonmsgsrsv1=SIGNONMSGSRSV1,
-                          invstmtmsgsrsv1=models.INVSTMTMSGSRSV1(
-                              models.INVSTMTTRNRS(trnuid="1001", status=STATUS,
-                                                  invstmtrs=rs)),
-                          seclistmsgsrsv1=models.SECLISTMSGSRSV1(seclist))
+        return models.OFX(
+            signonmsgsrsv1=SIGNONMSGSRSV1,
+            invstmtmsgsrsv1=models.INVSTMTMSGSRSV1(
+                models.INVSTMTTRNRS(trnuid="1001", status=STATUS, invstmtrs=rs)
+            ),
+            seclistmsgsrsv1=models.SECLISTMSGSRSV1(seclist),
+        )
 
 
 class Inc401kRequestTestCase(base.OfxTestCase, unittest.TestCase):
@@ -401,6 +476,7 @@ class Inc401kRequestTestCase(base.OfxTestCase, unittest.TestCase):
     This example is for a user who requests a 401(k) investment statement
     download for a single account.
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRQV1>
@@ -445,15 +521,23 @@ class Inc401kRequestTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        rq = models.INVSTMTRQ(invacctfrom=INVACCTFROM,
-                              inctran=models.INCTRAN(
-                                  dtstart=datetime(2005, 1, 1, 12, tzinfo=UTC),
-                                  include=True), incoo=False,
-                              incpos=models.INCPOS(include=True), incbal=False,
-                              inc401k=True, inc401kbal=True)
-        return models.OFX(signonmsgsrqv1=SIGNONMSGSRQV1,
-                          invstmtmsgsrqv1=models.INVSTMTMSGSRQV1(
-                              models.INVSTMTTRNRQ( trnuid="1002", invstmtrq=rq)))
+        rq = models.INVSTMTRQ(
+            invacctfrom=INVACCTFROM,
+            inctran=models.INCTRAN(
+                dtstart=datetime(2005, 1, 1, 12, tzinfo=UTC), include=True
+            ),
+            incoo=False,
+            incpos=models.INCPOS(include=True),
+            incbal=False,
+            inc401k=True,
+            inc401kbal=True,
+        )
+        return models.OFX(
+            signonmsgsrqv1=SIGNONMSGSRQV1,
+            invstmtmsgsrqv1=models.INVSTMTMSGSRQV1(
+                models.INVSTMTTRNRQ(trnuid="1002", invstmtrq=rq)
+            ),
+        )
 
 
 class Inc401kResponseTestCase(base.OfxTestCase, unittest.TestCase):
@@ -468,6 +552,7 @@ class Inc401kResponseTestCase(base.OfxTestCase, unittest.TestCase):
     401(k) balances and finally the 401(k) account information including a
     year-to-date summary.
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -656,103 +741,138 @@ class Inc401kResponseTestCase(base.OfxTestCase, unittest.TestCase):
     @classmethod
     def aggregate(cls):
         invtranlist = models.INVTRANLIST(
-            models.BUYMF(invbuy=models.INVBUY(
-                invtran=models.INVTRAN(
-                    fitid="212839062820295310723",
-                    dttrade=datetime(2005, 1, 19, 5, tzinfo=UTC)),
-                secid=MF_SECID, units=Decimal("14.6860"),
-                unitprice=Decimal("18.9000"), total=Decimal("-277.5700"),
-                currency=models.CURRENCY(currate=Decimal("1.0000"),
-                                         cursym="USD"),
-                subacctsec="OTHER", subacctfund="OTHER", loanid="2",
-                loanprincipal=Decimal("277.5700"),
-                loaninterest=Decimal("0.0000"), inv401ksource="ROLLOVER",
-                dtpayroll=datetime(2005, 1, 14, 5, tzinfo=UTC),
-                prioryearcontrib=False),
-                buytype="BUY"),
-            models.BUYMF(invbuy=models.INVBUY(
-                invtran= models.INVTRAN(
-                    fitid="212839062820510822977",
-                    dttrade=datetime(2005, 1, 19, 5, tzinfo=UTC)),
-                secid=MF_SECID, units=Decimal("2.0220"),
-                unitprice=Decimal("18.9000"), total=Decimal("-38.2200"),
-                currency=models.CURRENCY(currate=Decimal("1.0000"),
-                                         cursym="USD"),
-                subacctsec="OTHER", subacctfund="OTHER", loanid="2",
-                loanprincipal=Decimal("0.0000"),
-                loaninterest=Decimal("38.2200"), inv401ksource="ROLLOVER",
-                dtpayroll=datetime(2005, 1, 14, 5, tzinfo=UTC),
-                prioryearcontrib=False),
-                buytype="BUY"),
-            models.BUYMF(invbuy=models.INVBUY(
-                invtran=models.INVTRAN(
-                    fitid="212849815151950488609",
-                    dttrade=datetime(2005, 1, 6, 5, tzinfo=UTC)),
-                secid=MF_SECID, units=Decimal("4.9010"),
-                unitprice=Decimal("18.7900"), total=Decimal("-92.0900"),
-                currency=models.CURRENCY(currate=Decimal("1.0000"),
-                                         cursym="USD"),
-                subacctsec="OTHER", subacctfund="OTHER",
-                inv401ksource="PRETAX",
-                dtpayroll=datetime(2005, 12, 31, 5, tzinfo=UTC),
-                prioryearcontrib=True), buytype="BUY"),
+            models.BUYMF(
+                invbuy=models.INVBUY(
+                    invtran=models.INVTRAN(
+                        fitid="212839062820295310723",
+                        dttrade=datetime(2005, 1, 19, 5, tzinfo=UTC),
+                    ),
+                    secid=MF_SECID,
+                    units=Decimal("14.6860"),
+                    unitprice=Decimal("18.9000"),
+                    total=Decimal("-277.5700"),
+                    currency=models.CURRENCY(currate=Decimal("1.0000"), cursym="USD"),
+                    subacctsec="OTHER",
+                    subacctfund="OTHER",
+                    loanid="2",
+                    loanprincipal=Decimal("277.5700"),
+                    loaninterest=Decimal("0.0000"),
+                    inv401ksource="ROLLOVER",
+                    dtpayroll=datetime(2005, 1, 14, 5, tzinfo=UTC),
+                    prioryearcontrib=False,
+                ),
+                buytype="BUY",
+            ),
+            models.BUYMF(
+                invbuy=models.INVBUY(
+                    invtran=models.INVTRAN(
+                        fitid="212839062820510822977",
+                        dttrade=datetime(2005, 1, 19, 5, tzinfo=UTC),
+                    ),
+                    secid=MF_SECID,
+                    units=Decimal("2.0220"),
+                    unitprice=Decimal("18.9000"),
+                    total=Decimal("-38.2200"),
+                    currency=models.CURRENCY(currate=Decimal("1.0000"), cursym="USD"),
+                    subacctsec="OTHER",
+                    subacctfund="OTHER",
+                    loanid="2",
+                    loanprincipal=Decimal("0.0000"),
+                    loaninterest=Decimal("38.2200"),
+                    inv401ksource="ROLLOVER",
+                    dtpayroll=datetime(2005, 1, 14, 5, tzinfo=UTC),
+                    prioryearcontrib=False,
+                ),
+                buytype="BUY",
+            ),
+            models.BUYMF(
+                invbuy=models.INVBUY(
+                    invtran=models.INVTRAN(
+                        fitid="212849815151950488609",
+                        dttrade=datetime(2005, 1, 6, 5, tzinfo=UTC),
+                    ),
+                    secid=MF_SECID,
+                    units=Decimal("4.9010"),
+                    unitprice=Decimal("18.7900"),
+                    total=Decimal("-92.0900"),
+                    currency=models.CURRENCY(currate=Decimal("1.0000"), cursym="USD"),
+                    subacctsec="OTHER",
+                    subacctfund="OTHER",
+                    inv401ksource="PRETAX",
+                    dtpayroll=datetime(2005, 12, 31, 5, tzinfo=UTC),
+                    prioryearcontrib=True,
+                ),
+                buytype="BUY",
+            ),
             dtstart=datetime(2005, 1, 5, 22, 25, 32, tzinfo=UTC),
             dtend=datetime(2005, 1, 31, 21, 25, 32, tzinfo=UTC),
         )
 
-        inv401k = models.INV401K(employername="ELGIN NATIONAL INDUSTRIES INC",
-                                 planid="4343",
-                                 planjoindate=datetime(1994, 1, 1, 5, tzinfo=UTC),
-                                 matchinfo=models.MATCHINFO(
-                                     matchpct=Decimal("0.00")),
-                                 contribinfo=models.CONTRIBINFO(
-                                     models.CONTRIBSECURITY(
-                                         secid=MF_SECID,
-                                         pretaxcontribpct=Decimal("50.0000"),
-                                         profitsharingcontribpct=Decimal("100.0000"),
-                                         rollovercontribpct=Decimal("100.0000"),
-                                         othervestpct=Decimal("100.0000")),
-                                     models.CONTRIBSECURITY(
-                                         secid=models.SECID(
-                                         uniqueid="74431M105", uniqueidtype="CUSIP"),
-                                         pretaxcontribpct=Decimal("25.0000"),
-                                         profitsharingcontribpct=Decimal("0.0000"),
-                                         rollovercontribpct=Decimal("0.0000"),
-                                         othervestpct=Decimal("0.0000")),
-                                     models.CONTRIBSECURITY(
-                                         secid=models.SECID(
-                                             uniqueid="743969107",
-                                             uniqueidtype="CUSIP"),
-                                         pretaxcontribpct=Decimal("25.0000"),
-                                         profitsharingcontribpct=Decimal("0.0000"),
-                                         rollovercontribpct=Decimal("0.0000"),
-                                         othervestpct=Decimal("0.0000"))),
-                                 inv401ksummary=models.INV401KSUMMARY(
-                                     yeartodate=models.YEARTODATE(
-                                         dtstart=datetime(2005, 1, 1, tzinfo=UTC),
-                                         dtend=datetime(2005, 1, 31, tzinfo=UTC),
-                                         contributions=models.CONTRIBUTIONS(
-                                             pretax=Decimal("843.2500"),
-                                             aftertax=Decimal("43.4200"),
-                                             match=Decimal("421.6200"),
-                                             total=Decimal("1308.2900")))))
+        inv401k = models.INV401K(
+            employername="ELGIN NATIONAL INDUSTRIES INC",
+            planid="4343",
+            planjoindate=datetime(1994, 1, 1, 5, tzinfo=UTC),
+            matchinfo=models.MATCHINFO(matchpct=Decimal("0.00")),
+            contribinfo=models.CONTRIBINFO(
+                models.CONTRIBSECURITY(
+                    secid=MF_SECID,
+                    pretaxcontribpct=Decimal("50.0000"),
+                    profitsharingcontribpct=Decimal("100.0000"),
+                    rollovercontribpct=Decimal("100.0000"),
+                    othervestpct=Decimal("100.0000"),
+                ),
+                models.CONTRIBSECURITY(
+                    secid=models.SECID(uniqueid="74431M105", uniqueidtype="CUSIP"),
+                    pretaxcontribpct=Decimal("25.0000"),
+                    profitsharingcontribpct=Decimal("0.0000"),
+                    rollovercontribpct=Decimal("0.0000"),
+                    othervestpct=Decimal("0.0000"),
+                ),
+                models.CONTRIBSECURITY(
+                    secid=models.SECID(uniqueid="743969107", uniqueidtype="CUSIP"),
+                    pretaxcontribpct=Decimal("25.0000"),
+                    profitsharingcontribpct=Decimal("0.0000"),
+                    rollovercontribpct=Decimal("0.0000"),
+                    othervestpct=Decimal("0.0000"),
+                ),
+            ),
+            inv401ksummary=models.INV401KSUMMARY(
+                yeartodate=models.YEARTODATE(
+                    dtstart=datetime(2005, 1, 1, tzinfo=UTC),
+                    dtend=datetime(2005, 1, 31, tzinfo=UTC),
+                    contributions=models.CONTRIBUTIONS(
+                        pretax=Decimal("843.2500"),
+                        aftertax=Decimal("43.4200"),
+                        match=Decimal("421.6200"),
+                        total=Decimal("1308.2900"),
+                    ),
+                )
+            ),
+        )
 
-        inv401kbal = models.INV401KBAL(pretax=Decimal("31690.340000"),
-                                       profitsharing=Decimal("10725.640000"),
-                                       rollover=Decimal("15945.750000"),
-                                       othervest=Decimal("108.800000"),
-                                       total=Decimal("58470.530000"))
+        inv401kbal = models.INV401KBAL(
+            pretax=Decimal("31690.340000"),
+            profitsharing=Decimal("10725.640000"),
+            rollover=Decimal("15945.750000"),
+            othervest=Decimal("108.800000"),
+            total=Decimal("58470.530000"),
+        )
 
         invstmtrs = models.INVSTMTRS(
             dtasof=datetime(2005, 1, 31, 21, 26, 5, tzinfo=UTC),
-            curdef="USD", invacctfrom=INVACCTFROM, invtranlist=invtranlist,
-            inv401k=inv401k, inv401kbal=inv401kbal)
+            curdef="USD",
+            invacctfrom=INVACCTFROM,
+            invtranlist=invtranlist,
+            inv401k=inv401k,
+            inv401kbal=inv401kbal,
+        )
 
-        return models.OFX(signonmsgsrsv1=SIGNONMSGSRSV1,
-                          invstmtmsgsrsv1=models.INVSTMTMSGSRSV1(
-                              models.INVSTMTTRNRS(
-                                  trnuid="1002", status=STATUS,
-                                  invstmtrs=invstmtrs)))
+        return models.OFX(
+            signonmsgsrsv1=SIGNONMSGSRSV1,
+            invstmtmsgsrsv1=models.INVSTMTMSGSRSV1(
+                models.INVSTMTTRNRS(trnuid="1002", status=STATUS, invstmtrs=invstmtrs)
+            ),
+        )
 
 
 if __name__ == "__main__":

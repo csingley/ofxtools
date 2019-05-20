@@ -31,8 +31,11 @@ if not LibraryConfig.has_section("NAMES"):
     LibraryConfig["NAMES"] = {}
 
 # Map ofxhome_id: server_nick for all configs in library
-known_servers = {LibraryConfig[sct]["ofxhome"]: sct for sct in LibraryConfig
-                 if "ofxhome" in LibraryConfig[sct]}
+known_servers = {
+    LibraryConfig[sct]["ofxhome"]: sct
+    for sct in LibraryConfig
+    if "ofxhome" in LibraryConfig[sct]
+}
 
 
 def mk_server_cfg(args: ofxget.ArgType) -> configparser.SectionProxy:
@@ -46,8 +49,17 @@ def mk_server_cfg(args: ofxget.ArgType) -> configparser.SectionProxy:
         LibraryConfig[server] = {}
     cfg = LibraryConfig[server]
 
-    for opt in ("url", "version", "ofxhome", "org", "fid", "brokerid",
-                "bankid", "pretty", "unclosedelements"):
+    for opt in (
+        "url",
+        "version",
+        "ofxhome",
+        "org",
+        "fid",
+        "brokerid",
+        "bankid",
+        "pretty",
+        "unclosedelements",
+    ):
         if opt in args:
             value = args[opt]
             default_value = ofxget.DEFAULTS[opt]
@@ -105,11 +117,13 @@ def main():
 
         format = ofxget._best_scan_format(scan_results)
 
-        looked_up_data = {"ofxhome": ofxhome_id,
-                          "url": url,
-                          "org": org,
-                          "fid": fid,
-                          "brokerid": lookup.brokerid}
+        looked_up_data = {
+            "ofxhome": ofxhome_id,
+            "url": url,
+            "org": org,
+            "fid": fid,
+            "brokerid": lookup.brokerid,
+        }
 
         args = ChainMap({"server": srvr_nick}, looked_up_data, format)
         write_config(args)

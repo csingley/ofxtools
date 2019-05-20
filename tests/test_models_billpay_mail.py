@@ -41,9 +41,11 @@ class PmtmailrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PMTMAILRQ(mail=email.MailTestCase.aggregate,
-                         srvrtid="DEADBEEF",
-                         pmtinfo=bp_common.PmtinfoTestCase.aggregate)
+        return PMTMAILRQ(
+            mail=email.MailTestCase.aggregate,
+            srvrtid="DEADBEEF",
+            pmtinfo=bp_common.PmtinfoTestCase.aggregate,
+        )
 
 
 class PmtmailrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -64,9 +66,11 @@ class PmtmailrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PMTMAILRS(mail=email.MailTestCase.aggregate,
-                         srvrtid="DEADBEEF",
-                         pmtinfo=bp_common.PmtinfoTestCase.aggregate)
+        return PMTMAILRS(
+            mail=email.MailTestCase.aggregate,
+            srvrtid="DEADBEEF",
+            pmtinfo=bp_common.PmtinfoTestCase.aggregate,
+        )
 
 
 class PmtmailtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
@@ -77,8 +81,12 @@ class PmtmailtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PMTMAILTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                            pmtmailrq=PmtmailrqTestCase.aggregate)
+        return PMTMAILTRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            pmtmailrq=PmtmailrqTestCase.aggregate,
+        )
 
 
 class PmtmailtrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -96,10 +104,12 @@ class PmtmailtrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PMTMAILTRNRS(trnuid="DEADBEEF",
-                            status=base.StatusTestCase.aggregate,
-                            cltcookie="B00B135",
-                            pmtmailrs=PmtmailrsTestCase.aggregate)
+        return PMTMAILTRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            pmtmailrs=PmtmailrsTestCase.aggregate,
+        )
 
 
 class PmtmailsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
@@ -122,10 +132,14 @@ class PmtmailsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     @classproperty
     @classmethod
     def aggregate(self):
-        return PMTMAILSYNCRQ(PmtmailtrnrqTestCase.aggregate,
-                             PmtmailtrnrqTestCase.aggregate,
-                             token="DEADBEEF", rejectifmissing=True,
-                             incimages=True, usehtml=False)
+        return PMTMAILSYNCRQ(
+            PmtmailtrnrqTestCase.aggregate,
+            PmtmailtrnrqTestCase.aggregate,
+            token="DEADBEEF",
+            rejectifmissing=True,
+            incimages=True,
+            usehtml=False,
+        )
 
     @classproperty
     @classmethod
@@ -162,9 +176,12 @@ class PmtmailsyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     @classproperty
     @classmethod
     def aggregate(self):
-        return PMTMAILSYNCRS(PmtmailtrnrsTestCase.aggregate,
-                             PmtmailtrnrsTestCase.aggregate,
-                             token="DEADBEEF", lostsync=True)
+        return PMTMAILSYNCRS(
+            PmtmailtrnrsTestCase.aggregate,
+            PmtmailtrnrsTestCase.aggregate,
+            token="DEADBEEF",
+            lostsync=True,
+        )
 
 
 if __name__ == "__main__":

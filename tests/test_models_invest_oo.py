@@ -12,13 +12,26 @@ from ofxtools.models.base import Aggregate
 from ofxtools.models.bank.stmt import INV401KSOURCES
 from ofxtools.models.invest.acct import INVSUBACCTS
 from ofxtools.models.invest.transactions import (
-    BUYTYPES, SELLTYPES, OPTBUYTYPES, OPTSELLTYPES,
+    BUYTYPES,
+    SELLTYPES,
+    OPTBUYTYPES,
+    OPTSELLTYPES,
 )
 from ofxtools.models.invest.openorders import (
-    UNITTYPES, OO,
-    OOBUYDEBT, OOBUYMF, OOBUYOPT, OOBUYOTHER, OOBUYSTOCK,
-    OOSELLDEBT, OOSELLMF, OOSELLOPT, OOSELLOTHER, OOSELLSTOCK,
-    SWITCHMF, INVOOLIST,
+    UNITTYPES,
+    OO,
+    OOBUYDEBT,
+    OOBUYMF,
+    OOBUYOPT,
+    OOBUYOTHER,
+    OOBUYSTOCK,
+    OOSELLDEBT,
+    OOSELLMF,
+    OOSELLOPT,
+    OOSELLOTHER,
+    OOSELLSTOCK,
+    SWITCHMF,
+    INVOOLIST,
 )
 from ofxtools.models.i18n import CURRENCY_CODES
 from ofxtools.utils import UTC, classproperty
@@ -52,10 +65,13 @@ class OoTestCase(unittest.TestCase, base.TestAggregate):
         "CURRENCY",
         "INV401KSOURCE",
     ]
-    oneOfs = {"SUBACCT": INVSUBACCTS,
-              "DURATION": ("DAY", "GOODTILCANCEL", "IMMEDIATE"),
-              "RESTRICTION": ("ALLORNONE", "MINUNITS", "NONE"),
-              "CURSYM": CURRENCY_CODES, "INV401KSOURCE": INV401KSOURCES}
+    oneOfs = {
+        "SUBACCT": INVSUBACCTS,
+        "DURATION": ("DAY", "GOODTILCANCEL", "IMMEDIATE"),
+        "RESTRICTION": ("ALLORNONE", "MINUNITS", "NONE"),
+        "CURSYM": CURRENCY_CODES,
+        "INV401KSOURCE": INV401KSOURCES,
+    }
 
     @classproperty
     @classmethod
@@ -80,14 +96,22 @@ class OoTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return OO(fitid="1001", srvrtid="2002", secid=securities.SecidTestCase.aggregate,
-                  dtplaced=datetime(2004, 7, 1, tzinfo=UTC),
-                  units=Decimal("150"), subacct="CASH",
-                  duration="GOODTILCANCEL", restriction="ALLORNONE",
-                  minunits=Decimal("100"), limitprice=Decimal("10.50"),
-                  stopprice=Decimal("10.00"), memo="Open Order",
-                  currency=i18n.CurrencyTestCase.aggregate,
-                  inv401ksource="PROFITSHARING")
+        return OO(
+            fitid="1001",
+            srvrtid="2002",
+            secid=securities.SecidTestCase.aggregate,
+            dtplaced=datetime(2004, 7, 1, tzinfo=UTC),
+            units=Decimal("150"),
+            subacct="CASH",
+            duration="GOODTILCANCEL",
+            restriction="ALLORNONE",
+            minunits=Decimal("100"),
+            limitprice=Decimal("10.50"),
+            stopprice=Decimal("10.00"),
+            memo="Open Order",
+            currency=i18n.CurrencyTestCase.aggregate,
+            inv401ksource="PROFITSHARING",
+        )
 
     def testPropertyAliases(cls):
         instance = Aggregate.from_etree(cls.etree)
@@ -121,8 +145,11 @@ class OobuydebtTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return OOBUYDEBT(oo=OoTestCase.aggregate, auction=False,
-                         dtauction=datetime(2012, 1, 9, tzinfo=UTC))
+        return OOBUYDEBT(
+            oo=OoTestCase.aggregate,
+            auction=False,
+            dtauction=datetime(2012, 1, 9, tzinfo=UTC),
+        )
 
 
 class OobuymfTestCase(unittest.TestCase, base.TestAggregate):
@@ -143,8 +170,7 @@ class OobuymfTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return OOBUYMF(oo=OoTestCase.aggregate, buytype="BUY",
-                       unittype="SHARES")
+        return OOBUYMF(oo=OoTestCase.aggregate, buytype="BUY", unittype="SHARES")
 
 
 class OobuyoptTestCase(unittest.TestCase, base.TestAggregate):
@@ -245,8 +271,12 @@ class OosellmfTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return OOSELLMF(oo=OoTestCase.aggregate, selltype="SELLSHORT",
-                        unittype="SHARES", sellall=True)
+        return OOSELLMF(
+            oo=OoTestCase.aggregate,
+            selltype="SELLSHORT",
+            unittype="SHARES",
+            sellall=True,
+        )
 
 
 class OoselloptTestCase(unittest.TestCase, base.TestAggregate):
@@ -328,8 +358,12 @@ class SwitchmfTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return SWITCHMF(oo=OoTestCase.aggregate, secid=securities.SecidTestCase.aggregate,
-                        unittype="SHARES", switchall=True)
+        return SWITCHMF(
+            oo=OoTestCase.aggregate,
+            secid=securities.SecidTestCase.aggregate,
+            unittype="SHARES",
+            switchall=True,
+        )
 
 
 class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
@@ -373,17 +407,19 @@ class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INVOOLIST(OobuydebtTestCase.aggregate,
-                         OobuymfTestCase.aggregate,
-                         OobuyoptTestCase.aggregate,
-                         OobuyotherTestCase.aggregate,
-                         OobuystockTestCase.aggregate,
-                         OoselldebtTestCase.aggregate,
-                         OosellmfTestCase.aggregate,
-                         OoselloptTestCase.aggregate,
-                         OosellotherTestCase.aggregate,
-                         OosellstockTestCase.aggregate,
-                         SwitchmfTestCase.aggregate)
+        return INVOOLIST(
+            OobuydebtTestCase.aggregate,
+            OobuymfTestCase.aggregate,
+            OobuyoptTestCase.aggregate,
+            OobuyotherTestCase.aggregate,
+            OobuystockTestCase.aggregate,
+            OoselldebtTestCase.aggregate,
+            OosellmfTestCase.aggregate,
+            OoselloptTestCase.aggregate,
+            OosellotherTestCase.aggregate,
+            OosellstockTestCase.aggregate,
+            SwitchmfTestCase.aggregate,
+        )
 
 
 if __name__ == "__main__":

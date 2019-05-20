@@ -29,15 +29,7 @@ __all__ = [
 ]
 
 
-from ofxtools.Types import (
-    Bool,
-    String,
-    Integer,
-    OneOf,
-    Decimal,
-    DateTime,
-    ListItem,
-)
+from ofxtools.Types import Bool, String, Integer, OneOf, Decimal, DateTime, ListItem
 from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.invest.acct import INVACCTFROM
@@ -61,7 +53,7 @@ LOANPMTFREQUENCIES = (
     "QUARTERLY",
     "SEMIANNUALLY",
     "ANNUALLY",
-    "OTHER"
+    "OTHER",
 )
 
 

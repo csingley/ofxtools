@@ -101,10 +101,14 @@ class InterrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INTERRS(curdef="EUR", srvrtid="DEADBEEF",
-                       xferinfo=xfer.XferinfoTestCase.aggregate,
-                       refnum="B00B135", recsrvrtid="B16B00B5",
-                       xferprcsts=xfer.XferprcstsTestCase.aggregate)
+        return INTERRS(
+            curdef="EUR",
+            srvrtid="DEADBEEF",
+            xferinfo=xfer.XferinfoTestCase.aggregate,
+            refnum="B00B135",
+            recsrvrtid="B16B00B5",
+            xferprcsts=xfer.XferprcstsTestCase.aggregate,
+        )
 
 
 class IntermodrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -123,8 +127,7 @@ class IntermodrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INTERMODRQ(srvrtid="DEADBEEF",
-                          xferinfo=xfer.XferinfoTestCase.aggregate)
+        return INTERMODRQ(srvrtid="DEADBEEF", xferinfo=xfer.XferinfoTestCase.aggregate)
 
 
 class IntercanrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -162,9 +165,11 @@ class IntermodrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INTERMODRS(srvrtid="DEADBEEF",
-                          xferinfo=xfer.XferinfoTestCase.aggregate,
-                          xferprcsts=xfer.XferprcstsTestCase.aggregate)
+        return INTERMODRS(
+            srvrtid="DEADBEEF",
+            xferinfo=xfer.XferinfoTestCase.aggregate,
+            xferprcsts=xfer.XferprcstsTestCase.aggregate,
+        )
 
 
 class IntercanrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -193,8 +198,12 @@ class IntertrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INTERTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                          interrq=InterrqTestCase.aggregate)
+        return INTERTRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            interrq=InterrqTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -266,10 +275,12 @@ class IntertrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INTERTRNRS(trnuid="DEADBEEF",
-                          status=base.StatusTestCase.aggregate,
-                          cltcookie="B00B135",
-                          interrs=InterrsTestCase.aggregate)
+        return INTERTRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            interrs=InterrsTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod

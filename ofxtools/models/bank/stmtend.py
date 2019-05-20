@@ -24,12 +24,7 @@ from ofxtools.Types import Bool, String, Decimal, OneOf, DateTime, ListItem
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM, REWARDINFO
-from ofxtools.models.i18n import (
-    CURRENCY,
-    ORIGCURRENCY,
-    Origcurrency,
-    CURRENCY_CODES,
-)
+from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, Origcurrency, CURRENCY_CODES
 
 
 class CLOSING(Aggregate, Origcurrency):

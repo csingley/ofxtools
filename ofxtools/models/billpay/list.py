@@ -25,18 +25,18 @@ from ofxtools.models.billpay.common import EXTDPAYEE
 
 class PAYEERQ(ElementList):
     """ OFX Section 12.9.1.1 """
+
     payeeid = String(12)
     payee = SubAggregate(PAYEE)
     bankacctto = SubAggregate(BANKACCTTO)
     payacct = ListElement(String(32))
 
-    requiredMutexes = [
-        ["payeeid", "payee"],
-    ]
+    requiredMutexes = [["payeeid", "payee"]]
 
 
 class PAYEERS(ElementList):
     """ OFX Section 12.9.1.2 """
+
     payeelstid = String(12, required=True)
     payee = SubAggregate(PAYEE)
     bankacctto = SubAggregate(BANKACCTTO)
@@ -46,6 +46,7 @@ class PAYEERS(ElementList):
 
 class PAYEEMODRQ(ElementList):
     """ OFX Section 12.9.2.1 """
+
     payeelstid = String(12, required=True)
     payee = SubAggregate(PAYEE)
     bankacctto = SubAggregate(BANKACCTTO)
@@ -54,6 +55,7 @@ class PAYEEMODRQ(ElementList):
 
 class PAYEEMODRS(ElementList):
     """ OFX Section 12.9.2.2 """
+
     payeelstid = String(12, required=True)
     payee = SubAggregate(PAYEE)
     bankacctto = SubAggregate(BANKACCTTO)
@@ -63,11 +65,13 @@ class PAYEEMODRS(ElementList):
 
 class PAYEEDELRQ(Aggregate):
     """ OFX Section 12.9.3.1 """
+
     payeelstid = String(12, required=True)
 
 
 class PAYEEDELRS(Aggregate):
     """ OFX Section 12.9.3.1 """
+
     payeelstid = String(12, required=True)
 
 
@@ -76,9 +80,7 @@ class PAYEETRNRQ(TrnRq):
     payeemodrq = SubAggregate(PAYEEMODRQ)
     payeedelrq = SubAggregate(PAYEEDELRQ)
 
-    requiredMutexes = [
-        ['payeerq', 'payeemodrq', 'payeedelrq'],
-    ]
+    requiredMutexes = [["payeerq", "payeemodrq", "payeedelrq"]]
 
 
 class PAYEETRNRS(TrnRs):
@@ -86,6 +88,4 @@ class PAYEETRNRS(TrnRs):
     payeemodrs = SubAggregate(PAYEEMODRS)
     payeedelrs = SubAggregate(PAYEEDELRS)
 
-    optionalMutexes = [
-        ['payeers', 'payeemodrs', 'payeedelrs'],
-    ]
+    optionalMutexes = [["payeers", "payeemodrs", "payeedelrs"]]

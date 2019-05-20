@@ -4,8 +4,15 @@ Interface with http://ofxhome.com API
 """
 
 
-__all__ = ["URL", "VALID_DAYS", "OFXServer", "list_institutions", "lookup",
-           "ofx_invalid", "ssl_invalid"]
+__all__ = [
+    "URL",
+    "VALID_DAYS",
+    "OFXServer",
+    "list_institutions",
+    "lookup",
+    "ofx_invalid",
+    "ssl_invalid",
+]
 
 
 # stdlib imports
@@ -17,14 +24,7 @@ import urllib
 import urllib.error as urllib_error
 import urllib.parse as urllib_parse
 import re
-from typing import (
-    Dict,
-    NamedTuple,
-    Optional,
-    Union,
-    Mapping,
-    Match,
-)
+from typing import Dict, NamedTuple, Optional, Union, Mapping, Match
 
 
 URL = "http://www.ofxhome.com/api.php"
@@ -36,6 +36,7 @@ FID_REGEX = re.compile(r"<fid>([^<]*)</fid>")
 
 class OFXServer(NamedTuple):
     """ Container for an OFX Home FI record """
+
     id: Optional[str] = None
     name: Optional[str] = None
     fid: Optional[str] = None
@@ -54,8 +55,9 @@ def list_institutions() -> Mapping[str, str]:
     with urllib.request.urlopen(query) as f:
         response = f.read()
 
-    return OrderedDict((fi.get("id").strip(), fi.get("name").strip())
-                       for fi in ET.fromstring(response))
+    return OrderedDict(
+        (fi.get("id").strip(), fi.get("name").strip()) for fi in ET.fromstring(response)
+    )
 
 
 def lookup(id: str) -> Optional[OFXServer]:
@@ -63,11 +65,13 @@ def lookup(id: str) -> Optional[OFXServer]:
     if etree is None:
         return None
 
-    converters = {"ofxfail": _convert_bool,
-                  "sslfail": _convert_bool,
-                  "lastofxvalidation": _convert_dt,
-                  "lastsslvalidation": _convert_dt,
-                  "profile": _convert_profile}
+    converters = {
+        "ofxfail": _convert_bool,
+        "sslfail": _convert_bool,
+        "lastofxvalidation": _convert_dt,
+        "lastsslvalidation": _convert_dt,
+        "profile": _convert_profile,
+    }
 
     # mypy doesn't accept NamedTuple(**kwargs); use OrderedDict as workaround
     attrs = [(e.tag, converters.get(e.tag, _convert_str)(e)) for e in etree]

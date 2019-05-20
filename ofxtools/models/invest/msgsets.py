@@ -20,21 +20,14 @@ __all__ = [
 from ofxtools.Types import Bool, ListItem
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
 from ofxtools.models.common import MSGSETCORE
-from ofxtools.models.invest.stmt import (
-    INVSTMTTRNRQ,
-    INVSTMTTRNRS,
-)
+from ofxtools.models.invest.stmt import INVSTMTTRNRQ, INVSTMTTRNRS
 from ofxtools.models.invest.mail import (
     INVMAILTRNRQ,
     INVMAILTRNRS,
     INVMAILSYNCRQ,
     INVMAILSYNCRS,
 )
-from ofxtools.models.invest.securities import (
-    SECLIST,
-    SECLISTTRNRQ,
-    SECLISTTRNRS,
-)
+from ofxtools.models.invest.securities import SECLIST, SECLISTTRNRQ, SECLISTTRNRS
 
 
 class INVSTMTMSGSRQV1(Aggregate):

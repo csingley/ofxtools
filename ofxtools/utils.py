@@ -6,14 +6,7 @@ import datetime
 import os
 import itertools
 import xml.etree.ElementTree as ET
-from typing import (
-    Any,
-    Optional,
-    Tuple,
-    Callable,
-    Iterable,
-    Sequence,
-)
+from typing import Any, Optional, Tuple, Callable, Iterable, Sequence
 import math
 
 
@@ -48,8 +41,9 @@ def collapseToSingle(items: Sequence, label: str):
     if len(items_) == 0:
         raise ValueError("{label} is empty")
     if len(items_) > 1:
-        raise ValueError((f"Multiple {label} {list(items)}; "
-                          "can't configure automatically"))
+        raise ValueError(
+            (f"Multiple {label} {list(items)}; " "can't configure automatically")
+        )
     return items_.pop()
 
 
@@ -63,14 +57,16 @@ def gmt_offset(hours: int, minutes: int) -> datetime.timedelta:
     return datetime.timedelta(minutes=offset_minutes)
 
 
-TZS = {"EST": -5,
-       "EDT": -4,
-       "CST": -6,
-       "CDT": -5,
-       "MST": -7,
-       "MDT": -6,
-       "PST": -8,
-       "PDT": -7}
+TZS = {
+    "EST": -5,
+    "EDT": -4,
+    "CST": -6,
+    "CDT": -5,
+    "MST": -7,
+    "MDT": -6,
+    "PST": -8,
+    "PDT": -7,
+}
 
 
 ###############################################################################
@@ -248,21 +244,17 @@ try:
 except ImportError:
     # Otherwise create our own UTC tzinfo.
     class _UTC(datetime.tzinfo):
-        def tzname(self,
-                   dt: Optional[datetime.datetime],
-                   ) -> Optional[str]:
+        def tzname(self, dt: Optional[datetime.datetime]) -> Optional[str]:
             """datetime -> string name of time zone."""
             return "UTC"
 
-        def utcoffset(self,
-                      dt: Optional[datetime.datetime],
-                      ) -> Optional[datetime.timedelta]:
+        def utcoffset(
+            self, dt: Optional[datetime.datetime]
+        ) -> Optional[datetime.timedelta]:
             """datetime -> minutes east of UTC (negative for west of UTC)"""
             return datetime.timedelta(0)
 
-        def dst(self,
-                dt: Optional[datetime.datetime],
-                ) -> Optional[datetime.timedelta]:
+        def dst(self, dt: Optional[datetime.datetime]) -> Optional[datetime.timedelta]:
             """datetime -> DST offset in minutes east of UTC.
 
             Return 0 if DST not in effect.  utcoffset() must include the DST

@@ -122,9 +122,7 @@ class OFXClientV1TestCase(unittest.TestCase):
             mock["dtclient"].return_value = datetime(2017, 4, 1, tzinfo=UTC)
 
             dryrun = (
-                self.client.request_statements(
-                    "t0ps3kr1t", self.stmtRq0, dryrun=True
-                )
+                self.client.request_statements("t0ps3kr1t", self.stmtRq0, dryrun=True)
                 .read()
                 .decode()
             )
@@ -198,8 +196,10 @@ class OFXClientV1TestCase(unittest.TestCase):
                     self.assertEqual(kwargs["headers"], self.client.http_headers)
 
                     mock_urlopen.assert_called_once_with(
-                        sentinel.REQUEST, context=ANY,
-                        timeout = socket._GLOBAL_DEFAULT_TIMEOUT)
+                        sentinel.REQUEST,
+                        context=ANY,
+                        timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
+                    )
                     self.assertEqual(output, sentinel.RESPONSE)
 
                     return kwargs["data"].decode("utf_8")
@@ -258,9 +258,7 @@ class OFXClientV1TestCase(unittest.TestCase):
         self.assertEqual(data, request)
 
     def testRequestStatementsEmpty(self):
-        data = self._testRequest(
-            self.client.request_statements, "t0ps3kr1t"
-        )
+        data = self._testRequest(self.client.request_statements, "t0ps3kr1t")
 
         request = (
             "OFXHEADER:100\r\n"
@@ -294,10 +292,10 @@ class OFXClientV1TestCase(unittest.TestCase):
         self.assertEqual(data, request)
 
     #  def testRequestStatementsBadArgs(self):
-        #  with self.assertRaises(ValueError):
-            #  self._testRequest(
-                #  self.client.request_statements, "t0ps3kr1t", self.stmtEndRq
-            #  )
+    #  with self.assertRaises(ValueError):
+    #  self._testRequest(
+    #  self.client.request_statements, "t0ps3kr1t", self.stmtEndRq
+    #  )
 
     def testRequestStatementsMultipleMixed(self):
         data = self._testRequest(
@@ -435,15 +433,17 @@ class OFXClientV1TestCase(unittest.TestCase):
         self.assertEqual(data, request)
 
     def testRequestStatementsPrettyprint(self):
-        client = OFXClient("https://example.com/ofx", userid="elmerfudd",
-                           org="FIORG", fid="FID", version=103,
-                           prettyprint=True,
-                           bankid="123456789", brokerid="example.com")
-        data = self._testRequest(
-            client.request_statements,
-            "t0ps3kr1t",
-            self.stmtRq0,
+        client = OFXClient(
+            "https://example.com/ofx",
+            userid="elmerfudd",
+            org="FIORG",
+            fid="FID",
+            version=103,
+            prettyprint=True,
+            bankid="123456789",
+            brokerid="example.com",
         )
+        data = self._testRequest(client.request_statements, "t0ps3kr1t", self.stmtRq0)
 
         request = (
             "OFXHEADER:100\r\n"
@@ -494,15 +494,17 @@ class OFXClientV1TestCase(unittest.TestCase):
         self.assertEqual(data, request)
 
     def testRequestStatementsUnclosedTags(self):
-        client = OFXClient("https://example.com/ofx", userid="elmerfudd",
-                           org="FIORG", fid="FID", version=103,
-                           close_elements=False,
-                           bankid="123456789", brokerid="example.com")
-        data = self._testRequest(
-            client.request_statements,
-            "t0ps3kr1t",
-            self.stmtRq0,
+        client = OFXClient(
+            "https://example.com/ofx",
+            userid="elmerfudd",
+            org="FIORG",
+            fid="FID",
+            version=103,
+            close_elements=False,
+            bankid="123456789",
+            brokerid="example.com",
         )
+        data = self._testRequest(client.request_statements, "t0ps3kr1t", self.stmtRq0)
 
         request = (
             "OFXHEADER:100\r\n"
@@ -668,9 +670,14 @@ class OFXClientV1TestCase(unittest.TestCase):
         self.assertEqual(data, request)
 
     def testRequestProfile(self):
-        client = OFXClient("https://example.com/ofx", org="FIORG",
-                           fid="FID", version=103,
-                           bankid="123456789", brokerid="example.com")
+        client = OFXClient(
+            "https://example.com/ofx",
+            org="FIORG",
+            fid="FID",
+            version=103,
+            bankid="123456789",
+            brokerid="example.com",
+        )
         data = self._testRequest(client.request_profile)
 
         request = (
@@ -764,11 +771,16 @@ class OFXClientV2TestCase(unittest.TestCase):
     def testUnclosedTagsOFXv2(self):
         """ OFXv2 (XML) doesn't support unclosed tags """
         with self.assertRaises(ValueError):
-            OFXClient("https://example.com/ofx", userid="elmerfudd",
-                      org="FIORG", fid="FID", version=203,
-                      close_elements=False,
-                      bankid="123456789", brokerid="example.com")
-
+            OFXClient(
+                "https://example.com/ofx",
+                userid="elmerfudd",
+                org="FIORG",
+                fid="FID",
+                version=203,
+                close_elements=False,
+                bankid="123456789",
+                brokerid="example.com",
+            )
 
 
 class UtilitiesTestCase(unittest.TestCase):

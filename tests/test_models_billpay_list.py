@@ -39,8 +39,12 @@ class PayeerqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PAYEERQ("123", "123", payee=bank_stmt.PayeeTestCase.aggregate,
-                       bankacctto=bank_stmt.BankaccttoTestCase.aggregate)
+        return PAYEERQ(
+            "123",
+            "123",
+            payee=bank_stmt.PayeeTestCase.aggregate,
+            bankacctto=bank_stmt.BankaccttoTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -100,10 +104,14 @@ class PayeersTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PAYEERS("12345", "12345", payeelstid="B16B00B5",
-                       payee=bank_stmt.PayeeTestCase.aggregate,
-                       bankacctto=bank_stmt.BankaccttoTestCase.aggregate,
-                       extdpayee=bp_common.ExtdpayeeTestCase.aggregate)
+        return PAYEERS(
+            "12345",
+            "12345",
+            payeelstid="B16B00B5",
+            payee=bank_stmt.PayeeTestCase.aggregate,
+            bankacctto=bank_stmt.BankaccttoTestCase.aggregate,
+            extdpayee=bp_common.ExtdpayeeTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -139,9 +147,13 @@ class PayeemodrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PAYEEMODRQ("12345", "12345", payeelstid="DEADBEEF",
-                          payee=bank_stmt.PayeeTestCase.aggregate,
-                          bankacctto=bank_stmt.BankaccttoTestCase.aggregate)
+        return PAYEEMODRQ(
+            "12345",
+            "12345",
+            payeelstid="DEADBEEF",
+            payee=bank_stmt.PayeeTestCase.aggregate,
+            bankacctto=bank_stmt.BankaccttoTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -183,10 +195,14 @@ class PayeemodrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PAYEEMODRS("12345", "12345", payeelstid="DEADBEEF",
-                          payee=bank_stmt.PayeeTestCase.aggregate,
-                          bankacctto=bank_stmt.BankaccttoTestCase.aggregate,
-                          extdpayee=bp_common.ExtdpayeeTestCase.aggregate)
+        return PAYEEMODRS(
+            "12345",
+            "12345",
+            payeelstid="DEADBEEF",
+            payee=bank_stmt.PayeeTestCase.aggregate,
+            bankacctto=bank_stmt.BankaccttoTestCase.aggregate,
+            extdpayee=bp_common.ExtdpayeeTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -252,10 +268,12 @@ class PayeetrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PAYEETRNRQ(trnuid="DEADBEEF",
-                          cltcookie="B00B135",
-                          tan="B16B00B5",
-                          payeerq=PayeerqTestCase.aggregate)
+        return PAYEETRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            payeerq=PayeerqTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -327,10 +345,12 @@ class PayeetrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PAYEETRNRS(trnuid="DEADBEEF",
-                          status=base.StatusTestCase.aggregate,
-                          cltcookie="B00B135",
-                          payeers=PayeersTestCase.aggregate)
+        return PAYEETRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            payeers=PayeersTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod

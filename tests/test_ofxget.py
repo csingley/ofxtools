@@ -89,21 +89,34 @@ class CliTestCase(unittest.TestCase):
     def testScanProfile(self):
         with patch("ofxtools.scripts.ofxget._scan_profile") as mock_scan_prof:
             with patch("builtins.print") as mock_print:
-                ofxv1 = collections.OrderedDict([
-                    ("versions", [102, 103]),
-                    ("formats", [{"pretty": False, "unclosedelements": True},
-                                 {"pretty": True, "unclosedelements": False}])])
+                ofxv1 = collections.OrderedDict(
+                    [
+                        ("versions", [102, 103]),
+                        (
+                            "formats",
+                            [
+                                {"pretty": False, "unclosedelements": True},
+                                {"pretty": True, "unclosedelements": False},
+                            ],
+                        ),
+                    ]
+                )
 
-                ofxv2 = collections.OrderedDict([
-                    ("versions", [203]),
-                    ("formats", [{"pretty": False},
-                                 {"pretty": True}])])
+                ofxv2 = collections.OrderedDict(
+                    [
+                        ("versions", [203]),
+                        ("formats", [{"pretty": False}, {"pretty": True}]),
+                    ]
+                )
 
-                signoninfo = collections.OrderedDict([
-                    ('chgpinfirst', False),
-                    ('clientuidreq', False),
-                    ('authtokenfirst', False),
-                    ('mfachallengefirst', False)])
+                signoninfo = collections.OrderedDict(
+                    [
+                        ("chgpinfirst", False),
+                        ("clientuidreq", False),
+                        ("authtokenfirst", False),
+                        ("mfachallengefirst", False),
+                    ]
+                )
 
                 mock_scan_prof.return_value = (ofxv1, ofxv2, signoninfo)
                 result = ofxget.scan_profile(self.args)
@@ -123,19 +136,17 @@ class CliTestCase(unittest.TestCase):
                 # FIXME - json.dumps output for dicts isn't stable
                 #  self.maxDiff = None
                 #  self.assertEqual(
-                    #  args[0],
-                    #  ('[{"versions": [102, 103], '
-                     #  '"formats": [{"pretty": false, "unclosedelements": true},'
-                     #  ' {"pretty": true, "unclosedelements": false}]}, '
-                     #  '{"versions": [203], "formats": [{"pretty": false}, '
-                     #  '{"pretty": true}]}]'))
+                #  args[0],
+                #  ('[{"versions": [102, 103], '
+                #  '"formats": [{"pretty": false, "unclosedelements": true},'
+                #  ' {"pretty": true, "unclosedelements": false}]}, '
+                #  '{"versions": [203], "formats": [{"pretty": false}, '
+                #  '{"pretty": true}]}]'))
 
     def testScanProfileNoResult(self):
         with patch("ofxtools.scripts.ofxget._scan_profile") as mock_scan_prof:
             with patch("builtins.print") as mock_print:
-                mock_scan_prof.return_value = ({"versions": []},
-                                               {"versions": []},
-                                               {})
+                mock_scan_prof.return_value = ({"versions": []}, {"versions": []}, {})
                 result = ofxget.scan_profile(self.args)
                 self.assertIsNone(result, None)
 
@@ -151,31 +162,43 @@ class CliTestCase(unittest.TestCase):
                 self.assertEqual(len(args), 1)
 
                 self.maxDiff = None
-                self.assertEqual(
-                    args[0], f"Scan found no working formats for {url}")
+                self.assertEqual(args[0], f"Scan found no working formats for {url}")
 
     def testScanProfileWrite(self):
-        with patch.multiple("ofxtools.scripts.ofxget",
-                            _scan_profile=DEFAULT,
-                            write_config=DEFAULT) as MOCKS:
+        with patch.multiple(
+            "ofxtools.scripts.ofxget", _scan_profile=DEFAULT, write_config=DEFAULT
+        ) as MOCKS:
             mock_scan_prof = MOCKS["_scan_profile"]
             mock_write_config = MOCKS["write_config"]
 
-            ofxv1 = collections.OrderedDict([
-                ("versions", [102, 103]),
-                ("formats", [{"pretty": False, "unclosedelements": True},
-                             {"pretty": True, "unclosedelements": False}])])
+            ofxv1 = collections.OrderedDict(
+                [
+                    ("versions", [102, 103]),
+                    (
+                        "formats",
+                        [
+                            {"pretty": False, "unclosedelements": True},
+                            {"pretty": True, "unclosedelements": False},
+                        ],
+                    ),
+                ]
+            )
 
-            ofxv2 = collections.OrderedDict([
-                ("versions", [203]),
-                ("formats", [{"pretty": False},
-                             {"pretty": True}])])
+            ofxv2 = collections.OrderedDict(
+                [
+                    ("versions", [203]),
+                    ("formats", [{"pretty": False}, {"pretty": True}]),
+                ]
+            )
 
-            signoninfo = collections.OrderedDict([
-                ('chgpinfirst', False),
-                ('clientuidreq', False),
-                ('authtokenfirst', False),
-                ('mfachallengefirst', False)])
+            signoninfo = collections.OrderedDict(
+                [
+                    ("chgpinfirst", False),
+                    ("clientuidreq", False),
+                    ("authtokenfirst", False),
+                    ("mfachallengefirst", False),
+                ]
+            )
 
             mock_scan_prof.return_value = (ofxv1, ofxv2, signoninfo)
 
@@ -206,8 +229,7 @@ class CliTestCase(unittest.TestCase):
     def testRequestProfile(self):
         with patch("ofxtools.Client.OFXClient.request_profile") as fake_rqprof:
             with patch("builtins.print") as mock_print:
-                fake_rqprof.return_value = BytesIO(
-                    b"th-th-th-that's all folks!")
+                fake_rqprof.return_value = BytesIO(b"th-th-th-that's all folks!")
 
                 output = ofxget.request_profile(self.args)
                 self.assertEqual(output, None)
@@ -215,9 +237,13 @@ class CliTestCase(unittest.TestCase):
                 args, kwargs = fake_rqprof.call_args
                 self.assertEqual(len(args), 0)
 
-                self.assertEqual(kwargs,
-                                 {"dryrun": self.args["dryrun"],
-                                  "verify_ssl": not self.args["unsafe"]})
+                self.assertEqual(
+                    kwargs,
+                    {
+                        "dryrun": self.args["dryrun"],
+                        "verify_ssl": not self.args["unsafe"],
+                    },
+                )
 
                 args, kwargs = mock_print.call_args
                 self.assertEqual(len(args), 1)
@@ -233,7 +259,9 @@ class CliTestCase(unittest.TestCase):
             with patch("getpass.getpass") as fake_getpass:
                 with patch("builtins.print") as mock_print:
                     fake_getpass.return_value = "t0ps3kr1t"
-                    fake_rq_acctinfo.return_value = BytesIO(b"th-th-th-that's all folks!")
+                    fake_rq_acctinfo.return_value = BytesIO(
+                        b"th-th-th-that's all folks!"
+                    )
 
                     output = ofxget.request_acctinfo(self.args)
                     self.assertIsNone(output)
@@ -266,12 +294,12 @@ class CliTestCase(unittest.TestCase):
             self.assertEqual(len(args), 2)
             passwd, dtacctup = args
             self.assertEqual(passwd, "t0ps3kr1t")
-            self.assertEqual(dtacctup,
-                             datetime(1999, 12, 31, tzinfo=UTC))
+            self.assertEqual(dtacctup, datetime(1999, 12, 31, tzinfo=UTC))
 
-            self.assertEqual(kwargs,
-                             {"dryrun": self.args["dryrun"],
-                              "verify_ssl": not self.args["unsafe"]})
+            self.assertEqual(
+                kwargs,
+                {"dryrun": self.args["dryrun"], "verify_ssl": not self.args["unsafe"]},
+            )
 
     def testMergeAcctinfo(self):
         """ Unit test for ofxtools.scripts.ofxget._merge_acctinfo() """
@@ -287,8 +315,8 @@ class CliTestCase(unittest.TestCase):
         self.assertEqual(len(args), 7)
         self.assertEqual(args["dryrun"], True)
         self.assertEqual(args["pretty"], False)
-        self.assertEqual(args["bankid"], '111000614')
-        self.assertEqual(args["brokerid"], '111000614')
+        self.assertEqual(args["bankid"], "111000614")
+        self.assertEqual(args["brokerid"], "111000614")
         self.assertEqual(args["checking"], ["123456789123456789"])
         self.assertEqual(args["creditcard"], ["123456789123456789"])
         self.assertEqual(args["investment"], ["123456789123456789"])
@@ -402,7 +430,7 @@ class CliTestCase(unittest.TestCase):
                             ),
                         ],
                     )
-                    self.assertEqual(kwargs, {"dryrun": False,"verify_ssl": True})
+                    self.assertEqual(kwargs, {"dryrun": False, "verify_ssl": True})
 
                     args, kwargs = mock_print.call_args
                     self.assertEqual(len(args), 1)
@@ -527,8 +555,12 @@ class CliTestCase(unittest.TestCase):
         with patch("getpass.getpass") as fake_getpass:
             with patch("builtins.print") as mock_print:
                 fake_getpass.return_value = "t0ps3kr1t"
-                with patch("ofxtools.Client.OFXClient.request_statements") as fake_rq_stmtend:
-                    fake_rq_stmtend.return_value = BytesIO(b"th-th-th-that's all folks!")
+                with patch(
+                    "ofxtools.Client.OFXClient.request_statements"
+                ) as fake_rq_stmtend:
+                    fake_rq_stmtend.return_value = BytesIO(
+                        b"th-th-th-that's all folks!"
+                    )
                     output = ofxget.request_stmtend(args)
 
                     self.assertEqual(output, None)
@@ -599,7 +631,7 @@ class CliTestCase(unittest.TestCase):
                             ),
                         ],
                     )
-                    self.assertEqual(kwargs, {"dryrun": False,"verify_ssl": True})
+                    self.assertEqual(kwargs, {"dryrun": False, "verify_ssl": True})
 
                     args, kwargs = mock_print.call_args
                     self.assertEqual(len(args), 1)
@@ -629,6 +661,7 @@ class CliTestCase(unittest.TestCase):
 ###############################################################################
 class MkServerCfgTestCase(unittest.TestCase):
     """ Unit tests for ofxtools.script.ofxget.mk_server_cfg() """
+
     def testMkservercfg(self):
         with patch("ofxtools.scripts.ofxget.UserConfig", new=ConfigParser()):
             # FIXME - patching the classproperty isn't working
@@ -642,12 +675,23 @@ class MkServerCfgTestCase(unittest.TestCase):
             with self.assertRaises(ValueError):
                 ofxget.mk_server_cfg({"server": "foo", "url": "foo"})
 
-            results = dict(ofxget.mk_server_cfg(
-                {"server": "myserver", "url": "https://ofxget.test.com",
-                 "version": 203, "ofxhome": "123", "org": "TEST", "fid": "321",
-                 "brokerid": "test.com", "bankid": "11235813",
-                 "user": "porkypig", "pretty": True,
-                 "unclosedelements": False}))
+            results = dict(
+                ofxget.mk_server_cfg(
+                    {
+                        "server": "myserver",
+                        "url": "https://ofxget.test.com",
+                        "version": 203,
+                        "ofxhome": "123",
+                        "org": "TEST",
+                        "fid": "321",
+                        "brokerid": "test.com",
+                        "bankid": "11235813",
+                        "user": "porkypig",
+                        "pretty": True,
+                        "unclosedelements": False,
+                    }
+                )
+            )
 
             self.assertIn("clientuid", results)
 
@@ -656,9 +700,15 @@ class MkServerCfgTestCase(unittest.TestCase):
 
             # args equal to defaults are omitted from the results
             predicted = {
-                "url": "https://ofxget.test.com", "ofxhome": "123",
-                "org": "TEST", "fid": "321", "brokerid": "test.com",
-                "bankid": "11235813", "user": "porkypig", "pretty": "true"}
+                "url": "https://ofxget.test.com",
+                "ofxhome": "123",
+                "org": "TEST",
+                "fid": "321",
+                "brokerid": "test.com",
+                "bankid": "11235813",
+                "user": "porkypig",
+                "pretty": "true",
+            }
 
             self.assertEqual(dict(results), predicted)
 
@@ -671,9 +721,17 @@ class ArgConfigTestCase(unittest.TestCase):
     Unit tests for ofxtools.scripts.ofxget.config2arg() and
     ofxtools.scripts.ofxget.arg2config()
     """
+
     def testList2arg(self):
-        for cfg in ("checking", "savings", "moneymrkt", "creditline",
-                    "creditcard", "investment", "years"):
+        for cfg in (
+            "checking",
+            "savings",
+            "moneymrkt",
+            "creditline",
+            "creditcard",
+            "investment",
+            "years",
+        ):
             self.assertEqual(ofxget.config2arg(cfg, "123"), ["123"])
             self.assertEqual(ofxget.config2arg(cfg, "123,456"), ["123", "456"])
 
@@ -682,24 +740,49 @@ class ArgConfigTestCase(unittest.TestCase):
             self.assertEqual(ofxget.config2arg(cfg, "123, 456"), ["123", "456"])
 
     def testList2config(self):
-        for cfg in ("checking", "savings", "moneymrkt", "creditline",
-                    "creditcard", "investment", "years"):
+        for cfg in (
+            "checking",
+            "savings",
+            "moneymrkt",
+            "creditline",
+            "creditcard",
+            "investment",
+            "years",
+        ):
             self.assertEqual(ofxget.arg2config(cfg, ["123"]), "123")
             self.assertEqual(ofxget.arg2config(cfg, ["123", "456"]), "123, 456")
 
     def testListRoundtrip(self):
-        for cfg in ("checking", "savings", "moneymrkt", "creditline",
-                    "creditcard", "investment", "years"):
+        for cfg in (
+            "checking",
+            "savings",
+            "moneymrkt",
+            "creditline",
+            "creditcard",
+            "investment",
+            "years",
+        ):
             self.assertEqual(
                 ofxget.config2arg(cfg, ofxget.arg2config(cfg, ["123", "456"])),
-                ["123", "456"])
+                ["123", "456"],
+            )
             self.assertEqual(
-                ofxget.arg2config(cfg, ofxget.config2arg(cfg, "123, 456")),
-                "123, 456")
+                ofxget.arg2config(cfg, ofxget.config2arg(cfg, "123, 456")), "123, 456"
+            )
 
     def testBool2arg(self):
-        for cfg in ("dryrun", "unsafe", "unclosedelements", "pretty",
-                    "inctran", "incbal", "incpos", "incoo", "all", "write"):
+        for cfg in (
+            "dryrun",
+            "unsafe",
+            "unclosedelements",
+            "pretty",
+            "inctran",
+            "incbal",
+            "incpos",
+            "incoo",
+            "all",
+            "write",
+        ):
             self.assertEqual(ofxget.config2arg(cfg, "true"), True)
             self.assertEqual(ofxget.config2arg(cfg, "false"), False)
             self.assertEqual(ofxget.config2arg(cfg, "yes"), True)
@@ -710,66 +793,113 @@ class ArgConfigTestCase(unittest.TestCase):
             self.assertEqual(ofxget.config2arg(cfg, "0"), False)
 
     def testBool2config(self):
-        for cfg in ("dryrun", "unsafe", "unclosedelements", "pretty",
-                    "inctran", "incbal", "incpos", "incoo", "all", "write"):
+        for cfg in (
+            "dryrun",
+            "unsafe",
+            "unclosedelements",
+            "pretty",
+            "inctran",
+            "incbal",
+            "incpos",
+            "incoo",
+            "all",
+            "write",
+        ):
             self.assertEqual(ofxget.arg2config(cfg, True), "true")
             self.assertEqual(ofxget.arg2config(cfg, False), "false")
 
     def testBoolRoundtrip(self):
-        for cfg in ("dryrun", "unsafe", "unclosedelements", "pretty",
-                    "inctran", "incbal", "incpos", "incoo", "all", "write"):
+        for cfg in (
+            "dryrun",
+            "unsafe",
+            "unclosedelements",
+            "pretty",
+            "inctran",
+            "incbal",
+            "incpos",
+            "incoo",
+            "all",
+            "write",
+        ):
+            self.assertEqual(ofxget.config2arg(cfg, ofxget.arg2config(cfg, True)), True)
             self.assertEqual(
-                ofxget.config2arg(cfg, ofxget.arg2config(cfg, True)),
-                True)
+                ofxget.config2arg(cfg, ofxget.arg2config(cfg, False)), False
+            )
             self.assertEqual(
-                ofxget.config2arg(cfg, ofxget.arg2config(cfg, False)),
-                False)
+                ofxget.arg2config(cfg, ofxget.config2arg(cfg, "true")), "true"
+            )
             self.assertEqual(
-                ofxget.arg2config(cfg, ofxget.config2arg(cfg, "true")),
-                "true")
-            self.assertEqual(
-                ofxget.arg2config(cfg, ofxget.config2arg(cfg, "false")),
-                "false")
+                ofxget.arg2config(cfg, ofxget.config2arg(cfg, "false")), "false"
+            )
 
     def testInt2arg(self):
-        for cfg in ("version", ):
+        for cfg in ("version",):
             self.assertEqual(ofxget.config2arg(cfg, "1"), 1)
 
     def testInt2config(self):
-        for cfg in ("version", ):
+        for cfg in ("version",):
             self.assertEqual(ofxget.arg2config(cfg, 1), "1")
 
     def testIntRoundtrip(self):
-        for cfg in ("version", ):
-            self.assertEqual(
-                ofxget.config2arg(cfg, ofxget.arg2config(cfg, 1)),
-                1)
-            self.assertEqual(
-                ofxget.arg2config(cfg, ofxget.config2arg(cfg, "1")),
-                "1")
+        for cfg in ("version",):
+            self.assertEqual(ofxget.config2arg(cfg, ofxget.arg2config(cfg, 1)), 1)
+            self.assertEqual(ofxget.arg2config(cfg, ofxget.config2arg(cfg, "1")), "1")
 
     def testString2arg(self):
-        for cfg in ("url", "org", "fid", "appid", "appver", "bankid",
-                    "brokerid", "user", "clientuid", "language", "acctnum",
-                    "recid"):
+        for cfg in (
+            "url",
+            "org",
+            "fid",
+            "appid",
+            "appver",
+            "bankid",
+            "brokerid",
+            "user",
+            "clientuid",
+            "language",
+            "acctnum",
+            "recid",
+        ):
             self.assertEqual(ofxget.config2arg(cfg, "Something"), "Something")
 
     def testString2config(self):
-        for cfg in ("url", "org", "fid", "appid", "appver", "bankid",
-                    "brokerid", "user", "clientuid", "language", "acctnum",
-                    "recid"):
+        for cfg in (
+            "url",
+            "org",
+            "fid",
+            "appid",
+            "appver",
+            "bankid",
+            "brokerid",
+            "user",
+            "clientuid",
+            "language",
+            "acctnum",
+            "recid",
+        ):
             self.assertEqual(ofxget.arg2config(cfg, "Something"), "Something")
 
     def testStringRoundtrip(self):
-        for cfg in ("url", "org", "fid", "appid", "appver", "bankid",
-                    "brokerid", "user", "clientuid", "language", "acctnum",
-                    "recid"):
+        for cfg in (
+            "url",
+            "org",
+            "fid",
+            "appid",
+            "appver",
+            "bankid",
+            "brokerid",
+            "user",
+            "clientuid",
+            "language",
+            "acctnum",
+            "recid",
+        ):
             self.assertEqual(
-                ofxget.config2arg(cfg, ofxget.arg2config(cfg, "Something")),
-                "Something")
+                ofxget.config2arg(cfg, ofxget.arg2config(cfg, "Something")), "Something"
+            )
             self.assertEqual(
-                ofxget.arg2config(cfg, ofxget.config2arg(cfg, "Something")),
-                "Something")
+                ofxget.arg2config(cfg, ofxget.config2arg(cfg, "Something")), "Something"
+            )
 
 
 class MergeConfigTestCase(unittest.TestCase):
@@ -831,15 +961,18 @@ class MergeConfigTestCase(unittest.TestCase):
 
     def testMergeConfig(self):
         args = argparse.Namespace(
-            server="2big2fail",
-            user="daffyduck",
-            creditcard=["666"],
+            server="2big2fail", user="daffyduck", creditcard=["666"]
         )
 
         with patch("ofxtools.ofxhome.lookup") as ofxhome_lookup:
             ofxhome_lookup.return_value = OFXServer(
-                id="1", name="Two Big Two Fail", fid="22", org="2BIG2FAIL",
-                url="https://ofx.test.com", brokerid="2big2fail.com")
+                id="1",
+                name="Two Big Two Fail",
+                fid="22",
+                org="2BIG2FAIL",
+                url="https://ofx.test.com",
+                brokerid="2big2fail.com",
+            )
 
             merged = ofxget.merge_config(args, ofxget.UserConfig)
 
@@ -895,18 +1028,42 @@ class MergeConfigTestCase(unittest.TestCase):
         self.assertEqual(maps[1]["version"], 203)
 
         # We have proper types for all lists, even absent configuration
-        for lst in ("checking", "savings", "moneymrkt", "creditline",
-                    "creditcard", "investment", "years", ):
+        for lst in (
+            "checking",
+            "savings",
+            "moneymrkt",
+            "creditline",
+            "creditcard",
+            "investment",
+            "years",
+        ):
             self.assertIsInstance(merged[lst], list)
 
         # We have proper types for all bools, even absent configuration
-        for boole in ("dryrun", "unsafe", "unclosedelements", "pretty",
-                      "inctran", "incbal", "incpos", "incoo", "all", "write"):
+        for boole in (
+            "dryrun",
+            "unsafe",
+            "unclosedelements",
+            "pretty",
+            "inctran",
+            "incbal",
+            "incpos",
+            "incoo",
+            "all",
+            "write",
+        ):
             self.assertIsInstance(merged[boole], bool)
 
         # We have default empty string for all unset string configs
-        for string in ("appid", "appver", "bankid", "clientuid", "language",
-                       "acctnum", "recid"):
+        for string in (
+            "appid",
+            "appver",
+            "bankid",
+            "clientuid",
+            "language",
+            "acctnum",
+            "recid",
+        ):
             self.assertEqual(merged[string], "")
 
     def testMergeConfigUnknownFiArg(self):
@@ -920,9 +1077,11 @@ class MergeConfigTestCase(unittest.TestCase):
 ###############################################################################
 class ScanProfileTestCase(unittest.TestCase):
     """ Unit tests for ofxtools.scripts.ofxget._scan_profile() and helpers """
+
     ofx = models.OFX(
         signonmsgsrsv1=test_models_msgsets.Signonmsgsrsv1TestCase.aggregate,
-        profmsgsrsv1=test_models_msgsets.Profmsgsrsv1TestCase.aggregate)
+        profmsgsrsv1=test_models_msgsets.Profmsgsrsv1TestCase.aggregate,
+    )
 
     @property
     def client(self):
@@ -932,24 +1091,22 @@ class ScanProfileTestCase(unittest.TestCase):
 
     def prof_result(self, version, prettyprint, close_elements, **kwargs):
         # Sequence of errors caught for futures.result() in _scan_profile()
-        errors = (urllib.error.URLError(None, None),
-                  urllib.error.HTTPError(None, None, None, None, None),
-                  ConnectionError(),
-                  OSError(),
-                  )
+        errors = (
+            urllib.error.URLError(None, None),
+            urllib.error.HTTPError(None, None, None, None, None),
+            ConnectionError(),
+            OSError(),
+        )
         accept = [
             (102, False, False),
             (102, True, True),
             (103, False, False),
             (103, True, True),
             (203, False, True),
-            (203, True, True)
+            (203, True, True),
         ]
         if (version, prettyprint, close_elements) in accept:
-            ofx = self.client.serialize(self.ofx,
-                                        version,
-                                        prettyprint,
-                                        close_elements)
+            ofx = self.client.serialize(self.ofx, version, prettyprint, close_elements)
             return BytesIO(ofx)
         else:
             error = errors[self.errcount % len(errors)]
@@ -961,24 +1118,44 @@ class ScanProfileTestCase(unittest.TestCase):
             mock_profrq.side_effect = self.prof_result
             results = ofxget._scan_profile(None, None, None)
 
-        ofxv1 = collections.OrderedDict([
-            ("versions", [102, 103]),
-            ("formats", [collections.OrderedDict([("pretty", False),
-                                                  ("unclosedelements", True)]),
-                         collections.OrderedDict([("pretty", True),
-                                                  ("unclosedelements", False)]),
-                         ])])
+        ofxv1 = collections.OrderedDict(
+            [
+                ("versions", [102, 103]),
+                (
+                    "formats",
+                    [
+                        collections.OrderedDict(
+                            [("pretty", False), ("unclosedelements", True)]
+                        ),
+                        collections.OrderedDict(
+                            [("pretty", True), ("unclosedelements", False)]
+                        ),
+                    ],
+                ),
+            ]
+        )
 
-        ofxv2 = collections.OrderedDict([
-            ("versions", [203]),
-            ("formats", [collections.OrderedDict([("pretty", False)]),
-                         collections.OrderedDict([("pretty", True)])])])
+        ofxv2 = collections.OrderedDict(
+            [
+                ("versions", [203]),
+                (
+                    "formats",
+                    [
+                        collections.OrderedDict([("pretty", False)]),
+                        collections.OrderedDict([("pretty", True)]),
+                    ],
+                ),
+            ]
+        )
 
-        signoninfo = collections.OrderedDict([
-            ('chgpinfirst', False),
-            ('clientuidreq', False),
-            ('authtokenfirst', False),
-            ('mfachallengefirst', False)])
+        signoninfo = collections.OrderedDict(
+            [
+                ("chgpinfirst", False),
+                ("clientuidreq", False),
+                ("authtokenfirst", False),
+                ("mfachallengefirst", False),
+            ]
+        )
 
         self.assertEqual(len(results), 3)
         self.assertEqual(results[0], ofxv1)
@@ -1001,8 +1178,8 @@ class ScanProfileTestCase(unittest.TestCase):
             self.assertEqual(len(format), 2)
             version, format = format
             self.assertIn(
-                version,
-                [102, 103, 151, 160, 200, 201, 202, 203, 210, 211, 220])
+                version, [102, 103, 151, 160, 200, 201, 202, 203, 210, 211, 220]
+            )
             self.assertIsInstance(format, collections.OrderedDict)
             self.assertEqual(len(format), 2)
             self.assertIsInstance(format["pretty"], bool)
@@ -1012,7 +1189,8 @@ class ScanProfileTestCase(unittest.TestCase):
 class ReadScanResponseTestCase(unittest.TestCase):
     ofx = models.OFX(
         signonmsgsrsv1=test_models_msgsets.Signonmsgsrsv1TestCase.aggregate,
-        profmsgsrsv1=test_models_msgsets.Profmsgsrsv1TestCase.aggregate)
+        profmsgsrsv1=test_models_msgsets.Profmsgsrsv1TestCase.aggregate,
+    )
 
     @property
     def client(self):
@@ -1022,12 +1200,13 @@ class ReadScanResponseTestCase(unittest.TestCase):
         markup = self.client.serialize(self.ofx)
 
         # Connection error: return False, empty SIGNONINFO parameters
-        rq_errors = [URLError(""),
-                     HTTPError(None, None, None, None, None),
-                     ConnectionError(""),
-                     OSError(""),
-                     socket.timeout,
-                     ]
+        rq_errors = [
+            URLError(""),
+            HTTPError(None, None, None, None, None),
+            ConnectionError(""),
+            OSError(""),
+            socket.timeout,
+        ]
 
         for error in rq_errors:
             with patch("concurrent.futures.Future.result") as mock_result:
@@ -1050,7 +1229,9 @@ class ReadScanResponseTestCase(unittest.TestCase):
         for error in ofx_errors:
             with patch("concurrent.futures.Future.result") as mock_result:
                 mock_result.return_value = BytesIO(markup)
-                with patch("ofxtools.scripts.ofxget.extract_signoninfos") as mock_extract_signoninfos:
+                with patch(
+                    "ofxtools.scripts.ofxget.extract_signoninfos"
+                ) as mock_extract_signoninfos:
                     mock_extract_signoninfos.side_effect = error
 
                     future = concurrent.futures.Future()
@@ -1063,7 +1244,9 @@ class ReadScanResponseTestCase(unittest.TestCase):
         # Valid OFX with no good SIGNONINFO: return True, empty SIGNONINFO
         with patch("concurrent.futures.Future.result") as mock_result:
             mock_result.return_value = BytesIO(markup)
-            with patch("ofxtools.scripts.ofxget.extract_signoninfos") as mock_extract_signoninfos:
+            with patch(
+                "ofxtools.scripts.ofxget.extract_signoninfos"
+            ) as mock_extract_signoninfos:
                 mock_extract_signoninfos.side_effect = ValueError()
 
                 future = concurrent.futures.Future()
@@ -1085,9 +1268,17 @@ class ReadScanResponseTestCase(unittest.TestCase):
             signoninfo = result[1]
             self.assertIsInstance(signoninfo, collections.OrderedDict)
             self.assertEqual(len(signoninfo), 4)
-            self.assertEqual(set(signoninfo.keys()),
-                             set(["chgpinfirst", "clientuidreq",
-                                  "authtokenfirst", "mfachallengefirst"]))
+            self.assertEqual(
+                set(signoninfo.keys()),
+                set(
+                    [
+                        "chgpinfirst",
+                        "clientuidreq",
+                        "authtokenfirst",
+                        "mfachallengefirst",
+                    ]
+                ),
+            )
 
 
 class CollateScanResultsTestCase(unittest.TestCase):
@@ -1098,17 +1289,22 @@ class CollateScanResultsTestCase(unittest.TestCase):
             collections.OrderedDict([("pretty", False), ("unclosedelements", False)]),
         ]
 
-        v1 = [(160, formats_in),
-              (102, formats_in),
-              (103, formats_in)]
+        v1 = [(160, formats_in), (102, formats_in), (103, formats_in)]
         versions, formats_out = ofxget.collate_scan_results(v1)
         self.assertEqual(versions, [102, 103, 160])
 
-        self.assertEqual(formats_out, [
-            collections.OrderedDict([("pretty", False), ("unclosedelements", False)]),
-            collections.OrderedDict([("pretty", False), ("unclosedelements", True)]),
-            collections.OrderedDict([("pretty", True), ("unclosedelements", True)]),
-        ])
+        self.assertEqual(
+            formats_out,
+            [
+                collections.OrderedDict(
+                    [("pretty", False), ("unclosedelements", False)]
+                ),
+                collections.OrderedDict(
+                    [("pretty", False), ("unclosedelements", True)]
+                ),
+                collections.OrderedDict([("pretty", True), ("unclosedelements", True)]),
+            ],
+        )
 
 
 ###############################################################################
@@ -1116,10 +1312,13 @@ class CollateScanResultsTestCase(unittest.TestCase):
 ###############################################################################
 class ExtractAcctInfosTestCase(unittest.TestCase):
     """ Unit tests for ofxtools.scripts.ofxget.extract_acctinfos() """
+
     ofx = models.OFX(
         signonmsgsrsv1=test_models_msgsets.Signonmsgsrsv1TestCase.aggregate,
         signupmsgsrsv1=models.SIGNUPMSGSRSV1(
-            test_models_signup.AcctinfotrnrsTestCase.aggregate))
+            test_models_signup.AcctinfotrnrsTestCase.aggregate
+        ),
+    )
 
     @property
     def client(self):

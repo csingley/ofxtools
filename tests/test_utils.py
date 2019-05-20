@@ -85,7 +85,9 @@ class UtcTestCase(unittest.TestCase):
 
     def testUTC(self):
         self.assertEqual(ofxtools.utils.UTC.tzname(self.datetime), "UTC")
-        self.assertEqual(ofxtools.utils.UTC.utcoffset(self.datetime), datetime.timedelta(0))
+        self.assertEqual(
+            ofxtools.utils.UTC.utcoffset(self.datetime), datetime.timedelta(0)
+        )
         self.assertEqual(ofxtools.utils.UTC.dst(self.datetime), datetime.timedelta(0))
         self.assertEqual(repr(ofxtools.utils.UTC), "<UTC>")
 

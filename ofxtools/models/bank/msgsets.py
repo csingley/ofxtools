@@ -28,21 +28,8 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import (
-    Bool,
-    OneOf,
-    Integer,
-    Decimal,
-    Time,
-    ListItem,
-    ListElement,
-)
-from ofxtools.models.base import (
-    Aggregate,
-    SubAggregate,
-    Unsupported,
-    ElementList,
-)
+from ofxtools.Types import Bool, OneOf, Integer, Decimal, Time, ListItem, ListElement
+from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, ElementList
 from ofxtools.models.common import MSGSETCORE
 from ofxtools.models.bank.stmt import (
     ACCTTYPES,
@@ -81,13 +68,7 @@ from ofxtools.models.bank.sync import (
 from ofxtools.models.bank.mail import BANKMAILTRNRQ, BANKMAILTRNRS
 
 
-DAYS = ("MONDAY",
-        "TUESDAY",
-        "WEDNESDAY",
-        "THURSDAY",
-        "FRIDAY",
-        "SATURDAY",
-        "SUNDAY")
+DAYS = ("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY")
 
 
 class BANKMSGSRQV1(Aggregate):
@@ -218,6 +199,7 @@ class CREDITCARDMSGSET(Aggregate):
 
 class INTERXFERMSGSRQV1(Aggregate):
     """ OFX section 11.13.1.3.1 """
+
     intertrnrq = ListItem(INTERTRNRQ)
     recintertrnrq = ListItem(RECINTERTRNRQ)
     intersyncrq = ListItem(INTERSYNCRQ)

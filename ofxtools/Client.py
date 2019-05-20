@@ -34,8 +34,16 @@ For example:
 """
 
 
-__all__ = ["AUTH_PLACEHOLDER", "StmtRq", "CcStmtRq", "InvStmtRq", "StmtEndRq",
-           "CcStmtEndRq", "OFXClient", "wrap_stmtrq"]
+__all__ = [
+    "AUTH_PLACEHOLDER",
+    "StmtRq",
+    "CcStmtRq",
+    "InvStmtRq",
+    "StmtEndRq",
+    "CcStmtEndRq",
+    "OFXClient",
+    "wrap_stmtrq",
+]
 
 
 # stdlib imports
@@ -91,11 +99,7 @@ from ofxtools.models.invest import (
     INCPOS,
     INVSTMTMSGSRQV1,
 )
-from ofxtools.models.tax1099 import (
-    TAX1099RQ,
-    TAX1099TRNRQ,
-    TAX1099MSGSRQV1,
-)
+from ofxtools.models.tax1099 import TAX1099RQ, TAX1099TRNRQ, TAX1099MSGSRQV1
 from ofxtools.utils import classproperty, UTC
 from ofxtools import utils
 
@@ -109,6 +113,7 @@ class StmtRq(NamedTuple):
     """
     Parameters of a bank statement request
     """
+
     acctid: Optional[str] = None
     accttype: Optional[str] = None
     dtstart: Optional[datetime.datetime] = None
@@ -120,6 +125,7 @@ class CcStmtRq(NamedTuple):
     """
     Parameters of a credit card statement request
     """
+
     acctid: Optional[str] = None
     dtstart: Optional[datetime.datetime] = None
     dtend: Optional[datetime.datetime] = None
@@ -130,6 +136,7 @@ class InvStmtRq(NamedTuple):
     """
     Parameters of an investment account statement request
     """
+
     acctid: Optional[str] = None
     dtstart: Optional[datetime.datetime] = None
     dtend: Optional[datetime.datetime] = None
@@ -144,6 +151,7 @@ class StmtEndRq(NamedTuple):
     """
     Parameters of a bank statement ending balance request
     """
+
     acctid: Optional[str] = None
     accttype: Optional[str] = None
     dtstart: Optional[datetime.datetime] = None
@@ -154,6 +162,7 @@ class CcStmtEndRq(NamedTuple):
     """
     Parameters of a credit card statement ending balance request
     """
+
     acctid: Optional[str] = None
     dtstart: Optional[datetime.datetime] = None
     dtend: Optional[datetime.datetime] = None
@@ -183,37 +192,51 @@ class OFXClient:
     brokerid: Optional[str] = None
 
     def __repr__(self) -> str:
-        r = ("{cls}(url='{url}', userid='{userid}', clientuid='{clientuid}', "
-             "org='{org}', fid='{fid}', version={version}, appid='{appid}', "
-             "appver='{appver}', language='{language}', "
-             "prettyprint='{prettyprint}', close_elements='{close_elements}', "
-             "bankid='{bankid}', brokerid='{brokerid}')")
+        r = (
+            "{cls}(url='{url}', userid='{userid}', clientuid='{clientuid}', "
+            "org='{org}', fid='{fid}', version={version}, appid='{appid}', "
+            "appver='{appver}', language='{language}', "
+            "prettyprint='{prettyprint}', close_elements='{close_elements}', "
+            "bankid='{bankid}', brokerid='{brokerid}')"
+        )
         attrs = dict(vars(self.__class__))
         attrs.update(vars(self))
         attrs["cls"] = self.__class__.__name__
         return r.format(**attrs)
 
-    def __init__(self,
-                 url: str,
-                 userid: Optional[str] = None,
-                 clientuid: Optional[str] = None,
-                 org: Optional[str] = None,
-                 fid: Optional[str] = None,
-                 version: Optional[int] = None,
-                 appid: Optional[str] = None,
-                 appver: Optional[str] = None,
-                 language: Optional[str] = None,
-                 prettyprint: Optional[bool] = None,
-                 close_elements: Optional[bool] = None,
-                 bankid: Optional[str] = None,
-                 brokerid: Optional[str] = None,
-                 ):
+    def __init__(
+        self,
+        url: str,
+        userid: Optional[str] = None,
+        clientuid: Optional[str] = None,
+        org: Optional[str] = None,
+        fid: Optional[str] = None,
+        version: Optional[int] = None,
+        appid: Optional[str] = None,
+        appver: Optional[str] = None,
+        language: Optional[str] = None,
+        prettyprint: Optional[bool] = None,
+        close_elements: Optional[bool] = None,
+        bankid: Optional[str] = None,
+        brokerid: Optional[str] = None,
+    ):
 
         self.url = url
 
-        for attr in ["userid", "clientuid", "org", "fid", "version", "appid",
-                     "appver", "language", "prettyprint", "close_elements",
-                     "bankid", "brokerid"]:
+        for attr in [
+            "userid",
+            "clientuid",
+            "org",
+            "fid",
+            "version",
+            "appid",
+            "appver",
+            "language",
+            "prettyprint",
+            "close_elements",
+            "bankid",
+            "brokerid",
+        ]:
             value = locals()[attr]
             if value is not None:
                 setattr(self, attr, value)
@@ -248,14 +271,14 @@ class OFXClient:
         """
         return datetime.datetime.now(UTC)
 
-    def request_statements(self,
-                           password: str,
-                           *requests: Union[StmtRq, CcStmtRq, InvStmtRq,
-                                            StmtEndRq, CcStmtEndRq],
-                           dryrun: bool = False,
-                           verify_ssl: bool = True,
-                           timeout: Optional[float] = None,
-                           ) -> BinaryIO:
+    def request_statements(
+        self,
+        password: str,
+        *requests: Union[StmtRq, CcStmtRq, InvStmtRq, StmtEndRq, CcStmtEndRq],
+        dryrun: bool = False,
+        verify_ssl: bool = True,
+        timeout: Optional[float] = None,
+    ) -> BinaryIO:
         """
         Package and send OFX statement requests
         (STMTRQ/CCSTMTRQ/INVSTMTRQ/STMTENDRQ/CCSTMTENDRQ).
@@ -271,21 +294,23 @@ class OFXClient:
         # can't sort by class
         requests_ = sorted(requests, key=attrgetter("__class__.__name__"))
 
-        trnrqs = [wrap_stmtrq(cls(), rqs, self)
-                  for cls, rqs in itertools.groupby(
-                      requests_, key=attrgetter("__class__"))]
+        trnrqs = [
+            wrap_stmtrq(cls(), rqs, self)
+            for cls, rqs in itertools.groupby(requests_, key=attrgetter("__class__"))
+        ]
 
         # trnrqs is a pair of (models.*MSGSRQV1, [*TRNRQ])
         # Can't sort *MSGSRQV1 by class, either
         trnrqs.sort(key=lambda p: p[0].__name__)
 
-        def _mkmsgs(msgcls: Union[BANKMSGSRQV1, CREDITCARDMSGSRQV1,
-                                  INVSTMTMSGSRQV1],
-                    trnrqs: Iterator[
-                        Union[STMTTRNRQ, CCSTMTTRNRQ, INVSTMTTRNRQ,
-                              STMTENDTRNRQ, CCSTMTENDTRNRQ]]
-                    ) -> Tuple[str, Union[BANKMSGSRQV1, CREDITCARDMSGSRQV1,
-                                          INVSTMTMSGSRQV1]]:
+        def _mkmsgs(
+            msgcls: Union[BANKMSGSRQV1, CREDITCARDMSGSRQV1, INVSTMTMSGSRQV1],
+            trnrqs: Iterator[
+                Union[
+                    STMTTRNRQ, CCSTMTTRNRQ, INVSTMTTRNRQ, STMTENDTRNRQ, CCSTMTENDTRNRQ
+                ]
+            ],
+        ) -> Tuple[str, Union[BANKMSGSRQV1, CREDITCARDMSGSRQV1, INVSTMTMSGSRQV1]]:
             """
             msgcls - one of (BANKMSGSRQV1, CREDITCARDMSGSRQV1, INVSTMTMSGSRQV1)
             trnrqs - sequence of sequences of (*STMTTRNRQ, *STMTENDTRNRQ)
@@ -294,22 +319,24 @@ class OFXClient:
             attr_name = msgcls.__name__.lower()
             return (attr_name, msgcls(*trnrqs_))
 
-        msgs = dict(_mkmsgs(msgcls, _trnrqs) for msgcls, _trnrqs
-                    in itertools.groupby(trnrqs, key=itemgetter(0)))
+        msgs = dict(
+            _mkmsgs(msgcls, _trnrqs)
+            for msgcls, _trnrqs in itertools.groupby(trnrqs, key=itemgetter(0))
+        )
 
         signon = self.signon(password)
         ofx = OFX(signonmsgsrqv1=signon, **msgs)
-        return self.download(ofx, dryrun=dryrun, verify_ssl=verify_ssl,
-                             timeout=timeout)
+        return self.download(ofx, dryrun=dryrun, verify_ssl=verify_ssl, timeout=timeout)
 
-    def request_profile(self,
-                        version: Optional[int] = None,
-                        prettyprint: Optional[bool] = None,
-                        close_elements: Optional[bool] = None,
-                        dryrun: bool = False,
-                        verify_ssl: bool = True,
-                        timeout: Optional[float] = None,
-                        ) -> BinaryIO:
+    def request_profile(
+        self,
+        version: Optional[int] = None,
+        prettyprint: Optional[bool] = None,
+        close_elements: Optional[bool] = None,
+        dryrun: bool = False,
+        verify_ssl: bool = True,
+        timeout: Optional[float] = None,
+    ) -> BinaryIO:
         """
         Package and send OFX profile requests (PROFRQ).
 
@@ -335,14 +362,15 @@ class OFXClient:
             timeout=timeout,
         )
 
-    def request_accounts(self,
-                         password: str,
-                         dtacctup: datetime.datetime,
-                         dryrun: bool = False,
-                         version: Optional[int] = None,
-                         verify_ssl: bool = True,
-                         timeout: Optional[float] = None,
-                         ) -> BinaryIO:
+    def request_accounts(
+        self,
+        password: str,
+        dtacctup: datetime.datetime,
+        dryrun: bool = False,
+        version: Optional[int] = None,
+        verify_ssl: bool = True,
+        timeout: Optional[float] = None,
+    ) -> BinaryIO:
         """
         Package and send OFX account info requests (ACCTINFORQ)
         """
@@ -353,43 +381,35 @@ class OFXClient:
         signupmsgs = SIGNUPMSGSRQV1(acctinfotrnrq)
 
         ofx = OFX(signonmsgsrqv1=signon, signupmsgsrqv1=signupmsgs)
-        return self.download(
-            ofx,
-            dryrun=dryrun,
-            verify_ssl=verify_ssl,
-            timeout=timeout,
-        )
+        return self.download(ofx, dryrun=dryrun, verify_ssl=verify_ssl, timeout=timeout)
 
-    def request_tax1099(self,
-                        password: str,
-                        *taxyears: str,
-                        acctnum: str = None,
-                        recid: str = None,
-                        dryrun: bool = False,
-                        verify_ssl: bool = True,
-                        timeout: Optional[float] = None,
-                        ) -> BinaryIO:
+    def request_tax1099(
+        self,
+        password: str,
+        *taxyears: str,
+        acctnum: str = None,
+        recid: str = None,
+        dryrun: bool = False,
+        verify_ssl: bool = True,
+        timeout: Optional[float] = None,
+    ) -> BinaryIO:
         """
         Request US federal income tax form 1099 (TAX1099RQ)
         """
         signon = self.signon(password)
 
         rq = TAX1099RQ(*taxyears, recid=recid or None)
-        msgs = TAX1099MSGSRQV1(
-            TAX1099TRNRQ(trnuid=self.uuid, tax1099rq=rq))
+        msgs = TAX1099MSGSRQV1(TAX1099TRNRQ(trnuid=self.uuid, tax1099rq=rq))
 
         ofx = OFX(signonmsgsrqv1=signon, tax1099msgsrqv1=msgs)
-        return self.download(
-            ofx,
-            dryrun=dryrun,
-            verify_ssl=verify_ssl,
-            timeout=timeout,
-        )
+        return self.download(ofx, dryrun=dryrun, verify_ssl=verify_ssl, timeout=timeout)
 
-    def signon(self,
-               userpass: str,
-               userid: Optional[str] = None,
-               sesscookie: Optional[str] = None) -> SIGNONMSGSRQV1:
+    def signon(
+        self,
+        userpass: str,
+        userid: Optional[str] = None,
+        sesscookie: Optional[str] = None,
+    ) -> SIGNONMSGSRQV1:
         """ Construct SONRQ; package in SIGNONMSGSRQV1 """
         if self.org:
             fi: Optional[FI] = FI(org=self.org, fid=self.fid)
@@ -412,14 +432,15 @@ class OFXClient:
         )
         return SIGNONMSGSRQV1(sonrq=sonrq)
 
-    def stmttrnrq(self,
-                  bankid: str,
-                  acctid: str,
-                  accttype: str,
-                  dtstart: Optional[datetime.datetime] = None,
-                  dtend: Optional[datetime.datetime] = None,
-                  inctran: bool = True,
-                  ) -> STMTTRNRQ:
+    def stmttrnrq(
+        self,
+        bankid: str,
+        acctid: str,
+        accttype: str,
+        dtstart: Optional[datetime.datetime] = None,
+        dtend: Optional[datetime.datetime] = None,
+        inctran: bool = True,
+    ) -> STMTTRNRQ:
         """ Construct STMTRQ; package in STMTTRNRQ """
         acct = BANKACCTFROM(bankid=bankid, acctid=acctid, accttype=accttype)
         inctran_ = INCTRAN(dtstart=dtstart, dtend=dtend, include=inctran)
@@ -427,25 +448,27 @@ class OFXClient:
         trnuid = self.uuid
         return STMTTRNRQ(trnuid=trnuid, stmtrq=stmtrq)
 
-    def stmtendtrnrq(self,
-                     bankid: str,
-                     acctid: str,
-                     accttype: str,
-                     dtstart: Optional[datetime.datetime] = None,
-                     dtend: Optional[datetime.datetime] = None,
-                     ) -> STMTENDTRNRQ:
+    def stmtendtrnrq(
+        self,
+        bankid: str,
+        acctid: str,
+        accttype: str,
+        dtstart: Optional[datetime.datetime] = None,
+        dtend: Optional[datetime.datetime] = None,
+    ) -> STMTENDTRNRQ:
         """ Construct STMTENDRQ; package in STMTENDTRNRQ """
         acct = BANKACCTFROM(bankid=bankid, acctid=acctid, accttype=accttype)
         stmtrq = STMTENDRQ(bankacctfrom=acct, dtstart=dtstart, dtend=dtend)
         trnuid = self.uuid
         return STMTENDTRNRQ(trnuid=trnuid, stmtendrq=stmtrq)
 
-    def ccstmttrnrq(self,
-                    acctid: str,
-                    dtstart: Optional[datetime.datetime] = None,
-                    dtend: Optional[datetime.datetime] = None,
-                    inctran: bool = True,
-                    ) -> CCSTMTTRNRQ:
+    def ccstmttrnrq(
+        self,
+        acctid: str,
+        dtstart: Optional[datetime.datetime] = None,
+        dtend: Optional[datetime.datetime] = None,
+        inctran: bool = True,
+    ) -> CCSTMTTRNRQ:
         """ Construct CCSTMTRQ; package in CCSTMTTRNRQ """
         acct = CCACCTFROM(acctid=acctid)
         inctran_ = INCTRAN(dtstart=dtstart, dtend=dtend, include=inctran)
@@ -453,50 +476,59 @@ class OFXClient:
         trnuid = self.uuid
         return CCSTMTTRNRQ(trnuid=trnuid, ccstmtrq=stmtrq)
 
-    def ccstmtendtrnrq(self,
-                       acctid: str,
-                       dtstart: Optional[datetime.datetime] = None,
-                       dtend: Optional[datetime.datetime] = None,
-                       ) -> CCSTMTENDTRNRQ:
+    def ccstmtendtrnrq(
+        self,
+        acctid: str,
+        dtstart: Optional[datetime.datetime] = None,
+        dtend: Optional[datetime.datetime] = None,
+    ) -> CCSTMTENDTRNRQ:
         """ Construct CCSTMTENDRQ; package in CCSTMTENDTRNRQ """
         acct = CCACCTFROM(acctid=acctid)
         stmtrq = CCSTMTENDRQ(ccacctfrom=acct, dtstart=dtstart, dtend=dtend)
         trnuid = self.uuid
         return CCSTMTENDTRNRQ(trnuid=trnuid, ccstmtendrq=stmtrq)
 
-    def invstmttrnrq(self,
-                     acctid: str,
-                     brokerid: str,
-                     dtstart: Optional[datetime.datetime] = None,
-                     dtend: Optional[datetime.datetime] = None,
-                     inctran: bool = True,
-                     incoo: bool = False,
-                     dtasof: Optional[datetime.datetime] = None,
-                     incpos: bool = True,
-                     incbal: bool = True,
-                     ) -> INVSTMTTRNRQ:
+    def invstmttrnrq(
+        self,
+        acctid: str,
+        brokerid: str,
+        dtstart: Optional[datetime.datetime] = None,
+        dtend: Optional[datetime.datetime] = None,
+        inctran: bool = True,
+        incoo: bool = False,
+        dtasof: Optional[datetime.datetime] = None,
+        incpos: bool = True,
+        incbal: bool = True,
+    ) -> INVSTMTTRNRQ:
         """ Construct INVSTMTRQ; package in INVSTMTTRNRQ """
         acct = INVACCTFROM(acctid=acctid, brokerid=brokerid)
         if inctran:
-            inctran_: Optional[INCTRAN] = INCTRAN(dtstart=dtstart, dtend=dtend,
-                                                  include=inctran)
+            inctran_: Optional[INCTRAN] = INCTRAN(
+                dtstart=dtstart, dtend=dtend, include=inctran
+            )
         else:
             inctran_ = None
         incpos_ = INCPOS(dtasof=dtasof, include=incpos)
-        stmtrq = INVSTMTRQ(invacctfrom=acct, inctran=inctran_,
-                           incoo=incoo, incpos=incpos_, incbal=incbal)
+        stmtrq = INVSTMTRQ(
+            invacctfrom=acct,
+            inctran=inctran_,
+            incoo=incoo,
+            incpos=incpos_,
+            incbal=incbal,
+        )
         trnuid = self.uuid
         return INVSTMTTRNRQ(trnuid=trnuid, invstmtrq=stmtrq)
 
-    def download(self,
-                 ofx: OFX,
-                 version: Optional[int] = None,
-                 prettyprint: Optional[bool] = None,
-                 close_elements: Optional[bool] = None,
-                 dryrun: bool = False,
-                 verify_ssl: bool = True,
-                 timeout: Optional[float] = None,
-                 ) -> BinaryIO:
+    def download(
+        self,
+        ofx: OFX,
+        version: Optional[int] = None,
+        prettyprint: Optional[bool] = None,
+        close_elements: Optional[bool] = None,
+        dryrun: bool = False,
+        verify_ssl: bool = True,
+        timeout: Optional[float] = None,
+    ) -> BinaryIO:
         """
         Package complete OFX tree and POST to server.
 
@@ -505,8 +537,9 @@ class OFXClient:
 
         ofxget.scan_profile() overrides version/prettyprint/close_elements.
         """
-        request = self.serialize(ofx, version=version, prettyprint=prettyprint,
-                                 close_elements=close_elements)
+        request = self.serialize(
+            ofx, version=version, prettyprint=prettyprint, close_elements=close_elements
+        )
 
         if dryrun:
             return BytesIO(request)
@@ -523,24 +556,23 @@ class OFXClient:
             ssl_context = ssl.create_default_context()
 
         timeout = timeout or socket._GLOBAL_DEFAULT_TIMEOUT
-        response = urllib_request.urlopen(req, timeout=timeout,
-                                          context=ssl_context)
+        response = urllib_request.urlopen(req, timeout=timeout, context=ssl_context)
         return response
 
-    def serialize(self,
-                  ofx: OFX,
-                  version: Optional[int] = None,
-                  prettyprint: Optional[bool] = None,
-                  close_elements: Optional[bool] = None,
-                  ) -> bytes:
+    def serialize(
+        self,
+        ofx: OFX,
+        version: Optional[int] = None,
+        prettyprint: Optional[bool] = None,
+        close_elements: Optional[bool] = None,
+    ) -> bytes:
         if version is None:
             version = self.version
         if prettyprint is None:
             prettyprint = self.prettyprint
         if close_elements is None:
             close_elements = self.close_elements
-        header = bytes(str(make_header(version=version, newfileuid=self.uuid)),
-                       "utf_8")
+        header = bytes(str(make_header(version=version, newfileuid=self.uuid)), "utf_8")
 
         tree = ofx.to_etree()
         if prettyprint:
@@ -568,32 +600,36 @@ def wrap_stmtrq(nt, rqs, client):
 
 @wrap_stmtrq.register(StmtRq)
 def wrap_stmtrq_stmtrq(nt, rqs, client):
-    return (BANKMSGSRQV1,
-            [client.stmttrnrq(**dict(rq._asdict(), bankid=client.bankid))
-             for rq in rqs])
+    return (
+        BANKMSGSRQV1,
+        [client.stmttrnrq(**dict(rq._asdict(), bankid=client.bankid)) for rq in rqs],
+    )
 
 
 @wrap_stmtrq.register(CcStmtRq)
 def wrap_stmtrq_ccstmtrq(nt, rqs, client):
-    return (CREDITCARDMSGSRQV1,
-            [client.ccstmttrnrq(**rq._asdict()) for rq in rqs])
+    return (CREDITCARDMSGSRQV1, [client.ccstmttrnrq(**rq._asdict()) for rq in rqs])
 
 
 @wrap_stmtrq.register(InvStmtRq)
 def wrap_stmtrq_invstmtrq(nt, rqs, client):
-    return (INVSTMTMSGSRQV1,
-            [client.invstmttrnrq(**dict(r._asdict(), brokerid=client.brokerid))
-             for r in rqs])
+    return (
+        INVSTMTMSGSRQV1,
+        [
+            client.invstmttrnrq(**dict(r._asdict(), brokerid=client.brokerid))
+            for r in rqs
+        ],
+    )
 
 
 @wrap_stmtrq.register(StmtEndRq)
 def wrap_stmtrq_stmtendrq(nt, rqs, client):
-    return (BANKMSGSRQV1,
-            [client.stmtendtrnrq(**dict(rq._asdict(), bankid=client.bankid))
-             for rq in rqs])
+    return (
+        BANKMSGSRQV1,
+        [client.stmtendtrnrq(**dict(rq._asdict(), bankid=client.bankid)) for rq in rqs],
+    )
 
 
 @wrap_stmtrq.register(CcStmtEndRq)
 def wrap_stmtrq_ccstmtendrq(nt, rqs, client):
-    return (CREDITCARDMSGSRQV1,
-            [client.ccstmtendtrnrq(**rq._asdict()) for rq in rqs])
+    return (CREDITCARDMSGSRQV1, [client.ccstmtendtrnrq(**rq._asdict()) for rq in rqs])

@@ -4,29 +4,15 @@ Bill pay message sets - OFX Section 12.11
 """
 
 
-__all__ = [
-    "BILLPAYMSGSRQV1",
-    "BILLPAYMSGSRSV1",
-    "BILLPAYMSGSETV1",
-    "BILLPAYMSGSET",
-]
+__all__ = ["BILLPAYMSGSRQV1", "BILLPAYMSGSRSV1", "BILLPAYMSGSETV1", "BILLPAYMSGSET"]
 
 
 # local imports
 from ofxtools.Types import Bool, Integer, Time, OneOf, ListItem, ListElement
 from ofxtools.models.base import Aggregate, SubAggregate, ElementList
 from ofxtools.models.common import MSGSETCORE
-from ofxtools.models.billpay.pmt import (
-    PMTTRNRQ,
-    PMTTRNRS,
-    PMTINQTRNRQ,
-    PMTINQTRNRS,
-
-)
-from ofxtools.models.billpay.recur import (
-    RECPMTTRNRQ,
-    RECPMTTRNRS,
-)
+from ofxtools.models.billpay.pmt import PMTTRNRQ, PMTTRNRS, PMTINQTRNRQ, PMTINQTRNRS
+from ofxtools.models.billpay.recur import RECPMTTRNRQ, RECPMTTRNRS
 from ofxtools.models.billpay.sync import (
     PMTSYNCRQ,
     PMTSYNCRS,
@@ -41,19 +27,10 @@ from ofxtools.models.billpay.mail import (
     PMTMAILSYNCRQ,
     PMTMAILSYNCRS,
 )
-from ofxtools.models.billpay.list import (
-    PAYEETRNRQ,
-    PAYEETRNRS,
-)
+from ofxtools.models.billpay.list import PAYEETRNRQ, PAYEETRNRS
 
 
-DAYS = ("MONDAY",
-        "TUESDAY",
-        "WEDNESDAY",
-        "THURSDAY",
-        "FRIDAY",
-        "SATURDAY",
-        "SUNDAY")
+DAYS = ("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY")
 
 
 class BILLPAYMSGSRQV1(Aggregate):

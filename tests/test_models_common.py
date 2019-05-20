@@ -36,8 +36,7 @@ class BalTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["NAME", "DESC", "BALTYPE", "VALUE"]
     optionalElements = ["DTASOF", "CURRENCY"]
-    oneOfs = {"BALTYPE": ("DOLLAR", "PERCENT", "NUMBER"),
-              "CURSYM": CURRENCY_CODES}
+    oneOfs = {"BALTYPE": ("DOLLAR", "PERCENT", "NUMBER"), "CURSYM": CURRENCY_CODES}
 
     @classproperty
     @classmethod
@@ -55,10 +54,14 @@ class BalTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return BAL(name="balance", desc="Balance", baltype="DOLLAR",
-                   value=Decimal("111.22"),
-                   dtasof=datetime(2001, 6, 30, tzinfo=UTC),
-                   currency=i18n.CurrencyTestCase.aggregate)
+        return BAL(
+            name="balance",
+            desc="Balance",
+            baltype="DOLLAR",
+            value=Decimal("111.22"),
+            dtasof=datetime(2001, 6, 30, tzinfo=UTC),
+            currency=i18n.CurrencyTestCase.aggregate,
+        )
 
 
 class OfxelementTestCase(unittest.TestCase, base.TestAggregate):
@@ -77,8 +80,12 @@ class OfxelementTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return OFXELEMENT(tagname="ABC.SOMETHING", name="Some OFX extension",
-                          tagtype="A-32", tagvalue="Foobar")
+        return OFXELEMENT(
+            tagname="ABC.SOMETHING",
+            name="Some OFX extension",
+            tagtype="A-32",
+            tagvalue="Foobar",
+        )
 
 
 class OfxextensionTestCase(unittest.TestCase, base.TestAggregate):
@@ -95,8 +102,7 @@ class OfxextensionTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return OFXEXTENSION(OfxelementTestCase.aggregate,
-                            OfxelementTestCase.aggregate)
+        return OFXEXTENSION(OfxelementTestCase.aggregate, OfxelementTestCase.aggregate)
 
 
 class TranListTestCase(unittest.TestCase, base.TestAggregate):

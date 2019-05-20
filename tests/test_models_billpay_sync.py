@@ -44,10 +44,13 @@ class PmtsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     @classproperty
     @classmethod
     def aggregate(self):
-        return PMTSYNCRQ(bp_pmt.PmttrnrqTestCase.aggregate,
-                         bp_pmt.PmttrnrqTestCase.aggregate,
-                         token="DEADBEEF", rejectifmissing=True,
-                         bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate)
+        return PMTSYNCRQ(
+            bp_pmt.PmttrnrqTestCase.aggregate,
+            bp_pmt.PmttrnrqTestCase.aggregate,
+            token="DEADBEEF",
+            rejectifmissing=True,
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -83,10 +86,13 @@ class PmtsyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     @classproperty
     @classmethod
     def aggregate(self):
-        return PMTSYNCRS(bp_pmt.PmttrnrsTestCase.aggregate,
-                         bp_pmt.PmttrnrsTestCase.aggregate,
-                         token="DEADBEEF", lostsync=True,
-                         bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate)
+        return PMTSYNCRS(
+            bp_pmt.PmttrnrsTestCase.aggregate,
+            bp_pmt.PmttrnrsTestCase.aggregate,
+            token="DEADBEEF",
+            lostsync=True,
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -123,10 +129,13 @@ class RecpmtsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     @classproperty
     @classmethod
     def aggregate(self):
-        return RECPMTSYNCRQ(bp_recur.RecpmttrnrqTestCase.aggregate,
-                            bp_recur.RecpmttrnrqTestCase.aggregate,
-                            token="DEADBEEF", rejectifmissing=True,
-                            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate)
+        return RECPMTSYNCRQ(
+            bp_recur.RecpmttrnrqTestCase.aggregate,
+            bp_recur.RecpmttrnrqTestCase.aggregate,
+            token="DEADBEEF",
+            rejectifmissing=True,
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -162,10 +171,13 @@ class RecpmtsyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     @classproperty
     @classmethod
     def aggregate(self):
-        return RECPMTSYNCRS(bp_recur.RecpmttrnrsTestCase.aggregate,
-                            bp_recur.RecpmttrnrsTestCase.aggregate,
-                            token="DEADBEEF", lostsync=True,
-                            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate)
+        return RECPMTSYNCRS(
+            bp_recur.RecpmttrnrsTestCase.aggregate,
+            bp_recur.RecpmttrnrsTestCase.aggregate,
+            token="DEADBEEF",
+            lostsync=True,
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -199,9 +211,12 @@ class PayeesyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     @classproperty
     @classmethod
     def aggregate(self):
-        return PAYEESYNCRQ(bp_list.PayeetrnrqTestCase.aggregate,
-                           bp_list.PayeetrnrqTestCase.aggregate,
-                           token="DEADBEEF", rejectifmissing=True)
+        return PAYEESYNCRQ(
+            bp_list.PayeetrnrqTestCase.aggregate,
+            bp_list.PayeetrnrqTestCase.aggregate,
+            token="DEADBEEF",
+            rejectifmissing=True,
+        )
 
     @classproperty
     @classmethod
@@ -232,9 +247,12 @@ class PayeesyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
     @classproperty
     @classmethod
     def aggregate(self):
-        return PAYEESYNCRS(bp_list.PayeetrnrsTestCase.aggregate,
-                           bp_list.PayeetrnrsTestCase.aggregate,
-                           token="DEADBEEF", lostsync=True)
+        return PAYEESYNCRS(
+            bp_list.PayeetrnrsTestCase.aggregate,
+            bp_list.PayeetrnrsTestCase.aggregate,
+            token="DEADBEEF",
+            lostsync=True,
+        )
 
     @classproperty
     @classmethod

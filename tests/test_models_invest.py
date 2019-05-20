@@ -12,14 +12,41 @@ from ofxtools.models.base import Aggregate
 from ofxtools.models.common import SVCSTATUSES
 from ofxtools.models.bank.stmt import INV401KSOURCES
 from ofxtools.models.invest import (
-    USPRODUCTTYPES, INVACCTTYPES, INVSUBACCTS, LOANPMTFREQUENCIES,
-    INVPOS, POSDEBT, POSMF, POSOPT, POSOTHER, POSSTOCK,
-    INVTRANLIST, INVPOSLIST, INCPOS, INVACCTFROM, INVACCTTO, INVACCTINFO,
-    INVBAL, INV401KBAL,
-    MATCHINFO, CONTRIBSECURITY, CONTRIBINFO, VESTINFO, LOANINFO,
-    CONTRIBUTIONS, WITHDRAWALS, EARNINGS,
-    YEARTODATE, INCEPTODATE, PERIODTODATE, INV401KSUMMARY, INV401K,
-    INVSTMTRQ, INVSTMTRS, INVSTMTTRNRQ, INVSTMTTRNRS,
+    USPRODUCTTYPES,
+    INVACCTTYPES,
+    INVSUBACCTS,
+    LOANPMTFREQUENCIES,
+    INVPOS,
+    POSDEBT,
+    POSMF,
+    POSOPT,
+    POSOTHER,
+    POSSTOCK,
+    INVTRANLIST,
+    INVPOSLIST,
+    INCPOS,
+    INVACCTFROM,
+    INVACCTTO,
+    INVACCTINFO,
+    INVBAL,
+    INV401KBAL,
+    MATCHINFO,
+    CONTRIBSECURITY,
+    CONTRIBINFO,
+    VESTINFO,
+    LOANINFO,
+    CONTRIBUTIONS,
+    WITHDRAWALS,
+    EARNINGS,
+    YEARTODATE,
+    INCEPTODATE,
+    PERIODTODATE,
+    INV401KSUMMARY,
+    INV401K,
+    INVSTMTRQ,
+    INVSTMTRS,
+    INVSTMTTRNRQ,
+    INVSTMTTRNRS,
 )
 from ofxtools.utils import UTC, classproperty
 
@@ -75,8 +102,11 @@ class InvacctinfoTestCase(unittest.TestCase, base.TestAggregate):
 
     requiredElements = ["INVACCTFROM", "USPRODUCTTYPE", "CHECKING", "SVCSTATUS"]
     optionalElements = ["INVACCTTYPE", "OPTIONLEVEL"]
-    oneOfs = {"USPRODUCTTYPE": USPRODUCTTYPES, "SVCSTATUS": SVCSTATUSES,
-              "INVACCTTYPE": INVACCTTYPES}
+    oneOfs = {
+        "USPRODUCTTYPE": USPRODUCTTYPES,
+        "SVCSTATUS": SVCSTATUSES,
+        "INVACCTTYPE": INVACCTTYPES,
+    }
 
     @classproperty
     @classmethod
@@ -94,10 +124,14 @@ class InvacctinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INVACCTINFO(invacctfrom=InvacctfromTestCase.aggregate,
-                           usproducttype="401K", checking=True,
-                           svcstatus="ACTIVE", invaccttype="INDIVIDUAL",
-                           optionlevel="No way Jose")
+        return INVACCTINFO(
+            invacctfrom=InvacctfromTestCase.aggregate,
+            usproducttype="401K",
+            checking=True,
+            svcstatus="ACTIVE",
+            invaccttype="INDIVIDUAL",
+            optionlevel="No way Jose",
+        )
 
 
 class IncposTestCase(unittest.TestCase, base.TestAggregate):
@@ -136,9 +170,13 @@ class InvposlistTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INVPOSLIST(PosdebtTestCase.aggregate, PosmfTestCase.aggregate,
-                          PosoptTestCase.aggregate, PosotherTestCase.aggregate,
-                          PosstockTestCase.aggregate)
+        return INVPOSLIST(
+            PosdebtTestCase.aggregate,
+            PosmfTestCase.aggregate,
+            PosoptTestCase.aggregate,
+            PosotherTestCase.aggregate,
+            PosstockTestCase.aggregate,
+        )
 
     def testListItems(cls):
         # INVPOSLIST may only contain
@@ -171,16 +209,18 @@ class InvbalTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INVBAL(availcash=Decimal("12345.67"),
-                      marginbalance=Decimal("23456.78"),
-                      shortbalance=Decimal("34567.89"),
-                      buypower=Decimal("45678.90"))
+        return INVBAL(
+            availcash=Decimal("12345.67"),
+            marginbalance=Decimal("23456.78"),
+            shortbalance=Decimal("34567.89"),
+            buypower=Decimal("45678.90"),
+        )
 
 
 class Inv401kbalTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ["TOTAL",]
+    requiredElements = ["TOTAL"]
     optionalElements = [
         "CASHBAL",
         "PRETAX",
@@ -212,12 +252,18 @@ class Inv401kbalTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INV401KBAL(cashbal=Decimal("1"), pretax=Decimal("2"),
-                          aftertax=Decimal("3"), match=Decimal("4"),
-                          profitsharing=Decimal("5"), rollover=Decimal("6"),
-                          othervest=Decimal("7"), othernonvest=Decimal("8"),
-                          total=Decimal("36"),
-                          ballist=bk_stmt.BallistTestCase.aggregate)
+        return INV401KBAL(
+            cashbal=Decimal("1"),
+            pretax=Decimal("2"),
+            aftertax=Decimal("3"),
+            match=Decimal("4"),
+            profitsharing=Decimal("5"),
+            rollover=Decimal("6"),
+            othervest=Decimal("7"),
+            othernonvest=Decimal("8"),
+            total=Decimal("36"),
+            ballist=bk_stmt.BallistTestCase.aggregate,
+        )
 
 
 class MatchinfoTestCase(unittest.TestCase, base.TestAggregate):
@@ -247,11 +293,14 @@ class MatchinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return MATCHINFO(matchpct=Decimal("25.0"), maxmatchamt=Decimal("5000"),
-                         maxmatchpct=Decimal("20.0"),
-                         startofyear=datetime(1999, 1, 1, tzinfo=UTC),
-                         basematchamt=Decimal("1000"),
-                         basematchpct=Decimal("1.0"))
+        return MATCHINFO(
+            matchpct=Decimal("25.0"),
+            maxmatchamt=Decimal("5000"),
+            maxmatchpct=Decimal("20.0"),
+            startofyear=datetime(1999, 1, 1, tzinfo=UTC),
+            basematchamt=Decimal("1000"),
+            basematchpct=Decimal("1.0"),
+        )
 
 
 class ContribsecurityTestCase(unittest.TestCase, base.TestAggregate):
@@ -271,8 +320,8 @@ class ContribsecurityTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return CONTRIBSECURITY(
-            secid=securities.SecidTestCase.aggregate,
-            pretaxcontribpct=Decimal("25.0"))
+            secid=securities.SecidTestCase.aggregate, pretaxcontribpct=Decimal("25.0")
+        )
 
     @classproperty
     @classmethod
@@ -309,18 +358,30 @@ class ContribsecurityTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("CONTRIBSECURITY")
         root.append(securities.SecidTestCase.etree)
 
-        for pct in (pretaxcontribpct, aftertaxcontribpct, matchcontribpct,
-                    profitsharingcontribpct, rollovercontribpct, othervestpct,
-                    othernonvestpct):
+        for pct in (
+            pretaxcontribpct,
+            aftertaxcontribpct,
+            matchcontribpct,
+            profitsharingcontribpct,
+            rollovercontribpct,
+            othervestpct,
+            othernonvestpct,
+        ):
             root.append(pct)
             yield root
 
         root = Element("CONTRIBSECURITY")
         root.append(securities.SecidTestCase.etree)
 
-        for amt in (pretaxcontribamt, aftertaxcontribamt, matchcontribamt,
-                    profitsharingcontribamt, rollovercontribamt, othervestamt,
-                    othernonvestamt):
+        for amt in (
+            pretaxcontribamt,
+            aftertaxcontribamt,
+            matchcontribamt,
+            profitsharingcontribamt,
+            rollovercontribamt,
+            othervestamt,
+            othernonvestamt,
+        ):
             root.append(amt)
             yield root
 
@@ -362,12 +423,24 @@ class ContribsecurityTestCase(unittest.TestCase, base.TestAggregate):
         yield root
 
         # Mixing *pct and *amt is invalid
-        for pct in (pretaxcontribpct, aftertaxcontribpct, matchcontribpct,
-                    profitsharingcontribpct, rollovercontribpct, othervestpct,
-                    othernonvestpct):
-            for amt in (pretaxcontribamt, aftertaxcontribamt, matchcontribamt,
-                        profitsharingcontribamt, rollovercontribamt,
-                        othervestamt, othernonvestamt):
+        for pct in (
+            pretaxcontribpct,
+            aftertaxcontribpct,
+            matchcontribpct,
+            profitsharingcontribpct,
+            rollovercontribpct,
+            othervestpct,
+            othernonvestpct,
+        ):
+            for amt in (
+                pretaxcontribamt,
+                aftertaxcontribamt,
+                matchcontribamt,
+                profitsharingcontribamt,
+                rollovercontribamt,
+                othervestamt,
+                othernonvestamt,
+            ):
                 root = Element("CONTRIBSECURITY")
                 root.append(securities.SecidTestCase.etree)
                 root.append(pct)
@@ -389,8 +462,9 @@ class ContribinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CONTRIBINFO(ContribsecurityTestCase.aggregate,
-                           ContribsecurityTestCase.aggregate)
+        return CONTRIBINFO(
+            ContribsecurityTestCase.aggregate, ContribsecurityTestCase.aggregate
+        )
 
     @classproperty
     @classmethod
@@ -417,19 +491,29 @@ class VestinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return VESTINFO(vestdate=datetime(2004, 9, 28, tzinfo=UTC),
-                        vestpct=Decimal("29.6671"))
+        return VESTINFO(
+            vestdate=datetime(2004, 9, 28, tzinfo=UTC), vestpct=Decimal("29.6671")
+        )
 
 
 class LoaninfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["LOANID", "CURRENTLOANBAL", "DTASOF"]
-    optionalElements = ["LOANDESC", "INITIALLOANBAL", "LOANSTARTDATE",
-                        "LOANRATE", "LOANPMTAMT", "LOANPMTFREQ",
-                        "LOANPMTSINITIAL", "LOANPMTSREMAINING",
-                        "LOANMATURITYDATE", "LOANTOTALPROJINTEREST",
-                        "LOANINTERESTTODATE", "LOANNEXTPMTDATE"]
+    optionalElements = [
+        "LOANDESC",
+        "INITIALLOANBAL",
+        "LOANSTARTDATE",
+        "LOANRATE",
+        "LOANPMTAMT",
+        "LOANPMTFREQ",
+        "LOANPMTSINITIAL",
+        "LOANPMTSREMAINING",
+        "LOANMATURITYDATE",
+        "LOANTOTALPROJINTEREST",
+        "LOANINTERESTTODATE",
+        "LOANNEXTPMTDATE",
+    ]
     oneOfs = {"LOANPMTFREQ": LOANPMTFREQUENCIES}
 
     @classproperty
@@ -456,26 +540,38 @@ class LoaninfoTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return LOANINFO(loanid="1", loandesc="House down payment",
-                        initialloanbal=Decimal("21000"),
-                        loanstartdate=datetime(2005, 7, 1, tzinfo=UTC),
-                        currentloanbal=Decimal("12000"),
-                        dtasof=datetime(2009, 7, 1, tzinfo=UTC),
-                        loanrate=Decimal("5.0"), loanpmtamt=Decimal("865.34"),
-                        loanpmtfreq="MONTHLY", loanpmtsinitial=60,
-                        loanpmtsremaining=12,
-                        loanmaturitydate=datetime(2010, 7, 1, tzinfo=UTC),
-                        loantotalprojinterest=Decimal("13000"),
-                        loaninteresttodate=Decimal("8500"),
-                        loannextpmtdate=datetime(2009, 8, 1, tzinfo=UTC))
+        return LOANINFO(
+            loanid="1",
+            loandesc="House down payment",
+            initialloanbal=Decimal("21000"),
+            loanstartdate=datetime(2005, 7, 1, tzinfo=UTC),
+            currentloanbal=Decimal("12000"),
+            dtasof=datetime(2009, 7, 1, tzinfo=UTC),
+            loanrate=Decimal("5.0"),
+            loanpmtamt=Decimal("865.34"),
+            loanpmtfreq="MONTHLY",
+            loanpmtsinitial=60,
+            loanpmtsremaining=12,
+            loanmaturitydate=datetime(2010, 7, 1, tzinfo=UTC),
+            loantotalprojinterest=Decimal("13000"),
+            loaninteresttodate=Decimal("8500"),
+            loannextpmtdate=datetime(2009, 8, 1, tzinfo=UTC),
+        )
 
 
 class ContributionsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["TOTAL"]
-    optionalElements = ["PRETAX", "AFTERTAX", "MATCH", "PROFITSHARING",
-                        "ROLLOVER", "OTHERVEST", "OTHERNONVEST"]
+    optionalElements = [
+        "PRETAX",
+        "AFTERTAX",
+        "MATCH",
+        "PROFITSHARING",
+        "ROLLOVER",
+        "OTHERVEST",
+        "OTHERNONVEST",
+    ]
 
     @classproperty
     @classmethod
@@ -494,18 +590,31 @@ class ContributionsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CONTRIBUTIONS(pretax=Decimal("1"), aftertax=Decimal("2"),
-                             match=Decimal("3"), profitsharing=Decimal("4"),
-                             rollover=Decimal("5"), othervest=Decimal("6"),
-                             othernonvest=Decimal("7"), total=Decimal("28"))
+        return CONTRIBUTIONS(
+            pretax=Decimal("1"),
+            aftertax=Decimal("2"),
+            match=Decimal("3"),
+            profitsharing=Decimal("4"),
+            rollover=Decimal("5"),
+            othervest=Decimal("6"),
+            othernonvest=Decimal("7"),
+            total=Decimal("28"),
+        )
 
 
 class WithdrawalsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["TOTAL"]
-    optionalElements = ["PRETAX", "AFTERTAX", "MATCH", "PROFITSHARING",
-                        "ROLLOVER", "OTHERVEST", "OTHERNONVEST"]
+    optionalElements = [
+        "PRETAX",
+        "AFTERTAX",
+        "MATCH",
+        "PROFITSHARING",
+        "ROLLOVER",
+        "OTHERVEST",
+        "OTHERNONVEST",
+    ]
 
     @classproperty
     @classmethod
@@ -524,18 +633,31 @@ class WithdrawalsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return WITHDRAWALS(pretax=Decimal("1"), aftertax=Decimal("2"),
-                           match=Decimal("3"), profitsharing=Decimal("4"),
-                           rollover=Decimal("5"), othervest=Decimal("6"),
-                           othernonvest=Decimal("7"), total=Decimal("28"))
+        return WITHDRAWALS(
+            pretax=Decimal("1"),
+            aftertax=Decimal("2"),
+            match=Decimal("3"),
+            profitsharing=Decimal("4"),
+            rollover=Decimal("5"),
+            othervest=Decimal("6"),
+            othernonvest=Decimal("7"),
+            total=Decimal("28"),
+        )
 
 
 class EarningsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["TOTAL"]
-    optionalElements = ["PRETAX", "AFTERTAX", "MATCH", "PROFITSHARING",
-                        "ROLLOVER", "OTHERVEST", "OTHERNONVEST"]
+    optionalElements = [
+        "PRETAX",
+        "AFTERTAX",
+        "MATCH",
+        "PROFITSHARING",
+        "ROLLOVER",
+        "OTHERVEST",
+        "OTHERNONVEST",
+    ]
 
     @classproperty
     @classmethod
@@ -554,10 +676,16 @@ class EarningsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return EARNINGS(pretax=Decimal("1"), aftertax=Decimal("2"),
-                        match=Decimal("3"), profitsharing=Decimal("4"),
-                        rollover=Decimal("5"), othervest=Decimal("6"),
-                        othernonvest=Decimal("7"), total=Decimal("28"))
+        return EARNINGS(
+            pretax=Decimal("1"),
+            aftertax=Decimal("2"),
+            match=Decimal("3"),
+            profitsharing=Decimal("4"),
+            rollover=Decimal("5"),
+            othervest=Decimal("6"),
+            othernonvest=Decimal("7"),
+            total=Decimal("28"),
+        )
 
 
 class YeartodateTestCase(unittest.TestCase, base.TestAggregate):
@@ -580,11 +708,13 @@ class YeartodateTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return YEARTODATE(dtstart=datetime(2001, 1, 1, tzinfo=UTC),
-                          dtend=datetime(2001, 12, 31, tzinfo=UTC),
-                          contributions=ContributionsTestCase.aggregate,
-                          withdrawals=WithdrawalsTestCase.aggregate,
-                          earnings=EarningsTestCase.aggregate)
+        return YEARTODATE(
+            dtstart=datetime(2001, 1, 1, tzinfo=UTC),
+            dtend=datetime(2001, 12, 31, tzinfo=UTC),
+            contributions=ContributionsTestCase.aggregate,
+            withdrawals=WithdrawalsTestCase.aggregate,
+            earnings=EarningsTestCase.aggregate,
+        )
 
 
 class InceptodateTestCase(unittest.TestCase, base.TestAggregate):
@@ -607,11 +737,13 @@ class InceptodateTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INCEPTODATE(dtstart=datetime(2001, 1, 1, tzinfo=UTC),
-                           dtend=datetime(2001, 12, 31, tzinfo=UTC),
-                           contributions=ContributionsTestCase.aggregate,
-                           withdrawals=WithdrawalsTestCase.aggregate,
-                           earnings=EarningsTestCase.aggregate)
+        return INCEPTODATE(
+            dtstart=datetime(2001, 1, 1, tzinfo=UTC),
+            dtend=datetime(2001, 12, 31, tzinfo=UTC),
+            contributions=ContributionsTestCase.aggregate,
+            withdrawals=WithdrawalsTestCase.aggregate,
+            earnings=EarningsTestCase.aggregate,
+        )
 
 
 class PeriodtodateTestCase(unittest.TestCase, base.TestAggregate):
@@ -634,11 +766,13 @@ class PeriodtodateTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PERIODTODATE(dtstart=datetime(2001, 1, 1, tzinfo=UTC),
-                            dtend=datetime(2001, 12, 31, tzinfo=UTC),
-                            contributions=ContributionsTestCase.aggregate,
-                            withdrawals=WithdrawalsTestCase.aggregate,
-                            earnings=EarningsTestCase.aggregate)
+        return PERIODTODATE(
+            dtstart=datetime(2001, 1, 1, tzinfo=UTC),
+            dtend=datetime(2001, 12, 31, tzinfo=UTC),
+            contributions=ContributionsTestCase.aggregate,
+            withdrawals=WithdrawalsTestCase.aggregate,
+            earnings=EarningsTestCase.aggregate,
+        )
 
 
 class Inv401ksummaryTestCase(unittest.TestCase, base.TestAggregate):
@@ -659,19 +793,29 @@ class Inv401ksummaryTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INV401KSUMMARY(yeartodate=YeartodateTestCase.aggregate,
-                              inceptodate=InceptodateTestCase.aggregate,
-                              periodtodate=PeriodtodateTestCase.aggregate)
+        return INV401KSUMMARY(
+            yeartodate=YeartodateTestCase.aggregate,
+            inceptodate=InceptodateTestCase.aggregate,
+            periodtodate=PeriodtodateTestCase.aggregate,
+        )
 
 
 class Inv401kTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["EMPLOYERNAME"]
-    optionalElements = ["PLANID", "PLANJOINDATE", "EMPLOYERCONTACTINFO",
-                        "BROKERCONTACTINFO", "DEFERPCTPRETAX",
-                        "DEFERPCTAFTERTAX", "MATCHINFO", "CONTRIBINFO",
-                        "CURRENTVESTPCT", "INV401KSUMMARY"]
+    optionalElements = [
+        "PLANID",
+        "PLANJOINDATE",
+        "EMPLOYERCONTACTINFO",
+        "BROKERCONTACTINFO",
+        "DEFERPCTPRETAX",
+        "DEFERPCTAFTERTAX",
+        "MATCHINFO",
+        "CONTRIBINFO",
+        "CURRENTVESTPCT",
+        "INV401KSUMMARY",
+    ]
 
     @classproperty
     @classmethod
@@ -697,18 +841,23 @@ class Inv401kTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INV401K(VestinfoTestCase.aggregate, VestinfoTestCase.aggregate,
-                       LoaninfoTestCase.aggregate, LoaninfoTestCase.aggregate,
-                       employername="V2 Rockets GmbH", planid="1",
-                       planjoindate=datetime(2004, 7, 7, tzinfo=UTC),
-                       employercontactinfo="plan_help@v2.com",
-                       brokercontactinfo="plan_help@dch.com",
-                       deferpctpretax=Decimal("15.0"),
-                       deferpctaftertax=Decimal("15.0"),
-                       matchinfo=MatchinfoTestCase.aggregate,
-                       contribinfo=ContribinfoTestCase.aggregate,
-                       currentvestpct=Decimal("75.0"),
-                       inv401ksummary=Inv401ksummaryTestCase.aggregate)
+        return INV401K(
+            VestinfoTestCase.aggregate,
+            VestinfoTestCase.aggregate,
+            LoaninfoTestCase.aggregate,
+            LoaninfoTestCase.aggregate,
+            employername="V2 Rockets GmbH",
+            planid="1",
+            planjoindate=datetime(2004, 7, 7, tzinfo=UTC),
+            employercontactinfo="plan_help@v2.com",
+            brokercontactinfo="plan_help@dch.com",
+            deferpctpretax=Decimal("15.0"),
+            deferpctaftertax=Decimal("15.0"),
+            matchinfo=MatchinfoTestCase.aggregate,
+            contribinfo=ContribinfoTestCase.aggregate,
+            currentvestpct=Decimal("75.0"),
+            inv401ksummary=Inv401ksummaryTestCase.aggregate,
+        )
 
 
 class InvposTestCase(unittest.TestCase, base.TestAggregate):
@@ -724,8 +873,11 @@ class InvposTestCase(unittest.TestCase, base.TestAggregate):
         "DTPRICEASOF",
     ]
     optionalElements = ["AVGCOSTBASIS", "CURRENCY", "MEMO", "INV401KSOURCE"]
-    oneOfs = {"HELDINACCT": INVSUBACCTS, "POSTYPE": ("SHORT", "LONG"),
-              "INV401KSOURCE": INV401KSOURCES}
+    oneOfs = {
+        "HELDINACCT": INVSUBACCTS,
+        "POSTYPE": ("SHORT", "LONG"),
+        "INV401KSOURCE": INV401KSOURCES,
+    }
 
     @classproperty
     @classmethod
@@ -747,13 +899,19 @@ class InvposTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INVPOS(secid=securities.SecidTestCase.aggregate,
-                      heldinacct="MARGIN", postype="LONG",
-                      units=Decimal("100"), unitprice=Decimal("90"),
-                      mktval=Decimal("9000"), avgcostbasis=Decimal("85"),
-                      dtpriceasof=datetime(2013, 6, 30, tzinfo=UTC),
-                      currency=i18n.CurrencyTestCase.aggregate,
-                      memo="Marked to myth", inv401ksource="PROFITSHARING")
+        return INVPOS(
+            secid=securities.SecidTestCase.aggregate,
+            heldinacct="MARGIN",
+            postype="LONG",
+            units=Decimal("100"),
+            unitprice=Decimal("90"),
+            mktval=Decimal("9000"),
+            avgcostbasis=Decimal("85"),
+            dtpriceasof=datetime(2013, 6, 30, tzinfo=UTC),
+            currency=i18n.CurrencyTestCase.aggregate,
+            memo="Marked to myth",
+            inv401ksource="PROFITSHARING",
+        )
 
 
 class PosdebtTestCase(unittest.TestCase, base.TestAggregate):
@@ -812,9 +970,13 @@ class PosmfTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return POSMF(invpos=InvposTestCase.aggregate,
-                     unitsstreet=Decimal("200"), unitsuser=Decimal("300"),
-                     reinvdiv=False, reinvcg=True)
+        return POSMF(
+            invpos=InvposTestCase.aggregate,
+            unitsstreet=Decimal("200"),
+            unitsuser=Decimal("300"),
+            reinvdiv=False,
+            reinvcg=True,
+        )
 
     def testPropertyAliases(cls):
         instance = Aggregate.from_etree(cls.etree)
@@ -922,9 +1084,12 @@ class PosstockTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return POSSTOCK(invpos=InvposTestCase.aggregate,
-                        unitsstreet=Decimal("200"), unitsuser=Decimal("300"),
-                        reinvdiv=False)
+        return POSSTOCK(
+            invpos=InvposTestCase.aggregate,
+            unitsstreet=Decimal("200"),
+            unitsuser=Decimal("300"),
+            reinvdiv=False,
+        )
 
     def testPropertyAliases(cls):
         instance = Aggregate.from_etree(cls.etree)
@@ -963,10 +1128,16 @@ class InvstmtrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INVSTMTRQ(invacctfrom=InvacctfromTestCase.aggregate,
-                         inctran=bk_stmt.InctranTestCase.aggregate, incoo=False,
-                         incpos=IncposTestCase.aggregate, incbal=False,
-                         inc401k=True, inc401kbal=False, inctranimg=True)
+        return INVSTMTRQ(
+            invacctfrom=InvacctfromTestCase.aggregate,
+            inctran=bk_stmt.InctranTestCase.aggregate,
+            incoo=False,
+            incpos=IncposTestCase.aggregate,
+            incbal=False,
+            inc401k=True,
+            inc401kbal=False,
+            inctranimg=True,
+        )
 
 
 class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -980,7 +1151,7 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
         "INVOOLIST",
         "MKTGINFO",
         "INV401KBAL",
-        'MKTGINFO',
+        "MKTGINFO",
     ]
 
     @classproperty
@@ -1001,15 +1172,17 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INVSTMTRS(dtasof=datetime(2001, 5, 30, tzinfo=UTC),
-                         curdef="USD",
-                         invacctfrom=InvacctfromTestCase.aggregate,
-                         invtranlist=InvtranlistTestCase.aggregate,
-                         invposlist=InvposlistTestCase.aggregate,
-                         invbal=InvbalTestCase.aggregate,
-                         invoolist=oo.InvoolistTestCase.aggregate,
-                         inv401kbal=Inv401kbalTestCase.aggregate,
-                         mktginfo="Get Free Stuff NOW!!")
+        return INVSTMTRS(
+            dtasof=datetime(2001, 5, 30, tzinfo=UTC),
+            curdef="USD",
+            invacctfrom=InvacctfromTestCase.aggregate,
+            invtranlist=InvtranlistTestCase.aggregate,
+            invposlist=InvposlistTestCase.aggregate,
+            invbal=InvbalTestCase.aggregate,
+            invoolist=oo.InvoolistTestCase.aggregate,
+            inv401kbal=Inv401kbalTestCase.aggregate,
+            mktginfo="Get Free Stuff NOW!!",
+        )
 
     def testPropertyAliases(cls):
         instance = Aggregate.from_etree(cls.etree)
@@ -1027,8 +1200,12 @@ class InvstmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INVSTMTTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                            invstmtrq=InvstmtrqTestCase.aggregate)
+        return INVSTMTTRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            invstmtrq=InvstmtrqTestCase.aggregate,
+        )
 
 
 class InvstmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -1044,10 +1221,12 @@ class InvstmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INVSTMTTRNRS(trnuid="DEADBEEF",
-                            status=base.StatusTestCase.aggregate,
-                            cltcookie="B00B135",
-                            invstmtrs=InvstmtrsTestCase.aggregate)
+        return INVSTMTTRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            invstmtrs=InvstmtrsTestCase.aggregate,
+        )
 
 
 class InvtranlistTestCase(unittest.TestCase, base.TranlistTestCase):
@@ -1058,17 +1237,30 @@ class InvtranlistTestCase(unittest.TestCase, base.TranlistTestCase):
     def transactions(cls):
         # Avoid circular imports in the global scope
         import test_models_invest_transactions as test_txs
-        return (test_txs.InvbanktranTestCase, test_txs.BuydebtTestCase,
-                test_txs.BuymfTestCase, test_txs.BuyoptTestCase,
-                test_txs.BuyotherTestCase, test_txs.BuystockTestCase,
-                test_txs.ClosureoptTestCase, test_txs.IncomeTestCase,
-                test_txs.InvexpenseTestCase, test_txs.JrnlfundTestCase,
-                test_txs.JrnlsecTestCase, test_txs.MargininterestTestCase,
-                test_txs.ReinvestTestCase, test_txs.RetofcapTestCase,
-                test_txs.SelldebtTestCase, test_txs.SellmfTestCase,
-                test_txs.SelloptTestCase, test_txs.SellotherTestCase,
-                test_txs.SellstockTestCase, test_txs.SplitTestCase,
-                test_txs.TransferTestCase)
+
+        return (
+            test_txs.InvbanktranTestCase,
+            test_txs.BuydebtTestCase,
+            test_txs.BuymfTestCase,
+            test_txs.BuyoptTestCase,
+            test_txs.BuyotherTestCase,
+            test_txs.BuystockTestCase,
+            test_txs.ClosureoptTestCase,
+            test_txs.IncomeTestCase,
+            test_txs.InvexpenseTestCase,
+            test_txs.JrnlfundTestCase,
+            test_txs.JrnlsecTestCase,
+            test_txs.MargininterestTestCase,
+            test_txs.ReinvestTestCase,
+            test_txs.RetofcapTestCase,
+            test_txs.SelldebtTestCase,
+            test_txs.SellmfTestCase,
+            test_txs.SelloptTestCase,
+            test_txs.SellotherTestCase,
+            test_txs.SellstockTestCase,
+            test_txs.SplitTestCase,
+            test_txs.TransferTestCase,
+        )
 
     @classproperty
     @classmethod
@@ -1084,8 +1276,11 @@ class InvtranlistTestCase(unittest.TestCase, base.TranlistTestCase):
     @classmethod
     def aggregate(cls):
         txs = [tx.aggregate for tx in cls.transactions]
-        return INVTRANLIST(*txs, dtstart=datetime(2016, 1, 1, tzinfo=UTC),
-                           dtend=datetime(2016, 12, 31, tzinfo=UTC))
+        return INVTRANLIST(
+            *txs,
+            dtstart=datetime(2016, 1, 1, tzinfo=UTC),
+            dtend=datetime(2016, 12, 31, tzinfo=UTC)
+        )
 
     @classproperty
     @classmethod

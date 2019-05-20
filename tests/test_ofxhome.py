@@ -20,14 +20,17 @@ class ListInstitutionsTestCase(unittest.TestCase):
             <institutionid name="American Express" id="1234"/>
             <institutionid name="Bank of America" id="2222"/>
             </institutionlist>
-            """)
+            """
+        )
 
         with patch("urllib.request.urlopen") as mock_urlopen:
             mock_urlopen.return_value = mock_xml
             lst = ofxhome.list_institutions()
 
-        self.assertEqual(lst, OrderedDict([("1234", "American Express"),
-                                          ("2222", "Bank of America")]))
+        self.assertEqual(
+            lst,
+            OrderedDict([("1234", "American Express"), ("2222", "Bank of America")]),
+        )
 
 
 class LookupTestCase(unittest.TestCase):
@@ -45,7 +48,8 @@ class LookupTestCase(unittest.TestCase):
             <lastsslvalidation>2019-04-29 23:08:44</lastsslvalidation>
             <profile finame="American Express" addr1="777 American Expressway" city="Fort Lauderdale" state="Fla." postalcode="33337-0001" country="USA" csphone="1-800-AXP-7500  (1-800-297-7500)" url="https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload" signonmsgset="true" bankmsgset="true" creditcardmsgset="true"/>
             </institution>
-            """)
+            """
+        )
 
         with patch("urllib.request.urlopen") as mock_urlopen:
             mock_urlopen.return_value = mock_xml
@@ -56,23 +60,30 @@ class LookupTestCase(unittest.TestCase):
         self.assertEqual(lookup.name, "American Express Card")
         self.assertEqual(lookup.fid, "3101")
         self.assertEqual(lookup.org, "AMEX")
-        self.assertEqual(lookup.url, "https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload")
+        self.assertEqual(
+            lookup.url,
+            "https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload",
+        )
         self.assertEqual(lookup.ofxfail, False)
         self.assertEqual(lookup.sslfail, False)
         self.assertEqual(lookup.lastofxvalidation, datetime(2019, 4, 29, 23, 8, 45))
         self.assertEqual(lookup.lastsslvalidation, datetime(2019, 4, 29, 23, 8, 44))
-        self.assertEqual(lookup.profile,
-                         {"finame": "American Express",
-                          "addr1": "777 American Expressway",
-                          "city": "Fort Lauderdale",
-                          "state": "Fla.",
-                          "postalcode": "33337-0001",
-                          "country": "USA",
-                          "csphone": "1-800-AXP-7500  (1-800-297-7500)",
-                          "url": "https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload",
-                          "signonmsgset": True,
-                          "bankmsgset": True,
-                          "creditcardmsgset": True})
+        self.assertEqual(
+            lookup.profile,
+            {
+                "finame": "American Express",
+                "addr1": "777 American Expressway",
+                "city": "Fort Lauderdale",
+                "state": "Fla.",
+                "postalcode": "33337-0001",
+                "country": "USA",
+                "csphone": "1-800-AXP-7500  (1-800-297-7500)",
+                "url": "https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload",
+                "signonmsgset": True,
+                "bankmsgset": True,
+                "creditcardmsgset": True,
+            },
+        )
 
 
 class FetchFiXmlTestCase(unittest.TestCase):

@@ -20,12 +20,7 @@ from ofxtools.Types import String, Decimal, OneOf, DateTime, ListItem
 from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.bank.stmt import BANKACCTFROM
-from ofxtools.models.i18n import (
-    CURRENCY,
-    ORIGCURRENCY,
-    Origcurrency,
-    CURRENCY_CODES,
-)
+from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, Origcurrency, CURRENCY_CODES
 
 
 class CHKRANGE(Aggregate):
@@ -51,9 +46,7 @@ class STPCHKRQ(Aggregate):
     chkrange = SubAggregate(CHKRANGE)
     chkdesc = SubAggregate(CHKDESC)
 
-    requiredMutexes = [
-        ["chkrange", "chkdesc"],
-    ]
+    requiredMutexes = [["chkrange", "chkdesc"]]
 
 
 class STPCHKNUM(Aggregate, Origcurrency):
@@ -68,9 +61,7 @@ class STPCHKNUM(Aggregate, Origcurrency):
     currency = SubAggregate(CURRENCY)
     origcurrency = SubAggregate(ORIGCURRENCY)
 
-    optionalMutexes = [
-        ["currency", "origcurrency"],
-    ]
+    optionalMutexes = [["currency", "origcurrency"]]
 
 
 class STPCHKRS(Aggregate):

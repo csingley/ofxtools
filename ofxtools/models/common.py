@@ -4,14 +4,7 @@ Common Aggregates (OFX Section 3.1); message extensions (OFX Section 2.7)
 """
 
 
-__all__ = [
-    "SVCSTATUSES",
-    "STATUS",
-    "BAL",
-    "OFXELEMENT",
-    "OFXEXTENSION",
-    "MSGSETCORE",
-]
+__all__ = ["SVCSTATUSES", "STATUS", "BAL", "OFXELEMENT", "OFXEXTENSION", "MSGSETCORE"]
 
 
 # local imports
@@ -62,6 +55,7 @@ class OFXELEMENT(Aggregate):
 
 class OFXEXTENSION(Aggregate):
     """ OFX section 2.7.2 """
+
     ofxelement = ListItem(OFXELEMENT)
 
 

@@ -70,9 +70,13 @@ class BankacctfromTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return BANKACCTFROM(bankid="111000614", branchid="11223344",
-                            acctid="123456789123456789", accttype="CHECKING",
-                            acctkey="DEADBEEF")
+        return BANKACCTFROM(
+            bankid="111000614",
+            branchid="11223344",
+            acctid="123456789123456789",
+            accttype="CHECKING",
+            acctkey="DEADBEEF",
+        )
 
 
 class BankaccttoTestCase(BankacctfromTestCase):
@@ -96,9 +100,13 @@ class BankaccttoTestCase(BankacctfromTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return BANKACCTTO(bankid="111000614", branchid="11223344",
-                          acctid="123456789123456789", accttype="CHECKING",
-                          acctkey="DEADBEEF")
+        return BANKACCTTO(
+            bankid="111000614",
+            branchid="11223344",
+            acctid="123456789123456789",
+            accttype="CHECKING",
+            acctkey="DEADBEEF",
+        )
 
 
 class BankacctinfoTestCase(unittest.TestCase, base.TestAggregate):
@@ -121,9 +129,13 @@ class BankacctinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return BANKACCTINFO(bankacctfrom=BankacctfromTestCase.aggregate,
-                            suptxdl=True, xfersrc=False, xferdest=True,
-                            svcstatus="ACTIVE")
+        return BANKACCTINFO(
+            bankacctfrom=BankacctfromTestCase.aggregate,
+            suptxdl=True,
+            xfersrc=False,
+            xferdest=True,
+            svcstatus="ACTIVE",
+        )
 
 
 class CcacctfromTestCase(unittest.TestCase, base.TestAggregate):
@@ -186,9 +198,13 @@ class CcacctinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CCACCTINFO(ccacctfrom=CcacctfromTestCase.aggregate,
-                          suptxdl=True, xfersrc=False, xferdest=True,
-                          svcstatus="ACTIVE")
+        return CCACCTINFO(
+            ccacctfrom=CcacctfromTestCase.aggregate,
+            suptxdl=True,
+            xfersrc=False,
+            xferdest=True,
+            svcstatus="ACTIVE",
+        )
 
 
 class InctranTestCase(unittest.TestCase, base.TestAggregate):
@@ -209,9 +225,11 @@ class InctranTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INCTRAN(dtstart=datetime(2011, 4, 1, tzinfo=UTC),
-                       dtend=datetime(2011, 4, 30, tzinfo=UTC),
-                       include=True)
+        return INCTRAN(
+            dtstart=datetime(2011, 4, 1, tzinfo=UTC),
+            dtend=datetime(2011, 4, 30, tzinfo=UTC),
+            include=True,
+        )
 
 
 class StmtrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -233,9 +251,12 @@ class StmtrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return STMTRQ(bankacctfrom=BankacctfromTestCase.aggregate,
-                      inctran=InctranTestCase.aggregate,
-                      includepending=True, inctranimg=False)
+        return STMTRQ(
+            bankacctfrom=BankacctfromTestCase.aggregate,
+            inctran=InctranTestCase.aggregate,
+            includepending=True,
+            inctranimg=False,
+        )
 
 
 class PayeeTestCase(unittest.TestCase, base.TestAggregate):
@@ -262,10 +283,17 @@ class PayeeTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PAYEE(name="Wrigley Field", addr1="3717 N Clark St",
-                     addr2="Dugout Box, Aisle 19", addr3="Seat A1",
-                     city="Chicago", state="IL", postalcode="60613",
-                     country="USA", phone="(773) 309-1027")
+        return PAYEE(
+            name="Wrigley Field",
+            addr1="3717 N Clark St",
+            addr2="Dugout Box, Aisle 19",
+            addr3="Seat A1",
+            city="Chicago",
+            state="IL",
+            postalcode="60613",
+            country="USA",
+            phone="(773) 309-1027",
+        )
 
     def testConvertNameTooLong(self):
         """ Don't enforce length restriction on NAME; raise Warning """
@@ -356,18 +384,27 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return STMTTRN(trntype="CHECK", dtposted=datetime(2013,6, 15, tzinfo=UTC),
-                       dtuser=datetime(2013, 6, 14, tzinfo=UTC),
-                       dtavail=datetime(2013, 6, 16, tzinfo=UTC),
-                       trnamt=Decimal("-433.25"), fitid="DEADBEEF",
-                       correctfitid="B00B5", correctaction="REPLACE",
-                       srvrtid="101A2", checknum="101", refnum="5A6B",
-                       sic="171103", payeeid="77810", name="Porky Pig",
-                       extdname="Walkin' bacon",
-                       bankacctto=BankaccttoTestCase.aggregate,
-                       memo="Th-th-th-that's all folks!",
-                       currency=i18n.CurrencyTestCase.aggregate,
-                       inv401ksource="ROLLOVER")
+        return STMTTRN(
+            trntype="CHECK",
+            dtposted=datetime(2013, 6, 15, tzinfo=UTC),
+            dtuser=datetime(2013, 6, 14, tzinfo=UTC),
+            dtavail=datetime(2013, 6, 16, tzinfo=UTC),
+            trnamt=Decimal("-433.25"),
+            fitid="DEADBEEF",
+            correctfitid="B00B5",
+            correctaction="REPLACE",
+            srvrtid="101A2",
+            checknum="101",
+            refnum="5A6B",
+            sic="171103",
+            payeeid="77810",
+            name="Porky Pig",
+            extdname="Walkin' bacon",
+            bankacctto=BankaccttoTestCase.aggregate,
+            memo="Th-th-th-that's all folks!",
+            currency=i18n.CurrencyTestCase.aggregate,
+            inv401ksource="ROLLOVER",
+        )
 
     @classproperty
     @classmethod
@@ -460,9 +497,12 @@ class BanktranlistTestCase(unittest.TestCase, base.TranlistTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return BANKTRANLIST(StmttrnTestCase.aggregate, StmttrnTestCase.aggregate,
-                            dtstart=datetime(2016, 1, 1, tzinfo=UTC),
-                            dtend =datetime(2016, 12, 31, tzinfo=UTC))
+        return BANKTRANLIST(
+            StmttrnTestCase.aggregate,
+            StmttrnTestCase.aggregate,
+            dtstart=datetime(2016, 1, 1, tzinfo=UTC),
+            dtend=datetime(2016, 12, 31, tzinfo=UTC),
+        )
 
     @classproperty
     @classmethod
@@ -492,8 +532,10 @@ class LedgerbalTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return LEDGERBAL(balamt=Decimal("12345.67"),
-                         dtasof=datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC))
+        return LEDGERBAL(
+            balamt=Decimal("12345.67"),
+            dtasof=datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC),
+        )
 
 
 class AvailbalTestCase(unittest.TestCase, base.TestAggregate):
@@ -512,8 +554,10 @@ class AvailbalTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return AVAILBAL(balamt=Decimal("12345.67"),
-                        dtasof=datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC))
+        return AVAILBAL(
+            balamt=Decimal("12345.67"),
+            dtasof=datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC),
+        )
 
 
 class BallistTestCase(unittest.TestCase, base.TestAggregate):
@@ -521,7 +565,7 @@ class BallistTestCase(unittest.TestCase, base.TestAggregate):
 
     __test__ = True
 
-    optionalElements: List[str] = [] # FIXME - how to handle multiple BALs?
+    optionalElements: List[str] = []  # FIXME - how to handle multiple BALs?
 
     def testListItems(self):
         # BALLLIST may only contain BAL
@@ -586,15 +630,17 @@ class StmtrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return STMTRS(curdef="USD",
-                      bankacctfrom=BankacctfromTestCase.aggregate,
-                      banktranlist=BanktranlistTestCase.aggregate,
-                      ledgerbal=LedgerbalTestCase.aggregate,
-                      availbal=AvailbalTestCase.aggregate,
-                      cashadvbalamt=Decimal("10000.00"),
-                      intrate=Decimal("20.99"),
-                      ballist=BallistTestCase.aggregate,
-                      mktginfo="Get Free Stuff NOW!!")
+        return STMTRS(
+            curdef="USD",
+            bankacctfrom=BankacctfromTestCase.aggregate,
+            banktranlist=BanktranlistTestCase.aggregate,
+            ledgerbal=LedgerbalTestCase.aggregate,
+            availbal=AvailbalTestCase.aggregate,
+            cashadvbalamt=Decimal("10000.00"),
+            intrate=Decimal("20.99"),
+            ballist=BallistTestCase.aggregate,
+            mktginfo="Get Free Stuff NOW!!",
+        )
 
     def testPropertyAliases(self):
         root = Aggregate.from_etree(self.etree)
@@ -611,8 +657,12 @@ class StmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return STMTTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                         stmtrq=StmtrqTestCase.aggregate)
+        return STMTTRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            stmtrq=StmtrqTestCase.aggregate,
+        )
 
 
 class StmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -623,10 +673,12 @@ class StmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return STMTTRNRS(trnuid="DEADBEEF",
-                         status=base.StatusTestCase.aggregate,
-                         cltcookie="B00B135",
-                         stmtrs=StmtrsTestCase.aggregate)
+        return STMTTRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            stmtrs=StmtrsTestCase.aggregate,
+        )
 
     def testPropertyAliases(self):
         instance = self.aggregate
@@ -649,8 +701,9 @@ class RewardinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return REWARDINFO(name="Cash Back", rewardbal=Decimal("655"),
-                          rewardearned=Decimal("200"))
+        return REWARDINFO(
+            name="Cash Back", rewardbal=Decimal("655"), rewardearned=Decimal("200")
+        )
 
 
 class CcstmtrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -672,9 +725,12 @@ class CcstmtrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CCSTMTRQ(ccacctfrom=CcacctfromTestCase.aggregate,
-                        inctran=InctranTestCase.aggregate,
-                        includepending=False, inctranimg=True)
+        return CCSTMTRQ(
+            ccacctfrom=CcacctfromTestCase.aggregate,
+            inctran=InctranTestCase.aggregate,
+            includepending=False,
+            inctranimg=True,
+        )
 
 
 class CcstmtrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -714,17 +770,20 @@ class CcstmtrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CCSTMTRS(curdef="USD", ccacctfrom=CcacctfromTestCase.aggregate,
-                        banktranlist=BanktranlistTestCase.aggregate,
-                        ledgerbal=LedgerbalTestCase.aggregate,
-                        availbal=AvailbalTestCase.aggregate,
-                        cashadvbalamt=Decimal("10000.00"),
-                        intratepurch=Decimal("20.99"),
-                        intratecash=Decimal("25.99"),
-                        intratexfer=Decimal("21.99"),
-                        rewardinfo=RewardinfoTestCase.aggregate,
-                        ballist=BallistTestCase.aggregate,
-                        mktginfo="Get Free Stuff NOW!!")
+        return CCSTMTRS(
+            curdef="USD",
+            ccacctfrom=CcacctfromTestCase.aggregate,
+            banktranlist=BanktranlistTestCase.aggregate,
+            ledgerbal=LedgerbalTestCase.aggregate,
+            availbal=AvailbalTestCase.aggregate,
+            cashadvbalamt=Decimal("10000.00"),
+            intratepurch=Decimal("20.99"),
+            intratecash=Decimal("25.99"),
+            intratexfer=Decimal("21.99"),
+            rewardinfo=RewardinfoTestCase.aggregate,
+            ballist=BallistTestCase.aggregate,
+            mktginfo="Get Free Stuff NOW!!",
+        )
 
     def testPropertyAliases(self):
         instance = self.aggregate
@@ -741,8 +800,12 @@ class CcstmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CCSTMTTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                           ccstmtrq=CcstmtrqTestCase.aggregate)
+        return CCSTMTTRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            ccstmtrq=CcstmtrqTestCase.aggregate,
+        )
 
 
 class CcstmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -753,10 +816,12 @@ class CcstmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CCSTMTTRNRS(trnuid="DEADBEEF",
-                           status=base.StatusTestCase.aggregate,
-                           cltcookie="B00B135",
-                           ccstmtrs=CcstmtrsTestCase.aggregate)
+        return CCSTMTTRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            ccstmtrs=CcstmtrsTestCase.aggregate,
+        )
 
 
 if __name__ == "__main__":

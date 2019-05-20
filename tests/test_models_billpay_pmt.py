@@ -72,12 +72,16 @@ class PmtrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PMTRS(srvrtid="DEADBEEF", payeelstid="B16B00B5", curdef="GBP",
-                     pmtinfo=bp_common.PmtinfoTestCase.aggregate,
-                     extdpayee=bp_common.ExtdpayeeTestCase.aggregate,
-                     checknum="215",
-                     pmtprcsts=bp_common.PmtprcstsTestCase.aggregate,
-                     recsrvrtid="B00B135")
+        return PMTRS(
+            srvrtid="DEADBEEF",
+            payeelstid="B16B00B5",
+            curdef="GBP",
+            pmtinfo=bp_common.PmtinfoTestCase.aggregate,
+            extdpayee=bp_common.ExtdpayeeTestCase.aggregate,
+            checknum="215",
+            pmtprcsts=bp_common.PmtprcstsTestCase.aggregate,
+            recsrvrtid="B00B135",
+        )
 
 
 class PmtmodrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -96,8 +100,7 @@ class PmtmodrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PMTMODRQ(srvrtid="DEADBEEF",
-                        pmtinfo=bp_common.PmtinfoTestCase.aggregate)
+        return PMTMODRQ(srvrtid="DEADBEEF", pmtinfo=bp_common.PmtinfoTestCase.aggregate)
 
 
 class PmtmodrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -118,9 +121,11 @@ class PmtmodrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PMTMODRS(srvrtid="DEADBEEF",
-                        pmtinfo=bp_common.PmtinfoTestCase.aggregate,
-                        pmtprcsts=bp_common.PmtprcstsTestCase.aggregate)
+        return PMTMODRS(
+            srvrtid="DEADBEEF",
+            pmtinfo=bp_common.PmtinfoTestCase.aggregate,
+            pmtprcsts=bp_common.PmtprcstsTestCase.aggregate,
+        )
 
 
 class PmtcancrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -167,8 +172,12 @@ class PmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PMTTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                        pmtrq=PmtrqTestCase.aggregate)
+        return PMTTRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            pmtrq=PmtrqTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -246,10 +255,12 @@ class PmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PMTTRNRS(trnuid="DEADBEEF",
-                        status=base.StatusTestCase.aggregate,
-                        cltcookie="B00B135",
-                        pmtrs=PmtrsTestCase.aggregate)
+        return PMTTRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            pmtrs=PmtrsTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -349,9 +360,11 @@ class PmtinqrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PMTINQRS(srvrtid="DEADBEEF",
-                        pmtprcsts=bp_common.PmtprcstsTestCase.aggregate,
-                        checknum="215")
+        return PMTINQRS(
+            srvrtid="DEADBEEF",
+            pmtprcsts=bp_common.PmtprcstsTestCase.aggregate,
+            checknum="215",
+        )
 
 
 class PmtinqtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
@@ -362,8 +375,12 @@ class PmtinqtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PMTINQTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                           pmtinqrq=PmtinqrqTestCase.aggregate)
+        return PMTINQTRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            pmtinqrq=PmtinqrqTestCase.aggregate,
+        )
 
 
 class PmtinqtrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -374,10 +391,12 @@ class PmtinqtrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PMTINQTRNRS(trnuid="DEADBEEF",
-                           status=base.StatusTestCase.aggregate,
-                           cltcookie="B00B135",
-                           pmtinqrs=PmtinqrsTestCase.aggregate)
+        return PMTINQTRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            pmtinqrs=PmtinqrsTestCase.aggregate,
+        )
 
 
 if __name__ == "__main__":

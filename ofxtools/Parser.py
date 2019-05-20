@@ -163,11 +163,9 @@ class TreeBuilder(ET.TreeBuilder):
                 msg += " - position=[{}:{}]".format(match.start(), match.end())
                 raise ParseError(msg)
 
-    def _feedmatch(self,
-                   tag: str,
-                   text: Optional[str],
-                   closetag: Optional[str],
-                   ) -> None:
+    def _feedmatch(
+        self, tag: str, text: Optional[str], closetag: Optional[str]
+    ) -> None:
         """
         Route individual regex matches to _start()/_end() according to tag.
 
@@ -183,10 +181,7 @@ class TreeBuilder(ET.TreeBuilder):
         else:
             self._start(tag, text, closetag)
 
-    def _start(self,
-               tag: str,
-               text: Optional[str],
-               closetag: Optional[str]) -> None:
+    def _start(self, tag: str, text: Optional[str], closetag: Optional[str]) -> None:
         """
         Push a new Element to the stack.
 

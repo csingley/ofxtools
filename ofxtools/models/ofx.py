@@ -31,10 +31,7 @@ from ofxtools.models.invest.msgsets import (
     SECLISTMSGSRQV1,
     SECLISTMSGSRSV1,
 )
-from ofxtools.models.tax1099 import (
-    TAX1099MSGSRQV1,
-    TAX1099MSGSRSV1,
-)
+from ofxtools.models.tax1099 import TAX1099MSGSRQV1, TAX1099MSGSRSV1
 from ofxtools.utils import all_equal
 
 
@@ -79,9 +76,7 @@ class OFX(Aggregate):
     tax1095msgsrqv1 = Unsupported()
     tax1095msgsrsv1 = Unsupported()
 
-    requiredMutexes = [
-        ["signonmsgsrqv1", "signonmsgsrsv1"],
-    ]
+    requiredMutexes = [["signonmsgsrqv1", "signonmsgsrsv1"]]
 
     @classmethod
     def validate_args(cls, *args, **kwargs):

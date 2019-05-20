@@ -73,18 +73,23 @@ class ClosingTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CLOSING(fitid="DEADBEEF",
-                       dtopen=datetime(2016, 12, 1, tzinfo=UTC),
-                       dtclose=datetime(2016, 12, 25, tzinfo=UTC),
-                       dtnext=datetime(2017, 1, 1, tzinfo=UTC),
-                       balopen=Decimal("11"), balclose=Decimal("20"),
-                       balmin=Decimal("6"), depandcredit=Decimal("14"),
-                       chkanddebit=Decimal("-5"), totalfees=Decimal("0"),
-                       totalint=Decimal("0"),
-                       dtpoststart=datetime(2016, 12, 1, tzinfo=UTC),
-                       dtpostend=datetime(2016, 12, 25, tzinfo=UTC),
-                       mktginfo="Get Free Stuff NOW!!",
-                       currency=i18n.CurrencyTestCase.aggregate)
+        return CLOSING(
+            fitid="DEADBEEF",
+            dtopen=datetime(2016, 12, 1, tzinfo=UTC),
+            dtclose=datetime(2016, 12, 25, tzinfo=UTC),
+            dtnext=datetime(2017, 1, 1, tzinfo=UTC),
+            balopen=Decimal("11"),
+            balclose=Decimal("20"),
+            balmin=Decimal("6"),
+            depandcredit=Decimal("14"),
+            chkanddebit=Decimal("-5"),
+            totalfees=Decimal("0"),
+            totalint=Decimal("0"),
+            dtpoststart=datetime(2016, 12, 1, tzinfo=UTC),
+            dtpostend=datetime(2016, 12, 25, tzinfo=UTC),
+            mktginfo="Get Free Stuff NOW!!",
+            currency=i18n.CurrencyTestCase.aggregate,
+        )
 
 
 class StmtendrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -106,9 +111,11 @@ class StmtendrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return STMTENDRQ(bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
-                         dtstart=datetime(2016, 12, 1, tzinfo=UTC),
-                         dtend=datetime(2016, 12, 25, tzinfo=UTC))
+        return STMTENDRQ(
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+            dtstart=datetime(2016, 12, 1, tzinfo=UTC),
+            dtend=datetime(2016, 12, 25, tzinfo=UTC),
+        )
 
 
 class StmtendrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -132,8 +139,12 @@ class StmtendrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return STMTENDRS(ClosingTestCase.aggregate, ClosingTestCase.aggregate,
-                         curdef="CAD", bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate)
+        return STMTENDRS(
+            ClosingTestCase.aggregate,
+            ClosingTestCase.aggregate,
+            curdef="CAD",
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+        )
 
 
 class StmtendtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
@@ -144,8 +155,12 @@ class StmtendtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return STMTENDTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                            stmtendrq=StmtendrqTestCase.aggregate)
+        return STMTENDTRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            stmtendrq=StmtendrqTestCase.aggregate,
+        )
 
 
 class StmtendtrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -156,10 +171,12 @@ class StmtendtrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return STMTENDTRNRS(trnuid="DEADBEEF",
-                            status=base.StatusTestCase.aggregate,
-                            cltcookie="B00B135",
-                            stmtendrs=StmtendrsTestCase.aggregate)
+        return STMTENDTRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            stmtendrs=StmtendrsTestCase.aggregate,
+        )
 
 
 class LastpmtinfoTestCase(unittest.TestCase, base.TestAggregate):
@@ -177,42 +194,38 @@ class LastpmtinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return LASTPMTINFO(
-            lastpmtdate=datetime(2017, 5, 1, tzinfo=UTC),
-            lastpmtamt=Decimal("655.50"))
+            lastpmtdate=datetime(2017, 5, 1, tzinfo=UTC), lastpmtamt=Decimal("655.50")
+        )
 
 
 class CcclosingTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ["FITID",
-                        "DTCLOSE",
-                        "BALCLOSE",
-                        "DTPOSTSTART",
-                        "DTPOSTEND",
-                        ]
-    optionalElements = ["DTOPEN",
-                        "DTNEXT",
-                        "BALOPEN",
-                        "INTYTD",
-                        "DTPMTDUE",
-                        "MINPMTDUE",
-                        "PASTDUEAMT",
-                        "LATEFEEAMT",
-                        "FINCHG",
-                        "INTRATEPURCH",
-                        "INTRATECASH",
-                        "INTRATEXFER",
-                        "PAYANDCREDIT",
-                        "PURANDADV",
-                        "DEBADJ",
-                        "CREDITLIMIT",
-                        "CASHADVCREDITLIMIT",
-                        "AUTOPAY",
-                        "LASTPMTINFO",
-                        "REWARDINFO",
-                        "MKTGINFO",
-                        "CURRENCY",
-                        ]
+    requiredElements = ["FITID", "DTCLOSE", "BALCLOSE", "DTPOSTSTART", "DTPOSTEND"]
+    optionalElements = [
+        "DTOPEN",
+        "DTNEXT",
+        "BALOPEN",
+        "INTYTD",
+        "DTPMTDUE",
+        "MINPMTDUE",
+        "PASTDUEAMT",
+        "LATEFEEAMT",
+        "FINCHG",
+        "INTRATEPURCH",
+        "INTRATECASH",
+        "INTRATEXFER",
+        "PAYANDCREDIT",
+        "PURANDADV",
+        "DEBADJ",
+        "CREDITLIMIT",
+        "CASHADVCREDITLIMIT",
+        "AUTOPAY",
+        "LASTPMTINFO",
+        "REWARDINFO",
+        "MKTGINFO",
+        "CURRENCY",
+    ]
     unsupported = ["imagedata"]
 
     @classproperty
@@ -255,31 +268,41 @@ class CcclosingTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CCCLOSING(fitid="1001", dtopen=datetime(2004, 7, 1, tzinfo=UTC),
-                         dtclose=datetime(2004, 7, 4, tzinfo=UTC), dtnext=datetime(2004, 8, 4, tzinfo=UTC),
-                         balopen=Decimal("24.5"), balclose=Decimal("26.5"),
-                         intytd=Decimal("0.01"),
-                         dtpmtdue=datetime(2004, 7, 15, tzinfo=UTC),
-                         minpmtdue=Decimal("7.65"), pastdueamt=Decimal("0.35"),
-                         latefeeamt=Decimal("5"), finchg=Decimal("0.5"),
-                         intratepurch=Decimal("26"), intratecash=Decimal("30"),
-                         intratexfer=Decimal("28"), payandcredit=Decimal("1.5"),
-                         purandadv=Decimal("2.75"), debadj=Decimal("1.45"),
-                         creditlimit=Decimal("50000"),
-                         cashadvcreditlimit=Decimal("5000"),
-                         dtpoststart=datetime(2004, 7, 1, tzinfo=UTC),
-                         dtpostend=datetime(2004, 7, 4, tzinfo=UTC),
-                         autopay=True,
-                         lastpmtinfo=LastpmtinfoTestCase.aggregate,
-                         rewardinfo=bk_stmt.RewardinfoTestCase.aggregate,
-                         mktginfo="It's a floor wax! And a dessert topping!!",
-                         currency=i18n.CurrencyTestCase.aggregate)
+        return CCCLOSING(
+            fitid="1001",
+            dtopen=datetime(2004, 7, 1, tzinfo=UTC),
+            dtclose=datetime(2004, 7, 4, tzinfo=UTC),
+            dtnext=datetime(2004, 8, 4, tzinfo=UTC),
+            balopen=Decimal("24.5"),
+            balclose=Decimal("26.5"),
+            intytd=Decimal("0.01"),
+            dtpmtdue=datetime(2004, 7, 15, tzinfo=UTC),
+            minpmtdue=Decimal("7.65"),
+            pastdueamt=Decimal("0.35"),
+            latefeeamt=Decimal("5"),
+            finchg=Decimal("0.5"),
+            intratepurch=Decimal("26"),
+            intratecash=Decimal("30"),
+            intratexfer=Decimal("28"),
+            payandcredit=Decimal("1.5"),
+            purandadv=Decimal("2.75"),
+            debadj=Decimal("1.45"),
+            creditlimit=Decimal("50000"),
+            cashadvcreditlimit=Decimal("5000"),
+            dtpoststart=datetime(2004, 7, 1, tzinfo=UTC),
+            dtpostend=datetime(2004, 7, 4, tzinfo=UTC),
+            autopay=True,
+            lastpmtinfo=LastpmtinfoTestCase.aggregate,
+            rewardinfo=bk_stmt.RewardinfoTestCase.aggregate,
+            mktginfo="It's a floor wax! And a dessert topping!!",
+            currency=i18n.CurrencyTestCase.aggregate,
+        )
 
 
 class CcstmtendrqTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ["CCACCTFROM",]
+    requiredElements = ["CCACCTFROM"]
     optionalElements = ["DTSTART", "DTEND", "INCSTMTIMG"]
 
     @classproperty
@@ -297,10 +320,12 @@ class CcstmtendrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CCSTMTENDRQ(ccacctfrom=bk_stmt.CcacctfromTestCase.aggregate,
-                           dtstart=datetime(2004, 7, 1, tzinfo=UTC),
-                           dtend=datetime(2004, 7, 4, tzinfo=UTC),
-                           incstmtimg=False)
+        return CCSTMTENDRQ(
+            ccacctfrom=bk_stmt.CcacctfromTestCase.aggregate,
+            dtstart=datetime(2004, 7, 1, tzinfo=UTC),
+            dtend=datetime(2004, 7, 4, tzinfo=UTC),
+            incstmtimg=False,
+        )
 
 
 class CcstmtendrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -325,10 +350,13 @@ class CcstmtendrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CCSTMTENDRS(CcclosingTestCase.aggregate,
-                           CcclosingTestCase.aggregate,
-                           curdef="USD",
-                           ccacctfrom=bk_stmt.CcacctfromTestCase.aggregate)
+        return CCSTMTENDRS(
+            CcclosingTestCase.aggregate,
+            CcclosingTestCase.aggregate,
+            curdef="USD",
+            ccacctfrom=bk_stmt.CcacctfromTestCase.aggregate,
+        )
+
 
 class CcstmtendtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     __test__ = True
@@ -338,8 +366,12 @@ class CcstmtendtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CCSTMTENDTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                              ccstmtendrq=CcstmtendrqTestCase.aggregate)
+        return CCSTMTENDTRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            ccstmtendrq=CcstmtendrqTestCase.aggregate,
+        )
 
 
 class CcstmtendtrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -350,10 +382,12 @@ class CcstmtendtrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CCSTMTENDTRNRS(trnuid="DEADBEEF",
-                              status=base.StatusTestCase.aggregate,
-                              cltcookie="B00B135",
-                              ccstmtendrs=CcstmtendrsTestCase.aggregate)
+        return CCSTMTENDTRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            ccstmtendrs=CcstmtendrsTestCase.aggregate,
+        )
 
 
 if __name__ == "__main__":

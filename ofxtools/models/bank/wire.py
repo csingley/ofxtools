@@ -80,9 +80,7 @@ class WIRERS(Aggregate):
     fee = Decimal()
     confmsg = String(255)
 
-    optionalMutexes = [
-        ["dtxferprj", "dtposted"],
-    ]
+    optionalMutexes = [["dtxferprj", "dtposted"]]
 
 
 class WIRECANRQ(Aggregate):
@@ -103,9 +101,7 @@ class WIRETRNRQ(TrnRq):
     wirerq = SubAggregate(WIRERQ)
     wirecanrq = SubAggregate(WIRECANRQ)
 
-    requiredMutexes = [
-        ["wirerq", "wirecanrq"],
-    ]
+    requiredMutexes = [["wirerq", "wirecanrq"]]
 
 
 class WIRETRNRS(TrnRs):
@@ -114,6 +110,4 @@ class WIRETRNRS(TrnRs):
     wirers = SubAggregate(WIRERS)
     wirecanrs = SubAggregate(WIRECANRS)
 
-    optionalMutexes = [
-        ["wirers", "wirecanrs"],
-    ]
+    optionalMutexes = [["wirers", "wirecanrs"]]

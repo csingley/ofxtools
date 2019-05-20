@@ -108,9 +108,7 @@ class RECINTRATRNRQ(TrnRq):
     recintramodrq = SubAggregate(RECINTRAMODRQ)
     recintracanrq = SubAggregate(RECINTRACANRQ)
 
-    requiredMutexes = [
-        ["recintrarq", "recintramodrq", "recintracanrq"],
-    ]
+    requiredMutexes = [["recintrarq", "recintramodrq", "recintracanrq"]]
 
 
 class RECINTRATRNRS(TrnRs):
@@ -120,9 +118,7 @@ class RECINTRATRNRS(TrnRs):
     recintramodrs = SubAggregate(RECINTRAMODRS)
     recintracanrs = SubAggregate(RECINTRACANRS)
 
-    optionalMutexes = [
-        ["recintrars", "recintramodrs", "recintracanrs"],
-    ]
+    optionalMutexes = [["recintrars", "recintramodrs", "recintracanrs"]]
 
 
 class RECINTERRQ(Aggregate):
@@ -179,9 +175,7 @@ class RECINTERTRNRQ(TrnRq):
     recintermodrq = SubAggregate(RECINTERMODRQ)
     recintercanrq = SubAggregate(RECINTERCANRQ)
 
-    requiredMutexes = [
-        ["recinterrq", "recintermodrq", "recintercanrq"],
-    ]
+    requiredMutexes = [["recinterrq", "recintermodrq", "recintercanrq"]]
 
 
 class RECINTERTRNRS(TrnRs):
@@ -191,6 +185,4 @@ class RECINTERTRNRS(TrnRs):
     recintermodrs = SubAggregate(RECINTERMODRS)
     recintercanrs = SubAggregate(RECINTERCANRS)
 
-    optionalMutexes = [
-        ["recinterrs", "recintermodrs", "recintercanrs"],
-    ]
+    optionalMutexes = [["recinterrs", "recintermodrs", "recintercanrs"]]

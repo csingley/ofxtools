@@ -81,16 +81,18 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return OFX(signonmsgsrqv1=msgsets.Signonmsgsrqv1TestCase.aggregate,
-                   signupmsgsrqv1=msgsets.Signupmsgsrqv1TestCase.aggregate,
-                   bankmsgsrqv1=msgsets.Bankmsgsrqv1TestCase.aggregate,
-                   creditcardmsgsrqv1=msgsets.Creditcardmsgsrqv1TestCase.aggregate,
-                   invstmtmsgsrqv1=msgsets.Invstmtmsgsrqv1TestCase.aggregate,
-                   interxfermsgsrqv1=msgsets.Interxfermsgsrqv1TestCase.aggregate,
-                   wirexfermsgsrqv1=msgsets.Wirexfermsgsrqv1TestCase.aggregate,
-                   emailmsgsrqv1=msgsets.Emailmsgsrqv1TestCase.aggregate,
-                   seclistmsgsrqv1=msgsets.Seclistmsgsrqv1TestCase.aggregate,
-                   profmsgsrqv1=msgsets.Profmsgsrqv1TestCase.aggregate)
+        return OFX(
+            signonmsgsrqv1=msgsets.Signonmsgsrqv1TestCase.aggregate,
+            signupmsgsrqv1=msgsets.Signupmsgsrqv1TestCase.aggregate,
+            bankmsgsrqv1=msgsets.Bankmsgsrqv1TestCase.aggregate,
+            creditcardmsgsrqv1=msgsets.Creditcardmsgsrqv1TestCase.aggregate,
+            invstmtmsgsrqv1=msgsets.Invstmtmsgsrqv1TestCase.aggregate,
+            interxfermsgsrqv1=msgsets.Interxfermsgsrqv1TestCase.aggregate,
+            wirexfermsgsrqv1=msgsets.Wirexfermsgsrqv1TestCase.aggregate,
+            emailmsgsrqv1=msgsets.Emailmsgsrqv1TestCase.aggregate,
+            seclistmsgsrqv1=msgsets.Seclistmsgsrqv1TestCase.aggregate,
+            profmsgsrqv1=msgsets.Profmsgsrqv1TestCase.aggregate,
+        )
 
     @classproperty
     @classmethod

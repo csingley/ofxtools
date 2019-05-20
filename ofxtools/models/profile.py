@@ -26,7 +26,10 @@ from ofxtools.models.i18n import COUNTRY_CODES
 from ofxtools.models.signon import SIGNONMSGSET
 from ofxtools.models.signup import SIGNUPMSGSET
 from ofxtools.models.bank.msgsets import (
-    BANKMSGSET, CREDITCARDMSGSET, INTERXFERMSGSET, WIREXFERMSGSET,
+    BANKMSGSET,
+    CREDITCARDMSGSET,
+    INTERXFERMSGSET,
+    WIREXFERMSGSET,
 )
 from ofxtools.models.billpay.msgsets import BILLPAYMSGSET
 from ofxtools.models.invest.msgsets import INVSTMTMSGSET, SECLISTMSGSET

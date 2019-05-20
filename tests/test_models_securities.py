@@ -12,10 +12,24 @@ from copy import deepcopy
 # local imports
 from ofxtools.models.base import Aggregate
 from ofxtools.models.invest.securities import (
-    ASSETCLASSES, SECID, SECINFO,
-    DEBTINFO, MFINFO, OPTINFO, OTHERINFO, STOCKINFO,
-    PORTION, FIPORTION, MFASSETCLASS, FIMFASSETCLASS,
-    SECLIST, SECRQ, SECLISTRQ, SECLISTRS, SECLISTTRNRQ, SECLISTTRNRS,
+    ASSETCLASSES,
+    SECID,
+    SECINFO,
+    DEBTINFO,
+    MFINFO,
+    OPTINFO,
+    OTHERINFO,
+    STOCKINFO,
+    PORTION,
+    FIPORTION,
+    MFASSETCLASS,
+    FIMFASSETCLASS,
+    SECLIST,
+    SECRQ,
+    SECLISTRQ,
+    SECLISTRS,
+    SECLISTTRNRQ,
+    SECLISTTRNRS,
 )
 from ofxtools.utils import UTC, classproperty
 
@@ -41,20 +55,14 @@ class SecidTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return SECID( uniqueid="084670108", uniqueidtype="CUSIP")
+        return SECID(uniqueid="084670108", uniqueidtype="CUSIP")
 
 
 class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["SECID", "SECNAME"]
-    optionalElements = ["TICKER",
-                        "FIID",
-                        "RATING",
-                        "UNITPRICE",
-                        "DTASOF",
-                        "CURRENCY",
-                        ]
+    optionalElements = ["TICKER", "FIID", "RATING", "UNITPRICE", "DTASOF", "CURRENCY"]
 
     @classproperty
     @classmethod
@@ -74,19 +82,25 @@ class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return SECINFO(secid=SecidTestCase.aggregate,
-                       secname="Acme Development, Inc.",
-                       ticker="ACME", fiid="AC.ME", rating="Aa",
-                       unitprice=Decimal("94.5"),
-                       dtasof=datetime(2013, 6, 15, tzinfo=UTC),
-                       currency=i18n.CurrencyTestCase.aggregate,
-                       memo="Foobar")
+        return SECINFO(
+            secid=SecidTestCase.aggregate,
+            secname="Acme Development, Inc.",
+            ticker="ACME",
+            fiid="AC.ME",
+            rating="Aa",
+            unitprice=Decimal("94.5"),
+            dtasof=datetime(2013, 6, 15, tzinfo=UTC),
+            currency=i18n.CurrencyTestCase.aggregate,
+            memo="Foobar",
+        )
 
     def testConvertSecnameTooLong(self):
         """ Don't enforce length restriction on SECNAME; raise Warning """
         # Issue #12
         root = self.etree
-        root[1].text = """
+        root[
+            1
+        ].text = """
         There is a theory going around that the U.S.A. was and still is a
         gigantic Masonic plot under the ultimate control of the group known as
         the Illuminati. It is difficult to look for long at the strange single
@@ -111,13 +125,16 @@ class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
         for it to be pure chance. Lovers of global conspiracy, not all of them
         Catholic, can count on the Masons for a few good shivers and voids when
         all else fails.
-        """)
+        """,
+        )
 
     def testConvertTickerTooLong(self):
         """ Don't enforce length restriction on TICKER; raise Warning """
         # Issue #12
         root = deepcopy(self.etree)
-        root[2].text = """
+        root[
+            2
+        ].text = """
         Kekulé dreams the Great Serpent holding its own tail in its mouth, the
         dreaming Serpent which surrounds the World.  But the meanness, the
         cynicism with which this dream is to be used. The Serpent that
@@ -156,7 +173,8 @@ class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
         sooner or later crash to its death, when its addiction to energy has
         become more than the rest of the World can supply, dragging with it
         innocent souls all along the chain of life.
-        """)
+        """,
+        )
 
     def testPropertyAliases(self):
         instance = Aggregate.from_etree(self.etree)
@@ -168,23 +186,26 @@ class DebtinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["SECINFO", "PARVALUE", "DEBTTYPE"]
-    optionalElements = ["DEBTCLASS",
-                        "COUPONRT",
-                        "DTCOUPON",
-                        "COUPONFREQ",
-                        "CALLPRICE",
-                        "YIELDTOCALL",
-                        "DTCALL",
-                        "CALLTYPE",
-                        "YIELDTOMAT",
-                        "DTMAT",
-                        "ASSETCLASS",
-                        "FIASSETCLASS",
-                        ]
-    oneOfs = {"DEBTTYPE": ("COUPON", "ZERO"),
-              "DEBTCLASS": ("TREASURY", "MUNICIPAL", "CORPORATE", "OTHER"),
-              "COUPONFREQ": ("MONTHLY", "QUARTERLY", "SEMIANNUAL", "ANNUAL", "OTHER"),
-              "CALLTYPE": ("CALL", "PUT", "PREFUND", "MATURITY")}
+    optionalElements = [
+        "DEBTCLASS",
+        "COUPONRT",
+        "DTCOUPON",
+        "COUPONFREQ",
+        "CALLPRICE",
+        "YIELDTOCALL",
+        "DTCALL",
+        "CALLTYPE",
+        "YIELDTOMAT",
+        "DTMAT",
+        "ASSETCLASS",
+        "FIASSETCLASS",
+    ]
+    oneOfs = {
+        "DEBTTYPE": ("COUPON", "ZERO"),
+        "DEBTCLASS": ("TREASURY", "MUNICIPAL", "CORPORATE", "OTHER"),
+        "COUPONFREQ": ("MONTHLY", "QUARTERLY", "SEMIANNUAL", "ANNUAL", "OTHER"),
+        "CALLTYPE": ("CALL", "PUT", "PREFUND", "MATURITY"),
+    }
 
     @classproperty
     @classmethod
@@ -211,18 +232,23 @@ class DebtinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return DEBTINFO(secinfo=SecinfoTestCase.aggregate,
-                        parvalue=Decimal("1000"), debttype="COUPON",
-                        debtclass="CORPORATE", couponrt=Decimal("5.125"),
-                        dtcoupon=datetime(2003, 12, 1, tzinfo=UTC),
-                        couponfreq="QUARTERLY",
-                        callprice=Decimal("1000"),
-                        yieldtocall=Decimal("6.5"),
-                        dtcall=datetime(2005, 12, 15, tzinfo=UTC),
-                        calltype="CALL", yieldtomat=Decimal("6.0"),
-                        dtmat=datetime(2006, 12, 15, tzinfo=UTC),
-                        assetclass="INTLBOND",
-                        fiassetclass="Fixed to floating bond")
+        return DEBTINFO(
+            secinfo=SecinfoTestCase.aggregate,
+            parvalue=Decimal("1000"),
+            debttype="COUPON",
+            debtclass="CORPORATE",
+            couponrt=Decimal("5.125"),
+            dtcoupon=datetime(2003, 12, 1, tzinfo=UTC),
+            couponfreq="QUARTERLY",
+            callprice=Decimal("1000"),
+            yieldtocall=Decimal("6.5"),
+            dtcall=datetime(2005, 12, 15, tzinfo=UTC),
+            calltype="CALL",
+            yieldtomat=Decimal("6.0"),
+            dtmat=datetime(2006, 12, 15, tzinfo=UTC),
+            assetclass="INTLBOND",
+            fiassetclass="Fixed to floating bond",
+        )
 
     def testPropertyAliases(self):
         instance = Aggregate.from_etree(self.etree)
@@ -263,10 +289,12 @@ class MfassetclassTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return MFASSETCLASS(PortionTestCase.aggregate,
-                            PortionTestCase.aggregate,
-                            PortionTestCase.aggregate,
-                            PortionTestCase.aggregate)
+        return MFASSETCLASS(
+            PortionTestCase.aggregate,
+            PortionTestCase.aggregate,
+            PortionTestCase.aggregate,
+            PortionTestCase.aggregate,
+        )
 
 
 class FiportionTestCase(unittest.TestCase, base.TestAggregate):
@@ -301,22 +329,25 @@ class FimfassetclassTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return FIMFASSETCLASS(FiportionTestCase.aggregate,
-                              FiportionTestCase.aggregate,
-                              FiportionTestCase.aggregate,
-                              FiportionTestCase.aggregate)
+        return FIMFASSETCLASS(
+            FiportionTestCase.aggregate,
+            FiportionTestCase.aggregate,
+            FiportionTestCase.aggregate,
+            FiportionTestCase.aggregate,
+        )
 
 
 class MfinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["SECINFO"]
-    optionalElements = ["MFTYPE",
-                        "YIELD",
-                        "DTYIELDASOF",
-                        "MFASSETCLASS",
-                        "FIMFASSETCLASS",
-                        ]
+    optionalElements = [
+        "MFTYPE",
+        "YIELD",
+        "DTYIELDASOF",
+        "MFASSETCLASS",
+        "FIMFASSETCLASS",
+    ]
     oneOfs = {"MFTYPE": ("OPENEND", "CLOSEEND", "OTHER")}
 
     @classproperty
@@ -334,11 +365,14 @@ class MfinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return MFINFO(secinfo=SecinfoTestCase.aggregate, mftype="OPENEND",
-                      yld=Decimal("5.0"),
-                      dtyieldasof=datetime(2003, 5, 1, tzinfo=UTC),
-                      mfassetclass=MfassetclassTestCase.aggregate,
-                      fimfassetclass=FimfassetclassTestCase.aggregate)
+        return MFINFO(
+            secinfo=SecinfoTestCase.aggregate,
+            mftype="OPENEND",
+            yld=Decimal("5.0"),
+            dtyieldasof=datetime(2003, 5, 1, tzinfo=UTC),
+            mfassetclass=MfassetclassTestCase.aggregate,
+            fimfassetclass=FimfassetclassTestCase.aggregate,
+        )
 
     def testPropertyAliases(self):
         instance = Aggregate.from_etree(self.etree)
@@ -349,12 +383,7 @@ class MfinfoTestCase(unittest.TestCase, base.TestAggregate):
 class OptinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    requiredElements = ["SECINFO",
-                        "OPTTYPE",
-                        "STRIKEPRICE",
-                        "DTEXPIRE",
-                        "SHPERCTRCT",
-                        ]
+    requiredElements = ["SECINFO", "OPTTYPE", "STRIKEPRICE", "DTEXPIRE", "SHPERCTRCT"]
     optionalElements = ["SECID", "ASSETCLASS", "FIASSETCLASS"]
 
     @classproperty
@@ -374,11 +403,16 @@ class OptinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return OPTINFO(secinfo=SecinfoTestCase.aggregate, opttype="CALL",
-                       strikeprice=Decimal("25.5"),
-                       dtexpire=datetime(2003, 12, 15, tzinfo=UTC),
-                       shperctrct=100, secid=SecidTestCase.aggregate,
-                       assetclass="SMALLSTOCK", fiassetclass="FOO")
+        return OPTINFO(
+            secinfo=SecinfoTestCase.aggregate,
+            opttype="CALL",
+            strikeprice=Decimal("25.5"),
+            dtexpire=datetime(2003, 12, 15, tzinfo=UTC),
+            shperctrct=100,
+            secid=SecidTestCase.aggregate,
+            assetclass="SMALLSTOCK",
+            fiassetclass="FOO",
+        )
 
     def testPropertyAliases(self):
         instance = Aggregate.from_etree(self.etree)
@@ -407,9 +441,12 @@ class OtherinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return OTHERINFO(secinfo=SecinfoTestCase.aggregate,
-                         typedesc="Securitized baseball card pool",
-                         assetclass="SMALLSTOCK", fiassetclass="FOO")
+        return OTHERINFO(
+            secinfo=SecinfoTestCase.aggregate,
+            typedesc="Securitized baseball card pool",
+            assetclass="SMALLSTOCK",
+            fiassetclass="FOO",
+        )
 
     def testPropertyAliases(self):
         instance = Aggregate.from_etree(self.etree)
@@ -421,12 +458,13 @@ class StockinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["SECINFO"]
-    optionalElements = ["STOCKTYPE",
-                        "YIELD",
-                        "DTYIELDASOF",
-                        "ASSETCLASS",
-                        "FIASSETCLASS",
-                        ]
+    optionalElements = [
+        "STOCKTYPE",
+        "YIELD",
+        "DTYIELDASOF",
+        "ASSETCLASS",
+        "FIASSETCLASS",
+    ]
     oneOfs = {"ASSETCLASS": ASSETCLASSES}
 
     @classproperty
@@ -445,10 +483,14 @@ class StockinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return STOCKINFO(secinfo=SecinfoTestCase.aggregate,
-                         stocktype="CONVERTIBLE", yld=Decimal("5.0"),
-                         dtyieldasof=datetime(2003, 5, 1, tzinfo=UTC),
-                         assetclass="SMALLSTOCK", fiassetclass="FOO")
+        return STOCKINFO(
+            secinfo=SecinfoTestCase.aggregate,
+            stocktype="CONVERTIBLE",
+            yld=Decimal("5.0"),
+            dtyieldasof=datetime(2003, 5, 1, tzinfo=UTC),
+            assetclass="SMALLSTOCK",
+            fiassetclass="FOO",
+        )
 
     def testPropertyAliases(self):
         instance = Aggregate.from_etree(self.etree)
@@ -473,9 +515,13 @@ class SeclistTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return SECLIST(DebtinfoTestCase.aggregate, MfinfoTestCase.aggregate,
-                       OptinfoTestCase.aggregate, OtherinfoTestCase.aggregate,
-                       StockinfoTestCase.aggregate)
+        return SECLIST(
+            DebtinfoTestCase.aggregate,
+            MfinfoTestCase.aggregate,
+            OptinfoTestCase.aggregate,
+            OtherinfoTestCase.aggregate,
+            StockinfoTestCase.aggregate,
+        )
 
 
 class SecrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -575,8 +621,12 @@ class SeclisttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return SECLISTTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                            seclistrq=SeclistrqTestCase.aggregate)
+        return SECLISTTRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            seclistrq=SeclistrqTestCase.aggregate,
+        )
 
 
 class SeclisttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -587,10 +637,12 @@ class SeclisttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return SECLISTTRNRS(trnuid="DEADBEEF",
-                            status=base.StatusTestCase.aggregate,
-                            cltcookie="B00B135",
-                            seclistrs=SeclistrsTestCase.aggregate)
+        return SECLISTTRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            seclistrs=SeclistrsTestCase.aggregate,
+        )
 
 
 if __name__ == "__main__":

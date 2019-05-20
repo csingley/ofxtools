@@ -40,8 +40,10 @@ class BankmailrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return BANKMAILRQ(bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
-                          mail=email.MailTestCase.aggregate)
+        return BANKMAILRQ(
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+            mail=email.MailTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -90,8 +92,10 @@ class BankmailrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return BANKMAILRS(bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
-                          mail=email.MailTestCase.aggregate)
+        return BANKMAILRS(
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+            mail=email.MailTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -152,11 +156,14 @@ class ChkmailrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return CHKMAILRS(bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
-                         mail=email.MailTestCase.aggregate, checknum="1001",
-                         trnamt=Decimal("321.45"),
-                         dtuser=datetime(2106, 9, 30, tzinfo=UTC),
-                         fee=Decimal("21.50"))
+        return CHKMAILRS(
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+            mail=email.MailTestCase.aggregate,
+            checknum="1001",
+            trnamt=Decimal("321.45"),
+            dtuser=datetime(2106, 9, 30, tzinfo=UTC),
+            fee=Decimal("21.50"),
+        )
 
 
 class DepmailrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -186,8 +193,10 @@ class DepmailrsTestCase(unittest.TestCase, base.TestAggregate):
         return DEPMAILRS(
             bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
             mail=email.MailTestCase.aggregate,
-            trnamt=Decimal("321.45"), dtuser=datetime(2106, 9, 30, tzinfo=UTC),
-            fee=Decimal("21.50"))
+            trnamt=Decimal("321.45"),
+            dtuser=datetime(2106, 9, 30, tzinfo=UTC),
+            fee=Decimal("21.50"),
+        )
 
 
 class BankmailtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
@@ -198,8 +207,12 @@ class BankmailtrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return BANKMAILTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                             bankmailrq=BankmailrqTestCase.aggregate)
+        return BANKMAILTRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            bankmailrq=BankmailrqTestCase.aggregate,
+        )
 
 
 class BankmailtrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -210,10 +223,12 @@ class BankmailtrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return BANKMAILTRNRS(trnuid="DEADBEEF",
-                             status=base.StatusTestCase.aggregate,
-                             cltcookie="B00B135",
-                             bankmailrs=BankmailrsTestCase.aggregate)
+        return BANKMAILTRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            bankmailrs=BankmailrsTestCase.aggregate,
+        )
 
 
 if __name__ == "__main__":

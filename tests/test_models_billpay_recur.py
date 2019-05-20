@@ -46,9 +46,12 @@ class RecpmtrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return RECPMTRQ(recurrinst=bk_recur.RecurrinstTestCase.aggregate,
-                        pmtinfo=bp_common.PmtinfoTestCase.aggregate,
-                        initialamt=Decimal("12.25"), finalamt=Decimal("22.50"))
+        return RECPMTRQ(
+            recurrinst=bk_recur.RecurrinstTestCase.aggregate,
+            pmtinfo=bp_common.PmtinfoTestCase.aggregate,
+            initialamt=Decimal("12.25"),
+            finalamt=Decimal("22.50"),
+        )
 
 
 class RecpmtrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -74,11 +77,16 @@ class RecpmtrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return RECPMTRS(recsrvrtid="DEADBEEF", payeelstid="123456", curdef="USD",
-                        recurrinst=bk_recur.RecurrinstTestCase.aggregate,
-                        pmtinfo=bp_common.PmtinfoTestCase.aggregate,
-                        initialamt=Decimal("12.25"), finalamt=Decimal("22.50"),
-                        extdpayee=bp_common.ExtdpayeeTestCase.aggregate)
+        return RECPMTRS(
+            recsrvrtid="DEADBEEF",
+            payeelstid="123456",
+            curdef="USD",
+            recurrinst=bk_recur.RecurrinstTestCase.aggregate,
+            pmtinfo=bp_common.PmtinfoTestCase.aggregate,
+            initialamt=Decimal("12.25"),
+            finalamt=Decimal("22.50"),
+            extdpayee=bp_common.ExtdpayeeTestCase.aggregate,
+        )
 
 
 class RecpmtmodrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -102,11 +110,14 @@ class RecpmtmodrqTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return RECPMTMODRQ(recsrvrtid="DEADBEEF",
-                           recurrinst=bk_recur.RecurrinstTestCase.aggregate,
-                           pmtinfo=bp_common.PmtinfoTestCase.aggregate,
-                           initialamt=Decimal("12.25"),
-                           finalamt=Decimal("22.50"), modpending=True)
+        return RECPMTMODRQ(
+            recsrvrtid="DEADBEEF",
+            recurrinst=bk_recur.RecurrinstTestCase.aggregate,
+            pmtinfo=bp_common.PmtinfoTestCase.aggregate,
+            initialamt=Decimal("12.25"),
+            finalamt=Decimal("22.50"),
+            modpending=True,
+        )
 
 
 class RecpmtmodrsTestCase(unittest.TestCase, base.TestAggregate):
@@ -130,11 +141,14 @@ class RecpmtmodrsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return RECPMTMODRS(recsrvrtid="DEADBEEF",
-                           recurrinst=bk_recur.RecurrinstTestCase.aggregate,
-                           pmtinfo=bp_common.PmtinfoTestCase.aggregate,
-                           initialamt=Decimal("12.25"),
-                           finalamt=Decimal("22.50"), modpending=True)
+        return RECPMTMODRS(
+            recsrvrtid="DEADBEEF",
+            recurrinst=bk_recur.RecurrinstTestCase.aggregate,
+            pmtinfo=bp_common.PmtinfoTestCase.aggregate,
+            initialamt=Decimal("12.25"),
+            finalamt=Decimal("22.50"),
+            modpending=True,
+        )
 
 
 class RecpmtcancrqTestCase(unittest.TestCase, base.TestAggregate):
@@ -183,8 +197,12 @@ class RecpmttrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return RECPMTTRNRQ(trnuid="DEADBEEF", cltcookie="B00B135", tan="B16B00B5",
-                           recpmtrq=RecpmtrqTestCase.aggregate)
+        return RECPMTTRNRQ(
+            trnuid="DEADBEEF",
+            cltcookie="B00B135",
+            tan="B16B00B5",
+            recpmtrq=RecpmtrqTestCase.aggregate,
+        )
 
 
 class RecpmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
@@ -202,10 +220,12 @@ class RecpmttrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return RECPMTTRNRS(trnuid="DEADBEEF",
-                           status=base.StatusTestCase.aggregate,
-                           cltcookie="B00B135",
-                           recpmtrs=RecpmtrsTestCase.aggregate)
+        return RECPMTTRNRS(
+            trnuid="DEADBEEF",
+            status=base.StatusTestCase.aggregate,
+            cltcookie="B00B135",
+            recpmtrs=RecpmtrsTestCase.aggregate,
+        )
 
 
 if __name__ == "__main__":

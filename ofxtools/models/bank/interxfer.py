@@ -42,9 +42,7 @@ class INTERRS(Aggregate):
     recsrvrtid = String(10)
     xferprcsts = SubAggregate(XFERPRCSTS)
 
-    optionalMutexes = [
-        ["dtxferprj", "dtposted"],
-    ]
+    optionalMutexes = [["dtxferprj", "dtposted"]]
 
 
 class INTERMODRQ(Aggregate):
@@ -81,9 +79,7 @@ class INTERTRNRQ(TrnRq):
     intermodrq = SubAggregate(INTERMODRQ)
     intercanrq = SubAggregate(INTERCANRQ)
 
-    requiredMutexes = [
-        ["interrq", "intermodrq", "intercanrq"],
-    ]
+    requiredMutexes = [["interrq", "intermodrq", "intercanrq"]]
 
 
 class INTERTRNRS(TrnRs):
@@ -93,6 +89,4 @@ class INTERTRNRS(TrnRs):
     intermodrs = SubAggregate(INTERMODRS)
     intercanrs = SubAggregate(INTERCANRS)
 
-    optionalMutexes = [
-        ["interrs", "intermodrs", "intercanrs"],
-    ]
+    optionalMutexes = [["interrs", "intermodrs", "intercanrs"]]

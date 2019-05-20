@@ -109,6 +109,7 @@ class MAILSYNCRQ(SyncRqList):
 
 class MAILSYNCRS(SyncRsList):
     """ OFX section 9.2.4 """
+
     mailtrnrs = ListItem(MAILTRNRS)
 
 

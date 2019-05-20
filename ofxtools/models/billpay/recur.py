@@ -5,10 +5,14 @@ Recurring payments - OFX Section 12.7
 
 
 __all__ = [
-    "RECPMTRQ", "RECPMTRS",
-    "RECPMTMODRQ", "RECPMTMODRS",
-    "RECPMTCANCRQ", "RECPMTCANCRS",
-    "RECPMTTRNRQ", "RECPMTTRNRS",
+    "RECPMTRQ",
+    "RECPMTRS",
+    "RECPMTMODRQ",
+    "RECPMTMODRS",
+    "RECPMTCANCRQ",
+    "RECPMTCANCRS",
+    "RECPMTTRNRQ",
+    "RECPMTTRNRS",
 ]
 
 
@@ -22,6 +26,7 @@ from ofxtools.models.bank.recur import RECURRINST
 
 class RECPMTRQ(Aggregate):
     """ OFX Section 12.7.1.1 """
+
     recurrinst = SubAggregate(RECURRINST, required=True)
     pmtinfo = SubAggregate(PMTINFO, required=True)
     initialamt = Decimal()
@@ -30,6 +35,7 @@ class RECPMTRQ(Aggregate):
 
 class RECPMTRS(Aggregate):
     """ OFX Section 12.7.1.2 """
+
     recsrvrtid = String(10, required=True)
     payeelstid = String(12, required=True)
     curdef = OneOf(*CURRENCY_CODES, required=True)
@@ -42,6 +48,7 @@ class RECPMTRS(Aggregate):
 
 class RECPMTMODRQ(Aggregate):
     """ OFX Section 12.7.2.1 """
+
     recsrvrtid = String(10, required=True)
     recurrinst = SubAggregate(RECURRINST, required=True)
     pmtinfo = SubAggregate(PMTINFO, required=True)
@@ -52,6 +59,7 @@ class RECPMTMODRQ(Aggregate):
 
 class RECPMTMODRS(Aggregate):
     """ OFX Section 12.7.2.1 """
+
     recsrvrtid = String(10, required=True)
     recurrinst = SubAggregate(RECURRINST, required=True)
     pmtinfo = SubAggregate(PMTINFO, required=True)
@@ -62,33 +70,33 @@ class RECPMTMODRS(Aggregate):
 
 class RECPMTCANCRQ(Aggregate):
     """ OFX Section 12.7.3.1 """
+
     recsrvrtid = String(10, required=True)
     canpending = Bool(required=True)
 
 
 class RECPMTCANCRS(Aggregate):
     """ OFX Section 12.7.3.2 """
+
     recsrvrtid = String(10, required=True)
     canpending = Bool(required=True)
 
 
 class RECPMTTRNRQ(TrnRq):
     """ OFX Section 12.7.1.1 """
+
     recpmtrq = SubAggregate(RECPMTRQ)
     recpmtmodrq = SubAggregate(RECPMTMODRQ)
     recpmtcancrq = SubAggregate(RECPMTCANCRQ)
 
-    requiredMutexes = [
-        ['recpmtrq', 'recpmtmodrq', 'recpmtcancrq'],
-    ]
+    requiredMutexes = [["recpmtrq", "recpmtmodrq", "recpmtcancrq"]]
 
 
 class RECPMTTRNRS(TrnRs):
     """ OFX Section 12.7.1.2 """
+
     recpmtrs = SubAggregate(RECPMTRS)
     recpmtmodrs = SubAggregate(RECPMTMODRS)
     recpmtcancrs = SubAggregate(RECPMTCANCRS)
 
-    optionalMutexes = [
-        ['recpmtrs', 'recpmtmodrs', 'recpmtcancrs'],
-    ]
+    optionalMutexes = [["recpmtrs", "recpmtmodrs", "recpmtcancrs"]]

@@ -15,8 +15,9 @@ import ofxtools
 
 class OFXHeaderTestMixin(object):
     # Override in subclass
-    headerClass:  Optional[Union[Type[ofxtools.header.OFXHeaderV1],
-                                 Type[ofxtools.header.OFXHeaderV2]]] = None
+    headerClass: Optional[
+        Union[Type[ofxtools.header.OFXHeaderV1], Type[ofxtools.header.OFXHeaderV2]]
+    ] = None
     defaultVersion: Optional[int] = None
     valid: Optional[Mapping[str, Any]] = None
     invalid: Optional[Mapping[str, Any]] = None
@@ -310,15 +311,17 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
         # Even though it breaks with the OFX spec, some FIs insert whitespace
         # after the colon demarc between an OFX header field and its value.
         # We allow this.
-        header = ("OFXHEADER:  100\r\n"
-                  "DATA:  OFXSGML\r\n"
-                  "VERSION:  103\r\n"
-                  "SECURITY:  NONE\r\n"
-                  "ENCODING:  USASCII\r\n"
-                  "CHARSET:  NONE\r\n"
-                  "COMPRESSION:  NONE\r\n"
-                  "OLDFILEUID:  NONE\r\n"
-                  "NEWFILEUID:  NONE\r\n")
+        header = (
+            "OFXHEADER:  100\r\n"
+            "DATA:  OFXSGML\r\n"
+            "VERSION:  103\r\n"
+            "SECURITY:  NONE\r\n"
+            "ENCODING:  USASCII\r\n"
+            "CHARSET:  NONE\r\n"
+            "COMPRESSION:  NONE\r\n"
+            "OLDFILEUID:  NONE\r\n"
+            "NEWFILEUID:  NONE\r\n"
+        )
         ofx = header + self.body
         ofx = BytesIO(ofx.encode("utf8"))
         ofxheader, body = ofxtools.header.parse_header(ofx)

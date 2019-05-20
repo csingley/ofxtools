@@ -19,21 +19,28 @@ import base
 STATUS = models.STATUS(code=0, severity="INFO")
 
 
-SONRS = models.SONRS(status=STATUS,
-                     dtserver=datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC),
-                     language="ENG",
-                     dtprofup=datetime(2004, 10, 29, 10, 10, 3, tzinfo=UTC),
-                     dtacctup=datetime(2004, 10, 29, 10, 10, 3, tzinfo=UTC),
-                     fi=models.FI(org="NCH", fid="1001"))
+SONRS = models.SONRS(
+    status=STATUS,
+    dtserver=datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC),
+    language="ENG",
+    dtprofup=datetime(2004, 10, 29, 10, 10, 3, tzinfo=UTC),
+    dtacctup=datetime(2004, 10, 29, 10, 10, 3, tzinfo=UTC),
+    fi=models.FI(org="NCH", fid="1001"),
+)
 SIGNONMSGSRSV1 = models.SIGNONMSGSRSV1(sonrs=SONRS)
 
-PAYERADDR = models.PAYERADDR(payername1="Broker One", addr1="1111 MTV",
-                             city="PAYER CITY", state="CA",
-                             postalcode="12345-6789")
+PAYERADDR = models.PAYERADDR(
+    payername1="Broker One",
+    addr1="1111 MTV",
+    city="PAYER CITY",
+    state="CA",
+    postalcode="12345-6789",
+)
 
 
 class Tax1099BTestCase(base.OfxTestCase, unittest.TestCase):
     """ OFX Tax Extensions Section 2.2.11 """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -163,13 +170,20 @@ class Tax1099BTestCase(base.OfxTestCase, unittest.TestCase):
     @classmethod
     def aggregate(cls):
         procsum0 = models.PROCSUM_V100(
-            form8949code="A", adjcode="M", sumcostbasis=Decimal("1050.33"),
-            sumsalespr=Decimal("1140.00"))
+            form8949code="A",
+            adjcode="M",
+            sumcostbasis=Decimal("1050.33"),
+            sumsalespr=Decimal("1140.00"),
+        )
 
         procsum1 = models.PROCSUM_V100(
-            form8949code="A", adjcode="MW", sumcostbasis=Decimal("1270.00"),
-            sumsalespr=Decimal("1200.00"), sumadjamt=Decimal("100.00"),
-            sumdescription="SHORT TERM WASH SALES")
+            form8949code="A",
+            adjcode="MW",
+            sumcostbasis=Decimal("1270.00"),
+            sumsalespr=Decimal("1200.00"),
+            sumadjamt=Decimal("100.00"),
+            sumdescription="SHORT TERM WASH SALES",
+        )
 
         procdet0 = models.PROCDET_V100(
             dtaqd=datetime(2017, 9, 10, tzinfo=UTC),
@@ -179,7 +193,8 @@ class Tax1099BTestCase(base.OfxTestCase, unittest.TestCase):
             salespr=Decimal("380.00"),
             longshort="SHORT",
             noncoveredsecurity=False,
-            basisnotshown=True)
+            basisnotshown=True,
+        )
 
         procdet1 = models.PROCDET_V100(
             form8949code="A",
@@ -187,7 +202,8 @@ class Tax1099BTestCase(base.OfxTestCase, unittest.TestCase):
             dtsale=datetime(2018, 6, 18, tzinfo=UTC),
             saledescription="12.3 DFA TAX MGD FUND",
             costbasis=Decimal("350.11"),
-            salespr=Decimal("380.00"))
+            salespr=Decimal("380.00"),
+        )
 
         procdet2 = models.PROCDET_V100(
             form8949code="A",
@@ -196,7 +212,8 @@ class Tax1099BTestCase(base.OfxTestCase, unittest.TestCase):
             saledescription="12.3 DFA TAX MGD FUND",
             costbasis=Decimal("350.11"),
             salespr=Decimal("380.00"),
-            longshort="SHORT")
+            longshort="SHORT",
+        )
 
         procdet3 = models.PROCDET_V100(
             form8949code="D",
@@ -204,7 +221,8 @@ class Tax1099BTestCase(base.OfxTestCase, unittest.TestCase):
             dtsale=datetime(2018, 6, 18, tzinfo=UTC),
             saledescription="14.3 DFA TAX FUND",
             costbasis=Decimal("350.11"),
-            salespr=Decimal("238.00"))
+            salespr=Decimal("238.00"),
+        )
 
         procdet4 = models.PROCDET_V100(
             form8949code="A",
@@ -215,7 +233,8 @@ class Tax1099BTestCase(base.OfxTestCase, unittest.TestCase):
             costbasis=Decimal("1050.00"),
             salespr=Decimal("1000.00"),
             washsale=True,
-            washsalelossdisallowed=Decimal("50.00"))
+            washsalelossdisallowed=Decimal("50.00"),
+        )
 
         procdet5 = models.PROCDET_V100(
             form8949code="A",
@@ -225,30 +244,47 @@ class Tax1099BTestCase(base.OfxTestCase, unittest.TestCase):
             numshrs=Decimal("200"),
             costbasis=Decimal("220.00"),
             salespr=Decimal("200.00"),
-            washsalelossdisallowed=Decimal("50.00"))
+            washsalelossdisallowed=Decimal("50.00"),
+        )
 
         recaddr = models.RECADDR(
             recname1="Diane Jones",
             addr1="7535 Santa Fe Rd",
             city="Recipient City",
             state="CA",
-            postalcode="9876-54321")
+            postalcode="9876-54321",
+        )
 
         extdbinfo = models.EXTDBINFO_V100(
-            procsum0, procsum1, procdet0, procdet1, procdet2, procdet3,
-            procdet4, procdet5)
+            procsum0,
+            procsum1,
+            procdet0,
+            procdet1,
+            procdet2,
+            procdet3,
+            procdet4,
+            procdet5,
+        )
 
         tax1099b = models.TAX1099B_V100(
-            srvrtid="IMASRVRTID", taxyear=2018, extdbinfo_v100=extdbinfo,
-            payeraddr=PAYERADDR, payerid="012345678", recaddr=recaddr,
-            recid="****56789", recacct="1000002222")
+            srvrtid="IMASRVRTID",
+            taxyear=2018,
+            extdbinfo_v100=extdbinfo,
+            payeraddr=PAYERADDR,
+            payerid="012345678",
+            recaddr=recaddr,
+            recid="****56789",
+            recacct="1000002222",
+        )
 
         return models.OFX(
             signonmsgsrsv1=SIGNONMSGSRSV1,
             tax1099msgsrsv1=models.TAX1099MSGSRSV1(
-                models.TAX1099TRNRS(trnuid="1001",
-                                    status=STATUS,
-                                    tax1099rs=models.TAX1099RS(tax1099b))))
+                models.TAX1099TRNRS(
+                    trnuid="1001", status=STATUS, tax1099rs=models.TAX1099RS(tax1099b)
+                )
+            ),
+        )
 
 
 class FidirectdepositinfoTestCase(base.OfxTestCase, unittest.TestCase):
@@ -257,6 +293,7 @@ class FidirectdepositinfoTestCase(base.OfxTestCase, unittest.TestCase):
 
     OFX Tax Extensions Section 2.3.1
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -318,27 +355,35 @@ class FidirectdepositinfoTestCase(base.OfxTestCase, unittest.TestCase):
     @classmethod
     def aggregate(cls):
         tax1099b = models.TAX1099B_V100(
-            srvrtid="IMASRVRTID", taxyear=2018, payeraddr=PAYERADDR,
-            payerid="012345678", recid="****56789")
+            srvrtid="IMASRVRTID",
+            taxyear=2018,
+            payeraddr=PAYERADDR,
+            payerid="012345678",
+            recid="****56789",
+        )
 
         dd0 = models.FIDIRECTDEPOSITINFO(
             finame_directdeposit="Your FI name here",
             firoutingnum="122000247",
-            fiacctnum="080808080808")
+            fiacctnum="080808080808",
+        )
         dd1 = models.FIDIRECTDEPOSITINFO(
             finame_directdeposit="Your FI name here",
             firoutingnum="933000247",
             fiacctnum="090809080808",
-            fiaccountnickname="James’ nest egg")
+            fiaccountnickname="James’ nest egg",
+        )
 
         return models.OFX(
             signonmsgsrsv1=SIGNONMSGSRSV1,
             tax1099msgsrsv1=models.TAX1099MSGSRSV1(
-                models.TAX1099TRNRS(trnuid="1001",
-                                    status=STATUS,
-                                    tax1099rs=models.TAX1099RS(
-                                        dd0, dd1, tax1099b, recid="111423815"
-                                    ))))
+                models.TAX1099TRNRS(
+                    trnuid="1001",
+                    status=STATUS,
+                    tax1099rs=models.TAX1099RS(dd0, dd1, tax1099b, recid="111423815"),
+                )
+            ),
+        )
 
 
 class Tax1099RequestTestCase(base.OfxTestCase, unittest.TestCase):
@@ -347,6 +392,7 @@ class Tax1099RequestTestCase(base.OfxTestCase, unittest.TestCase):
 
     OFX Tax Extensions Section 2.3.1
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRQV1>
@@ -374,15 +420,23 @@ class Tax1099RequestTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        sonrq = models.SONRQ(dtclient=datetime(2018, 1, 30, 13, 25, 10, tzinfo=UTC),
-                             userid="123456789", userpass="money",
-                             language="ENG", appid="TTWin", appver="2018")
+        sonrq = models.SONRQ(
+            dtclient=datetime(2018, 1, 30, 13, 25, 10, tzinfo=UTC),
+            userid="123456789",
+            userpass="money",
+            language="ENG",
+            appid="TTWin",
+            appver="2018",
+        )
 
         trnrq = models.TAX1099TRNRQ(
-            trnuid="12345", tax1099rq=models.TAX1099RQ(2018, recid="123456789"))
+            trnuid="12345", tax1099rq=models.TAX1099RQ(2018, recid="123456789")
+        )
 
-        return models.OFX(signonmsgsrqv1=models.SIGNONMSGSRQV1(sonrq=sonrq),
-                          tax1099msgsrqv1=models.TAX1099MSGSRQV1(trnrq))
+        return models.OFX(
+            signonmsgsrqv1=models.SIGNONMSGSRQV1(sonrq=sonrq),
+            tax1099msgsrqv1=models.TAX1099MSGSRQV1(trnrq),
+        )
 
 
 class Tax1099ResponseDeniedTestCase(base.OfxTestCase, unittest.TestCase):
@@ -391,6 +445,7 @@ class Tax1099ResponseDeniedTestCase(base.OfxTestCase, unittest.TestCase):
 
     OFX Tax Extensions Section 2.3.2
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -419,15 +474,23 @@ class Tax1099ResponseDeniedTestCase(base.OfxTestCase, unittest.TestCase):
     @classproperty
     @classmethod
     def aggregate(cls):
-        sonrs = models.SONRS(status=STATUS,
-                             dtserver=datetime(2018, 1, 27, 13, 25, 10, tzinfo=UTC),
-                             language="ENG")
+        sonrs = models.SONRS(
+            status=STATUS,
+            dtserver=datetime(2018, 1, 27, 13, 25, 10, tzinfo=UTC),
+            language="ENG",
+        )
         trnrs = models.TAX1099TRNRS(
             trnuid="12345",
-            status=models.STATUS(code="14501", severity="ERROR",
-                                 message="1099 Forms Unavailable for User"))
-        return models.OFX(signonmsgsrsv1=models.SIGNONMSGSRSV1(sonrs=sonrs),
-                          tax1099msgsrsv1=models.TAX1099MSGSRSV1(trnrs))
+            status=models.STATUS(
+                code="14501",
+                severity="ERROR",
+                message="1099 Forms Unavailable for User",
+            ),
+        )
+        return models.OFX(
+            signonmsgsrsv1=models.SIGNONMSGSRSV1(sonrs=sonrs),
+            tax1099msgsrsv1=models.TAX1099MSGSRSV1(trnrs),
+        )
 
 
 class Tax1099ResponseTestCase(base.OfxTestCase, unittest.TestCase):
@@ -437,6 +500,7 @@ class Tax1099ResponseTestCase(base.OfxTestCase, unittest.TestCase):
 
     OFX Tax Extensions Section 2.3.3
     """
+
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -509,49 +573,66 @@ class Tax1099ResponseTestCase(base.OfxTestCase, unittest.TestCase):
         </TAX1099MSGSRSV1>
     </OFX>
     """
+
     @classproperty
     @classmethod
     def aggregate(cls):
-        sonrs = models.SONRS(status=STATUS,
-                             dtserver=datetime(2018, 1, 30, 13, 25, 10, tzinfo=UTC),
-                             language="ENG")
-        
-        payeraddr = models.PAYERADDR(payername1="Charles Schwab",
-                                     addr1="123 Schwab Way",
-                                     city="Philadelphia", state="PA",
-                                     postalcode="26433")
+        sonrs = models.SONRS(
+            status=STATUS,
+            dtserver=datetime(2018, 1, 30, 13, 25, 10, tzinfo=UTC),
+            language="ENG",
+        )
 
-        recaddr = models.RECADDR(recname1="Mr Investor",
-                                 addr1="464 Investor Way",
-                                 city="Mountain View", state="CA",
-                                 postalcode="96433")
+        payeraddr = models.PAYERADDR(
+            payername1="Charles Schwab",
+            addr1="123 Schwab Way",
+            city="Philadelphia",
+            state="PA",
+            postalcode="26433",
+        )
 
-        tax1099int = models.TAX1099INT_V100(srvrtid="2345", taxyear=2018,
-                                            intincome=Decimal("3000.12"),
-                                            fedtaxwh=Decimal("200.56"),
-                                            payeraddr=payeraddr,
-                                            payerid="2331243",
-                                            recaddr=recaddr,
-                                            recid="123456789",
-                                            recacct="12345")
+        recaddr = models.RECADDR(
+            recname1="Mr Investor",
+            addr1="464 Investor Way",
+            city="Mountain View",
+            state="CA",
+            postalcode="96433",
+        )
 
-        tax1099div = models.TAX1099DIV_V100(srvrtid="2346", taxyear=2018,
-                                            totcapgain=Decimal("34000"),
-                                            p28gain=Decimal("34000"),
-                                            payeraddr=payeraddr,
-                                            payerid="2331243",
-                                            recaddr=recaddr,
-                                            recid="123456789",
-                                            recacct="12345")
+        tax1099int = models.TAX1099INT_V100(
+            srvrtid="2345",
+            taxyear=2018,
+            intincome=Decimal("3000.12"),
+            fedtaxwh=Decimal("200.56"),
+            payeraddr=payeraddr,
+            payerid="2331243",
+            recaddr=recaddr,
+            recid="123456789",
+            recacct="12345",
+        )
 
-        trnrs = models.TAX1099TRNRS(trnuid="12345", status=STATUS,
-                                    tax1099rs=models.TAX1099RS(
-                                        tax1099int,
-                                        tax1099div,
-                                        recid="123456789"))
+        tax1099div = models.TAX1099DIV_V100(
+            srvrtid="2346",
+            taxyear=2018,
+            totcapgain=Decimal("34000"),
+            p28gain=Decimal("34000"),
+            payeraddr=payeraddr,
+            payerid="2331243",
+            recaddr=recaddr,
+            recid="123456789",
+            recacct="12345",
+        )
 
-        return models.OFX(signonmsgsrsv1=models.SIGNONMSGSRSV1(sonrs=sonrs),
-                          tax1099msgsrsv1=models.TAX1099MSGSRSV1(trnrs))
+        trnrs = models.TAX1099TRNRS(
+            trnuid="12345",
+            status=STATUS,
+            tax1099rs=models.TAX1099RS(tax1099int, tax1099div, recid="123456789"),
+        )
+
+        return models.OFX(
+            signonmsgsrsv1=models.SIGNONMSGSRSV1(sonrs=sonrs),
+            tax1099msgsrsv1=models.TAX1099MSGSRSV1(trnrs),
+        )
 
 
 if __name__ == "__main__":

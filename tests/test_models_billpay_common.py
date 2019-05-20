@@ -49,8 +49,9 @@ class BpacctinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return BPACCTINFO(bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
-                          svcstatus="AVAIL")
+        return BPACCTINFO(
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate, svcstatus="AVAIL"
+        )
 
 
 class BillpubinfoTestCase(unittest.TestCase, base.TestAggregate):
@@ -76,8 +77,13 @@ class PmtinfoTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["BANKACCTFROM", "TRNAMT", "PAYACCT", "DTDUE"]
-    optionalElements = ["PAYEELSTID", "BANKACCTTO", "MEMO",
-                        "BILLREFINFO", "BILLPUBINFO"]
+    optionalElements = [
+        "PAYEELSTID",
+        "BANKACCTTO",
+        "MEMO",
+        "BILLREFINFO",
+        "BILLPUBINFO",
+    ]
 
     @classproperty
     @classmethod
@@ -100,15 +106,20 @@ class PmtinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PMTINFO(ExtdpmtTestCase.aggregate,
-                       ExtdpmtTestCase.aggregate,
-                       bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
-                       trnamt=Decimal("313.45"), payeeid="5112",
-                       payeelstid="240",
-                       bankacctto=bk_stmt.BankaccttoTestCase.aggregate,
-                       payacct="711", dtdue=datetime(1924, 5, 7, tzinfo=UTC),
-                       memo="Time's up", billrefinfo="Paying it",
-                       billpubinfo=BillpubinfoTestCase.aggregate)
+        return PMTINFO(
+            ExtdpmtTestCase.aggregate,
+            ExtdpmtTestCase.aggregate,
+            bankacctfrom=bk_stmt.BankacctfromTestCase.aggregate,
+            trnamt=Decimal("313.45"),
+            payeeid="5112",
+            payeelstid="240",
+            bankacctto=bk_stmt.BankaccttoTestCase.aggregate,
+            payacct="711",
+            dtdue=datetime(1924, 5, 7, tzinfo=UTC),
+            memo="Time's up",
+            billrefinfo="Paying it",
+            billpubinfo=BillpubinfoTestCase.aggregate,
+        )
 
     @classproperty
     @classmethod
@@ -169,9 +180,12 @@ class DiscountTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return DISCOUNT(dscrate=Decimal('18'), dscamt=Decimal('13.50'),
-                        dscdate=datetime(2017, 3, 17, tzinfo=UTC),
-                        dscdesc="Loyal customer discount")
+        return DISCOUNT(
+            dscrate=Decimal("18"),
+            dscamt=Decimal("13.50"),
+            dscdate=datetime(2017, 3, 17, tzinfo=UTC),
+            dscdesc="Loyal customer discount",
+        )
 
 
 class AdjustmentTestCase(unittest.TestCase, base.TestAggregate):
@@ -193,9 +207,12 @@ class AdjustmentTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return ADJUSTMENT(adjno= "18", adjdesc="We like you",
-                          adjamt=Decimal('13.50'),
-                          adjdate=datetime(2017, 3, 17, tzinfo=UTC))
+        return ADJUSTMENT(
+            adjno="18",
+            adjdesc="We like you",
+            adjamt=Decimal("13.50"),
+            adjdate=datetime(2017, 3, 17, tzinfo=UTC),
+        )
 
 
 class LineitemTestCase(unittest.TestCase, base.TestAggregate):
@@ -241,14 +258,17 @@ class InvoiceTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return INVOICE(LineitemTestCase.aggregate,
-                       LineitemTestCase.aggregate,
-                       invno="103", invtotalamt=Decimal("25"),
-                       invpaidamt=Decimal("25"),
-                       invdate=datetime(2015, 9, 6, tzinfo=UTC),
-                       invdesc="Purchase invoice",
-                       discount=DiscountTestCase.aggregate,
-                       adjustment=AdjustmentTestCase.aggregate)
+        return INVOICE(
+            LineitemTestCase.aggregate,
+            LineitemTestCase.aggregate,
+            invno="103",
+            invtotalamt=Decimal("25"),
+            invpaidamt=Decimal("25"),
+            invdate=datetime(2015, 9, 6, tzinfo=UTC),
+            invdesc="Purchase invoice",
+            discount=DiscountTestCase.aggregate,
+            adjustment=AdjustmentTestCase.aggregate,
+        )
 
 
 class ExtdpmtinvTestCase(unittest.TestCase, base.TestAggregate):
@@ -288,10 +308,13 @@ class ExtdpmtTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return EXTDPMT(ExtdpmtinvTestCase.aggregate,
-                       ExtdpmtinvTestCase.aggregate,
-                       extdpmtfor="INDIVIDUAL", extdpmtchk="112",
-                       extdpmtdsc="Here is your money")
+        return EXTDPMT(
+            ExtdpmtinvTestCase.aggregate,
+            ExtdpmtinvTestCase.aggregate,
+            extdpmtfor="INDIVIDUAL",
+            extdpmtchk="112",
+            extdpmtdsc="Here is your money",
+        )
 
     @classproperty
     @classmethod
@@ -359,8 +382,9 @@ class ExtdpayeeTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return EXTDPAYEE(payeeid="DEADBEEF", idscope="GLOBAL",
-                         name="Porky Pig", daystopay=30)
+        return EXTDPAYEE(
+            payeeid="DEADBEEF", idscope="GLOBAL", name="Porky Pig", daystopay=30
+        )
 
     @classproperty
     @classmethod
@@ -437,7 +461,15 @@ class PmtprcstsTestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
     requiredElements = ["PMTPRCCODE", "DTPMTPRC"]
-    oneOfs = {"PMTPRCCODE": ("WILLPROCESSON", "PROCESSEDON", "NOFUNDSON", "FAILEDON", "CANCELEDON")}
+    oneOfs = {
+        "PMTPRCCODE": (
+            "WILLPROCESSON",
+            "PROCESSEDON",
+            "NOFUNDSON",
+            "FAILEDON",
+            "CANCELEDON",
+        )
+    }
 
     @classproperty
     @classmethod
@@ -450,8 +482,9 @@ class PmtprcstsTestCase(unittest.TestCase, base.TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        return PMTPRCSTS(pmtprccode="FAILEDON",
-                         dtpmtprc=datetime(2001, 1, 1, tzinfo=UTC))
+        return PMTPRCSTS(
+            pmtprccode="FAILEDON", dtpmtprc=datetime(2001, 1, 1, tzinfo=UTC)
+        )
 
 
 if __name__ == "__main__":

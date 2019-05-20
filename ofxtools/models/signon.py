@@ -93,6 +93,7 @@ class FI(Aggregate):
 
 class MFACHALLENGE(Aggregate):
     """ OFX Section 2.5.4.2 """
+
     mfaphraseid = String(32, required=True)
     mfaphraselabel = String(64)
 
@@ -137,8 +138,10 @@ class SONRQ(Aggregate):
             assert (userid and userpass) or userkey
             assert not ((userid or userpass) and userkey)
         except AssertionError:
-            msg = ("{} must contain either <USERID> and <USERPASS> "
-                   "or <USERKEY>, but not both")
+            msg = (
+                "{} must contain either <USERID> and <USERPASS> "
+                "or <USERKEY>, but not both"
+            )
             raise ValueError(msg.format(cls.__name__))
 
         super().validate_args(*args, **kwargs)
@@ -257,6 +260,7 @@ class MFACHALLENGETRNRS(TrnRs):
 
 class SIGNONMSGSRQV1(Aggregate):
     """ OFX Section 2.5 """
+
     sonrq = SubAggregate(SONRQ, required=True)
     pinchtrnrq = SubAggregate(PINCHTRNRQ)
     challengetrnrq = SubAggregate(CHALLENGETRNRQ)
@@ -265,6 +269,7 @@ class SIGNONMSGSRQV1(Aggregate):
 
 class SIGNONMSGSRSV1(Aggregate):
     """ OFX Section 2.5 """
+
     sonrs = SubAggregate(SONRS, required=True)
     pinchtrnrs = SubAggregate(PINCHTRNRS)
     challengetrnrs = SubAggregate(CHALLENGETRNRS)
