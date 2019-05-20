@@ -5,6 +5,7 @@ Configurable CLI front end for ``ofxtools.Client``
 """
 # stdlib imports
 import os
+import sys
 import argparse
 import configparser
 import datetime
@@ -103,158 +104,179 @@ class UuidAction(argparse.Action):
 
 
 def make_argparser() -> argparse.ArgumentParser:
-    argparser = argparse.ArgumentParser(
+    main_parser = argparse.ArgumentParser(
         description="Download OFX financial data",
         prog="ofxget",
     )
-    argparser.add_argument(
-        "request",
-        choices=list(REQUEST_HANDLERS.keys()),
-        help="Request type")
-    argparser.add_argument(
-        "server", nargs="?",
-        help="OFX server nickname (cf. `ofxget list`)")
-    argparser.add_argument("--url", help="OFX server URL")
-    argparser.add_argument("--ofxhome", metavar="ID#",
-                           help="FI id# on http://www.ofxhome.com/")
-    argparser.add_argument(
-        "-n",
-        "--dryrun",
-        action="store_true",
-        default=None,
-        help="Display OFX request and exit without sending",
+    subparsers_ = main_parser.add_subparsers(
+        title="commands",
+        description=None,
+        help=None,
     )
-    argparser.add_argument(
-        "-w",
-        "--write",
-        action="store_true",
-        default=None,
-        help="Write working parameters to config file"
-    )
-    argparser.add_argument(
-        "--savepass",
-        action="store_true",
-        default=None,
-        help="Store password in system keyring (requires python-keyring)",
-    )
-    argparser.add_argument(
-        "--unsafe",
-        action="store_true",
-        default=None,
-        help="Disable SSL certificate verification",
-    )
-    add_format_group(argparser)
-    add_signon_group(argparser)
-    add_stmt_group(argparser)
+    subparsers = {}
 
-    return argparser
+    subparsers["list"] = add_subparser(subparsers_, "list",
+                                       help="List known reachable OFX servers")
+    subparsers["scan"] = add_subparser(subparsers_, "scan", server=True,
+                                       help=("Probe OFX server for working "
+                                             "connection parameters"))
+    subparsers["prof"] = add_subparser(subparsers_, "prof", format=True,
+                                       help=("Download OFX service profile "
+                                             "for server"))
+    subparsers["acctinfo"] = add_subparser(subparsers_, "acctinfo", signon=True,
+                                           help=("Download account information "
+                                                 "for a user login"))
+    subparsers["stmt"] = add_subparser(subparsers_, "stmt", stmt=True,
+                                       help=("Download statement(s) for "
+                                             "bank/CC/investment acct(s)"))
+    subparsers["stmtend"] = add_subparser(subparsers_, "stmtend", stmtend=True,
+                                          help=("Download closing statement(s) "
+                                                "for bank/CC account(s)"))
+    subparsers["tax1099"] = add_subparser(subparsers_, "tax1099", tax=True,
+                                          help=("(EXPERIMENTAL) Download US "
+                                                "income tax data on f1099"))
+    main_parser.subparsers = subparsers
+    return main_parser
+
+
+def add_subparser(subparsers,
+                  cmd,
+                  server=False,
+                  format=False,
+                  signon=False,
+                  stmtend=False,
+                  stmt=False,
+                  tax=False,
+                  help=None,
+                  ):
+    parser = subparsers.add_parser(cmd, help=help, description=help)
+    parser.set_defaults(request=cmd)
+    parser.add_argument(
+        "server", nargs="?",
+        help="OFX server nickname")
+
+    # Higher-level configs (e.g. account #s)
+    # imply lower-level configs (e.g. username/passwd)
+    if stmt:
+        stmtend = True
+    if stmtend or tax:
+        signon = True
+    if signon:
+        format = True
+    if format:
+        server = True
+
+    if server:
+        parser.add_argument("--url", help="OFX server URL")
+        parser.add_argument("--ofxhome", metavar="ID#",
+                            help="FI id# on http://www.ofxhome.com/")
+        parser.add_argument(
+            "-w",
+            "--write",
+            action="store_true",
+            default=None,
+            help="Write working parameters to config file"
+        )
+        parser.add_argument(
+            "--unsafe",
+            action="store_true",
+            default=None,
+            help="Skip SSL certificate verification",
+        )
+
+    if format:
+        parser.add_argument(
+            "-n",
+            "--dryrun",
+            action="store_true",
+            default=None,
+            help="Display OFX request and exit without sending",
+        )
+        add_format_group(parser)
+
+    if signon:
+        parser.add_argument(
+            "--savepass",
+            action="store_true",
+            default=None,
+            help="Store password in system keyring (requires python-keyring)",
+        )
+        add_signon_group(parser)
+
+    if stmtend:
+        add_bank_acct_group(parser)
+        stmt_group = add_stmt_group(parser)
+        if stmt:
+            add_stmt_args(stmt_group)
+            add_inv_acct_group(parser)
+            add_inv_stmt_group(parser)
+
+    if tax:
+        add_tax_group(parser)
+
+    return parser
 
 
 def add_format_group(parser):
-    format_group = parser.add_argument_group(title="Format Options")
-    format_group.add_argument("--version", help="OFX version")
-    format_group.add_argument(
+    group = parser.add_argument_group(title="format options")
+    group.add_argument("--version", help="OFX version")
+    group.add_argument(
         "--unclosedelements",
         action="store_true",
         default=None,
         help="Omit end tags for elements (OFXv1 only)",
     )
-    format_group.add_argument(
+    group.add_argument(
         "--pretty",
         action="store_true",
         default=None,
         help="Insert newlines and whitespace indentation",
     )
 
-    return parser
+    return group
 
 
 def add_signon_group(parser):
-    signon_group = parser.add_argument_group(title="Signon Options")
-    signon_group.add_argument("-u", "--user", help="FI login username")
-    signon_group.add_argument("--clientuid",
-                              nargs=0,
-                              action=UuidAction,
-                              metavar="UUID4",
-                              help="Override default CLIENTUID with random #")
-    signon_group.add_argument("--org", help="FI.ORG")
-    signon_group.add_argument("--fid", help="FI.FID")
-    signon_group.add_argument("--appid", help="OFX client app identifier")
-    signon_group.add_argument("--appver", help="OFX client app version")
-    signon_group.add_argument("--language", help="OFX language")
+    group = parser.add_argument_group(title="signon options")
+    group.add_argument("-u", "--user", help="FI login username")
+    group.add_argument("--clientuid",
+                       nargs=0,
+                       action=UuidAction,
+                       metavar="UUID4",
+                       help="Override default CLIENTUID with random number")
+    group.add_argument("--org", help="FI.ORG")
+    group.add_argument("--fid", help="FI.FID")
+    group.add_argument("--appid", help="OFX client app identifier")
+    group.add_argument("--appver", help="OFX client app version")
+    group.add_argument("--language", help="OFX language")
 
-    return parser
+    return group
 
 
-def add_stmt_group(parser):
-    stmt_group = parser.add_argument_group(title="Statement Options")
-    stmt_group.add_argument("--bankid", help="ABA routing#")
-    stmt_group.add_argument("--brokerid", help="Broker ID string")
-    stmt_group.add_argument(
+def add_bank_acct_group(parser):
+    group = parser.add_argument_group(title="bank/CC account options")
+    group.add_argument("--bankid", help="ABA routing#")
+    group.add_argument(
         "-C", "--checking", metavar="#", action="append",
         help="Account number (option can be repeated)"
     )
-    stmt_group.add_argument(
+    group.add_argument(
         "-S", "--savings", metavar="#", action="append",
         help="Account number (option can be repeated)"
     )
-    stmt_group.add_argument(
+    group.add_argument(
         "-M", "--moneymrkt", metavar="#", action="append",
         help="Account number (option can be repeated)"
     )
-    stmt_group.add_argument(
+    group.add_argument(
         "-L", "--creditline", metavar="#", action="append",
         help="Account number (option can be repeated)"
     )
-    stmt_group.add_argument(
+    group.add_argument(
         "-c", "--creditcard", "--cc", metavar="#", action="append",
         help="Account number (option can be repeated)"
     )
-    stmt_group.add_argument(
-        "-i", "--investment", metavar="#", action="append",
-        help="Account number (option can be repeated)"
-    )
-    stmt_group.add_argument(
-        "-s", "--start", metavar="DATE", dest="dtstart",
-        help="(YYYYmmdd) Transactions list start date"
-    )
-    stmt_group.add_argument(
-        "-e", "--end", metavar="DATE", dest="dtend",
-        help="(YYYYmmdd) Transactions list end date"
-    )
-    stmt_group.add_argument(
-        "-a", "--asof", metavar="DATE", dest="dtasof",
-        help="(YYYYmmdd) As-of date for balances and investment positions",
-    )
-    stmt_group.add_argument(
-        "--no-transactions",
-        dest="inctran",
-        action="store_false",
-        default=None,
-        help="Omit transactions (config 'inctran: false')",
-    )
-    stmt_group.add_argument(
-        "--no-balances",
-        dest="incbal",
-        action="store_false",
-        default=None,
-        help="Omit balances (config 'incbal: false')",
-    )
-    stmt_group.add_argument(
-        "--no-positions",
-        dest="incpos",
-        action="store_false",
-        default=None,
-        help="Omit investment positions (config 'incpos: false')",
-    )
-    stmt_group.add_argument(
-        "--open-orders",
-        dest="incoo",
-        action="store_true",
-        default=None,
-        help="Include open orders (config 'incoo: true')",
-    )
-    stmt_group.add_argument(
+    group.add_argument(
         "--all",
         dest="all",
         action="store_true",
@@ -262,28 +284,95 @@ def add_stmt_group(parser):
         help="Request ACCTINFO; download statements for all",
     )
 
-    return parser
+    return group
+
+
+def add_stmt_group(parser):
+    group = parser.add_argument_group(
+        title="general statement options (both bank and investment)"
+    )
+    group.add_argument(
+        "-s", "--start", metavar="DATE", dest="dtstart",
+        help="(YYYYmmdd) Transactions list start date"
+    )
+    group.add_argument(
+        "-e", "--end", metavar="DATE", dest="dtend",
+        help="(YYYYmmdd) Transactions list end date"
+    )
+    return group
+
+
+def add_stmt_args(group):
+    group.add_argument(
+        "-a", "--asof", metavar="DATE", dest="dtasof",
+        help="(YYYYmmdd) As-of date for balances and investment positions",
+    )
+    group.add_argument(
+        "--no-transactions",
+        dest="inctran",
+        action="store_false",
+        default=None,
+        help="Omit transactions (config 'inctran: false')",
+    )
+    group.add_argument(
+        "--no-balances",
+        dest="incbal",
+        action="store_false",
+        default=None,
+        help="Omit balances (config 'incbal: false')",
+    )
+
+    return group
+
+
+def add_inv_acct_group(parser):
+    group = parser.add_argument_group(title="investment account options")
+    group.add_argument("--brokerid", help="Broker ID string")
+    group.add_argument(
+        "-i", "--investment", metavar="#", action="append",
+        help="Account number (option can be repeated)"
+    )
+    return group
+
+
+def add_inv_stmt_group(parser):
+    group = parser.add_argument_group(title="investment statement options")
+    group.add_argument(
+        "--no-positions",
+        dest="incpos",
+        action="store_false",
+        default=None,
+        help="Omit investment positions (config 'incpos: false')",
+    )
+    group.add_argument(
+        "--open-orders",
+        dest="incoo",
+        action="store_true",
+        default=None,
+        help="Include open orders (config 'incoo: true')",
+    )
+    return group
 
 
 def add_tax_group(parser):
-    tax_group = parser.add_argument_group(title="Tax Form Options")
-    tax_group.add_argument(
+    group = parser.add_argument_group(title="tax form options")
+    group.add_argument(
         "-y", "--year", metavar="YEAR", dest="years",
         type=int, action="append",
         help="(YYYY) Tax year (option can be repeated)",
     )
-    tax_group.add_argument(
+    group.add_argument(
         "--acctnum",
         dest="acctnum",
         help="Account # of recipient, if different than tax ID",
     )
-    tax_group.add_argument(
+    group.add_argument(
         "--recid",
         dest="recid",
         help="ID of recipient",
     )
 
-    return parser
+    return group
 
 
 ###############################################################################
@@ -723,8 +812,12 @@ def merge_config(args: argparse.Namespace,
 
         if "server" not in _args:
             msg = (f"{err} - please provide a server nickname, "
-                   "or configure 'url' / 'ofxhome'")
-            raise ValueError(msg)
+                   "or configure 'url' / 'ofxhome'\n")
+            print(msg)
+            parser = make_argparser()
+            command = merged["request"]
+            parser.subparsers[command].print_help()
+            sys.exit()
 
         server = _args["server"]
         # Allow sloppy CLI args - passing URL as "server" positional arg
@@ -1144,7 +1237,13 @@ REQUEST_HANDLERS = {"list": list_fis,
 
 def main() -> None:
     argparser = make_argparser()
-    args = merge_config(argparser.parse_args(), UserConfig)
+    args_ = argparser.parse_args()
+
+    if not hasattr(args_, "request"):
+        argparser.print_help()
+        sys.exit()
+
+    args = merge_config(args_, UserConfig)
     REQUEST_HANDLERS[args["request"]](args)
 
 
