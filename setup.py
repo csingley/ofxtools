@@ -14,10 +14,10 @@ from setuptools import setup, find_packages
 __here__ = os.path.dirname(os.path.realpath(__file__))
 
 ABOUT = {}
-with open(os.path.join(__here__, 'ofxtools', '__version__.py'), 'r') as f:
+with open(os.path.join(__here__, "ofxtools", "__version__.py"), "r") as f:
     exec(f.read(), ABOUT)
 
-with open(os.path.join(__here__, 'README.rst'), 'r') as f:
+with open(os.path.join(__here__, "README.rst"), "r") as f:
     README = f.read()
 
 URL_BASE = "{}/tarball".format(ABOUT["__url__"])
@@ -32,16 +32,13 @@ setup(
     author_email=ABOUT["__author_email__"],
     url=ABOUT["__url__"],
     packages=find_packages(),
-    package_data={'ofxtools': ["README.rst", "config/*.cfg"]},
+    package_data={"ofxtools": ["README.rst", "config/*.cfg"]},
     python_requires=">=3.6",
     license=ABOUT["__license__"],
-
     # Note: change 'master' to the tag name when releasing a new verion
     #  download_url="{}/master".format(URL_BASE),
     download_url="{}/{}".format(URL_BASE, ABOUT["__version__"]),
-
-    entry_points={'console_scripts': ['ofxget=ofxtools.scripts.ofxget:main']},
-
+    entry_points={"console_scripts": ["ofxget=ofxtools.scripts.ofxget:main"]},
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
@@ -60,5 +57,5 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
     ],
-    keywords=['ofx', 'Open Financial Exchange'],
+    keywords=["ofx", "Open Financial Exchange"],
 )
