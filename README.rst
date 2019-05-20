@@ -1,5 +1,6 @@
 Open Financial Exchange (OFX) Tools for Python
 ==============================================
+
 .. image:: https://travis-ci.org/csingley/ofxtools.svg?branch=master
     :target: https://travis-ci.org/csingley/ofxtools
 

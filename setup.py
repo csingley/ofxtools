@@ -33,7 +33,7 @@ setup(
     url=ABOUT["__url__"],
     packages=find_packages(),
     package_data={'ofxtools': ["README.rst", "config/*.cfg"]},
-    python_requires=">=3.4",
+    python_requires=">=3.6",
     license=ABOUT["__license__"],
 
     # Note: change 'master' to the tag name when releasing a new verion
