@@ -420,6 +420,12 @@ def request_stmt(args: ArgType) -> None:
                       incoo=args["incoo"], incpos=args["incpos"],
                       incbal=args["incbal"]))
 
+    if not stmtrqs:
+        accttypes = ['checking', 'savings', 'moneymrkt', 'creditline',
+                     'creditcard', 'investment']
+        msg = f"No accounts specified; configure at least one of {accttypes}"
+        warnings.warn(msg, category=OfxgetWarning)
+
     client = init_client(args)
     with client.request_statements(
         password,
@@ -460,6 +466,12 @@ def request_stmtend(args: ArgType) -> None:
     for acctid in args["creditcard"]:
         stmtendrqs.append(
             CcStmtEndRq(acctid=acctid, dtstart=dt["start"], dtend=dt["end"]))
+
+    if not stmtendrqs:
+        accttypes = ['checking', 'savings', 'moneymrkt', 'creditline',
+                     'creditcard']
+        msg = f"No accounts specified; configure at least one of {accttypes}"
+        warnings.warn(msg, category=OfxgetWarning)
 
     client = init_client(args)
     with client.request_statements(
