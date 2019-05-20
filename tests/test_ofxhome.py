@@ -75,6 +75,10 @@ class LookupTestCase(unittest.TestCase):
                           "creditcardmsgset": True})
 
 
+class FetchFiXmlTestCase(unittest.TestCase):
+    pass
+
+
 class OfxInvalidTestCase(unittest.TestCase):
     pass
 

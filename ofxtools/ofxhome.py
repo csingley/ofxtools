@@ -76,6 +76,9 @@ def lookup(id: str) -> Optional[OFXServer]:
 
 
 def fetch_fi_xml(id: str) -> Optional[ET.Element]:
+    if not id:
+        return None
+
     query = _make_query(lookup=id)
     try:
         with urllib.request.urlopen(query) as f:
