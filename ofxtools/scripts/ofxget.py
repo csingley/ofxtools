@@ -113,7 +113,7 @@ def make_argparser() -> argparse.ArgumentParser:
         help="Request type")
     argparser.add_argument(
         "server", nargs="?",
-        help="OFX server - URL or FI name from ofxget.cfg/fi.cfg")
+        help="OFX server nickname (cf. `ofxget list`)")
     argparser.add_argument("--url", help="OFX server URL")
     argparser.add_argument("--ofxhome", metavar="ID#",
                            help="FI id# on http://www.ofxhome.com/")
@@ -143,8 +143,15 @@ def make_argparser() -> argparse.ArgumentParser:
         default=None,
         help="Disable SSL certificate verification",
     )
+    add_format_group(argparser)
+    add_signon_group(argparser)
+    add_stmt_group(argparser)
 
-    format_group = argparser.add_argument_group(title="Format Options")
+    return argparser
+
+
+def add_format_group(parser):
+    format_group = parser.add_argument_group(title="Format Options")
     format_group.add_argument("--version", help="OFX version")
     format_group.add_argument(
         "--unclosedelements",
@@ -159,7 +166,11 @@ def make_argparser() -> argparse.ArgumentParser:
         help="Insert newlines and whitespace indentation",
     )
 
-    signon_group = argparser.add_argument_group(title="Signon Options")
+    return parser
+
+
+def add_signon_group(parser):
+    signon_group = parser.add_argument_group(title="Signon Options")
     signon_group.add_argument("-u", "--user", help="FI login username")
     signon_group.add_argument("--clientuid",
                               nargs=0,
@@ -172,7 +183,11 @@ def make_argparser() -> argparse.ArgumentParser:
     signon_group.add_argument("--appver", help="OFX client app version")
     signon_group.add_argument("--language", help="OFX language")
 
-    stmt_group = argparser.add_argument_group(title="Statement Options")
+    return parser
+
+
+def add_stmt_group(parser):
+    stmt_group = parser.add_argument_group(title="Statement Options")
     stmt_group.add_argument("--bankid", help="ABA routing#")
     stmt_group.add_argument("--brokerid", help="Broker ID string")
     stmt_group.add_argument(
@@ -247,7 +262,11 @@ def make_argparser() -> argparse.ArgumentParser:
         help="Request ACCTINFO; download statements for all",
     )
 
-    tax_group = argparser.add_argument_group(title="Tax Form Options")
+    return parser
+
+
+def add_tax_group(parser):
+    tax_group = parser.add_argument_group(title="Tax Form Options")
     tax_group.add_argument(
         "-y", "--year", metavar="YEAR", dest="years",
         type=int, action="append",
@@ -264,7 +283,7 @@ def make_argparser() -> argparse.ArgumentParser:
         help="ID of recipient",
     )
 
-    return argparser
+    return parser
 
 
 ###############################################################################
@@ -285,8 +304,6 @@ def scan_profile(args: ArgType) -> None:
 
         if args["write"] and not args["dryrun"]:
             extra_args = _best_scan_format(scan_results)
-            #  args.maps.insert(0, extra_args)
-            #  write_config(args)
             write_config(ChainMap(extra_args, dict(args)))
 
 
