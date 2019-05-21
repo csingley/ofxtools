@@ -20,7 +20,8 @@ import xml.etree.ElementTree as ET
 from io import BytesIO
 import itertools
 from operator import attrgetter
-import warnings
+import logging
+import logging.config
 import pydoc
 import typing
 from typing import (
@@ -62,8 +63,40 @@ from ofxtools.header import OFXHeaderError
 from ofxtools.Parser import OFXTree, ParseError
 
 
-class OfxgetWarning(UserWarning):
-    """ Base class for warnings in this module """
+CONFIGPATH = os.path.join(config.CONFIGDIR, "fi.cfg")
+USERCONFIGPATH = os.path.join(config.USERCONFIGDIR, "ofxget.cfg")
+LOGCONFIGPATH = os.path.join(config.CONFIGDIR, "ofxget_log_cfg.json")
+USERLOGCONFIGPATH = os.path.join(config.USERCONFIGDIR, "ofxget_log_cfg.json")
+
+
+###############################################################################
+# LOGGING
+###############################################################################
+
+
+def setup_logging(default_level=logging.INFO,):
+    """
+    Set up logging from user config file.
+    Fall back to library default, and create user config file.
+    """
+    path = USERLOGCONFIGPATH
+    value = os.getenv("OFXGET_LOG_CFG", None)
+    if value:
+        path = value
+    if os.path.exists(path):
+        with open(path, "r") as f:
+            config = json.load(f)
+        logging.config.dictConfig(config)
+    else:
+        with open(LOGCONFIGPATH, "rt") as f:
+            config = json.load(f)
+        logging.config.dictConfig(config)
+        with open(USERLOGCONFIGPATH, "w") as f:
+            json.dump(config, f, indent=4)
+
+
+setup_logging()
+logger = logging.getLogger(__name__)
 
 
 ###############################################################################
@@ -175,7 +208,13 @@ def add_subparser(
     parser = subparsers.add_parser(cmd, help=help, description=help)
     parser.set_defaults(request=cmd)
     parser.add_argument("server", nargs="?", help="OFX server nickname")
-
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="count",
+        default=0,
+        help="Give more output (option can be repeated)",
+    )
     # Higher-level configs (e.g. account #s)
     # imply lower-level configs (e.g. username/passwd)
     if stmt:
@@ -461,19 +500,26 @@ def _best_scan_format(scan_results: ScanResults) -> MutableMapping:
     delta, i.e. we prefer formats with "pretty"/"unclosedelements" given as
     False (the default) over True.
     """
+    logger.info(f"Choosing best scan result from {scan_results}")
     v1, v2, signoninfo = scan_results
     if v2["versions"]:
+        logger.debug("Found working OFX version 2")
         result = v2
     elif v1["versions"]:
+        logger.debug("Found working OFX version 1")
         result = v1
     else:
+        logger.info("Found no working OFX versions; returning")
         return {}
 
     formats = sorted(result["formats"], key=lambda f: sum(f.values()))
+    logger.debug(f"Choose best format {formats[0]} from {formats}")
     args = {k: v for k, v in formats[0].items() if v}
 
-    args["version"] = result["versions"][-1]
-
+    versions = result["versions"]
+    args["version"] = versions[-1]
+    logger.debug(f"Choose best version{versions[-1]} from {versions}")
+    logger.info(f"Best scan result: {args}")
     return args
 
 
@@ -500,7 +546,9 @@ def request_acctinfo(args: ArgType) -> None:
     """
 
     if not args["user"]:
-        raise ValueError("Please configure 'user'")
+        msg = "'user' not configured"
+        logger.error(msg)
+        raise ValueError(msg)
 
     password = get_passwd(args)
     acctinfo = _request_acctinfo(args, password)
@@ -612,8 +660,7 @@ def request_stmt(args: ArgType) -> None:
             "creditcard",
             "investment",
         ]
-        msg = f"No accounts specified; configure at least one of {accttypes}"
-        warnings.warn(msg, category=OfxgetWarning)
+        logger.warn(f"No accounts specified; configure at least one of {accttypes}")
 
     client = init_client(args)
     with client.request_statements(
@@ -663,8 +710,7 @@ def request_stmtend(args: ArgType) -> None:
 
     if not stmtendrqs:
         accttypes = ["checking", "savings", "moneymrkt", "creditline", "creditcard"]
-        msg = f"No accounts specified; configure at least one of {accttypes}"
-        warnings.warn(msg, category=OfxgetWarning)
+        logger.warn(f"No accounts specified; configure at least one of {accttypes}")
 
     client = init_client(args)
     with client.request_statements(
@@ -705,13 +751,12 @@ def request_tax1099(args: ArgType) -> None:
 ###############################################################################
 # ARGUMENT/CONFIG HANDLERS
 ###############################################################################
-CONFIGPATH = os.path.join(config.CONFIGDIR, "fi.cfg")
-USERCONFIGPATH = os.path.join(config.USERCONFIGDIR, "ofxget.cfg")
 UserConfig = configparser.ConfigParser()
 UserConfig.read([CONFIGPATH, USERCONFIGPATH])
 
 
 DEFAULTS: Dict[str, Union[str, int, bool, list]] = {
+    "verbose": 0,
     "server": "",
     "url": "",
     "ofxhome": "",
@@ -800,13 +845,10 @@ def config2arg(key: str, value: str) -> Union[List[str], bool, int, str]:
 def write_config(args: ArgType) -> None:
     mk_server_cfg(args)
 
-    #  msg = "\nWriting '{}' configs {} to {}..."
-    #  print(msg.format(args["server"], dict(cfg.items()), USERCONFIGPATH))
+    logger.info(f"Writing user configs to {USERCONFIGPATH}")
 
     with open(USERCONFIGPATH, "w") as f:
         UserConfig.write(f)
-
-    #  print("...write OK")
 
 
 def mk_server_cfg(args: ArgType) -> configparser.SectionProxy:
@@ -814,22 +856,30 @@ def mk_server_cfg(args: ArgType) -> configparser.SectionProxy:
     Load user config from disk; apply key args to the section corresponding to
     the server nickname.
     """
+    logger.info("Creating user config file")
+    logger.debug(f"Args to save to config file: {args}")
+    logger.debug(f"Reloading user config from {USERCONFIGPATH}")
     UserConfig.clear()
     UserConfig.read(USERCONFIGPATH)
 
     defaults = UserConfig[UserConfig.default_section]  # type: ignore
     if "clientuid" not in defaults:
-        defaults["clientuid"] = OFXClient.uuid
+        clientuid = OFXClient.uuid
+        logger.debug(f"No global default CLIENTUID found; choosing {clientuid}")
+        defaults["clientuid"] = clientuid
 
     server = args.get("server", None)
     # args.server might actually be a URL from CLI, not a nickname
     if (not server) or server == args["url"]:
-        msg = "Please provide a server nickname to write the config"
+        msg = "No server nickname provided; can't create config"
+        logger.error(msg)
         raise ValueError(msg)
+    logger.debug(f"Configuring {server}")
 
     if not UserConfig.has_section(server):
         UserConfig[server] = {}
     cfg = UserConfig[server]
+    logger.debug(f"Existing user config section: {dict(cfg)}")
 
     LibraryConfig = configparser.ConfigParser()
     LibraryConfig.read(CONFIGPATH)
@@ -857,6 +907,8 @@ def mk_server_cfg(args: ArgType) -> configparser.SectionProxy:
             value = args[opt]
             default_value = lib_cfg.get(opt, DEFAULTS[opt])
             if value != default_value and value not in NULL_ARGS:
+                logger.debug(f"Configuring {opt} as {value}")
+                [opt] = arg2config(opt, value)
                 cfg[opt] = arg2config(opt, value)
 
     # Don't include CLIENTUID in the server section if it's sourced from
@@ -864,6 +916,7 @@ def mk_server_cfg(args: ArgType) -> configparser.SectionProxy:
     if "clientuid" in args:
         value = args["clientuid"]
         if value not in NULL_ARGS and value != defaults["clientuid"]:
+            logger.debug(f"Configuring server CLIENTUID as {value}")
             cfg["clientuid"] = value
 
     return cfg
@@ -891,6 +944,7 @@ def arg2config(key: str, value: Union[list, bool, int, str]) -> str:
 
     if key not in DEFAULTS:
         msg = f"Don't know type of {key}; define in ofxget.DEFAULTS"
+        logger.error(msg)
         raise ValueError(msg)
 
     cfg_type = type(DEFAULTS[key])
@@ -902,16 +956,20 @@ def merge_config(
     args: argparse.Namespace, config: configparser.ConfigParser
 ) -> ArgType:
     """
-    Merge CLI args > user config > library config > OFX Home > defaults
+    Merge CLI args > user config > OFX Home > defaults
     """
+    logger.info("Merging CLI args with config files")
     # All ArgumentParser args that have a value set
     _args = {k: v for k, v in vars(args).items() if v is not None}
+    logger.debug(f"Non-empty CLI args; {_args}")
 
     if "server" in _args:
         user_cfg = read_config(config, _args["server"])
     else:
         user_cfg = {}
+    logger.debug(f"Existing user configs: {user_cfg}")
     merged = ChainMap(_args, user_cfg, DEFAULTS)
+    logger.debug(f"CLI args merged with user configs and defaults: {merged}")
 
     # Try to perform an OFX Home lookup if:
     # - it's configured from the CLI
@@ -919,11 +977,13 @@ def merge_config(
     # - we don't have a URL
     if "ofxhome" in _args or "ofxhome" in user_cfg or (not merged["url"]):
         ofxhome_id = merged["ofxhome"]
+        logger.info(f"Looking up OFX Home API for id#{ofxhome_id}")
         if ofxhome_id:
             lookup = ofxhome.lookup(ofxhome_id)
             if lookup:
+                logger.info(f"OFX Home lookup found {lookup}")
                 # Insert OFX Home lookup ahead of DEFAULTS but after
-                # user configs and library configs
+                # CLI args and user configss
                 merged.maps.insert(
                     -1,
                     {
@@ -932,6 +992,12 @@ def merge_config(
                         "fid": lookup.fid,
                         "brokerid": lookup.brokerid,
                     },
+                )
+                logger.debug(
+                    (
+                        "CLI args merged with user configs, OFX Home "
+                        f"lookup, and defaults: {merged}"
+                    )
                 )
 
     if not (
@@ -942,6 +1008,7 @@ def merge_config(
         err = "Missing URL"
 
         if "server" not in _args:
+            logger.error(err)
             msg = (
                 f"{err} - please provide a server nickname, "
                 "or configure 'url' / 'ofxhome'\n"
@@ -958,11 +1025,11 @@ def merge_config(
             merged["url"] = server
             merged["server"] = None
         else:
-            msg = (
-                f"{err} - please configure 'url' or 'ofxhome' " f"for server '{server}'"
-            )
+            logger.error(err)
+            msg = f"{err} - please configure 'url' or 'ofxhome' for server '{server}'"
             raise ValueError(msg)
 
+    logger.info(f"Merged args: {merged}")
     return merged
 
 
@@ -985,6 +1052,7 @@ def init_client(args: ArgType) -> OFXClient:
         bankid=args["bankid"] or None,
         brokerid=args["brokerid"] or None,
     )
+    logger.debug(f"Initialized {client}")
     return client
 
 
@@ -1007,6 +1075,12 @@ def _scan_profile(
     make a basic OFX connection. SIGNONINFO reports further information
     that may be helpful to authenticate successfully.
     """
+    logger.info(
+        (
+            f"Scanning url={url} org={org} fid={fid} "
+            "max_workers={max_workers} timeout={timeout}"
+        )
+    )
     client = OFXClient(url, org=org, fid=fid)
     futures = _queue_scans(client, max_workers, timeout)
 
@@ -1030,6 +1104,9 @@ def _scan_profile(
         if not signoninfo and signoninfo_:
             signoninfo = signoninfo_
 
+        logger.debug(
+            (f"OFX connection success, version={version}, " f"format={format}")
+        )
         success_params[version].append(format)
 
     v1_result, v2_result = [
@@ -1043,6 +1120,7 @@ def _scan_profile(
         del fmt["unclosedelements"]
 
     results = (v1_result, v2_result, signoninfo)
+    logger.info(f"Scan results: {results}")
     return results
 
 
@@ -1096,7 +1174,8 @@ def _read_scan_response(
     try:
         # ``future.result()`` returns an http.client.HTTPResponse
         response = future.result()
-    except (URLError, HTTPError, ConnectionError, OSError, socket.timeout):
+    except (URLError, HTTPError, ConnectionError, OSError, socket.timeout) as exc:
+        logger.debug(f"Didn't receive HTTP response: {exc}")
         future.cancel()
         return valid, signoninfo
 
@@ -1125,20 +1204,30 @@ def _read_scan_response(
             signoninfo = OrderedDict(
                 [(attr, getattr(info, attr, None) or False) for attr in bool_attrs]
             )
+            logger.debug(
+                ("Received HTTP response with valid OFX; " f"signoninfo={signoninfo}")
+            )
         except (socket.timeout,):
             # We didn't receive a response at all
+            logger.debug("Didn't receive HTTP response: socket timeout")
             valid = False
         except (ParseError, ET.ParseError, OFXHeaderError):
             # We didn't receive valid OFX in the response
+            logger.debug("Received HTTP response that didn't contain valid OFX")
             valid = False
         except (ValueError,):
-            # We received OFX, but not a valid PROFRS
+            # We received OFX; can't find SIGNONIFO (probably no PROFRS)
+            logger.debug(
+                ("Received HTTP response with valid OFX; " "can't parse SIGNONINFO")
+            )
             valid = True
     else:
         # IF we're not parsing the PROFRS, then we interpret receiving a good
         # HTTP response as valid.
+        logger.debug("Received HTTP response; not parsing SIGNONINFO")
         valid = True
 
+    logger.info(f"valid: {valid}, signoninfo: {signoninfo}")
     return valid, signoninfo
 
 
@@ -1180,6 +1269,7 @@ def verify_status(trnrs: models.Aggregate) -> None:
             f"{cls}: Request failed, code={status.code}, "
             f"severity={status.severity}, message='{status.message}'"
         )
+        logger.error(msg)
         raise ValueError(msg)
 
 
@@ -1333,11 +1423,14 @@ def get_passwd(args: ArgType) -> str:
     3.  Prompt for password in terminal
     """
     if args["dryrun"]:
+        logger.debug("Dry run; using dummy password")
         password = "{:0<32}".format("anonymous")
     else:
         password = ""
         if HAS_KEYRING and not args["savepass"]:
-            password = keyring.get_password("ofxtools", args["server"]) or ""
+            server = args["server"]
+            logger.debug("Found python-keyring; loading password for {server}")
+            password = keyring.get_password("ofxtools", server) or ""
         if not password:
             password = getpass.getpass()
     return password
@@ -1346,16 +1439,21 @@ def get_passwd(args: ArgType) -> str:
 def save_passwd(args: ArgType, password: str) -> None:
     if args["dryrun"]:
         msg = "Dry run; won't store password"
-        warnings.warn(msg, category=OfxgetWarning)
+        logger.warn(msg)
     if not HAS_KEYRING:
-        msg = "You must install https://pypi.org/project/keyring"
+        msg = "Can't find python-keyring pacakge; can't save password"
+        logger.error(msg)
         raise RuntimeError(msg)
     if not password:
         msg = "Empty password; won't store"
-        warnings.warn(msg, category=OfxgetWarning)
+        logger.warn(msg)
 
-    assert isinstance(password, str)
-    keyring.set_password("ofxtools", args["server"], password)
+    server = args["server"]
+    logger.debug("Found python-keyring; storing password for {server}")
+    keyring.set_password("ofxtools", server, password)
+
+
+LOG_LEVELS = {0: logging.WARN, 1: logging.INFO, 2: logging.DEBUG}
 
 
 # Map "request" arg to handler function
@@ -1374,12 +1472,15 @@ def main() -> None:
     argparser = make_argparser()
     args_ = argparser.parse_args()
 
+    log_level = LOG_LEVELS.get(args_.verbose, logging.DEBUG)
+    logger.setLevel(log_level)
+    logger.debug(f"Parsed CLI args: {args_}")
+
     if not hasattr(args_, "request"):
         argparser.print_help()
         sys.exit()
 
     args = merge_config(args_, UserConfig)
-
     REQUEST_HANDLERS[args["request"]](args)
 
 

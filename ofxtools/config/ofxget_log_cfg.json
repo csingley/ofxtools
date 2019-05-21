@@ -3,7 +3,7 @@
     "disable_existing_loggers": false,
     "formatters": {
         "simple": {
-            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            "format": "%(name)s - %(levelname)s - %(message)s"
         }
     },
 
@@ -12,12 +12,12 @@
             "class": "logging.StreamHandler",
             "level": "DEBUG",
             "formatter": "simple",
-            "stream": "ext://sys.stdout"
+            "stream": "ext://sys.stderr"
         }
     },
 
     "root": {
-        "level": "ERROR",
+        "level": "WARN",
         "handlers": ["console"]
     }
 }
