@@ -1290,11 +1290,13 @@ class CollateScanResultsTestCase(unittest.TestCase):
         ]
 
         v1 = [(160, formats_in), (102, formats_in), (103, formats_in)]
-        versions, formats_out = ofxget.collate_scan_results(v1)
-        self.assertEqual(versions, [102, 103, 160])
+        v1_result = ofxget.collate_scan_results(v1)
+        self.assertIsInstance(v1_result, collections.OrderedDict)
+        self.assertEqual(list(v1_result.keys()), ["versions", "formats"])
+        self.assertEqual(v1_result["versions"], [102, 103, 160])
 
         self.assertEqual(
-            formats_out,
+            v1_result["formats"],
             [
                 collections.OrderedDict(
                     [("pretty", False), ("unclosedelements", False)]

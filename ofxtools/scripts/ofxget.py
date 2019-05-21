@@ -83,7 +83,7 @@ ScanMetadata = Tuple[OFXVersion, MarkupFormat]
 FormatMap = Mapping[OFXVersion, List[MarkupFormat]]
 
 # Scan result of a single OFX protocol version
-ScanResult = Mapping[str, Union[list, dict]]
+ScanResult = Mapping[str, list]
 
 # Auth information parsed out of SIGNONINFO during a profile scan -
 # CLIENTUIDREQ et al.
@@ -434,12 +434,16 @@ def scan_profile(args: ArgType) -> None:
     """
     Report working connection parameters
     """
-    scan_results = _scan_profile(args["url"], args["org"], args["fid"])
+    url = args["url"]
+    org = args["org"]
+    fid = args["fid"]
+
+    scan_results = _scan_profile(url, org, fid)
 
     v1, v2, signoninfo = scan_results
     if (not v2["versions"]) and (not v1["versions"]):
-        msg = "Scan found no working formats for {}"
-        print(msg.format(args["url"]))
+        msg = f"Scan found no working formats for {url}"
+        print(msg)
     else:
         print(json.dumps(scan_results))
 
@@ -1025,24 +1029,21 @@ def _scan_profile(
             continue
         if not signoninfo and signoninfo_:
             signoninfo = signoninfo_
+
         success_params[version].append(format)
 
-    v2, v1 = utils.partition(lambda it: it[0] < 200, success_params.items())
-    v1_versions, v1_formats = collate_scan_results(v1)
-    v2_versions, v2_formats = collate_scan_results(v2)
+    v1_result, v2_result = [
+        collate_scan_results(ver)
+        for ver in utils.partition(lambda it: it[0] >= 200, success_params.items())
+    ]
 
     # V2 always has closing tags for elements; just report prettyprint
-    for format in v2_formats:
-        assert not format["unclosedelements"]
-        del format["unclosedelements"]
+    for fmt in v2_result["formats"]:
+        assert not fmt["unclosedelements"]
+        del fmt["unclosedelements"]
 
-    v1_result: ScanResult = OrderedDict(
-        [("versions", v1_versions), ("formats", v1_formats)]
-    )
-    v2_result: ScanResult = OrderedDict(
-        [("versions", v2_versions), ("formats", v2_formats)]
-    )
-    return (v1_result, v2_result, signoninfo)
+    results = (v1_result, v2_result, signoninfo)
+    return results
 
 
 def _queue_scans(
@@ -1143,14 +1144,14 @@ def _read_scan_response(
 
 def collate_scan_results(
     scan_results: Iterable[Tuple[OFXVersion, MarkupFormat]]
-) -> Tuple[List[OFXVersion], List[MarkupFormat]]:
+) -> ScanResult:
     """
     Input ``scan_results`` needs to be a complete set for either OFXv1 or v2,
     with no results for the other version admixed.
     """
     results_ = list(scan_results)
     if not results_:
-        return [], []
+        return OrderedDict()
     versions, formats = zip(*results_)
 
     # Assumption: the same markup formatting requirements apply to all
@@ -1162,8 +1163,7 @@ def collate_scan_results(
     # formats and assume it applies for all versions.
     formats = max(formats, key=len)
     formats.sort(key=lambda f: (f["pretty"], f["unclosedelements"]))
-
-    return sorted(versions), formats
+    return OrderedDict(zip(("versions", "formats"), (sorted(versions), formats)))
 
 
 ###############################################################################
@@ -1379,6 +1379,7 @@ def main() -> None:
         sys.exit()
 
     args = merge_config(args_, UserConfig)
+
     REQUEST_HANDLERS[args["request"]](args)
 
 
