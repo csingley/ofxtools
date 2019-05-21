@@ -6,6 +6,7 @@ Configurable CLI front end for ``ofxtools.Client``
 # stdlib imports
 import os
 import sys
+from pathlib import Path
 import argparse
 import configparser
 import datetime
@@ -72,8 +73,6 @@ USERLOGCONFIGPATH = os.path.join(config.USERCONFIGDIR, "ofxget_log_cfg.json")
 ###############################################################################
 # LOGGING
 ###############################################################################
-
-
 def setup_logging(default_level=logging.INFO,):
     """
     Set up logging from user config file.
@@ -91,6 +90,7 @@ def setup_logging(default_level=logging.INFO,):
         with open(LOGCONFIGPATH, "rt") as f:
             config = json.load(f)
         logging.config.dictConfig(config)
+        Path(config.USERCONFIGDIR).mkdir(parents=True, exist_ok=True)
         with open(USERLOGCONFIGPATH, "w") as f:
             json.dump(config, f, indent=4)
 
@@ -881,6 +881,7 @@ def write_config(args: ArgsType) -> None:
 
     logger.info(f"Writing user configs to {USERCONFIGPATH}")
 
+    Path(config.USERCONFIGDIR).mkdir(parents=True, exist_ok=True)
     with open(USERCONFIGPATH, "w") as f:
         UserConfig.write(f)
 
@@ -956,7 +957,7 @@ def arg2config(key: str, cfg_type: type, value: ArgType) -> str:
         return {True: "true", False: "false"}[value]
 
     def write_list(value: list) -> str:
-        # INI-friendly string representation of Python list type
+        # Serialized string representation of Python list type
         return str(value).strip("[]").replace("'", "")
 
     handlers = {str: write_string, bool: write_bool, list: write_list, int: write_int}
