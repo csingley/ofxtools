@@ -10,7 +10,11 @@ from ofxtools import utils
 __all__ = ["CONFIGDIR", "USERCONFIGDIR"]
 
 
-CONFIGDIR = utils.fixpath(os.path.dirname(__file__))
+#  CONFIGDIR = utils.fixpath(os.path.dirname(__file__))
+CONFIGDIR = Path(__file__).parent.resolve()
+
+
+HOME = Path.home().resolve()
 
 
 # Cross-platform specification of user configuration directory
@@ -19,16 +23,19 @@ environ = os.environ
 
 if system.startswith("win"):  # Windows
     if "APPDATA" in environ:
-        CONFIGHOME = Path(environ["APPDATA"])
+        CONFIGHOME = Path(environ["APPDATA"]).resolve()
     else:
-        CONFIGHOME = Path.home().joinpath("AppData").joinpath("Roaming")
+        CONFIGHOME = HOME / "AppData" / "Roaming"
 elif system.startswith("darwin"):  # Mac
-    CONFIGHOME = Path.home().joinpath("Library").joinpath("Preferences")
+    CONFIGHOME = HOME / "Library" / "Preferences"
 else:  # Linux
     if "XDG_CONFIG_HOME" in os.environ:
         CONFIGHOME = Path(environ["XDG_CONFIG_HOME"])
     else:
-        CONFIGHOME = Path.home().joinpath(".config")
+        CONFIGHOME = HOME / ".config"
 
 
-USERCONFIGDIR = CONFIGHOME.joinpath("ofxtools")
+USERCONFIGDIR = CONFIGHOME / "ofxtools"
+
+
+USERCONFIGDIR.mkdir(parents=True, exist_ok=True)

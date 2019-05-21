@@ -64,10 +64,10 @@ from ofxtools.header import OFXHeaderError
 from ofxtools.Parser import OFXTree, ParseError
 
 
-CONFIGPATH = os.path.join(config.CONFIGDIR, "fi.cfg")
-USERCONFIGPATH = os.path.join(config.USERCONFIGDIR, "ofxget.cfg")
-LOGCONFIGPATH = os.path.join(config.CONFIGDIR, "ofxget_log_cfg.json")
-USERLOGCONFIGPATH = os.path.join(config.USERCONFIGDIR, "ofxget_log_cfg.json")
+CONFIGPATH = config.CONFIGDIR / "fi.cfg"
+USERCONFIGPATH = config.USERCONFIGDIR / "ofxget.cfg"
+LOGCONFIGPATH = config.CONFIGDIR / "ofxget_log_cfg.json"
+USERLOGCONFIGPATH = config.USERCONFIGDIR / "ofxget_log_cfg.json"
 
 
 ###############################################################################
@@ -81,8 +81,8 @@ def setup_logging(default_level=logging.INFO,):
     path = USERLOGCONFIGPATH
     value = os.getenv("OFXGET_LOG_CFG", None)
     if value:
-        path = value
-    if os.path.exists(path):
+        path = Path(value)
+    if path.exists():
         with open(path, "r") as f:
             config = json.load(f)
         logging.config.dictConfig(config)
@@ -90,7 +90,6 @@ def setup_logging(default_level=logging.INFO,):
         with open(LOGCONFIGPATH, "rt") as f:
             config = json.load(f)
         logging.config.dictConfig(config)
-        Path(config.USERCONFIGDIR).mkdir(parents=True, exist_ok=True)
         with open(USERLOGCONFIGPATH, "w") as f:
             json.dump(config, f, indent=4)
 
@@ -881,7 +880,6 @@ def write_config(args: ArgsType) -> None:
 
     logger.info(f"Writing user configs to {USERCONFIGPATH}")
 
-    Path(config.USERCONFIGDIR).mkdir(parents=True, exist_ok=True)
     with open(USERCONFIGPATH, "w") as f:
         UserConfig.write(f)
 
