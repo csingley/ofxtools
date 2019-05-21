@@ -722,23 +722,6 @@ class ArgConfigTestCase(unittest.TestCase):
     ofxtools.scripts.ofxget.arg2config()
     """
 
-    def testList2arg(self):
-        for cfg in (
-            "checking",
-            "savings",
-            "moneymrkt",
-            "creditline",
-            "creditcard",
-            "investment",
-            "years",
-        ):
-            self.assertEqual(ofxget.config2arg(cfg, "123"), ["123"])
-            self.assertEqual(ofxget.config2arg(cfg, "123,456"), ["123", "456"])
-
-            # Surrounding whitespace is stripped
-            self.assertEqual(ofxget.config2arg(cfg, " 123 "), ["123"])
-            self.assertEqual(ofxget.config2arg(cfg, "123, 456"), ["123", "456"])
-
     def testList2config(self):
         for cfg in (
             "checking",
@@ -749,48 +732,8 @@ class ArgConfigTestCase(unittest.TestCase):
             "investment",
             "years",
         ):
-            self.assertEqual(ofxget.arg2config(cfg, ["123"]), "123")
-            self.assertEqual(ofxget.arg2config(cfg, ["123", "456"]), "123, 456")
-
-    def testListRoundtrip(self):
-        for cfg in (
-            "checking",
-            "savings",
-            "moneymrkt",
-            "creditline",
-            "creditcard",
-            "investment",
-            "years",
-        ):
-            self.assertEqual(
-                ofxget.config2arg(cfg, ofxget.arg2config(cfg, ["123", "456"])),
-                ["123", "456"],
-            )
-            self.assertEqual(
-                ofxget.arg2config(cfg, ofxget.config2arg(cfg, "123, 456")), "123, 456"
-            )
-
-    def testBool2arg(self):
-        for cfg in (
-            "dryrun",
-            "unsafe",
-            "unclosedelements",
-            "pretty",
-            "inctran",
-            "incbal",
-            "incpos",
-            "incoo",
-            "all",
-            "write",
-        ):
-            self.assertEqual(ofxget.config2arg(cfg, "true"), True)
-            self.assertEqual(ofxget.config2arg(cfg, "false"), False)
-            self.assertEqual(ofxget.config2arg(cfg, "yes"), True)
-            self.assertEqual(ofxget.config2arg(cfg, "no"), False)
-            self.assertEqual(ofxget.config2arg(cfg, "on"), True)
-            self.assertEqual(ofxget.config2arg(cfg, "off"), False)
-            self.assertEqual(ofxget.config2arg(cfg, "1"), True)
-            self.assertEqual(ofxget.config2arg(cfg, "0"), False)
+            self.assertEqual(ofxget.arg2config(cfg, list, ["123"]), "123")
+            self.assertEqual(ofxget.arg2config(cfg, list, ["123", "456"]), "123, 456")
 
     def testBool2config(self):
         for cfg in (
@@ -805,62 +748,12 @@ class ArgConfigTestCase(unittest.TestCase):
             "all",
             "write",
         ):
-            self.assertEqual(ofxget.arg2config(cfg, True), "true")
-            self.assertEqual(ofxget.arg2config(cfg, False), "false")
-
-    def testBoolRoundtrip(self):
-        for cfg in (
-            "dryrun",
-            "unsafe",
-            "unclosedelements",
-            "pretty",
-            "inctran",
-            "incbal",
-            "incpos",
-            "incoo",
-            "all",
-            "write",
-        ):
-            self.assertEqual(ofxget.config2arg(cfg, ofxget.arg2config(cfg, True)), True)
-            self.assertEqual(
-                ofxget.config2arg(cfg, ofxget.arg2config(cfg, False)), False
-            )
-            self.assertEqual(
-                ofxget.arg2config(cfg, ofxget.config2arg(cfg, "true")), "true"
-            )
-            self.assertEqual(
-                ofxget.arg2config(cfg, ofxget.config2arg(cfg, "false")), "false"
-            )
-
-    def testInt2arg(self):
-        for cfg in ("version",):
-            self.assertEqual(ofxget.config2arg(cfg, "1"), 1)
+            self.assertEqual(ofxget.arg2config(cfg, bool, True), "true")
+            self.assertEqual(ofxget.arg2config(cfg, bool, False), "false")
 
     def testInt2config(self):
         for cfg in ("version",):
-            self.assertEqual(ofxget.arg2config(cfg, 1), "1")
-
-    def testIntRoundtrip(self):
-        for cfg in ("version",):
-            self.assertEqual(ofxget.config2arg(cfg, ofxget.arg2config(cfg, 1)), 1)
-            self.assertEqual(ofxget.arg2config(cfg, ofxget.config2arg(cfg, "1")), "1")
-
-    def testString2arg(self):
-        for cfg in (
-            "url",
-            "org",
-            "fid",
-            "appid",
-            "appver",
-            "bankid",
-            "brokerid",
-            "user",
-            "clientuid",
-            "language",
-            "acctnum",
-            "recid",
-        ):
-            self.assertEqual(ofxget.config2arg(cfg, "Something"), "Something")
+            self.assertEqual(ofxget.arg2config(cfg, int, 1), "1")
 
     def testString2config(self):
         for cfg in (
@@ -877,29 +770,7 @@ class ArgConfigTestCase(unittest.TestCase):
             "acctnum",
             "recid",
         ):
-            self.assertEqual(ofxget.arg2config(cfg, "Something"), "Something")
-
-    def testStringRoundtrip(self):
-        for cfg in (
-            "url",
-            "org",
-            "fid",
-            "appid",
-            "appver",
-            "bankid",
-            "brokerid",
-            "user",
-            "clientuid",
-            "language",
-            "acctnum",
-            "recid",
-        ):
-            self.assertEqual(
-                ofxget.config2arg(cfg, ofxget.arg2config(cfg, "Something")), "Something"
-            )
-            self.assertEqual(
-                ofxget.arg2config(cfg, ofxget.config2arg(cfg, "Something")), "Something"
-            )
+            self.assertEqual(ofxget.arg2config(cfg, str, "Something"), "Something")
 
 
 class MergeConfigTestCase(unittest.TestCase):
@@ -947,7 +818,7 @@ class MergeConfigTestCase(unittest.TestCase):
         creditcard = 444, 555
         """
 
-        cfg = configparser.ConfigParser()
+        cfg = configparser.ConfigParser(converters={"list": ofxget.convert_list})
         cfg.read_string(default_cfg)
         cfg.read_string(user_cfg)
 

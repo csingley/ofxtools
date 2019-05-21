@@ -38,9 +38,9 @@ known_servers = {
 }
 
 
-def mk_server_cfg(args: ofxget.ArgType) -> configparser.SectionProxy:
+def mk_server_cfg(args: ofxget.ArgsType) -> configparser.SectionProxy:
     """
-    Modified version of ofxget.mk_server_cfg()
+    Stripped-down version of ofxget.mk_server_cfg()
     """
     server = args["server"]
     assert server
@@ -49,27 +49,17 @@ def mk_server_cfg(args: ofxget.ArgType) -> configparser.SectionProxy:
         LibraryConfig[server] = {}
     cfg = LibraryConfig[server]
 
-    for opt in (
-        "url",
-        "version",
-        "ofxhome",
-        "org",
-        "fid",
-        "brokerid",
-        "bankid",
-        "pretty",
-        "unclosedelements",
-    ):
+    for opt, opt_type in ofxget.CONFIGURABLE_SRVR.items():
         if opt in args:
             value = args[opt]
             default_value = ofxget.DEFAULTS[opt]
             if value != default_value and value not in ofxget.NULL_ARGS:
-                cfg[opt] = ofxget.arg2config(opt, value)
+                cfg[opt] = ofxget.arg2config(opt, opt_type, value)
 
     return cfg
 
 
-def write_config(args: ofxget.ArgType) -> None:
+def write_config(args: ofxget.ArgsType) -> None:
     """
     Modified version of ofxget.write_config()
     """

@@ -102,8 +102,12 @@ logger = logging.getLogger(__name__)
 ###############################################################################
 # TYPE ALIASES
 ###############################################################################
-# Loaded Argparser args
-ArgType = typing.ChainMap[str, Any]
+# Parsed ArgParser arg
+ArgType = Union[List[str], bool, int, str]
+
+# Common data structure used for loading, combining, and converting between
+# ArgParser and ConfigParser
+ArgsType = typing.ChainMap[str, Any]
 
 # OFX connection params (OFX version, prettyprint, unclosedelements) tagged
 # onto the OFXClient.request_profile() job submitted to the ThreadPoolExecutor
@@ -195,16 +199,16 @@ def make_argparser() -> argparse.ArgumentParser:
 
 
 def add_subparser(
-    subparsers,
-    cmd,
-    server=False,
-    format=False,
-    signon=False,
-    stmtend=False,
-    stmt=False,
-    tax=False,
-    help=None,
-):
+    subparsers: argparse._SubParsersAction,
+    cmd: str,
+    server: bool = False,
+    format: bool = False,
+    signon: bool = False,
+    stmtend: bool = False,
+    stmt: bool = False,
+    tax: bool = False,
+    help: Optional[str] = None,
+) -> argparse.ArgumentParser:
     parser = subparsers.add_parser(cmd, help=help, description=help)
     parser.set_defaults(request=cmd)
     parser.add_argument("server", nargs="?", help="OFX server nickname")
@@ -278,7 +282,7 @@ def add_subparser(
     return parser
 
 
-def add_format_group(parser):
+def add_format_group(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
     group = parser.add_argument_group(title="format options")
     group.add_argument("--version", help="OFX version")
     group.add_argument(
@@ -297,7 +301,7 @@ def add_format_group(parser):
     return group
 
 
-def add_signon_group(parser):
+def add_signon_group(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
     group = parser.add_argument_group(title="signon options")
     group.add_argument("-u", "--user", help="FI login username")
     group.add_argument(
@@ -316,7 +320,7 @@ def add_signon_group(parser):
     return group
 
 
-def add_bank_acct_group(parser):
+def add_bank_acct_group(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
     group = parser.add_argument_group(title="bank/CC account options")
     group.add_argument("--bankid", help="ABA routing#")
     group.add_argument(
@@ -366,7 +370,7 @@ def add_bank_acct_group(parser):
     return group
 
 
-def add_stmt_group(parser):
+def add_stmt_group(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
     group = parser.add_argument_group(
         title="general statement options (both bank and investment)"
     )
@@ -387,7 +391,7 @@ def add_stmt_group(parser):
     return group
 
 
-def add_stmt_args(group):
+def add_stmt_args(group: argparse._ArgumentGroup) -> argparse._ArgumentGroup:
     group.add_argument(
         "-a",
         "--asof",
@@ -413,7 +417,7 @@ def add_stmt_args(group):
     return group
 
 
-def add_inv_acct_group(parser):
+def add_inv_acct_group(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
     group = parser.add_argument_group(title="investment account options")
     group.add_argument("--brokerid", help="Broker ID string")
     group.add_argument(
@@ -426,7 +430,7 @@ def add_inv_acct_group(parser):
     return group
 
 
-def add_inv_stmt_group(parser):
+def add_inv_stmt_group(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
     group = parser.add_argument_group(title="investment statement options")
     group.add_argument(
         "--no-positions",
@@ -445,7 +449,7 @@ def add_inv_stmt_group(parser):
     return group
 
 
-def add_tax_group(parser):
+def add_tax_group(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
     group = parser.add_argument_group(title="tax form options")
     group.add_argument(
         "-y",
@@ -469,7 +473,7 @@ def add_tax_group(parser):
 ###############################################################################
 # CLI METHODS
 ###############################################################################
-def scan_profile(args: ArgType) -> None:
+def scan_profile(args: ArgsType) -> None:
     """
     Report working connection parameters
     """
@@ -523,7 +527,7 @@ def _best_scan_format(scan_results: ScanResults) -> MutableMapping:
     return args
 
 
-def request_profile(args: ArgType) -> None:
+def request_profile(args: ArgsType) -> None:
     """
     Send PROFRQ
     """
@@ -540,7 +544,7 @@ def request_profile(args: ArgType) -> None:
         write_config(args)
 
 
-def request_acctinfo(args: ArgType) -> None:
+def request_acctinfo(args: ArgsType) -> None:
     """
     Send ACCTINFORQ
     """
@@ -565,7 +569,7 @@ def request_acctinfo(args: ArgType) -> None:
         save_passwd(args, password)
 
 
-def _request_acctinfo(args: ArgType, password: str) -> BytesIO:
+def _request_acctinfo(args: ArgsType, password: str) -> BytesIO:
     client = init_client(args)
     dtacctup = datetime.datetime(1999, 12, 31, tzinfo=UTC)
 
@@ -577,7 +581,7 @@ def _request_acctinfo(args: ArgType, password: str) -> BytesIO:
     return BytesIO(response)
 
 
-def _merge_acctinfo(args: ArgType, markup: BytesIO) -> None:
+def _merge_acctinfo(args: ArgsType, markup: BytesIO) -> None:
     # *ACCTINFO classes don't have rich comparison methods;
     # can't sort by class
     sortKey = attrgetter("__class__.__name__")
@@ -601,7 +605,7 @@ def _merge_acctinfo(args: ArgType, markup: BytesIO) -> None:
     args.maps.insert(1, ChainMap(*parsed_args))
 
 
-def request_stmt(args: ArgType) -> None:
+def request_stmt(args: ArgsType) -> None:
     """
     Send *STMTRQ
     """
@@ -677,7 +681,7 @@ def request_stmt(args: ArgType) -> None:
         save_passwd(args, password)
 
 
-def request_stmtend(args: ArgType) -> None:
+def request_stmtend(args: ArgsType) -> None:
     """
     Send *STMTENDRQ
     """
@@ -727,7 +731,7 @@ def request_stmtend(args: ArgType) -> None:
         save_passwd(args, password)
 
 
-def request_tax1099(args: ArgType) -> None:
+def request_tax1099(args: ArgsType) -> None:
     """
     Send TAX1099RQ
     """
@@ -751,11 +755,22 @@ def request_tax1099(args: ArgType) -> None:
 ###############################################################################
 # ARGUMENT/CONFIG HANDLERS
 ###############################################################################
-UserConfig = configparser.ConfigParser()
+def convert_list(string: str) -> List[str]:
+    """
+    Deserialize INI representation to a Python list
+    """
+    return [sub.strip() for sub in string.split(",")]
+
+
+UserConfig = configparser.ConfigParser(converters={"list": convert_list})
 UserConfig.read([CONFIGPATH, USERCONFIGPATH])
 
 
-DEFAULTS: Dict[str, Union[str, int, bool, list]] = {
+LibraryConfig = configparser.ConfigParser(converters={"list": convert_list})
+LibraryConfig.read(CONFIGPATH)
+
+
+DEFAULTS: Dict[str, ArgType] = {
     "verbose": 0,
     "server": "",
     "url": "",
@@ -796,53 +811,72 @@ DEFAULTS: Dict[str, Union[str, int, bool, list]] = {
 }
 
 
+configurable_srvr = (
+    "url",
+    "ofxhome",
+    "version",
+    "pretty",
+    "unclosedelements",
+    "org",
+    "fid",
+    "brokerid",
+    "bankid",
+    "appid",
+    "appver",
+    "language",
+)
+CONFIGURABLE_SRVR = OrderedDict(
+    [(k, type(v)) for k, v in DEFAULTS.items() if k in configurable_srvr]
+)
+
+
+configurable_user = (
+    "user",
+    "clientuid",
+    "checking",
+    "savings",
+    "moneymrkt",
+    "creditline",
+    "creditcard",
+    "investment",
+)
+CONFIGURABLE_USER = OrderedDict(
+    [(k, type(v)) for k, v in DEFAULTS.items() if k in configurable_user]
+)
+
+
+CONFIGURABLE = CONFIGURABLE_SRVR
+CONFIGURABLE.update(CONFIGURABLE_USER)
+
+
 NULL_ARGS = [None, "", []]
 
 
-def read_config(cfg, section):
-    return (
-        {k: config2arg(k, v) for k, v in cfg[section].items()} if section in cfg else {}
-    )
+def read_config(cfg: configparser.ConfigParser, section: str) -> Mapping[str, ArgType]:
+    logger.info(f"Loading Python data structures from {cfg}")
+    args: Mapping = {}
+    if section not in cfg:
+        return args
+
+    proxy = cfg[section]
+    handlers = {
+        bool: proxy.getboolean,
+        int: proxy.getint,
+        list: proxy.getlist,
+        str: proxy.get,
+        None: lambda x: None,
+    }
+
+    args = {
+        opt: handlers[CONFIGURABLE.get(opt, None)](opt)  # type: ignore
+        for opt in proxy
+        if opt in CONFIGURABLE
+    }
+
+    return args
 
 
-def config2arg(key: str, value: str) -> Union[List[str], bool, int, str]:
-    """
-    Transform a config value from ConfigParser format to ArgParser format
-    """
-
-    def read_string(string: str) -> str:
-        return string
-
-    def read_int(string: str) -> int:
-        return int(value)
-
-    def read_bool(string: str) -> bool:
-        BOOLY = configparser.ConfigParser.BOOLEAN_STATES  # type: ignore
-        keys = list(BOOLY.keys())
-        if string not in BOOLY:
-            msg = f"Can't interpret '{list}' as bool; must be one of {keys}"
-            raise ValueError(msg)
-        return BOOLY[string]
-
-    def read_list(string: str) -> List[str]:
-        return [sub.strip() for sub in string.split(",")]
-
-    handlers = {str: read_string, bool: read_bool, list: read_list, int: read_int}
-
-    if key not in DEFAULTS:
-        msg = f"Don't know type of {key}; define in ofxget.DEFAULTS"
-        raise ValueError(msg)
-
-    cfg_type = type(DEFAULTS[key])
-
-    if cfg_type not in handlers:
-        msg = f"Config key {key}: no handler defined for type '{cfg_type}'"
-        raise ValueError(msg)
-
-    return handlers[cfg_type](value)  # type: ignore
-
-
-def write_config(args: ArgType) -> None:
+def write_config(args: ArgsType) -> None:
     mk_server_cfg(args)
 
     logger.info(f"Writing user configs to {USERCONFIGPATH}")
@@ -851,13 +885,14 @@ def write_config(args: ArgType) -> None:
         UserConfig.write(f)
 
 
-def mk_server_cfg(args: ArgType) -> configparser.SectionProxy:
+def mk_server_cfg(args: ArgsType) -> configparser.SectionProxy:
     """
     Load user config from disk; apply key args to the section corresponding to
     the server nickname.
     """
-    logger.info("Creating user config file")
-    logger.debug(f"Args to save to config file: {args}")
+    logger.info("Creating user config")
+    logger.debug(f"Args to populate config: {args}")
+
     logger.debug(f"Reloading user config from {USERCONFIGPATH}")
     UserConfig.clear()
     UserConfig.read(USERCONFIGPATH)
@@ -881,48 +916,32 @@ def mk_server_cfg(args: ArgType) -> configparser.SectionProxy:
     cfg = UserConfig[server]
     logger.debug(f"Existing user config section: {dict(cfg)}")
 
-    LibraryConfig = configparser.ConfigParser()
-    LibraryConfig.read(CONFIGPATH)
     lib_cfg = read_config(LibraryConfig, server)
 
-    for opt in (
-        "url",
-        "version",
-        "ofxhome",
-        "org",
-        "fid",
-        "brokerid",
-        "bankid",
-        "user",
-        "checking",
-        "savings",
-        "moneymrkt",
-        "creditline",
-        "creditcard",
-        "investment",
-        "pretty",
-        "unclosedelements",
-    ):
+    def test_cfg_val(opt: str, value: ArgType) -> bool:
+        """ Select CLI args to write to config file """
+        if value in NULL_ARGS:
+            return False
+        # Don't include CLIENTUID in the server section if it's sourced
+        # from UserConfig.default_section
+        if opt == "clientuid" and value == defaults["clientuid"]:
+            return False
+        # Don't include configs that are the same as defaults
+        elif value == lib_cfg.get(opt, DEFAULTS[opt]):
+            return False
+
+        return True
+
+    for opt, opt_type in CONFIGURABLE.items():
         if opt in args:
             value = args[opt]
-            default_value = lib_cfg.get(opt, DEFAULTS[opt])
-            if value != default_value and value not in NULL_ARGS:
-                logger.debug(f"Configuring {opt} as {value}")
-                [opt] = arg2config(opt, value)
-                cfg[opt] = arg2config(opt, value)
-
-    # Don't include CLIENTUID in the server section if it's sourced from
-    # UserConfig.default_section
-    if "clientuid" in args:
-        value = args["clientuid"]
-        if value not in NULL_ARGS and value != defaults["clientuid"]:
-            logger.debug(f"Configuring server CLIENTUID as {value}")
-            cfg["clientuid"] = value
+            if test_cfg_val(opt, value):
+                cfg[opt] = arg2config(opt, opt_type, value)
 
     return cfg
 
 
-def arg2config(key: str, value: Union[list, bool, int, str]) -> str:
+def arg2config(key: str, cfg_type: type, value: ArgType) -> str:
     """
     Transform a config value from ArgParser format to ConfigParser format
     """
@@ -942,19 +961,17 @@ def arg2config(key: str, value: Union[list, bool, int, str]) -> str:
 
     handlers = {str: write_string, bool: write_bool, list: write_list, int: write_int}
 
-    if key not in DEFAULTS:
-        msg = f"Don't know type of {key}; define in ofxget.DEFAULTS"
+    if cfg_type not in handlers:
+        msg = f"Don't know how to write config for {key} type={cfg_type}"
         logger.error(msg)
         raise ValueError(msg)
-
-    cfg_type = type(DEFAULTS[key])
 
     return handlers[cfg_type](value)  # type: ignore
 
 
 def merge_config(
     args: argparse.Namespace, config: configparser.ConfigParser
-) -> ArgType:
+) -> ArgsType:
     """
     Merge CLI args > user config > OFX Home > defaults
     """
@@ -968,7 +985,7 @@ def merge_config(
     else:
         user_cfg = {}
     logger.debug(f"Existing user configs: {user_cfg}")
-    merged = ChainMap(_args, user_cfg, DEFAULTS)
+    merged: ArgsType = ChainMap(_args, user_cfg, DEFAULTS)
     logger.debug(f"CLI args merged with user configs and defaults: {merged}")
 
     # Try to perform an OFX Home lookup if:
@@ -976,29 +993,7 @@ def merge_config(
     # - it's configured in ofxget.cfg
     # - we don't have a URL
     if "ofxhome" in _args or "ofxhome" in user_cfg or (not merged["url"]):
-        ofxhome_id = merged["ofxhome"]
-        logger.info(f"Looking up OFX Home API for id#{ofxhome_id}")
-        if ofxhome_id:
-            lookup = ofxhome.lookup(ofxhome_id)
-            if lookup:
-                logger.info(f"OFX Home lookup found {lookup}")
-                # Insert OFX Home lookup ahead of DEFAULTS but after
-                # CLI args and user configss
-                merged.maps.insert(
-                    -1,
-                    {
-                        "url": lookup.url,
-                        "org": lookup.org,
-                        "fid": lookup.fid,
-                        "brokerid": lookup.brokerid,
-                    },
-                )
-                logger.debug(
-                    (
-                        "CLI args merged with user configs, OFX Home "
-                        f"lookup, and defaults: {merged}"
-                    )
-                )
+        merge_from_ofxhome(merged)
 
     if not (
         merged.get("url", None)
@@ -1014,9 +1009,8 @@ def merge_config(
                 "or configure 'url' / 'ofxhome'\n"
             )
             print(msg)
-            parser = make_argparser()
             command = merged["request"]
-            parser.subparsers[command].print_help()  # type: ignore
+            make_argparser().subparsers[command].print_help()  # type: ignore
             sys.exit()
 
         server = _args["server"]
@@ -1033,7 +1027,29 @@ def merge_config(
     return merged
 
 
-def init_client(args: ArgType) -> OFXClient:
+def merge_from_ofxhome(args: ArgsType):
+    ofxhome_id = args["ofxhome"]
+    logger.info(f"Looking up OFX Home API for id#{ofxhome_id}")
+    if ofxhome_id:
+        lookup = ofxhome.lookup(ofxhome_id)
+        if lookup:
+            logger.info(f"OFX Home lookup found {lookup}")
+            # Insert OFX Home lookup ahead of DEFAULTS but after
+            # CLI args and user configss
+            args.maps.insert(
+                -1,
+                {
+                    "url": lookup.url,
+                    "org": lookup.org,
+                    "fid": lookup.fid,
+                    "brokerid": lookup.brokerid,
+                },
+            )
+            msg = "CLI args merged with user configs, OFX Home lookup, and defaults: {merged}"
+            logger.debug(msg)
+
+
+def init_client(args: ArgsType) -> OFXClient:
     """
     Initialize OFXClient with connection info from args
     """
@@ -1369,7 +1385,7 @@ def parse_ccacctinfos(acctinfos: Sequence[models.CCACCTINFO]) -> ParsedAcctinfo:
 ###############################################################################
 # CLI UTILITIES
 ###############################################################################
-def list_fis(args: ArgType) -> None:
+def list_fis(args: ArgsType) -> None:
     server = args["server"]
     if server in NULL_ARGS:
         entries = ["{:<40}{:<30}{:<8}".format(*srv) for srv in fi_index()]
@@ -1410,13 +1426,13 @@ def fi_index() -> Sequence[Tuple[str, str, str]]:
     return servers
 
 
-def convert_datetime(args: ArgType) -> Mapping[str, Optional[datetime.datetime]]:
+def convert_datetime(args: ArgsType) -> Mapping[str, Optional[datetime.datetime]]:
     """ Convert dtstart/dtend/dtasof to Python datetime type for request """
     D = DateTime().convert
     return {d[2:]: D(args[d] or None) for d in ("dtstart", "dtend", "dtasof")}
 
 
-def get_passwd(args: ArgType) -> str:
+def get_passwd(args: ArgsType) -> str:
     """
     1.  For dry run, use dummy password from OFX spec
     2.  If python-keyring is installed and --savepass is unset, try to use it
@@ -1436,7 +1452,7 @@ def get_passwd(args: ArgType) -> str:
     return password
 
 
-def save_passwd(args: ArgType, password: str) -> None:
+def save_passwd(args: ArgsType, password: str) -> None:
     if args["dryrun"]:
         msg = "Dry run; won't store password"
         logger.warn(msg)
