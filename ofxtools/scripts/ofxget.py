@@ -810,6 +810,16 @@ DEFAULTS: Dict[str, ArgType] = {
 }
 
 
+NULL_ARGS = [None, "", []]
+
+
+# "Configurable" means "will be read from / written to config file".
+# Subdivided into -
+#   "Configurable server", i.e. parameters used establish an OFX connection
+#       (the kind of thing you'd pass to OFXClient.__init__(), which is
+#       how they're used by update_fi_cfg.py); and
+#   "Configurable user", i.e. auth/account parameters that are completely
+#       user-specific and won't be shared by different users of the library.
 configurable_srvr = (
     "url",
     "ofxhome",
@@ -846,9 +856,6 @@ CONFIGURABLE_USER = OrderedDict(
 
 CONFIGURABLE = CONFIGURABLE_SRVR
 CONFIGURABLE.update(CONFIGURABLE_USER)
-
-
-NULL_ARGS = [None, "", []]
 
 
 def read_config(cfg: configparser.ConfigParser, section: str) -> Mapping[str, ArgType]:
