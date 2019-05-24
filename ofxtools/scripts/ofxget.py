@@ -4,9 +4,7 @@
 Configurable CLI front end for ``ofxtools.Client``
 """
 # stdlib imports
-import os
 import sys
-from pathlib import Path
 import argparse
 import configparser
 import datetime
@@ -49,7 +47,7 @@ except ImportError:
 
 
 # local imports
-from ofxtools import utils, ofxhome, config, models
+from ofxtools import Client, header, Parser, utils, ofxhome, config, models
 from ofxtools.Client import (
     OFXClient,
     StmtRq,
@@ -59,43 +57,19 @@ from ofxtools.Client import (
     CcStmtEndRq,
 )
 from ofxtools.Types import DateTime
-from ofxtools.utils import UTC
 from ofxtools.header import OFXHeaderError
 from ofxtools.Parser import OFXTree, ParseError
 
 
 CONFIGPATH = config.CONFIGDIR / "fi.cfg"
 USERCONFIGPATH = config.USERCONFIGDIR / "ofxget.cfg"
-LOGCONFIGPATH = config.CONFIGDIR / "ofxget_log_cfg.json"
-USERLOGCONFIGPATH = config.USERCONFIGDIR / "ofxget_log_cfg.json"
 
 
-###############################################################################
-# LOGGING
-###############################################################################
-def setup_logging(default_level=logging.INFO,):
-    """
-    Set up logging from user config file.
-    Fall back to library default, and create user config file.
-    """
-    path = USERLOGCONFIGPATH
-    value = os.getenv("OFXGET_LOG_CFG", None)
-    if value:
-        path = Path(value)
-    if path.exists():
-        with open(path, "r") as f:
-            config = json.load(f)
-        logging.config.dictConfig(config)
-    else:
-        with open(LOGCONFIGPATH, "rt") as f:
-            config = json.load(f)
-        logging.config.dictConfig(config)
-        with open(USERLOGCONFIGPATH, "w") as f:
-            json.dump(config, f, indent=4)
-
-
-setup_logging()
 logger = logging.getLogger(__name__)
+
+
+class OfxgetWarning(UserWarning):
+    """ Base class for warnings in this module """
 
 
 ###############################################################################
@@ -570,7 +544,7 @@ def request_acctinfo(args: ArgsType) -> None:
 
 def _request_acctinfo(args: ArgsType, password: str) -> BytesIO:
     client = init_client(args)
-    dtacctup = datetime.datetime(1999, 12, 31, tzinfo=UTC)
+    dtacctup = datetime.datetime(1999, 12, 31, tzinfo=utils.UTC)
 
     with client.request_accounts(
         password, dtacctup, dryrun=args["dryrun"], verify_ssl=not args["unsafe"]
@@ -663,7 +637,7 @@ def request_stmt(args: ArgsType) -> None:
             "creditcard",
             "investment",
         ]
-        logger.warn(f"No accounts specified; configure at least one of {accttypes}")
+        logger.warning(f"No accounts specified; configure at least one of {accttypes}")
 
     client = init_client(args)
     with client.request_statements(
@@ -713,7 +687,7 @@ def request_stmtend(args: ArgsType) -> None:
 
     if not stmtendrqs:
         accttypes = ["checking", "savings", "moneymrkt", "creditline", "creditcard"]
-        logger.warn(f"No accounts specified; configure at least one of {accttypes}")
+        logger.warning(f"No accounts specified; configure at least one of {accttypes}")
 
     client = init_client(args)
     with client.request_statements(
@@ -859,7 +833,7 @@ CONFIGURABLE.update(CONFIGURABLE_USER)
 
 
 def read_config(cfg: configparser.ConfigParser, section: str) -> Mapping[str, ArgType]:
-    logger.info(f"Loading Python data structures from {cfg}")
+    logger.info(f"Loading Python data structures from {cfg.}")
     args: Mapping = {}
     if section not in cfg:
         return args
@@ -1035,8 +1009,8 @@ def merge_config(
 
 def merge_from_ofxhome(args: ArgsType):
     ofxhome_id = args["ofxhome"]
-    logger.info(f"Looking up OFX Home API for id#{ofxhome_id}")
     if ofxhome_id:
+        logger.info(f"Looking up OFX Home API for id#{ofxhome_id}")
         lookup = ofxhome.lookup(ofxhome_id)
         if lookup:
             logger.info(f"OFX Home lookup found {lookup}")
@@ -1051,7 +1025,7 @@ def merge_from_ofxhome(args: ArgsType):
                     "brokerid": lookup.brokerid,
                 },
             )
-            msg = "CLI args merged with user configs, OFX Home lookup, and defaults: {merged}"
+            msg = f"CLI args merged with user configs, OFX Home lookup, and defaults: {args}"
             logger.debug(msg)
 
 
@@ -1461,14 +1435,14 @@ def get_passwd(args: ArgsType) -> str:
 def save_passwd(args: ArgsType, password: str) -> None:
     if args["dryrun"]:
         msg = "Dry run; won't store password"
-        logger.warn(msg)
+        logger.warning(msg)
     if not HAS_KEYRING:
         msg = "Can't find python-keyring pacakge; can't save password"
         logger.error(msg)
         raise RuntimeError(msg)
     if not password:
         msg = "Empty password; won't store"
-        logger.warn(msg)
+        logger.warning(msg)
 
     server = args["server"]
     logger.debug("Found python-keyring; storing password for {server}")
@@ -1495,7 +1469,8 @@ def main() -> None:
     args_ = argparser.parse_args()
 
     log_level = LOG_LEVELS.get(args_.verbose, logging.DEBUG)
-    logger.setLevel(log_level)
+    config.configure_logging(log_level)
+
     logger.debug(f"Parsed CLI args: {args_}")
 
     if not hasattr(args_, "request"):
