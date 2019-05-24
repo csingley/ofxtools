@@ -46,102 +46,6 @@ class OFXTypeWarning(UserWarning):
     """ Base class for warnings in this module """
 
 
-# Valid datetime formats per the OFX spec (in OFX_Common.xsd):
-#  [0-9]{4}
-#  ((0[1-9])|(1[0-2]))
-#  ((0[1-9])|([1-2][0-9])|(3[0-1]))|
-
-#  [0-9]{4}
-#  ((0[1-9])|(1[0-2]))
-#  ((0[1-9])|([1-2][0-9])|(3[0-1]))
-#  (([0-1][0-9])|(2[0-3]))
-#  [0-5][0-9]
-#  (([0-5][0-9])|(60))|
-
-#  [0-9]{4}
-#  ((0[1-9])|(1[0-2]))
-#  ((0[1-9])|([1-2][0-9])|(3[0-1]))
-#  (([0-1][0-9])|(2[0-3]))
-#  [0-5][0-9]
-#  (([0-5][0-9])|(60))
-#  \.[0-9]{3}|
-
-#  [0-9]{4}
-#  ((0[1-9])|(1[0-2]))
-#  ((0[1-9])|([1-2][0-9])|(3[0-1]))
-#  (([0-1][0-9])|(2[0-3]))
-#  [0-5][0-9]
-#  (([0-5][0-9])|(60))
-#  \.[0-9]{3}
-#  (\[[\+\-]?.+(:.+)?\])?
-#
-# WORKAROUND
-# JPM sends DTPOSTED formatted as YYYYMMDDHHMMSS[offset], which isn't
-# valid per the spec.  We allow it.
-DT_REGEX = re.compile(
-    r"""
-    ^
-    (?P<year>[0-9]{4})
-    (?P<month>(0[1-9])|(1[0-2]))
-    (?P<day>(0[1-9])|([1-2][0-9])|(3[0-1]))
-    (
-        (
-            (?P<hour>([0-1][0-9])|(2[0-3]))
-            (?P<minute>[0-5][0-9])
-            (?P<second>([0-5][0-9])|(60))
-            (
-                (\.(?P<millisecond>[0-9]{3}))?
-                (
-                    \[(?P<gmt_offset_hours>[0-9-+]+)
-                    (
-                        (.(?P<gmt_offset_minutes>\d\d))?
-                        (:(?P<tz_name>.*))?
-                    )?
-                    \]
-                )?
-            )?
-        )?
-    )?
-    $
-    """,
-    re.VERBOSE,
-)
-
-
-# Valid time formats given by OFX spec (in OFX_Common.xsd):
-#  (([0-1][0-9])|(2[0-3]))
-#  [0-5][0-9]
-#  (([0-5][0-9])|(60))
-#  (\.[0-9]{3})?
-#  (\[[\+\-]?.+(:.+)?\])?
-#
-# N.B. the language from section 3.2.8.3 gives the format as:
-# HHMMSS.XXX[gmt offset[:tz name]]
-# This is inconsistent with the regex from the schema.  We follow the
-# schema rather than the human language version
-TIME_REGEX = re.compile(
-    r"""
-    ^
-    (?P<hour>([0-1][0-9])|(2[0-3]))
-    (?P<minute>[0-5][0-9])
-    (?P<second>([0-5][0-9])|(60))
-    (
-        (\.(?P<millisecond>[0-9]{3}))?
-        (
-            \[(?P<gmt_offset_hours>[0-9-+]+)
-            (
-                (.(?P<gmt_offset_minutes>\d\d))?
-                (:(?P<tz_name>.*))?
-            )?
-            \]
-        )?
-    )?
-    $
-    """,
-    re.VERBOSE,
-)
-
-
 class InstanceCounterMixin:
     """
     Objects that derive from this mixin get a globally unique monotonically
@@ -227,8 +131,8 @@ class Element(InstanceCounterMixin):
 
     def enforce_required(self, value):
         if value is None and self.required:
-            msg = "{}: Value is required"
-            raise ValueError(msg.format(self.__class__.__name__))
+            msg = f"{self.__class__.__name__}: Value is required"
+            raise ValueError(msg)
 
         return value
 
@@ -262,8 +166,8 @@ class Element(InstanceCounterMixin):
 
     def _unconvert_default(self, value):
         # By default, any type not specifically dispatched raises an error
-        msg = "{} is not an instance of {}"
-        raise ValueError(msg.format(value, self.__class__.__name__))
+        msg = f"{value} is not an instance of {self.__class__.__name__}"
+        raise ValueError(msg)
 
     def _unconvert_none(self, value: None) -> None:
         """ Dispatch unconvert() for type(None) """
@@ -286,8 +190,8 @@ class Bool(Element):
 
     def _convert_default(self, value):
         # Better error message than superclass default
-        msg = "{} is not one of the allowed values {}"
-        raise ValueError(msg.format(value, self.mapping.keys()))
+        msg = f"{value} is not one of the allowed values {self.mapping.keys()}"
+        raise ValueError(msg)
 
     def _convert_bool(self, value):
         return value
@@ -296,14 +200,14 @@ class Bool(Element):
         try:
             value = self.mapping[value]
         except KeyError:
-            msg = "{} is not one of the allowed values {}"
-            raise ValueError(msg.format(value, self.mapping.keys()))
+            msg = f"{value} is not one of the allowed values {self.mapping.keys()}"
+            raise ValueError(msg)
         return value
 
     def _unconvert_default(self, value):
         # Better error message than superclass default
-        msg = "{} is not one of the allowed values {}"
-        raise ValueError(msg.format(value, self.mapping.keys()))
+        msg = f"{value} is not one of the allowed values {self.mapping.keys()}"
+        raise ValueError(msg)
 
     def _unconvert_bool(self, value):
         value = {v: k for k, v in self.mapping.items()}[value]
@@ -325,17 +229,15 @@ class String(Element):
 
     def _convert_default(self, value):
         # Better error message than superclass default
-        msg = "'{}' is not a str"
-        raise ValueError(msg.format(value))
+        raise ValueError(f"'{value}' is not a str")
 
     def enforce_length(self, value: str) -> str:
         if self.length is not None and len(value) > self.length:
+            msg = f"Value '{value}' exceeds max length={self.length}"
             if self.strict:
-                msg = "'{}' is too long; max length={}"
-                raise ValueError(msg.format(value, self.length))
+                raise ValueError(msg)
             else:
-                msg = "Value '{}' exceeds length={}"
-                warnings.warn(msg.format(value, self.length), category=OFXTypeWarning)
+                warnings.warn(msg)
         return value
 
     def _convert_str(self, value):
@@ -405,8 +307,8 @@ class Integer(Element):
 
     def enforce_length(self, value: int) -> int:
         if self.length is not None and value >= 10 ** self.length:
-            msg = "'{}' has too many digits; max digits={}"
-            raise ValueError(msg.format(value, self.length))
+            msg = f"'{value}' has too many digits; max digits={self.length}"
+            raise ValueError(msg)
         return value
 
     def _convert_default(self, value):
@@ -457,9 +359,71 @@ class Decimal(Element):
 
     def _unconvert_decimal(self, value):
         if self.scale is not None and not value.same_quantum(self.scale):
-            msg = "'{}' doesn't match scale={}"
-            raise ValueError(msg.format(value, self.scale))
+            msg = f"'{value}' doesn't match scale={self.scale}"
+            raise ValueError(msg)
         return str(value)
+
+
+# Valid datetime formats per the OFX spec (in OFX_Common.xsd):
+#  [0-9]{4}
+#  ((0[1-9])|(1[0-2]))
+#  ((0[1-9])|([1-2][0-9])|(3[0-1]))|
+
+#  [0-9]{4}
+#  ((0[1-9])|(1[0-2]))
+#  ((0[1-9])|([1-2][0-9])|(3[0-1]))
+#  (([0-1][0-9])|(2[0-3]))
+#  [0-5][0-9]
+#  (([0-5][0-9])|(60))|
+
+#  [0-9]{4}
+#  ((0[1-9])|(1[0-2]))
+#  ((0[1-9])|([1-2][0-9])|(3[0-1]))
+#  (([0-1][0-9])|(2[0-3]))
+#  [0-5][0-9]
+#  (([0-5][0-9])|(60))
+#  \.[0-9]{3}|
+
+#  [0-9]{4}
+#  ((0[1-9])|(1[0-2]))
+#  ((0[1-9])|([1-2][0-9])|(3[0-1]))
+#  (([0-1][0-9])|(2[0-3]))
+#  [0-5][0-9]
+#  (([0-5][0-9])|(60))
+#  \.[0-9]{3}
+#  (\[[\+\-]?.+(:.+)?\])?
+#
+# WORKAROUND
+# JPM sends DTPOSTED formatted as YYYYMMDDHHMMSS[offset], which isn't
+# valid per the spec.  We allow it.
+DT_REGEX = re.compile(
+    r"""
+    ^
+    (?P<year>[0-9]{4})
+    (?P<month>(0[1-9])|(1[0-2]))
+    (?P<day>(0[1-9])|([1-2][0-9])|(3[0-1]))
+    (
+        (
+            (?P<hour>([0-1][0-9])|(2[0-3]))
+            (?P<minute>[0-5][0-9])
+            (?P<second>([0-5][0-9])|(60))
+            (
+                (\.(?P<millisecond>[0-9]{3}))?
+                (
+                    \[(?P<gmt_offset_hours>[0-9-+]+)
+                    (
+                        (.(?P<gmt_offset_minutes>\d\d))?
+                        (:(?P<tz_name>.*))?
+                    )?
+                    \]
+                )?
+            )?
+        )?
+    )?
+    $
+    """,
+    re.VERBOSE,
+)
 
 
 class DateTime(Element):
@@ -474,20 +438,19 @@ class DateTime(Element):
         super()._init(*args, **kwargs)
 
     def _convert_default(self, value):
-        msg = "'{}' is type '{}'; can't convert to {}"
-        raise ValueError(msg.format(value, value.__class__.__name__, self.type))
+        raise ValueError((f"'{value}' is type '{value.__class__.__name__}'; "
+                          f"can't convert to {self.type}")
 
     def _convert_datetime(self, value):
         if value.utcoffset() is None:
-            msg = "{} is not timezone-aware".format(value)
-            raise ValueError(msg)
+            raise ValueError(f"{value} is not timezone-aware")
         return value
 
     def _convert_str(self, value):
         match = self.regex.match(value)
         if match is None:
-            msg = "'{}' does not conform to OFX formats for {}"
-            raise ValueError(msg.format(value, self.type))
+            msg = f"'{value}' does not conform to OFX formats for {self.type}"
+            raise ValueError(msg)
 
         matchdict = match.groupdict()
 
@@ -514,8 +477,8 @@ class DateTime(Element):
             #  YYYYMMDDHHMMSS.XXX[-:TZ]
             # If we can't parse hours, try to infer from TZ name
             if tz_name not in utils.TZS:
-                msg = "Can't parse timezone '{}' into a valid GMT offset"
-                raise ValueError(msg.format(tz_name))
+                msg = f"Can't parse timezone '{tz_name}' into a valid GMT offset"
+                raise ValueError(msg)
 
             gmt_offset_hours = utils.TZS[tz_name]
 
@@ -528,9 +491,7 @@ class DateTime(Element):
 
     def _unconvert_datetime(self, value):
         if not hasattr(value, "utcoffset") or value.utcoffset() is None:
-            msg = ("'{}' isn't a timezone-aware instance; can't convert to GMT").format(
-                value, self.type
-            )
+            msg = f"'{value}' isn't a timezone-aware {self.type} instance; can't convert to GMT"
             raise ValueError(msg)
 
         # Transform to GMT
@@ -538,6 +499,40 @@ class DateTime(Element):
         milliseconds = "{0:03d}".format((value.microsecond + 500) // 1000)
         fmt = "%Y%m%d%H%M%S.{}[0:GMT]".format(milliseconds)
         return value.strftime(fmt)
+
+
+# Valid time formats given by OFX spec (in OFX_Common.xsd):
+#  (([0-1][0-9])|(2[0-3]))
+#  [0-5][0-9]
+#  (([0-5][0-9])|(60))
+#  (\.[0-9]{3})?
+#  (\[[\+\-]?.+(:.+)?\])?
+#
+# N.B. the language from section 3.2.8.3 gives the format as:
+# HHMMSS.XXX[gmt offset[:tz name]]
+# This is inconsistent with the regex from the schema.  We follow the
+# schema rather than the human language version
+TIME_REGEX = re.compile(
+    r"""
+    ^
+    (?P<hour>([0-1][0-9])|(2[0-3]))
+    (?P<minute>[0-5][0-9])
+    (?P<second>([0-5][0-9])|(60))
+    (
+        (\.(?P<millisecond>[0-9]{3}))?
+        (
+            \[(?P<gmt_offset_hours>[0-9-+]+)
+            (
+                (.(?P<gmt_offset_minutes>\d\d))?
+                (:(?P<tz_name>.*))?
+            )?
+            \]
+        )?
+    )?
+    $
+    """,
+    re.VERBOSE,
+)
 
 
 class Time(DateTime):
@@ -570,8 +565,7 @@ class Time(DateTime):
 
     def _convert_time(self, value):
         if value.utcoffset() is None:
-            msg = "{} is not timezone-aware".format(value)
-            raise ValueError(msg)
+            raise ValueError(f"{value} is not timezone-aware")
         return value
 
     def _convert_datetime(self, value):
@@ -579,9 +573,7 @@ class Time(DateTime):
 
     def _unconvert_time(self, value):
         if not hasattr(value, "utcoffset") or value.utcoffset() is None:
-            msg = (
-                "'{}' isn't a timezone-aware {} instance; can't convert to GMT"
-            ).format(value, self.type)
+            msg = f"'{value}' isn't a timezone-aware {self.type} instance; can't convert to GMT"
             raise ValueError(msg)
 
         # Transform to GMT
