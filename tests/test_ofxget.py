@@ -663,7 +663,7 @@ class MkServerCfgTestCase(unittest.TestCase):
     """ Unit tests for ofxtools.script.ofxget.mk_server_cfg() """
 
     def testMkservercfg(self):
-        with patch("ofxtools.scripts.ofxget.UserConfig", new=ConfigParser()):
+        with patch("ofxtools.scripts.ofxget.USERCFG", new=ConfigParser()):
             # FIXME - patching the classproperty isn't working
             #  with patch("ofxtools.Client.OFXClient.uuid", new="DEADBEEF"):
 
@@ -713,7 +713,7 @@ class MkServerCfgTestCase(unittest.TestCase):
             self.assertEqual(dict(results), predicted)
 
             for opt, val in predicted.items():
-                self.assertEqual(ofxget.UserConfig["myserver"][opt], val)
+                self.assertEqual(ofxget.USERCFG["myserver"][opt], val)
 
 
 class ArgConfigTestCase(unittest.TestCase):
@@ -799,7 +799,7 @@ class MergeConfigTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        # Monkey-patch ofxget.UserConfig
+        # Monkey-patch ofxget.USERCFG
         default_cfg = """
         [2big2fail]
         ofxhome = 417
@@ -818,17 +818,18 @@ class MergeConfigTestCase(unittest.TestCase):
         creditcard = 444, 555
         """
 
-        cfg = configparser.ConfigParser(converters={"list": ofxget.convert_list})
+        cfg = ofxget.UserConfig()
         cfg.read_string(default_cfg)
         cfg.read_string(user_cfg)
 
-        cls._UserConfig = ofxget.UserConfig
-        ofxget.UserConfig = cfg
+        cls._USERCFG = ofxget.USERCFG
+        ofxget.USERCFG = cfg
 
     @classmethod
     def tearDownClass(cls):
-        # Undo monkey patches for ofxget.UserConfig
-        ofxget.UserConfig = cls._UserConfig
+        # Undo monkey patches for ofxget.USERCFG
+        #  ofxget.UserConfig = cls._UserConfig
+        ofxget.USERCFG = cls._USERCFG
 
     def testMergeConfig(self):
         args = argparse.Namespace(
@@ -845,7 +846,7 @@ class MergeConfigTestCase(unittest.TestCase):
                 brokerid="2big2fail.com",
             )
 
-            merged = ofxget.merge_config(args, ofxget.UserConfig)
+            merged = ofxget.merge_config(args, ofxget.USERCFG)
 
         # None of args/usercfg/defaultcfg has the URL,
         # so there should have been an OFX Home lookup
@@ -940,7 +941,7 @@ class MergeConfigTestCase(unittest.TestCase):
     def testMergeConfigUnknownFiArg(self):
         args = argparse.Namespace(server="3big4fail")
         with self.assertRaises(ValueError):
-            ofxget.merge_config(args, ofxget.UserConfig)
+            ofxget.merge_config(args, ofxget.USERCFG)
 
 
 ###############################################################################

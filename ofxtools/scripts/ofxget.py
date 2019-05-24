@@ -735,12 +735,24 @@ def convert_list(string: str) -> List[str]:
     return [sub.strip() for sub in string.split(",")]
 
 
-UserConfig = configparser.ConfigParser(converters={"list": convert_list})
-UserConfig.read([CONFIGPATH, USERCONFIGPATH])
+class UserConfig(configparser.ConfigParser):
+    def __init__(self, *args, **kwargs):
+        kwargs["converters"] = {"list": convert_list}
+        super().__init__(*args, **kwargs)
 
 
-LibraryConfig = configparser.ConfigParser(converters={"list": convert_list})
-LibraryConfig.read(CONFIGPATH)
+class LibraryConfig(configparser.ConfigParser):
+    def __init__(self, *args, **kwargs):
+        kwargs["converters"] = {"list": convert_list}
+        super().__init__(*args, **kwargs)
+
+
+USERCFG = UserConfig()
+USERCFG.read([CONFIGPATH, USERCONFIGPATH])
+
+
+LIBCFG = LibraryConfig()
+LIBCFG.read(CONFIGPATH)
 
 
 DEFAULTS: Dict[str, ArgType] = {
@@ -833,7 +845,7 @@ CONFIGURABLE.update(CONFIGURABLE_USER)
 
 
 def read_config(cfg: configparser.ConfigParser, section: str) -> Mapping[str, ArgType]:
-    logger.info(f"Loading Python data structures from {cfg.}")
+    logger.info(f"Loading Python data structures from {cfg.__class__.__name__}")
     args: Mapping = {}
     if section not in cfg:
         return args
@@ -862,7 +874,7 @@ def write_config(args: ArgsType) -> None:
     logger.info(f"Writing user configs to {USERCONFIGPATH}")
 
     with open(USERCONFIGPATH, "w") as f:
-        UserConfig.write(f)
+        USERCFG.write(f)
 
 
 def mk_server_cfg(args: ArgsType) -> configparser.SectionProxy:
@@ -874,10 +886,10 @@ def mk_server_cfg(args: ArgsType) -> configparser.SectionProxy:
     logger.debug(f"Args to populate config: {args}")
 
     logger.debug(f"Reloading user config from {USERCONFIGPATH}")
-    UserConfig.clear()
-    UserConfig.read(USERCONFIGPATH)
+    USERCFG.clear()
+    USERCFG.read(USERCONFIGPATH)
 
-    defaults = UserConfig[UserConfig.default_section]  # type: ignore
+    defaults = USERCFG[USERCFG.default_section]  # type: ignore
     if "clientuid" not in defaults:
         clientuid = OFXClient.uuid
         logger.debug(f"No global default CLIENTUID found; choosing {clientuid}")
@@ -891,19 +903,19 @@ def mk_server_cfg(args: ArgsType) -> configparser.SectionProxy:
         raise ValueError(msg)
     logger.debug(f"Configuring {server}")
 
-    if not UserConfig.has_section(server):
-        UserConfig[server] = {}
-    cfg = UserConfig[server]
+    if not USERCFG.has_section(server):
+        USERCFG[server] = {}
+    cfg = USERCFG[server]
     logger.debug(f"Existing user config section: {dict(cfg)}")
 
-    lib_cfg = read_config(LibraryConfig, server)
+    lib_cfg = read_config(LIBCFG, server)
 
     def test_cfg_val(opt: str, value: ArgType) -> bool:
         """ Select CLI args to write to config file """
         if value in NULL_ARGS:
             return False
         # Don't include CLIENTUID in the server section if it's sourced
-        # from UserConfig.default_section
+        # from USERCFG.default_section
         if opt == "clientuid" and value == defaults["clientuid"]:
             return False
         # Don't include configs that are the same as defaults
@@ -1372,13 +1384,13 @@ def list_fis(args: ArgsType) -> None:
         entries.insert(0, " ".join(("=" * 39, "=" * 29, "=" * 8)))
         entries.insert(0, "{:^40}{:^30}{:^8}".format("Name", "Nickname", "OFX Home"))
         pydoc.pager("\n".join(entries))
-    elif server not in UserConfig:
+    elif server not in USERCFG:
         msg = f"Unknown server '{server}'"
         raise ValueError(msg)
     else:
-        ofxhome = UserConfig[server].get("ofxhome", "")
-        name = UserConfig["NAMES"].get(ofxhome, "")
-        config = [" = ".join(pair) for pair in UserConfig[server].items()]
+        ofxhome = USERCFG[server].get("ofxhome", "")
+        name = USERCFG["NAMES"].get(ofxhome, "")
+        config = [" = ".join(pair) for pair in USERCFG[server].items()]
         print()
         if name:
             print(name)
@@ -1388,11 +1400,11 @@ def list_fis(args: ArgsType) -> None:
 
 def fi_index() -> Sequence[Tuple[str, str, str]]:
     """ All FIs known to ofxget """
-    names = {id_: name for id_, name in UserConfig["NAMES"].items()}
-    cfg_default_sect = UserConfig.default_section  # type: ignore
+    names = {id_: name for id_, name in USERCFG["NAMES"].items()}
+    cfg_default_sect = USERCFG.default_section  # type: ignore
     servers = [
         (names.get(sct.get("ofxhome", None), ""), nick, sct.get("ofxhome", "--"))
-        for nick, sct in UserConfig.items()
+        for nick, sct in USERCFG.items()
         if nick not in (cfg_default_sect, "NAMES") and "url" in sct
     ]
 
@@ -1477,7 +1489,7 @@ def main() -> None:
         argparser.print_help()
         sys.exit()
 
-    args = merge_config(args_, UserConfig)
+    args = merge_config(args_, USERCFG)
     REQUEST_HANDLERS[args["request"]](args)
 
 
