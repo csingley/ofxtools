@@ -438,8 +438,12 @@ class DateTime(Element):
         super()._init(*args, **kwargs)
 
     def _convert_default(self, value):
-        raise ValueError((f"'{value}' is type '{value.__class__.__name__}'; "
-                          f"can't convert to {self.type}")
+        raise ValueError(
+            (
+                f"'{value}' is type '{value.__class__.__name__}'; "
+                f"can't convert to {self.type}"
+            )
+        )
 
     def _convert_datetime(self, value):
         if value.utcoffset() is None:
