@@ -21,6 +21,7 @@ import itertools
 from operator import attrgetter
 import logging
 import logging.config
+import warnings
 import pydoc
 import typing
 from typing import (
@@ -66,10 +67,6 @@ USERCONFIGPATH = config.USERCONFIGDIR / "ofxget.cfg"
 
 
 logger = logging.getLogger(__name__)
-
-
-class OfxgetWarning(UserWarning):
-    """ Base class for warnings in this module """
 
 
 ###############################################################################
@@ -500,6 +497,29 @@ def _best_scan_format(scan_results: ScanResults) -> MutableMapping:
     return args
 
 
+def init_client(args: ArgsType) -> OFXClient:
+    """
+    Initialize OFXClient with connection info from args
+    """
+    client = OFXClient(
+        args["url"],
+        userid=args["user"] or None,
+        clientuid=args["clientuid"] or None,
+        org=args["org"] or None,
+        fid=args["fid"] or None,
+        version=args["version"],
+        appid=args["appid"] or None,
+        appver=args["appver"] or None,
+        language=args["language"] or None,
+        prettyprint=args["pretty"],
+        close_elements=not args["unclosedelements"],
+        bankid=args["bankid"] or None,
+        brokerid=args["brokerid"] or None,
+    )
+    logger.debug(f"Initialized {client}")
+    return client
+
+
 def request_profile(args: ArgsType) -> None:
     """
     Send PROFRQ
@@ -637,7 +657,8 @@ def request_stmt(args: ArgsType) -> None:
             "creditcard",
             "investment",
         ]
-        logger.warning(f"No accounts specified; configure at least one of {accttypes}")
+        msg = f"No accounts specified; configure at least one of {accttypes}"
+        warnings.warn(msg, category=SyntaxWarning)
 
     client = init_client(args)
     with client.request_statements(
@@ -687,7 +708,8 @@ def request_stmtend(args: ArgsType) -> None:
 
     if not stmtendrqs:
         accttypes = ["checking", "savings", "moneymrkt", "creditline", "creditcard"]
-        logger.warning(f"No accounts specified; configure at least one of {accttypes}")
+        msg = f"No accounts specified; configure at least one of {accttypes}"
+        warnings.warn(msg, category=SyntaxWarning)
 
     client = init_client(args)
     with client.request_statements(
@@ -845,7 +867,7 @@ CONFIGURABLE.update(CONFIGURABLE_USER)
 
 
 def read_config(cfg: configparser.ConfigParser, section: str) -> Mapping[str, ArgType]:
-    logger.info(f"Loading Python data structures from {cfg.__class__.__name__}")
+    logger.info(f"Loading {cfg.__class__.__name__}")
     args: Mapping = {}
     if section not in cfg:
         return args
@@ -864,6 +886,7 @@ def read_config(cfg: configparser.ConfigParser, section: str) -> Mapping[str, Ar
         for opt in proxy
         if opt in CONFIGURABLE
     }
+    logger.debug(f"Loaded {args}")
 
     return args
 
@@ -967,18 +990,18 @@ def merge_config(
     """
     Merge CLI args > user config > OFX Home > defaults
     """
-    logger.info("Merging CLI args with config files")
+    logger.info("Merging args")
     # All ArgumentParser args that have a value set
-    _args = {k: v for k, v in vars(args).items() if v is not None}
-    logger.debug(f"Non-empty CLI args; {_args}")
+    _args = extractns(args)
+    logger.debug(f"CLI args: {_args}")
 
     if "server" in _args:
         user_cfg = read_config(config, _args["server"])
     else:
         user_cfg = {}
-    logger.debug(f"Existing user configs: {user_cfg}")
+    logger.debug(f"Configs: {user_cfg}")
     merged: ArgsType = ChainMap(_args, user_cfg, DEFAULTS)
-    logger.debug(f"CLI args merged with user configs and defaults: {merged}")
+    #  logger.debug(f"CLI args merged with user configs and defaults: {extrargs(merged)}")
 
     # Try to perform an OFX Home lookup if:
     # - it's configured from the CLI
@@ -1015,7 +1038,7 @@ def merge_config(
             msg = f"{err} - please configure 'url' or 'ofxhome' for server '{server}'"
             raise ValueError(msg)
 
-    logger.info(f"Merged args: {merged}")
+    logger.info(f"Merged args: {extrargs(merged)}")
     return merged
 
 
@@ -1025,7 +1048,7 @@ def merge_from_ofxhome(args: ArgsType):
         logger.info(f"Looking up OFX Home API for id#{ofxhome_id}")
         lookup = ofxhome.lookup(ofxhome_id)
         if lookup:
-            logger.info(f"OFX Home lookup found {lookup}")
+            logger.debug(f"OFX Home lookup found {lookup}")
             # Insert OFX Home lookup ahead of DEFAULTS but after
             # CLI args and user configss
             args.maps.insert(
@@ -1037,31 +1060,18 @@ def merge_from_ofxhome(args: ArgsType):
                     "brokerid": lookup.brokerid,
                 },
             )
-            msg = f"CLI args merged with user configs, OFX Home lookup, and defaults: {args}"
-            logger.debug(msg)
+            #  msg = f"CLI args merged with user configs, OFX Home lookup, and defaults: {extrargs(args)}"
+            #  logger.debug(msg)
 
 
-def init_client(args: ArgsType) -> OFXClient:
-    """
-    Initialize OFXClient with connection info from args
-    """
-    client = OFXClient(
-        args["url"],
-        userid=args["user"] or None,
-        clientuid=args["clientuid"] or None,
-        org=args["org"] or None,
-        fid=args["fid"] or None,
-        version=args["version"],
-        appid=args["appid"] or None,
-        appver=args["appver"] or None,
-        language=args["language"] or None,
-        prettyprint=args["pretty"],
-        close_elements=not args["unclosedelements"],
-        bankid=args["bankid"] or None,
-        brokerid=args["brokerid"] or None,
-    )
-    logger.debug(f"Initialized {client}")
-    return client
+def extrargs(args: ArgsType) -> dict:
+    """ Extract non-null args """
+    return {k: v for k, v in args.items() if v not in NULL_ARGS}
+
+
+def extractns(ns) -> dict:
+    """ Extract non-null argparse.Namespace"""
+    return {k: v for k, v in vars(ns).items() if v is not None}
 
 
 ###############################################################################
@@ -1447,14 +1457,14 @@ def get_passwd(args: ArgsType) -> str:
 def save_passwd(args: ArgsType, password: str) -> None:
     if args["dryrun"]:
         msg = "Dry run; won't store password"
-        logger.warning(msg)
+        warnings.warn(msg, category=SyntaxWarning)
     if not HAS_KEYRING:
         msg = "Can't find python-keyring pacakge; can't save password"
         logger.error(msg)
         raise RuntimeError(msg)
     if not password:
         msg = "Empty password; won't store"
-        logger.warning(msg)
+        warnings.warn(msg, category=SyntaxWarning)
 
     server = args["server"]
     logger.debug("Found python-keyring; storing password for {server}")
@@ -1483,7 +1493,7 @@ def main() -> None:
     log_level = LOG_LEVELS.get(args_.verbose, logging.DEBUG)
     config.configure_logging(log_level)
 
-    logger.debug(f"Parsed CLI args: {args_}")
+    logger.debug(f"Parsed CLI args: {extractns(args_)}")
 
     if not hasattr(args_, "request"):
         argparser.print_help()

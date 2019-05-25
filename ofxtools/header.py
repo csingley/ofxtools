@@ -30,11 +30,15 @@ __all__ = [
 
 # stdlib imports
 import re
+import logging
 
 
 # local imports
 from ofxtools import Types
 from typing import Tuple, Union, Optional, BinaryIO
+
+
+logger = logging.getLogger(__name__)
 
 
 OFXHeaderType = Union["OFXHeaderBase", "OFXHeaderV1", "OFXHeaderV2"]
@@ -246,6 +250,8 @@ def parse_header(source: BinaryIO) -> Tuple[OFXHeaderType, str]:
         * instance of OFXHeaderV1/OFXHeaderV2 containing parsed data, and
         * decoded text of OFX data body
     """
+    logger.info("Parsing OFX header")
+
     # Skip any empty lines at the beginning
     while True:
         # OFX header is read by nice clean machines, not meatbags -
@@ -257,8 +263,9 @@ def parse_header(source: BinaryIO) -> Tuple[OFXHeaderType, str]:
     # If the first non-empty line contains an XML declaration, it's OFX v2
     xml_match = XML_REGEX.match(line)
     if xml_match:
-        # OFXv2 spec doesn't require newlines between XML declaration,
-        # OFX declaration, and data elements; `line` may or may not
+        logger.debug("Found XML declaration - OFX version 2")
+        # OFXv2 spec doesn't require newlines between XML declaration;
+        # OFX declaration, and data elements; ``line`` may or may not
         # contain the latter two.
         #
         # Just rewind, read the whole file (it must be UTF-8 encoded per
@@ -269,7 +276,7 @@ def parse_header(source: BinaryIO) -> Tuple[OFXHeaderType, str]:
         header, header_end_index = OFXHeaderV2.parse(decoded_source)
         message = decoded_source[header_end_index:]
     else:
-        # OFX v1
+        logger.debug("No XML declaration - OFX version 1")
         rawheader = line + "\n"
         # First line is OFXHEADER; need to read next 8 lines for a fixed
         # total of 9 fields required by OFX v1 spec.
@@ -310,6 +317,8 @@ def make_header(
     except KeyError:
         msg = "OFX version {} not version 1 or version 2"
         raise OFXHeaderError(msg.format(version))
-    return HeaderClass(
+    header = HeaderClass(
         version, security=security, oldfileuid=oldfileuid, newfileuid=newfileuid
     )
+    logger.debug("Made OFX header {header}")
+    return header

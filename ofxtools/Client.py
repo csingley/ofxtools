@@ -7,8 +7,8 @@ To use, create an OFXClient instance configured with OFX connection parameters:
 server URL, OFX protocol version, financial institution identifiers, client
 identifiers, etc.
 
-If you don't have these, try http://ofxhome.com/ .
-
+``config/fi.cfg`` contains a database of these parameters, most conveniently
+accessed via ``scripts/ofx.py``.
 
 Using the configured ``OFXClient`` instance, make a request by calling the
 relevant method, e.g. ``OFXClient.request_statements()``.  Provide the password
@@ -47,27 +47,18 @@ __all__ = [
 
 
 # stdlib imports
+import logging
 import datetime
 import uuid
 import xml.etree.ElementTree as ET
 import ssl
 import urllib.request as urllib_request
-from http.client import HTTPResponse
 import socket
 from io import BytesIO
 import itertools
 from operator import attrgetter, itemgetter
 from functools import singledispatch
-from typing import (
-    TYPE_CHECKING,
-    Dict,
-    Union,
-    Optional,
-    Tuple,
-    Iterator,
-    NamedTuple,
-    BinaryIO,
-)
+from typing import Dict, Union, Optional, Tuple, Iterator, NamedTuple, BinaryIO
 
 
 # local imports
@@ -105,6 +96,9 @@ from ofxtools import utils
 
 
 AUTH_PLACEHOLDER = "{:0<32}".format("anonymous")
+
+
+logger = logging.getLogger(__name__)
 
 
 # Statement request data containers
@@ -166,6 +160,12 @@ class CcStmtEndRq(NamedTuple):
     acctid: Optional[str] = None
     dtstart: Optional[datetime.datetime] = None
     dtend: Optional[datetime.datetime] = None
+
+
+# TYPE ALIASES
+RequestParam = Union[StmtRq, CcStmtRq, InvStmtRq, StmtEndRq, CcStmtEndRq]
+Request = Union[STMTRQ, CCSTMTRQ, INVSTMTRQ, STMTENDRQ, CCSTMTENDRQ]
+Message = Union[BANKMSGSRQV1, CREDITCARDMSGSRQV1, INVSTMTMSGSRQV1]
 
 
 class OFXClient:
@@ -248,7 +248,11 @@ class OFXClient:
     @classproperty
     @classmethod
     def uuid(cls) -> str:
-        """ Returns a new UUID each time called """
+        """
+        Return a new UUID each time called.
+
+        Wrapper we can mock for testing.
+        """
         return str(uuid.uuid4())
 
     @property
@@ -266,7 +270,7 @@ class OFXClient:
 
     def dtclient(self) -> datetime.datetime:
         """
-        Wrapper we can mock for testing purposes
+        Wrapper we can mock for testing.
         (as opposed to datetime.datetime, which is a C extension)
         """
         return datetime.datetime.now(UTC)
@@ -274,7 +278,7 @@ class OFXClient:
     def request_statements(
         self,
         password: str,
-        *requests: Union[StmtRq, CcStmtRq, InvStmtRq, StmtEndRq, CcStmtEndRq],
+        *requests: RequestParam,
         dryrun: bool = False,
         verify_ssl: bool = True,
         timeout: Optional[float] = None,
@@ -282,47 +286,43 @@ class OFXClient:
         """
         Package and send OFX statement requests
         (STMTRQ/CCSTMTRQ/INVSTMTRQ/STMTENDRQ/CCSTMTENDRQ).
-
-        Input *requests are instances of the corresponding namedtuples
-        (StmtRq, CcStmtRq, InvStmtRq, StmtEndRq, CcStmtEndRq)
         """
-        # Our input requests are (potentially mixed) *STMTRQ/*STMTENDRQ
-        # namedtuples.  They must be grouped by type and passed to the
-        # appropriate *TRNRQ hander function (see singledispatch setup below).
-
+        logger.info(f"Creating statement requests for {requests}")
+        # Group requests by type and pass to the appropriate *TRNRQ handler
+        # function (see singledispatch setup below).
+        #
         # *StmtRq/*StmtEndRqs (namedtuples) don't have rich comparison methods;
-        # can't sort by class
-        requests_ = sorted(requests, key=attrgetter("__class__.__name__"))
-
+        # can't sort by class. As a proxy, we sort by class name, even though
+        # we actually group by request class so we can use it when iterating
+        # over groupby().
+        stmtSortKey = attrgetter("__class__.__name__")
+        stmtGroupKey = attrgetter("__class__")
         trnrqs = [
             wrap_stmtrq(cls(), rqs, self)
-            for cls, rqs in itertools.groupby(requests_, key=attrgetter("__class__"))
+            for cls, rqs in itertools.groupby(
+                sorted(requests, key=stmtSortKey), key=stmtGroupKey
+            )
         ]
 
         # trnrqs is a pair of (models.*MSGSRQV1, [*TRNRQ])
-        # Can't sort *MSGSRQV1 by class, either
-        trnrqs.sort(key=lambda p: p[0].__name__)
+        # Can't sort *MSGSRQV1 by class, either, so we use the same trick
+        # of sorting by class name and grouping by class.
+        def trnSortKey(pair):
+            return pair[0].__name__
 
-        def _mkmsgs(
-            msgcls: Union[BANKMSGSRQV1, CREDITCARDMSGSRQV1, INVSTMTMSGSRQV1],
-            trnrqs: Iterator[
-                Union[
-                    STMTTRNRQ, CCSTMTTRNRQ, INVSTMTTRNRQ, STMTENDTRNRQ, CCSTMTENDTRNRQ
-                ]
-            ],
-        ) -> Tuple[str, Union[BANKMSGSRQV1, CREDITCARDMSGSRQV1, INVSTMTMSGSRQV1]]:
-            """
-            msgcls - one of (BANKMSGSRQV1, CREDITCARDMSGSRQV1, INVSTMTMSGSRQV1)
-            trnrqs - sequence of sequences of (*STMTTRNRQ, *STMTENDTRNRQ)
-            """
+        trnGroupKey = itemgetter(0)
+        trnrqs.sort(key=trnSortKey)
+
+        def msg_args(msgcls: Message, trnrqs: Iterator[Request]) -> Tuple[str, Message]:
             trnrqs_ = list(itertools.chain.from_iterable(t[1] for t in trnrqs))
             attr_name = msgcls.__name__.lower()
             return (attr_name, msgcls(*trnrqs_))
 
         msgs = dict(
-            _mkmsgs(msgcls, _trnrqs)
-            for msgcls, _trnrqs in itertools.groupby(trnrqs, key=itemgetter(0))
+            msg_args(msgcls, _trnrqs)
+            for msgcls, _trnrqs in itertools.groupby(trnrqs, key=trnGroupKey)
         )
+        logger.debug(f"Wrapped statement request messages: {msgs}")
 
         signon = self.signon(password)
         ofx = OFX(signonmsgsrqv1=signon, **msgs)
@@ -342,10 +342,13 @@ class OFXClient:
 
         ofxget.scan_profile() overrides version/prettyprint/close_elements.
         """
+        logger.info("Creating profile request")
 
         dtprofup = datetime.datetime(1990, 1, 1, tzinfo=UTC)
         profrq = PROFRQ(clientrouting="NONE", dtprofup=dtprofup)
         proftrnrq = PROFTRNRQ(trnuid=self.uuid, profrq=profrq)
+
+        logger.debug(f"Wrapped profile request: {proftrnrq}")
 
         user = password = AUTH_PLACEHOLDER
         signon = self.signon(password, userid=user)
@@ -374,13 +377,16 @@ class OFXClient:
         """
         Package and send OFX account info requests (ACCTINFORQ)
         """
+        logger.info("Creating account info request")
         signon = self.signon(password)
 
         acctinforq = ACCTINFORQ(dtacctup=dtacctup)
         acctinfotrnrq = ACCTINFOTRNRQ(trnuid=self.uuid, acctinforq=acctinforq)
-        signupmsgs = SIGNUPMSGSRQV1(acctinfotrnrq)
+        msgs = SIGNUPMSGSRQV1(acctinfotrnrq)
 
-        ofx = OFX(signonmsgsrqv1=signon, signupmsgsrqv1=signupmsgs)
+        logger.debug(f"Wrapped account info request messages: {msgs}")
+
+        ofx = OFX(signonmsgsrqv1=signon, signupmsgsrqv1=msgs)
         return self.download(ofx, dryrun=dryrun, verify_ssl=verify_ssl, timeout=timeout)
 
     def request_tax1099(
@@ -396,10 +402,13 @@ class OFXClient:
         """
         Request US federal income tax form 1099 (TAX1099RQ)
         """
+        logger.info("Creating tax 1099 request")
         signon = self.signon(password)
 
         rq = TAX1099RQ(*taxyears, recid=recid or None)
         msgs = TAX1099MSGSRQV1(TAX1099TRNRQ(trnuid=self.uuid, tax1099rq=rq))
+
+        logger.debug(f"Wrapped tax 1099 request messages: {msgs}")
 
         ofx = OFX(signonmsgsrqv1=signon, tax1099msgsrqv1=msgs)
         return self.download(ofx, dryrun=dryrun, verify_ssl=verify_ssl, timeout=timeout)
@@ -540,6 +549,7 @@ class OFXClient:
         request = self.serialize(
             ofx, version=version, prettyprint=prettyprint, close_elements=close_elements
         )
+        logger.debug(f"Finished request: {request}")
 
         if dryrun:
             return BytesIO(request)
@@ -551,6 +561,7 @@ class OFXClient:
         # Cf. PEP 476
         # TESTME
         if verify_ssl is False:
+            logger.warning("Skipping SSL certificate verification")
             ssl_context = ssl._create_unverified_context()
         else:
             ssl_context = ssl.create_default_context()

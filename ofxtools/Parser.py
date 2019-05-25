@@ -25,12 +25,17 @@ https://stackoverflow.com/questions/1732348/regex-match-open-tags-except-xhtml-s
 # stdlib imports
 import re
 import xml.etree.ElementTree as ET
-from typing import Any, Tuple, IO, Union, Optional, Dict, Callable, Text
+from typing import Tuple, Optional
+import logging
 
 
 # local imports
+from ofxtools import config
 from ofxtools.header import parse_header, OFXHeaderType
 from ofxtools.models.base import Aggregate
+
+
+logger = logging.getLogger(__name__)
 
 
 class ParseError(SyntaxError):
@@ -69,8 +74,10 @@ class OFXTree(ET.ElementTree):
 
         Overrides ElementTree.ElementTree.parse().
         """
+        logger.info(f"Parsing OFX from {source}")
         # Stash the converted OFX header
         self.header, message = self._read(source)
+        logger.debug(f"Parsed OFX header: {self.header}")
 
         # If no parser specified, create default `ofxtools.Parser.TreeBuilder`
         if parser is None:
@@ -81,6 +88,7 @@ class OFXTree(ET.ElementTree):
         # Follow ElementTree API and stash as self._root (so all normal
         # ElementTree methods e.g. find() work normally on our subclass).
         self._root = parser.close()
+        logger.debug(f"Parsed Element tree root: {self._root}")
 
         return self._root
 
@@ -97,9 +105,8 @@ class OFXTree(ET.ElementTree):
             source = open(source, "rb")
             close_source = True
 
-        if hasattr(source, "mode"):
-            if "b" not in source.mode:
-                raise ValueError("Source must be opened in binary mode")
+        if hasattr(source, "mode") and "b" not in source.mode:
+            raise ValueError("Source must be opened in binary mode")
 
         try:
             header, message = parse_header(source)
@@ -116,6 +123,7 @@ class OFXTree(ET.ElementTree):
         """
         if not isinstance(self._root, ET.Element):
             raise ValueError("Must first call parse() to have data to convert")
+        logger.info(f"Converting {self._root} to ofxtools.models.Aggregate")
         instance = Aggregate.from_etree(self._root)
         return instance
 
@@ -133,10 +141,10 @@ class TreeBuilder(ET.TreeBuilder):
     # and optionally an end tag (not mandatory for OFXv1 syntax).
     regex = re.compile(
         r"""<(?P<tag>[A-Z0-9./_ ]+?)>
-                            (?P<text>[^<]+)?
-                            (</(?P<closetag>(?P=tag))>)?
-                            (?P<tail>[^<]+)?
-                            """,
+                (?P<text>[^<]+)?
+            (</(?P<closetag>(?P=tag))>)?
+            (?P<tail>[^<]+)?
+        """,
         re.VERBOSE,
     )
 
@@ -144,18 +152,21 @@ class TreeBuilder(ET.TreeBuilder):
         """
         Iterate through all tags matched by regex.
         """
+        logger.info("Building Element tree from serialized data")
         for match in self.regex.finditer(data):
             try:
                 groupdict = match.groupdict()
 
                 tail = self._groomstring(groupdict["tail"])
                 if tail:
-                    msg = "Tail text '{}' in {}".format(tail, match.string)
-                    raise ParseError(msg)
+                    raise ParseError(f"Tail text '{tail}' in {match.string}")
 
                 tag = groupdict["tag"]
                 text = self._groomstring(groupdict["text"])
                 closetag = groupdict["closetag"]
+                logger.debug(
+                    f"Regex match tag='{tag}', text='{text}', closetag='{closetag}'"
+                )
                 self._feedmatch(tag, text, closetag)
             except ParseError as err:
                 # Report the position of the error
@@ -175,8 +186,7 @@ class TreeBuilder(ET.TreeBuilder):
         assert closetag is None or closetag == tag
         if tag.startswith("/"):
             if text:
-                msg = "Tail text '{}' after <{}>".format(text, tag)
-                raise ParseError(msg.format(tag, text))
+                raise ParseError(f"Tail text '{text}' after <{tag}>")
             self.end(tag[1:])
         else:
             self._start(tag, text, closetag)
@@ -189,15 +199,18 @@ class TreeBuilder(ET.TreeBuilder):
         * If there's no text, it's a branch.
             - If regex captured closetag, it's an empty "aggregate"; pop it.
         """
+        logger.debug(f"Pushing tag '{tag}'")
         self.start(tag, {})
         if text:
-            # OFX "element" (i.e. data-bearing leaf)
+            # OFX "element" i.e. data-bearing leaf
+            logger.debug(f"Data text '{text}'")
             self.data(text)
             # End tags are optional for OFXv1 data elements
             # End all elements, whether or not they're explicitly ended
             self.end(tag)
         elif closetag:
             # Empty OFX "aggregate" branch
+            logger.debug(f"Popping tag '{closetag}'")
             self.end(tag)
 
     @staticmethod
@@ -215,10 +228,14 @@ def main(*files):
     Simple functional test for impatient developers.
     """
     for file in files:
+        logger.info(f"Parsing {file}")
         ofxparser = OFXTree()
         ofxparser.parse(file)
         response = ofxparser.convert()
         print(response.statements[0].transactions[:])
+
+
+LOG_LEVELS = {0: logging.WARN, 1: logging.INFO, 2: logging.DEBUG}
 
 
 if __name__ == "__main__":
@@ -226,5 +243,14 @@ if __name__ == "__main__":
 
     argparser = ArgumentParser(description="Parse OFX data; dump transactions")
     argparser.add_argument("file", nargs="+", help="OFX file(s)")
+    argparser.add_argument(
+        "--verbose",
+        "-v",
+        action="count",
+        default=0,
+        help="Give more output (option can be repeated)",
+    )
     args = argparser.parse_args()
+    log_level = LOG_LEVELS.get(args.verbose, logging.DEBUG)
+    config.configure_logging(log_level)
     main(*args.file)
