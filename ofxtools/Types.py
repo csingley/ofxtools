@@ -237,7 +237,7 @@ class String(Element):
             if self.strict:
                 raise ValueError(msg)
             else:
-                warnings.warn(msg)
+                warnings.warn(msg, category=OFXTypeWarning)
         return value
 
     def _convert_str(self, value):
