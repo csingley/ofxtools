@@ -23,6 +23,7 @@ __all__ = ["Aggregate", "SubAggregate", "Unsupported", "ElementList"]
 
 # stdlib imports
 import xml.etree.ElementTree as ET
+
 from collections import OrderedDict, ChainMap
 from copy import deepcopy
 from typing import Any, List, Dict, Tuple, Callable, Sequence, Mapping, Union, Optional
@@ -32,7 +33,7 @@ import logging
 # local imports
 from ofxtools.Types import Element, InstanceCounterMixin, ListItem, ListElement
 import ofxtools.models
-from ofxtools.utils import classproperty, pairwise
+from ofxtools.utils import classproperty, pairwise, partition
 
 
 logger = logging.getLogger(__name__)
@@ -178,12 +179,28 @@ class Aggregate(list):
         # Hook to modify incoming ``ET.Element`` before conversion
         elem = cls.groom(elem)
 
-        args: List = []
-        kwargs: Dict = {}
-        specIndices: List = []
+        spec = list(cls.spec)
 
-        for subelem in elem:
-            cls._mapArgs(subelem, args, kwargs, specIndices)
+        def extractArgs(elem: ET.Element) -> Tuple[Tuple[str, Any], Tuple[int, Any]]:
+            key = elem.tag.lower()
+            try:
+                index = spec.index(key)
+            except ValueError:
+                clsnm = cls.__name__
+                raise ValueError(f"{clsnm}.spec = {spec}; does not contain {key}")
+
+            # If child contains text data, it's an Element; return text data.
+            # Otherwise it's an Aggregate - perform type conversion
+            if key in cls.unsupported:
+                value: Optional[Union[str, Aggregate]] = None
+            elif elem.text:
+                value = elem.text
+            else:
+                value = Aggregate.from_etree(elem)
+
+            return (key, value), (index, spec[index])
+
+        args_, specIndices = zip(*[extractArgs(subelem) for subelem in elem])
 
         listitems = cls.listitems
         # Verify that SubElements appear in the order defined by SubClass.spec
@@ -195,40 +212,9 @@ class Aggregate(list):
                 clsnm = cls.__name__
                 subels = [el.tag for el in elem]
                 raise ValueError(f"{clsnm} SubElements out of order: {subels}")
-        return cls(*args, **kwargs)
 
-    @classmethod
-    def _mapArgs(
-        cls,
-        elem: ET.Element,
-        args: List[Any],
-        kwargs: Dict[Any, Any],
-        specIndices: List[Any],
-    ) -> None:
-        spec = list(cls.spec)
-
-        key = elem.tag.lower()
-        try:
-            idx = spec.index(key)
-        except ValueError:
-            clsnm = cls.__name__
-            raise ValueError(f"{clsnm}.spec = {spec}; does not contain {key}")
-
-        # If child contains text data, it's an Element; return text data.
-        # Otherwise it's an Aggregate - perform type conversion
-        if key in cls.unsupported:
-            value: Optional[Union[str, Aggregate]] = None
-        elif elem.text:
-            value = elem.text
-        else:
-            value = Aggregate.from_etree(elem)
-
-        if key in cls.listitems:
-            args.append(value)
-        else:
-            kwargs[key] = value
-
-        specIndices.append((idx, spec[idx]))
+        kwargs, args = partition(lambda p: p[0] in listitems, args_)
+        return cls(*[arg[1] for arg in args], **dict(kwargs))
 
     @staticmethod
     def groom(elem: ET.Element) -> ET.Element:
@@ -287,14 +273,6 @@ class Aggregate(list):
     def _listAppend(self, root: ET.Element, member) -> None:
         root.append(member.to_etree())
 
-    @classproperty
-    @classmethod
-    def _superdict(cls) -> Mapping:
-        """
-        Consolidate cls.__dict__ with that of all superclasses.
-        """
-        return ChainMap(*[base.__dict__ for base in cls.mro()])
-
     @staticmethod
     def ungroom(elem: ET.Element) -> ET.Element:
         """
@@ -306,6 +284,14 @@ class Aggregate(list):
         to keep the input free of side effects.
         """
         return elem
+
+    @classproperty
+    @classmethod
+    def _superdict(cls) -> Mapping[str, Any]:
+        """
+        Consolidate cls.__dict__ with that of all superclasses.
+        """
+        return ChainMap(*[base.__dict__ for base in cls.mro()])
 
     @classmethod
     def _ordered_attrs(cls, predicate: Callable) -> OrderedDict:
@@ -474,7 +460,7 @@ class ElementList(Aggregate):
 
     @classproperty
     @classmethod
-    def listitems(cls):
+    def listitems(cls) -> OrderedDict:
         """
         ElementList.listitems returns ListElements instead of ListItems
         """
