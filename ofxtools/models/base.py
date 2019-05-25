@@ -26,12 +26,16 @@ import xml.etree.ElementTree as ET
 from collections import OrderedDict, ChainMap
 from copy import deepcopy
 from typing import Any, List, Dict, Tuple, Callable, Sequence, Mapping, Union, Optional
+import logging
 
 
 # local imports
 from ofxtools.Types import Element, InstanceCounterMixin, ListItem, ListElement
 import ofxtools.models
 from ofxtools.utils import classproperty, pairwise
+
+
+logger = logging.getLogger(__name__)
 
 
 class Aggregate(list):
@@ -65,10 +69,8 @@ class Aggregate(list):
                 # ``List``, etc.) then its value is type-converted here.
                 setattr(self, attr, value)
             except ValueError as e:
-                msg = "Can't set {}.{} to {}: {}".format(
-                    self.__class__.__name__, attr, value, e.args[0]
-                )
-                raise ValueError(msg)
+                cls = self.__class__.__name__
+                raise ValueError(f"Can't set {cls}.{attr} to {value}: {e.args[0]}")
 
         self._apply_args(*args)
         self._apply_residual_kwargs(**kwargs)
@@ -105,9 +107,7 @@ class Aggregate(list):
         enforce_count(
             cls,
             kwargs,
-            errMsg=(
-                "{cls}({kwargs}): must contain at most 1 of " "[{mutex}] (not {count})"
-            ),
+            errMsg="{cls}({kwargs}): must contain at most 1 of [{mutex}] (not {count})",
             mutexes=cls.optionalMutexes,
             predicate=lambda x: x <= 1,
         )
@@ -115,9 +115,7 @@ class Aggregate(list):
         enforce_count(
             cls,
             kwargs,
-            errMsg=(
-                "{cls}({kwargs}): must contain exactly 1 of " "[{mutex}] (not {count})"
-            ),
+            errMsg="{cls}({kwargs}): must contain exactly 1 of [{mutex}] (not {count})",
             mutexes=cls.requiredMutexes,
             predicate=lambda x: x == 1,
         )
@@ -125,24 +123,24 @@ class Aggregate(list):
     def _apply_args(self, *args: "Aggregate") -> None:
         # Interpret positional args as contained list items (of variable #)
         for member in args:
-            cls_name = member.__class__.__name__.lower()
-            if cls_name not in self.listitems:
-                msg = "{} can't contain {} as list item: {}"
-                raise ValueError(msg.format(self.__class__.__name__, cls_name, member))
+            arg = member.__class__.__name__.lower()
+            if arg not in self.listitems:
+                clsnm = self.__class__.__name__
+                msg = f"{clsnm} can't contain {arg} as list item: {member}"
+                raise ValueError(msg)
             self.append(member)
 
     def _apply_residual_kwargs(self, **kwargs) -> None:
         # Check that all kwargs have been consumed
         if kwargs:
-            args = {k: v for k, v in kwargs.items() if k in self.listitems}
+            args = [k for k in kwargs.keys() if k in self.listitems]
             if args:
-                msg = "{}: pass ListItems as args, not kwargs".format(list(args.keys()))
+                msg = f"{args}: pass ListItems as args, not kwargs"
             else:
-                msg = "Aggregate {} does not define {} (spec={})".format(
-                    self.__class__.__name__,
-                    str(list(kwargs.keys())),
-                    str(list(self.spec.keys())),
-                )
+                cls = self.__class__.__name__
+                kw = str(list(kwargs.keys()))
+                spc = str(list(self.spec.keys()))
+                msg = f"Aggregate {cls} does not define {kw} (spec={spc})"
             raise ValueError(msg)
 
     @classmethod
@@ -150,29 +148,36 @@ class Aggregate(list):
         """
         Instantiate from ``xml.etree.ElementTree.Element``.
 
-        Look up `Aggregate`` subclass corresponding to ``Element.tag``;
-        parse the Element structure into (args, kwargs) and pass those
-        to the subclass __init__().
+        Look up `Aggregate`` subclass corresponding to ``ET.Element.tag``
+        and pass to the subclass ``_convert()``, which actually perfoms the
+        instantiation.
         """
         if not isinstance(elem, ET.Element):
-            msg = "Bad type {} - should be xml.etree.ElementTree.Element"
-            raise ValueError(msg.format(type(elem)))
+            msg = f"Bad type {type(elem)} - should be xml.etree.ElementTree.Element"
+            raise ValueError(msg)
         try:
             SubClass = getattr(ofxtools.models, elem.tag)
+            #  logger.info(f"Converting <{elem.tag}> to {SubClass.__name__}")
         except AttributeError:
-            msg = "ofxtools.models doesn't define {}".format(elem.tag)
-            raise ValueError(msg)
-
-        # Hook to modify incoming ``ET.Element`` before conversion
-        elem = SubClass.groom(elem)
+            raise ValueError(f"ofxtools.models doesn't define {elem.tag}")
 
         instance = SubClass._convert(elem)
         return instance
 
     @classmethod
     def _convert(cls, elem: ET.Element) -> "Aggregate":
+        """
+        Instantiate from ``xml.etree.ElementTree.Element``.
+
+        N.B. this method most be called on the appropriate subclass,
+        not the ``Aggregate`` base class.
+        """
         if len(elem) == 0:
             return cls()
+
+        # Hook to modify incoming ``ET.Element`` before conversion
+        elem = cls.groom(elem)
+
         args: List = []
         kwargs: Dict = {}
         specIndices: List = []
@@ -187,8 +192,9 @@ class Aggregate(list):
             # ListItems relative to non-ListItems (and that of non-ListItems
             # relative to other non-ListItems) does matter.
             if idx1 <= idx0 and (attr0 not in listitems or attr1 not in listitems):
-                msg = "{} SubElements out of order: {}"
-                raise ValueError(msg.format(cls.__name__, [el.tag for el in elem]))
+                clsnm = cls.__name__
+                subels = [el.tag for el in elem]
+                raise ValueError(f"{clsnm} SubElements out of order: {subels}")
         return cls(*args, **kwargs)
 
     @classmethod
@@ -205,8 +211,8 @@ class Aggregate(list):
         try:
             idx = spec.index(key)
         except ValueError:
-            msg = "{}.spec = {}; does not contain {}"
-            raise ValueError(msg.format(cls.__name__, spec, key))
+            clsnm = cls.__name__
+            raise ValueError(f"{clsnm}.spec = {spec}; does not contain {key}")
 
         # If child contains text data, it's an Element; return text data.
         # Otherwise it's an Aggregate - perform type conversion
@@ -225,11 +231,11 @@ class Aggregate(list):
         specIndices.append((idx, spec[idx]))
 
     @staticmethod
-    def groom(elem):
+    def groom(elem: ET.Element) -> ET.Element:
         """
         Modify incoming ``ET.Element`` to play nice with our Python schema.
 
-        Default action is to emove extended tags, e.g. INTU.XXX
+        Default action is to remove extended tags, e.g. INTU.XXX
 
         Extend in subclass.
 
@@ -244,7 +250,7 @@ class Aggregate(list):
 
         return elem
 
-    def to_etree(self):
+    def to_etree(self) -> ET.Element:
         """
         Convert self and children to `ElementTree.Element` hierarchy
         """
@@ -269,7 +275,6 @@ class Aggregate(list):
                     continue
                 elif isinstance(value, Aggregate):
                     child = value.to_etree()
-                    #  child = value.ungroom(child)
                     root.append(child)
                 else:
                     converter = cls._superdict[attr]
@@ -279,7 +284,7 @@ class Aggregate(list):
         # Hook to modify `ET.ElementTree` after conversion
         return cls.ungroom(root)
 
-    def _listAppend(self, root, member):
+    def _listAppend(self, root: ET.Element, member) -> None:
         root.append(member.to_etree())
 
     @classproperty
@@ -414,8 +419,8 @@ class Aggregate(list):
                 return getattr(subagg, attr)
             except AttributeError:
                 continue
-        msg = "'{}' object has no attribute '{}'"
-        raise AttributeError(msg.format(self.__class__.__name__, attr))
+        cls = self.__class__.__name__
+        raise AttributeError(f"'{cls}' object has no attribute '{attr}'")
 
 
 class SubAggregate(Element):
@@ -439,8 +444,7 @@ class SubAggregate(Element):
 
     def _convert_default(self, value):
         if not isinstance(value, self.type):
-            msg = "'{}' is not an instance of {}"
-            raise ValueError(msg.format(value, self.type))
+            raise ValueError(f"'{value}' is not an instance of {self.type}")
         return value
 
     #  This doesn't get used
@@ -483,7 +487,7 @@ class ElementList(Aggregate):
         for member in args:
             self.append(converter.convert(member))
 
-    def _listAppend(self, root, member):
+    def _listAppend(self, root: ET.Element, member) -> None:
         assert len(self.listitems) == 1
         spec = list(self.listitems.items())[0]
         attr, converter = spec
