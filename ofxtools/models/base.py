@@ -180,8 +180,13 @@ class Aggregate(list):
         elem = cls.groom(elem)
 
         spec = list(cls.spec)
+        listitems = cls.listitems
 
         def extractArgs(elem: ET.Element) -> Tuple[Tuple[str, Any], Tuple[int, Any]]:
+            """
+            Transform input ET.Element into attribute name/ value pairs ready
+            to pass to Aggregate.__init__(), as well as a sequence check.
+            """
             key = elem.tag.lower()
             try:
                 index = spec.index(key)
@@ -189,30 +194,36 @@ class Aggregate(list):
                 clsnm = cls.__name__
                 raise ValueError(f"{clsnm}.spec = {spec}; does not contain {key}")
 
-            # If child contains text data, it's an Element; return text data.
-            # Otherwise it's an Aggregate - perform type conversion
             if key in cls.unsupported:
                 value: Optional[Union[str, Aggregate]] = None
             elif elem.text:
+                # Element - extract raw text string; it will be type converted
+                # when used to set an Aggregate class attribute
                 value = elem.text
             else:
+                # Aggregate - perform type conversion
                 value = Aggregate.from_etree(elem)
 
-            return (key, value), (index, spec[index])
+            return (key, value), (index, key in listitems)
 
-        args_, specIndices = zip(*[extractArgs(subelem) for subelem in elem])
-
-        listitems = cls.listitems
-        # Verify that SubElements appear in the order defined by SubClass.spec
-        for (idx0, attr0), (idx1, attr1) in pairwise(specIndices):
+        def outOfOrder(index0: Tuple[int, bool], index1: Tuple[int, bool]) -> bool:
+            """
+            Do SubElements appear not in the order defined by SubClass.spec?
+            """
+            idx0, isListItem0 = index0
+            idx1, isListItem1 = index1
             # Relative order of ListItems doesn't matter, but position of
             # ListItems relative to non-ListItems (and that of non-ListItems
             # relative to other non-ListItems) does matter.
-            if idx1 <= idx0 and (attr0 not in listitems or attr1 not in listitems):
-                clsnm = cls.__name__
-                subels = [el.tag for el in elem]
-                raise ValueError(f"{clsnm} SubElements out of order: {subels}")
+            return idx1 <= idx0 and (not isListItem0 or not isListItem1)
 
+        args_, specIndices = zip(*[extractArgs(subelem) for subelem in elem])
+        if any(
+            [outOfOrder(index0, index1) for index0, index1 in pairwise(specIndices)]
+        ):
+            clsnm = cls.__name__
+            subels = [el.tag for el in elem]
+            raise ValueError(f"{clsnm} SubElements out of order: {subels}")
         kwargs, args = partition(lambda p: p[0] in listitems, args_)
         return cls(*[arg[1] for arg in args], **dict(kwargs))
 
@@ -232,6 +243,7 @@ class Aggregate(list):
 
         for child in set(elem):
             if "." in child.tag:
+                logger.debug("Removing extended tag <{child.tag}>")
                 elem.remove(child)
 
         return elem
