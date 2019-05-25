@@ -39,6 +39,14 @@ from ofxtools.utils import classproperty, pairwise, partition
 logger = logging.getLogger(__name__)
 
 
+class OFXAggregateError(ValueError):
+    """ Base class for errors in this module """
+
+
+class OFXSpecError(OFXAggregateError):
+    """ Violation of the OFX specification """
+
+
 class Aggregate(list):
     """
     Base class for Python representation of OFX 'aggregate', i.e. SGML/XML
@@ -69,9 +77,10 @@ class Aggregate(list):
                 # ``ofxtools.Types``, not defined below as ``Subaggregate``,
                 # ``List``, etc.) then its value is type-converted here.
                 setattr(self, attr, value)
-            except ValueError as e:
+            except ValueError as exc:
                 cls = self.__class__.__name__
-                raise ValueError(f"Can't set {cls}.{attr} to {value}: {e.args[0]}")
+                msg = exc.args[0]
+                raise type(exc)(f"Can't set {cls}.{attr} to {value}: {msg}")
 
         self._apply_args(*args)
         self._apply_residual_kwargs(**kwargs)
@@ -103,7 +112,7 @@ class Aggregate(list):
                         "mutex": mutex,
                         "count": count,
                     }
-                    raise ValueError(errMsg.format(**errFields))
+                    raise OFXSpecError(errMsg.format(**errFields))
 
         enforce_count(
             cls,
@@ -128,7 +137,7 @@ class Aggregate(list):
             if arg not in self.listitems:
                 clsnm = self.__class__.__name__
                 msg = f"{clsnm} can't contain {arg} as list item: {member}"
-                raise ValueError(msg)
+                raise TypeError(msg)
             self.append(member)
 
     def _apply_residual_kwargs(self, **kwargs) -> None:
@@ -137,12 +146,13 @@ class Aggregate(list):
             args = [k for k in kwargs.keys() if k in self.listitems]
             if args:
                 msg = f"{args}: pass ListItems as args, not kwargs"
+                raise SyntaxError(msg)
             else:
                 cls = self.__class__.__name__
                 kw = str(list(kwargs.keys()))
                 spc = str(list(self.spec.keys()))
                 msg = f"Aggregate {cls} does not define {kw} (spec={spc})"
-            raise ValueError(msg)
+                raise OFXSpecError(msg)
 
     @classmethod
     def from_etree(cls, elem: ET.Element) -> "Aggregate":
@@ -155,11 +165,11 @@ class Aggregate(list):
         """
         if not isinstance(elem, ET.Element):
             msg = f"Bad type {type(elem)} - should be xml.etree.ElementTree.Element"
-            raise ValueError(msg)
+            raise TypeError(msg)
         try:
             SubClass = getattr(ofxtools.models, elem.tag)
         except AttributeError:
-            raise ValueError(f"ofxtools.models doesn't define {elem.tag}")
+            raise OFXSpecError(f"ofxtools.models doesn't define {elem.tag}")
 
         logger.info(f"Converting <{elem.tag}> to {SubClass.__name__}")
         instance = SubClass._convert(elem)
@@ -192,7 +202,7 @@ class Aggregate(list):
                 index = spec.index(key)
             except ValueError:
                 clsnm = cls.__name__
-                raise ValueError(f"{clsnm}.spec = {spec}; does not contain {key}")
+                raise OFXSpecError(f"{clsnm}.spec = {spec}; does not contain {key}")
 
             if key in cls.unsupported:
                 value: Optional[Union[str, Aggregate]] = None
@@ -224,7 +234,7 @@ class Aggregate(list):
             [outOfOrder(index0, index1) for index0, index1 in pairwise(specIndices)]
         ):
             subels = [el.tag for el in elem]
-            raise ValueError(f"{clsnm} SubElements out of order: {subels}")
+            raise OFXSpecError(f"{clsnm} SubElements out of order: {subels}")
         kwargs, args = partition(lambda p: p[0] in listitems, args_)
         return cls(*[arg[1] for arg in args], **dict(kwargs))
 
@@ -443,7 +453,7 @@ class SubAggregate(Element):
 
     def _convert_default(self, value):
         if not isinstance(value, self.type):
-            raise ValueError(f"'{value}' is not an instance of {self.type}")
+            raise TypeError(f"'{value}' is not an instance of {self.type}")
         return value
 
     #  This doesn't get used

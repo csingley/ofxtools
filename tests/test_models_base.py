@@ -8,9 +8,15 @@ from datetime import datetime
 
 
 # local imports
-from ofxtools import models
+from ofxtools import models, Types
 from ofxtools.Types import String, DateTime, Bool, ListItem, ListElement
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, ElementList
+from ofxtools.models.base import (
+    Aggregate,
+    SubAggregate,
+    Unsupported,
+    ElementList,
+    OFXSpecError,
+)
 from ofxtools.utils import UTC
 
 
@@ -77,16 +83,16 @@ class AggregateTestCase(unittest.TestCase):
 
     def testInitMissingRequired(self):
         subagg = TESTSUBAGGREGATE(data="bar")
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             TESTAGGREGATE(testsubaggregate=subagg, req00=True)
 
     def testInitWrongType(self):
         subagg = TESTSUBAGGREGATE(data="bar")
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             TESTAGGREGATE(
                 metadata=subagg, testsubaggregate=subagg, req00=True, req11=False
             )
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             TESTAGGREGATE(
                 metadata="foo", testsubaggregate="foo", req00=True, req11=False
             )
@@ -94,7 +100,7 @@ class AggregateTestCase(unittest.TestCase):
     def testInitWithTooManyArgs(self):
         # Pass extra args not in TESTAGGREGATE.spec
         subagg = TESTSUBAGGREGATE(data="bar")
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             TESTAGGREGATE(
                 metadata="foo",
                 testsubaggregate=subagg,
@@ -107,14 +113,14 @@ class AggregateTestCase(unittest.TestCase):
         # optionalMutexes - either is OK, but both is not OK
         TESTAGGREGATE(metadata="foo", option00=True, req00=True, req11=False)
         TESTAGGREGATE(metadata="foo", option01=True, req00=True, req11=False)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             TESTAGGREGATE(
                 metadata="foo", option00=True, option01=False, req00=True, req11=False
             )
 
         TESTAGGREGATE(metadata="foo", option10=True, req00=True, req11=False)
         TESTAGGREGATE(metadata="foo", option11=True, req00=True, req11=False)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             TESTAGGREGATE(
                 metadata="foo", option10=True, option11=False, req00=True, req11=False
             )
@@ -122,13 +128,13 @@ class AggregateTestCase(unittest.TestCase):
         # requiredMutexes - 1 is OK, 0 or 2 is not OK
         TESTAGGREGATE(metadata="foo", req00=True, req11=False)
         TESTAGGREGATE(metadata="foo", req01=True, req10=False)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             TESTAGGREGATE(metadata="foo", req11=False)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             TESTAGGREGATE(metadata="foo", req00=True)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             TESTAGGREGATE(metadata="foo", req00=True, req01=False, req11=False)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             TESTAGGREGATE(metadata="foo", req00=True, req10=True, req11=False)
 
     def testFromEtree(self):
@@ -159,7 +165,7 @@ class AggregateTestCase(unittest.TestCase):
         root.append(sub)
         ET.SubElement(root, "DONTUSE").text = "dontuse"
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(Types.OFXSpecError):
             Aggregate.from_etree(root)
 
     def testFromEtreeMissingUnrequired(self):
@@ -185,7 +191,7 @@ class AggregateTestCase(unittest.TestCase):
         root.append(sub)
         ET.SubElement(root, "DONTUSE").text = "dontuse"
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             Aggregate.from_etree(root)
 
         root = ET.Element("TESTAGGREGATE")
@@ -196,7 +202,7 @@ class AggregateTestCase(unittest.TestCase):
         root.append(sub)
         ET.SubElement(root, "DONTUSE").text = "dontuse"
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             Aggregate.from_etree(root)
 
         root = ET.Element("TESTAGGREGATE")
@@ -207,49 +213,73 @@ class AggregateTestCase(unittest.TestCase):
         ET.SubElement(root, "DONTUSE").text = "dontuse"
         ET.SubElement(root, "DONTUSE").text = "dontuse"
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             Aggregate.from_etree(root)
 
     def testFromEtreeWrongOrder(self):
+        # Correct sequence:
+        # [metadata (required), option00, option01, option10, option11,
+        #  req00, req01, req10, req11, testsubaggregate, dontuse]
+        #
+        # requiredMutexes = [["req00", "req01"], ["req10", "req11"]]
         root = ET.Element("TESTAGGREGATE")
         ET.SubElement(root, "METADATA").text = "metadata"
+        ET.SubElement(root, "REQ00").text = "Y"
+        ET.SubElement(root, "REQ11").text = "N"
+        sub = ET.SubElement(root, "TESTSUBAGGREGATE")
+        ET.SubElement(sub, "DATA").text = "data"
         ET.SubElement(root, "DONTUSE").text = "dontuse"
+
+        Aggregate.from_etree(root)
+
+        root = ET.Element("TESTAGGREGATE")
+        ET.SubElement(root, "METADATA").text = "metadata"
+        ET.SubElement(root, "REQ00").text = "Y"
+        ET.SubElement(root, "REQ11").text = "N"
+        ET.SubElement(root, "DONTUSE").text = "dontuse"
+        sub = ET.SubElement(root, "TESTSUBAGGREGATE")
+        ET.SubElement(sub, "DATA").text = "data"
+
+        with self.assertRaises(OFXSpecError) as exc:
+            Aggregate.from_etree(root)
+
+        self.assertIn("out of order", exc.exception.args[0].lower())
+
+        root = ET.Element("TESTAGGREGATE")
+        sub = ET.SubElement(root, "TESTSUBAGGREGATE")
+        ET.SubElement(sub, "DATA").text = "data"
+        root.append(sub)
+        ET.SubElement(root, "METADATA").text = "metadata"
+        ET.SubElement(root, "DONTUSE").text = "dontuse"
+
+        with self.assertRaises(OFXSpecError) as exc:
+            Aggregate.from_etree(root)
+
+        self.assertIn("out of order", exc.exception.args[0].lower())
+
+        root = ET.Element("TESTAGGREGATE")
+        sub = ET.Element("TESTSUBAGGREGATE")
+        ET.SubElement(sub, "DATA").text = "data"
+        root.append(sub)
+        ET.SubElement(root, "DONTUSE").text = "dontuse"
+        ET.SubElement(root, "METADATA").text = "metadata"
+
+        with self.assertRaises(OFXSpecError) as exc:
+            Aggregate.from_etree(root)
+
+        self.assertIn("out of order", exc.exception.args[0].lower())
+
+        root = ET.Element("TESTAGGREGATE")
+        ET.SubElement(root, "DONTUSE").text = "dontuse"
+        ET.SubElement(root, "METADATA").text = "metadata"
         sub = ET.Element("TESTSUBAGGREGATE")
         ET.SubElement(sub, "DATA").text = "data"
         root.append(sub)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError) as exc:
             Aggregate.from_etree(root)
 
-        root = ET.Element("TESTAGGREGATE")
-        sub = ET.Element("TESTSUBAGGREGATE")
-        ET.SubElement(sub, "DATA").text = "data"
-        root.append(sub)
-        ET.SubElement(root, "METADATA").text = "metadata"
-        ET.SubElement(root, "DONTUSE").text = "dontuse"
-
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
-
-        root = ET.Element("TESTAGGREGATE")
-        sub = ET.Element("TESTSUBAGGREGATE")
-        ET.SubElement(sub, "DATA").text = "data"
-        root.append(sub)
-        ET.SubElement(root, "DONTUSE").text = "dontuse"
-        ET.SubElement(root, "METADATA").text = "metadata"
-
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
-
-        root = ET.Element("TESTAGGREGATE")
-        ET.SubElement(root, "DONTUSE").text = "dontuse"
-        ET.SubElement(root, "METADATA").text = "metadata"
-        sub = ET.Element("TESTSUBAGGREGATE")
-        ET.SubElement(sub, "DATA").text = "data"
-        root.append(sub)
-
-        with self.assertRaises(ValueError):
-            Aggregate.from_etree(root)
+        self.assertIn("out of order", exc.exception.args[0].lower())
 
         root = ET.Element("TESTAGGREGATE")
         ET.SubElement(root, "DONTUSE").text = "dontuse"
@@ -258,11 +288,13 @@ class AggregateTestCase(unittest.TestCase):
         root.append(sub)
         ET.SubElement(root, "METADATA").text = "metadata"
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError) as exc:
             Aggregate.from_etree(root)
+
+        self.assertIn("out of order", exc.exception.args[0].lower())
 
     def testFromEtreeBadArg(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             Aggregate.from_etree(None)
 
     def testGroom(self):
@@ -561,7 +593,7 @@ class ListTestCase(unittest.TestCase):
         ET.SubElement(agg, "METADATA").text = "dumbo"
         ET.SubElement(root, "METADATA").text = "foo"
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             Aggregate.from_etree(root)
 
     def testInitInstancesDistinct(self):
@@ -621,13 +653,13 @@ class ListTestCase(unittest.TestCase):
         )
         agg2 = TESTAGGREGATE2(metadata="dumbo")
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SyntaxError):
             TESTLIST(metadata="foo", testaggregate=agg0)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SyntaxError):
             TESTLIST(metadata="foo", testaggregate2=agg2)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SyntaxError):
             TESTLIST(agg0, metadata="foo", testaggregate=agg1)
 
     def testToEtree(self):
@@ -711,7 +743,7 @@ class ElementListTestCase(unittest.TestCase):
         self.assertEqual(lst[1], True)
 
         # Validators apply
-        with self.assertRaises(ValueError):
+        with self.assertRaises(Types.OFXSpecError):
             TESTELEMENTLIST("123", metadata="something")
 
         # Only one ListElement may be defined on the class
@@ -737,7 +769,7 @@ class ElementListTestCase(unittest.TestCase):
         ET.SubElement(root, "TAG").text = "Y"
         ET.SubElement(root, "METADATA").text = "something"
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             Aggregate.from_etree(root)
 
         root = ET.Element("TESTELEMENTLIST")
@@ -745,7 +777,7 @@ class ElementListTestCase(unittest.TestCase):
         ET.SubElement(root, "METADATA").text = "something"
         ET.SubElement(root, "TAG").text = "Y"
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             Aggregate.from_etree(root)
 
     def testToEtree(self):

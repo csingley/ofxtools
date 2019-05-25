@@ -9,7 +9,7 @@ import warnings
 
 # local imports
 import ofxtools
-from ofxtools.Types import OFXTypeWarning
+from ofxtools.Types import OFXTypeWarning, OFXSpecError
 from ofxtools.utils import UTC
 
 
@@ -28,7 +28,7 @@ class ElementTestCase(unittest.TestCase):
 
     def testConvert(self):
         """ Element base class convert() validates ``required`` """
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             instance = ofxtools.Types.Element(required=True)
             instance.convert(None)
 
@@ -44,7 +44,7 @@ class Base:
     def test_required(self):
         t = self.type_(required=True)
         # If required, missing value (i.e. None) is illegal
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             t.convert(None)
 
     def test_optional(self):
@@ -71,7 +71,7 @@ class BoolTestCase(unittest.TestCase, Base):
 
         # All other inputs are illegal
         for illegal in (0, 1, "y", "n"):
-            with self.assertRaises(ValueError):
+            with self.assertRaises(OFXSpecError):
                 t.convert(illegal)
         for illegal in (
             0,
@@ -83,7 +83,7 @@ class BoolTestCase(unittest.TestCase, Base):
             datetime.datetime(1999, 9, 9),
             datetime.time(12, 12, 12),
         ):
-            with self.assertRaises(ValueError):
+            with self.assertRaises(OFXSpecError):
                 t.convert(illegal)
 
     def test_unconvert(self):
@@ -97,7 +97,7 @@ class BoolTestCase(unittest.TestCase, Base):
 
         # All other inputs are illegal
         for illegal in ("Y", "N", 0, 1):
-            with self.assertRaises(ValueError):
+            with self.assertRaises(OFXSpecError):
                 t.unconvert(illegal)
 
     def test_convert_roundtrip(self):
@@ -130,7 +130,7 @@ class StringTestCase(unittest.TestCase, Base):
             datetime.datetime(1999, 9, 9),
             datetime.time(12, 12, 12),
         ):
-            with self.assertRaises(ValueError):
+            with self.assertRaises(TypeError):
                 t.convert(illegal)
 
     def test_unescape(self):
@@ -155,13 +155,13 @@ class StringTestCase(unittest.TestCase, Base):
     def test_max_length(self):
         t = self.type_(5)
         self.assertEqual("foo", t.convert("foo"))
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             t.convert("foobar")
 
     def test_empty_string(self):
         # Empty string interpreted as None
         t = self.type_(required=True)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             t.convert("")
         t = self.type_(required=False)
         self.assertEqual(t.convert(""), None)
@@ -176,11 +176,11 @@ class StringTestCase(unittest.TestCase, Base):
 
         # Validator behavior for ``unconvert()``
         t = self.type_(10, required=True)
-        # required=True + value=None -> ValueError
-        with self.assertRaises(ValueError):
+        # required=True + value=None -> OFXSpecError
+        with self.assertRaises(OFXSpecError):
             t.unconvert(None)
-        # value > length constraint -> ValueError
-        with self.assertRaises(ValueError):
+        # value > length constraint -> OFXSpecError
+        with self.assertRaises(OFXSpecError):
             t.unconvert("My car is fast, my teeth are shiny")
 
         # Don't pass non-string
@@ -191,7 +191,7 @@ class StringTestCase(unittest.TestCase, Base):
             datetime.datetime(1999, 9, 9),
             datetime.time(12, 12, 12),
         ):
-            with self.assertRaises(ValueError):
+            with self.assertRaises(TypeError):
                 t.unconvert(illegal)
 
     def test_convert_roundtrip(self):
@@ -227,8 +227,8 @@ class NagstringTestCase(StringTestCase):
 
         # Validator behavior for ``unconvert()``
         t = self.type_(10, required=True)
-        # required=True + value=None -> ValueError
-        with self.assertRaises(ValueError):
+        # required=True + value=None -> OFXSpecError
+        with self.assertRaises(OFXSpecError):
             t.unconvert(None)
         # value > length constraint -> OFXTypeWarning
         with warnings.catch_warnings(record=True) as w:
@@ -246,9 +246,9 @@ class OneOfTestCase(unittest.TestCase, Base):
         self.assertEqual("1", t.convert("1"))
         self.assertEqual("2", t.convert("2"))
         self.assertEqual(None, t.convert(""))
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             t.convert("3")
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             t.convert(1)
 
     def test_unconvert(self):
@@ -261,13 +261,13 @@ class OneOfTestCase(unittest.TestCase, Base):
 
         # Validator behavior for ``unconvert()``
         t = self.type_("1", "2", required=True)
-        # required=True + value=None -> ValueError (never should have been
+        # required=True + value=None -> OFXSpecError (never should have been
         # allowed by ``__set__()`` in the first place)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             t.unconvert(None)
-        # value not in enum -> ValueError (never should have been
+        # value not in enum -> OFXSpecError (never should have been
         # allowed by ``__set__()`` in the first place)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             t.unconvert("3")
 
     def test_convert_roundtrip(self):
@@ -299,7 +299,7 @@ class IntegerTestCase(unittest.TestCase, Base):
     def test_max_length(self):
         t = self.type_(2)
         self.assertEqual(1, t.convert("1"))
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             t.convert("100")
 
     def test_unconvert(self):
@@ -312,17 +312,17 @@ class IntegerTestCase(unittest.TestCase, Base):
 
         # Validator behavior for ``unconvert()``
         t = self.type_(2, required=True)
-        # type(value) is not int -> ValueError (never should have been
+        # type(value) is not int -> TypeError (never should have been
         # allowed by ``__set__()`` in the first place)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             t.unconvert(decimal.Decimal("1"))
-        # required=True + value=None -> ValueError (never should have been
+        # required=True + value=None -> OFXSpecError (never should have been
         # allowed by ``__set__()`` in the first place)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             t.unconvert(None)
-        # value has more digits than length constraint -> ValueError
+        # value has more digits than length constraint -> OFXSpecError
         # (never should have been allowed by ``__set__()`` in the first place)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             t.unconvert(123)
 
     def test_convert_roundtrip(self):
@@ -386,13 +386,13 @@ class DecimalTestCase(unittest.TestCase, Base):
 
         # Validator behavior for ``unconvert()``
         t = self.type_(2, required=True)
-        # type(value) is not decimal -> ValueError (never should have been
+        # type(value) is not decimal -> TypeError (never should have been
         # allowed by ``__set__()`` in the first place)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             t.unconvert(1)
-        # required=True + value=None -> ValueError (never should have been
+        # required=True + value=None -> OFXSpecError (never should have been
         # allowed by ``__set__()`` in the first place)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OFXSpecError):
             t.unconvert(None)
         # value doesn't match scale constraint -> ValueError
         # (never should have been allowed by ``__set__()`` in the first place)
@@ -446,7 +446,7 @@ class DateTimeTestCase(unittest.TestCase, Base):
         with self.assertRaises(ValueError):
             t.convert(datetime.datetime(2011, 11, 17, 3, 30, 45, 150))
         # Don't accept date
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             t.convert(datetime.date(2011, 11, 17))
         # Don't accept strings of the wrong length
         with self.assertRaises(ValueError):
@@ -455,7 +455,7 @@ class DateTimeTestCase(unittest.TestCase, Base):
         with self.assertRaises(ValueError):
             t.convert("20151A29")
         # Don't accept integer
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             t.convert(123)
         # Don't accept YYYYMMDDHHMM
         with self.assertRaises(ValueError):
@@ -478,10 +478,10 @@ class DateTimeTestCase(unittest.TestCase, Base):
         with self.assertRaises(ValueError):
             t.unconvert(datetime.datetime(2011, 11, 17, 3, 30, 45, 150))
         # Don't accept date
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             t.unconvert(datetime.date(2011, 11, 17))
         # Don't accept string
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             t.unconvert("20070101")
 
     def test_convert_roundtrip(self):
@@ -548,7 +548,7 @@ class TimeTestCase(unittest.TestCase, Base):
             t.convert(datetime.time(3, 30, 45, 150))
 
         # Don't accept datetime
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             t.convert(datetime.datetime(2011, 11, 17, 3, 30, 45, 150, tzinfo=UTC))
 
         # Don't accept strings of the wrong length
@@ -573,7 +573,7 @@ class TimeTestCase(unittest.TestCase, Base):
             t.convert("033060.150[-:CST]")
 
         # Don't accept integer
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             t.convert(123)
 
         # Don't accept HHMMSS.XXX[-:TZ] for TZs not defined in kludge
@@ -592,11 +592,11 @@ class TimeTestCase(unittest.TestCase, Base):
             t.unconvert(datetime.time(3, 30, 45, 150))
 
         # Don't accept datetime
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             t.unconvert(datetime.datetime(2011, 11, 17, 6, 8, 10, tzinfo=UTC))
 
         # Don't accept string
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             t.unconvert("033045")
 
     def test_convert_roundtrip(self):

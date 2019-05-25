@@ -46,6 +46,14 @@ class OFXTypeWarning(UserWarning):
     """ Base class for warnings in this module """
 
 
+class OFXTypeError(ValueError):
+    """ Base class for errors in this module """
+
+
+class OFXSpecError(OFXTypeError):
+    """ Violation of the OFX specification """
+
+
 class InstanceCounterMixin:
     """
     Objects that derive from this mixin get a globally unique monotonically
@@ -112,9 +120,9 @@ class Element(InstanceCounterMixin):
     def _init(self, *args, **kwargs):
         """ Extend in subclass """
         if args or kwargs:
+            cls = self.__class__.__name__
             raise ValueError(
-                "Unknown args for '%s'- args: %r; kwargs: %r"
-                % (self.__class__.__name__, args, kwargs)
+                f"Unknown args for '{cls}'- args: {args}; kwargs: {kwargs}"
             )
 
     def __get__(self, parent, parent_type):
@@ -131,8 +139,7 @@ class Element(InstanceCounterMixin):
 
     def enforce_required(self, value):
         if value is None and self.required:
-            msg = f"{self.__class__.__name__}: Value is required"
-            raise ValueError(msg)
+            raise OFXSpecError(f"{self.__class__.__name__}: Value is required")
 
         return value
 
@@ -166,8 +173,8 @@ class Element(InstanceCounterMixin):
 
     def _unconvert_default(self, value):
         # By default, any type not specifically dispatched raises an error
-        msg = f"{value} is not an instance of {self.__class__.__name__}"
-        raise ValueError(msg)
+        cls = self.__class__.__name__
+        raise TypeError(f"{value!r} is not an instance of {cls}")
 
     def _unconvert_none(self, value: None) -> None:
         """ Dispatch unconvert() for type(None) """
@@ -191,7 +198,7 @@ class Bool(Element):
     def _convert_default(self, value):
         # Better error message than superclass default
         msg = f"{value} is not one of the allowed values {self.mapping.keys()}"
-        raise ValueError(msg)
+        raise OFXSpecError(msg)
 
     def _convert_bool(self, value):
         return value
@@ -201,13 +208,13 @@ class Bool(Element):
             value = self.mapping[value]
         except KeyError:
             msg = f"{value} is not one of the allowed values {self.mapping.keys()}"
-            raise ValueError(msg)
+            raise OFXSpecError(msg)
         return value
 
     def _unconvert_default(self, value):
         # Better error message than superclass default
         msg = f"{value} is not one of the allowed values {self.mapping.keys()}"
-        raise ValueError(msg)
+        raise OFXSpecError(msg)
 
     def _unconvert_bool(self, value):
         value = {v: k for k, v in self.mapping.items()}[value]
@@ -229,13 +236,13 @@ class String(Element):
 
     def _convert_default(self, value):
         # Better error message than superclass default
-        raise ValueError(f"'{value}' is not a str")
+        raise TypeError(f"'{value!r}' is not a str")
 
     def enforce_length(self, value: str) -> str:
         if self.length is not None and len(value) > self.length:
             msg = f"Value '{value}' exceeds max length={self.length}"
             if self.strict:
-                raise ValueError(msg)
+                raise OFXSpecError(msg)
             else:
                 warnings.warn(msg, category=OFXTypeWarning)
         return value
@@ -276,7 +283,7 @@ class OneOf(Element):
     def _convert_default(self, value):
         value = self.enforce_required(value)
         if value is not None and value not in self.valid:
-            raise ValueError("'{}' is not OneOf {}".format(value, self.valid))
+            raise OFXSpecError(f"'{value}' is not OneOf {self.valid}")
         return value
 
     def _convert_str(self, value):
@@ -287,7 +294,7 @@ class OneOf(Element):
     def _unconvert_default(self, value):
         value = self.enforce_required(value)
         if value is not None and value not in self.valid:
-            raise ValueError("'{}' is not OneOf {}".format(value, self.valid))
+            raise OFXSpecError(f"'{value}' is not OneOf {self.valid}")
         return value
 
 
@@ -308,7 +315,7 @@ class Integer(Element):
     def enforce_length(self, value: int) -> int:
         if self.length is not None and value >= 10 ** self.length:
             msg = f"'{value}' has too many digits; max digits={self.length}"
-            raise ValueError(msg)
+            raise OFXSpecError(msg)
         return value
 
     def _convert_default(self, value):
@@ -359,8 +366,7 @@ class Decimal(Element):
 
     def _unconvert_decimal(self, value):
         if self.scale is not None and not value.same_quantum(self.scale):
-            msg = f"'{value}' doesn't match scale={self.scale}"
-            raise ValueError(msg)
+            raise ValueError(f"'{value}' doesn't match scale={self.scale}")
         return str(value)
 
 
@@ -438,12 +444,8 @@ class DateTime(Element):
         super()._init(*args, **kwargs)
 
     def _convert_default(self, value):
-        raise ValueError(
-            (
-                f"'{value}' is type '{value.__class__.__name__}'; "
-                f"can't convert to {self.type}"
-            )
-        )
+        cls = value.__class__.__name__
+        raise TypeError(f"{value!r} is type '{cls}'; can't convert to {self.type}")
 
     def _convert_datetime(self, value):
         if value.utcoffset() is None:
@@ -454,7 +456,7 @@ class DateTime(Element):
         match = self.regex.match(value)
         if match is None:
             msg = f"'{value}' does not conform to OFX formats for {self.type}"
-            raise ValueError(msg)
+            raise OFXSpecError(msg)
 
         matchdict = match.groupdict()
 
@@ -609,14 +611,12 @@ class ListItem(Element):
 
     def _convert_default(self, value):
         if not isinstance(value, self.type):
-            msg = "'{}' is not an instance of {}"
-            raise ValueError(msg.format(value, self.type))
+            raise TypeError(f"'{value!r}' is not an instance of {self.type}")
         return value
 
     def _unconvert_default(self, value):
         if not isinstance(value, self.type):
-            msg = "'{}' is not an instance of {}"
-            raise ValueError(msg.format(value, self.type))
+            raise TypeError(f"'{value!r}' is not an instance of {self.type}")
         return value
 
 
