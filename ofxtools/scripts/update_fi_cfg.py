@@ -17,10 +17,11 @@ from configparser import ConfigParser
 from collections import ChainMap
 from xml.sax import saxutils
 from typing import Mapping, Optional
+import logging
 
 
 # local imports
-from ofxtools import ofxhome
+from ofxtools import ofxhome, config
 from ofxtools.scripts import ofxget
 
 
@@ -119,5 +120,21 @@ def main():
         write_config(args)
 
 
+LOG_LEVELS = {0: logging.WARN, 1: logging.INFO, 2: logging.DEBUG}
+
+
 if __name__ == "__main__":
+    from argparse import ArgumentParser
+
+    argparser = ArgumentParser(description="Scan all FIs; update fi.cfg")
+    argparser.add_argument(
+        "--verbose",
+        "-v",
+        action="count",
+        default=0,
+        help="Give more output (option can be repeated)",
+    )
+    args = argparser.parse_args()
+    log_level = LOG_LEVELS.get(args.verbose, logging.DEBUG)
+    config.configure_logging(log_level)
     main()

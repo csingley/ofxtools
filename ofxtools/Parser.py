@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # coding: utf-8
 """
 A parser for Open Financial Exchange (OFX) messages,
@@ -22,6 +23,11 @@ https://docs.python.org/3/howto/regex.html#non-capturing-and-named-groups
 No ponies were harmed during the production of this parser:
 https://stackoverflow.com/questions/1732348/regex-match-open-tags-except-xhtml-self-contained-tags/1732454#1732454
 """
+
+
+__all__ = ["OFXTree", "TreeBuilder", "ParseError"]
+
+
 # stdlib imports
 import re
 import xml.etree.ElementTree as ET
@@ -123,7 +129,6 @@ class OFXTree(ET.ElementTree):
         """
         if not isinstance(self._root, ET.Element):
             raise ValueError("Must first call parse() to have data to convert")
-        logger.info(f"Converting {self._root} to ofxtools.models.Aggregate")
         instance = Aggregate.from_etree(self._root)
         return instance
 
@@ -152,7 +157,7 @@ class TreeBuilder(ET.TreeBuilder):
         """
         Iterate through all tags matched by regex.
         """
-        logger.info("Building Element tree from serialized data")
+        logger.info("Building Element tree from markup body")
         for match in self.regex.finditer(data):
             try:
                 groupdict = match.groupdict()
@@ -187,6 +192,7 @@ class TreeBuilder(ET.TreeBuilder):
         if tag.startswith("/"):
             if text:
                 raise ParseError(f"Tail text '{text}' after <{tag}>")
+            logger.debug(f"Popping tag '{tag[1:]}'")
             self.end(tag[1:])
         else:
             self._start(tag, text, closetag)
@@ -207,6 +213,7 @@ class TreeBuilder(ET.TreeBuilder):
             self.data(text)
             # End tags are optional for OFXv1 data elements
             # End all elements, whether or not they're explicitly ended
+            logger.debug(f"Popping tag '{tag}'")
             self.end(tag)
         elif closetag:
             # Empty OFX "aggregate" branch
@@ -228,7 +235,6 @@ def main(*files):
     Simple functional test for impatient developers.
     """
     for file in files:
-        logger.info(f"Parsing {file}")
         ofxparser = OFXTree()
         ofxparser.parse(file)
         response = ofxparser.convert()
