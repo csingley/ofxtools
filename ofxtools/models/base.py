@@ -158,10 +158,10 @@ class Aggregate(list):
             raise ValueError(msg)
         try:
             SubClass = getattr(ofxtools.models, elem.tag)
-            #  logger.info(f"Converting <{elem.tag}> to {SubClass.__name__}")
         except AttributeError:
             raise ValueError(f"ofxtools.models doesn't define {elem.tag}")
 
+        logger.info(f"Converting <{elem.tag}> to {SubClass.__name__}")
         instance = SubClass._convert(elem)
         return instance
 
@@ -218,10 +218,11 @@ class Aggregate(list):
             return idx1 <= idx0 and (not isListItem0 or not isListItem1)
 
         args_, specIndices = zip(*[extractArgs(subelem) for subelem in elem])
+        clsnm = cls.__name__
+        logger.debug(f"Args to instantiate {clsnm}: {args_}")
         if any(
             [outOfOrder(index0, index1) for index0, index1 in pairwise(specIndices)]
         ):
-            clsnm = cls.__name__
             subels = [el.tag for el in elem]
             raise ValueError(f"{clsnm} SubElements out of order: {subels}")
         kwargs, args = partition(lambda p: p[0] in listitems, args_)
@@ -243,7 +244,7 @@ class Aggregate(list):
 
         for child in set(elem):
             if "." in child.tag:
-                logger.debug("Removing extended tag <{child.tag}>")
+                logger.debug(f"Removing extended tag <{child.tag}>")
                 elem.remove(child)
 
         return elem

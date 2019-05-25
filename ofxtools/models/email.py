@@ -25,6 +25,7 @@ __all__ = [
 
 # stdlib imports
 from copy import deepcopy
+import logging
 
 
 # local imports
@@ -32,6 +33,9 @@ from ofxtools.Types import Bool, String, DateTime, ListItem
 from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
 from ofxtools.models.common import MSGSETCORE
+
+
+logger = logging.getLogger(__name__)
 
 
 class MAIL(Aggregate):
@@ -56,6 +60,7 @@ class MAIL(Aggregate):
 
         frm = elem.find("./FROM")
         if frm is not None:
+            logger.debug("Renaming <FROM> to <FRM>")
             frm.tag = "FRM"
 
         return super(MAIL, MAIL).groom(elem)
@@ -70,6 +75,7 @@ class MAIL(Aggregate):
 
         frm = elem.find("./FRM")
         if frm is not None:
+            logger.debug("Renaming <FRM> to <FROM>")
             frm.tag = "FROM"
 
         return super(MAIL, MAIL).ungroom(elem)

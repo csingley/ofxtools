@@ -27,6 +27,7 @@ __all__ = [
 
 # stdlib imports
 from copy import deepcopy
+import logging
 
 
 # local imports
@@ -42,6 +43,9 @@ from ofxtools.Types import (
 from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.i18n import CURRENCY
+
+
+logger = logging.getLogger(__name__)
 
 
 ASSETCLASSES = (
@@ -160,6 +164,7 @@ class MFINFO(Aggregate):
 
         yld = elem.find("./YIELD")
         if yld is not None:
+            logger.debug("Renaming <YIELD> to <YLD>")
             yld.tag = "YLD"
 
         return super(MFINFO, MFINFO).groom(elem)
@@ -174,6 +179,7 @@ class MFINFO(Aggregate):
 
         yld = elem.find("./YLD")
         if yld is not None:
+            logger.debug("Renaming <YLD> to <YIELD>")
             yld.tag = "YIELD"
 
         return super(MFINFO, MFINFO).ungroom(elem)
@@ -222,6 +228,7 @@ class STOCKINFO(Aggregate):
 
         yld = elem.find("./YIELD")
         if yld is not None:
+            logger.debug("Renaming <YIELD> to <YLD>")
             yld.tag = "YLD"
 
         return super(STOCKINFO, STOCKINFO).groom(elem)
@@ -229,13 +236,14 @@ class STOCKINFO(Aggregate):
     @staticmethod
     def ungroom(elem):
         """
-        Rename YLD back to YLD
+        Rename YLD back to YIELD
         """
         # Keep input free of side effects
         elem = deepcopy(elem)
 
         yld = elem.find("./YLD")
         if yld is not None:
+            logger.debug("Renaming <YLD> to <YIELD>")
             yld.tag = "YIELD"
 
         return super(STOCKINFO, STOCKINFO).ungroom(elem)
