@@ -27,7 +27,6 @@ __all__ = [
 
 
 # stdlib imports
-import itertools
 import functools
 import decimal
 import datetime
@@ -54,28 +53,7 @@ class OFXSpecError(OFXTypeError):
     """ Violation of the OFX specification """
 
 
-class InstanceCounterMixin:
-    """
-    Objects that derive from this mixin get a globally unique monotonically
-    increasing integer member named '_counter'. This is used for ordering class
-    members - needed e.g. for Aggregate.spec to sequence Elements/SubAggregates
-    in the order they're declared in the class definition.
-
-    This is not needed for Python v3.6+
-    https://docs.python.org/3/whatsnew/3.6.html#whatsnew36-pep520
-    """
-
-    _element_counter = itertools.count()
-
-    @classmethod
-    def _next_counter(cls) -> int:
-        return next(cls._element_counter)
-
-    def __init__(self):
-        self._counter = self._next_counter()
-
-
-class Element(InstanceCounterMixin):
+class Element:
     """
     Python representation of an OFX 'element', i.e. SGML/XML leaf node that
     contains text data.
@@ -100,7 +78,6 @@ class Element(InstanceCounterMixin):
     type = NotImplemented  # define in subclass
 
     def __init__(self, *args, **kwargs):
-        InstanceCounterMixin.__init__(self)
         self.data = defaultdict(None)
         self.required = kwargs.pop("required", False)
 
