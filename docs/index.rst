@@ -84,7 +84,7 @@ a `bug tracker`_.
 
 Installation Dependencies
 -------------------------
-``ofxtools`` requires Python version 3.4+, and depends only on the standard
+``ofxtools`` requires Python version 3.7+, and depends only on the standard
 libary (no external dependencies).
 
 **NOTE: As of version 0.6, ofxtools no longer supports Python version 2,
