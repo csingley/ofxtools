@@ -23,7 +23,6 @@ __all__ = ["Aggregate", "SubAggregate", "Unsupported", "ElementList"]
 
 # stdlib imports
 import xml.etree.ElementTree as ET
-
 from collections import OrderedDict, ChainMap
 from copy import deepcopy
 from typing import Any, List, Dict, Tuple, Callable, Sequence, Mapping, Union, Optional
@@ -317,7 +316,7 @@ class Aggregate(list):
         return ChainMap(*[base.__dict__ for base in cls.mro()])
 
     @classmethod
-    def _ordered_attrs(cls, predicate: Callable) -> OrderedDict:
+    def _ordered_attrs(cls, predicate: Callable) -> "OrderedDict[str, Any]":
         """
         Filter class attributes for items matching the given predicate.
 
@@ -331,7 +330,7 @@ class Aggregate(list):
 
     @classproperty
     @classmethod
-    def spec(cls) -> OrderedDict:
+    def spec(cls) -> "OrderedDict[str, Union[Element, Unsupported]]":
         """
         OrderedDict of all class attributes that are Elements/SubAggregates/Unsupported.
 
@@ -341,7 +340,7 @@ class Aggregate(list):
 
     @classproperty
     @classmethod
-    def spec_no_listitems(cls) -> OrderedDict:
+    def spec_no_listitems(cls) -> "OrderedDict[str, Union[Element, Unsupported]]":
         """
         OrderedDict of all class attributes that are
         Elements/SubAggregates/Unsupported, excluding ListItems/ListElements
@@ -353,7 +352,7 @@ class Aggregate(list):
 
     @classproperty
     @classmethod
-    def elements(cls) -> OrderedDict:
+    def elements(cls) -> "OrderedDict[str, Element]":
         """
         OrderedDict of all class attributes that are Elements but not
         SubAggregates.
@@ -364,7 +363,7 @@ class Aggregate(list):
 
     @classproperty
     @classmethod
-    def subaggregates(cls) -> OrderedDict:
+    def subaggregates(cls) -> "OrderedDict[str, SubAggregate]":
         """
         OrderedDict of all class attributes that are SubAggregates.
         """
@@ -372,7 +371,7 @@ class Aggregate(list):
 
     @classproperty
     @classmethod
-    def unsupported(cls) -> OrderedDict:
+    def unsupported(cls) -> "OrderedDict[str, Unsupported]":
         """
         OrderedDict of all class attributes that are Unsupported.
         """
@@ -380,7 +379,7 @@ class Aggregate(list):
 
     @classproperty
     @classmethod
-    def listitems(cls) -> OrderedDict:
+    def listitems(cls) -> "OrderedDict[str, ListItem]":
         """
         OrderedDict of all class attributes that are ListItems.
         """
@@ -417,7 +416,7 @@ class Aggregate(list):
             instance_repr += ", len={}".format(num_list_elements)
         return "<{}>".format(instance_repr)
 
-    def __getattr__(self, attr):
+    def __getattr__(self, attr: str):
         """ Proxy access to attributes of SubAggregates """
         for subaggregate in self.subaggregates:
             subagg = getattr(self, subaggregate)
@@ -480,13 +479,13 @@ class ElementList(Aggregate):
 
     @classproperty
     @classmethod
-    def listitems(cls) -> OrderedDict:
+    def listitems(cls) -> "OrderedDict[str, ListElement]":
         """
         ElementList.listitems returns ListElements instead of ListItems
         """
         return cls._ordered_attrs(lambda v: isinstance(v, ListElement))
 
-    def _apply_args(self, *args):
+    def _apply_args(self, *args) -> None:
         # Interpret positional args as contained list items (of variable #)
         assert len(self.listitems) == 1
         converter = list(self.listitems.values())[0]

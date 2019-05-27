@@ -11,7 +11,8 @@ section 3.2.8.
 
 __all__ = [
     "OFXTypeWarning",
-    "InstanceCounterMixin",
+    "OFXTypeError",
+    "OFXSpecError",
     "Element",
     "Bool",
     "String",
@@ -111,8 +112,7 @@ class Element:
 
     def __set__(self, parent, value) -> None:
         """ Perform validation and type conversion before setting value """
-        value = self.convert(value)
-        self.data[parent] = value
+        self.data[parent] = self.convert(value)
 
     def enforce_required(self, value):
         if value is None and self.required:
@@ -582,9 +582,8 @@ class ListItem(Element):
     """ """
 
     def _init(self, *args, **kwargs):
-        args = list(args)
-        self.type = args.pop(0)
-        super()._init(*args, **kwargs)
+        self.type = args[0]
+        super()._init(*args[1:], **kwargs)
 
     def _convert_default(self, value):
         if not isinstance(value, self.type):
@@ -601,9 +600,8 @@ class ListElement(Element):
     """ """
 
     def _init(self, *args, **kwargs):
-        args = list(args)
-        self.converter = args.pop(0)
-        super()._init(*args, **kwargs)
+        self.converter = args[0]
+        super()._init(*args[1:], **kwargs)
 
     def _convert_default(self, value):
         return self.converter.convert(value)
