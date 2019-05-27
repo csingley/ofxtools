@@ -23,9 +23,18 @@ __all__ = ["Aggregate", "SubAggregate", "Unsupported", "ElementList"]
 
 # stdlib imports
 import xml.etree.ElementTree as ET
-from collections import ChainMap
 from copy import deepcopy
-from typing import Any, List, Dict, Tuple, Callable, Sequence, Mapping, Union, Optional
+from typing import (
+    Any,
+    Dict,
+    Tuple,
+    Callable,
+    Sequence,
+    Mapping,
+    Union,
+    Optional,
+    ChainMap,
+)
 import logging
 
 

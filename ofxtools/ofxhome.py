@@ -55,9 +55,9 @@ def list_institutions() -> Mapping[str, str]:
     with urllib.request.urlopen(query) as f:
         response = f.read()
 
-    return OrderedDict(
-        (fi.get("id").strip(), fi.get("name").strip()) for fi in ET.fromstring(response)
-    )
+    return {
+        fi.get("id").strip(): fi.get("name").strip() for fi in ET.fromstring(response)
+    }
 
 
 def lookup(id: str) -> Optional[OFXServer]:

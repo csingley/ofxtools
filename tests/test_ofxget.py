@@ -7,7 +7,6 @@ from unittest.mock import patch, DEFAULT
 from datetime import datetime
 from io import BytesIO
 import argparse
-import configparser
 import collections
 import urllib
 from configparser import ConfigParser
@@ -19,7 +18,7 @@ import socket
 
 
 # local imports
-from ofxtools import models, header, Parser
+from ofxtools import models, header, Parser, utils
 from ofxtools.Client import (
     OFXClient,
     StmtRq,
@@ -36,6 +35,9 @@ from ofxtools.ofxhome import OFXServer
 import base
 import test_models_msgsets
 import test_models_signup
+import test_models_bank_stmt
+import test_models_invest
+import test_models_billpay_common
 
 
 class MakeArgParserTestCase(unittest.TestCase):
@@ -1052,7 +1054,6 @@ class ScanProfileTestCase(unittest.TestCase):
             self.assertIn(
                 version, [102, 103, 151, 160, 200, 201, 202, 203, 210, 211, 220]
             )
-            self.assertIsInstance(format, collections.OrderedDict)
             self.assertEqual(len(format), 2)
             self.assertIsInstance(format["pretty"], bool)
             self.assertIsInstance(format["unclosedelements"], bool)
@@ -1138,7 +1139,6 @@ class ReadScanResponseTestCase(unittest.TestCase):
             self.assertEqual(len(result), 2)
             self.assertTrue(result[0])
             signoninfo = result[1]
-            self.assertIsInstance(signoninfo, collections.OrderedDict)
             self.assertEqual(len(signoninfo), 4)
             self.assertEqual(
                 set(signoninfo.keys()),
@@ -1163,7 +1163,6 @@ class CollateScanResultsTestCase(unittest.TestCase):
 
         v1 = [(160, formats_in), (102, formats_in), (103, formats_in)]
         v1_result = ofxget.collate_scan_results(v1)
-        self.assertIsInstance(v1_result, collections.OrderedDict)
         self.assertEqual(list(v1_result.keys()), ["versions", "formats"])
         self.assertEqual(v1_result["versions"], [102, 103, 160])
 
@@ -1184,6 +1183,77 @@ class CollateScanResultsTestCase(unittest.TestCase):
 ###############################################################################
 # OFX PARSING
 ###############################################################################
+class VerifyStatusTestCase(unittest.TestCase):
+    """ Unit tests for ofxtools.scripts.ofxget.verify_status() """
+
+    status_good = models.STATUS(code=0, severity="INFO")
+    status_bad = models.STATUS(code=1500, severity="ERROR")
+    dtserver = datetime(2012, 5, 31, tzinfo=UTC)
+
+    def test_verify_status(self):
+        sonrs_good = models.SONRS(
+            status=self.status_good, dtserver=self.dtserver, language="ENG"
+        )
+
+        ofxget.verify_status(sonrs_good)
+        sonrs_bad = models.SONRS(
+            status=self.status_bad, dtserver=self.dtserver, language="ENG"
+        )
+        with self.assertRaises(ValueError):
+            ofxget.verify_status(sonrs_bad)
+
+
+class AcctIsActiveTestCase(unittest.TestCase):
+    """ Unit tests for ofxtools.scripts.ofxget._acctIsActive() """
+
+    bankacctinfo = test_models_bank_stmt.BankacctinfoTestCase.aggregate
+    ccacctinfo = test_models_bank_stmt.CcacctinfoTestCase.aggregate
+    invacctinfo = test_models_invest.InvacctinfoTestCase.aggregate
+    bpacctinfo = test_models_billpay_common.BpacctinfoTestCase.aggregate
+
+    def testAcctIsActive(self):
+        for acctinfo in (
+            self.bankacctinfo,
+            self.ccacctinfo,
+            self.invacctinfo,
+            self.bpacctinfo,
+        ):
+            acctinfo.svcstatus = "ACTIVE"
+            self.assertTrue(ofxget._acctIsActive(acctinfo))
+            for svcstatus in "PEND", "AVAIL":
+                acctinfo.svcstatus = svcstatus
+                self.assertFalse(ofxget._acctIsActive(acctinfo))
+
+
+class ExtractSignonInfosTestCase(unittest.TestCase):
+    """ Unit tests for ofxtools.scripts.ofxget.extract_signoninfos() """
+
+    ofx = models.OFX(
+        signonmsgsrsv1=test_models_msgsets.Signonmsgsrsv1TestCase.aggregate,
+        profmsgsrsv1=test_models_msgsets.Profmsgsrsv1TestCase.aggregate,
+    )
+
+    @property
+    def client(self):
+        return OFXClient("https://ofx.test.com")
+
+    def testExtractSignonInfos(self):
+        markup = BytesIO(self.client.serialize(self.ofx))
+        signoninfos = list(ofxget.extract_signoninfos(markup))
+        self.assertEqual(len(signoninfos), 4)
+        self.assertTrue(utils.all_equal(signoninfos))
+        info = signoninfos[0]
+        self.assertEqual(info.signonrealm, "AMERITRADE")
+        self.assertEqual(info.min, 4)
+        self.assertEqual(info.max, 32)
+        self.assertEqual(info.chartype, "ALPHAORNUMERIC")
+        self.assertTrue(info.casesen)
+        self.assertFalse(info.special)
+        self.assertFalse(info.spaces)
+        self.assertFalse(info.pinch)
+        self.assertFalse(info.chgpinfirst)
+
+
 class ExtractAcctInfosTestCase(unittest.TestCase):
     """ Unit tests for ofxtools.scripts.ofxget.extract_acctinfos() """
 
@@ -1217,6 +1287,13 @@ class ExtractAcctInfosTestCase(unittest.TestCase):
 
         for n in range(3):
             tc._eqAggregate(results[n], acctinfo[n])
+
+
+###############################################################################
+# CLI UTILITIES
+###############################################################################
+class SavePasswdTestCase(unittest.TestCase):
+    pass
 
 
 if __name__ == "__main__":

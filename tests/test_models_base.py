@@ -2,14 +2,12 @@
 """ Unit tests for models/base.py """
 # stdlib imports
 import unittest
-from collections import OrderedDict
 import xml.etree.ElementTree as ET
-from datetime import datetime
 
 
 # local imports
 from ofxtools import models, Types
-from ofxtools.Types import String, DateTime, Bool, ListItem, ListElement
+from ofxtools.Types import String, Bool, ListItem, ListElement
 from ofxtools.models.base import (
     Aggregate,
     SubAggregate,
@@ -17,7 +15,6 @@ from ofxtools.models.base import (
     ElementList,
     OFXSpecError,
 )
-from ofxtools.utils import UTC
 
 
 class TESTSUBAGGREGATE(Aggregate):

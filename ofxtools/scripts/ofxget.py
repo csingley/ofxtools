@@ -8,7 +8,7 @@ import sys
 import argparse
 import configparser
 import datetime
-from collections import defaultdict, OrderedDict, ChainMap
+from collections import defaultdict
 import getpass
 from urllib import parse as urllib_parse
 from urllib.error import HTTPError, URLError
@@ -23,7 +23,6 @@ import logging
 import logging.config
 import warnings
 import pydoc
-import typing
 from typing import (
     Union,
     Optional,
@@ -35,6 +34,8 @@ from typing import (
     Dict,
     Sequence,
     Iterable,
+    Iterator,
+    ChainMap,
 )
 
 # 3rd party imports
@@ -77,13 +78,13 @@ ArgType = Union[List[str], bool, int, str]
 
 # Common data structure used for loading, combining, and converting between
 # ArgParser and ConfigParser
-ArgsType = typing.ChainMap[str, Any]
+ArgsType = ChainMap[str, Any]
 
 # OFX connection params (OFX version, prettyprint, unclosedelements) tagged
 # onto the OFXClient.request_profile() job submitted to the ThreadPoolExecutor
 # during a profile scan
 OFXVersion = int
-MarkupFormat = OrderedDict  # keys are "pretty", "unclosedelements"
+MarkupFormat = Mapping[str, bool]  # keys are "pretty", "unclosedelements"
 ScanMetadata = Tuple[OFXVersion, MarkupFormat]
 
 # All working FormatArgs for a given OFX version
@@ -447,6 +448,9 @@ def scan_profile(args: ArgsType) -> None:
     """
     Report working connection parameters
     """
+    if args["dryrun"]:
+        raise SyntaxError("Can't reasonably show a dry run for a profile scan")
+
     url = args["url"]
     org = args["org"]
     fid = args["fid"]
@@ -460,7 +464,7 @@ def scan_profile(args: ArgsType) -> None:
     else:
         print(json.dumps(scan_results))
 
-        if args["write"] and not args["dryrun"]:
+        if args["write"]:
             extra_args = _best_scan_format(scan_results)
             write_config(ChainMap(extra_args, dict(args)))
 
@@ -533,7 +537,7 @@ def request_profile(args: ArgsType) -> None:
 
     print(response.decode())
 
-    if args["write"] and not args["dryrun"]:
+    if args["write"]:
         write_config(args)
 
 
@@ -553,12 +557,11 @@ def request_acctinfo(args: ArgsType) -> None:
     print(acctinfo.read().decode())
     acctinfo.seek(0)
 
-    if args["write"] and not args["dryrun"]:
+    if args["write"]:
         _merge_acctinfo(args, acctinfo)
-
         write_config(args)
 
-    if args["savepass"] and not args["dryrun"]:
+    if args["savepass"]:
         save_passwd(args, password)
 
 
@@ -668,10 +671,10 @@ def request_stmt(args: ArgsType) -> None:
 
     print(response.decode())
 
-    if args["write"] and not args["dryrun"]:
+    if args["write"]:
         write_config(args)
 
-    if args["savepass"] and not args["dryrun"]:
+    if args["savepass"]:
         save_passwd(args, password)
 
 
@@ -719,10 +722,10 @@ def request_stmtend(args: ArgsType) -> None:
 
     print(response.decode())
 
-    if args["write"] and not args["dryrun"]:
+    if args["write"]:
         write_config(args)
 
-    if args["savepass"] and not args["dryrun"]:
+    if args["savepass"]:
         save_passwd(args, password)
 
 
@@ -842,9 +845,7 @@ configurable_srvr = (
     "appver",
     "language",
 )
-CONFIGURABLE_SRVR = OrderedDict(
-    [(k, type(v)) for k, v in DEFAULTS.items() if k in configurable_srvr]
-)
+CONFIGURABLE_SRVR = {k: type(v) for k, v in DEFAULTS.items() if k in configurable_srvr}
 
 
 configurable_user = (
@@ -857,9 +858,7 @@ configurable_user = (
     "creditcard",
     "investment",
 )
-CONFIGURABLE_USER = OrderedDict(
-    [(k, type(v)) for k, v in DEFAULTS.items() if k in configurable_user]
-)
+CONFIGURABLE_USER = {k: type(v) for k, v in DEFAULTS.items() if k in configurable_user}
 
 
 CONFIGURABLE = CONFIGURABLE_SRVR
@@ -892,8 +891,12 @@ def read_config(cfg: configparser.ConfigParser, section: str) -> Mapping[str, Ar
 
 
 def write_config(args: ArgsType) -> None:
-    mk_server_cfg(args)
+    if args["dryrun"]:
+        msg = "Dry run; won't store password"
+        warnings.warn(msg, category=SyntaxWarning)
+        return
 
+    mk_server_cfg(args)
     logger.info(f"Writing user configs to {USERCONFIGPATH}")
 
     with open(USERCONFIGPATH, "w") as f:
@@ -1060,8 +1063,6 @@ def merge_from_ofxhome(args: ArgsType):
                     "brokerid": lookup.brokerid,
                 },
             )
-            #  msg = f"CLI args merged with user configs, OFX Home lookup, and defaults: {extrargs(args)}"
-            #  logger.debug(msg)
 
 
 def extrargs(args: ArgsType) -> dict:
@@ -1144,7 +1145,7 @@ def _scan_profile(
 
 def _queue_scans(
     client: OFXClient, max_workers: Optional[int], timeout: Optional[float]
-) -> Dict[concurrent.futures.Future, ScanMetadata]:
+) -> Mapping[concurrent.futures.Future, ScanMetadata]:
     ofxv1 = [102, 103, 151, 160]
     ofxv2 = [200, 201, 202, 203, 210, 211, 220]
 
@@ -1160,10 +1161,9 @@ def _queue_scans(
                 close_elements=close,
                 timeout=timeout,
             )
-            #  futures[future] = (version, pretty, True)
             futures[future] = (
                 version,
-                OrderedDict([("pretty", pretty), ("unclosedelements", not close)]),
+                {"pretty": pretty, "unclosedelements": not close},
             )
 
         for version, pretty in itertools.product(ofxv2, BOOLS):
@@ -1177,7 +1177,7 @@ def _queue_scans(
             #  futures[future] = (version, pretty, True)
             futures[future] = (
                 version,
-                OrderedDict([("pretty", pretty), ("unclosedelements", not close)]),
+                {"pretty": pretty, "unclosedelements": not close},
             )
 
     return futures
@@ -1197,31 +1197,33 @@ def _read_scan_response(
         future.cancel()
         return valid, signoninfo
 
-    # ``response`` is an HTTPResponse; doesn't have seek() method used
-    # by ``header.parse_header()``.  Repackage as BytesIO for parsing.
     if read_signoninfo:
+        # ``response`` is an HTTPResponse; doesn't have seek() method used
+        # by ``header.parse_header()``.  Repackage as BytesIO for parsing.
         with response as f:
             response_ = f.read()
         try:
             if not response_:
                 return valid, signoninfo
 
-            signoninfos: List[models.SIGNONINFO] = extract_signoninfos(
+            signoninfos: Iterator[models.SIGNONINFO] = extract_signoninfos(
                 BytesIO(response_)
             )
 
-            assert len(signoninfos) > 0
+            # Assume that all the SIGNONINFOs have the same content
             valid = True
-            info = signoninfos[0]
+            #  info = signoninfos[0]
+            info = next(signoninfos)
             bool_attrs = (
                 "chgpinfirst",
                 "clientuidreq",
                 "authtokenfirst",
                 "mfachallengefirst",
             )
-            signoninfo = OrderedDict(
-                [(attr, getattr(info, attr, None) or False) for attr in bool_attrs]
-            )
+            signoninfo = {
+                attr: getattr(info, attr, None) or False for attr in bool_attrs
+            }
+
             logger.debug(
                 ("Received HTTP response with valid OFX; " f"signoninfo={signoninfo}")
             )
@@ -1249,16 +1251,14 @@ def _read_scan_response(
     return valid, signoninfo
 
 
-def collate_scan_results(
-    scan_results: Iterable[Tuple[OFXVersion, MarkupFormat]]
-) -> ScanResult:
+def collate_scan_results(scan_results: Iterable[ScanMetadata]) -> ScanResult:
     """
     Input ``scan_results`` needs to be a complete set for either OFXv1 or v2,
     with no results for the other version admixed.
     """
     results_ = list(scan_results)
     if not results_:
-        return OrderedDict()
+        return {}
     versions, formats = zip(*results_)
 
     # Assumption: the same markup formatting requirements apply to all
@@ -1268,15 +1268,17 @@ def collate_scan_results(
     #
     # Translation: just pick the longest sequence of successful
     # formats and assume it applies for all versions.
-    formats = max(formats, key=len)
-    formats.sort(key=lambda f: (f["pretty"], f["unclosedelements"]))
-    return OrderedDict(zip(("versions", "formats"), (sorted(versions), formats)))
+    formats_ = max(formats, key=len)
+    formats_.sort(key=lambda f: (f["pretty"], f["unclosedelements"]))
+    return dict(zip(("versions", "formats"), (sorted(versions), formats_)))
 
 
 ###############################################################################
 # OFX PARSING
 ###############################################################################
-def verify_status(trnrs: models.Aggregate) -> None:
+def verify_status(
+    trnrs: Union[models.SONRS, models.PROFTRNRS, models.ACCTINFOTRNRS]
+) -> None:
     """
     Input a models.Aggregate instance representing a transaction wrapper.
     """
@@ -1285,7 +1287,7 @@ def verify_status(trnrs: models.Aggregate) -> None:
         cls = trnrs.__class__.__name__
         msg = (
             f"{cls}: Request failed, code={status.code}, "
-            f"severity={status.severity}, message='{status.message}'"
+            f"severity={status.severity}, message={status.message!r}"
         )
         logger.error(msg)
         raise ValueError(msg)
@@ -1295,7 +1297,7 @@ def _acctIsActive(acctinfo: AcctInfo) -> bool:
     return acctinfo.svcstatus == "ACTIVE"
 
 
-def extract_signoninfos(markup: BytesIO) -> List[models.SIGNONINFO]:
+def extract_signoninfos(markup: BytesIO) -> Iterator[models.SIGNONINFO]:
     """
     Input seralized OFX containing PROFRS
     Output list of ofxtools.models.SIGNONINFO instances
@@ -1304,30 +1306,26 @@ def extract_signoninfos(markup: BytesIO) -> List[models.SIGNONINFO]:
     parser.parse(markup)
     ofx = parser.convert()
 
-    sonrs = ofx.signonmsgsrsv1.sonrs
+    sonrs: Union[models.SONRS, None] = ofx.signonmsgsrsv1.sonrs
     assert isinstance(sonrs, models.SONRS)
     verify_status(sonrs)
 
-    msgs = ofx.profmsgsrsv1
+    msgs: Union[models.PROFMSGSRSV1, None] = ofx.profmsgsrsv1
     assert msgs is not None
 
     def extract_signoninfo(trnrs: models.PROFTRNRS) -> List[models.SIGNONINFO]:
         verify_status(trnrs)
-        rs = trnrs.profrs
+        rs: Union[models.PROFRS, None] = trnrs.profrs
         assert rs is not None
 
-        list_ = rs.signoninfolist
+        list_: Union[models.SIGNONINFOLIST, None] = rs.signoninfolist
         assert list_ is not None
-        return list_[:]
+        return list_
 
-    #  return list(itertools.chain.from_iterable(
-    #  [extract_signoninfo(trnrs) for trnrs in msgs]))
-    return list(
-        itertools.chain.from_iterable(extract_signoninfo(trnrs) for trnrs in msgs)
-    )
+    return itertools.chain.from_iterable(extract_signoninfo(trnrs) for trnrs in msgs)
 
 
-def extract_acctinfos(markup: BytesIO) -> Iterable[AcctInfo]:
+def extract_acctinfos(markup: BytesIO) -> Iterator[AcctInfo]:
     """
     Input seralized OFX containing ACCTINFORS
     Output dict-like object containing parsed *ACCTINFOs
@@ -1454,10 +1452,11 @@ def get_passwd(args: ArgsType) -> str:
     return password
 
 
-def save_passwd(args: ArgsType, password: str) -> None:
+def save_passwd(args: Mapping, password: str) -> None:
     if args["dryrun"]:
         msg = "Dry run; won't store password"
         warnings.warn(msg, category=SyntaxWarning)
+        return
     if not HAS_KEYRING:
         msg = "Can't find python-keyring pacakge; can't save password"
         logger.error(msg)
@@ -1465,6 +1464,7 @@ def save_passwd(args: ArgsType, password: str) -> None:
     if not password:
         msg = "Empty password; won't store"
         warnings.warn(msg, category=SyntaxWarning)
+        return
 
     server = args["server"]
     logger.debug("Found python-keyring; storing password for {server}")

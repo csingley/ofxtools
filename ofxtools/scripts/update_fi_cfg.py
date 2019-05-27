@@ -14,9 +14,8 @@ is not at all stable so it needs to be checked.
 # stdlib imports
 import configparser
 from configparser import ConfigParser
-from collections import ChainMap
 from xml.sax import saxutils
-from typing import Mapping, Optional
+from typing import Mapping, Optional, ChainMap
 import logging
 
 
