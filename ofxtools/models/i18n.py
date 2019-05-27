@@ -1203,8 +1203,7 @@ class ORIGCURRENCY(Aggregate):
 class Origcurrency:
     """ Mixin providing property aliases and CURRENCY/ORIGCURRENCY mutex """
 
-    #  optionalMutexes: Sequence[Sequence[str]] = [
-    optionalMutexes = [["currency", "origcurrency"]]
+    optionalMutexes: Sequence[Sequence[str]] = [["currency", "origcurrency"]]
 
     @property
     def curtype(self):

@@ -23,7 +23,7 @@ __all__ = ["Aggregate", "SubAggregate", "Unsupported", "ElementList"]
 
 # stdlib imports
 import xml.etree.ElementTree as ET
-from collections import OrderedDict, ChainMap
+from collections import ChainMap
 from copy import deepcopy
 from typing import Any, List, Dict, Tuple, Callable, Sequence, Mapping, Union, Optional
 import logging
@@ -55,8 +55,7 @@ class Aggregate(list):
     # Validation constraints used by ``validate_args()``.
 
     # Aggregate MAY have at most child from  `optionalMutexes``
-    optionalMutexes: List[List[str]] = []
-    #  optionalMutexes: Sequence[Sequence[str]] = []
+    optionalMutexes: Sequence[Sequence[str]] = []
 
     # Aggregate MUST contain exactly one child from ``requiredMutexes``
     requiredMutexes: Sequence[Sequence[str]] = []
@@ -316,74 +315,73 @@ class Aggregate(list):
         return ChainMap(*[base.__dict__ for base in cls.mro()])
 
     @classmethod
-    def _ordered_attrs(cls, predicate: Callable) -> "OrderedDict[str, Any]":
+    def _filter_attrs(cls, predicate: Callable) -> Mapping[str, Any]:
         """
         Filter class attributes for items matching the given predicate.
 
-        Return them as an OrderedDict in the same order they're declared in the
+        Return them as a mapping in the same order they're declared in the
         class definition.
 
         N.B. predicate tests *values* of cls._superdict
              (not keys i.e. attribute names)
         """
-        return OrderedDict([(k, v) for k, v in cls._superdict.items() if predicate(v)])
+        return {k: v for k, v in cls._superdict.items() if predicate(v)}
 
     @classproperty
     @classmethod
-    def spec(cls) -> "OrderedDict[str, Union[Element, Unsupported]]":
+    def spec(cls) -> Mapping[str, Union[Element, "Unsupported"]]:
         """
-        OrderedDict of all class attributes that are Elements/SubAggregates/Unsupported.
+        Mapping of all class attributes that are Elements/SubAggregates/Unsupported.
 
         N.B. SubAggregate is a subclass of Element.
         """
-        return cls._ordered_attrs(lambda v: isinstance(v, (Element, Unsupported)))
+        return cls._filter_attrs(lambda v: isinstance(v, (Element, Unsupported)))
 
     @classproperty
     @classmethod
-    def spec_no_listitems(cls) -> "OrderedDict[str, Union[Element, Unsupported]]":
+    def spec_no_listitems(cls) -> Mapping[str, Union[Element, "Unsupported"]]:
         """
-        OrderedDict of all class attributes that are
+        Mapping of all class attributes that are
         Elements/SubAggregates/Unsupported, excluding ListItems/ListElements
         """
-        return cls._ordered_attrs(
+        return cls._filter_attrs(
             lambda v: isinstance(v, (Element, Unsupported))
             and not isinstance(v, (ListItem, ListElement))
         )
 
     @classproperty
     @classmethod
-    def elements(cls) -> "OrderedDict[str, Element]":
+    def elements(cls) -> Mapping[str, Element]:
         """
-        OrderedDict of all class attributes that are Elements but not
-        SubAggregates.
+        Mapping of all class attributes that are Elements but not SubAggregates.
         """
-        return cls._ordered_attrs(
+        return cls._filter_attrs(
             lambda v: isinstance(v, Element) and not isinstance(v, SubAggregate)
         )
 
     @classproperty
     @classmethod
-    def subaggregates(cls) -> "OrderedDict[str, SubAggregate]":
+    def subaggregates(cls) -> Mapping[str, "SubAggregate"]:
         """
-        OrderedDict of all class attributes that are SubAggregates.
+        Mapping of all class attributes that are SubAggregates.
         """
-        return cls._ordered_attrs(lambda v: isinstance(v, SubAggregate))
+        return cls._filter_attrs(lambda v: isinstance(v, SubAggregate))
 
     @classproperty
     @classmethod
-    def unsupported(cls) -> "OrderedDict[str, Unsupported]":
+    def unsupported(cls) -> Mapping[str, "Unsupported"]:
         """
-        OrderedDict of all class attributes that are Unsupported.
+        Mapping of all class attributes that are Unsupported.
         """
-        return cls._ordered_attrs(lambda v: isinstance(v, Unsupported))
+        return cls._filter_attrs(lambda v: isinstance(v, Unsupported))
 
     @classproperty
     @classmethod
-    def listitems(cls) -> "OrderedDict[str, ListItem]":
+    def listitems(cls) -> Mapping[str, ListItem]:
         """
-        OrderedDict of all class attributes that are ListItems.
+        Mapping of all class attributes that are ListItems.
         """
-        return cls._ordered_attrs(lambda v: isinstance(v, ListItem))
+        return cls._filter_attrs(lambda v: isinstance(v, ListItem))
 
     @property
     def _spec_repr(self) -> Sequence[Tuple[str, Any]]:
@@ -479,11 +477,11 @@ class ElementList(Aggregate):
 
     @classproperty
     @classmethod
-    def listitems(cls) -> "OrderedDict[str, ListElement]":
+    def listitems(cls) -> Mapping[str, ListElement]:
         """
         ElementList.listitems returns ListElements instead of ListItems
         """
-        return cls._ordered_attrs(lambda v: isinstance(v, ListElement))
+        return cls._filter_attrs(lambda v: isinstance(v, ListElement))
 
     def _apply_args(self, *args) -> None:
         # Interpret positional args as contained list items (of variable #)
