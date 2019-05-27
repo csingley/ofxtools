@@ -303,9 +303,9 @@ class AggregateTestCase(unittest.TestCase):
     def testUngroom(self):
         pass
 
-    def testOrderedAttrs(self):
+    def testFilterAttrs(self):
         """
-        models.base._ordered_attrs() takes a predicate, and returns OrderedDict
+        models.base._filter_attrs() takes a predicate, and returns mapping
         of matching items from cls.__dict__.
 
         N.B. predicate tests *values* of cls.__dict__
@@ -316,8 +316,7 @@ class AggregateTestCase(unittest.TestCase):
             return v.__class__.__name__.startswith("S")
 
         # Matches are returned in the order of the class definition
-        matches = TESTAGGREGATE._ordered_attrs(predicate)
-        self.assertIsInstance(matches, OrderedDict)
+        matches = TESTAGGREGATE._filter_attrs(predicate)
         self.assertEqual(len(matches), 2)
         (name0, instance0), (name1, instance1) = matches.items()
 
@@ -333,100 +332,103 @@ class AggregateTestCase(unittest.TestCase):
 
     def testSpec(self):
         spec = TESTAGGREGATE.spec
-        self.assertIsInstance(spec, OrderedDict)
         self.assertEqual(len(spec), 11)
 
-        name, instance = spec.popitem(last=False)
-        self.assertEqual(name, "metadata")
-        self.assertIsInstance(instance, String)
+        [
+            (name0, instance0),
+            (name1, instance1),
+            (name2, instance2),
+            (name3, instance3),
+            (name4, instance4),
+            (name5, instance5),
+            (name6, instance6),
+            (name7, instance7),
+            (name8, instance8),
+            (name9, instance9),
+            (name10, instance10),
+        ] = spec.items()
 
-        name, instance = spec.popitem(last=False)
-        self.assertEqual(name, "option00")
-        self.assertIsInstance(instance, Bool)
+        self.assertEqual(name0, "metadata")
+        self.assertIsInstance(instance0, String)
 
-        name, instance = spec.popitem(last=False)
-        self.assertEqual(name, "option01")
-        self.assertIsInstance(instance, Bool)
+        self.assertEqual(name1, "option00")
+        self.assertIsInstance(instance1, Bool)
 
-        name, instance = spec.popitem(last=False)
-        self.assertEqual(name, "option10")
-        self.assertIsInstance(instance, Bool)
+        self.assertEqual(name2, "option01")
+        self.assertIsInstance(instance2, Bool)
 
-        name, instance = spec.popitem(last=False)
-        self.assertEqual(name, "option11")
-        self.assertIsInstance(instance, Bool)
+        self.assertEqual(name3, "option10")
+        self.assertIsInstance(instance3, Bool)
 
-        name, instance = spec.popitem(last=False)
-        self.assertEqual(name, "req00")
-        self.assertIsInstance(instance, Bool)
+        self.assertEqual(name4, "option11")
+        self.assertIsInstance(instance4, Bool)
 
-        name, instance = spec.popitem(last=False)
-        self.assertEqual(name, "req01")
-        self.assertIsInstance(instance, Bool)
+        self.assertEqual(name5, "req00")
+        self.assertIsInstance(instance5, Bool)
 
-        name, instance = spec.popitem(last=False)
-        self.assertEqual(name, "req10")
-        self.assertIsInstance(instance, Bool)
+        self.assertEqual(name6, "req01")
+        self.assertIsInstance(instance6, Bool)
 
-        name, instance = spec.popitem(last=False)
-        self.assertEqual(name, "req11")
-        self.assertIsInstance(instance, Bool)
+        self.assertEqual(name7, "req10")
+        self.assertIsInstance(instance7, Bool)
 
-        name, instance = spec.popitem(last=False)
-        self.assertEqual(name, "testsubaggregate")
+        self.assertEqual(name8, "req11")
+        self.assertIsInstance(instance8, Bool)
+
+        self.assertEqual(name9, "testsubaggregate")
         # N.B. on the class TestAggregate, 'sub' is an instance of SubAggregate
         # but on instances of the class, it's reeplaced by TestSubaggregate
         # (to which it refers)
-        self.assertIsInstance(instance, SubAggregate)
+        self.assertIsInstance(instance9, SubAggregate)
 
-        name, instance = spec.popitem(last=False)
-        self.assertEqual(name, "dontuse")
-        self.assertIsInstance(instance, Unsupported)
+        self.assertEqual(name10, "dontuse")
+        self.assertIsInstance(instance10, Unsupported)
 
     def testElements(self):
         elements = TESTAGGREGATE.elements
-        self.assertIsInstance(elements, OrderedDict)
         self.assertEqual(len(elements), 9)
 
-        name, instance = elements.popitem(last=False)
-        self.assertEqual(name, "metadata")
-        self.assertIsInstance(instance, String)
+        [
+            (name0, instance0),
+            (name1, instance1),
+            (name2, instance2),
+            (name3, instance3),
+            (name4, instance4),
+            (name5, instance5),
+            (name6, instance6),
+            (name7, instance7),
+            (name8, instance8),
+        ] = elements.items()
 
-        name, instance = elements.popitem(last=False)
-        self.assertEqual(name, "option00")
-        self.assertIsInstance(instance, Bool)
+        self.assertEqual(name0, "metadata")
+        self.assertIsInstance(instance0, String)
 
-        name, instance = elements.popitem(last=False)
-        self.assertEqual(name, "option01")
-        self.assertIsInstance(instance, Bool)
+        self.assertEqual(name1, "option00")
+        self.assertIsInstance(instance1, Bool)
 
-        name, instance = elements.popitem(last=False)
-        self.assertEqual(name, "option10")
-        self.assertIsInstance(instance, Bool)
+        self.assertEqual(name2, "option01")
+        self.assertIsInstance(instance2, Bool)
 
-        name, instance = elements.popitem(last=False)
-        self.assertEqual(name, "option11")
-        self.assertIsInstance(instance, Bool)
+        self.assertEqual(name3, "option10")
+        self.assertIsInstance(instance3, Bool)
 
-        name, instance = elements.popitem(last=False)
-        self.assertEqual(name, "req00")
-        self.assertIsInstance(instance, Bool)
+        self.assertEqual(name4, "option11")
+        self.assertIsInstance(instance4, Bool)
 
-        name, instance = elements.popitem(last=False)
-        self.assertEqual(name, "req01")
-        self.assertIsInstance(instance, Bool)
+        self.assertEqual(name5, "req00")
+        self.assertIsInstance(instance5, Bool)
 
-        name, instance = elements.popitem(last=False)
-        self.assertEqual(name, "req10")
-        self.assertIsInstance(instance, Bool)
+        self.assertEqual(name6, "req01")
+        self.assertIsInstance(instance6, Bool)
 
-        name, instance = elements.popitem(last=False)
-        self.assertEqual(name, "req11")
-        self.assertIsInstance(instance, Bool)
+        self.assertEqual(name7, "req10")
+        self.assertIsInstance(instance7, Bool)
+
+        self.assertEqual(name8, "req11")
+        self.assertIsInstance(instance8, Bool)
 
     def testSubaggregates(self):
         subaggs = TESTAGGREGATE.subaggregates
-        self.assertIsInstance(subaggs, OrderedDict)
         self.assertEqual(len(subaggs), 1)
         name, instance = subaggs.popitem()
         self.assertEqual(name, "testsubaggregate")
@@ -437,7 +439,6 @@ class AggregateTestCase(unittest.TestCase):
 
     def testUnsupported(self):
         unsupported = TESTAGGREGATE.unsupported
-        self.assertIsInstance(unsupported, OrderedDict)
         self.assertEqual(len(unsupported), 1)
         name, instance = unsupported.popitem()
         self.assertEqual(name, "dontuse")
