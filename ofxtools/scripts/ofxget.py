@@ -1457,14 +1457,14 @@ def save_passwd(args: Mapping, password: str) -> None:
         msg = "Dry run; won't store password"
         warnings.warn(msg, category=SyntaxWarning)
         return
-    if not HAS_KEYRING:
-        msg = "Can't find python-keyring pacakge; can't save password"
-        logger.error(msg)
-        raise RuntimeError(msg)
     if not password:
         msg = "Empty password; won't store"
         warnings.warn(msg, category=SyntaxWarning)
         return
+    if not HAS_KEYRING:
+        msg = "Can't find python-keyring pacakge; can't save password"
+        logger.error(msg)
+        raise RuntimeError(msg)
 
     server = args["server"]
     logger.debug("Found python-keyring; storing password for {server}")

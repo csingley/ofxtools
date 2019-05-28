@@ -121,7 +121,9 @@ class CliTestCase(unittest.TestCase):
                 )
 
                 mock_scan_prof.return_value = (ofxv1, ofxv2, signoninfo)
-                result = ofxget.scan_profile(self.args)
+                args = self.args
+                args["dryrun"] = False
+                result = ofxget.scan_profile(args)
                 self.assertIsNone(result, None)
 
                 args, kwargs = mock_scan_prof.call_args
@@ -149,7 +151,9 @@ class CliTestCase(unittest.TestCase):
         with patch("ofxtools.scripts.ofxget._scan_profile") as mock_scan_prof:
             with patch("builtins.print") as mock_print:
                 mock_scan_prof.return_value = ({"versions": []}, {"versions": []}, {})
-                result = ofxget.scan_profile(self.args)
+                args = self.args
+                args["dryrun"] = False
+                result = ofxget.scan_profile(args)
                 self.assertIsNone(result, None)
 
                 args, kwargs = mock_scan_prof.call_args
@@ -206,7 +210,7 @@ class CliTestCase(unittest.TestCase):
 
             ARGS = ChainMap({"write": True, "dryrun": False}, self.args)
 
-            with patch("builtins.print") as mock_print:
+            with patch("builtins.print"):
                 result = ofxget.scan_profile(ARGS)
 
             self.assertEqual(result, None)
@@ -224,9 +228,25 @@ class CliTestCase(unittest.TestCase):
             args = args[0]
 
             ARGS["version"] = 203  # best version
-            #  self.assertEqual(dict(args), dict(ARGS))
             self.assertEqual(dict(args), dict(ARGS))
             self.assertEqual(len(kwargs), 0)
+
+    def testInitClient(self):
+        args = self.args
+        client = ofxget.init_client(args)
+        self.assertIsInstance(client, OFXClient)
+        self.assertEqual(str(client.version), args["version"])
+        for arg in [
+            "url",
+            "org",
+            "fid",
+            "appid",
+            "appver",
+            "language",
+            "bankid",
+            "brokerid",
+        ]:
+            self.assertEqual(getattr(client, arg), args[arg])
 
     def testRequestProfile(self):
         with patch("ofxtools.Client.OFXClient.request_profile") as fake_rqprof:
@@ -640,22 +660,44 @@ class CliTestCase(unittest.TestCase):
                     self.assertEqual(args[0], "th-th-th-that's all folks!")
                     self.assertEqual(len(kwargs), 0)
 
-    def testInitClient(self):
+    def testRequestTax1099(self):
         args = self.args
-        client = ofxget.init_client(args)
-        self.assertIsInstance(client, OFXClient)
-        self.assertEqual(str(client.version), args["version"])
-        for arg in [
-            "url",
-            "org",
-            "fid",
-            "appid",
-            "appver",
-            "language",
-            "bankid",
-            "brokerid",
-        ]:
-            self.assertEqual(getattr(client, arg), args[arg])
+        args["dryrun"] = False
+        args["years"] = [2017, 2018]
+        args["acctnum"] = "12345"
+        args["recid"] = "67890"
+
+        with patch("getpass.getpass") as fake_getpass:
+            with patch("builtins.print") as mock_print:
+                fake_getpass.return_value = "t0ps3kr1t"
+                with patch(
+                    "ofxtools.Client.OFXClient.request_tax1099"
+                ) as fake_rq_tax1099:
+                    fake_rq_tax1099.return_value = BytesIO(
+                        b"th-th-th-that's all folks!"
+                    )
+                    output = ofxget.request_tax1099(args)
+
+                    self.assertEqual(output, None)
+
+                    args, kwargs = fake_rq_tax1099.call_args
+                    password, *years = args
+                    self.assertEqual(password, "t0ps3kr1t")
+                    self.assertEqual(years, [2017, 2018])
+                    self.assertEqual(
+                        kwargs,
+                        {
+                            "acctnum": "12345",
+                            "recid": "67890",
+                            "dryrun": False,
+                            "verify_ssl": True,
+                        },
+                    )
+
+                    args, kwargs = mock_print.call_args
+                    self.assertEqual(len(args), 1)
+                    self.assertEqual(args[0], "th-th-th-that's all folks!")
+                    self.assertEqual(len(kwargs), 0)
 
 
 ###############################################################################
@@ -1293,7 +1335,28 @@ class ExtractAcctInfosTestCase(unittest.TestCase):
 # CLI UTILITIES
 ###############################################################################
 class SavePasswdTestCase(unittest.TestCase):
-    pass
+    def testSavePasswdDryRun(self):
+        with self.assertWarns(SyntaxWarning):
+            ofxget.save_passwd({"dryrun": True}, "t0ps3kr1t")
+
+    def testSavePasswdEmptyPassword(self):
+        with self.assertWarns(SyntaxWarning):
+            ofxget.save_passwd({"dryrun": False}, "")
+
+    def testSavePasswdNoKeyring(self):
+        HAS_KEYRING = ofxget.HAS_KEYRING
+        try:
+            ofxget.HAS_KEYRING = False
+            with self.assertRaises(RuntimeError):
+                ofxget.save_passwd({"dryrun": False}, "t0ps3kr1t")
+        finally:
+            ofxget.HAS_KEYRING = HAS_KEYRING
+
+    def testSavePasswdSuccess(self):
+        assert ofxget.HAS_KEYRING is True
+        with patch("keyring.set_password") as set_password:
+            ofxget.save_passwd({"dryrun": False, "server": "myserver"}, "t0ps3kr1t")
+        set_password.assert_called_once_with("ofxtools", "myserver", "t0ps3kr1t")
 
 
 if __name__ == "__main__":

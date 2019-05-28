@@ -12,3 +12,6 @@ ipdbplugin
 coveralls
 mypy
 black
+
+# optional dependencies
+keyring
