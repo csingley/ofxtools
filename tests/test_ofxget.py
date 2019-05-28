@@ -3,7 +3,7 @@
 
 # stdlib imports
 import unittest
-from unittest.mock import patch, DEFAULT
+from unittest.mock import Mock, patch, DEFAULT
 from datetime import datetime
 from io import BytesIO
 import argparse
@@ -46,11 +46,10 @@ class MakeArgParserTestCase(unittest.TestCase):
         argparser = ofxget.make_argparser()
         self.assertGreater(len(argparser._actions), 0)
 
-
-###############################################################################
-# CLI METHODS
-###############################################################################
-class CliTestCase(unittest.TestCase):
+    ###############################################################################
+    # CLI METHODS
+    ###############################################################################
+    #  class CliTestCase(unittest.TestCase):
     @property
     def args(self):
         return {
@@ -569,6 +568,29 @@ class CliTestCase(unittest.TestCase):
                 self.assertEqual(len(args), 1)
                 self.assertEqual(args[0], "th-th-th-that's all folks!")
                 self.assertEqual(len(kwargs), 0)
+
+    def testRequestStmtEmpty(self):
+        args = self.args
+        args["dryrun"] = False
+        for accttype in (
+            "checking",
+            "savings",
+            "moneymrkt",
+            "creditline",
+            "creditcard",
+            "investment",
+        ):
+            args[accttype] = []
+
+        with patch("getpass.getpass") as fake_getpass:
+            with patch("builtins.print"):
+                fake_getpass.return_value = "t0ps3kr1t"
+                with patch(
+                    "ofxtools.Client.OFXClient.request_statements"
+                ) as fake_rq_stmt:
+                    fake_rq_stmt.return_value = BytesIO(b"th-th-th-that's all folks!")
+                    with self.assertWarns(SyntaxWarning):
+                        ofxget.request_stmt(args)
 
     def testRequestStmtend(self):
         args = self.args
@@ -1334,6 +1356,44 @@ class ExtractAcctInfosTestCase(unittest.TestCase):
 ###############################################################################
 # CLI UTILITIES
 ###############################################################################
+class FiIndexTestCase(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        parser = ConfigParser()
+        parser["NAMES"] = {"0": "0th Server", "1": "1st Server"}
+        parser["server0"] = {"ofxhome": "0", "url": "https://ofx.test.com"}
+        parser["server1"] = {"ofxhome": "1", "url": "https://ofx.test.com"}
+
+        cls.USERCFG = parser
+
+    def testFiIndex(self):
+        with patch("ofxtools.scripts.ofxget.USERCFG", new=self.USERCFG):
+            servers = ofxget.fi_index()
+
+        self.assertEqual(
+            servers, [("0th Server", "server0", "0"), ("1st Server", "server1", "1")]
+        )
+
+    def testListFisNoServer(self):
+        with patch("ofxtools.scripts.ofxget.USERCFG", new=self.USERCFG):
+            with patch("pydoc.pager") as mock_pager:
+                ofxget.list_fis({"server": ""})
+
+        # FIXME
+
+    def testListFisWithUnknownServer(self):
+        with patch("ofxtools.scripts.ofxget.USERCFG", new=self.USERCFG):
+            with self.assertRaises(ValueError):
+                ofxget.list_fis({"server": "server2"})
+
+    def testListFisWithKnownServer(self):
+        with patch("ofxtools.scripts.ofxget.USERCFG", new=self.USERCFG):
+            with patch("builtins.print") as mock_print:
+                ofxget.list_fis({"server": "server0"})
+
+        # FIXME
+
+
 class SavePasswdTestCase(unittest.TestCase):
     def testSavePasswdDryRun(self):
         with self.assertWarns(SyntaxWarning):
@@ -1357,6 +1417,29 @@ class SavePasswdTestCase(unittest.TestCase):
         with patch("keyring.set_password") as set_password:
             ofxget.save_passwd({"dryrun": False, "server": "myserver"}, "t0ps3kr1t")
         set_password.assert_called_once_with("ofxtools", "myserver", "t0ps3kr1t")
+
+
+class MainTestCase(unittest.TestCase):
+    def testMain(self):
+        args = argparse.Namespace(verbose=1, request="list")
+        mock_parser = Mock()
+        mock_parser.parse_args.return_value = args
+
+        def _merge_config(*args):
+            return {"verbose": 1, "request": "list", "server": "server0"}
+
+        _USERCFG = ConfigParser()
+        _USERCFG["NAMES"] = {"0": "0th server"}
+        _USERCFG["server0"] = {"ofxhome": "0", "url": "https://ofx.test.com"}
+
+        with patch.multiple(
+            "ofxtools.scripts.ofxget",
+            make_argparser=mock_parser,
+            merge_config=_merge_config,
+            list_fis=DEFAULT,
+            USERCFG=_USERCFG,
+        ) as MOCKS:
+            ofxget.main()
 
 
 if __name__ == "__main__":

@@ -1174,7 +1174,6 @@ def _queue_scans(
                 close_elements=True,
                 timeout=timeout,
             )
-            #  futures[future] = (version, pretty, True)
             futures[future] = (
                 version,
                 {"pretty": pretty, "unclosedelements": not close},
