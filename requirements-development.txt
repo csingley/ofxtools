@@ -12,7 +12,3 @@ ipdbplugin
 coveralls
 mypy
 black
-
-# optional dependencies
-keyring
-dbus-python
