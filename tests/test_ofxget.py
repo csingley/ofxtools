@@ -1413,10 +1413,10 @@ class SavePasswdTestCase(unittest.TestCase):
             ofxget.HAS_KEYRING = HAS_KEYRING
 
     #  def testSavePasswdSuccess(self):
-        #  assert ofxget.HAS_KEYRING is True
-        #  with patch("keyring.set_password") as set_password:
-            #  ofxget.save_passwd({"dryrun": False, "server": "myserver"}, "t0ps3kr1t")
-        #  set_password.assert_called_once_with("ofxtools", "myserver", "t0ps3kr1t")
+    #  assert ofxget.HAS_KEYRING is True
+    #  with patch("keyring.set_password") as set_password:
+    #  ofxget.save_passwd({"dryrun": False, "server": "myserver"}, "t0ps3kr1t")
+    #  set_password.assert_called_once_with("ofxtools", "myserver", "t0ps3kr1t")
 
 
 class MainTestCase(unittest.TestCase):
