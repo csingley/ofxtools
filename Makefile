@@ -3,7 +3,7 @@ test:
 	black --check .
 	mypy ofxtools
 	mypy tests
-	python `which nosetests` -dsv --with-coverage --cover-package ofxtools tests/*.py
+	python `which nosetests` -dsv --nologcapture --with-coverage --cover-package ofxtools tests/*.py
 
 clean:
 	find -regex '.*\.pyc' -exec rm {} \;

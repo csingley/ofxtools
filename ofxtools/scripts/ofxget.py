@@ -458,7 +458,7 @@ def scan_profile(args: ArgsType) -> None:
     scan_results = _scan_profile(url, org, fid)
 
     v1, v2, signoninfo = scan_results
-    if (not v2["versions"]) and (not v1["versions"]):
+    if (not v2.get("versions", None)) and (not v1.get("versions", None)):
         msg = f"Scan found no working formats for {url}"
         print(msg)
     else:
@@ -1097,7 +1097,7 @@ def _scan_profile(
     logger.info(
         (
             f"Scanning url={url} org={org} fid={fid} "
-            "max_workers={max_workers} timeout={timeout}"
+            f"max_workers={max_workers} timeout={timeout}"
         )
     )
     client = OFXClient(url, org=org, fid=fid)
@@ -1124,7 +1124,7 @@ def _scan_profile(
             signoninfo = signoninfo_
 
         logger.debug(
-            (f"OFX connection success, version={version}, " f"format={format}")
+            (f"OFX connection success, version={version}, format={format}")
         )
         success_params[version].append(format)
 
@@ -1134,7 +1134,7 @@ def _scan_profile(
     ]
 
     # V2 always has closing tags for elements; just report prettyprint
-    for fmt in v2_result["formats"]:
+    for fmt in v2_result.get("formats", []):
         assert not fmt["unclosedelements"]
         del fmt["unclosedelements"]
 
@@ -1211,7 +1211,6 @@ def _read_scan_response(
 
             # Assume that all the SIGNONINFOs have the same content
             valid = True
-            #  info = signoninfos[0]
             info = next(signoninfos)
             bool_attrs = (
                 "chgpinfirst",
