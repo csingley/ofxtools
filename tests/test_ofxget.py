@@ -97,7 +97,10 @@ class MakeArgParserTestCase(unittest.TestCase):
                     ],
                 }
 
-                ofxv2 = {"versions": [203], "formats": [{"pretty": False}, {"pretty": True}]}
+                ofxv2 = {
+                    "versions": [203],
+                    "formats": [{"pretty": False}, {"pretty": True}],
+                }
 
                 signoninfo = {
                     "chgpinfirst": False,
@@ -171,7 +174,10 @@ class MakeArgParserTestCase(unittest.TestCase):
                 ],
             }
 
-            ofxv2 = {"versions": [203], "formats": [{"pretty": False}, {"pretty": True}]}
+            ofxv2 = {
+                "versions": [203],
+                "formats": [{"pretty": False}, {"pretty": True}],
+            }
 
             signoninfo = {
                 "chgpinfirst": False,
