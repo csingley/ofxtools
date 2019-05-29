@@ -1123,9 +1123,7 @@ def _scan_profile(
         if not signoninfo and signoninfo_:
             signoninfo = signoninfo_
 
-        logger.debug(
-            (f"OFX connection success, version={version}, format={format}")
-        )
+        logger.debug((f"OFX connection success, version={version}, format={format}"))
         success_params[version].append(format)
 
     v1_result, v2_result = [
