@@ -10,7 +10,6 @@ import argparse
 import collections
 import urllib
 from configparser import ConfigParser
-from collections import ChainMap
 import xml.etree.ElementTree as ET
 import concurrent.futures
 from urllib.error import HTTPError, URLError
@@ -90,34 +89,22 @@ class MakeArgParserTestCase(unittest.TestCase):
     def testScanProfile(self):
         with patch("ofxtools.scripts.ofxget._scan_profile") as mock_scan_prof:
             with patch("builtins.print") as mock_print:
-                ofxv1 = collections.OrderedDict(
-                    [
-                        ("versions", [102, 103]),
-                        (
-                            "formats",
-                            [
-                                {"pretty": False, "unclosedelements": True},
-                                {"pretty": True, "unclosedelements": False},
-                            ],
-                        ),
-                    ]
-                )
+                ofxv1 = {
+                    "versions": [102, 103],
+                    "formats": [
+                        {"pretty": False, "unclosedelements": True},
+                        {"pretty": True, "unclosedelements": False},
+                    ],
+                }
 
-                ofxv2 = collections.OrderedDict(
-                    [
-                        ("versions", [203]),
-                        ("formats", [{"pretty": False}, {"pretty": True}]),
-                    ]
-                )
+                ofxv2 = {"versions": [203], "formats": [{"pretty": False}, {"pretty": True}]}
 
-                signoninfo = collections.OrderedDict(
-                    [
-                        ("chgpinfirst", False),
-                        ("clientuidreq", False),
-                        ("authtokenfirst", False),
-                        ("mfachallengefirst", False),
-                    ]
-                )
+                signoninfo = {
+                    "chgpinfirst": False,
+                    "clientuidreq": False,
+                    "authtokenfirst": False,
+                    "mfachallengefirst": False,
+                }
 
                 mock_scan_prof.return_value = (ofxv1, ofxv2, signoninfo)
                 args = self.args
@@ -176,38 +163,26 @@ class MakeArgParserTestCase(unittest.TestCase):
             mock_scan_prof = MOCKS["_scan_profile"]
             mock_write_config = MOCKS["write_config"]
 
-            ofxv1 = collections.OrderedDict(
-                [
-                    ("versions", [102, 103]),
-                    (
-                        "formats",
-                        [
-                            {"pretty": False, "unclosedelements": True},
-                            {"pretty": True, "unclosedelements": False},
-                        ],
-                    ),
-                ]
-            )
+            ofxv1 = {
+                "versions": [102, 103],
+                "formats": [
+                    {"pretty": False, "unclosedelements": True},
+                    {"pretty": True, "unclosedelements": False},
+                ],
+            }
 
-            ofxv2 = collections.OrderedDict(
-                [
-                    ("versions", [203]),
-                    ("formats", [{"pretty": False}, {"pretty": True}]),
-                ]
-            )
+            ofxv2 = {"versions": [203], "formats": [{"pretty": False}, {"pretty": True}]}
 
-            signoninfo = collections.OrderedDict(
-                [
-                    ("chgpinfirst", False),
-                    ("clientuidreq", False),
-                    ("authtokenfirst", False),
-                    ("mfachallengefirst", False),
-                ]
-            )
+            signoninfo = {
+                "chgpinfirst": False,
+                "clientuidreq": False,
+                "authtokenfirst": False,
+                "mfachallengefirst": False,
+            }
 
             mock_scan_prof.return_value = (ofxv1, ofxv2, signoninfo)
 
-            ARGS = ChainMap({"write": True, "dryrun": False}, self.args)
+            ARGS = collections.ChainMap({"write": True, "dryrun": False}, self.args)
 
             with patch("builtins.print"):
                 result = ofxget.scan_profile(ARGS)
@@ -326,7 +301,7 @@ class MakeArgParserTestCase(unittest.TestCase):
         """ Unit test for ofxtools.scripts.ofxget._merge_acctinfo() """
         cli = {"dryrun": True}
         config = {"pretty": False}
-        args = ChainMap(cli, config)
+        args = collections.ChainMap(cli, config)
 
         markup = OFXClient("").serialize(ExtractAcctInfosTestCase.ofx)
 
@@ -1056,49 +1031,37 @@ class ScanProfileTestCase(unittest.TestCase):
             mock_profrq.side_effect = self.prof_result
             results = ofxget._scan_profile(None, None, None)
 
-        ofxv1 = collections.OrderedDict(
-            [
-                ("versions", [102, 103]),
-                (
-                    "formats",
-                    [
-                        collections.OrderedDict(
-                            [("pretty", False), ("unclosedelements", True)]
-                        ),
-                        collections.OrderedDict(
-                            [("pretty", True), ("unclosedelements", False)]
-                        ),
-                    ],
-                ),
-            ]
-        )
+        ofxv1 = {
+            "versions": [102, 103],
+            "formats": [
+                {"pretty": False, "unclosedelements": True},
+                {"pretty": True, "unclosedelements": False},
+            ],
+        }
 
-        ofxv2 = collections.OrderedDict(
-            [
-                ("versions", [203]),
-                (
-                    "formats",
-                    [
-                        collections.OrderedDict([("pretty", False)]),
-                        collections.OrderedDict([("pretty", True)]),
-                    ],
-                ),
-            ]
-        )
+        ofxv2 = {"versions": [203], "formats": [{"pretty": False}, {"pretty": True}]}
 
-        signoninfo = collections.OrderedDict(
-            [
-                ("chgpinfirst", False),
-                ("clientuidreq", False),
-                ("authtokenfirst", False),
-                ("mfachallengefirst", False),
-            ]
-        )
+        signoninfo = {
+            "chgpinfirst": False,
+            "clientuidreq": False,
+            "authtokenfirst": False,
+            "mfachallengefirst": False,
+        }
 
         self.assertEqual(len(results), 3)
         self.assertEqual(results[0], ofxv1)
         self.assertEqual(results[1], ofxv2)
         self.assertEqual(results[2], signoninfo)
+
+    def test_scanProfileNoResult(self):
+        with patch("ofxtools.Client.OFXClient.request_profile") as mock_profrq:
+            mock_profrq.side_effect = urllib.error.URLError(None, None)
+            results = ofxget._scan_profile(None, None, None)
+
+        self.assertEqual(len(results), 3)
+        self.assertEqual(results[0], {"versions": [], "formats": []})
+        self.assertEqual(results[1], {"versions": [], "formats": []})
+        self.assertEqual(results[2], {})
 
     def testQueueScanResponse(self):
         """ Test ofxget._queue_scans() """
@@ -1220,9 +1183,9 @@ class ReadScanResponseTestCase(unittest.TestCase):
 class CollateScanResultsTestCase(unittest.TestCase):
     def testCollateScanResults(self):
         formats_in = [
-            collections.OrderedDict([("pretty", True), ("unclosedelements", True)]),
-            collections.OrderedDict([("pretty", False), ("unclosedelements", True)]),
-            collections.OrderedDict([("pretty", False), ("unclosedelements", False)]),
+            {"pretty": True, "unclosedelements": True},
+            {"pretty": False, "unclosedelements": True},
+            {"pretty": False, "unclosedelements": False},
         ]
 
         v1 = [(160, formats_in), (102, formats_in), (103, formats_in)]
@@ -1233,13 +1196,9 @@ class CollateScanResultsTestCase(unittest.TestCase):
         self.assertEqual(
             v1_result["formats"],
             [
-                collections.OrderedDict(
-                    [("pretty", False), ("unclosedelements", False)]
-                ),
-                collections.OrderedDict(
-                    [("pretty", False), ("unclosedelements", True)]
-                ),
-                collections.OrderedDict([("pretty", True), ("unclosedelements", True)]),
+                {"pretty": False, "unclosedelements": False},
+                {"pretty": False, "unclosedelements": True},
+                {"pretty": True, "unclosedelements": True},
             ],
         )
 

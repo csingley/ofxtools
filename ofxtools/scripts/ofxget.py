@@ -458,7 +458,7 @@ def scan_profile(args: ArgsType) -> None:
     scan_results = _scan_profile(url, org, fid)
 
     v1, v2, signoninfo = scan_results
-    if (not v2.get("versions", None)) and (not v1.get("versions", None)):
+    if (not v2["versions"]) and (not v1["versions"]):
         msg = f"Scan found no working formats for {url}"
         print(msg)
     else:
@@ -1132,7 +1132,7 @@ def _scan_profile(
     ]
 
     # V2 always has closing tags for elements; just report prettyprint
-    for fmt in v2_result.get("formats", []):
+    for fmt in v2_result["formats"]:
         assert not fmt["unclosedelements"]
         del fmt["unclosedelements"]
 
@@ -1254,7 +1254,7 @@ def collate_scan_results(scan_results: Iterable[ScanMetadata]) -> ScanResult:
     """
     results_ = list(scan_results)
     if not results_:
-        return {}
+        return {"versions": [], "formats": []}
     versions, formats = zip(*results_)
 
     # Assumption: the same markup formatting requirements apply to all
