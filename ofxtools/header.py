@@ -75,8 +75,7 @@ class OFXHeaderBase:
         """
         headermatch = cls.regex.search(rawheader)
         if not headermatch:
-            msg = "OFX header is malformed:\n{}".format(rawheader)
-            raise OFXHeaderError(msg)
+            raise OFXHeaderError(f"OFX header is malformed:\n{rawheader}")
         headerattrs = headermatch.groupdict()
         headerattrs = {k.lower(): v for k, v in headerattrs.items()}
         header = cls(**headerattrs)
@@ -150,8 +149,7 @@ class OFXHeaderV1(OFXHeaderBase):
             self.oldfileuid = oldfileuid or "NONE"
             self.newfileuid = newfileuid or "NONE"
         except ValueError as err:
-            msg = "Invalid OFX header - {}"
-            raise OFXHeaderError(msg.format(err.args[0]))
+            raise OFXHeaderError(f"Invalid OFX header - {err.args[0]}")
 
     def __str__(self) -> str:
         # Flat text header
@@ -210,9 +208,8 @@ class OFXHeaderV2(OFXHeaderBase):
             self.security = security or "NONE"
             self.oldfileuid = oldfileuid or "NONE"
             self.newfileuid = newfileuid or "NONE"
-        except ValueError as e:
-            msg = "Invalid OFX header - {}"
-            raise OFXHeaderError(msg.format(e.args[0]))
+        except ValueError as err:
+            raise OFXHeaderError(f"Invalid OFX header - {err.args[0]}")
 
     def __str__(self) -> str:
         # XML header
@@ -310,15 +307,13 @@ def make_header(
     try:
         major_version = int(version) // 100
     except ValueError:
-        msg = "Invalid OFX version {}"
-        raise OFXHeaderError(msg.format(version))
+        raise OFXHeaderError(f"Invalid OFX version {version}")
     try:
         HeaderClass = {1: OFXHeaderV1, 2: OFXHeaderV2}[major_version]
     except KeyError:
-        msg = "OFX version {} not version 1 or version 2"
-        raise OFXHeaderError(msg.format(version))
+        raise OFXHeaderError(f"OFX version {version} not version 1 or version 2")
     header = HeaderClass(
         version, security=security, oldfileuid=oldfileuid, newfileuid=newfileuid
     )
-    logger.debug("Made OFX header {header}")
+    logger.debug(f"Made OFX header {header}")
     return header
