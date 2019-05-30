@@ -193,11 +193,10 @@ class OFXClient:
 
     def __repr__(self) -> str:
         r = (
-            "{cls}(url='{url}', userid='{userid}', clientuid='{clientuid}', "
-            "org='{org}', fid='{fid}', version={version}, appid='{appid}', "
-            "appver='{appver}', language='{language}', "
-            "prettyprint='{prettyprint}', close_elements='{close_elements}', "
-            "bankid='{bankid}', brokerid='{brokerid}')"
+            "{cls}(url={url!r}, userid={userid!r}, clientuid={clientuid!r}, "
+            "org={org!r}, fid={fid!r}, version={version}, appid={appid!r}, "
+            "appver={appver!r}, language={language!r}, prettyprint={prettyprint}, "
+            "close_elements={close_elements}, bankid={bankid!r}, brokerid={brokerid!r})"
         )
         attrs = dict(vars(self.__class__))
         attrs.update(vars(self))
@@ -428,6 +427,12 @@ class OFXClient:
         if userid is None:
             userid = self.userid
 
+        # CLIENTUID was introduced to the spec in OFXv1.0.3
+        if self.version < 103:
+            clientuid = None
+        else:
+            clientuid = self.clientuid
+
         sonrq = SONRQ(
             dtclient=self.dtclient(),
             userid=userid,
@@ -437,7 +442,7 @@ class OFXClient:
             sesscookie=sesscookie,
             appid=self.appid,
             appver=self.appver,
-            clientuid=self.clientuid,
+            clientuid=clientuid,
         )
         return SIGNONMSGSRQV1(sonrq=sonrq)
 
