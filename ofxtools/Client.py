@@ -241,7 +241,6 @@ class OFXClient:
                 setattr(self, attr, value)
 
         if (not self.close_elements) and self.version >= 200:
-            msg =
             raise ValueError(f"OFX version {self.version} must close all tags")
 
     @classproperty
@@ -621,7 +620,9 @@ class OFXClient:
         # elements (which are optional per the spec).
         if close_elements is False:
             if version >= 200:
-                raise ValueError(f"OFX version {version} requires ending tags for elements")
+                raise ValueError(
+                    f"OFX version {version} requires ending tags for elements"
+                )
             body = utils.tostring_unclosed_elements(tree)
         else:
             # ``method="html"`` skips the initial XML declaration
