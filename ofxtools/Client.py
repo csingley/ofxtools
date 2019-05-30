@@ -241,8 +241,8 @@ class OFXClient:
                 setattr(self, attr, value)
 
         if (not self.close_elements) and self.version >= 200:
-            msg = "OFX version {} must close all tags"
-            raise ValueError(msg.format(self.version))
+            msg =
+            raise ValueError(f"OFX version {self.version} must close all tags")
 
     @classproperty
     @classmethod
@@ -546,10 +546,18 @@ class OFXClient:
         """
         Package complete OFX tree and POST to server.
 
-        Returns a file-like object that supports the file interface, and can
-        therefore be passed drectly to ``OFXTree.parse()``.
+        N.B. ``version`` / ``prettyprint`` / ``close_elements`` kwargs are
+        basically hacks for ``scripts.ofx.scan_profile()``; ordinarily you
+        should initialize the ``OFXClient`` with the proper version# and
+        formatting parameters, rather than overriding the client config here.
 
-        ofxget.scan_profile() overrides version/prettyprint/close_elements.
+        Optional kwargs:
+            ``version`` - OFX version to report in header
+            ``prettyprint`` - add newlines between tags and indentation
+            ``close_elements`` - add markup closing tags to leaf elements
+            ``dryrun`` - dump serialized request to stdout instead of POSTing
+            ``verify_ssl`` - perform SSL certificate check
+            ``timeout`` - HTTP connection timeout (in seconds)
         """
         request = self.serialize(
             ofx, version=version, prettyprint=prettyprint, close_elements=close_elements
@@ -571,7 +579,8 @@ class OFXClient:
         else:
             ssl_context = ssl.create_default_context()
 
-        timeout = timeout or socket._GLOBAL_DEFAULT_TIMEOUT
+        if timeout is None:
+            timeout = socket._GLOBAL_DEFAULT_TIMEOUT
         response = urllib_request.urlopen(req, timeout=timeout, context=ssl_context)
         return response
 
@@ -582,6 +591,20 @@ class OFXClient:
         prettyprint: Optional[bool] = None,
         close_elements: Optional[bool] = None,
     ) -> bytes:
+        """
+        Transform a ``models.OFX`` instance into bytestring representation
+        with OFX header prepended.
+
+        N.B. ``version`` / ``prettyprint`` / ``close_elements`` kwargs are
+        basically hacks for ``scripts.ofx.scan_profile()``; ordinarily you
+        should initialize the ``OFXClient`` with the proper version# and
+        formatting parameters, rather than overriding the client config here.
+
+        Optional kwargs:
+            ``version`` - OFX version to report in header
+            ``prettyprint`` - add newlines between tags and indentation
+            ``close_elements`` - add markup closing tags to leaf elements
+        """
         if version is None:
             version = self.version
         if prettyprint is None:
@@ -598,8 +621,7 @@ class OFXClient:
         # elements (which are optional per the spec).
         if close_elements is False:
             if version >= 200:
-                msg = "OFX version {} requires ending tags for elements"
-                raise ValueError(msg.format(version))
+                raise ValueError(f"OFX version {version} requires ending tags for elements")
             body = utils.tostring_unclosed_elements(tree)
         else:
             # ``method="html"`` skips the initial XML declaration
@@ -610,8 +632,7 @@ class OFXClient:
 
 @singledispatch
 def wrap_stmtrq(nt, rqs, client):
-    msg = "Not a *StmtRq/*StmtEndRq: {}".format(nt.__class__.__name__)
-    raise ValueError(msg)
+    raise ValueError(f"Not a *StmtRq/*StmtEndRq: {nt.__class__.__name__}")
 
 
 @wrap_stmtrq.register(StmtRq)
