@@ -61,6 +61,7 @@ from ofxtools.models.bank.msgsets import (
     WIREXFERMSGSET,
 )
 from ofxtools.models.bank.stmt import ACCTTYPES, STMTRS
+from ofxtools.models.bank.stmtend import STMTENDRS
 from ofxtools.models.invest.msgsets import (
     INVSTMTMSGSRQV1,
     INVSTMTMSGSRSV1,
@@ -604,9 +605,11 @@ class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     def testPropertyAliases(self):
         instance = Aggregate.from_etree(self.etree)
         self.assertIsInstance(instance.statements, list)
-        self.assertEqual(len(instance.statements), 2)
+        self.assertEqual(len(instance.statements), 4)
         self.assertIsInstance(instance.statements[0], STMTRS)
         self.assertIsInstance(instance.statements[1], STMTRS)
+        self.assertIsInstance(instance.statements[2], STMTENDRS)
+        self.assertIsInstance(instance.statements[3], STMTENDRS)
 
 
 class XferprofTestCase(unittest.TestCase, base.TestAggregate):
