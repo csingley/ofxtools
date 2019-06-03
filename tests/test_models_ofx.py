@@ -10,7 +10,7 @@ from datetime import datetime
 from ofxtools.models.base import Aggregate
 from ofxtools.models.ofx import OFX
 from ofxtools.models.signon import SONRS
-from ofxtools.models.bank import STMTRS, CCSTMTRS, CCSTMTENDRS
+from ofxtools.models.bank import STMTRS, CCSTMTRS, STMTENDRS, CCSTMTENDRS
 from ofxtools.models.invest import INVSTMTRS
 from ofxtools.utils import UTC, classproperty
 
@@ -168,7 +168,7 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
         return list(self.validSoup)[-1]
 
     def testUnsupported(self):
-        instance = Aggregate.from_etree(self.root)
+        instance = self.aggregate
         unsupported = list(instance.unsupported)
         self.assertEqual(unsupported, self.unsupported)
         for unsupp in unsupported:
@@ -176,21 +176,29 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
             self.assertIsNone(getattr(instance, unsupp))
 
     def testRepr(self):
+        #  instance = self.aggregate
         instance = Aggregate.from_etree(self.root)
         rep = repr(instance)
         rep_template = (
-            "<OFX fid='{fid}' org='{org}' dtserver='{dtserver}' "
+            "<OFX fid='{fid}' org='{org}' "
             "len(statements)={stmtlen} len(securities)={seclen}>"
         )
         # SIGNON values from test_models_signon.FiTestCase
         # DTSERVER from test_models_signon.SonrsTestCase
-        # 2 *STMTs each from bank/cc/invstmt (6 total)
-        # 5 securitites each from 2 SECLISTs in test_models_securities.SeclistTestCase
+        # *MSGSRSV1 test cases include:
+        #   2 STMTRS
+        #   2 STMTENDRS
+        #   1 CCSTMTRS
+        #   1 CCSTMTENDRS
+        #   2 INVSTMTRS
+        #
+        # 5 securitites each from 2 SECLISTs in
+        # test_models_securities.SeclistTestCase (10 total)
         rep_values = {
             "fid": "4705",
             "org": "IBLLC-US",
             "dtserver": datetime(2005, 10, 29, 10, 10, 3, tzinfo=UTC),
-            "stmtlen": 6,
+            "stmtlen": 8,
             "seclen": 10,
         }
         self.assertEqual(rep, rep_template.format(**rep_values))
@@ -199,17 +207,35 @@ class OfxTestCase(unittest.TestCase, base.TestAggregate):
         # Make sure class property aliases have been defined correctly
         instance = Aggregate.from_etree(self.root)
         self.assertIsInstance(instance, OFX)
-        self.assertIsInstance(instance.sonrs, SONRS)
+        self.assertIsInstance(instance.signon, SONRS)
         self.assertIsInstance(instance.securities, list)
         self.assertIsInstance(instance.statements, list)
-        # *MSGSRSV1 test cases include 2 of each *STMTRS
-        self.assertEqual(len(instance.statements), 6)
-        self.assertIsInstance(instance.statements[0], STMTRS)
-        self.assertIsInstance(instance.statements[1], STMTRS)
-        self.assertIsInstance(instance.statements[2], CCSTMTRS)
-        self.assertIsInstance(instance.statements[3], CCSTMTENDRS)
-        self.assertIsInstance(instance.statements[4], INVSTMTRS)
-        self.assertIsInstance(instance.statements[5], INVSTMTRS)
+        # *MSGSRSV1 test cases include:
+        #   2 STMTRS
+        #   2 STMTENDRS
+        #   1 CCSTMTRS
+        #   1 CCSTMTENDRS
+        #   2 INVSTMTRS
+        self.assertEqual(len(instance.statements), 8)
+
+        for n, type_ in enumerate(
+            [
+                STMTRS,
+                STMTRS,
+                STMTENDRS,
+                STMTENDRS,
+                CCSTMTRS,
+                CCSTMTENDRS,
+                INVSTMTRS,
+                INVSTMTRS,
+            ]
+        ):
+            stmt = instance.statements[n]
+            self.assertIsInstance(stmt, type_)
+            # Verify *TRNRS wrapper TRNUID/CLTCOOKIE have been stapled
+            # to the contained *RS
+            self.assertEqual(stmt.trnuid, "DEADBEEF")
+            self.assertEqual(stmt.cltcookie, "B00B135")
 
 
 if __name__ == "__main__":

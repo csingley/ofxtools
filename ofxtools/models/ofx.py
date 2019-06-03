@@ -82,26 +82,28 @@ class OFX(Aggregate):
     def validate_args(cls, *args, **kwargs):
         # Don't allow mixed *RQ and *RS in the same OFX
         if not all_equal(key[-7:] for key in kwargs):
-            msg = "{}: mixed *MSGRQV1 and *MSGSRSV1 are invalid"
-            raise ValueError(msg.format(cls.__name__))
+            msg = f"{cls.__name__}: mixed *MSGRQV1 and *MSGSRSV1 are invalid"
+            raise ValueError(msg)
 
         super().validate_args(*args, **kwargs)
 
     def __repr__(self):
         s = "<{} ".format(self.__class__.__name__)
-        if self.sonrs.fi is not None:
-            s += "fid='{}' org='{}' ".format(
-                self.sonrs.fi.fid or "", self.sonrs.fi.org or ""
-            )
-        s += "dtserver='{}' len(statements)={} len(securities)={}>".format(
-            str(self.sonrs.dtserver), len(self.statements), len(self.securities)
-        )
+        signon = self.signon
+        if signon.fi is not None:
+            s += f"fid='{signon.fi.fid}' org='{signon.fi.org}' "
+        s += f"len(statements)={len(self.statements)} "
+        s += f"len(securities)={len(self.securities)}>"
         return s
 
     # Human-friendly attribute aliases
     @property
-    def sonrs(self):
-        return self.signonmsgsrsv1.sonrs
+    def signon(self):
+        if self.signonmsgsrqv1 is not None:
+            return self.signonmsgsrqv1.sonrq
+        else:
+            assert self.signonmsgsrsv1 is not None
+            return self.signonmsgsrsv1.sonrs
 
     @property
     def securities(self):
@@ -114,7 +116,14 @@ class OFX(Aggregate):
     @property
     def statements(self):
         stmts = []
-        for msgs in ("bankmsgsrsv1", "creditcardmsgsrsv1", "invstmtmsgsrsv1"):
+        for msgs in (
+            "bankmsgsrqv1",
+            "creditcardmsgsrqv1",
+            "invstmtmsgsrqv1",
+            "bankmsgsrsv1",
+            "creditcardmsgsrsv1",
+            "invstmtmsgsrsv1",
+        ):
             msg = getattr(self, msgs, None)
             if msg:
                 stmts.extend(msg.statements)

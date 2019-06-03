@@ -38,7 +38,12 @@ from ofxtools.models.bank.stmt import (
     CCSTMTTRNRQ,
     CCSTMTTRNRS,
 )
-from ofxtools.models.bank.stmtend import STMTENDTRNRQ, STMTENDTRNRS
+from ofxtools.models.bank.stmtend import (
+    STMTENDTRNRQ,
+    STMTENDTRNRS,
+    CCSTMTENDTRNRQ,
+    CCSTMTENDTRNRS,
+)
 from ofxtools.models.bank.stpchk import STPCHKTRNRQ, STPCHKTRNRS
 from ofxtools.models.bank.xfer import INTRATRNRQ, INTRATRNRS
 from ofxtools.models.bank.interxfer import INTERTRNRQ, INTERTRNRS
@@ -85,6 +90,37 @@ class BANKMSGSRQV1(Aggregate):
     recintrasyncrq = ListItem(RECINTRASYNCRQ)
     bankmailsyncrq = ListItem(BANKMAILSYNCRQ)
 
+    @property
+    def statements(self):
+        stmts = []
+        for trnrq in self:
+            stmtrq = None
+            if isinstance(trnrq, STMTTRNRQ):
+                stmtrq = trnrq.stmtrq
+            elif isinstance(trnrq, STMTTRNRQ):
+                stmtrq = trnrq.stmtendrq
+
+            if stmtrq is not None:
+                stmts.append(stmtrq)
+        return stmts
+
+    @property
+    def statements(self):
+        stmts = []
+        for trnrs in self:
+            stmtrs = None
+            if isinstance(trnrs, STMTTRNRS):
+                stmtrs = trnrs.stmtrs
+            elif isinstance(trnrs, STMTENDTRNRS):
+                stmtrs = trnrs.stmtendrs
+
+            if stmtrs is not None:
+                # Staple wrapper TRNUID, CLTCOOKIE onto STMTRS for convenience
+                stmtrs.trnuid = trnrs.trnuid
+                stmtrs.cltcookie = trnrs.cltcookie
+                stmts.append(stmtrs)
+        return stmts
+
 
 class BANKMSGSRSV1(Aggregate):
     """ OFX section 11.13.1.1.2 """
@@ -103,11 +139,18 @@ class BANKMSGSRSV1(Aggregate):
     @property
     def statements(self):
         stmts = []
-        for rs in self:
-            if isinstance(rs, STMTTRNRS):
-                stmtrs = rs.stmtrs
-                if stmtrs is not None:
-                    stmts.append(stmtrs)
+        for trnrs in self:
+            stmtrs = None
+            if isinstance(trnrs, STMTTRNRS):
+                stmtrs = trnrs.stmtrs
+            elif isinstance(trnrs, STMTENDTRNRS):
+                stmtrs = trnrs.stmtendrs
+
+            if stmtrs is not None:
+                # Staple wrapper TRNUID, CLTCOOKIE onto STMTRS for convenience
+                stmtrs.trnuid = trnrs.trnuid
+                stmtrs.cltcookie = trnrs.cltcookie
+                stmts.append(stmtrs)
         return stmts
 
 
@@ -168,18 +211,46 @@ class CREDITCARDMSGSRQV1(Aggregate):
     """ OFX section 11.13.1.1.1 """
 
     ccstmttrnrq = ListItem(CCSTMTTRNRQ)
-    ccstmtendtrnrq = ListItem(CCSTMTTRNRQ)
+    ccstmtendtrnrq = ListItem(CCSTMTENDTRNRQ)
+
+    @property
+    def statements(self):
+        stmts = []
+        for trnrq in self:
+            stmtrq = None
+            if isinstance(trnrq, CCSTMTTRNRQ):
+                stmtrq = trnrq.ccstmtrq
+            elif isinstance(trnrq, CCSTMTENDTRNRQ):
+                stmtrq = trnrq.ccstmtendrq
+
+            if stmtrq is not None:
+                stmts.append(stmtrq)
+        return stmts
 
 
 class CREDITCARDMSGSRSV1(Aggregate):
     """ OFX section 11.13.1.1.2 """
 
     ccstmttrnrs = ListItem(CCSTMTTRNRS)
-    ccstmtendtrnrs = ListItem(CCSTMTTRNRS)
+    ccstmtendtrnrs = ListItem(CCSTMTENDTRNRS)
 
     @property
     def statements(self):
-        return [trnrs.statement for trnrs in self]
+        stmts = []
+        for trnrs in self:
+            stmtrs = None
+            if isinstance(trnrs, CCSTMTTRNRS):
+                stmtrs = trnrs.ccstmtrs
+            else:
+                assert isinstance(trnrs, CCSTMTENDTRNRS)
+                stmtrs = trnrs.ccstmtendrs
+
+            if stmtrs is not None:
+                # Staple wrapper TRNUID, CLTCOOKIE onto STMTRS for convenience
+                stmtrs.trnuid = trnrs.trnuid
+                stmtrs.cltcookie = trnrs.cltcookie
+                stmts.append(stmtrs)
+        return stmts
 
 
 class CREDITCARDMSGSETV1(Aggregate):

@@ -37,6 +37,16 @@ class INVSTMTMSGSRQV1(Aggregate):
     invmailtrnrq = ListItem(INVMAILTRNRQ)
     invmailsyncrq = ListItem(INVMAILSYNCRQ)
 
+    @property
+    def statements(self):
+        stmts = []
+        for trnrq in self:
+            if isinstance(trnrq, INVSTMTTRNRQ):
+                stmtrq = trnrq.invstmtrq
+                if stmtrq is not None:
+                    stmts.append(stmtrq)
+        return stmts
+
 
 class INVSTMTMSGSRSV1(Aggregate):
     """ OFX section 13.7.1.2.2 """
@@ -48,10 +58,13 @@ class INVSTMTMSGSRSV1(Aggregate):
     @property
     def statements(self):
         stmts = []
-        for rs in self:
-            if isinstance(rs, INVSTMTTRNRS):
-                stmtrs = rs.invstmtrs
+        for trnrs in self:
+            if isinstance(trnrs, INVSTMTTRNRS):
+                stmtrs = trnrs.invstmtrs
                 if stmtrs is not None:
+                    # Staple wrapper TRNUID, CLTCOOKIE onto STMTRS for convenience
+                    stmtrs.trnuid = trnrs.trnuid
+                    stmtrs.cltcookie = trnrs.cltcookie
                     stmts.append(stmtrs)
         return stmts
 
