@@ -32,7 +32,7 @@ setup(
     author_email=ABOUT["__author_email__"],
     url=ABOUT["__url__"],
     packages=find_packages(),
-    package_data={"ofxtools": ["README.rst", "config/*"]},
+    package_data={"ofxtools": ["README.rst", "py.typed", "config/*"]},
     python_requires=">=3.7",
     license=ABOUT["__license__"],
     # Note: change 'master' to the tag name when releasing a new verion
