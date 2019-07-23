@@ -56,7 +56,8 @@ def list_institutions() -> Mapping[str, str]:
         response = f.read()
 
     return {
-        fi.get("id").strip(): fi.get("name").strip() for fi in ET.fromstring(response)
+        fi.get("id").strip(): fi.get("name").strip()  # type: ignore
+        for fi in ET.fromstring(response)
     }
 
 

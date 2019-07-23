@@ -58,7 +58,7 @@ from io import BytesIO
 import itertools
 from operator import attrgetter, itemgetter
 from functools import singledispatch
-from typing import Dict, Union, Optional, Tuple, Iterator, NamedTuple, BinaryIO
+from typing import Dict, Union, Optional, Tuple, Iterator, NamedTuple, BinaryIO, Type
 
 
 # local imports
@@ -311,7 +311,14 @@ class OFXClient:
         trnGroupKey = itemgetter(0)
         trnrqs.sort(key=trnSortKey)
 
-        def msg_args(msgcls: Message, trnrqs: Iterator[Request]) -> Tuple[str, Message]:
+        # N.B. we need to annotate first arg as typing.Type here to indicate that
+        # we're passing in a class not an instance.
+        def msg_args(
+            msgcls: Union[
+                Type[BANKMSGSRQV1], Type[CREDITCARDMSGSRQV1], Type[INVSTMTMSGSRQV1]
+            ],
+            trnrqs: Iterator[Request],
+        ) -> Tuple[str, Message]:
             trnrqs_ = list(itertools.chain.from_iterable(t[1] for t in trnrqs))
             attr_name = msgcls.__name__.lower()
             return (attr_name, msgcls(*trnrqs_))

@@ -821,7 +821,7 @@ DEFAULTS: Dict[str, ArgType] = {
 }
 
 
-NULL_ARGS = [None, "", []]
+NULL_ARGS: Iterable = (None, "", [])
 
 
 # "Configurable" means "will be read from / written to config file".
