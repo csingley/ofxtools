@@ -137,20 +137,32 @@ class Aggregate(list):
             predicate=lambda x: x == 1,
         )
 
-    def _apply_args(self, *args: "Aggregate") -> None:
-        # Interpret positional args as contained list items (of variable #)
+    def _apply_args(self, *args) -> None:
+        # Interpret positional args as contained list items/elements (of variable #)
+        clsnm = self.__class__.__name__
+
         for member in args:
-            arg = member.__class__.__name__.lower()
-            if arg not in self.listitems:
-                clsnm = self.__class__.__name__
-                msg = f"{clsnm} can't contain {arg} as list item: {member}"
-                raise TypeError(msg)
+            if isinstance(member, Aggregate):
+                # ListItem - validate type against spec
+                arg = member.__class__.__name__.lower()
+                if arg not in self.listitems:
+                    msg = f"{clsnm} can't contain {arg} as list item: {member}"
+                    raise TypeError(msg)
+            else:
+                # ListElement
+                # FIXME validation
+                if type(member) is not str:
+                    msg = (
+                        f"{clsnm} can only contain str as list element, "
+                        f"not {member!r}"
+                    )
+                    raise TypeError(msg)
             self.append(member)
 
     def _apply_residual_kwargs(self, **kwargs) -> None:
         # Check that all kwargs have been consumed
         if kwargs:
-            args = [k for k in kwargs.keys() if k in self.listitems]
+            args = [k for k in kwargs.keys() if k in self.listitems or k in self.listelements]
             if args:
                 msg = f"{args}: pass ListItems as args, not kwargs"
                 raise SyntaxError(msg)
@@ -198,6 +210,7 @@ class Aggregate(list):
 
         spec = list(cls.spec)
         listitems = cls.listitems
+        listelements = cls.listelements
 
         def extractArgs(elem: ET.Element) -> Tuple[Tuple[str, Any], Tuple[int, Any]]:
             """
@@ -221,7 +234,7 @@ class Aggregate(list):
                 # Aggregate - perform type conversion
                 value = Aggregate.from_etree(elem)
 
-            return (key, value), (index, key in listitems)
+            return (key, value), (index, key in listitems or key in listelements)
 
         def outOfOrder(index0: Tuple[int, bool], index1: Tuple[int, bool]) -> bool:
             """
@@ -229,9 +242,10 @@ class Aggregate(list):
             """
             idx0, isListItem0 = index0
             idx1, isListItem1 = index1
-            # Relative order of ListItems doesn't matter, but position of
-            # ListItems relative to non-ListItems (and that of non-ListItems
-            # relative to other non-ListItems) does matter.
+            # Relative order of ListItems/Elements doesn't matter, but position of
+            # ListItems/Elements relative to non-ListItems/Elements (and that of
+            # non-ListItems/Elements relative to other non-ListItems/Elements)
+            # does matter.
             return idx1 <= idx0 and (not isListItem0 or not isListItem1)
 
         args_, specIndices = zip(*[extractArgs(subelem) for subelem in elem])
@@ -242,7 +256,7 @@ class Aggregate(list):
         ):
             subels = [el.tag for el in elem]
             raise OFXSpecError(f"{clsnm} SubElements out of order: {subels}")
-        kwargs, args = partition(lambda p: p[0] in listitems, args_)
+        kwargs, args = partition(lambda p: p[0] in listitems or p[0] in listelements, args_)
         return cls(*[arg[1] for arg in args], **dict(kwargs))
 
     @staticmethod
@@ -391,6 +405,14 @@ class Aggregate(list):
         Mapping of all class attributes that are ListItems.
         """
         return cls._filter_attrs(lambda v: isinstance(v, ListItem))
+
+    @classproperty
+    @classmethod
+    def listelements(cls) -> Mapping[str, ListItem]:
+        """
+        Mapping of all class attributes that are ListElements.
+        """
+        return cls._filter_attrs(lambda v: isinstance(v, ListElement))
 
     @property
     def _spec_repr(self) -> Sequence[Tuple[str, Any]]:
