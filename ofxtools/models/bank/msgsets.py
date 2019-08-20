@@ -104,23 +104,6 @@ class BANKMSGSRQV1(Aggregate):
                 stmts.append(stmtrq)
         return stmts
 
-    @property
-    def statements(self):
-        stmts = []
-        for trnrs in self:
-            stmtrs = None
-            if isinstance(trnrs, STMTTRNRS):
-                stmtrs = trnrs.stmtrs
-            elif isinstance(trnrs, STMTENDTRNRS):
-                stmtrs = trnrs.stmtendrs
-
-            if stmtrs is not None:
-                # Staple wrapper TRNUID, CLTCOOKIE onto STMTRS for convenience
-                stmtrs.trnuid = trnrs.trnuid
-                stmtrs.cltcookie = trnrs.cltcookie
-                stmts.append(stmtrs)
-        return stmts
-
 
 class BANKMSGSRSV1(Aggregate):
     """ OFX section 11.13.1.1.2 """
@@ -192,7 +175,7 @@ class BANKMSGSETV1(Aggregate):
     """ OFX section 11.13.2.1 """
 
     msgsetcore = SubAggregate(MSGSETCORE, required=True)
-    invalidaccttype = OneOf(*ACCTTYPES)
+    invalidaccttype = ListElement(OneOf(*ACCTTYPES))
     closingavail = Bool(required=True)
     pendingavail = Bool()
     xferprof = SubAggregate(XFERPROF)
