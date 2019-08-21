@@ -255,7 +255,7 @@ def add_subparser(
 
 def add_format_group(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
     group = parser.add_argument_group(title="format options")
-    group.add_argument("--version", help="OFX version")
+    group.add_argument("--version", help="OFX version", type=int)
     group.add_argument(
         "--unclosedelements",
         action="store_true",
