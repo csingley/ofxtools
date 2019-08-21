@@ -162,7 +162,11 @@ class Aggregate(list):
     def _apply_residual_kwargs(self, **kwargs) -> None:
         # Check that all kwargs have been consumed
         if kwargs:
-            args = [k for k in kwargs.keys() if k in self.listitems or k in self.listelements]
+            args = [
+                k
+                for k in kwargs.keys()
+                if k in self.listitems or k in self.listelements
+            ]
             if args:
                 msg = f"{args}: pass ListItems as args, not kwargs"
                 raise SyntaxError(msg)
@@ -256,7 +260,9 @@ class Aggregate(list):
         ):
             subels = [el.tag for el in elem]
             raise OFXSpecError(f"{clsnm} SubElements out of order: {subels}")
-        kwargs, args = partition(lambda p: p[0] in listitems or p[0] in listelements, args_)
+        kwargs, args = partition(
+            lambda p: p[0] in listitems or p[0] in listelements, args_
+        )
         return cls(*[arg[1] for arg in args], **dict(kwargs))
 
     @staticmethod
