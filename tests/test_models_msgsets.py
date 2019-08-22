@@ -693,14 +693,13 @@ class EmailprofTestCase(unittest.TestCase, base.TestAggregate):
 class Bankmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True
 
-    oneOfs = {"INVALIDACCTTYPE": ACCTTYPES}
-
     @classproperty
     @classmethod
     def etree(cls):
         root = Element("BANKMSGSETV1")
         root.append(MsgsetcoreTestCase.etree)
         SubElement(root, "INVALIDACCTTYPE").text = "CHECKING"
+        SubElement(root, "INVALIDACCTTYPE").text = "SAVINGS"
         SubElement(root, "CLOSINGAVAIL").text = "Y"
         SubElement(root, "PENDINGAVAIL").text = "N"
         root.append(XferprofTestCase.etree)
@@ -712,8 +711,9 @@ class Bankmsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def aggregate(cls):
         return BANKMSGSETV1(
+            "CHECKING",
+            "SAVINGS",
             msgsetcore=MsgsetcoreTestCase.aggregate,
-            invalidaccttype="CHECKING",
             closingavail=True,
             pendingavail=False,
             xferprof=XferprofTestCase.aggregate,
