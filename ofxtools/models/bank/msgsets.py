@@ -171,7 +171,7 @@ class EMAILPROF(Aggregate):
     cannotify = Bool(required=True)
 
 
-class BANKMSGSETV1(Aggregate):
+class BANKMSGSETV1(ElementList):
     """ OFX section 11.13.2.1 """
 
     msgsetcore = SubAggregate(MSGSETCORE, required=True)
