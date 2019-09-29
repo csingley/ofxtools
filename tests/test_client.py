@@ -7,6 +7,7 @@ from unittest.mock import patch, DEFAULT, sentinel, ANY
 from datetime import datetime
 import xml.etree.ElementTree as ET
 import socket
+from io import BytesIO
 
 
 # local imports
@@ -184,7 +185,8 @@ class OFXClientV1TestCase(unittest.TestCase):
                     mock_Request = mock_urllib["Request"]
                     mock_Request.return_value = sentinel.REQUEST
                     mock_urlopen = mock_urllib["urlopen"]
-                    mock_urlopen.return_value = sentinel.RESPONSE
+                    mock_response = BytesIO(b"Some OFX Response")
+                    mock_urlopen.return_value = mock_response
                     output = fn(*args, **kwargs)
 
                     args = mock_Request.call_args[0]
@@ -200,7 +202,7 @@ class OFXClientV1TestCase(unittest.TestCase):
                         context=ANY,
                         timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
                     )
-                    self.assertEqual(output, sentinel.RESPONSE)
+                    self.assertEqual(output.read(), b"Some OFX Response")
 
                     return kwargs["data"].decode("utf_8")
 

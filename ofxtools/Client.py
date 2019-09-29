@@ -588,7 +588,7 @@ class OFXClient:
         if timeout is None:
             timeout = socket._GLOBAL_DEFAULT_TIMEOUT
         response = urllib_request.urlopen(req, timeout=timeout, context=ssl_context)
-        return response
+        return BytesIO(response.read())
 
     def serialize(
         self,
