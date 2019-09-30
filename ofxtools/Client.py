@@ -548,7 +548,7 @@ class OFXClient:
         dryrun: bool = False,
         verify_ssl: bool = True,
         timeout: Optional[float] = None,
-    ) -> BinaryIO:
+    ) -> BytesIO:
         """
         Package complete OFX tree and POST to server.
 
