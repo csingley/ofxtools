@@ -436,7 +436,7 @@ class Aggregate(list):
         ]
         return attrs
 
-    def __hash__(self) -> int:
+    def __hash__(self) -> int:  # type: ignore
         """
         HACK - as a subclass of list, List is unhashable, but we need to
         use it as a dict key in Type.Element.{__get__, __set__}
