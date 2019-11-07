@@ -72,6 +72,7 @@ is in `development mode`_:
 .. code-block:: bash
 
     $ git clone https://github.com/csingley/ofxtools.git
+    $ cd ofxtools
     $ pip install -e .
     $ pip install -r ofxtools/requirements-development.txt
 
