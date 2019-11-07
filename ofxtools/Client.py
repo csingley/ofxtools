@@ -568,7 +568,7 @@ class OFXClient:
         request = self.serialize(
             ofx, version=version, prettyprint=prettyprint, close_elements=close_elements
         )
-        logger.debug(f"Finished request: {request}")
+        logger.debug(f"Finished request: {request.decode()}")
 
         if dryrun:
             return BytesIO(request)
