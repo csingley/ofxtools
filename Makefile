@@ -6,8 +6,8 @@ test:
 	python `which nosetests` -dsv --nologcapture --with-coverage --cover-package ofxtools tests/*.py
 
 clean:
-	find -regex '.*\.pyc' -exec rm {} \;
-	find -regex '.*~' -exec rm {} \;
+	find -name '.*\.pyc' -exec rm {} \;
+	find -name '.*~' -exec rm {} \;
 	rm -rf reg-settings.py
 	rm -rf MANIFEST dist build *.egg-info
 	rm coverage.xml
