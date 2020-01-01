@@ -586,7 +586,7 @@ class OFXClient:
             ssl_context = ssl.create_default_context()
 
         if timeout is None:
-            timeout = socket._GLOBAL_DEFAULT_TIMEOUT
+            timeout = socket._GLOBAL_DEFAULT_TIMEOUT  # type: ignore
         response = urllib_request.urlopen(req, timeout=timeout, context=ssl_context)
         return BytesIO(response.read())
 
