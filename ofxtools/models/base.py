@@ -349,9 +349,25 @@ class Aggregate(list):
         Filter class attributes for items matching the given predicate.
 
         Return them as a mapping in the same order they're declared in the
-        class definition.
+        class definition, in reverse MRO (which is the natural order you
+        want for these cases, as implemented by `collections.ChainMap`).
 
-        N.B. predicate tests *values* of cls._superdict
+        In the following example, `_filter_attrs()` always returns a mapping
+        whose keys are ordered as ('foo', 'bar', 'baz'), with subclass values
+        overriding values defined on the base class.
+
+        >>> class Base(Aggregate):
+        ...     foo = 1
+        ...     bar = 2
+        ...
+        >>> class Sub(Base):
+        ...     bar = 3
+        ...     baz = 4
+        ...
+        >>> Sub._filter_attrs(lambda v: isinstance(v, int))
+        {'foo': 1, 'bar': 3, 'baz': 4}
+
+        N.B. `predicate` tests *values* of cls._superdict
              (not keys i.e. attribute names)
         """
         return {k: v for k, v in cls._superdict.items() if predicate(v)}
@@ -371,7 +387,7 @@ class Aggregate(list):
     def spec_no_listitems(cls) -> Mapping[str, Union[Element, "Unsupported"]]:
         """
         Mapping of all class attributes that are
-        Elements/SubAggregates/Unsupported, excluding ListItems/ListElements
+        Elements/SubAggregates/Unsupported, excluding ListItems/ListElements.
         """
         return cls._filter_attrs(
             lambda v: isinstance(v, (Element, Unsupported))
@@ -424,15 +440,16 @@ class Aggregate(list):
     def _spec_repr(self) -> Sequence[Tuple[str, Any]]:
         """
         Sequence of (name, repr()) for each non-empty attribute in the
-        class ``_spec`` (see property above).
+        class ``spec`` (see property above).
 
         Used by __repr__().
         """
+        # FIXME - this comprehension is a good use case for the PEP 572
+        # "walrus operator" provided in Python 3.8.
         attrs = [
             (attr, repr(getattr(self, attr)))
-            for attr, validator in self.spec.items()
-            if not isinstance(validator, (ListItem, ListElement))
-            and getattr(self, attr) is not None
+            for attr in self.spec_no_listitems.keys()
+            if getattr(self, attr) is not None
         ]
         return attrs
 
