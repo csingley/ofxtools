@@ -339,7 +339,24 @@ class Aggregate(list):
     @classmethod
     def _superdict(cls) -> Mapping[str, Any]:
         """
-        Consolidate cls.__dict__ with that of all superclasses.
+        Consolidate ``cls.__dict__`` with that of all superclasses.
+
+        Ordering is significant for OFX messages, which maps to significant ordering
+        of class attributes of ``ofxtools.models.base.Aggregate`` subclasses.
+
+        That ordering is implemented by combining `PEP 520`_ (which was implemented
+        as of Python 3.6), `collections.ChainMap`_, and Python's `inheritance chain`_
+        (i.e. the MRO).
+
+        PEP 520 guarantees that each class's ``__dict__`` preserves the order in which
+        its attributes and methods were defined.  ``ChainMap`` searches its list of
+        mappings from left to right.  By feeding a class's MRO into ``ChainMap``, we
+        get an ordering where attributes defined on subclasses override those defined
+        on the parent, preserving the order of the class definition in each case.
+
+        .. _PEP 520: https://www.python.org/dev/peps/pep-0520/
+        .. _collections.ChainMap: https://docs.python.org/3/library/collections.html#collections.ChainMap
+        .. _inheritance order: https://www.python.org/download/releases/2.3/mro/
         """
         return ChainMap(*[base.__dict__ for base in cls.mro()])
 
@@ -348,9 +365,7 @@ class Aggregate(list):
         """
         Filter class attributes for items matching the given predicate.
 
-        Return them as a mapping in the same order they're declared in the
-        class definition, in reverse MRO (which is the natural order you
-        want for these cases, as implemented by `collections.ChainMap`).
+        See the discussion of ordering above in the docstring for ``_superdict()``.
 
         In the following example, `_filter_attrs()` always returns a mapping
         whose keys are ordered as ('foo', 'bar', 'baz'), with subclass values
@@ -378,6 +393,8 @@ class Aggregate(list):
         """
         Mapping of all class attributes that are Elements/SubAggregates/Unsupported.
 
+        See the discussion of ordering above in the docstring for ``_filter_attrs()``.
+
         N.B. SubAggregate is a subclass of Element.
         """
         return cls._filter_attrs(lambda v: isinstance(v, (Element, Unsupported)))
@@ -388,6 +405,8 @@ class Aggregate(list):
         """
         Mapping of all class attributes that are
         Elements/SubAggregates/Unsupported, excluding ListItems/ListElements.
+
+        See the discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
         return cls._filter_attrs(
             lambda v: isinstance(v, (Element, Unsupported))
@@ -399,6 +418,8 @@ class Aggregate(list):
     def elements(cls) -> Mapping[str, Element]:
         """
         Mapping of all class attributes that are Elements but not SubAggregates.
+
+        See the discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
         return cls._filter_attrs(
             lambda v: isinstance(v, Element) and not isinstance(v, SubAggregate)
@@ -409,6 +430,8 @@ class Aggregate(list):
     def subaggregates(cls) -> Mapping[str, "SubAggregate"]:
         """
         Mapping of all class attributes that are SubAggregates.
+
+        See the discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
         return cls._filter_attrs(lambda v: isinstance(v, SubAggregate))
 
@@ -417,6 +440,8 @@ class Aggregate(list):
     def unsupported(cls) -> Mapping[str, "Unsupported"]:
         """
         Mapping of all class attributes that are Unsupported.
+
+        See the discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
         return cls._filter_attrs(lambda v: isinstance(v, Unsupported))
 
@@ -425,6 +450,8 @@ class Aggregate(list):
     def listitems(cls) -> Mapping[str, ListItem]:
         """
         Mapping of all class attributes that are ListItems.
+
+        See the discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
         return cls._filter_attrs(lambda v: isinstance(v, ListItem))
 
@@ -433,6 +460,8 @@ class Aggregate(list):
     def listelements(cls) -> Mapping[str, ListItem]:
         """
         Mapping of all class attributes that are ListElements.
+
+        See the discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
         return cls._filter_attrs(lambda v: isinstance(v, ListElement))
 
@@ -534,6 +563,8 @@ class ElementList(Aggregate):
     def listitems(cls) -> Mapping[str, ListElement]:
         """
         ElementList.listitems returns ListElements instead of ListItems
+
+        See the discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
         return cls._filter_attrs(lambda v: isinstance(v, ListElement))
 
