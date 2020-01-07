@@ -42,7 +42,7 @@ import logging
 # local imports
 from ofxtools.Types import Element, ListItem, ListElement
 import ofxtools.models
-from ofxtools.utils import classproperty, pairwise, partition
+from ofxtools.utils import classproperty
 
 
 logger = logging.getLogger(__name__)
@@ -223,19 +223,33 @@ class Aggregate(list):
         " args, kwargs, previous attr index within spec, previous attr is list member? "
 
         def update_args(accum: Accum, elem: ET.Element) -> Accum:
+            """ Extend ``functools.reduce()`` accumulator with parsed ``ET.Element``
+            value (either OFX `aggregate` or OFX 'element').
+
+            List members are stored as positional args; everything else is stored
+            as keyword args.
+
+            Check index within the ``Aggregate.spec`` sequence against previous
+            ``ET.Element`` and return sequencing info for current ``ET.Element``
+            to be used in the next iteration.
+            """
             args, kwargs, prev_index, prev_is_listmember = accum
             attrname = elem.tag.lower()
 
+            #  OFX messages have a sequence order defined by the spec.  This order maps
+            #  to the order of class attributes defined by ``Aggregate`` subclasses.
+            #  Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
+            #
+            #  Class attributes defined as list members (i.e. ListItem / ListElement,
+            #  identified as "one or more" or "zero or more" in the OFX spec) may
+            #  occur in any order, so we don't validate the relative order of list
+            #  members.  Other than, we require that the index of an attribute within
+            #  the ``Aggregate.spec`` sequence must increase monotonically.
             try:
                 index = spec.index(attrname)
             except ValueError:
                 raise OFXSpecError(f"{clsnm}.spec = {spec}; doesn't contain {attrname}")
 
-            # Relative order of list members doesn't matter, but position of list
-            # members relative to non-list members (and that of non-list members
-            # relative to other non-list members) does matter.
-            #
-            #  See the discussion of ordering above in the docstring for ``_filter_attrs()``.
             is_listmember = attrname in listitems or attrname in listelements
             if index <= prev_index and not (is_listmember and prev_is_listmember):
                 subels = [el.tag for el in elem]
@@ -245,10 +259,11 @@ class Aggregate(list):
             if attrname in cls.unsupported:
                 value: Optional[Union[str, Aggregate]] = None
             elif elem.text:
-                # Element - value will be type-converted upon setattr()
+                # Element - extract as string; value will be type-converted upon
+                # instance initialization by ``ofxtools.Types.Element.__set__()``.
                 value = elem.text
             else:
-                # Aggregate
+                # Aggregate - recurse
                 value = Aggregate.from_etree(elem)
 
             # Append attr value to args (list members) or kwargs (everything else)
@@ -261,6 +276,9 @@ class Aggregate(list):
 
             return args, kwargs, index, is_listmember
 
+        #  ElementTree API: child Elements stored as a sequence, accessible
+        #  by iterating over the parent Element.
+        #  https://effbot.org/zone/pythondoc-elementtree-ElementTree.htm#elementtree.ElementTree._ElementInterface-class
         initial: Accum = ([], {}, -1, False)
         args, kwargs = functools.reduce(update_args, elem, initial)[:2]
         return cls(*args, **kwargs)
@@ -365,7 +383,7 @@ class Aggregate(list):
         """
         Filter class attributes for items matching the given predicate.
 
-        See the discussion of ordering above in the docstring for ``_superdict()``.
+        Cf. discussion of ordering above in the docstring for ``_superdict()``.
 
         In the following example, `_filter_attrs()` always returns a mapping
         whose keys are ordered as ('foo', 'bar', 'baz'), with subclass values
@@ -393,7 +411,7 @@ class Aggregate(list):
         """
         Mapping of all class attributes that are Elements/SubAggregates/Unsupported.
 
-        See the discussion of ordering above in the docstring for ``_filter_attrs()``.
+        Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
 
         N.B. SubAggregate is a subclass of Element.
         """
@@ -406,7 +424,7 @@ class Aggregate(list):
         Mapping of all class attributes that are
         Elements/SubAggregates/Unsupported, excluding ListItems/ListElements.
 
-        See the discussion of ordering above in the docstring for ``_filter_attrs()``.
+        Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
         return cls._filter_attrs(
             lambda v: isinstance(v, (Element, Unsupported))
@@ -419,7 +437,7 @@ class Aggregate(list):
         """
         Mapping of all class attributes that are Elements but not SubAggregates.
 
-        See the discussion of ordering above in the docstring for ``_filter_attrs()``.
+        Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
         return cls._filter_attrs(
             lambda v: isinstance(v, Element) and not isinstance(v, SubAggregate)
@@ -431,7 +449,7 @@ class Aggregate(list):
         """
         Mapping of all class attributes that are SubAggregates.
 
-        See the discussion of ordering above in the docstring for ``_filter_attrs()``.
+        Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
         return cls._filter_attrs(lambda v: isinstance(v, SubAggregate))
 
@@ -441,7 +459,7 @@ class Aggregate(list):
         """
         Mapping of all class attributes that are Unsupported.
 
-        See the discussion of ordering above in the docstring for ``_filter_attrs()``.
+        Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
         return cls._filter_attrs(lambda v: isinstance(v, Unsupported))
 
@@ -451,7 +469,7 @@ class Aggregate(list):
         """
         Mapping of all class attributes that are ListItems.
 
-        See the discussion of ordering above in the docstring for ``_filter_attrs()``.
+        Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
         return cls._filter_attrs(lambda v: isinstance(v, ListItem))
 
@@ -461,7 +479,7 @@ class Aggregate(list):
         """
         Mapping of all class attributes that are ListElements.
 
-        See the discussion of ordering above in the docstring for ``_filter_attrs()``.
+        Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
         return cls._filter_attrs(lambda v: isinstance(v, ListElement))
 
@@ -564,7 +582,7 @@ class ElementList(Aggregate):
         """
         ElementList.listitems returns ListElements instead of ListItems
 
-        See the discussion of ordering above in the docstring for ``_filter_attrs()``.
+        Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
         return cls._filter_attrs(lambda v: isinstance(v, ListElement))
 
