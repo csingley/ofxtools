@@ -24,6 +24,7 @@ __all__ = ["Aggregate", "SubAggregate", "Unsupported", "ElementList"]
 # stdlib imports
 import xml.etree.ElementTree as ET
 from copy import deepcopy
+import functools
 from typing import (
     Any,
     Dict,
@@ -212,70 +213,57 @@ class Aggregate(list):
         # Hook to modify incoming ``ET.Element`` before conversion
         elem = cls.groom(elem)
 
+        clsnm = cls.__name__
         spec = list(cls.spec)
         listitems = cls.listitems
         listelements = cls.listelements
 
-        def extractArgs(elem: ET.Element) -> Tuple[Tuple[str, Any], Tuple[int, bool]]:
-            """
-            Transform input ET.Element into attribute name/ value pairs ready
-            to pass to Aggregate.__init__(), as well as a sequence check.
+        #  Type alias - accumulator for functools.reduce()
+        Accum = Tuple[list, dict, int, bool]
+        " args, kwargs, previous attr index within spec, previous attr is list member? "
 
-            The returned sequence check (i.e. the Tuple[int, bool] part) represents:
-                0 - The position (index) of the attr name within the sequence of
-                    the class attribute spec
-                1 - Is this attr a list member (ListItem/ListElement)?
-            """
-            key = elem.tag.lower()
+        def update_args(accum: Accum, elem: ET.Element) -> Accum:
+            args, kwargs, prev_index, prev_is_listmember = accum
+            attrname = elem.tag.lower()
 
-            # Sequence check
             try:
-                index = spec.index(key)
+                index = spec.index(attrname)
             except ValueError:
-                clsnm = cls.__name__
-                raise OFXSpecError(f"{clsnm}.spec = {spec}; does not contain {key}")
+                raise OFXSpecError(f"{clsnm}.spec = {spec}; doesn't contain {attrname}")
 
-            is_list_member = key in listitems or key in listelements
-
-            # Process value
-            if key in cls.unsupported:
-                value: Optional[Union[str, Aggregate]] = None
-            elif elem.text:
-                # Element - extract raw text string; it will be type converted
-                # when used to set an Aggregate class attribute
-                value = elem.text
-            else:
-                # Aggregate - perform type conversion
-                value = Aggregate.from_etree(elem)
-
-            return (key, value), (index, is_list_member)
-
-        def outOfOrder(seqChk0: Tuple[int, bool], seqChk1: Tuple[int, bool]) -> bool:
-            """
-            Do SubElements appear not in the order defined by SubClass.spec?
-            """
-            index0, is_list_member0 = seqChk0
-            index1, is_list_member1 = seqChk1
             # Relative order of list members doesn't matter, but position of list
             # members relative to non-list members (and that of non-list members
             # relative to other non-list members) does matter.
-            return index1 <= index0 and not (is_list_member0 and is_list_member1)
+            #
+            #  See the discussion of ordering above in the docstring for ``_filter_attrs()``.
+            is_listmember = attrname in listitems or attrname in listelements
+            if index <= prev_index and not (is_listmember and prev_is_listmember):
+                subels = [el.tag for el in elem]
+                raise OFXSpecError(f"{clsnm} SubElements out of order: {subels}")
 
-        # FIXME - instead of iterating multiple times
-        # (subelements, then sequence checks, then args vs. kwargs)
-        # can we iterate only once by using an accumulator or somesuch?
-        args_, seqChks = zip(*[extractArgs(subelem) for subelem in elem])
-        clsnm = cls.__name__
-        logger.debug(f"Args to instantiate {clsnm}: {args_}")
-        if any(
-            [outOfOrder(seqChk0, seqChk1) for seqChk0, seqChk1 in pairwise(seqChks)]
-        ):
-            subels = [el.tag for el in elem]
-            raise OFXSpecError(f"{clsnm} SubElements out of order: {subels}")
-        kwargs, args = partition(
-            lambda p: p[0] in listitems or p[0] in listelements, args_
-        )
-        return cls(*[arg[1] for arg in args], **dict(kwargs))
+            # Parse attribute value
+            if attrname in cls.unsupported:
+                value: Optional[Union[str, Aggregate]] = None
+            elif elem.text:
+                # Element - value will be type-converted upon setattr()
+                value = elem.text
+            else:
+                # Aggregate
+                value = Aggregate.from_etree(elem)
+
+            # Append attr value to args (list members) or kwargs (everything else)
+            if is_listmember:
+                args.append(value)
+            else:
+                if attrname in kwargs:
+                    raise OFXSpecError
+                kwargs[attrname] = value
+
+            return args, kwargs, index, is_listmember
+
+        initial: Accum = ([], {}, -1, False)
+        args, kwargs = functools.reduce(update_args, elem, initial)[:2]
+        return cls(*args, **kwargs)
 
     @staticmethod
     def groom(elem: ET.Element) -> ET.Element:
