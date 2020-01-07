@@ -203,7 +203,7 @@ class Aggregate(list):
         """
         Instantiate from ``xml.etree.ElementTree.Element``.
 
-        N.B. this method most be called on the appropriate subclass,
+        N.B. this method must be called on the appropriate subclass,
         not the ``Aggregate`` base class.
         """
         if len(elem) == 0:
@@ -216,18 +216,28 @@ class Aggregate(list):
         listitems = cls.listitems
         listelements = cls.listelements
 
-        def extractArgs(elem: ET.Element) -> Tuple[Tuple[str, Any], Tuple[int, Any]]:
+        def extractArgs(elem: ET.Element) -> Tuple[Tuple[str, Any], Tuple[int, bool]]:
             """
             Transform input ET.Element into attribute name/ value pairs ready
             to pass to Aggregate.__init__(), as well as a sequence check.
+
+            The returned sequence check (i.e. the Tuple[int, bool] part) represents:
+                0 - The position (index) of the attr name within the sequence of
+                    the class attribute spec
+                1 - Is this attr a list member (ListItem/ListElement)?
             """
             key = elem.tag.lower()
+
+            # Sequence check
             try:
                 index = spec.index(key)
             except ValueError:
                 clsnm = cls.__name__
                 raise OFXSpecError(f"{clsnm}.spec = {spec}; does not contain {key}")
 
+            is_list_member = key in listitems or key in listelements
+
+            # Process value
             if key in cls.unsupported:
                 value: Optional[Union[str, Aggregate]] = None
             elif elem.text:
@@ -238,25 +248,27 @@ class Aggregate(list):
                 # Aggregate - perform type conversion
                 value = Aggregate.from_etree(elem)
 
-            return (key, value), (index, key in listitems or key in listelements)
+            return (key, value), (index, is_list_member)
 
-        def outOfOrder(index0: Tuple[int, bool], index1: Tuple[int, bool]) -> bool:
+        def outOfOrder(seqChk0: Tuple[int, bool], seqChk1: Tuple[int, bool]) -> bool:
             """
             Do SubElements appear not in the order defined by SubClass.spec?
             """
-            idx0, isListItem0 = index0
-            idx1, isListItem1 = index1
-            # Relative order of ListItems/Elements doesn't matter, but position of
-            # ListItems/Elements relative to non-ListItems/Elements (and that of
-            # non-ListItems/Elements relative to other non-ListItems/Elements)
-            # does matter.
-            return idx1 <= idx0 and (not isListItem0 or not isListItem1)
+            index0, is_list_member0 = seqChk0
+            index1, is_list_member1 = seqChk1
+            # Relative order of list members doesn't matter, but position of list
+            # members relative to non-list members (and that of non-list members
+            # relative to other non-list members) does matter.
+            return index1 <= index0 and not (is_list_member0 and is_list_member1)
 
-        args_, specIndices = zip(*[extractArgs(subelem) for subelem in elem])
+        # FIXME - instead of iterating multiple times
+        # (subelements, then sequence checks, then args vs. kwargs)
+        # can we iterate only once by using an accumulator or somesuch?
+        args_, seqChks = zip(*[extractArgs(subelem) for subelem in elem])
         clsnm = cls.__name__
         logger.debug(f"Args to instantiate {clsnm}: {args_}")
         if any(
-            [outOfOrder(index0, index1) for index0, index1 in pairwise(specIndices)]
+            [outOfOrder(seqChk0, seqChk1) for seqChk0, seqChk1 in pairwise(seqChks)]
         ):
             subels = [el.tag for el in elem]
             raise OFXSpecError(f"{clsnm} SubElements out of order: {subels}")
