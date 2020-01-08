@@ -390,7 +390,7 @@ number of transaction wrappers means that we can't define these wrappers with
 ``SubAggregate``, which maps every child element to a single class attribute.
 
 Contained aggregates that are allowed to appear more than once are instead
-defined with a validator of type ``ListItem``, and accessed via the Python list
+defined with a validator of type ``ListAggregate``, and accessed via the Python list
 API.  Unique children are defined in the usual manner, and accessed as instance
 attributes.
 
@@ -398,7 +398,7 @@ Here's how it looks in ``ofxtools.models.bank.sync``.
 
 .. code:: python
 
-    from ofxtools.Type import ListItem
+    from ofxtools.Type import ListAggregate
     from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM
     from ofxtools.Types import Bool
 
@@ -410,7 +410,7 @@ Here's how it looks in ``ofxtools.models.bank.sync``.
         rejectifmissing = Bool(required=True)
         bankacctfrom = SubAggregate(BANKACCTFROM)
         ccacctfrom = SubAggregate(CCACCTFROM)
-        intratrnrq = ListItem(INTRATRNRQ)
+        intratrnrq = ListAggregate(INTRATRNRQ)
 
         requiredMutexes = [
             ["token", "tokenonly", "refresh"],
@@ -424,7 +424,7 @@ Here's how it looks in ``ofxtools.models.bank.sync``.
         lostsync = Bool()
         bankacctfrom = SubAggregate(BANKACCTFROM)
         ccacctfrom = SubAggregate(CCACCTFROM)
-        intratrnrs = ListItem(INTRATRNRS)
+        intratrnrs = ListAggregate(INTRATRNRS)
 
         requiredMutexes = [
             ["bankacctfrom", "ccacctfrom"],
@@ -440,7 +440,7 @@ Here's how it looks in ``ofxtools.models.bank.sync``.
         rejectifmissing = Bool(required=True)
         bankacctfrom = SubAggregate(BANKACCTFROM)
         ccacctfrom = SubAggregate(CCACCTFROM)
-        recintratrnrq = ListItem(RECINTRATRNRQ)
+        recintratrnrq = ListAggregate(RECINTRATRNRQ)
 
         requiredMutexes = [
             ["token", "tokenonly", "refresh"],
@@ -455,7 +455,7 @@ Here's how it looks in ``ofxtools.models.bank.sync``.
         lostsync = Bool()
         bankacctfrom = SubAggregate(BANKACCTFROM)
         ccacctfrom = SubAggregate(CCACCTFROM)
-        recintratrnrs = ListItem(RECINTRATRNRS)
+        recintratrnrs = ListAggregate(RECINTRATRNRS)
 
         requiredMutexes = [
             ["bankacctfrom", "ccacctfrom"],
@@ -473,10 +473,10 @@ relevant classes in ``ofxtools.models.msgsets``.
         """ OFX section 11.13.1.1.1 """
 
         ...
-        intratrnrq = ListItem(INTRATRNRQ)
-        recintratrnrq = ListItem(RECINTRATRNRQ)
-        intrasyncrq = ListItem(INTRASYNCRQ)
-        recintrasyncrq = ListItem(RECINTRASYNCRQ)
+        intratrnrq = ListAggregate(INTRATRNRQ)
+        recintratrnrq = ListAggregate(RECINTRATRNRQ)
+        intrasyncrq = ListAggregate(INTRASYNCRQ)
+        recintrasyncrq = ListAggregate(RECINTRASYNCRQ)
         ...
 
 
@@ -484,10 +484,10 @@ relevant classes in ``ofxtools.models.msgsets``.
         """ OFX section 11.13.1.1.2 """
 
         ...
-        intratrnrs = ListItem(INTRATRNRS)
-        recintratrnrs = ListItem(RECINTRATRNRS)
-        intrasyncrs = ListItem(INTRASYNCRS)
-        recintrasyncrs = ListItem(RECINTRASYNCRS)
+        intratrnrs = ListAggregate(INTRATRNRS)
+        recintratrnrs = ListAggregate(RECINTRATRNRS)
+        intrasyncrs = ListAggregate(INTRASYNCRS)
+        recintrasyncrs = ListAggregate(RECINTRASYNCRS)
         ...
 
 Then we need to define the funds transfer profile.

@@ -29,7 +29,15 @@ __all__ = [
 ]
 
 
-from ofxtools.Types import Bool, String, Integer, OneOf, Decimal, DateTime, ListItem
+from ofxtools.Types import (
+    Bool,
+    String,
+    Integer,
+    OneOf,
+    Decimal,
+    DateTime,
+    ListAggregate,
+)
 from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.invest.acct import INVACCTFROM
@@ -154,7 +162,7 @@ class CONTRIBSECURITY(Aggregate):
 class CONTRIBINFO(Aggregate):
     """ OFX section 13.9.3 """
 
-    contribsecurity = ListItem(CONTRIBSECURITY)
+    contribsecurity = ListAggregate(CONTRIBSECURITY)
 
     @classmethod
     def validate_args(cls, *args, **kwargs):
@@ -257,8 +265,8 @@ class INV401K(Aggregate):
     matchinfo = SubAggregate(MATCHINFO)
     contribinfo = SubAggregate(CONTRIBINFO)
     currentvestpct = Decimal()
-    vestinfo = ListItem(VESTINFO)
-    loaninfo = ListItem(LOANINFO)
+    vestinfo = ListAggregate(VESTINFO)
+    loaninfo = ListAggregate(LOANINFO)
     inv401ksummary = SubAggregate(INV401KSUMMARY)
 
 

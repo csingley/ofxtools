@@ -20,7 +20,7 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import Bool, String, Decimal, OneOf, DateTime, ListItem
+from ofxtools.Types import Bool, String, Decimal, OneOf, DateTime, ListAggregate
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM, REWARDINFO
@@ -61,7 +61,7 @@ class STMTENDRS(Aggregate):
 
     curdef = OneOf(*CURRENCY_CODES, required=True)
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
-    closing = ListItem(CLOSING)
+    closing = ListAggregate(CLOSING)
 
 
 class STMTENDTRNRQ(TrnRq):
@@ -131,7 +131,7 @@ class CCSTMTENDRS(Aggregate):
 
     curdef = OneOf(*CURRENCY_CODES, required=True)
     ccacctfrom = SubAggregate(CCACCTFROM, required=True)
-    ccclosing = ListItem(CCCLOSING)
+    ccclosing = ListAggregate(CCCLOSING)
 
 
 class CCSTMTENDTRNRQ(TrnRq):

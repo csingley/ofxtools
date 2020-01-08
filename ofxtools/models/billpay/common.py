@@ -21,7 +21,7 @@ __all__ = [
 ]
 
 
-from ofxtools.Types import String, OneOf, Integer, Decimal, DateTime, ListItem
+from ofxtools.Types import String, OneOf, Integer, Decimal, DateTime, ListAggregate
 from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.common import SVCSTATUSES
 from ofxtools.models.bank.stmt import BANKACCTFROM, BANKACCTTO, PAYEE
@@ -79,13 +79,13 @@ class INVOICE(Aggregate):
     invdesc = String(80, required=True)
     discount = SubAggregate(DISCOUNT)
     adjustment = SubAggregate(ADJUSTMENT)
-    lineitem = ListItem(LINEITEM)
+    lineitem = ListAggregate(LINEITEM)
 
 
 class EXTDPMTINV(Aggregate):
     """ OFX Section 12.5.2.2 """
 
-    invoice = ListItem(INVOICE)
+    invoice = ListAggregate(INVOICE)
 
 
 class EXTDPMT(Aggregate):
@@ -94,7 +94,7 @@ class EXTDPMT(Aggregate):
     extdpmtfor = OneOf("INDIVIDUAL", "BUSINESS")
     extdpmtchk = Integer(10)
     extdpmtdsc = String(255)
-    extdpmtinv = ListItem(EXTDPMTINV)
+    extdpmtinv = ListAggregate(EXTDPMTINV)
 
     @classmethod
     def validate_args(cls, *args, **kwargs):
@@ -116,7 +116,7 @@ class PMTINFO(Aggregate):
     payee = SubAggregate(PAYEE)
     payeelstid = String(12)
     bankacctto = SubAggregate(BANKACCTTO)
-    extdpmt = ListItem(EXTDPMT)
+    extdpmt = ListAggregate(EXTDPMT)
     payacct = String(32, required=True)
     dtdue = DateTime(required=True)
     memo = String(255)

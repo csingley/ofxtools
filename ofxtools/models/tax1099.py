@@ -36,7 +36,15 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import String, Bool, Integer, Decimal, OneOf, DateTime, ListItem
+from ofxtools.Types import (
+    String,
+    Bool,
+    Integer,
+    Decimal,
+    OneOf,
+    DateTime,
+    ListAggregate,
+)
 from ofxtools.models.base import Aggregate, SubAggregate, ElementList, ListElement
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.common import MSGSETCORE
@@ -145,8 +153,8 @@ class PROCSUM_V100(Aggregate):
 class EXTDBINFO_V100(Aggregate):
     """ OFX tax extensions section 2.2.11.1 """
 
-    procsum_v100 = ListItem(PROCSUM_V100)
-    procdet_v100 = ListItem(PROCDET_V100)
+    procsum_v100 = ListAggregate(PROCSUM_V100)
+    procdet_v100 = ListAggregate(PROCDET_V100)
 
 
 class STKBND(Aggregate):
@@ -209,7 +217,7 @@ class TAX1099MISC_V100(Aggregate):
     payerstate = String(2)
     payerstid = String(32)
     stincome = Decimal()
-    addlsttaxwhagg = ListItem(ADDLSTTAXWHAGG)
+    addlsttaxwhagg = ListAggregate(ADDLSTTAXWHAGG)
     grossattor = Decimal()
     excsgldn = Decimal()
     sec409adeferrals = Decimal()
@@ -255,8 +263,8 @@ class TAX1099R_V100(Aggregate):
     totempcont = Decimal()
     amtallocableirr = Decimal()
     firstyeardesigroth = Integer(4)
-    sttaxwhagg = ListItem(STTAXWHAGG)
-    lcltaxwhagg = ListItem(LCLTAXWHAGG)
+    sttaxwhagg = ListAggregate(STTAXWHAGG)
+    lcltaxwhagg = ListAggregate(LCLTAXWHAGG)
     payeraddr = SubAggregate(PAYERADDR, required=True)
     payerid = String(32, required=True)
     recaddr = SubAggregate(RECADDR)
@@ -322,9 +330,9 @@ class TAX1099INT_V100(Aggregate):
     fortaxpd = Decimal()
     forincomeamt = Decimal()
     forcnt = String(32)
-    forincome = ListItem(FORINCOME)
+    forincome = ListAggregate(FORINCOME)
     taxexemptint = Decimal()
-    origstate = ListItem(ORIGSTATE)
+    origstate = ListAggregate(ORIGSTATE)
     specifiedpabint = Decimal()
     marketdiscount = Decimal()
     bondpremium = Decimal()
@@ -371,7 +379,7 @@ class TAX1099DIV_V100(Aggregate):
     fortaxpd = Decimal()
     forincomeamt = Decimal()
     forcnt = String(32)
-    forincome = ListItem(FORINCOME)
+    forincome = ListAggregate(FORINCOME)
     cashliq = Decimal()
     noncashliq = Decimal()
     exemptintdiv = Decimal()
@@ -410,7 +418,7 @@ class TAX1099OID_V100(Aggregate):
     investexp = Decimal()
     bondpremium = Decimal()
     taxexemptoid = Decimal()
-    origstate = ListItem(ORIGSTATE)
+    origstate = ListAggregate(ORIGSTATE)
     privactbondamt = Decimal()
     privactbondint = Decimal()
     statecode = String(2)
@@ -444,19 +452,19 @@ class TAX1099RS(Aggregate):
 
     acctnum = String(32)
     recid = String(32)
-    fidirectdepositinfo = ListItem(FIDIRECTDEPOSITINFO)
-    tax1099misc_v100 = ListItem(TAX1099MISC_V100)
-    tax1099r_v100 = ListItem(TAX1099R_V100)
-    tax1099b_v100 = ListItem(TAX1099B_V100)
-    tax1099int_v100 = ListItem(TAX1099INT_V100)
-    tax1099div_v100 = ListItem(TAX1099DIV_V100)
-    tax1099oid_v100 = ListItem(TAX1099OID_V100)
+    fidirectdepositinfo = ListAggregate(FIDIRECTDEPOSITINFO)
+    tax1099misc_v100 = ListAggregate(TAX1099MISC_V100)
+    tax1099r_v100 = ListAggregate(TAX1099R_V100)
+    tax1099b_v100 = ListAggregate(TAX1099B_V100)
+    tax1099int_v100 = ListAggregate(TAX1099INT_V100)
+    tax1099div_v100 = ListAggregate(TAX1099DIV_V100)
+    tax1099oid_v100 = ListAggregate(TAX1099OID_V100)
 
     @classmethod
     def validate_args(cls, *args, **kwargs):
         # Must contain at least one TAX1099x_Vy
         if len([a for a in args if a.__class__.__name__.startswith("TAX1099")]) == 0:
-            mandatory = list(cls.listitems.keys())
+            mandatory = list(cls.listaggregates.keys())
             mandatory.remove("fidirectdepositinfo")
             msg = "{} must contain at least one of {}"
             raise ValueError(msg.format(cls.__name__, mandatory))
@@ -479,14 +487,14 @@ class TAX1099TRNRS(TrnRs):
 class TAX1099MSGSRQV1(Aggregate):
     """ OFX tax extensions section 2.2.1 """
 
-    tax1099trnrq = ListItem(TAX1099TRNRQ)
+    tax1099trnrq = ListAggregate(TAX1099TRNRQ)
 
     @classmethod
     def validate_args(cls, *args, **kwargs):
         # Must contain at least one TAX1099TRNRQ
         if len(args) == 0:
             msg = "{} must contain at least one of {}"
-            raise ValueError(msg.format(cls.__name__, list(cls.listitems.keys())))
+            raise ValueError(msg.format(cls.__name__, list(cls.listaggregates.keys())))
 
         super().validate_args(*args, **kwargs)
 
@@ -494,14 +502,14 @@ class TAX1099MSGSRQV1(Aggregate):
 class TAX1099MSGSRSV1(Aggregate):
     """ OFX tax extensions section 2.2.2 """
 
-    tax1099trnrs = ListItem(TAX1099TRNRS)
+    tax1099trnrs = ListAggregate(TAX1099TRNRS)
 
     @classmethod
     def validate_args(cls, *args, **kwargs):
         # Must contain at least one TAX1099TRNRS
         if len(args) == 0:
             msg = "{} must contain at least one of {}"
-            raise ValueError(msg.format(cls.__name__, list(cls.listitems.keys())))
+            raise ValueError(msg.format(cls.__name__, list(cls.listaggregates.keys())))
 
         super().validate_args(*args, **kwargs)
 
@@ -519,7 +527,7 @@ class TAX1099MSGSETV1(ElementList):
         # Must contain at least one TAXYEARSUPPORTED
         if len(args) == 0:
             msg = "{} must contain at least one of {}"
-            raise ValueError(msg.format(cls.__name__, list(cls.listitems.keys())))
+            raise ValueError(msg.format(cls.__name__, list(cls.listaggregates.keys())))
 
         super().validate_args(*args, **kwargs)
 

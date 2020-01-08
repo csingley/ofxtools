@@ -3,7 +3,7 @@
 Investment Email - OFX Section 13.10
 """
 # local imports
-from ofxtools.Types import Bool, ListItem
+from ofxtools.Types import Bool, ListAggregate
 from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
 from ofxtools.models.email import MAIL
@@ -38,11 +38,11 @@ class INVMAILSYNCRQ(SyncRqList):
     incimages = Bool(required=True)
     usehtml = Bool(required=True)
     invacctfrom = SubAggregate(INVACCTFROM)
-    invmailtrnrq = ListItem(INVMAILTRNRQ)
+    invmailtrnrq = ListAggregate(INVMAILTRNRQ)
 
 
 class INVMAILSYNCRS(SyncRsList):
     """ OFX Section 13.10.2.2 """
 
     invacctfrom = SubAggregate(INVACCTFROM)
-    invmailtrnrs = ListItem(INVMAILTRNRS)
+    invmailtrnrs = ListAggregate(INVMAILTRNRS)

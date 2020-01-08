@@ -29,7 +29,7 @@ import logging
 
 
 # local imports
-from ofxtools.Types import Bool, String, DateTime, ListItem
+from ofxtools.Types import Bool, String, DateTime, ListAggregate
 from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
 from ofxtools.models.common import MSGSETCORE
@@ -110,13 +110,13 @@ class MAILSYNCRQ(SyncRqList):
 
     incimages = Bool(required=True)
     usehtml = Bool(required=True)
-    mailtrnrq = ListItem(MAILTRNRQ)
+    mailtrnrq = ListAggregate(MAILTRNRQ)
 
 
 class MAILSYNCRS(SyncRsList):
     """ OFX section 9.2.4 """
 
-    mailtrnrs = ListItem(MAILTRNRS)
+    mailtrnrs = ListAggregate(MAILTRNRS)
 
 
 class GETMIMERQ(Aggregate):
@@ -146,17 +146,17 @@ class GETMIMETRNRS(TrnRs):
 class EMAILMSGSRQV1(Aggregate):
     """ OFX section 9.4.1.1 """
 
-    mailtrnrq = ListItem(MAILTRNRQ)
-    getmimetrnrq = ListItem(GETMIMETRNRQ)
-    mailsyncrq = ListItem(MAILSYNCRQ)
+    mailtrnrq = ListAggregate(MAILTRNRQ)
+    getmimetrnrq = ListAggregate(GETMIMETRNRQ)
+    mailsyncrq = ListAggregate(MAILSYNCRQ)
 
 
 class EMAILMSGSRSV1(Aggregate):
     """ OFX section 9.4.1.2 """
 
-    mailtrnrs = ListItem(MAILTRNRS)
-    getmimetrnrs = ListItem(GETMIMETRNRS)
-    mailsyncrs = ListItem(MAILSYNCRS)
+    mailtrnrs = ListAggregate(MAILTRNRS)
+    getmimetrnrs = ListAggregate(GETMIMETRNRS)
+    mailsyncrs = ListAggregate(MAILSYNCRS)
 
 
 class EMAILMSGSETV1(Aggregate):

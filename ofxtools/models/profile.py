@@ -18,7 +18,7 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import Bool, String, OneOf, Integer, DateTime, ListItem
+from ofxtools.Types import Bool, String, OneOf, Integer, DateTime, ListAggregate
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.common import MSGSETCORE
@@ -52,22 +52,22 @@ class PROFMSGSET(Aggregate):
 class MSGSETLIST(Aggregate):
     """ OFX section 7.2 """
 
-    signonmsgset = ListItem(SIGNONMSGSET)
-    signupmsgset = ListItem(SIGNUPMSGSET)
-    bankmsgset = ListItem(BANKMSGSET)
-    creditcardmsgset = ListItem(CREDITCARDMSGSET)
-    invstmtmsgset = ListItem(INVSTMTMSGSET)
-    interxfermsgset = ListItem(INTERXFERMSGSET)
-    wirexfermsgset = ListItem(WIREXFERMSGSET)
-    billpaymsgset = ListItem(BILLPAYMSGSET)
-    emailmsgset = ListItem(EMAILMSGSET)
-    seclistmsgset = ListItem(SECLISTMSGSET)
-    #  presdirmsgset = ListItem(PRESDIRMSGSET)
+    signonmsgset = ListAggregate(SIGNONMSGSET)
+    signupmsgset = ListAggregate(SIGNUPMSGSET)
+    bankmsgset = ListAggregate(BANKMSGSET)
+    creditcardmsgset = ListAggregate(CREDITCARDMSGSET)
+    invstmtmsgset = ListAggregate(INVSTMTMSGSET)
+    interxfermsgset = ListAggregate(INTERXFERMSGSET)
+    wirexfermsgset = ListAggregate(WIREXFERMSGSET)
+    billpaymsgset = ListAggregate(BILLPAYMSGSET)
+    emailmsgset = ListAggregate(EMAILMSGSET)
+    seclistmsgset = ListAggregate(SECLISTMSGSET)
+    #  presdirmsgset = ListAggregate(PRESDIRMSGSET)
     presdirmsgset = Unsupported()
-    #  presdlvmsgset = ListItem(PRESDLVMSGSET)
+    #  presdlvmsgset = ListAggregate(PRESDLVMSGSET)
     presdlvmsgset = Unsupported()
-    profmsgset = ListItem(PROFMSGSET)
-    tax1099msgset = ListItem(TAX1099MSGSET)
+    profmsgset = ListAggregate(PROFMSGSET)
+    tax1099msgset = ListAggregate(TAX1099MSGSET)
 
     @classmethod
     def validate_args(cls, *args, **kwargs):
@@ -107,7 +107,7 @@ class SIGNONINFO(Aggregate):
 class SIGNONINFOLIST(Aggregate):
     """ OFX section 7.2 """
 
-    signoninfo = ListItem(SIGNONINFO)
+    signoninfo = ListAggregate(SIGNONINFO)
 
 
 class PROFRQ(Aggregate):
@@ -155,8 +155,8 @@ class PROFTRNRS(TrnRs):
 
 
 class PROFMSGSRQV1(Aggregate):
-    proftrnrq = ListItem(PROFTRNRQ)
+    proftrnrq = ListAggregate(PROFTRNRQ)
 
 
 class PROFMSGSRSV1(Aggregate):
-    proftrnrs = ListItem(PROFTRNRS)
+    proftrnrs = ListAggregate(PROFTRNRS)

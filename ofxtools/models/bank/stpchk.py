@@ -16,7 +16,7 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import String, Decimal, OneOf, DateTime, ListItem
+from ofxtools.Types import String, Decimal, OneOf, DateTime, ListAggregate
 from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.bank.stmt import BANKACCTFROM
@@ -69,7 +69,7 @@ class STPCHKRS(Aggregate):
 
     curdef = OneOf(*CURRENCY_CODES, required=True)
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
-    stpchknum = ListItem(STPCHKNUM)
+    stpchknum = ListAggregate(STPCHKNUM)
     fee = Decimal(required=True)
     feemsg = String(80, required=True)
 

@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 
 # local imports
 from ofxtools import models, Types
-from ofxtools.Types import String, Bool, ListItem, ListElement
+from ofxtools.Types import String, Bool, ListAggregate, ListElement
 from ofxtools.models.base import (
     Aggregate,
     SubAggregate,
@@ -44,8 +44,8 @@ class TESTAGGREGATE2(Aggregate):
 
 class TESTLIST(Aggregate):
     metadata = String(32)
-    testaggregate = ListItem(TESTAGGREGATE)
-    testaggregate2 = ListItem(TESTAGGREGATE2)
+    testaggregate = ListAggregate(TESTAGGREGATE)
+    testaggregate2 = ListAggregate(TESTAGGREGATE2)
 
 
 class TESTELEMENTLIST(ElementList):
@@ -638,8 +638,8 @@ class ListTestCase(unittest.TestCase):
         self.assertEqual(instance1[0], agg0)
         self.assertEqual(instance1[1], agg1)
 
-    def testInitListItemsAsKwargs(self):
-        # Test that passing in list items as keyword arguments
+    def testInitListAggregatesAsKwargs(self):
+        # Test that passing in list aggregates as keyword arguments
         # (rather than positional args) raises an error
         subagg0 = TESTSUBAGGREGATE(data="quux")
         agg0 = TESTAGGREGATE(

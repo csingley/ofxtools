@@ -178,11 +178,11 @@ class InvposlistTestCase(unittest.TestCase, base.TestAggregate):
             PosstockTestCase.aggregate,
         )
 
-    def testListItems(cls):
+    def testListAggregates(cls):
         # INVPOSLIST may only contain
         # ['POSDEBT', 'POSMF', 'POSOPT', 'POSOTHER', 'POSSTOCK', ]
-        listitems = INVPOSLIST.listitems
-        cls.assertEqual(len(listitems), 5)
+        listaggregates = INVPOSLIST.listaggregates
+        cls.assertEqual(len(listaggregates), 5)
         root = cls.etree
         root.append(bk_stmt.StmttrnTestCase.etree)
 

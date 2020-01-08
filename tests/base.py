@@ -9,7 +9,7 @@ import itertools
 from typing import List, Dict, Sequence
 
 # local imports
-from ofxtools.Types import ListItem, ListElement
+from ofxtools.Types import ListAggregate, ListElement
 import ofxtools.models
 from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.common import STATUS
@@ -116,7 +116,7 @@ class TestAggregate:
         self.assertIsInstance(agg0, Aggregate)
         self.assertIsInstance(agg1, Aggregate)
         self.assertIs(agg0.__class__, agg1.__class__)
-        for attr in agg0.spec_no_listitems:
+        for attr in agg0.spec_no_listaggregates:
             attr0 = getattr(agg0, attr)
             attr1 = getattr(agg1, attr)
             if isinstance(attr0, Aggregate):
@@ -483,7 +483,7 @@ class OfxTestCase:
         self.assertIsInstance(agg0, Aggregate)
         self.assertIsInstance(agg1, Aggregate)
         self.assertIs(agg0.__class__, agg1.__class__)
-        for attr in agg0.spec_no_listitems:
+        for attr in agg0.spec_no_listaggregates:
             attr0 = getattr(agg0, attr)
             attr1 = getattr(agg1, attr)
             if isinstance(attr0, Aggregate):

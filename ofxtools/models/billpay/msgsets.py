@@ -8,7 +8,7 @@ __all__ = ["BILLPAYMSGSRQV1", "BILLPAYMSGSRSV1", "BILLPAYMSGSETV1", "BILLPAYMSGS
 
 
 # local imports
-from ofxtools.Types import Bool, Integer, Time, OneOf, ListItem, ListElement
+from ofxtools.Types import Bool, Integer, Time, OneOf, ListAggregate, ListElement
 from ofxtools.models.base import Aggregate, SubAggregate, ElementList
 from ofxtools.models.common import MSGSETCORE
 from ofxtools.models.billpay.pmt import PMTTRNRQ, PMTTRNRS, PMTINQTRNRQ, PMTINQTRNRS
@@ -36,29 +36,29 @@ DAYS = ("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUN
 class BILLPAYMSGSRQV1(Aggregate):
     """ OFX section 12.11.1.1 """
 
-    pmttrnrq = ListItem(PMTTRNRQ)
-    recpmttrnrq = ListItem(RECPMTTRNRQ)
-    payeetrnrq = ListItem(PAYEETRNRQ)
-    pmtinqtrnrq = ListItem(PMTINQTRNRQ)
-    pmtmailtrnrq = ListItem(PMTMAILTRNRQ)
-    pmtsyncrq = ListItem(PMTSYNCRQ)
-    recpmtsyncrq = ListItem(RECPMTSYNCRQ)
-    payeesyncrq = ListItem(PAYEESYNCRQ)
-    pmtmailsyncrq = ListItem(PMTMAILSYNCRQ)
+    pmttrnrq = ListAggregate(PMTTRNRQ)
+    recpmttrnrq = ListAggregate(RECPMTTRNRQ)
+    payeetrnrq = ListAggregate(PAYEETRNRQ)
+    pmtinqtrnrq = ListAggregate(PMTINQTRNRQ)
+    pmtmailtrnrq = ListAggregate(PMTMAILTRNRQ)
+    pmtsyncrq = ListAggregate(PMTSYNCRQ)
+    recpmtsyncrq = ListAggregate(RECPMTSYNCRQ)
+    payeesyncrq = ListAggregate(PAYEESYNCRQ)
+    pmtmailsyncrq = ListAggregate(PMTMAILSYNCRQ)
 
 
 class BILLPAYMSGSRSV1(Aggregate):
     """ OFX section 12.11.1.2 """
 
-    pmttrnrs = ListItem(PMTTRNRS)
-    recpmttrnrs = ListItem(RECPMTTRNRS)
-    payeetrnrs = ListItem(PAYEETRNRS)
-    pmtinqtrnrs = ListItem(PMTINQTRNRS)
-    pmtmailtrns = ListItem(PMTMAILTRNRS)
-    pmtsyncrs = ListItem(PMTSYNCRS)
-    recpmtsyncrs = ListItem(RECPMTSYNCRS)
-    payeesyncrs = ListItem(PAYEESYNCRS)
-    pmtmailsyncrs = ListItem(PMTMAILSYNCRS)
+    pmttrnrs = ListAggregate(PMTTRNRS)
+    recpmttrnrs = ListAggregate(RECPMTTRNRS)
+    payeetrnrs = ListAggregate(PAYEETRNRS)
+    pmtinqtrnrs = ListAggregate(PMTINQTRNRS)
+    pmtmailtrns = ListAggregate(PMTMAILTRNRS)
+    pmtsyncrs = ListAggregate(PMTSYNCRS)
+    recpmtsyncrs = ListAggregate(RECPMTSYNCRS)
+    payeesyncrs = ListAggregate(PAYEESYNCRS)
+    pmtmailsyncrs = ListAggregate(PMTMAILSYNCRS)
 
 
 class BILLPAYMSGSETV1(ElementList):

@@ -40,7 +40,7 @@ import logging
 
 
 # local imports
-from ofxtools.Types import Element, ListItem, ListElement
+from ofxtools.Types import Element, ListAggregate, ListElement
 import ofxtools.models
 from ofxtools.utils import classproperty
 
@@ -78,7 +78,7 @@ class Aggregate(list):
         list.__init__(self)
         self.validate_args(*args, **kwargs)
 
-        for attr in self.spec_no_listitems:
+        for attr in self.spec_no_listaggregates:
             value = kwargs.pop(attr, None)
             try:
                 # If attr is an element (i.e. its class is defined in
@@ -144,9 +144,9 @@ class Aggregate(list):
 
         for member in args:
             if isinstance(member, Aggregate):
-                # ListItem - validate type against spec
+                # ListAggregate - validate type against spec
                 arg = member.__class__.__name__.lower()
-                if arg not in self.listitems:
+                if arg not in self.listaggregates:
                     msg = f"{clsnm} can't contain {arg} as list item: {member}"
                     raise TypeError(msg)
             else:
@@ -166,10 +166,10 @@ class Aggregate(list):
             args = [
                 k
                 for k in kwargs.keys()
-                if k in self.listitems or k in self.listelements
+                if k in self.listaggregates or k in self.listelements
             ]
             if args:
-                msg = f"{args}: pass ListItems as args, not kwargs"
+                msg = f"{args}: pass list members as args, not kwargs"
                 raise SyntaxError(msg)
             else:
                 cls = self.__class__.__name__
@@ -215,7 +215,7 @@ class Aggregate(list):
 
         clsnm = cls.__name__
         spec = list(cls.spec)
-        listitems = cls.listitems
+        listaggregates = cls.listaggregates
         listelements = cls.listelements
 
         #  Type alias - accumulator for functools.reduce()
@@ -240,7 +240,7 @@ class Aggregate(list):
             #  to the order of class attributes defined by ``Aggregate`` subclasses.
             #  Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
             #
-            #  Class attributes defined as list members (i.e. ListItem / ListElement,
+            #  Class attributes defined as list members (i.e. ListAggregate / ListElement,
             #  identified as "one or more" or "zero or more" in the OFX spec) may
             #  occur in any order, so we don't validate the relative order of list
             #  members.  Other than, we require that the index of an attribute within
@@ -250,7 +250,7 @@ class Aggregate(list):
             except ValueError:
                 raise OFXSpecError(f"{clsnm}.spec = {spec}; doesn't contain {attrname}")
 
-            is_listmember = attrname in listitems or attrname in listelements
+            is_listmember = attrname in listaggregates or attrname in listelements
             if index <= prev_index and not (is_listmember and prev_is_listmember):
                 subels = [el.tag for el in elem]
                 raise OFXSpecError(f"{clsnm} SubElements out of order: {subels}")
@@ -313,12 +313,12 @@ class Aggregate(list):
         do_list = True  # HACK
 
         for attr, type_ in self.spec.items():
-            if isinstance(type_, (ListItem, ListElement)):
-                # HACK - the assumption here is that all ListItems/ListElements
+            if isinstance(type_, (ListAggregate, ListElement)):
+                # HACK - the assumption here is that all list members
                 # occur immediately adjacent to each other in the class
                 # definition.  So when you encounter the first one, process
                 # all Aggregate contained sequence items, then don't do them
-                # again for subsequent ListItems/ListElements.
+                # again for subsequent list members.
                 if do_list:
                     for member in self:
                         self._listAppend(root, member)
@@ -419,16 +419,16 @@ class Aggregate(list):
 
     @classproperty
     @classmethod
-    def spec_no_listitems(cls) -> Mapping[str, Union[Element, "Unsupported"]]:
+    def spec_no_listaggregates(cls) -> Mapping[str, Union[Element, "Unsupported"]]:
         """
         Mapping of all class attributes that are
-        Elements/SubAggregates/Unsupported, excluding ListItems/ListElements.
+        Elements/SubAggregates/Unsupported, excluding ListAggregates/ListElements.
 
         Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
         return cls._filter_attrs(
             lambda v: isinstance(v, (Element, Unsupported))
-            and not isinstance(v, (ListItem, ListElement))
+            and not isinstance(v, (ListAggregate, ListElement))
         )
 
     @classproperty
@@ -465,17 +465,17 @@ class Aggregate(list):
 
     @classproperty
     @classmethod
-    def listitems(cls) -> Mapping[str, ListItem]:
+    def listaggregates(cls) -> Mapping[str, ListAggregate]:
         """
-        Mapping of all class attributes that are ListItems.
+        Mapping of all class attributes that are ListAggregates.
 
         Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
-        return cls._filter_attrs(lambda v: isinstance(v, ListItem))
+        return cls._filter_attrs(lambda v: isinstance(v, ListAggregate))
 
     @classproperty
     @classmethod
-    def listelements(cls) -> Mapping[str, ListItem]:
+    def listelements(cls) -> Mapping[str, ListAggregate]:
         """
         Mapping of all class attributes that are ListElements.
 
@@ -495,7 +495,7 @@ class Aggregate(list):
         # "walrus operator" provided in Python 3.8.
         attrs = [
             (attr, repr(getattr(self, attr)))
-            for attr in self.spec_no_listitems.keys()
+            for attr in self.spec_no_listaggregates.keys()
             if getattr(self, attr) is not None
         ]
         return attrs
@@ -573,14 +573,14 @@ class Unsupported:
 
 class ElementList(Aggregate):
     """
-    Aggregate whose sequence contents are ListElements instead of ListItems
+    Aggregate whose sequence contents are ListElements instead of ListAggregates
     """
 
     @classproperty
     @classmethod
-    def listitems(cls) -> Mapping[str, ListElement]:
+    def listaggregates(cls) -> Mapping[str, ListElement]:
         """
-        ElementList.listitems returns ListElements instead of ListItems
+        ElementList.listaggregates returns ListElements instead of ListAggregates
 
         Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
@@ -588,14 +588,14 @@ class ElementList(Aggregate):
 
     def _apply_args(self, *args) -> None:
         # Interpret positional args as contained list items (of variable #)
-        assert len(self.listitems) == 1
-        converter = list(self.listitems.values())[0]
+        assert len(self.listaggregates) == 1
+        converter = list(self.listaggregates.values())[0]
         for member in args:
             self.append(converter.convert(member))
 
     def _listAppend(self, root: ET.Element, member) -> None:
-        assert len(self.listitems) == 1
-        spec = list(self.listitems.items())[0]
+        assert len(self.listaggregates) == 1
+        spec = list(self.listaggregates.items())[0]
         attr, converter = spec
 
         text = converter.unconvert(member)

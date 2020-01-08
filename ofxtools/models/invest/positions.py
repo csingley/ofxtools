@@ -8,7 +8,7 @@ __all__ = ["INVPOS", "POSDEBT", "POSMF", "POSOPT", "POSOTHER", "POSSTOCK", "INVP
 
 
 # Local imports
-from ofxtools.Types import Bool, String, OneOf, Decimal, DateTime, ListItem
+from ofxtools.Types import Bool, String, OneOf, Decimal, DateTime, ListAggregate
 from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.invest.acct import INVSUBACCTS
 from ofxtools.models.invest.securities import SECID
@@ -73,8 +73,8 @@ class POSSTOCK(Aggregate):
 class INVPOSLIST(Aggregate):
     """ OFX section 13.9.2.2 """
 
-    posdebt = ListItem(POSDEBT)
-    posmf = ListItem(POSMF)
-    posopt = ListItem(POSOPT)
-    posother = ListItem(POSOTHER)
-    posstock = ListItem(POSSTOCK)
+    posdebt = ListAggregate(POSDEBT)
+    posmf = ListAggregate(POSMF)
+    posopt = ListAggregate(POSOPT)
+    posother = ListAggregate(POSOTHER)
+    posstock = ListAggregate(POSSTOCK)

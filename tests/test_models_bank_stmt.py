@@ -567,10 +567,10 @@ class BallistTestCase(unittest.TestCase, base.TestAggregate):
 
     optionalElements: List[str] = []  # FIXME - how to handle multiple BALs?
 
-    def testListItems(self):
+    def testListAggregates(self):
         # BALLLIST may only contain BAL
-        listitems = BALLIST.listitems
-        self.assertEqual(len(listitems), 1)
+        listaggregates = BALLIST.listaggregates
+        self.assertEqual(len(listaggregates), 1)
         root = self.etree
         root.append(StmttrnTestCase.etree)
 

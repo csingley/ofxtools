@@ -14,7 +14,7 @@ __all__ = [
 ]
 
 
-from ofxtools.Types import Bool, String, ListItem
+from ofxtools.Types import Bool, String, ListAggregate
 from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
 from ofxtools.models.email import MAIL
@@ -54,10 +54,10 @@ class PMTMAILSYNCRQ(SyncRqList):
 
     incimages = Bool(required=True)
     usehtml = Bool(required=True)
-    pmtmailtrnrq = ListItem(PMTMAILTRNRQ)
+    pmtmailtrnrq = ListAggregate(PMTMAILTRNRQ)
 
 
 class PMTMAILSYNCRS(SyncRsList):
     """ OFX Section 12.8.2.2 """
 
-    pmtmailtrnrs = ListItem(PMTMAILTRNRS)
+    pmtmailtrnrs = ListAggregate(PMTMAILTRNRS)

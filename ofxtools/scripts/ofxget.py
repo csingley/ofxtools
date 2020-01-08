@@ -1343,8 +1343,8 @@ def extract_acctinfos(markup: BytesIO) -> Iterator[AcctInfo]:
     acctinfors = trnrs.acctinfors
     assert isinstance(acctinfors, models.ACCTINFORS)
 
-    # ACCTINFOs are ListItems of ACCTINFORS
-    # *ACCTINFOs are ListItems of ACCTINFO
+    # ACCTINFOs are ListAggregates of ACCTINFORS
+    # *ACCTINFOs are ListAggregates of ACCTINFO
     # The data we want is in a nested list
     return itertools.chain.from_iterable(acctinfors)
 

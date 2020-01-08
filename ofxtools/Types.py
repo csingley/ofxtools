@@ -22,7 +22,7 @@ __all__ = [
     "Decimal",
     "DateTime",
     "Time",
-    "ListItem",
+    "ListAggregate",
     "ListElement",
 ]
 
@@ -578,7 +578,7 @@ class Time(DateTime):
         return self._unconvert_default(value)
 
 
-class ListItem(Element):
+class ListAggregate(Element):
     """ """
 
     def _init(self, *args, **kwargs):

@@ -38,7 +38,7 @@ from ofxtools.Types import (
     Integer,
     Decimal,
     DateTime,
-    ListItem,
+    ListAggregate,
 )
 from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
@@ -79,7 +79,7 @@ class SECRQ(Aggregate):
 class SECLISTRQ(Aggregate):
     """ OFX section 13.8.2.2 """
 
-    secrq = ListItem(SECRQ)
+    secrq = ListAggregate(SECRQ)
 
 
 class SECINFO(Aggregate):
@@ -128,7 +128,7 @@ class PORTION(Aggregate):
 class MFASSETCLASS(Aggregate):  # pylint: disable=too-many-ancestors
     """ OFX section 13.8.5.3 """
 
-    portion = ListItem(PORTION)
+    portion = ListAggregate(PORTION)
 
 
 class FIPORTION(Aggregate):
@@ -141,7 +141,7 @@ class FIPORTION(Aggregate):
 class FIMFASSETCLASS(Aggregate):  # pylint: disable=too-many-ancestors
     """ OFX section 13.8.5.3 """
 
-    fiportion = ListItem(FIPORTION)
+    fiportion = ListAggregate(FIPORTION)
 
 
 class MFINFO(Aggregate):
@@ -252,11 +252,11 @@ class STOCKINFO(Aggregate):
 class SECLIST(Aggregate):
     """ OFX section 13.8.4.4 """
 
-    debtinfo = ListItem(DEBTINFO)
-    mfinfo = ListItem(MFINFO)
-    optinfo = ListItem(OPTINFO)
-    otherinfo = ListItem(OTHERINFO)
-    stockinfo = ListItem(STOCKINFO)
+    debtinfo = ListAggregate(DEBTINFO)
+    mfinfo = ListAggregate(MFINFO)
+    optinfo = ListAggregate(OPTINFO)
+    otherinfo = ListAggregate(OTHERINFO)
+    stockinfo = ListAggregate(STOCKINFO)
 
 
 class SECLISTTRNRQ(TrnRq):

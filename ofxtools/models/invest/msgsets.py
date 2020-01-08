@@ -17,7 +17,7 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import Bool, ListItem
+from ofxtools.Types import Bool, ListAggregate
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
 from ofxtools.models.common import MSGSETCORE
 from ofxtools.models.invest.stmt import INVSTMTTRNRQ, INVSTMTTRNRS
@@ -33,9 +33,9 @@ from ofxtools.models.invest.securities import SECLIST, SECLISTTRNRQ, SECLISTTRNR
 class INVSTMTMSGSRQV1(Aggregate):
     """ OFX section 13.7.1.2.1 """
 
-    invstmttrnrq = ListItem(INVSTMTTRNRQ)
-    invmailtrnrq = ListItem(INVMAILTRNRQ)
-    invmailsyncrq = ListItem(INVMAILSYNCRQ)
+    invstmttrnrq = ListAggregate(INVSTMTTRNRQ)
+    invmailtrnrq = ListAggregate(INVMAILTRNRQ)
+    invmailsyncrq = ListAggregate(INVMAILSYNCRQ)
 
     @property
     def statements(self):
@@ -51,9 +51,9 @@ class INVSTMTMSGSRQV1(Aggregate):
 class INVSTMTMSGSRSV1(Aggregate):
     """ OFX section 13.7.1.2.2 """
 
-    invstmttrnrs = ListItem(INVSTMTTRNRS)
-    invmailtrnrs = ListItem(INVMAILTRNRS)
-    invmailsyncrs = ListItem(INVMAILSYNCRS)
+    invstmttrnrs = ListAggregate(INVSTMTTRNRS)
+    invmailtrnrs = ListAggregate(INVMAILTRNRS)
+    invmailsyncrs = ListAggregate(INVMAILSYNCRS)
 
     @property
     def statements(self):
@@ -92,7 +92,7 @@ class INVSTMTMSGSET(Aggregate):
 class SECLISTMSGSRQV1(Aggregate):
     """ OFX section 13.7.2.2.1 """
 
-    seclisttrnrq = ListItem(SECLISTTRNRQ)
+    seclisttrnrq = ListAggregate(SECLISTTRNRQ)
 
 
 class SECLISTMSGSRSV1(Aggregate):
@@ -103,8 +103,8 @@ class SECLISTMSGSRSV1(Aggregate):
     # is an empty aggregate; including SECLISTTRNRS/SECLISTRS under
     # SECLISTMSGSTSV1 merely indicates that the accompanying SECLIST was
     # generated in response to a client SECLISTRQ.
-    seclisttrnrs = ListItem(SECLISTTRNRS)
-    seclist = ListItem(SECLIST)
+    seclisttrnrs = ListAggregate(SECLISTTRNRS)
+    seclist = ListAggregate(SECLIST)
 
     @property
     def securities(self):

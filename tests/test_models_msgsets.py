@@ -182,10 +182,10 @@ class Profmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
             profile.ProftrnrqTestCase.aggregate, profile.ProftrnrqTestCase.aggregate
         )
 
-    def testListItem(self):
+    def testListAggregate(self):
         # PROFMSGSRQV1 may only contain PROFTRNRQ
-        listitems = PROFMSGSRQV1.listitems
-        self.assertEqual(len(listitems), 1)
+        listaggregates = PROFMSGSRQV1.listaggregates
+        self.assertEqual(len(listaggregates), 1)
         root = self.etree
         root.append(profile.ProftrnrsTestCase.etree)
 
@@ -211,10 +211,10 @@ class Profmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
             profile.ProftrnrsTestCase.aggregate, profile.ProftrnrsTestCase.aggregate
         )
 
-    def testListItems(self):
+    def testListAggregates(self):
         # PROFMSGSRSV1 may only contain PROFTRNRS
-        listitems = PROFMSGSRSV1.listitems
-        self.assertEqual(len(listitems), 1)
+        listaggregates = PROFMSGSRSV1.listaggregates
+        self.assertEqual(len(listaggregates), 1)
         root = self.etree
         root.append(profile.ProftrnrqTestCase.etree)
 
@@ -274,11 +274,11 @@ class Signupmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
             signup.EnrolltrnrqTestCase.aggregate, signup.EnrolltrnrqTestCase.aggregate
         )
 
-    def testListItems(self):
+    def testListAggregates(self):
         # SIGNUPMSGSRQV1 may contain
         # ["ENROLLTRNRQ", "ACCTINFOTRNRQ", "ACCTTRNRQ", "CHGUSERINFOTRNRQ"]
-        listitems = SIGNUPMSGSRQV1.listitems
-        self.assertEqual(len(listitems), 4)
+        listaggregates = SIGNUPMSGSRQV1.listaggregates
+        self.assertEqual(len(listaggregates), 4)
         root = self.etree
         root.append(signup.EnrolltrnrsTestCase.etree)
 
@@ -304,11 +304,11 @@ class Signupmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
             signup.EnrolltrnrsTestCase.aggregate, signup.EnrolltrnrsTestCase.aggregate
         )
 
-    def testListItems(self):
+    def testListAggregates(self):
         # SIGNUPMSGSRSV1 may contain
         # ["ENROLLTRNRS", "ACCTINFOTRNRS", "ACCTTRNRS", "CHGUSERINFOTRNRS"]
-        listitems = SIGNUPMSGSRSV1.listitems
-        self.assertEqual(len(listitems), 4)
+        listaggregates = SIGNUPMSGSRSV1.listaggregates
+        self.assertEqual(len(listaggregates), 4)
         root = self.etree
         root.append(signup.EnrolltrnrqTestCase.etree)
 
@@ -390,10 +390,10 @@ class Emailmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
             email.MailsyncrqTestCase.aggregate,
         )
 
-    def testListItems(self):
+    def testListAggregates(self):
         # EMAILMSGSRQV1 may contain ["MAILTRNRQ", "GETMIMETRNRQ", "MAILSYNCRQ"]
-        listitems = EMAILMSGSRQV1.listitems
-        self.assertEqual(len(listitems), 3)
+        listaggregates = EMAILMSGSRQV1.listaggregates
+        self.assertEqual(len(listaggregates), 3)
         root = self.etree
         root.append(email.MailtrnrsTestCase.etree)
 
@@ -429,10 +429,10 @@ class Emailmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
             email.MailsyncrsTestCase.aggregate,
         )
 
-    def testListItems(self):
+    def testListAggregates(self):
         # EMAILMSGSRSV1 may contain ["MAILTRNRS", "GETMIMETRNRS", "MAILSYNCRS"]
-        listitems = EMAILMSGSRSV1.listitems
-        self.assertEqual(len(listitems), 3)
+        listaggregates = EMAILMSGSRSV1.listaggregates
+        self.assertEqual(len(listaggregates), 3)
         root = self.etree
         root.append(email.MailtrnrqTestCase.etree)
 
@@ -525,14 +525,14 @@ class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
             bank_sync.BankmailsyncrqTestCase.aggregate,
         )
 
-    def testListItems(self):
+    def testListAggregates(self):
         # BANKMSGSRQV1 may contain
         # ["STMTTRNRQ", "STMTENDTRNRQ", "STPCHKTRNRQ", "INTRATRNRQ",
         # "RECINTRATRNRQ", "BANKMAILTRNRQ", "STPCHKSYNCRQ", "INTRASYNCRQ",
         # "RECINTRASYNCRQ", "BANKMAILSYNCRQ"]
 
-        listitems = BANKMSGSRQV1.listitems
-        self.assertEqual(len(listitems), 10)
+        listaggregates = BANKMSGSRQV1.listaggregates
+        self.assertEqual(len(listaggregates), 10)
         root = self.etree
         root.append(bk_stmt.StmttrnrsTestCase.etree)
 
@@ -589,13 +589,13 @@ class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
             bank_sync.BankmailsyncrsTestCase.aggregate,
         )
 
-    def testListItems(self):
+    def testListAggregates(self):
         # BANKMSGSRSV! may contain
         # ["STMTTRNRS", "STMTENDRS", "STPCHKTRNRS", "INTRATRNRS",
         # "RECINTRATRNRS", "BANKMAILTRNRS", "STPCHKSYNCRS", "INTRASYNCRS",
         # "RECINTRASYNCRS", "BANKMAILSYNCRS"]
-        listitems = BANKMSGSRSV1.listitems
-        self.assertEqual(len(listitems), 10)
+        listaggregates = BANKMSGSRSV1.listaggregates
+        self.assertEqual(len(listaggregates), 10)
         root = self.etree
         root.append(bk_stmt.StmttrnrqTestCase.etree)
 
@@ -850,11 +850,11 @@ class Interxfermsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
             bank_sync.RecintersyncrqTestCase.aggregate,
         )
 
-    def testListItems(self):
+    def testListAggregates(self):
         # INTERXFERMSGSRQV1 may contain
         # ["INTERTRNRQ", "RECINTERTRNRQ", "INTERSYNCRQ", "RECINTERSYNCRQ"]
-        listitems = INTERXFERMSGSRQV1.listitems
-        self.assertEqual(len(listitems), 4)
+        listaggregates = INTERXFERMSGSRQV1.listaggregates
+        self.assertEqual(len(listaggregates), 4)
         root = self.etree
         root.append(interxfer.IntertrnrsTestCase.etree)
 
@@ -893,11 +893,11 @@ class Interxfermsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
             bank_sync.RecintersyncrsTestCase.aggregate,
         )
 
-    def testListItems(self):
+    def testListAggregates(self):
         # INTERXFERMSGSRSV1 may contain
         # ["INTERTRNRS", "RECINTERTRNRS", "INTERSYNCRS", "RECINTERSYNCRS"]
-        listitems = INTERXFERMSGSRSV1.listitems
-        self.assertEqual(len(listitems), 4)
+        listaggregates = INTERXFERMSGSRSV1.listaggregates
+        self.assertEqual(len(listaggregates), 4)
         root = self.etree
         root.append(interxfer.IntertrnrqTestCase.etree)
 
@@ -971,11 +971,11 @@ class Wirexfermsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
             bank_sync.WiresyncrqTestCase.aggregate,
         )
 
-    def testListItems(self):
+    def testListAggregates(self):
         # WIREXFERMSGSRQV1 may contain
         # ["WIRETRNRQ", "WIREERSYNCRQ"]
-        listitems = WIREXFERMSGSRQV1.listitems
-        self.assertEqual(len(listitems), 2)
+        listaggregates = WIREXFERMSGSRQV1.listaggregates
+        self.assertEqual(len(listaggregates), 2)
         root = self.etree
         root.append(wire.WiretrnrsTestCase.etree)
 
@@ -1005,11 +1005,11 @@ class Wirexfermsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
             bank_sync.WiresyncrsTestCase.aggregate,
         )
 
-    def testListItems(self):
+    def testListAggregates(self):
         # WIRERXFERMSGSRSV1 may contain
         # ["WIRETRNRS", "WIRESYNCRS"]
-        listitems = WIREXFERMSGSRSV1.listitems
-        self.assertEqual(len(listitems), 2)
+        listaggregates = WIREXFERMSGSRSV1.listaggregates
+        self.assertEqual(len(listaggregates), 2)
         root = self.etree
         root.append(wire.WiretrnrqTestCase.etree)
 
@@ -1098,12 +1098,12 @@ class WirexfermsgsetTestCase(unittest.TestCase, base.TestAggregate):
 #  PmtmailsyncrqTestCase.aggregate,
 #  PmtmailsyncrqTestCase.aggregate)
 
-#  def testListItems(self):
+#  def testListAggregates(self):
 #  # BILLPAYMSGSRQV1 may contain
 #  # [PMTTRNRQ, RECPMTTRNRQ, PAYEETRNRQ, PMTINQTRNRQ, PMTMAILTRNRQ,
 #  # PMTSYNCRQ, RECPMTSYNCRQ, PAYEESYNCRQ, PMTMAILSYNCRQ]
-#  listitems = BILLPAYMSGSRQV1.listitems
-#  self.assertEqual(len(listitems), 9)
+#  listaggregates = BILLPAYMSGSRQV1.listaggregates
+#  self.assertEqual(len(listaggregates), 9)
 #  root = self.etree
 #  root.append(BillpaytrnrsTestCase.etree)
 
@@ -1148,12 +1148,12 @@ class WirexfermsgsetTestCase(unittest.TestCase, base.TestAggregate):
 #  PmtmailsyncrsTestCase.aggregate,
 #  PmtmailsyncrsTestCase.aggregate)
 
-#  def testListItems(self):
+#  def testListAggregates(self):
 #  # BILLPAYMSGSRQV1 may contain
 #  # [PMTTRNRS, RECPMTTRNRS, PAYEETRNRS, PMTINQTRNRS, PMTMAILTRNRS,
 #  # PMTSYNCRS, RECPMTSYNCRS, PAYEESYNCRS, PMTMAILSYNCRS]
-#  listitems = BILLPAYMSGSRSV1.listitems
-#  self.assertEqual(len(listitems), 9)
+#  listaggregates = BILLPAYMSGSRSV1.listaggregates
+#  self.assertEqual(len(listaggregates), 9)
 #  root = self.etree
 #  root.append(BillpaytrnrsTestCase.etree)
 
@@ -1242,11 +1242,11 @@ class Invstmtmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
             invest.InvstmttrnrqTestCase.aggregate, invest.InvstmttrnrqTestCase.aggregate
         )
 
-    def testListItems(self):
+    def testListAggregates(self):
         # INVSTMTMSGSRQV1 may only contain
         # ["INVSTMTTRNRQ", "INVMAILTRNRQ", "INVMAILSYNCRQ"]
-        listitems = INVSTMTMSGSRQV1.listitems
-        self.assertEqual(len(listitems), 3)
+        listaggregates = INVSTMTMSGSRQV1.listaggregates
+        self.assertEqual(len(listaggregates), 3)
         root = self.etree
         root.append(invest.InvstmttrnrsTestCase.etree)
 
@@ -1273,11 +1273,11 @@ class Invstmtmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
             invest.InvstmttrnrsTestCase.aggregate, invest.InvstmttrnrsTestCase.aggregate
         )
 
-    def testListItems(self):
+    def testListAggregates(self):
         # INVSTMTMSGSRSV1 may only contain
         # ["INVSTMTTRNRS", "INVMAILTRNRS", "INVMAILSYNCRS"]
-        listitems = INVSTMTMSGSRSV1.listitems
-        self.assertEqual(len(listitems), 3)
+        listaggregates = INVSTMTMSGSRSV1.listaggregates
+        self.assertEqual(len(listaggregates), 3)
         root = self.etree
         root.append(invest.InvstmttrnrqTestCase.etree)
 
@@ -1366,11 +1366,11 @@ class Seclistmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
             securities.SeclisttrnrqTestCase.aggregate,
         )
 
-    def testListItems(self):
+    def testListAggregates(self):
         # SECLISTMSGSRQV1 may only contain SECLISTTRNRQ
 
-        listitems = SECLISTMSGSRQV1.listitems
-        self.assertEqual(len(listitems), 1)
+        listaggregates = SECLISTMSGSRQV1.listaggregates
+        self.assertEqual(len(listaggregates), 1)
         root = self.etree
         root.append(securities.SeclisttrnrsTestCase.etree)
 
@@ -1399,11 +1399,11 @@ class Seclistmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
             securities.SeclistTestCase.aggregate, securities.SeclistTestCase.aggregate
         )
 
-    def testListItems(self):
+    def testListAggregates(self):
         # SECLISTMSGSRSV1 may only contain SECLISTTRNRS, SECLIST
 
-        listitems = SECLISTMSGSRSV1.listitems
-        self.assertEqual(len(listitems), 2)
+        listaggregates = SECLISTMSGSRSV1.listaggregates
+        self.assertEqual(len(listaggregates), 2)
         root = self.etree
         root.append(securities.SeclisttrnrqTestCase.etree)
 
@@ -1587,15 +1587,14 @@ class MsgsetlistTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("MSGSETLIST")
         yield root
 
-    def testListItems(self):
+    def testListAggregates(self):
         # MSGSETLIST may only contain
         # ["SIGNONMSGSET", "SIGNUPMSGSET", "PROFMSGSET", "BANKMSGSET",
         # "CREDITCARDMSGSET", "INTERXFERMSGSET", "WIREXFERMSGSET",
         # "EMAILMSGSET", "INVSTMTMSGSET", "SECLISTMSGSET", "BILLPAYMSGSET",
         # "PRESDIRMSGSET", "PRESDLVMSGSET", "TAX1099MSGSET"]
-        listitems = MSGSETLIST.listitems
-        #  cls.assertEqual(len(listitems), 13)
-        self.assertEqual(len(listitems), 12)
+        listaggregates = MSGSETLIST.listaggregates
+        self.assertEqual(len(listaggregates), 12)
         root = self.etree
         root.append(bk_stmt.StmttrnrsTestCase.etree)
 

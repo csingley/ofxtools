@@ -45,7 +45,7 @@ import itertools
 
 
 # local imports
-from ofxtools.Types import Bool, String, OneOf, DateTime, ListItem
+from ofxtools.Types import Bool, String, OneOf, DateTime, ListAggregate
 from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
 from ofxtools.models.common import SVCSTATUSES, MSGSETCORE
@@ -139,18 +139,18 @@ class ACCTINFO(Aggregate):
 
     desc = String(80)
     phone = String(32)
-    bankacctinfo = ListItem(BANKACCTINFO)
-    ccacctinfo = ListItem(CCACCTINFO)
-    bpacctinfo = ListItem(BPACCTINFO)
-    invacctinfo = ListItem(INVACCTINFO)
-    #  presacctinfo = ListItem(PRESACCTINFO)
+    bankacctinfo = ListAggregate(BANKACCTINFO)
+    ccacctinfo = ListAggregate(CCACCTINFO)
+    bpacctinfo = ListAggregate(BPACCTINFO)
+    invacctinfo = ListAggregate(INVACCTINFO)
+    #  presacctinfo = ListAggregate(PRESACCTINFO)
 
     @classmethod
     def validate_args(cls, *args, **kwargs):
         # Must contain at least one <xxxACCTINFO>
         if len(args) == 0:
             msg = "{} must contain at least one of {}"
-            raise ValueError(msg.format(cls.__name__, cls.listitems.keys()))
+            raise ValueError(msg.format(cls.__name__, cls.listaggregates.keys()))
 
         #  For a given service xxx, there can be at most one <xxxACCTINFO>
         #  returned. For example, you cannot return two <BANKACCTINFO>
@@ -180,7 +180,7 @@ class ACCTINFORS(Aggregate):
     """ OFX section 8.5.2 """
 
     dtacctup = DateTime(required=True)
-    acctinfo = ListItem(ACCTINFO)
+    acctinfo = ListAggregate(ACCTINFO)
 
     def __repr__(self):
         return "<{} dtacctup='{}' len={}>".format(
@@ -274,13 +274,13 @@ class ACCTTRNRS(TrnRs):
 class ACCTSYNCRQ(SyncRqList):
     """ OFX section 8.6.4.1 """
 
-    accttrnrq = ListItem(ACCTTRNRQ)
+    accttrnrq = ListAggregate(ACCTTRNRQ)
 
 
 class ACCTSYNCRS(SyncRsList):
     """ OFX section 8.6.4.2 """
 
-    accttrnrs = ListItem(ACCTTRNRS)
+    accttrnrs = ListAggregate(ACCTTRNRS)
 
 
 class CHGUSERINFORQ(Aggregate):
@@ -335,31 +335,31 @@ class CHGUSERINFOTRNRS(TrnRs):
 class CHGUSERINFOSYNCRQ(SyncRqList):
     """ OFX section 8.7.4.1 """
 
-    chguserinfotrnrq = ListItem(CHGUSERINFOTRNRQ)
+    chguserinfotrnrq = ListAggregate(CHGUSERINFOTRNRQ)
 
 
 class CHGUSERINFOSYNCRS(SyncRsList):
     """ OFX section 8.7.4.2 """
 
-    chguserinfotrnrs = ListItem(CHGUSERINFOTRNRS)
+    chguserinfotrnrs = ListAggregate(CHGUSERINFOTRNRS)
 
 
 class SIGNUPMSGSRQV1(Aggregate):
     """ OFX section 8.1 """
 
-    enrolltrnrq = ListItem(ENROLLTRNRQ)
-    acctinfotrnrq = ListItem(ACCTINFOTRNRQ)
-    accttrnrq = ListItem(ACCTTRNRQ)
-    chguserinfotrnrq = ListItem(CHGUSERINFOTRNRQ)
+    enrolltrnrq = ListAggregate(ENROLLTRNRQ)
+    acctinfotrnrq = ListAggregate(ACCTINFOTRNRQ)
+    accttrnrq = ListAggregate(ACCTTRNRQ)
+    chguserinfotrnrq = ListAggregate(CHGUSERINFOTRNRQ)
 
 
 class SIGNUPMSGSRSV1(Aggregate):
     """ OFX section 8.1 """
 
-    enrolltrnrs = ListItem(ENROLLTRNRS)
-    acctinfotrnrs = ListItem(ACCTINFOTRNRS)
-    accttrnrs = ListItem(ACCTTRNRS)
-    chguserinfotrnrs = ListItem(CHGUSERINFOTRNRS)
+    enrolltrnrs = ListAggregate(ENROLLTRNRS)
+    acctinfotrnrs = ListAggregate(ACCTINFOTRNRS)
+    accttrnrs = ListAggregate(ACCTTRNRS)
+    chguserinfotrnrs = ListAggregate(CHGUSERINFOTRNRS)
 
 
 class CLIENTENROLL(Aggregate):

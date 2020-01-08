@@ -28,7 +28,15 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import Bool, OneOf, Integer, Decimal, Time, ListItem, ListElement
+from ofxtools.Types import (
+    Bool,
+    OneOf,
+    Integer,
+    Decimal,
+    Time,
+    ListAggregate,
+    ListElement,
+)
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, ElementList
 from ofxtools.models.common import MSGSETCORE
 from ofxtools.models.bank.stmt import (
@@ -79,16 +87,16 @@ DAYS = ("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUN
 class BANKMSGSRQV1(Aggregate):
     """ OFX section 11.13.1.1.1 """
 
-    stmttrnrq = ListItem(STMTTRNRQ)
-    stmtendtrnrq = ListItem(STMTENDTRNRQ)
-    stpchktrnrq = ListItem(STPCHKTRNRQ)
-    intratrnrq = ListItem(INTRATRNRQ)
-    recintratrnrq = ListItem(RECINTRATRNRQ)
-    bankmailtrnrq = ListItem(BANKMAILTRNRQ)
-    stpchksyncrq = ListItem(STPCHKSYNCRQ)
-    intrasyncrq = ListItem(INTRASYNCRQ)
-    recintrasyncrq = ListItem(RECINTRASYNCRQ)
-    bankmailsyncrq = ListItem(BANKMAILSYNCRQ)
+    stmttrnrq = ListAggregate(STMTTRNRQ)
+    stmtendtrnrq = ListAggregate(STMTENDTRNRQ)
+    stpchktrnrq = ListAggregate(STPCHKTRNRQ)
+    intratrnrq = ListAggregate(INTRATRNRQ)
+    recintratrnrq = ListAggregate(RECINTRATRNRQ)
+    bankmailtrnrq = ListAggregate(BANKMAILTRNRQ)
+    stpchksyncrq = ListAggregate(STPCHKSYNCRQ)
+    intrasyncrq = ListAggregate(INTRASYNCRQ)
+    recintrasyncrq = ListAggregate(RECINTRASYNCRQ)
+    bankmailsyncrq = ListAggregate(BANKMAILSYNCRQ)
 
     @property
     def statements(self):
@@ -108,16 +116,16 @@ class BANKMSGSRQV1(Aggregate):
 class BANKMSGSRSV1(Aggregate):
     """ OFX section 11.13.1.1.2 """
 
-    stmttrnrs = ListItem(STMTTRNRS)
-    stmtendtrnrs = ListItem(STMTENDTRNRS)
-    stpchktrnrs = ListItem(STPCHKTRNRS)
-    intratrnrs = ListItem(INTRATRNRS)
-    recintratrnrs = ListItem(RECINTRATRNRS)
-    bankmailtrnrs = ListItem(BANKMAILTRNRS)
-    stpchksyncrs = ListItem(STPCHKSYNCRS)
-    intrasyncrs = ListItem(INTRASYNCRS)
-    recintrasyncrs = ListItem(RECINTRASYNCRS)
-    bankmailsyncrs = ListItem(BANKMAILSYNCRS)
+    stmttrnrs = ListAggregate(STMTTRNRS)
+    stmtendtrnrs = ListAggregate(STMTENDTRNRS)
+    stpchktrnrs = ListAggregate(STPCHKTRNRS)
+    intratrnrs = ListAggregate(INTRATRNRS)
+    recintratrnrs = ListAggregate(RECINTRATRNRS)
+    bankmailtrnrs = ListAggregate(BANKMAILTRNRS)
+    stpchksyncrs = ListAggregate(STPCHKSYNCRS)
+    intrasyncrs = ListAggregate(INTRASYNCRS)
+    recintrasyncrs = ListAggregate(RECINTRASYNCRS)
+    bankmailsyncrs = ListAggregate(BANKMAILSYNCRS)
 
     @property
     def statements(self):
@@ -193,8 +201,8 @@ class BANKMSGSET(Aggregate):
 class CREDITCARDMSGSRQV1(Aggregate):
     """ OFX section 11.13.1.1.1 """
 
-    ccstmttrnrq = ListItem(CCSTMTTRNRQ)
-    ccstmtendtrnrq = ListItem(CCSTMTENDTRNRQ)
+    ccstmttrnrq = ListAggregate(CCSTMTTRNRQ)
+    ccstmtendtrnrq = ListAggregate(CCSTMTENDTRNRQ)
 
     @property
     def statements(self):
@@ -214,8 +222,8 @@ class CREDITCARDMSGSRQV1(Aggregate):
 class CREDITCARDMSGSRSV1(Aggregate):
     """ OFX section 11.13.1.1.2 """
 
-    ccstmttrnrs = ListItem(CCSTMTTRNRS)
-    ccstmtendtrnrs = ListItem(CCSTMTENDTRNRS)
+    ccstmttrnrs = ListAggregate(CCSTMTTRNRS)
+    ccstmtendtrnrs = ListAggregate(CCSTMTENDTRNRS)
 
     @property
     def statements(self):
@@ -254,19 +262,19 @@ class CREDITCARDMSGSET(Aggregate):
 class INTERXFERMSGSRQV1(Aggregate):
     """ OFX section 11.13.1.3.1 """
 
-    intertrnrq = ListItem(INTERTRNRQ)
-    recintertrnrq = ListItem(RECINTERTRNRQ)
-    intersyncrq = ListItem(INTERSYNCRQ)
-    recintersyncrq = ListItem(RECINTERSYNCRQ)
+    intertrnrq = ListAggregate(INTERTRNRQ)
+    recintertrnrq = ListAggregate(RECINTERTRNRQ)
+    intersyncrq = ListAggregate(INTERSYNCRQ)
+    recintersyncrq = ListAggregate(RECINTERSYNCRQ)
 
 
 class INTERXFERMSGSRSV1(Aggregate):
     """ OFX section 11.13.1.3.2 """
 
-    intertrnrs = ListItem(INTERTRNRS)
-    recintertrnrs = ListItem(RECINTERTRNRS)
-    intersyncrs = ListItem(INTERSYNCRS)
-    recintersyncrs = ListItem(RECINTERSYNCRS)
+    intertrnrs = ListAggregate(INTERTRNRS)
+    recintertrnrs = ListAggregate(RECINTERTRNRS)
+    intersyncrs = ListAggregate(INTERSYNCRS)
+    recintersyncrs = ListAggregate(RECINTERSYNCRS)
 
 
 class INTERXFERMSGSETV1(Aggregate):
@@ -289,15 +297,15 @@ class INTERXFERMSGSET(Aggregate):
 class WIREXFERMSGSRQV1(Aggregate):
     """ OFX section 11.13.1.4.1 """
 
-    wiretrnrq = ListItem(WIRETRNRQ)
-    wiresyncrq = ListItem(WIRESYNCRQ)
+    wiretrnrq = ListAggregate(WIRETRNRQ)
+    wiresyncrq = ListAggregate(WIRESYNCRQ)
 
 
 class WIREXFERMSGSRSV1(Aggregate):
     """ OFX section 11.13.1.4.2 """
 
-    wiretrnrs = ListItem(WIRETRNRS)
-    wiresyncrs = ListItem(WIRESYNCRS)
+    wiretrnrs = ListAggregate(WIRETRNRS)
+    wiresyncrs = ListAggregate(WIRESYNCRS)
 
 
 class WIREXFERMSGSETV1(ElementList):

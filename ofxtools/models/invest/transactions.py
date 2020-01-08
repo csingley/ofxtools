@@ -39,7 +39,15 @@ __all__ = [
 
 
 # Local imports
-from ofxtools.Types import Bool, String, OneOf, Integer, Decimal, DateTime, ListItem
+from ofxtools.Types import (
+    Bool,
+    String,
+    OneOf,
+    Integer,
+    Decimal,
+    DateTime,
+    ListAggregate,
+)
 from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.wrapperbases import TranList
 from ofxtools.models.invest.acct import INVSUBACCTS, INVACCTFROM
@@ -341,24 +349,24 @@ class TRANSFER(Aggregate):
 class INVTRANLIST(TranList):
     """ OFX section 13.9.2.2 """
 
-    invbanktran = ListItem(INVBANKTRAN)
-    buydebt = ListItem(BUYDEBT)
-    buymf = ListItem(BUYMF)
-    buyopt = ListItem(BUYOPT)
-    buyother = ListItem(BUYOTHER)
-    buystock = ListItem(BUYSTOCK)
-    closureopt = ListItem(CLOSUREOPT)
-    income = ListItem(INCOME)
-    invexpense = ListItem(INVEXPENSE)
-    jrnlfund = ListItem(JRNLFUND)
-    jrnlsec = ListItem(JRNLSEC)
-    margininterest = ListItem(MARGININTEREST)
-    reinvest = ListItem(REINVEST)
-    retofcap = ListItem(RETOFCAP)
-    selldebt = ListItem(SELLDEBT)
-    sellmf = ListItem(SELLMF)
-    sellopt = ListItem(SELLOPT)
-    sellother = ListItem(SELLOTHER)
-    sellstock = ListItem(SELLSTOCK)
-    split = ListItem(SPLIT)
-    transfer = ListItem(TRANSFER)
+    invbanktran = ListAggregate(INVBANKTRAN)
+    buydebt = ListAggregate(BUYDEBT)
+    buymf = ListAggregate(BUYMF)
+    buyopt = ListAggregate(BUYOPT)
+    buyother = ListAggregate(BUYOTHER)
+    buystock = ListAggregate(BUYSTOCK)
+    closureopt = ListAggregate(CLOSUREOPT)
+    income = ListAggregate(INCOME)
+    invexpense = ListAggregate(INVEXPENSE)
+    jrnlfund = ListAggregate(JRNLFUND)
+    jrnlsec = ListAggregate(JRNLSEC)
+    margininterest = ListAggregate(MARGININTEREST)
+    reinvest = ListAggregate(REINVEST)
+    retofcap = ListAggregate(RETOFCAP)
+    selldebt = ListAggregate(SELLDEBT)
+    sellmf = ListAggregate(SELLMF)
+    sellopt = ListAggregate(SELLOPT)
+    sellother = ListAggregate(SELLOTHER)
+    sellstock = ListAggregate(SELLSTOCK)
+    split = ListAggregate(SPLIT)
+    transfer = ListAggregate(TRANSFER)

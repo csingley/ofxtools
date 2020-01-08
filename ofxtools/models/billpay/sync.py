@@ -15,7 +15,7 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import ListItem
+from ofxtools.Types import ListAggregate
 from ofxtools.models.base import SubAggregate
 from ofxtools.models.wrapperbases import SyncRqList, SyncRsList
 from ofxtools.models.bank.stmt import BANKACCTFROM
@@ -28,37 +28,37 @@ class PMTSYNCRQ(SyncRqList):
     """ OFX Section 12.10.1.1 """
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
-    pmttrnrq = ListItem(PMTTRNRQ)
+    pmttrnrq = ListAggregate(PMTTRNRQ)
 
 
 class PMTSYNCRS(SyncRsList):
     """ OFX Section 12.10.1.2 """
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
-    pmttrnrs = ListItem(PMTTRNRS)
+    pmttrnrs = ListAggregate(PMTTRNRS)
 
 
 class RECPMTSYNCRQ(SyncRqList):
     """ OFX Section 12.10.2.1 """
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
-    recpmttrnrq = ListItem(RECPMTTRNRQ)
+    recpmttrnrq = ListAggregate(RECPMTTRNRQ)
 
 
 class RECPMTSYNCRS(SyncRsList):
     """ OFX Section 12.10.2.2 """
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
-    recpmttrnrs = ListItem(RECPMTTRNRS)
+    recpmttrnrs = ListAggregate(RECPMTTRNRS)
 
 
 class PAYEESYNCRQ(SyncRqList):
     """ OFX Section 12.9.4.1 """
 
-    payeetrnrq = ListItem(PAYEETRNRQ)
+    payeetrnrq = ListAggregate(PAYEETRNRQ)
 
 
 class PAYEESYNCRS(SyncRsList):
     """ OFX Section 12.9.4.2 """
 
-    payeetrnrs = ListItem(PAYEETRNRS)
+    payeetrnrs = ListAggregate(PAYEETRNRS)

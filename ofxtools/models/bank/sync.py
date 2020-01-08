@@ -23,7 +23,7 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import Bool, ListItem
+from ofxtools.Types import Bool, ListAggregate
 from ofxtools.models.base import SubAggregate
 from ofxtools.models.wrapperbases import SyncRqList, SyncRsList
 from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM
@@ -44,14 +44,14 @@ class STPCHKSYNCRQ(SyncRqList):
     """ OFX section 11.12.1.1 """
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
-    stpchktrnrq = ListItem(STPCHKTRNRQ)
+    stpchktrnrq = ListAggregate(STPCHKTRNRQ)
 
 
 class STPCHKSYNCRS(SyncRsList):
     """ OFX section 11.12.1.2 """
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
-    stpchktrnrs = ListItem(STPCHKTRNRS)
+    stpchktrnrs = ListAggregate(STPCHKTRNRS)
 
 
 class INTRASYNCRQ(SyncRqList):
@@ -59,7 +59,7 @@ class INTRASYNCRQ(SyncRqList):
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
-    intratrnrq = ListItem(INTRATRNRQ)
+    intratrnrq = ListAggregate(INTRATRNRQ)
 
     requiredMutexes = SyncRqList.requiredMutexes + [["bankacctfrom", "ccacctfrom"]]
 
@@ -69,7 +69,7 @@ class INTRASYNCRS(SyncRsList):
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
-    intratrnrs = ListItem(INTRATRNRS)
+    intratrnrs = ListAggregate(INTRATRNRS)
 
     requiredMutexes = [["bankacctfrom", "ccacctfrom"]]
 
@@ -79,7 +79,7 @@ class INTERSYNCRQ(SyncRqList):
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
-    intertrnrq = ListItem(INTERTRNRQ)
+    intertrnrq = ListAggregate(INTERTRNRQ)
 
     requiredMutexes = SyncRqList.requiredMutexes + [["bankacctfrom", "ccacctfrom"]]
 
@@ -89,7 +89,7 @@ class INTERSYNCRS(SyncRsList):
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
-    intertrnrs = ListItem(INTERTRNRS)
+    intertrnrs = ListAggregate(INTERTRNRS)
 
     requiredMutexes = [["bankacctfrom", "ccacctfrom"]]
 
@@ -98,14 +98,14 @@ class WIRESYNCRQ(SyncRqList):
     """ OFX section 11.12.4.1 """
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
-    wiretrnrq = ListItem(WIRETRNRQ)
+    wiretrnrq = ListAggregate(WIRETRNRQ)
 
 
 class WIRESYNCRS(SyncRsList):
     """ OFX section 11.12.4.2 """
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
-    wiretrnrs = ListItem(WIRETRNRS)
+    wiretrnrs = ListAggregate(WIRETRNRS)
 
 
 class RECINTRASYNCRQ(SyncRqList):
@@ -113,7 +113,7 @@ class RECINTRASYNCRQ(SyncRqList):
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
-    recintratrnrq = ListItem(RECINTRATRNRQ)
+    recintratrnrq = ListAggregate(RECINTRATRNRQ)
 
     requiredMutexes = SyncRqList.requiredMutexes + [["bankacctfrom", "ccacctfrom"]]
 
@@ -123,7 +123,7 @@ class RECINTRASYNCRS(SyncRsList):
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
-    recintratrnrs = ListItem(RECINTRATRNRS)
+    recintratrnrs = ListAggregate(RECINTRATRNRS)
 
     requiredMutexes = [["bankacctfrom", "ccacctfrom"]]
 
@@ -133,7 +133,7 @@ class RECINTERSYNCRQ(SyncRqList):
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
-    recintertrnrq = ListItem(RECINTERTRNRQ)
+    recintertrnrq = ListAggregate(RECINTERTRNRQ)
 
     requiredMutexes = SyncRqList.requiredMutexes + [["bankacctfrom", "ccacctfrom"]]
 
@@ -143,7 +143,7 @@ class RECINTERSYNCRS(SyncRsList):
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
-    recintertrnrs = ListItem(RECINTERTRNRS)
+    recintertrnrs = ListAggregate(RECINTERTRNRS)
 
     requiredMutexes = [["bankacctfrom", "ccacctfrom"]]
 
@@ -155,7 +155,7 @@ class BANKMAILSYNCRQ(SyncRqList):
     usehtml = Bool(required=True)
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
-    bankmailtrnrq = ListItem(BANKMAILTRNRQ)
+    bankmailtrnrq = ListAggregate(BANKMAILTRNRQ)
 
     requiredMutexes = SyncRqList.requiredMutexes + [["bankacctfrom", "ccacctfrom"]]
 
@@ -165,6 +165,6 @@ class BANKMAILSYNCRS(SyncRsList):
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
-    bankmailtrnrs = ListItem(BANKMAILTRNRS)
+    bankmailtrnrs = ListAggregate(BANKMAILTRNRS)
 
     requiredMutexes = [["bankacctfrom", "ccacctfrom"]]

@@ -391,13 +391,13 @@ class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
             root.append(elem)
         return root
 
-    def testListItems(self):
+    def testListAggregates(self):
         # INVOOLIST may only contain
         # ['OOBUYDEBT', 'OOBUYMF', 'OOBUYOPT', 'OOBUYOTHER',
         # 'OOBUYSTOCK', 'OOSELLDEBT', 'OOSELLMF', 'OOSELLOPT',
         # 'OOSELLOTHER', 'OOSELLSTOCK', 'SWITCHMF', ]
-        listitems = INVOOLIST.listitems
-        self.assertEqual(len(listitems), 11)
+        listaggregates = INVOOLIST.listaggregates
+        self.assertEqual(len(listaggregates), 11)
         root = self.etree
         root.append(bk_stmt.StmttrnTestCase.etree)
 

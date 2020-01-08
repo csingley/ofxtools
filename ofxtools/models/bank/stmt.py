@@ -42,7 +42,7 @@ from ofxtools.Types import (
     Integer,
     Decimal,
     DateTime,
-    ListItem,
+    ListAggregate,
 )
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
 from ofxtools.models.common import SVCSTATUSES, BAL
@@ -213,7 +213,7 @@ class STMTTRN(Aggregate, Origcurrency):
 class BANKTRANLIST(TranList):
     """ OFX section 11.4.2.2 """
 
-    stmttrn = ListItem(STMTTRN)
+    stmttrn = ListAggregate(STMTTRN)
 
 
 class LEDGERBAL(Aggregate):
@@ -233,7 +233,7 @@ class AVAILBAL(Aggregate):
 class BALLIST(Aggregate):
     """ OFX section 11.4.2.2 & 13.9.2.7 """
 
-    bal = ListItem(BAL)
+    bal = ListAggregate(BAL)
 
 
 class STMTRS(Aggregate):

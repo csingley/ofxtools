@@ -33,7 +33,7 @@ __all__ = [
 from copy import deepcopy
 
 # local imports
-from ofxtools.Types import String, OneOf, DateTime, Bool, ListItem
+from ofxtools.Types import String, OneOf, DateTime, Bool, ListAggregate
 from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.common import STATUS, MSGSETCORE
@@ -125,7 +125,7 @@ class SONRQ(Aggregate):
     usercred2 = String(171)
     authtoken = String(171)
     accesskey = String(1000)
-    mfachallengea = ListItem(MFACHALLENGEA)
+    mfachallengea = ListAggregate(MFACHALLENGEA)
     ofxextension = Unsupported()
 
     @classmethod
@@ -234,7 +234,7 @@ class MFACHALLENGERQ(Aggregate):
 class MFACHALLENGERS(Aggregate):
     """ OFX Section 2.5.4.2 """
 
-    mfachallenge = ListItem(MFACHALLENGE)
+    mfachallenge = ListAggregate(MFACHALLENGE)
 
     @classmethod
     def validate_args(cls, *args, **kwargs):

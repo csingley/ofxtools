@@ -15,7 +15,7 @@ from ofxtools.Types import (
     Decimal,
     DateTime,
     Bool,
-    ListItem,
+    ListAggregate,
     ListElement,
 )
 from ofxtools.models.base import Aggregate, SubAggregate, ElementList
@@ -56,7 +56,7 @@ class OFXELEMENT(Aggregate):
 class OFXEXTENSION(Aggregate):
     """ OFX section 2.7.2 """
 
-    ofxelement = ListItem(OFXELEMENT)
+    ofxelement = ListAggregate(OFXELEMENT)
 
 
 class MSGSETCORE(ElementList):

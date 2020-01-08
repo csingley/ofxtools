@@ -23,7 +23,7 @@ __all__ = [
 
 
 # Local imports
-from ofxtools.Types import Bool, String, OneOf, Decimal, DateTime, ListItem
+from ofxtools.Types import Bool, String, OneOf, Decimal, DateTime, ListAggregate
 from ofxtools.models.base import Aggregate, SubAggregate
 from ofxtools.models.invest.acct import INVSUBACCTS
 from ofxtools.models.invest.transactions import (
@@ -144,14 +144,14 @@ class SWITCHMF(Aggregate):
 class INVOOLIST(Aggregate):
     """ OFX section 13.9.2.2 """
 
-    oobuydebt = ListItem(OOBUYDEBT)
-    oobuymf = ListItem(OOBUYMF)
-    oobuyopt = ListItem(OOBUYOPT)
-    oobuyother = ListItem(OOBUYOTHER)
-    oobuystock = ListItem(OOBUYSTOCK)
-    ooselldebt = ListItem(OOSELLDEBT)
-    oosellmf = ListItem(OOSELLMF)
-    oosellopt = ListItem(OOSELLOPT)
-    oosellother = ListItem(OOSELLOTHER)
-    oosellstock = ListItem(OOSELLSTOCK)
-    switchmf = ListItem(SWITCHMF)
+    oobuydebt = ListAggregate(OOBUYDEBT)
+    oobuymf = ListAggregate(OOBUYMF)
+    oobuyopt = ListAggregate(OOBUYOPT)
+    oobuyother = ListAggregate(OOBUYOTHER)
+    oobuystock = ListAggregate(OOBUYSTOCK)
+    ooselldebt = ListAggregate(OOSELLDEBT)
+    oosellmf = ListAggregate(OOSELLMF)
+    oosellopt = ListAggregate(OOSELLOPT)
+    oosellother = ListAggregate(OOSELLOTHER)
+    oosellstock = ListAggregate(OOSELLSTOCK)
+    switchmf = ListAggregate(SWITCHMF)
