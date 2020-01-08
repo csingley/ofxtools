@@ -20,8 +20,8 @@ __all__ = [
 ]
 
 
-from ofxtools.Types import String, OneOf
-from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.Types import String, OneOf, SubAggregate
+from ofxtools.models.base import Aggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.i18n import CURRENCY_CODES
 from ofxtools.models.billpay.common import PMTINFO, EXTDPAYEE, PMTPRCSTS

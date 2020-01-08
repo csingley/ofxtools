@@ -16,8 +16,8 @@ __all__ = [
 ]
 
 
-from ofxtools.Types import String, ListElement
-from ofxtools.models.base import Aggregate, SubAggregate, ElementList
+from ofxtools.Types import String, ListElement, SubAggregate
+from ofxtools.models.base import Aggregate, ElementList
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.bank.stmt import PAYEE, BANKACCTTO
 from ofxtools.models.billpay.common import EXTDPAYEE

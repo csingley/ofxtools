@@ -9,7 +9,8 @@ __all__ = ["OFX"]
 
 
 # local imports
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
+from ofxtools.Types import SubAggregate, Unsupported
+from ofxtools.models.base import Aggregate
 from ofxtools.models.signon import SIGNONMSGSRQV1, SIGNONMSGSRSV1
 from ofxtools.models.profile import PROFMSGSRQV1, PROFMSGSRSV1
 from ofxtools.models.signup import SIGNUPMSGSRQV1, SIGNUPMSGSRSV1

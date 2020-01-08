@@ -23,8 +23,7 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import Bool, ListAggregate
-from ofxtools.models.base import SubAggregate
+from ofxtools.Types import Bool, ListAggregate, SubAggregate
 from ofxtools.models.wrapperbases import SyncRqList, SyncRsList
 from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM
 from ofxtools.models.bank.xfer import INTRATRNRQ, INTRATRNRS

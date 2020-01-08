@@ -7,11 +7,16 @@ import xml.etree.ElementTree as ET
 
 # local imports
 from ofxtools import models, Types
-from ofxtools.Types import String, Bool, ListAggregate, ListElement
-from ofxtools.models.base import (
-    Aggregate,
+from ofxtools.Types import (
+    String,
+    Bool,
     SubAggregate,
     Unsupported,
+    ListAggregate,
+    ListElement,
+)
+from ofxtools.models.base import (
+    Aggregate,
     ElementList,
     OFXSpecError,
 )

@@ -15,10 +15,11 @@ from ofxtools.Types import (
     Decimal,
     DateTime,
     Bool,
+    SubAggregate,
     ListAggregate,
     ListElement,
 )
-from ofxtools.models.base import Aggregate, SubAggregate, ElementList
+from ofxtools.models.base import Aggregate, ElementList
 from ofxtools.models.i18n import CURRENCY, LANG_CODES
 
 

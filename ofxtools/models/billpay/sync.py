@@ -15,8 +15,7 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import ListAggregate
-from ofxtools.models.base import SubAggregate
+from ofxtools.Types import ListAggregate, SubAggregate
 from ofxtools.models.wrapperbases import SyncRqList, SyncRsList
 from ofxtools.models.bank.stmt import BANKACCTFROM
 from ofxtools.models.billpay.pmt import PMTTRNRQ, PMTTRNRS

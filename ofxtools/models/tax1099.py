@@ -43,9 +43,11 @@ from ofxtools.Types import (
     Decimal,
     OneOf,
     DateTime,
+    SubAggregate,
     ListAggregate,
+    ListElement,
 )
-from ofxtools.models.base import Aggregate, SubAggregate, ElementList, ListElement
+from ofxtools.models.base import Aggregate, ElementList
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.common import MSGSETCORE
 

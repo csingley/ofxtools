@@ -15,8 +15,8 @@ __all__ = [
 
 
 # Local imports
-from ofxtools.Types import Bool, String, OneOf
-from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.Types import Bool, String, OneOf, SubAggregate
+from ofxtools.models.base import Aggregate
 from ofxtools.models.common import SVCSTATUSES
 
 

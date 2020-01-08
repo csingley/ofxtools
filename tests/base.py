@@ -9,9 +9,9 @@ import itertools
 from typing import List, Dict, Sequence
 
 # local imports
-from ofxtools.Types import ListAggregate, ListElement
+from ofxtools.Types import SubAggregate, ListAggregate, ListElement
 import ofxtools.models
-from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.models.base import Aggregate
 from ofxtools.models.common import STATUS
 from ofxtools.utils import classproperty, indent
 from ofxtools.Parser import OFXTree, TreeBuilder

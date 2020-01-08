@@ -11,8 +11,8 @@ __all__ = ["TrnRq", "TrnRs", "SyncRqList", "SyncRsList"]
 
 
 # local imports
-from ofxtools.Types import Bool, String, DateTime
-from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.Types import Bool, String, DateTime, SubAggregate
+from ofxtools.models.base import Aggregate
 from ofxtools.models.common import STATUS, OFXEXTENSION
 
 

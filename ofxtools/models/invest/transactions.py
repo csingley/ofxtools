@@ -47,8 +47,9 @@ from ofxtools.Types import (
     Decimal,
     DateTime,
     ListAggregate,
+    SubAggregate,
 )
-from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.models.base import Aggregate
 from ofxtools.models.wrapperbases import TranList
 from ofxtools.models.invest.acct import INVSUBACCTS, INVACCTFROM
 from ofxtools.models.invest.securities import SECID

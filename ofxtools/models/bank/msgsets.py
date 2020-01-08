@@ -34,10 +34,12 @@ from ofxtools.Types import (
     Integer,
     Decimal,
     Time,
+    SubAggregate,
     ListAggregate,
     ListElement,
+    Unsupported,
 )
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported, ElementList
+from ofxtools.models.base import Aggregate, ElementList
 from ofxtools.models.common import MSGSETCORE
 from ofxtools.models.bank.stmt import (
     ACCTTYPES,

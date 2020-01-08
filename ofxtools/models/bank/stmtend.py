@@ -20,8 +20,17 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import Bool, String, Decimal, OneOf, DateTime, ListAggregate
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
+from ofxtools.Types import (
+    Bool,
+    String,
+    Decimal,
+    OneOf,
+    DateTime,
+    SubAggregate,
+    Unsupported,
+    ListAggregate,
+)
+from ofxtools.models.base import Aggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM, REWARDINFO
 from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, Origcurrency, CURRENCY_CODES

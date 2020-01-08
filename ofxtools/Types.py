@@ -1,11 +1,14 @@
 # coding: utf-8
 """
-Type converters / validators for OFX data content text.
+Type converters / validators for OFX data content text, used as attributes
+of OFX model classes.
 
-``ofxtools.Types`` classes correspond to OFX "elements" as defined in OFX
-section 1.3.8, i.e. leaf nodes in the SGML/XML hierarcy that bear textual
-data content.  The subclasses implement the data types described in OFX
-section 3.2.8.
+Most of the ``ofxtools.Types`` classes correspond to OFX "elements" as defined
+in OFX section 1.3.8, i.e. leaf nodes in the SGML/XML hierarcy that bear textual
+data content.  These Types implement the data types described in OFX section 3.2.8.
+
+Since the OFX schema is highly nested, some of these class attributes
+(e.g. ``SubAggregate``) express parent/child relationships between ``Aggregates``.
 """
 
 
@@ -22,8 +25,10 @@ __all__ = [
     "Decimal",
     "DateTime",
     "Time",
-    "ListAggregate",
     "ListElement",
+    "SubAggregate",
+    "ListAggregate",
+    "Unsupported",
 ]
 
 
@@ -63,17 +68,18 @@ class Element:
     required vs. optional, etc.) as arguments to __init__() when defining
     an Aggregate subclass.
 
-    Element instances are bound to model classes (sundry Aggregate and List
-    subclasses found in the models subpackage, as well as OFXHeaderV1/V2
-    classes found in the header module).  Since these validators are class
-    attributes, they are shared by all instances of a model class.  Therefore
-    Elements are implemented as data descriptors; they intercept calls to
-    __get__ and __set__ and redirect them to a defaultdict keyed by the calling
-    parent, where values are the data passed to that Element).
+    ``Element`` instances are bound to model classes (sundry ``Aggregate``
+    subclasses found in the ``ofxtools.models`` subpackage, as well as
+    ``OFXHeaderV1``/``OFXHeaverV2`` classes found in the header module).
+    Since these validators are class attributes, they are shared by all instances
+    of a model class.  Therefore ``Elements`` are implemented as data descriptors;
+    they intercept calls to ``__get__`` and ``__set__`` redirecting them to a
+    ``defaultdict`` keyed by the calling parent, where values are the data passed
+    to that ``Element``).
 
-    Prior to setting the data value, each Element Performs validation
-    (using the arguments passed to __init__()) and type conversion (using the
-    logic implemented in convert()).
+    Prior to setting the data value, each ``Element`` performs validation
+    (using the arguments passed to ``__init__()``) and type conversion
+    (using the logic implemented in ``_convert()``).
     """
 
     type = NotImplemented  # define in subclass
@@ -578,26 +584,15 @@ class Time(DateTime):
         return self._unconvert_default(value)
 
 
-class ListAggregate(Element):
-    """ """
-
-    def _init(self, *args, **kwargs):
-        self.type = args[0]
-        super()._init(*args[1:], **kwargs)
-
-    def _convert_default(self, value):
-        if not isinstance(value, self.type):
-            raise TypeError(f"'{value!r}' is not an instance of {self.type}")
-        return value
-
-    def _unconvert_default(self, value):
-        if not isinstance(value, self.type):
-            raise TypeError(f"'{value!r}' is not an instance of {self.type}")
-        return value
-
-
 class ListElement(Element):
-    """ """
+    """
+    ``Element`` that can be repeated on the parent ``Aggregate``.
+
+    Pass the underlying ``Element`` as the first arg to ``__init__()``.
+    Constraints may be passed to the underying ``Element`` type, e.g.
+
+        ``ListElement(String(32))``
+    """
 
     def _init(self, *args, **kwargs):
         self.converter = args[0]
@@ -608,3 +603,58 @@ class ListElement(Element):
 
     def _unconvert_default(self, value):
         return self.converter.unconvert(value)
+
+
+class SubAggregate(Element):
+    """
+    Parent/child relationship between ``Aggregates`` - used for child ``Aggregates``
+    that can appear at most once within the parent ``Aggregate``.
+
+    ``SubAggregate`` instances appear only in the model class definitions
+    (Aggregate subclasses).  Actual model instances replace these ``SubAggregate``
+    instances with the ``Aggregate`` instances to which they refer.
+
+    Pass the underlying ``Aggregate`` as the first arg to ``__init__()``,
+    followed by any class attribute constraints, e.g.
+
+        ``SubAggregate(BANKACCTFROM, required=True)``
+    """
+
+    def _init(self, *args, **kwargs):
+        self.type = args[0]
+        super()._init(*args[1:], **kwargs)
+
+    def _convert_default(self, value):
+        if not isinstance(value, self.type):
+            raise TypeError(f"'{value}' is not an instance of {self.type}")
+        return value
+
+    #  This doesn't get used
+    #  def __repr__(self):
+    #  return "<{}>".format(self.type.__name__)
+
+
+class ListAggregate(SubAggregate):
+    """
+    ``SubAggregate`` that can be repeated on the parent ``Aggregate``.
+    """
+
+    def _unconvert_default(self, value):
+        if not isinstance(value, self.type):
+            raise TypeError(f"'{value!r}' is not an instance of {self.type}")
+        return value
+
+
+class Unsupported:
+    """
+    Null Aggregate/Element - not implemented (yet)
+    """
+
+    def __get__(self, instance, type_) -> None:
+        pass
+
+    def __set__(self, instance, value) -> None:
+        pass
+
+    def __repr__(self) -> str:
+        return "<Unsupported>"

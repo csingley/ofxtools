@@ -27,8 +27,8 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import String, Integer, OneOf, Bool
-from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.Types import String, Integer, OneOf, Bool, SubAggregate
+from ofxtools.models.base import Aggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.bank.xfer import INTRARQ, INTRARS
 from ofxtools.models.bank.interxfer import INTERRQ, INTERRS

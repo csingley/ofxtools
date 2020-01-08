@@ -14,8 +14,8 @@ __all__ = [
 ]
 
 
-from ofxtools.Types import Bool, String, ListAggregate
-from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.Types import Bool, String, ListAggregate, SubAggregate
+from ofxtools.models.base import Aggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
 from ofxtools.models.email import MAIL
 from ofxtools.models.billpay.common import PMTINFO

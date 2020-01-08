@@ -29,8 +29,8 @@ import logging
 
 
 # local imports
-from ofxtools.Types import Bool, String, DateTime, ListAggregate
-from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.Types import Bool, String, DateTime, SubAggregate, ListAggregate
+from ofxtools.models.base import Aggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
 from ofxtools.models.common import MSGSETCORE
 

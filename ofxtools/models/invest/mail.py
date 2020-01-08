@@ -3,8 +3,8 @@
 Investment Email - OFX Section 13.10
 """
 # local imports
-from ofxtools.Types import Bool, ListAggregate
-from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.Types import Bool, SubAggregate, ListAggregate
+from ofxtools.models.base import Aggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
 from ofxtools.models.email import MAIL
 from ofxtools.models.invest.acct import INVACCTFROM

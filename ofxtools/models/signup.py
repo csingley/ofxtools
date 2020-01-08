@@ -45,8 +45,8 @@ import itertools
 
 
 # local imports
-from ofxtools.Types import Bool, String, OneOf, DateTime, ListAggregate
-from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.Types import Bool, String, OneOf, DateTime, SubAggregate, ListAggregate
+from ofxtools.models.base import Aggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
 from ofxtools.models.common import SVCSTATUSES, MSGSETCORE
 from ofxtools.models.i18n import COUNTRY_CODES

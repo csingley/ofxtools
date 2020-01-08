@@ -36,9 +36,10 @@ from ofxtools.Types import (
     OneOf,
     Decimal,
     DateTime,
+    SubAggregate,
     ListAggregate,
 )
-from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.models.base import Aggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.invest.acct import INVACCTFROM
 from ofxtools.models.invest.transactions import INVTRANLIST

@@ -38,9 +38,10 @@ from ofxtools.Types import (
     Integer,
     Decimal,
     DateTime,
+    SubAggregate,
     ListAggregate,
 )
-from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.models.base import Aggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.i18n import CURRENCY
 

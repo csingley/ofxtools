@@ -17,8 +17,8 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import Bool, ListAggregate
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
+from ofxtools.Types import Bool, SubAggregate, ListAggregate, Unsupported
+from ofxtools.models.base import Aggregate
 from ofxtools.models.common import MSGSETCORE
 from ofxtools.models.invest.stmt import INVSTMTTRNRQ, INVSTMTTRNRS
 from ofxtools.models.invest.mail import (

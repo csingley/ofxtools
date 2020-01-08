@@ -18,8 +18,17 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import Bool, String, OneOf, Integer, DateTime, ListAggregate
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
+from ofxtools.Types import (
+    Bool,
+    String,
+    OneOf,
+    Integer,
+    DateTime,
+    ListAggregate,
+    SubAggregate,
+    Unsupported,
+)
+from ofxtools.models.base import Aggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.common import MSGSETCORE
 from ofxtools.models.i18n import COUNTRY_CODES

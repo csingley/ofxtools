@@ -23,8 +23,16 @@ __all__ = [
 
 
 # Local imports
-from ofxtools.Types import Bool, String, OneOf, Decimal, DateTime, ListAggregate
-from ofxtools.models.base import Aggregate, SubAggregate
+from ofxtools.Types import (
+    Bool,
+    String,
+    OneOf,
+    Decimal,
+    DateTime,
+    SubAggregate,
+    ListAggregate,
+)
+from ofxtools.models.base import Aggregate
 from ofxtools.models.invest.acct import INVSUBACCTS
 from ofxtools.models.invest.transactions import (
     BUYTYPES,

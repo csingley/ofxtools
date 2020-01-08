@@ -33,8 +33,16 @@ __all__ = [
 from copy import deepcopy
 
 # local imports
-from ofxtools.Types import String, OneOf, DateTime, Bool, ListAggregate
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
+from ofxtools.Types import (
+    String,
+    OneOf,
+    DateTime,
+    Bool,
+    ListAggregate,
+    SubAggregate,
+    Unsupported,
+)
+from ofxtools.models.base import Aggregate
 from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.common import STATUS, MSGSETCORE
 from ofxtools.models.i18n import LANG_CODES

@@ -8,8 +8,16 @@ __all__ = ["BILLPAYMSGSRQV1", "BILLPAYMSGSRSV1", "BILLPAYMSGSETV1", "BILLPAYMSGS
 
 
 # local imports
-from ofxtools.Types import Bool, Integer, Time, OneOf, ListAggregate, ListElement
-from ofxtools.models.base import Aggregate, SubAggregate, ElementList
+from ofxtools.Types import (
+    Bool,
+    Integer,
+    Time,
+    OneOf,
+    ListElement,
+    SubAggregate,
+    ListAggregate,
+)
+from ofxtools.models.base import Aggregate, ElementList
 from ofxtools.models.common import MSGSETCORE
 from ofxtools.models.billpay.pmt import PMTTRNRQ, PMTTRNRS, PMTINQTRNRQ, PMTINQTRNRS
 from ofxtools.models.billpay.recur import RECPMTTRNRQ, RECPMTTRNRS

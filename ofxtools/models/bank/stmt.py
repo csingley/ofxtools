@@ -42,9 +42,11 @@ from ofxtools.Types import (
     Integer,
     Decimal,
     DateTime,
+    SubAggregate,
     ListAggregate,
+    Unsupported,
 )
-from ofxtools.models.base import Aggregate, SubAggregate, Unsupported
+from ofxtools.models.base import Aggregate
 from ofxtools.models.common import SVCSTATUSES, BAL
 from ofxtools.models.wrapperbases import TrnRq, TrnRs, TranList
 from ofxtools.models.i18n import (

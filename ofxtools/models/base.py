@@ -9,7 +9,7 @@ XML elements whose only content is other elements; they don't themselves
 have text content.
 
 Aggregates may contain other aggregates (which relationship is implemented
-by the ``SubAggregate`` and ``List`` classes) and/or data-bearing
+by the ``Types.SubAggregate`` and ``ListAggregate`` classes) and/or data-bearing
 "Elements", i.e. leaf nodes, which are defined in ``ofxtools.Types``.
 
 Names of all Aggregate classes must be ALL CAPS, following the convention of
@@ -18,7 +18,7 @@ the OFX spec, to be found in the package namespace by
 """
 
 
-__all__ = ["Aggregate", "SubAggregate", "Unsupported", "ElementList"]
+__all__ = ["Aggregate", "ElementList"]
 
 
 # stdlib imports
@@ -40,7 +40,15 @@ import logging
 
 
 # local imports
-from ofxtools.Types import Element, ListAggregate, ListElement
+from ofxtools import Types
+
+#  from ofxtools.Types import (
+#      Element,
+#      Types.SubAggregate,
+#      ListAggregate,
+#      ListElement,
+#      Unsupported,
+#  )
 import ofxtools.models
 from ofxtools.utils import classproperty
 
@@ -226,8 +234,8 @@ class Aggregate(list):
             """ Extend ``functools.reduce()`` accumulator with parsed ``ET.Element``
             value (either OFX `aggregate` or OFX 'element').
 
-            List members are stored as positional args; everything else is stored
-            as keyword args.
+            List members are stored as positional args (i.e. list); everything
+            else is stored as keyword args (i.e. dict).
 
             Check index within the ``Aggregate.spec`` sequence against previous
             ``ET.Element`` and return sequencing info for current ``ET.Element``
@@ -313,7 +321,7 @@ class Aggregate(list):
         do_list = True  # HACK
 
         for attr, type_ in self.spec.items():
-            if isinstance(type_, (ListAggregate, ListElement)):
+            if isinstance(type_, (Types.ListAggregate, Types.ListElement)):
                 # HACK - the assumption here is that all list members
                 # occur immediately adjacent to each other in the class
                 # definition.  So when you encounter the first one, process
@@ -407,71 +415,76 @@ class Aggregate(list):
 
     @classproperty
     @classmethod
-    def spec(cls) -> Mapping[str, Union[Element, "Unsupported"]]:
+    def spec(cls) -> Mapping[str, Union[Types.Element, Types.Unsupported]]:
         """
         Mapping of all class attributes that are Elements/SubAggregates/Unsupported.
 
         Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
 
-        N.B. SubAggregate is a subclass of Element.
+        N.B. Types.SubAggregate is a subclass of Element.
         """
-        return cls._filter_attrs(lambda v: isinstance(v, (Element, Unsupported)))
+        return cls._filter_attrs(
+            lambda v: isinstance(v, (Types.Element, Types.Unsupported))
+        )
 
     @classproperty
     @classmethod
-    def spec_no_listaggregates(cls) -> Mapping[str, Union[Element, "Unsupported"]]:
+    def spec_no_listaggregates(
+        cls,
+    ) -> Mapping[str, Union[Types.Element, Types.Unsupported]]:
         """
         Mapping of all class attributes that are
         Elements/SubAggregates/Unsupported, excluding ListAggregates/ListElements.
         """
         return cls._filter_attrs(
-            lambda v: isinstance(v, (Element, Unsupported))
-            and not isinstance(v, (ListAggregate, ListElement))
+            lambda v: isinstance(v, (Types.Element, Types.Unsupported))
+            and not isinstance(v, (Types.ListAggregate, Types.ListElement))
         )
 
     @classproperty
     @classmethod
-    def elements(cls) -> Mapping[str, Element]:
+    def elements(cls) -> Mapping[str, Types.Element]:
         """
         Mapping of all class attributes that are Elements but not SubAggregates.
 
-        N.B. SubAggregate is a subclass of Element.
+        N.B. Types.SubAggregate is a subclass of Element.
         """
         return cls._filter_attrs(
-            lambda v: isinstance(v, Element) and not isinstance(v, SubAggregate)
+            lambda v: isinstance(v, Types.Element)
+            and not isinstance(v, Types.SubAggregate)
         )
 
     @classproperty
     @classmethod
-    def subaggregates(cls) -> Mapping[str, "SubAggregate"]:
+    def subaggregates(cls) -> Mapping[str, Types.SubAggregate]:
         """
         Mapping of all class attributes that are SubAggregates.
         """
-        return cls._filter_attrs(lambda v: isinstance(v, SubAggregate))
+        return cls._filter_attrs(lambda v: isinstance(v, Types.SubAggregate))
 
     @classproperty
     @classmethod
-    def unsupported(cls) -> Mapping[str, "Unsupported"]:
+    def unsupported(cls) -> Mapping[str, Types.Unsupported]:
         """
         Mapping of all class attributes that are Unsupported.
         """
-        return cls._filter_attrs(lambda v: isinstance(v, Unsupported))
+        return cls._filter_attrs(lambda v: isinstance(v, Types.Unsupported))
 
     @classproperty
     @classmethod
-    def listaggregates(cls) -> Mapping[str, ListAggregate]:
+    def listaggregates(cls) -> Mapping[str, Types.ListAggregate]:
         """
         Mapping of all class attributes that are ListAggregates.
         """
-        return cls._filter_attrs(lambda v: isinstance(v, ListAggregate))
+        return cls._filter_attrs(lambda v: isinstance(v, Types.ListAggregate))
 
     @classproperty
     @classmethod
-    def listelements(cls) -> Mapping[str, ListAggregate]:
+    def listelements(cls) -> Mapping[str, Types.ListAggregate]:
         """
         Mapping of all class attributes that are ListElements.
         """
-        return cls._filter_attrs(lambda v: isinstance(v, ListElement))
+        return cls._filter_attrs(lambda v: isinstance(v, Types.ListElement))
 
     @property
     def _spec_repr(self) -> Sequence[Tuple[str, Any]]:
@@ -517,50 +530,6 @@ class Aggregate(list):
         raise AttributeError(f"'{cls}' object has no attribute '{attr}'")
 
 
-class SubAggregate(Element):
-    """
-    Aggregate that is a child of this parent Aggregate.
-
-    SubAggregate instances appear only in the model class definitions
-    (Aggregate subclasses).  Actual model instances replace these SubAggregate
-    instances with the Aggregate instances to which they refer.
-
-    The main job of a SubAggregate is to contribute to the ``spec`` of its
-    parent model class.  It also validates ``__init__()`` args via its
-    ``convert()`` method.
-    """
-
-    def _init(self, *args, **kwargs):
-        args = list(args)
-        self.type = args.pop(0)
-        assert issubclass(self.type, Aggregate)
-        super()._init(*args, **kwargs)
-
-    def _convert_default(self, value):
-        if not isinstance(value, self.type):
-            raise TypeError(f"'{value}' is not an instance of {self.type}")
-        return value
-
-    #  This doesn't get used
-    #  def __repr__(self):
-    #  return "<{}>".format(self.type.__name__)
-
-
-class Unsupported:
-    """
-    Null Aggregate/Element - not implemented (yet)
-    """
-
-    def __get__(self, instance, type_) -> None:
-        pass
-
-    def __set__(self, instance, value) -> None:
-        pass
-
-    def __repr__(self) -> str:
-        return "<Unsupported>"
-
-
 class ElementList(Aggregate):
     """
     Aggregate whose sequence contents are ListElements instead of ListAggregates
@@ -568,13 +537,11 @@ class ElementList(Aggregate):
 
     @classproperty
     @classmethod
-    def listaggregates(cls) -> Mapping[str, ListElement]:
+    def listaggregates(cls) -> Mapping[str, Types.ListElement]:
         """
         ElementList.listaggregates returns ListElements instead of ListAggregates
-
-        Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
-        return cls._filter_attrs(lambda v: isinstance(v, ListElement))
+        return cls._filter_attrs(lambda v: isinstance(v, Types.ListElement))
 
     def _apply_args(self, *args) -> None:
         # Interpret positional args as contained list items (of variable #)
