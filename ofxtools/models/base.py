@@ -423,8 +423,6 @@ class Aggregate(list):
         """
         Mapping of all class attributes that are
         Elements/SubAggregates/Unsupported, excluding ListAggregates/ListElements.
-
-        Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
         return cls._filter_attrs(
             lambda v: isinstance(v, (Element, Unsupported))
@@ -437,7 +435,7 @@ class Aggregate(list):
         """
         Mapping of all class attributes that are Elements but not SubAggregates.
 
-        Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
+        N.B. SubAggregate is a subclass of Element.
         """
         return cls._filter_attrs(
             lambda v: isinstance(v, Element) and not isinstance(v, SubAggregate)
@@ -448,8 +446,6 @@ class Aggregate(list):
     def subaggregates(cls) -> Mapping[str, "SubAggregate"]:
         """
         Mapping of all class attributes that are SubAggregates.
-
-        Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
         return cls._filter_attrs(lambda v: isinstance(v, SubAggregate))
 
@@ -458,8 +454,6 @@ class Aggregate(list):
     def unsupported(cls) -> Mapping[str, "Unsupported"]:
         """
         Mapping of all class attributes that are Unsupported.
-
-        Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
         return cls._filter_attrs(lambda v: isinstance(v, Unsupported))
 
@@ -468,8 +462,6 @@ class Aggregate(list):
     def listaggregates(cls) -> Mapping[str, ListAggregate]:
         """
         Mapping of all class attributes that are ListAggregates.
-
-        Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
         return cls._filter_attrs(lambda v: isinstance(v, ListAggregate))
 
@@ -478,8 +470,6 @@ class Aggregate(list):
     def listelements(cls) -> Mapping[str, ListAggregate]:
         """
         Mapping of all class attributes that are ListElements.
-
-        Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
         """
         return cls._filter_attrs(lambda v: isinstance(v, ListElement))
 
