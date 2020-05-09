@@ -472,6 +472,19 @@ class DateTimeTestCase(unittest.TestCase, Base):
         check = datetime.datetime(2007, 1, 1, tzinfo=UTC)
         self.assertEqual(t.unconvert(check), "20070101000000.000[0:GMT]")
 
+    def test_unconvert_round_microseconds(self):
+        # Round up microseconds above 999499; increment seconds (Issue #80)
+        t = self.type_()
+        check = datetime.datetime(2020, 1, 1, 1, 1, 1, 999499, tzinfo=UTC)
+        self.assertEqual(t.unconvert(check), "20200101010101.999[0:GMT]")
+        check = datetime.datetime(2020, 1, 1, 1, 1, 1, 999500, tzinfo=UTC)
+        self.assertEqual(t.unconvert(check), "20200101010102.000[0:GMT]")
+        check = datetime.datetime(2020, 1, 1, 1, 1, 1, 999999, tzinfo=UTC)
+        self.assertEqual(t.unconvert(check), "20200101010102.000[0:GMT]")
+        # Check that bumping seconds correctly propagates to bump all higher dials
+        check = datetime.datetime(2020, 12, 31, 23, 59, 59, 999500, tzinfo=UTC)
+        self.assertEqual(t.unconvert(check), "20210101000000.000[0:GMT]")
+
     def test_unconvert_illegal(self):
         t = self.type_()
         # Don't accept timezone-naive datetime

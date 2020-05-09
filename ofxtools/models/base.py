@@ -42,13 +42,6 @@ import logging
 # local imports
 from ofxtools import Types
 
-#  from ofxtools.Types import (
-#      Element,
-#      Types.SubAggregate,
-#      ListAggregate,
-#      ListElement,
-#      Unsupported,
-#  )
 import ofxtools.models
 from ofxtools.utils import classproperty
 

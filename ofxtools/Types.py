@@ -485,7 +485,20 @@ class DateTime(Element):
 
         # Transform to GMT
         value = value.astimezone(utils.UTC)
-        milliseconds = "{0:03d}".format((value.microsecond + 500) // 1000)
+
+        # Round datetime.datetime microseconds to milliseconds per OFX spec.
+        # Can't naively format microseconds via strftime() due
+        # to need to round to milliseconds.  Instead, manually round
+        # microseconds, then insert milliseconds into string format template.
+        millisecond = (value.microsecond + 500) // 1000
+
+        # Round up microseconds above 999499; increment seconds (Issue #80)
+        if millisecond > 999:
+            assert millisecond == 1000
+            millisecond = 0
+            value = value + datetime.timedelta(seconds=1)
+
+        milliseconds = "{0:03d}".format(millisecond)
         fmt = "%Y%m%d%H%M%S.{}[0:GMT]".format(milliseconds)
         return value.strftime(fmt)
 
