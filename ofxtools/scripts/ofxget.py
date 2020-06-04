@@ -1247,12 +1247,15 @@ def _read_scan_response(
     return valid, signoninfo
 
 
-def collate_scan_results(scan_results: Iterable[ScanMetadata]) -> ScanResult:
+def collate_scan_results(
+    scan_results: Iterable[Tuple[OFXVersion, Sequence[MarkupFormat]]]
+) -> ScanResult:
     """
     Input ``scan_results`` needs to be a complete set for either OFXv1 or v2,
     with no results for the other version admixed.
     """
     results_ = list(scan_results)
+    print(results_)
     if not results_:
         return {"versions": [], "formats": []}
     versions, formats = zip(*results_)
@@ -1264,7 +1267,7 @@ def collate_scan_results(scan_results: Iterable[ScanMetadata]) -> ScanResult:
     #
     # Translation: just pick the longest sequence of successful
     # formats and assume it applies for all versions.
-    formats_ = list(max(formats, key=lambda d: len(d)))
+    formats_ = max(formats, key=len)
     formats_.sort(key=lambda f: (f["pretty"], f["unclosedelements"]))
     return {"versions": sorted(versions), "formats": formats_}
 
