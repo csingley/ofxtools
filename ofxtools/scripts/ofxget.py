@@ -1486,7 +1486,8 @@ def main() -> None:
     argparser = make_argparser()
     args_ = argparser.parse_args()
 
-    log_level = LOG_LEVELS.get(args_.verbose, logging.DEBUG)
+    verbosity = getattr(args_, "verbose", 0)
+    log_level = LOG_LEVELS.get(verbosity, logging.DEBUG)
     config.configure_logging(log_level)
 
     logger.debug(f"Parsed CLI args: {extractns(args_)}")
