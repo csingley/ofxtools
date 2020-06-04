@@ -1264,9 +1264,9 @@ def collate_scan_results(scan_results: Iterable[ScanMetadata]) -> ScanResult:
     #
     # Translation: just pick the longest sequence of successful
     # formats and assume it applies for all versions.
-    formats_ = list(max(formats, key=len))
+    formats_ = list(max(formats, key=lambda d: len(d)))
     formats_.sort(key=lambda f: (f["pretty"], f["unclosedelements"]))
-    return dict(zip(("versions", "formats"), (sorted(versions), formats_)))
+    return {"versions": sorted(versions), "formats": formats_}
 
 
 ###############################################################################
