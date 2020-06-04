@@ -1267,7 +1267,10 @@ def collate_scan_results(
     #
     # Translation: just pick the longest sequence of successful
     # formats and assume it applies for all versions.
-    formats_ = max(formats, key=len)
+    def sortKey(d):
+        return len(d)
+
+    formats_ = list(max(formats, key=sortKey))
     formats_.sort(key=lambda f: (f["pretty"], f["unclosedelements"]))
     return {"versions": sorted(versions), "formats": formats_}
 
