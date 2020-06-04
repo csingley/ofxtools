@@ -1,7 +1,7 @@
-dist: xenial
 language: python
 python:
 - '3.7'
+- '3.8'
 install:
 - pip install -r requirements-development.txt
 - pip install .
@@ -11,9 +11,10 @@ after_success:
 - coveralls
 deploy:
   provider: pypi
-  user: csingley
+  username: csingley
   password:
     secure: fCjMpnEheNk3ZdaqLwRl9FuHdSuLkA2ppz5BDzVuLYMSWDeXdm4QZOMRATRTULVm6Y+TRSJqRlpTdtazzlF9FP+chrVOvCfRmbzbPAl1hUL1WOCEEUPND2eHEMSNSG0cd6/nFwFKrRocSOW22xUC/sr2ucEIsTntT0DVvtrni5VbLupapd/xstz1zEgpfALEZ7obi3e6vTH5EYhan/NLIAefI0wnLBUAuqfc0w6Q6P4P+STL11pJfq9u6DpKU3+OSKNG3RHq4RpOP8FwBQf9JuRMWbpQpUW4U7m83NSPf095ZSEg/F+xIC0USlbkX0LLouGwu+Ua6GwHmWFXcEeE/jHeKRucQtVebndkYR65lZaqjbSWIUb3/G6gkdXeL6Sw+Njde90lZKgiRei74/YZFCknvsELM26q9sDcBL7lBPm/58szTjYALvNFtAryjr3TWiMkbsTIIwDYjC19nc2aMWS/twIJiB+RkZUreSQ/W/sYPTFvdZU68vrb77B+WWG3N6a1xeAJPaWO+BZj6wAd7pDWzZNGZHrsY04C/iaoAB6mt1FfKl9BaLzMpEeW5HHWdFd+zLh77DGgHOr9j8GB7x8upfZfuaANJtwgth25zNwD+Gl8888cPkOPh1rfXxdCZQarGxIO2+voJhHCxqxyCbQdzh3hmC2g0ELkh5hyEU8=
+  skip_existing: true
   on:
     tags: true
-    python: 3.7
+    python: 3.8
