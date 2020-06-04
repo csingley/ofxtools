@@ -492,7 +492,9 @@ class DateTime(Element):
         # microseconds, then insert milliseconds into string format template.
         millisecond = round(value.microsecond / 1000)  # 99500-99999 round to 1000
         second_delta, millisecond = divmod(millisecond, 1000)
-        value += datetime.timedelta(seconds=second_delta)  # Push seconds dial if necessary
+        value += datetime.timedelta(
+            seconds=second_delta
+        )  # Push seconds dial if necessary
 
         millisec_str = "{0:03d}".format(millisecond)
         fmt = "%Y%m%d%H%M%S.{}[0:GMT]".format(millisec_str)
