@@ -281,10 +281,11 @@ def parse_header(source: BinaryIO) -> Tuple[OFXHeaderType, str]:
             rawheader += source.readline().decode("ascii")
         header, header_end_index = OFXHeaderV1.parse(rawheader)
 
-        #  Input source stream position has advanced to the beginning of
+        #  Input source stream position should have advanced to the beginning of
         #  the OFX body tag soup, which is where subsequent calls
-        #  to read()/readlines() will pick up.
-        #
+        #  to read()/readlines() will pick up. 
+        #  The seek call will correct the position when \r newline character is used
+        source.seek(header_end_index)
         #  Decode the OFX data body according to the encoding declared
         #  in the OFX header
         message = source.read().decode(header.codec)
