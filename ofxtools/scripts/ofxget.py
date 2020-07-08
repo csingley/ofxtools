@@ -1453,7 +1453,13 @@ def get_passwd(args: ArgsType) -> str:
         password = "{:0<32}".format("anonymous")
     else:
         password = ""
-        if HAS_KEYRING and not args["nokeyring"] and not args["savepass"]:
+        if all(
+            (
+                HAS_KEYRING,
+                "nokeyring" in args and not args["nokeyring"],
+                "savepass" in args and not args["savepass"],
+            )
+        ):
             server = args["server"]
             logger.debug("Found python-keyring; loading password for {server}")
             try:
@@ -1470,11 +1476,11 @@ def get_passwd(args: ArgsType) -> str:
 
 
 def save_passwd(args: Mapping, password: str) -> None:
-    if args["dryrun"]:
+    if "dryrun" in args and args["dryrun"]:
         msg = "Dry run; won't store password"
         warnings.warn(msg, category=SyntaxWarning)
         return
-    if args["nokeyring"]:
+    if "nokeyring" in args and args["nokeyring"]:
         msg = "python-keyring disabled; won't store password"
         warnings.warn(msg, category=SyntaxWarning)
         return
