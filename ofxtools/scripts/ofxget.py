@@ -133,37 +133,37 @@ def make_argparser() -> argparse.ArgumentParser:
         subparsers_,
         "scan",
         server=True,
-        help=("Probe OFX server for working " "connection parameters"),
+        help=("Probe OFX server for working connection parameters"),
     )
     subparsers["prof"] = add_subparser(
         subparsers_,
         "prof",
         format=True,
-        help=("Download OFX service profile " "for server"),
+        help=("Download OFX service profile for server"),
     )
     subparsers["acctinfo"] = add_subparser(
         subparsers_,
         "acctinfo",
         signon=True,
-        help=("Download account information " "for a user login"),
+        help=("Download account information for a user login"),
     )
     subparsers["stmt"] = add_subparser(
         subparsers_,
         "stmt",
         stmt=True,
-        help=("Download statement(s) for " "bank/CC/investment acct(s)"),
+        help=("Download statement(s) for bank/CC/investment acct(s)"),
     )
     subparsers["stmtend"] = add_subparser(
         subparsers_,
         "stmtend",
         stmtend=True,
-        help=("Download closing statement(s) " "for bank/CC account(s)"),
+        help=("Download closing statement(s) for bank/CC account(s)"),
     )
     subparsers["tax1099"] = add_subparser(
         subparsers_,
         "tax1099",
         tax=True,
-        help=("(EXPERIMENTAL) Download US " "income tax data on f1099"),
+        help=("(EXPERIMENTAL) Download US income tax data on f1099"),
     )
     main_parser.subparsers = subparsers  # type: ignore
     return main_parser
@@ -236,6 +236,12 @@ def add_subparser(
             action="store_true",
             default=None,
             help="Store password in system keyring (requires python-keyring)",
+        )
+        parser.add_argument(
+            "--nokeyring",
+            action="store_true",
+            default=None,
+            help="Don't use system keyring to store/retrieve passwords",
         )
         add_signon_group(parser)
 
@@ -818,6 +824,7 @@ DEFAULTS: Dict[str, ArgType] = {
     "unsafe": False,
     "write": False,
     "savepass": False,
+    "nokeyring": False,
 }
 
 
@@ -1234,7 +1241,7 @@ def _read_scan_response(
         except (ValueError,):
             # We received OFX; can't find SIGNONIFO (probably no PROFRS)
             logger.debug(
-                ("Received HTTP response with valid OFX; " "can't parse SIGNONINFO")
+                ("Received HTTP response with valid OFX; can't parse SIGNONINFO")
             )
             valid = True
     else:
@@ -1437,7 +1444,8 @@ def convert_datetime(args: ArgsType) -> Mapping[str, Optional[datetime.datetime]
 def get_passwd(args: ArgsType) -> str:
     """
     1.  For dry run, use dummy password from OFX spec
-    2.  If python-keyring is installed and --savepass is unset, try to use it
+    2.  If python-keyring is installed and neither --nokeyring nor --savepass is set,
+        try to use it!
     3.  Prompt for password in terminal
     """
     if args["dryrun"]:
@@ -1445,10 +1453,17 @@ def get_passwd(args: ArgsType) -> str:
         password = "{:0<32}".format("anonymous")
     else:
         password = ""
-        if HAS_KEYRING and not args["savepass"]:
+        if HAS_KEYRING and not args["nokeyring"] and not args["savepass"]:
             server = args["server"]
             logger.debug("Found python-keyring; loading password for {server}")
-            password = keyring.get_password("ofxtools", server) or ""
+            try:
+                password = keyring.get_password("ofxtools", server) or ""
+            except keyring.errors.KeyringError as err:
+                msg = (
+                    f"keyring.get_password('ofxtools', {server}) failed: "
+                    f"'{err.args[0]}'"
+                )
+                logger.error(msg)
         if not password:
             password = getpass.getpass()
     return password
@@ -1457,6 +1472,10 @@ def get_passwd(args: ArgsType) -> str:
 def save_passwd(args: Mapping, password: str) -> None:
     if args["dryrun"]:
         msg = "Dry run; won't store password"
+        warnings.warn(msg, category=SyntaxWarning)
+        return
+    if args["nokeyring"]:
+        msg = "python-keyring disabled; won't store password"
         warnings.warn(msg, category=SyntaxWarning)
         return
     if not password:

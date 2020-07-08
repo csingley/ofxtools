@@ -1366,14 +1366,14 @@ class SavePasswdTestCase(unittest.TestCase):
 
     def testSavePasswdEmptyPassword(self):
         with self.assertWarns(SyntaxWarning):
-            ofxget.save_passwd({"dryrun": False}, "")
+            ofxget.save_passwd({"dryrun": False, "nokeyring": False}, "")
 
     def testSavePasswdNoKeyring(self):
         HAS_KEYRING = ofxget.HAS_KEYRING
         try:
             ofxget.HAS_KEYRING = False
             with self.assertRaises(RuntimeError):
-                ofxget.save_passwd({"dryrun": False}, "t0ps3kr1t")
+                ofxget.save_passwd({"dryrun": False, "nokeyring": False}, "t0ps3kr1t")
         finally:
             ofxget.HAS_KEYRING = HAS_KEYRING
 
