@@ -20,7 +20,7 @@ arguments.
 For example:
 
 >>> import datetime; import ofxtools
->>> from ofxtools import OFXClient, StmtRq, CcStmtEndRq
+>>> from ofxtools.Client import OFXClient, StmtRq, CcStmtEndRq
 >>> client = OFXClient("https://ofx.chase.com", userid="MoMoney",
 ...                    org="B1", fid="10898",
 ...                    version=220, prettyprint=True,
