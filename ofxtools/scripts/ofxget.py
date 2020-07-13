@@ -145,6 +145,7 @@ def make_argparser() -> argparse.ArgumentParser:
         subparsers_,
         "acctinfo",
         signon=True,
+        acctinforq=True,
         help=("Download account information for a user login"),
     )
     subparsers["stmt"] = add_subparser(
@@ -177,6 +178,7 @@ def add_subparser(
     signon: bool = False,
     stmtend: bool = False,
     stmt: bool = False,
+    acctinforq: bool = False,
     tax: bool = False,
     help: Optional[str] = None,
 ) -> argparse.ArgumentParser:
@@ -196,6 +198,7 @@ def add_subparser(
         stmtend = True
     if stmtend or tax:
         signon = True
+        acctinforq = True  # Support internally generated ACCTINFORQ for --all accounts
     if signon:
         format = True
     if format:
@@ -252,6 +255,9 @@ def add_subparser(
             add_stmt_args(stmt_group)
             add_inv_acct_group(parser)
             add_inv_stmt_group(parser)
+
+    if acctinforq:
+        add_acctinforq_group(parser)
 
     if tax:
         add_tax_group(parser)
@@ -426,6 +432,19 @@ def add_inv_stmt_group(parser: argparse.ArgumentParser) -> argparse._ArgumentGro
     return group
 
 
+def add_acctinforq_group(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
+    group = parser.add_argument_group(
+        title="account info request options"
+    )
+    group.add_argument(
+        "--dtacctup",
+        metavar="DATE",
+        dest="dtacctup",
+        help="(YYYYmmdd) date of last account update",
+    )
+    return group
+
+
 def add_tax_group(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
     group = parser.add_argument_group(title="tax form options")
     group.add_argument(
@@ -573,7 +592,7 @@ def request_acctinfo(args: ArgsType) -> None:
 
 def _request_acctinfo(args: ArgsType, password: str) -> BytesIO:
     client = init_client(args)
-    dtacctup = datetime.datetime(1999, 12, 31, tzinfo=utils.UTC)
+    dtacctup = args['dtacctup'] or datetime.datetime(1990, 12, 31, tzinfo=utils.UTC)
 
     with client.request_accounts(
         password, dtacctup, dryrun=args["dryrun"], verify_ssl=not args["unsafe"]
@@ -812,6 +831,7 @@ DEFAULTS: Dict[str, ArgType] = {
     "dtstart": "",
     "dtend": "",
     "dtasof": "",
+    "dtacctup": "",
     "inctran": True,
     "incbal": True,
     "incpos": True,
