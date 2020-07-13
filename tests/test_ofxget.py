@@ -65,6 +65,7 @@ class MakeArgParserTestCase(unittest.TestCase):
             "dtstart": "20070101000000",
             "dtend": "20071231000000",
             "dtasof": "20071231000000",
+            "dtacctup": "",
             "checking": ["123", "234"],
             "savings": ["345", "456"],
             "moneymrkt": ["567", "678"],
@@ -296,7 +297,30 @@ class MakeArgParserTestCase(unittest.TestCase):
             self.assertEqual(len(args), 2)
             passwd, dtacctup = args
             self.assertEqual(passwd, "t0ps3kr1t")
-            self.assertEqual(dtacctup, datetime(1999, 12, 31, tzinfo=UTC))
+            self.assertEqual(dtacctup, datetime(1990, 12, 31, tzinfo=UTC))
+
+            self.assertEqual(
+                kwargs,
+                {"dryrun": self.args["dryrun"], "verify_ssl": not self.args["unsafe"]},
+            )
+
+    def test_RequestAcctinfoOverrideDtacctup(self):
+        """ Nondefault `dtacctup` arg for ofxtools.scripts.ofxget._request_acctinfo() """
+        args = self.args
+        args["dryrun"] = False
+        args["dtacctup"] = "17760704"
+
+        with patch("ofxtools.Client.OFXClient.request_accounts") as fake_rq_acctinfo:
+            fake_rq_acctinfo.return_value = BytesIO(b"th-th-th-that's all folks!")
+
+            output = ofxget._request_acctinfo(self.args, password="t0ps3kr1t")
+            self.assertEqual(output.read(), (b"th-th-th-that's all folks!"))
+
+            args, kwargs = fake_rq_acctinfo.call_args
+            self.assertEqual(len(args), 2)
+            passwd, dtacctup = args
+            self.assertEqual(passwd, "t0ps3kr1t")
+            self.assertEqual(dtacctup, datetime(1990, 12, 31, tzinfo=UTC))
 
             self.assertEqual(
                 kwargs,

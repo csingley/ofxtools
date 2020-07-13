@@ -433,9 +433,7 @@ def add_inv_stmt_group(parser: argparse.ArgumentParser) -> argparse._ArgumentGro
 
 
 def add_acctinforq_group(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
-    group = parser.add_argument_group(
-        title="account info request options"
-    )
+    group = parser.add_argument_group(title="account info request options")
     group.add_argument(
         "--dtacctup",
         metavar="DATE",
@@ -592,7 +590,7 @@ def request_acctinfo(args: ArgsType) -> None:
 
 def _request_acctinfo(args: ArgsType, password: str) -> BytesIO:
     client = init_client(args)
-    dtacctup = args['dtacctup'] or datetime.datetime(1990, 12, 31, tzinfo=utils.UTC)
+    dtacctup = args["dtacctup"] or datetime.datetime(1990, 12, 31, tzinfo=utils.UTC)
 
     with client.request_accounts(
         password, dtacctup, dryrun=args["dryrun"], verify_ssl=not args["unsafe"]
