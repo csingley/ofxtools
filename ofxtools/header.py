@@ -104,15 +104,15 @@ class OFXHeaderV1(OFXHeaderBase):
     # format, because it's pretty harmless.
     regex = re.compile(
         r"""\s*
-            OFXHEADER:\s*(?P<OFXHEADER>\d+)\s+
-            DATA:\s*(?P<DATA>[A-Z]+)\s+
-            VERSION:\s*(?P<VERSION>\d+)\s+
-            SECURITY:\s*(?P<SECURITY>[\w]+)\s+
-            ENCODING:\s*(?P<ENCODING>[A-Z0-9-]+)\s+
-            CHARSET:\s*(?P<CHARSET>[\w-]+)\s+
-            COMPRESSION:\s*(?P<COMPRESSION>[A-Z]+)\s+
-            OLDFILEUID:\s*(?P<OLDFILEUID>[\w-]+)\s+
-            NEWFILEUID:\s*(?P<NEWFILEUID>[\w-]+)\s+
+            OFXHEADER:\s*(?P<OFXHEADER>\d+)\s*
+            DATA:\s*(?P<DATA>[A-Z]+)\s*
+            VERSION:\s*(?P<VERSION>\d+)\s*
+            SECURITY:\s*(?P<SECURITY>[\w]+)\s*
+            ENCODING:\s*(?P<ENCODING>[A-Z0-9-]+)\s*
+            CHARSET:\s*(?P<CHARSET>[\w-]+)\s*
+            COMPRESSION:\s*(?P<COMPRESSION>[A-Z]+)\s*
+            OLDFILEUID:\s*(?P<OLDFILEUID>[\w-]+)\s*
+            NEWFILEUID:\s*(?P<NEWFILEUID>[\w-]+)
         """,
         re.VERBOSE,
     )
@@ -287,7 +287,7 @@ def parse_header(source: BinaryIO) -> Tuple[OFXHeaderType, str]:
         #
         #  The seek call will correct the position when \r newline character is used
         #  (Issue #84)
-        source.seek(header_end_index - 1)
+        source.seek(header_end_index)
 
         #  Decode the OFX data body according to the encoding declared
         #  in the OFX header

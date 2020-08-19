@@ -338,6 +338,58 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
 
         self.assertEqual(body, self.body)
 
+    def testNoLineBreaksAnywhere(self):
+        # Some FIs apparently return OFX data with no line breaks anywhere, not
+        # even in the OFX header.  We're cool with that.
+        #
+        # Issue #89
+        header = (
+            "OFXHEADER:100"
+            "DATA:OFXSGML"
+            "VERSION:102"
+            "SECURITY:NONE"
+            "ENCODING:USASCII"
+            "CHARSET:1252"
+            "COMPRESSION:NONE"
+            "OLDFILEUID:NONE"
+            "NEWFILEUID:NONE"
+        )
+        body = (
+            "<OFX><SIGNONMSGSRSV1><SONRS>"
+            "<STATUS><CODE>0<SEVERITY>INFO<MESSAGE>SUCCESS</STATUS>"
+            "<DTSERVER>20200818065106.132[-7:PDT]<LANGUAGE>ENG<FI><ORG>WF<FID>3000</FI>"
+            "<SESSCOOKIE>a6a12496-682d-42b2-aafa-ed973c406a17-08182020075105922"
+            "<INTU.BID>3000<INTU.USERID>jdoe</SONRS></SIGNONMSGSRSV1>"
+            "<BANKMSGSRSV1><STMTTRNRS><TRNUID>0"
+            "<STATUS><CODE>0<SEVERITY>INFO<MESSAGE>SUCCESS</STATUS>"
+            "<STMTRS><CURDEF>USD<BANKACCTFROM><BANKID>121042882<ACCTID>5555555555"
+            "<ACCTTYPE>CHECKING</BANKACCTFROM>"
+            "<BANKTRANLIST><DTSTART>20200101120000.000[-8:PST]"
+            "<DTEND>20200810110000.000[-7:PDT]"
+            "<STMTTRN><TRNTYPE>CREDIT<DTPOSTED>20200403110000.000[-7:PDT]"
+            "<TRNAMT>507500.00<FITID>202004031<NAME>TD AMERITRADE CLEARING"
+            "<MEMO>WT SEQ555555 /ORG=JOHN DOE SRF# EC55555555555 TRN#55555555555 RFB# 55555555555"
+            "</STMTTRN></BANKTRANLIST>"
+            "<LEDGERBAL><BALAMT>56498.04<DTASOF>20200817110000.000[-7:PDT]</LEDGERBAL>"
+            "<AVAILBAL><BALAMT>56498.04<DTASOF>20200817110000.000[-7:PDT]</AVAILBAL>"
+            "</STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>"
+        )
+        ofx = header + body
+        ofx = BytesIO(ofx.encode("utf8"))
+        ofxheader, body_ = ofxtools.header.parse_header(ofx)
+
+        self.assertEqual(ofxheader.ofxheader, 100)
+        self.assertEqual(ofxheader.data, "OFXSGML")
+        self.assertEqual(ofxheader.version, 102)
+        self.assertEqual(ofxheader.security, "NONE")
+        self.assertEqual(ofxheader.encoding, "USASCII")
+        self.assertEqual(ofxheader.charset, "1252")
+        self.assertEqual(ofxheader.compression, "NONE")
+        self.assertEqual(ofxheader.oldfileuid, "NONE")
+        self.assertEqual(ofxheader.newfileuid, "NONE")
+
+        self.assertEqual(body, body_)
+
 
 class OFXHeaderV2TestCase(unittest.TestCase, OFXHeaderTestMixin):
     headerClass = ofxtools.header.OFXHeaderV2
