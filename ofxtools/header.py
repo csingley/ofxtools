@@ -98,10 +98,19 @@ class OFXHeaderV1(OFXHeaderBase):
     oldfileuid = Types.String(36)
     newfileuid = Types.String(36)
 
-    # NOTE: Although the OFX spec requires formatting OFX headers as
+    # 1) Although the OFX spec requires formatting OFX headers as
     # "HEADER:VALUE", apparently some FIs are inserting whitespace between
     # the colon and the header value.  We'll allow this noncompliant
     # format, because it's pretty harmless.
+    #
+    # 2) The OFXv1 spec doesn't require line breaks between header fields,
+    # and # apparently some FIs are sending OFX files (including header)
+    # all as one line.
+    #
+    # 3) The OFXv1 spec requires a line break between the OFX header and
+    # the SGML data, but some FIs disregard this requirement.  We allow it.
+    # Therefore the regex doesn't capture whitespace at the end of the header;
+    # instead ``parse_header()`` strips whitespace from the start of the data.
     regex = re.compile(
         r"""\s*
             OFXHEADER:\s*(?P<OFXHEADER>\d+)\s*
