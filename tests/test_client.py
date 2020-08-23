@@ -116,6 +116,17 @@ class OFXClientV1TestCase(unittest.TestCase):
             self.assertEqual(signon.appver, client.appver)
             self.assertIsNone(signon.clientuid)
 
+    def testSignonVersion102(self):
+        # CLIENTUID wasn't defined until OFX version 1.0.3,
+        # so it returns None if if initialized.
+        client = OFXClient(
+            "http://example.com", userid="porkypig", clientuid="DEADBEEF", version=102
+        )
+        signon = client.signon("t0ps3kr1t")
+        self.assertIsInstance(signon, SIGNONMSGSRQV1)
+        signon = signon.sonrq
+        self.assertIsNone(signon.clientuid)
+
     def testRequestStatementsDryrun(self):
         with patch.multiple(
             "ofxtools.Client.OFXClient", dtclient=DEFAULT, uuid="DEADBEEF"
@@ -175,36 +186,56 @@ class OFXClientV1TestCase(unittest.TestCase):
             self.assertEqual(dryrun, request)
 
     def _testRequest(self, fn, *args, **kwargs):
+        """ Mock out the relevant parts of ``urllib`` that get called by
+        ``ofxtools.Client.OFXClient.download()``, then call the function
+        with the given arguments.
+
+        Return the serialized data passed to ``urllib.request.Request`` by
+        ``ofxtools.Client.OFXClient.download()`` (as a string, not bytes)
+        """
         with patch.multiple(
             "urllib.request", Request=DEFAULT, urlopen=DEFAULT
         ) as mock_urllib:
             with patch("uuid.uuid4") as mock_uuid:
                 with patch("ofxtools.Client.OFXClient.dtclient") as mock_dtclient:
+                    # Mock out DTCLIENT/CLIENTUID to get static values, not dynamic
                     mock_dtclient.return_value = datetime(2017, 4, 1, tzinfo=UTC)
                     mock_uuid.return_value = "DEADBEEF"
+                    # Mock out urllib.request's Request & urlopen that get called by
+                    # OFXClient.download()
                     mock_Request = mock_urllib["Request"]
                     mock_Request.return_value = sentinel.REQUEST
                     mock_urlopen = mock_urllib["urlopen"]
-                    mock_response = BytesIO(b"Some OFX Response")
-                    mock_urlopen.return_value = mock_response
+                    mock_urlopen.return_value = BytesIO(b"Some OFX Response")
+
+                    # With the necessary mocks in place, call the function with
+                    # the given arguments.
                     output = fn(*args, **kwargs)
 
-                    args = mock_Request.call_args[0]
-                    self.assertEqual(len(args), 1)
-                    self.assertEqual(args[0], self.client.url)
+                    # OFXClient.download() calls Request with these args:
+                    #  self.url, method="POST", data=request, headers=self.http_headers
+                    rq_args = mock_Request.call_args[0]
 
-                    kwargs = mock_Request.call_args[1]
-                    self.assertEqual(kwargs["method"], "POST")
-                    self.assertEqual(kwargs["headers"], self.client.http_headers)
+                    self.assertEqual(len(rq_args), 1)
+                    self.assertEqual(rq_args[0], self.client.url)
 
+                    rq_kwargs = mock_Request.call_args[1]
+                    self.assertEqual(rq_kwargs["method"], "POST")
+                    self.assertEqual(rq_kwargs["headers"], self.client.http_headers)
+
+                    # OFXClient.download() calls urlopen() with these args:
+                    #  req, timeout=timeout, context=ssl_context
                     mock_urlopen.assert_called_once_with(
                         sentinel.REQUEST,
-                        context=ANY,
                         timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
+                        context=ANY,
                     )
+
+                    # The tested function should return the output of download(),
+                    # which itself returns the output of urlopen()
                     self.assertEqual(output.read(), b"Some OFX Response")
 
-                    return kwargs["data"].decode("utf_8")
+                    return rq_kwargs["data"].decode("utf_8")
 
     def testRequestStatements(self):
         data = self._testRequest(
@@ -292,12 +323,6 @@ class OFXClientV1TestCase(unittest.TestCase):
         ).format(appid=DEFAULT_APPID, appver=DEFAULT_APPVER)
 
         self.assertEqual(data, request)
-
-    #  def testRequestStatementsBadArgs(self):
-    #  with self.assertRaises(ValueError):
-    #  self._testRequest(
-    #  self.client.request_statements, "t0ps3kr1t", self.stmtEndRq
-    #  )
 
     def testRequestStatementsMultipleMixed(self):
         data = self._testRequest(
@@ -555,6 +580,33 @@ class OFXClientV1TestCase(unittest.TestCase):
         ).format(appid=DEFAULT_APPID, appver=DEFAULT_APPVER)
 
         self.assertEqual(data, request)
+
+    def testRequestStatementsUnclosedTagsOFXv2(self):
+        # OFX version 2 (XML) doesn't allow unclosed tags.
+        # This is already checked by OFXClient.__init__(), so to test this
+        # illegal state we have to be sneaky and change the attribute after
+        # instantiation
+        client = OFXClient(
+            "https://example.com/ofx",
+            userid="elmerfudd",
+            org="FIORG",
+            fid="FID",
+            version=203,
+            close_elements=True,
+            bankid="123456789",
+            brokerid="example.com",
+        )
+        client.close_elements = False
+        with self.assertRaises(ValueError):
+            self._testRequest(client.request_statements, "t0ps3kr1t", self.stmtRq0)
+
+    def testRequestStatementsBadRequestType(self):
+        # OFXClient.request_statements() pukes if you don't feed it one of the
+        # special-purpose *STMTRQ/*STMTENDRQ NamedTuple instances
+        with self.assertRaises(ValueError):
+            self._testRequest(
+                self.client.request_statements, "t0ps3kr1t", "I SHOULD BE A STMTRQ"
+            )
 
     def testRequestEndStatements(self):
         data = self._testRequest(
