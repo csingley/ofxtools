@@ -194,7 +194,7 @@ class STMTTRN(Aggregate, Origcurrency):
     refnum = String(32)
     sic = Integer()
     payeeid = String(12)
-    name = String(32)
+    name = NagString(32)
     payee = SubAggregate(PAYEE)
     extdname = String(100)
     bankacctto = SubAggregate(BANKACCTTO)
