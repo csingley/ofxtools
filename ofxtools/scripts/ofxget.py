@@ -1280,7 +1280,6 @@ def collate_scan_results(
     with no results for the other version admixed.
     """
     results_ = list(scan_results)
-    print(results_)
     if not results_:
         return {"versions": [], "formats": []}
     versions, formats = zip(*results_)
