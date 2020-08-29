@@ -202,8 +202,7 @@ class Aggregate(list):
 
     @classmethod
     def _convert(cls, elem: ET.Element) -> "Aggregate":
-        """
-        Instantiate from ``xml.etree.ElementTree.Element``.
+        """Instantiate from ``xml.etree.ElementTree.Element``.
 
         N.B. this method must be called on the appropriate subclass,
         not the ``Aggregate`` base class.
@@ -224,7 +223,7 @@ class Aggregate(list):
         " args, kwargs, previous attr index within spec, previous attr is list member? "
 
         def update_args(accum: Accum, elem: ET.Element) -> Accum:
-            """ Extend ``functools.reduce()`` accumulator with parsed ``ET.Element``
+            """Extend ``functools.reduce()`` accumulator with parsed ``ET.Element``
             value (either OFX `aggregate` or OFX 'element').
 
             List members are stored as positional args (i.e. list); everything

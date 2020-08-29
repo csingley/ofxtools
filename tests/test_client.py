@@ -186,7 +186,7 @@ class OFXClientV1TestCase(unittest.TestCase):
             self.assertEqual(dryrun, request)
 
     def _testRequest(self, fn, *args, **kwargs):
-        """ Mock out the relevant parts of ``urllib`` that get called by
+        """Mock out the relevant parts of ``urllib`` that get called by
         ``ofxtools.Client.OFXClient.download()``, then call the function
         with the given arguments.
 

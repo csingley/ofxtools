@@ -1279,7 +1279,7 @@ class InvtranlistTestCase(unittest.TestCase, base.TranlistTestCase):
         return INVTRANLIST(
             *txs,
             dtstart=datetime(2016, 1, 1, tzinfo=UTC),
-            dtend=datetime(2016, 12, 31, tzinfo=UTC)
+            dtend=datetime(2016, 12, 31, tzinfo=UTC),
         )
 
     @classproperty
