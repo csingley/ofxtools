@@ -482,6 +482,36 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(instance.cursym, instance.currency.cursym)
         self.assertEqual(instance.currate, instance.currency.currate)
 
+    def testConvertNameTooLong(self):
+        """ Don't enforce length restriction on NAME; raise Warning """
+        # Issue #91
+        copy_root = deepcopy(self.etree)
+        copy_element = Element("NAME")
+        copy_element.text = """
+        The true war is a celebration of markets. Organic markets, carefully
+        styled "black" by the professionals, spring up everywhere.  Scrip,
+        Sterling, Reichsmarks, continue to move, severe as classical ballet,
+        inside their antiseptic marble chambers. But out here, down here among
+        the people, the truer currencies come into being.  So, Jews are
+        negotiable.  Every bit as negotiable as cigarettes, cunt, or Hershey
+        bars.
+        """
+        copy_root[13] = copy_element
+        with self.assertWarns(Warning):
+            root = Aggregate.from_etree(copy_root)
+        self.assertEqual(
+            root.name,
+            """
+        The true war is a celebration of markets. Organic markets, carefully
+        styled "black" by the professionals, spring up everywhere.  Scrip,
+        Sterling, Reichsmarks, continue to move, severe as classical ballet,
+        inside their antiseptic marble chambers. But out here, down here among
+        the people, the truer currencies come into being.  So, Jews are
+        negotiable.  Every bit as negotiable as cigarettes, cunt, or Hershey
+        bars.
+        """,
+        )
+
 
 class BanktranlistTestCase(unittest.TestCase, base.TranlistTestCase):
     __test__ = True
