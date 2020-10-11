@@ -31,11 +31,11 @@ __all__ = [
 # stdlib imports
 import re
 import logging
+from typing import Tuple, Union, Optional, BinaryIO, Pattern
 
 
 # local imports
 from ofxtools import Types
-from typing import Tuple, Union, Optional, BinaryIO
 
 
 logger = logging.getLogger(__name__)
@@ -55,8 +55,10 @@ class OFXHeaderBase:
     Superclass for OFXHeader{V1,V2} factoring out common logic.
     """
 
-    regex = NotImplemented  # Define in subclass
-    codec = NotImplemented  # Define in subclass
+    regex: Union[
+        Pattern[str], type(NotImplemented)
+    ] = NotImplemented  # Define in subclass
+    codec: Union[str, type(NotImplemented)] = NotImplemented  # Define in subclass
 
     def __init__(self, *args, **kwargs):
         """ This is only here to please the type checker """

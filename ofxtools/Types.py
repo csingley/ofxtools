@@ -82,7 +82,7 @@ class Element:
     (using the logic implemented in ``_convert()``).
     """
 
-    type = NotImplemented  # define in subclass
+    type: Any = NotImplemented  # define in subclass
 
     def __init__(self, *args, **kwargs):
         self.data = defaultdict(None)
