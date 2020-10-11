@@ -453,7 +453,10 @@ E*Trade will only accept OFX version 1.0.2; they don't care about newlines or
 closing tags.
 
 USAA only accepts OFX versions 1.0.2, 1.5.1, 2.0.0, and 2.0.2.  Version 1 needs
-to be old-school SGML - no closing tags.  Newlines are optional.
+to be old-school SGML - no closing tags.  Newlines are optional. [Nota bene:
+in actual fact, while USAA accepts profile requests in OFX versions 2.0.0 and
+2.0.2, it only accepts statement requests in OFX versions 1.0.2 and 1.5.1...
+without closing tags, as indicated above].
 
 Vanguard is a little funkier.  They accept all versions of OFX, but version
 2 must have newlines.  For version 1, you must either insert newlines or
