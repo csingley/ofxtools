@@ -55,7 +55,10 @@ class OFXHeaderBase:
     Superclass for OFXHeader{V1,V2} factoring out common logic.
     """
 
-    regex: Union[Pattern, "NotImplemented"] = NotImplemented  # Define in subclass
+    # mypy doesn't allow specifying NotImplemented or type(NotImplemented)
+    # as a type, so disable type checking for class attributes which are
+    # NotImplemented in the superclass to define the interface.
+    regex: Any = NotImplemented  # Define in subclass
     codec: Any = NotImplemented  # Define in subclass
 
     def __init__(self, *args, **kwargs):
