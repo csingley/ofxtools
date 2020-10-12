@@ -31,7 +31,7 @@ __all__ = [
 # stdlib imports
 import re
 import logging
-from typing import Tuple, Union, Optional, BinaryIO, Any
+from typing import Tuple, Union, Optional, BinaryIO, Pattern, Any
 
 
 # local imports
@@ -55,7 +55,7 @@ class OFXHeaderBase:
     Superclass for OFXHeader{V1,V2} factoring out common logic.
     """
 
-    regex: Any = NotImplemented  # Define in subclass
+    regex: Union[Pattern, "NotImplemented"] = NotImplemented  # Define in subclass
     codec: Any = NotImplemented  # Define in subclass
 
     def __init__(self, *args, **kwargs):
