@@ -6,7 +6,7 @@ import unittest
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 import itertools
-from typing import List, Dict, Sequence
+from typing import List, Dict, Sequence, Any
 
 # local imports
 from ofxtools.Types import SubAggregate, ListAggregate, ListElement
@@ -27,8 +27,8 @@ class TestAggregate:
     oneOfs: Dict[str, Sequence[str]] = {}
     unsupported: List[str] = []
 
-    etree = NotImplemented
-    aggregate = NotImplemented
+    etree: Any = NotImplemented
+    aggregate: Any = NotImplemented
 
     @classproperty
     @classmethod
@@ -180,7 +180,7 @@ class TrnrqTestCase(TestAggregate):
     Cf. models.wrapperbases.TrnRq
     """
 
-    wraps = NotImplemented
+    wraps: Any = NotImplemented
     optionalElements = ["CLTCOOKIE", "TAN"]
 
     @classproperty
@@ -269,7 +269,7 @@ class TrnrsTestCase(TestAggregate):
     Cf. models.wrapperbases.TrnRs
     """
 
-    wraps = NotImplemented
+    wraps: Any = NotImplemented
     optionalElements = ["CLTCOOKIE"]
     requiredElements = ["TRNUID", "STATUS"]
 
@@ -286,7 +286,7 @@ class TrnrsTestCase(TestAggregate):
     @classproperty
     @classmethod
     def aggregate(cls):
-        raise NotImplemented
+        raise NotImplementedError
 
     @classproperty
     @classmethod
@@ -470,7 +470,7 @@ class SyncrsTestCase(TestAggregate):
 
 
 class OfxTestCase:
-    ofx = NotImplemented
+    ofx: Any = NotImplemented
 
     @classmethod
     def setUpClass(cls):
