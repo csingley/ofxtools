@@ -252,8 +252,8 @@ class Aggregate(list):
 
             is_listmember = attrname in listaggregates or attrname in listelements
             if index <= prev_index and not (is_listmember and prev_is_listmember):
-                subels = [el.tag for el in elem]
-                raise OFXSpecError(f"{clsnm} SubElements out of order: {subels}")
+                prev = spec[prev_index]
+                raise OFXSpecError(f"{clsnm} Elements out of order: {attrname}, {prev}")
 
             # Parse attribute value
             if attrname in cls.unsupported:
