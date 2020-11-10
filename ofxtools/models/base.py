@@ -252,8 +252,12 @@ class Aggregate(list):
 
             is_listmember = attrname in listaggregates or attrname in listelements
             if index <= prev_index and not (is_listmember and prev_is_listmember):
-                prev = spec[prev_index]
-                raise OFXSpecError(f"{clsnm} Elements out of order: {attrname}, {prev}")
+                msg = (
+                    f"Elements out of order: According to the class spec for {clsnm}, "
+                    f"{attrname.upper()} should occur before "
+                    f"{spec[prev_index].upper()}, not after it."
+                )
+                raise OFXSpecError(msg)
 
             # Parse attribute value
             if attrname in cls.unsupported:
