@@ -1150,8 +1150,8 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
         "INVBAL",
         "INVOOLIST",
         "MKTGINFO",
+        "INV401K",
         "INV401KBAL",
-        "MKTGINFO",
     ]
 
     @classproperty
@@ -1166,6 +1166,7 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
         root.append(InvbalTestCase.etree)
         root.append(oo.InvoolistTestCase.etree)
         SubElement(root, "MKTGINFO").text = "Get Free Stuff NOW!!"
+        root.append(Inv401kTestCase.etree)
         root.append(Inv401kbalTestCase.etree)
         return root
 
@@ -1180,6 +1181,7 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
             invposlist=InvposlistTestCase.aggregate,
             invbal=InvbalTestCase.aggregate,
             invoolist=oo.InvoolistTestCase.aggregate,
+            inv401k=Inv401kTestCase.aggregate,
             inv401kbal=Inv401kbalTestCase.aggregate,
             mktginfo="Get Free Stuff NOW!!",
         )

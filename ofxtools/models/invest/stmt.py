@@ -282,8 +282,8 @@ class INVSTMTRS(Aggregate):
     invbal = SubAggregate(INVBAL)
     invoolist = SubAggregate(INVOOLIST)
     mktginfo = String(360)
-    inv401kbal = SubAggregate(INV401KBAL)
     inv401k = SubAggregate(INV401K)
+    inv401kbal = SubAggregate(INV401KBAL)
 
     @property
     def account(self):

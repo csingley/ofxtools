@@ -553,6 +553,14 @@ class Inc401kResponseTestCase(base.OfxTestCase, unittest.TestCase):
     year-to-date summary.
     """
 
+    # N.B. the example server response in Section 13.12 of the OFXv2 spec contains
+    # two errors:
+    #
+    # 1) an out-of-sequence error; INV401KBAL appears before INV401K when it should come
+    #    after it.  Cf. the schema file for INVSTMTRS, OFX_Investment_Messages.xsd
+    # 2) an opening <YEARTODATE> tag without a corresponding closeing </YEARTODATE> tag.
+    #
+    # These errors are corrected for the test below.
     ofx = """
     <OFX>
         <SIGNONMSGSRSV1>
@@ -670,13 +678,6 @@ class Inc401kResponseTestCase(base.OfxTestCase, unittest.TestCase):
                             <BUYTYPE>BUY</BUYTYPE>
                         </BUYMF>
                     </INVTRANLIST>
-                    <INV401KBAL>
-                        <PRETAX>31690.340000</PRETAX>
-                        <PROFITSHARING>10725.640000</PROFITSHARING>
-                        <ROLLOVER>15945.750000</ROLLOVER>
-                        <OTHERVEST>108.800000</OTHERVEST>
-                        <TOTAL>58470.530000</TOTAL>
-                    </INV401KBAL>
                     <INV401K>
                         <EMPLOYERNAME>ELGIN NATIONAL INDUSTRIES INC</EMPLOYERNAME>
                         <PLANID>4343</PLANID>
@@ -721,16 +722,24 @@ class Inc401kResponseTestCase(base.OfxTestCase, unittest.TestCase):
                         </CONTRIBINFO>
                         <INV401KSUMMARY>
                             <YEARTODATE>
-                            <DTSTART>20050101000000.000[0:GMT]</DTSTART>
-                            <DTEND>20050131000000.000[0:GMT]</DTEND>
-                            <CONTRIBUTIONS>
-                                <PRETAX>843.2500</PRETAX>
-                                <AFTERTAX>43.4200</AFTERTAX>
-                                <MATCH>421.6200</MATCH>
-                                <TOTAL>1308.2900</TOTAL>
-                            </CONTRIBUTIONS>
+                                <DTSTART>20050101000000.000[0:GMT]</DTSTART>
+                                <DTEND>20050131000000.000[0:GMT]</DTEND>
+                                <CONTRIBUTIONS>
+                                    <PRETAX>843.2500</PRETAX>
+                                    <AFTERTAX>43.4200</AFTERTAX>
+                                    <MATCH>421.6200</MATCH>
+                                    <TOTAL>1308.2900</TOTAL>
+                                </CONTRIBUTIONS>
+                            </YEARTODATE>
                         </INV401KSUMMARY>
                     </INV401K>
+                    <INV401KBAL>
+                        <PRETAX>31690.340000</PRETAX>
+                        <PROFITSHARING>10725.640000</PROFITSHARING>
+                        <ROLLOVER>15945.750000</ROLLOVER>
+                        <OTHERVEST>108.800000</OTHERVEST>
+                        <TOTAL>58470.530000</TOTAL>
+                    </INV401KBAL>
                 </INVSTMTRS>
             </INVSTMTTRNRS>
         </INVSTMTMSGSRSV1>
