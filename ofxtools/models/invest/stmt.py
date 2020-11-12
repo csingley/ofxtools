@@ -31,6 +31,7 @@ __all__ = [
 
 from ofxtools.Types import (
     Bool,
+    NagString,
     String,
     Integer,
     OneOf,
@@ -256,7 +257,7 @@ class INV401KSUMMARY(Aggregate):
 class INV401K(Aggregate):
     """ OFX section 13.9.3 """
 
-    employername = String(32, required=True)
+    employername = NagString(32, required=True)
     planid = String(32)
     planjoindate = DateTime()
     employercontactinfo = String(255)
