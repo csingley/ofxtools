@@ -277,6 +277,7 @@ class OFXClient:
         self,
         password: str,
         *requests: RequestParam,
+        gen_newfileuid: bool = True,
         dryrun: bool = False,
         verify_ssl: bool = True,
         timeout: Optional[float] = None,
@@ -331,11 +332,24 @@ class OFXClient:
 
         signon = self.signon(password)
         ofx = OFX(signonmsgsrqv1=signon, **msgs)
-        return self.download(ofx, dryrun=dryrun, verify_ssl=verify_ssl, timeout=timeout)
+
+        if gen_newfileuid:
+            newfileuid = self.uuid
+        else:
+            newfileuid = None
+
+        return self.download(
+            ofx,
+            newfileuid=newfileuid,
+            dryrun=dryrun,
+            verify_ssl=verify_ssl,
+            timeout=timeout,
+        )
 
     def request_profile(
         self,
         version: Optional[int] = None,
+        gen_newfileuid: bool = True,
         prettyprint: Optional[bool] = None,
         close_elements: Optional[bool] = None,
         dryrun: bool = False,
@@ -360,9 +374,15 @@ class OFXClient:
 
         ofx = OFX(signonmsgsrqv1=signon, profmsgsrqv1=PROFMSGSRQV1(proftrnrq))
 
+        if gen_newfileuid:
+            newfileuid = self.uuid
+        else:
+            newfileuid = None
+
         return self.download(
             ofx,
             version=version,
+            newfileuid=newfileuid,
             prettyprint=prettyprint,
             close_elements=close_elements,
             dryrun=dryrun,
@@ -376,6 +396,7 @@ class OFXClient:
         dtacctup: datetime.datetime,
         dryrun: bool = False,
         version: Optional[int] = None,
+        gen_newfileuid: bool = True,
         verify_ssl: bool = True,
         timeout: Optional[float] = None,
     ) -> BinaryIO:
@@ -392,7 +413,19 @@ class OFXClient:
         logger.debug(f"Wrapped account info request messages: {msgs}")
 
         ofx = OFX(signonmsgsrqv1=signon, signupmsgsrqv1=msgs)
-        return self.download(ofx, dryrun=dryrun, verify_ssl=verify_ssl, timeout=timeout)
+
+        if gen_newfileuid:
+            newfileuid = self.uuid
+        else:
+            newfileuid = None
+
+        return self.download(
+            ofx,
+            newfileuid=newfileuid,
+            dryrun=dryrun,
+            verify_ssl=verify_ssl,
+            timeout=timeout,
+        )
 
     def request_tax1099(
         self,
@@ -400,6 +433,7 @@ class OFXClient:
         *taxyears: str,
         acctnum: str = None,
         recid: str = None,
+        gen_newfileuid: bool = True,
         dryrun: bool = False,
         verify_ssl: bool = True,
         timeout: Optional[float] = None,
@@ -416,7 +450,19 @@ class OFXClient:
         logger.debug(f"Wrapped tax 1099 request messages: {msgs}")
 
         ofx = OFX(signonmsgsrqv1=signon, tax1099msgsrqv1=msgs)
-        return self.download(ofx, dryrun=dryrun, verify_ssl=verify_ssl, timeout=timeout)
+
+        if gen_newfileuid:
+            newfileuid = self.uuid
+        else:
+            newfileuid = None
+
+        return self.download(
+            ofx,
+            newfileuid=newfileuid,
+            dryrun=dryrun,
+            verify_ssl=verify_ssl,
+            timeout=timeout,
+        )
 
     def signon(
         self,
@@ -543,6 +589,8 @@ class OFXClient:
         self,
         ofx: OFX,
         version: Optional[int] = None,
+        oldfileuid: Optional[str] = None,
+        newfileuid: Optional[str] = None,
         prettyprint: Optional[bool] = None,
         close_elements: Optional[bool] = None,
         dryrun: bool = False,
@@ -559,6 +607,8 @@ class OFXClient:
 
         Optional kwargs:
             ``version`` - OFX version to report in header
+            ``oldfileuid`` - OLDFILEUID to report in header
+            ``newfileuid`` - NEWFILEUID to report in header
             ``prettyprint`` - add newlines between tags and indentation
             ``close_elements`` - add markup closing tags to leaf elements
             ``dryrun`` - dump serialized request to stdout instead of POSTing
@@ -566,7 +616,12 @@ class OFXClient:
             ``timeout`` - HTTP connection timeout (in seconds)
         """
         request = self.serialize(
-            ofx, version=version, prettyprint=prettyprint, close_elements=close_elements
+            ofx,
+            version=version,
+            oldfileuid=oldfileuid,
+            newfileuid=newfileuid,
+            prettyprint=prettyprint,
+            close_elements=close_elements,
         )
         logger.debug(f"Finished request: {request.decode()}")
 
@@ -594,6 +649,8 @@ class OFXClient:
         self,
         ofx: OFX,
         version: Optional[int] = None,
+        oldfileuid: Optional[str] = None,
+        newfileuid: Optional[str] = None,
         prettyprint: Optional[bool] = None,
         close_elements: Optional[bool] = None,
     ) -> bytes:
@@ -608,6 +665,8 @@ class OFXClient:
 
         Optional kwargs:
             ``version`` - OFX version to report in header
+            ``oldfileuid`` - OLDFILEUID to report in header
+            ``newfileuid`` - NEWFILEUID to report in header
             ``prettyprint`` - add newlines between tags and indentation
             ``close_elements`` - add markup closing tags to leaf elements
         """
@@ -617,7 +676,14 @@ class OFXClient:
             prettyprint = self.prettyprint
         if close_elements is None:
             close_elements = self.close_elements
-        header = bytes(str(make_header(version=version, newfileuid=self.uuid)), "utf_8")
+        header = bytes(
+            str(
+                make_header(
+                    version=version, oldfileuid=oldfileuid, newfileuid=newfileuid
+                )
+            ),
+            "utf_8",
+        )
 
         tree = ofx.to_etree()
         if prettyprint:

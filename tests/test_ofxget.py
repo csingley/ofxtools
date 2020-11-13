@@ -1049,7 +1049,12 @@ class ScanProfileTestCase(unittest.TestCase):
             (203, True, True),
         ]
         if (version, prettyprint, close_elements) in accept:
-            ofx = self.client.serialize(self.ofx, version, prettyprint, close_elements)
+            ofx = self.client.serialize(
+                ofx=self.ofx,
+                version=version,
+                prettyprint=prettyprint,
+                close_elements=close_elements,
+            )
             return BytesIO(ofx)
         else:
             error = errors[self.errcount % len(errors)]
