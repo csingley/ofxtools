@@ -222,6 +222,12 @@ def add_subparser(
             default=None,
             help="Skip SSL certificate verification",
         )
+        parser.add_argument(
+            "--nonewfileuid",
+            action="store_true",
+            default=None,
+            help="Use 'NONE' instead of generating a UID for NEWFILEUID in header",
+        )
 
     if format:
         parser.add_argument(
@@ -554,7 +560,9 @@ def request_profile(args: ArgsType) -> None:
     client = init_client(args)
 
     with client.request_profile(
-        dryrun=args["dryrun"], verify_ssl=not args["unsafe"]
+        dryrun=args["dryrun"],
+        verify_ssl=not args["unsafe"],
+        gen_newfileuid=not args["nonewfileuid"],
     ) as f:
         response = f.read()
 
@@ -593,7 +601,11 @@ def _request_acctinfo(args: ArgsType, password: str) -> BytesIO:
     dtacctup = args["dtacctup"] or datetime.datetime(1990, 12, 31, tzinfo=utils.UTC)
 
     with client.request_accounts(
-        password, dtacctup, dryrun=args["dryrun"], verify_ssl=not args["unsafe"]
+        password,
+        dtacctup,
+        dryrun=args["dryrun"],
+        verify_ssl=not args["unsafe"],
+        gen_newfileuid=not args["nonewfileuid"],
     ) as f:
         response = f.read()
 
@@ -688,7 +700,11 @@ def request_stmt(args: ArgsType) -> None:
 
     client = init_client(args)
     with client.request_statements(
-        password, *stmtrqs, dryrun=args["dryrun"], verify_ssl=not args["unsafe"]
+        password,
+        *stmtrqs,
+        dryrun=args["dryrun"],
+        verify_ssl=not args["unsafe"],
+        gen_newfileuid=not args["nonewfileuid"],
     ) as f:
         response = f.read()
 
@@ -739,7 +755,11 @@ def request_stmtend(args: ArgsType) -> None:
 
     client = init_client(args)
     with client.request_statements(
-        password, *stmtendrqs, dryrun=args["dryrun"], verify_ssl=not args["unsafe"]
+        password,
+        *stmtendrqs,
+        dryrun=args["dryrun"],
+        verify_ssl=not args["unsafe"],
+        gen_newfileuid=not args["nonewfileuid"],
     ) as f:
         response = f.read()
 
@@ -767,6 +787,7 @@ def request_tax1099(args: ArgsType) -> None:
         recid=args["recid"],
         dryrun=args["dryrun"],
         verify_ssl=not args["unsafe"],
+        gen_newfileuid=not args["nonewfileuid"],
     ) as f:
         response = f.read()
 
@@ -843,6 +864,7 @@ DEFAULTS: Dict[str, ArgType] = {
     "write": False,
     "savepass": False,
     "nokeyring": False,
+    "nonewfileuid": False,
 }
 
 
@@ -869,6 +891,7 @@ configurable_srvr = (
     "appid",
     "appver",
     "language",
+    "nonewfileuid",
 )
 CONFIGURABLE_SRVR = {k: type(v) for k, v in DEFAULTS.items() if k in configurable_srvr}
 

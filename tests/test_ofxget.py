@@ -85,6 +85,7 @@ class MakeArgParserTestCase(unittest.TestCase):
             "all": False,
             "write": False,
             "savepass": False,
+            "nonewfileuid": False,
         }
 
     def testScanProfile(self):
@@ -245,6 +246,7 @@ class MakeArgParserTestCase(unittest.TestCase):
                     {
                         "dryrun": self.args["dryrun"],
                         "verify_ssl": not self.args["unsafe"],
+                        "gen_newfileuid": not self.args["nonewfileuid"],
                     },
                 )
 
@@ -301,7 +303,11 @@ class MakeArgParserTestCase(unittest.TestCase):
 
             self.assertEqual(
                 kwargs,
-                {"dryrun": self.args["dryrun"], "verify_ssl": not self.args["unsafe"]},
+                {
+                    "dryrun": self.args["dryrun"],
+                    "verify_ssl": not self.args["unsafe"],
+                    "gen_newfileuid": not self.args["nonewfileuid"],
+                },
             )
 
     def test_RequestAcctinfoOverrideDtacctup(self):
@@ -324,7 +330,11 @@ class MakeArgParserTestCase(unittest.TestCase):
 
             self.assertEqual(
                 kwargs,
-                {"dryrun": self.args["dryrun"], "verify_ssl": not self.args["unsafe"]},
+                {
+                    "dryrun": self.args["dryrun"],
+                    "verify_ssl": not self.args["unsafe"],
+                    "gen_newfileuid": not self.args["nonewfileuid"],
+                },
             )
 
     def testMergeAcctinfo(self):
@@ -456,7 +466,14 @@ class MakeArgParserTestCase(unittest.TestCase):
                             ),
                         ],
                     )
-                    self.assertEqual(kwargs, {"dryrun": False, "verify_ssl": True})
+                    self.assertEqual(
+                        kwargs,
+                        {
+                            "dryrun": False,
+                            "verify_ssl": True,
+                            "gen_newfileuid": True,
+                        },
+                    )
 
                     args, kwargs = mock_print.call_args
                     self.assertEqual(len(args), 1)
@@ -567,7 +584,14 @@ class MakeArgParserTestCase(unittest.TestCase):
                         ),
                     ],
                 )
-                self.assertEqual(kwargs, {"dryrun": True, "verify_ssl": True})
+                self.assertEqual(
+                    kwargs,
+                    {
+                        "dryrun": True,
+                        "verify_ssl": True,
+                        "gen_newfileuid": True,
+                    },
+                )
 
                 args, kwargs = mock_print.call_args
                 self.assertEqual(len(args), 1)
@@ -680,7 +704,14 @@ class MakeArgParserTestCase(unittest.TestCase):
                             ),
                         ],
                     )
-                    self.assertEqual(kwargs, {"dryrun": False, "verify_ssl": True})
+                    self.assertEqual(
+                        kwargs,
+                        {
+                            "dryrun": False,
+                            "verify_ssl": True,
+                            "gen_newfileuid": True,
+                        },
+                    )
 
                     args, kwargs = mock_print.call_args
                     self.assertEqual(len(args), 1)
@@ -718,6 +749,7 @@ class MakeArgParserTestCase(unittest.TestCase):
                             "recid": "67890",
                             "dryrun": False,
                             "verify_ssl": True,
+                            "gen_newfileuid": True,
                         },
                     )
 
