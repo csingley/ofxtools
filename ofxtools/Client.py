@@ -182,6 +182,7 @@ class OFXClient:
     appid: str = "QWIN"
     appver: str = "2700"
     language: str = "ENG"
+    useragent: str = ""
 
     # Formatting defaults
     prettyprint: bool = False
@@ -218,6 +219,7 @@ class OFXClient:
         close_elements: Optional[bool] = None,
         bankid: Optional[str] = None,
         brokerid: Optional[str] = None,
+        useragent: Optional[str] = None,
     ):
 
         self.url = url
@@ -235,6 +237,7 @@ class OFXClient:
             "close_elements",
             "bankid",
             "brokerid",
+            "useragent",
         ]:
             value = locals()[attr]
             if value is not None:
@@ -261,7 +264,7 @@ class OFXClient:
         # identify themselves in the ``User-Agent`` header,
         # which apparently displeases some FIs
         return {
-            "User-Agent": "",
+            "User-Agent": self.useragent,
             "Content-type": mimetype,
             "Accept": "*/*, {}".format(mimetype),
         }

@@ -222,6 +222,11 @@ def add_subparser(
             default=None,
             help="Skip SSL certificate verification",
         )
+        parser.add_argument(
+            "--useragent",
+            dest="useragent",
+            help="Value to use in HTTP 'User-Agent' header (defaults to empty string)",
+        )
 
     if format:
         parser.add_argument(
@@ -548,6 +553,7 @@ def init_client(args: ArgsType) -> OFXClient:
         close_elements=not args["unclosedelements"],
         bankid=args["bankid"] or None,
         brokerid=args["brokerid"] or None,
+        useragent=args["useragent"] or None,
     )
     logger.debug(f"Initialized {client}")
     return client
@@ -865,6 +871,7 @@ DEFAULTS: Dict[str, ArgType] = {
     "savepass": False,
     "nokeyring": False,
     "nonewfileuid": False,
+    "useragent": "",
 }
 
 
@@ -892,6 +899,7 @@ configurable_srvr = (
     "appver",
     "language",
     "nonewfileuid",
+    "useragent",
 )
 CONFIGURABLE_SRVR = {k: type(v) for k, v in DEFAULTS.items() if k in configurable_srvr}
 
