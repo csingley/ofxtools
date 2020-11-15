@@ -222,12 +222,6 @@ def add_subparser(
             default=None,
             help="Skip SSL certificate verification",
         )
-        parser.add_argument(
-            "--nonewfileuid",
-            action="store_true",
-            default=None,
-            help="Use 'NONE' instead of generating a UID for NEWFILEUID in header",
-        )
 
     if format:
         parser.add_argument(
@@ -285,6 +279,12 @@ def add_format_group(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup
         action="store_true",
         default=None,
         help="Insert newlines and whitespace indentation",
+    )
+    group.add_argument(
+        "--nonewfileuid",
+        action="store_true",
+        default=None,
+        help="Use 'NONE' instead of generating a UID for NEWFILEUID in header",
     )
 
     return group
