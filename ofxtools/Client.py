@@ -266,7 +266,9 @@ class OFXClient:
         return {
             "User-Agent": self.useragent,
             "Content-type": mimetype,
-            "Accept": "*/*, {}".format(mimetype),
+            # Apparently Amex is unhappy unless it sees a MIME type of application/xml
+            # with some quality rating - ANY quality rating, it seems.
+            "Accept": "*/*, {}, application/xml;q=0.9".format(mimetype),
         }
 
     def dtclient(self) -> datetime.datetime:
