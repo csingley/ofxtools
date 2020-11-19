@@ -58,7 +58,7 @@ from io import BytesIO
 import itertools
 from operator import attrgetter, itemgetter
 from functools import singledispatch
-from typing import Dict, Union, Optional, Tuple, Iterator, NamedTuple, BinaryIO, Type
+from typing import Dict, Union, Optional, Tuple, Iterator, NamedTuple, BinaryIO, Type, Callable
 
 
 # local imports
@@ -192,6 +192,9 @@ class OFXClient:
     bankid: Optional[str] = None
     brokerid: Optional[str] = None
 
+    # URL opener
+    url_opener: Optional[Callable] = urllib_request.urlopen
+
     def __repr__(self) -> str:
         r = (
             "{cls}(url={url!r}, userid={userid!r}, clientuid={clientuid!r}, "
@@ -220,6 +223,7 @@ class OFXClient:
         bankid: Optional[str] = None,
         brokerid: Optional[str] = None,
         useragent: Optional[str] = None,
+        url_opener: Optional[Callable] = None,
     ):
 
         self.url = url
@@ -238,6 +242,7 @@ class OFXClient:
             "bankid",
             "brokerid",
             "useragent",
+            "url_opener",
         ]:
             value = locals()[attr]
             if value is not None:
@@ -636,18 +641,24 @@ class OFXClient:
         req = urllib_request.Request(
             self.url, method="POST", data=request, headers=self.http_headers
         )
-        # By default, verify SSL certificate signatures
-        # Cf. PEP 476
-        # TESTME
-        if verify_ssl is False:
-            logger.warning("Skipping SSL certificate verification")
-            ssl_context = ssl._create_unverified_context()
-        else:
-            ssl_context = ssl.create_default_context()
 
         if timeout is None:
             timeout = socket._GLOBAL_DEFAULT_TIMEOUT  # type: ignore
-        response = urllib_request.urlopen(req, timeout=timeout, context=ssl_context)
+
+        kwargs = dict(timeout=timeout)
+
+        if not verify_ssl:
+            if self.url_opener != urllib_request.urlopen:
+                raise Exception("Can only skip ssl verification when using default urlopener!")
+
+            # By default, verify SSL certificate signatures
+            # Cf. PEP 476
+            # TESTME
+            if verify_ssl is False:
+                logger.warning("Skipping SSL certificate verification")
+                kwargs['context'] = ssl._create_unverified_context()
+
+        response = self.url_opener(req, **kwargs)
         return BytesIO(response.read())
 
     def serialize(
