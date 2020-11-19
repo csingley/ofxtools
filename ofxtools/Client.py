@@ -49,6 +49,7 @@ __all__ = [
 # stdlib imports
 import logging
 import datetime
+import http.cookiejar
 import uuid
 import xml.etree.ElementTree as ET
 import ssl
@@ -233,7 +234,7 @@ class OFXClient:
         bankid: Optional[str] = None,
         brokerid: Optional[str] = None,
         useragent: Optional[str] = None,
-        url_opener: Optional[Callable] = None,
+        persist_cookies: bool = False,
     ):
 
         self.url = url
@@ -252,7 +253,6 @@ class OFXClient:
             "bankid",
             "brokerid",
             "useragent",
-            "url_opener",
         ]:
             value = locals()[attr]
             if value is not None:
@@ -260,6 +260,11 @@ class OFXClient:
 
         if (not self.close_elements) and self.version >= 200:
             raise ValueError(f"OFX version {self.version} must close all tags")
+
+        if persist_cookies:
+            cj = http.cookiejar.CookieJar()
+            opener = urllib_request.build_opener(urllib_request.HTTPCookieProcessor(cj))
+            self.url_opener = opener.open
 
     @classproperty
     @classmethod
@@ -659,6 +664,9 @@ class OFXClient:
 
         url_opener = self.url_opener
         if url_opener is None:
+            # NB: we resolve the default url opener here instead
+            #     instead of in __init__ because the tests
+            #     mock urlopen after instantiating the OFXClient object
             url_opener = urllib_request.urlopen
 
             # By default, verify SSL certificate signatures
