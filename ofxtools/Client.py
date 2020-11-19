@@ -286,6 +286,7 @@ class OFXClient:
         dryrun: bool = False,
         verify_ssl: bool = True,
         timeout: Optional[float] = None,
+        prettyprint: Optional[bool] = None,
     ) -> BinaryIO:
         """
         Package and send OFX statement requests
@@ -346,6 +347,7 @@ class OFXClient:
         return self.download(
             ofx,
             newfileuid=newfileuid,
+            prettyprint=prettyprint,
             dryrun=dryrun,
             verify_ssl=verify_ssl,
             timeout=timeout,
