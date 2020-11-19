@@ -203,7 +203,7 @@ class OFXClient:
     brokerid: Optional[str] = None
 
     # URL opener
-    url_opener: Callable = urllib_request.urlopen
+    url_opener: Optional[Callable] = None
 
     def __repr__(self) -> str:
         r = (
@@ -661,7 +661,7 @@ class OFXClient:
         # Cf. PEP 476
         # TESTME
         if verify_ssl is False:
-            if self.url_opener != urllib_request.urlopen:
+            if self.url_opener is not None:
                 raise Exception(
                     "Can only skip ssl verification when using default urlopener!"
                 )
@@ -669,7 +669,11 @@ class OFXClient:
             logger.warning("Skipping SSL certificate verification")
             kwargs["context"] = ssl._create_unverified_context()
 
-        response = self.url_opener(req, **kwargs)
+        url_opener = self.url_opener
+        if url_opener is None:
+            url_opener = urllib_request.urlopen
+
+        response = url_opener(req, **kwargs)
         return BytesIO(response.read())
 
     def serialize(
