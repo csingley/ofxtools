@@ -58,7 +58,17 @@ from io import BytesIO
 import itertools
 from operator import attrgetter, itemgetter
 from functools import singledispatch
-from typing import Dict, Union, Optional, Tuple, Iterator, NamedTuple, BinaryIO, Type, Callable
+from typing import (
+    Dict,
+    Union,
+    Optional,
+    Tuple,
+    Iterator,
+    NamedTuple,
+    BinaryIO,
+    Type,
+    Callable,
+)
 
 
 # local imports
@@ -652,10 +662,12 @@ class OFXClient:
         # TESTME
         if verify_ssl is False:
             if self.url_opener != urllib_request.urlopen:
-                raise Exception("Can only skip ssl verification when using default urlopener!")
+                raise Exception(
+                    "Can only skip ssl verification when using default urlopener!"
+                )
 
             logger.warning("Skipping SSL certificate verification")
-            kwargs['context'] = ssl._create_unverified_context()
+            kwargs["context"] = ssl._create_unverified_context()
 
         response = self.url_opener(req, **kwargs)
         return BytesIO(response.read())
