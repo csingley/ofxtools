@@ -193,7 +193,7 @@ class OFXClient:
     brokerid: Optional[str] = None
 
     # URL opener
-    url_opener: Optional[Callable] = urllib_request.urlopen
+    url_opener: Callable = urllib_request.urlopen
 
     def __repr__(self) -> str:
         r = (
