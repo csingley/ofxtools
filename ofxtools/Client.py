@@ -360,6 +360,7 @@ class OFXClient:
         dryrun: bool = False,
         verify_ssl: bool = True,
         timeout: Optional[float] = None,
+        url: Optional[str] = None,
     ) -> BinaryIO:
         """
         Package and send OFX profile requests (PROFRQ).
@@ -393,6 +394,7 @@ class OFXClient:
             dryrun=dryrun,
             verify_ssl=verify_ssl,
             timeout=timeout,
+            url=url,
         )
 
     def request_accounts(
@@ -601,6 +603,7 @@ class OFXClient:
         dryrun: bool = False,
         verify_ssl: bool = True,
         timeout: Optional[float] = None,
+        url: Optional[str] = None,
     ) -> BytesIO:
         """
         Package complete OFX tree and POST to server.
@@ -633,8 +636,11 @@ class OFXClient:
         if dryrun:
             return BytesIO(request)
 
+        if url is None:
+            url = self.url
+
         req = urllib_request.Request(
-            self.url, method="POST", data=request, headers=self.http_headers
+            url, method="POST", data=request, headers=self.http_headers
         )
         # By default, verify SSL certificate signatures
         # Cf. PEP 476
