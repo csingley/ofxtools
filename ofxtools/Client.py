@@ -647,13 +647,13 @@ class OFXClient:
 
         kwargs = dict(timeout=timeout)
 
+        # By default, verify SSL certificate signatures
+        # Cf. PEP 476
+        # TESTME
         if verify_ssl is False:
             if self.url_opener != urllib_request.urlopen:
                 raise Exception("Can only skip ssl verification when using default urlopener!")
 
-            # By default, verify SSL certificate signatures
-            # Cf. PEP 476
-            # TESTME
             logger.warning("Skipping SSL certificate verification")
             kwargs['context'] = ssl._create_unverified_context()
 
