@@ -246,7 +246,6 @@ class MakeArgParserTestCase(unittest.TestCase):
                     kwargs,
                     {
                         "dryrun": self.args["dryrun"],
-                        "verify_ssl": not self.args["unsafe"],
                         "gen_newfileuid": not self.args["nonewfileuid"],
                     },
                 )
@@ -306,7 +305,6 @@ class MakeArgParserTestCase(unittest.TestCase):
                 kwargs,
                 {
                     "dryrun": self.args["dryrun"],
-                    "verify_ssl": not self.args["unsafe"],
                     "gen_newfileuid": not self.args["nonewfileuid"],
                 },
             )
@@ -333,7 +331,6 @@ class MakeArgParserTestCase(unittest.TestCase):
                 kwargs,
                 {
                     "dryrun": self.args["dryrun"],
-                    "verify_ssl": not self.args["unsafe"],
                     "gen_newfileuid": not self.args["nonewfileuid"],
                 },
             )
@@ -471,7 +468,6 @@ class MakeArgParserTestCase(unittest.TestCase):
                         kwargs,
                         {
                             "dryrun": False,
-                            "verify_ssl": True,
                             "gen_newfileuid": True,
                         },
                     )
@@ -589,7 +585,6 @@ class MakeArgParserTestCase(unittest.TestCase):
                     kwargs,
                     {
                         "dryrun": True,
-                        "verify_ssl": True,
                         "gen_newfileuid": True,
                     },
                 )
@@ -709,7 +704,6 @@ class MakeArgParserTestCase(unittest.TestCase):
                         kwargs,
                         {
                             "dryrun": False,
-                            "verify_ssl": True,
                             "gen_newfileuid": True,
                         },
                     )
@@ -749,7 +743,6 @@ class MakeArgParserTestCase(unittest.TestCase):
                             "acctnum": "12345",
                             "recid": "67890",
                             "dryrun": False,
-                            "verify_ssl": True,
                             "gen_newfileuid": True,
                         },
                     )

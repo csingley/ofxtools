@@ -52,7 +52,6 @@ import datetime
 import http.cookiejar
 import uuid
 import xml.etree.ElementTree as ET
-import ssl
 import urllib.request as urllib_request
 import socket
 from io import BytesIO
@@ -234,7 +233,7 @@ class OFXClient:
         bankid: Optional[str] = None,
         brokerid: Optional[str] = None,
         useragent: Optional[str] = None,
-        persist_cookies: bool = False,
+        persist_cookies: bool = True,
     ):
 
         self.url = url
@@ -304,7 +303,6 @@ class OFXClient:
         *requests: RequestParam,
         gen_newfileuid: bool = True,
         dryrun: bool = False,
-        verify_ssl: bool = True,
         timeout: Optional[float] = None,
     ) -> BinaryIO:
         """
@@ -367,7 +365,6 @@ class OFXClient:
             ofx,
             newfileuid=newfileuid,
             dryrun=dryrun,
-            verify_ssl=verify_ssl,
             timeout=timeout,
         )
 
@@ -378,7 +375,6 @@ class OFXClient:
         prettyprint: Optional[bool] = None,
         close_elements: Optional[bool] = None,
         dryrun: bool = False,
-        verify_ssl: bool = True,
         timeout: Optional[float] = None,
         url: Optional[str] = None,
     ) -> BinaryIO:
@@ -412,7 +408,6 @@ class OFXClient:
             prettyprint=prettyprint,
             close_elements=close_elements,
             dryrun=dryrun,
-            verify_ssl=verify_ssl,
             timeout=timeout,
             url=url,
         )
@@ -424,7 +419,6 @@ class OFXClient:
         dryrun: bool = False,
         version: Optional[int] = None,
         gen_newfileuid: bool = True,
-        verify_ssl: bool = True,
         timeout: Optional[float] = None,
     ) -> BinaryIO:
         """
@@ -450,7 +444,6 @@ class OFXClient:
             ofx,
             newfileuid=newfileuid,
             dryrun=dryrun,
-            verify_ssl=verify_ssl,
             timeout=timeout,
         )
 
@@ -462,7 +455,6 @@ class OFXClient:
         recid: str = None,
         gen_newfileuid: bool = True,
         dryrun: bool = False,
-        verify_ssl: bool = True,
         timeout: Optional[float] = None,
     ) -> BinaryIO:
         """
@@ -487,7 +479,6 @@ class OFXClient:
             ofx,
             newfileuid=newfileuid,
             dryrun=dryrun,
-            verify_ssl=verify_ssl,
             timeout=timeout,
         )
 
@@ -621,7 +612,6 @@ class OFXClient:
         prettyprint: Optional[bool] = None,
         close_elements: Optional[bool] = None,
         dryrun: bool = False,
-        verify_ssl: bool = True,
         timeout: Optional[float] = None,
         url: Optional[str] = None,
     ) -> BytesIO:
@@ -640,7 +630,6 @@ class OFXClient:
             ``prettyprint`` - add newlines between tags and indentation
             ``close_elements`` - add markup closing tags to leaf elements
             ``dryrun`` - dump serialized request to stdout instead of POSTing
-            ``verify_ssl`` - perform SSL certificate check
             ``timeout`` - HTTP connection timeout (in seconds)
         """
         request = self.serialize(
@@ -674,20 +663,6 @@ class OFXClient:
             #     instead of in __init__ because the tests
             #     mock urlopen after instantiating the OFXClient object
             url_opener = urllib_request.urlopen
-
-            # By default, verify SSL certificate signatures
-            # Cf. PEP 476
-            # TESTME
-            if verify_ssl is False:
-                logger.warning("Skipping SSL certificate verification")
-                kwargs["context"] = ssl._create_unverified_context()
-            else:
-                kwargs["context"] = ssl.create_default_context()
-        else:
-            if verify_ssl is False:
-                raise Exception(
-                    "Can only skip ssl verification when using default urlopener!"
-                )
 
         response = url_opener(req, **kwargs)
         return BytesIO(response.read())

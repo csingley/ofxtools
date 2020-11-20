@@ -39,6 +39,7 @@ class OFXClientV1TestCase(unittest.TestCase):
             version=103,
             bankid="123456789",
             brokerid="example.com",
+            persist_cookies=False,  # TESTME - need to test `persist_cookies`=True
         )
 
     @property
@@ -201,12 +202,17 @@ class OFXClientV1TestCase(unittest.TestCase):
                     # Mock out DTCLIENT/CLIENTUID to get static values, not dynamic
                     mock_dtclient.return_value = datetime(2017, 4, 1, tzinfo=UTC)
                     mock_uuid.return_value = "DEADBEEF"
-                    # Mock out urllib.request's Request & urlopen that get called by
+                    # Mock out urllib.request's Request that gets called by
                     # OFXClient.download()
                     mock_Request = mock_urllib["Request"]
                     mock_Request.return_value = sentinel.REQUEST
+                    # Mock out the url_opener that gets called by
+                    # OFXClient.download() for the case of `persist_cookies=False`
                     mock_urlopen = mock_urllib["urlopen"]
                     mock_urlopen.return_value = BytesIO(b"Some OFX Response")
+                    # Mock out the url_opener that gets called by
+                    # OFXClient.download() for the case of `persist_cookies=True`
+                    # FIXME
 
                     # With the necessary mocks in place, call the function with
                     # the given arguments.
@@ -224,11 +230,10 @@ class OFXClientV1TestCase(unittest.TestCase):
                     self.assertEqual(rq_kwargs["headers"], self.client.http_headers)
 
                     # OFXClient.download() calls urlopen() with these args:
-                    #  req, timeout=timeout, context=ssl_context
+                    #  req, timeout=timeout
                     mock_urlopen.assert_called_once_with(
                         sentinel.REQUEST,
                         timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
-                        context=ANY,
                     )
 
                     # The tested function should return the output of download(),
@@ -469,6 +474,7 @@ class OFXClientV1TestCase(unittest.TestCase):
             prettyprint=True,
             bankid="123456789",
             brokerid="example.com",
+            persist_cookies=False,
         )
         data = self._testRequest(client.request_statements, "t0ps3kr1t", self.stmtRq0)
 
@@ -530,6 +536,7 @@ class OFXClientV1TestCase(unittest.TestCase):
             close_elements=False,
             bankid="123456789",
             brokerid="example.com",
+            persist_cookies=False,
         )
         data = self._testRequest(client.request_statements, "t0ps3kr1t", self.stmtRq0)
 
@@ -731,6 +738,7 @@ class OFXClientV1TestCase(unittest.TestCase):
             version=103,
             bankid="123456789",
             brokerid="example.com",
+            persist_cookies=False,
         )
         data = self._testRequest(client.request_profile)
 

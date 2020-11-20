@@ -217,12 +217,6 @@ def add_subparser(
             help="Write working parameters to config file",
         )
         parser.add_argument(
-            "--unsafe",
-            action="store_true",
-            default=None,
-            help="Skip SSL certificate verification",
-        )
-        parser.add_argument(
             "--useragent",
             dest="useragent",
             help="Value to use in HTTP 'User-Agent' header (defaults to empty string)",
@@ -567,7 +561,6 @@ def request_profile(args: ArgsType) -> None:
 
     with client.request_profile(
         dryrun=args["dryrun"],
-        verify_ssl=not args["unsafe"],
         gen_newfileuid=not args["nonewfileuid"],
     ) as f:
         response = f.read()
@@ -610,7 +603,6 @@ def _request_acctinfo(args: ArgsType, password: str) -> BytesIO:
         password,
         dtacctup,
         dryrun=args["dryrun"],
-        verify_ssl=not args["unsafe"],
         gen_newfileuid=not args["nonewfileuid"],
     ) as f:
         response = f.read()
@@ -709,7 +701,6 @@ def request_stmt(args: ArgsType) -> None:
         password,
         *stmtrqs,
         dryrun=args["dryrun"],
-        verify_ssl=not args["unsafe"],
         gen_newfileuid=not args["nonewfileuid"],
     ) as f:
         response = f.read()
@@ -764,7 +755,6 @@ def request_stmtend(args: ArgsType) -> None:
         password,
         *stmtendrqs,
         dryrun=args["dryrun"],
-        verify_ssl=not args["unsafe"],
         gen_newfileuid=not args["nonewfileuid"],
     ) as f:
         response = f.read()
@@ -792,7 +782,6 @@ def request_tax1099(args: ArgsType) -> None:
         acctnum=args["acctnum"],
         recid=args["recid"],
         dryrun=args["dryrun"],
-        verify_ssl=not args["unsafe"],
         gen_newfileuid=not args["nonewfileuid"],
     ) as f:
         response = f.read()
