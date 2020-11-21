@@ -35,10 +35,12 @@ if system.startswith("win"):  # Windows
         CONFIGHOME = HOME / "AppData" / "Roaming"
 
     LOGDIR = CONFIGHOME / PKGNAME / "Logs"
+    DATAHOME = CONFIGHOME
 
 elif system.startswith("darwin"):  # Mac
     CONFIGHOME = HOME / "Library" / "Preferences"
     LOGDIR = HOME / "Library" / "Logs"
+    DATAHOME = HOME / "Library" / "Application Support"
 
 else:  # Linux
     if "XDG_CONFIG_HOME" in environ:
@@ -53,6 +55,11 @@ else:  # Linux
 
     LOGDIR = LOGHOME / PKGNAME / "log"
 
+    if "XDG_DATA_HOME" in environ:
+        DATAHOME = Path(environ["XDG_DATA_HOME"]).expanduser().resolve()
+    else:
+        DATAHOME = HOME / ".local" / "share"
+
 
 USERCONFIGDIR = CONFIGHOME / PKGNAME
 USERCONFIGDIR.mkdir(parents=True, exist_ok=True)
@@ -60,6 +67,9 @@ USERCONFIGDIR.mkdir(parents=True, exist_ok=True)
 # Logging configuration
 LOGCONFIGPATH = USERCONFIGDIR / "logging.json"
 LOGPATH = LOGDIR / "ofxtools.log"
+
+DATADIR = DATAHOME / PKGNAME
+DATADIR.mkdir(parents=True, exist_ok=True)
 
 
 def configure_logging(level=None):

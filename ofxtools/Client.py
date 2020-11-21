@@ -75,7 +75,7 @@ from typing import (
 from ofxtools.header import make_header
 from ofxtools.models.ofx import OFX
 from ofxtools.models import ACCTINFORQ, ACCTINFOTRNRQ
-from ofxtools.models.profile import PROFRQ, PROFTRNRQ, PROFMSGSRQV1
+from ofxtools.models.profile import PROFRQ, PROFTRNRQ, PROFMSGSRQV1, PROFMSGSET
 from ofxtools.models.signon import SONRQ, FI, SIGNONMSGSRQV1
 from ofxtools.models.signup import SIGNUPMSGSRQV1
 from ofxtools.models.bank import (
@@ -92,6 +92,10 @@ from ofxtools.models.bank import (
     CCSTMTENDTRNRQ,
     BANKMSGSRQV1,
     CREDITCARDMSGSRQV1,
+    BANKMSGSET,
+    CREDITCARDMSGSET,
+    INTERXFERMSGSET,
+    WIREXFERMSGSET,
 )
 from ofxtools.models.invest import (
     INVSTMTTRNRQ,
@@ -99,10 +103,18 @@ from ofxtools.models.invest import (
     INVACCTFROM,
     INCPOS,
     INVSTMTMSGSRQV1,
+    INVSTMTMSGSET,
+    SECLISTMSGSET,
 )
+from ofxtools.models.signon import SIGNONMSGSET
+from ofxtools.models.signup import SIGNUPMSGSET
+from ofxtools.models.billpay.msgsets import BILLPAYMSGSET
+from ofxtools.models.email import EMAILMSGSET
+from ofxtools.models.tax1099 import TAX1099MSGSET
 from ofxtools.models.tax1099 import TAX1099RQ, TAX1099TRNRQ, TAX1099MSGSRQV1
 from ofxtools.utils import classproperty, UTC
-from ofxtools import utils
+from ofxtools import utils, config
+from ofxtools.Parser import OFXTree
 
 
 AUTH_PLACEHOLDER = "{:0<32}".format("anonymous")
@@ -176,6 +188,20 @@ class CcStmtEndRq(NamedTuple):
 RequestParam = Union[StmtRq, CcStmtRq, InvStmtRq, StmtEndRq, CcStmtEndRq]
 Request = Union[STMTRQ, CCSTMTRQ, INVSTMTRQ, STMTENDRQ, CCSTMTENDRQ]
 Message = Union[BANKMSGSRQV1, CREDITCARDMSGSRQV1, INVSTMTMSGSRQV1]
+MsgsetClass = Union[
+    Type[SIGNONMSGSET],
+    Type[SIGNUPMSGSET],
+    Type[BANKMSGSET],
+    Type[CREDITCARDMSGSET],
+    Type[INVSTMTMSGSET],
+    Type[INTERXFERMSGSET],
+    Type[WIREXFERMSGSET],
+    Type[BILLPAYMSGSET],
+    Type[EMAILMSGSET],
+    Type[SECLISTMSGSET],
+    Type[PROFMSGSET],
+    Type[TAX1099MSGSET],
+]
 
 
 class OFXClient:
@@ -309,20 +335,28 @@ class OFXClient:
         Package and send OFX statement requests
         (STMTRQ/CCSTMTRQ/INVSTMTRQ/STMTENDRQ/CCSTMTENDRQ).
         """
+        RqCls2url = self._get_service_urls()
+
+        # HACK FIXME
+        # As a simplification, we assume that FIs handle all classes
+        # of statement request from a single URL.
+        urls = set(RqCls2url.values())
+        assert len(urls) == 1
+        url = urls.pop()
+
         logger.info(f"Creating statement requests for {requests}")
         # Group requests by type and pass to the appropriate *TRNRQ handler
         # function (see singledispatch setup below).
         #
-        # *StmtRq/*StmtEndRqs (namedtuples) don't have rich comparison methods;
-        # can't sort by class. As a proxy, we sort by class name, even though
-        # we actually group by request class so we can use it when iterating
-        # over groupby().
-        stmtSortKey = attrgetter("__class__.__name__")
-        stmtGroupKey = attrgetter("__class__")
+        # Classes don't have rich comparison methods, so we can't sort by class.
+        # As a proxy, we sort by class name, even though we actually group by class
+        # so we can use it when iterating over groupby().
+        sortKey = attrgetter("__class__.__name__")
+        groupKey = attrgetter("__class__")
         trnrqs = [
             wrap_stmtrq(cls(), rqs, self)
             for cls, rqs in itertools.groupby(
-                sorted(requests, key=stmtSortKey), key=stmtGroupKey
+                sorted(requests, key=sortKey), key=groupKey
             )
         ]
 
@@ -366,7 +400,48 @@ class OFXClient:
             newfileuid=newfileuid,
             dryrun=dryrun,
             timeout=timeout,
+            url=url,
         )
+
+    def _get_service_urls(self) -> dict:
+        """Query OFX profile endpoint to construct mapping of statement request
+        data container to URL providing that service.
+        """
+        profile = self.request_profile()
+        parser = OFXTree()
+        parser.parse(profile)
+        ofx = parser.convert()
+        proftrnrs = ofx.profmsgsrsv1[0]
+        msgsetlist = proftrnrs.msgsetlist  # proxy access to SubAggregate attributes
+        classmap = {
+            BANKMSGSET: StmtRq,
+            CREDITCARDMSGSET: CcStmtRq,
+            INVSTMTMSGSET: InvStmtRq,
+        }
+        urls = {
+            RqCls: msgset.url  # proxy access to SubAggregate attributes
+            for msgset in msgsetlist
+            if (RqCls := classmap.get(type(msgset), None)) is not None
+        }
+
+        # Also map *STMTENDRQ
+        def map_stmtendrq_urls(
+            msgsetCls: MsgsetClass,
+            stmtendrqCls: Union[Type[StmtEndRq], Type[CcStmtEndRq]],
+        ):
+            try:
+                index = [type(msgset) for msgset in msgsetlist].index(msgsetCls)
+            except ValueError:
+                pass
+            else:
+                msgset = msgsetlist[index]
+                if msgset.closingavail:  # proxy access to SubAggregate attributes
+                    urls[stmtendrqCls] = msgset.url  # proxy access to SubAgg attributes
+
+        map_stmtendrq_urls(BANKMSGSET, StmtEndRq)
+        map_stmtendrq_urls(CREDITCARDMSGSET, CcStmtEndRq)
+
+        return urls
 
     def request_profile(
         self,
@@ -377,15 +452,86 @@ class OFXClient:
         dryrun: bool = False,
         timeout: Optional[float] = None,
         url: Optional[str] = None,
+        persist: bool = True,
     ) -> BinaryIO:
-        """
-        Package and send OFX profile requests (PROFRQ).
+        """Request/cache OFX profiles (PROFRS).
 
         ofxget.scan_profile() overrides version/prettyprint/close_elements.
         """
+        filename = f"{self.org}-{self.fid}.profrs"
+        persistdir = config.DATADIR / "fiprofiles"
+        persistpath = persistdir / filename
+
+        if persistpath.exists():
+            with open(persistpath, "rb") as f:
+                profrs: Optional[BytesIO] = BytesIO(f.read())
+
+            parser = OFXTree()
+            parser.parse(profrs)
+            ofx = parser.convert()
+            proftrnrs = ofx.profmsgsrsv1[0]
+            dtprofup = proftrnrs.profrs.dtprofup
+        else:
+            persistdir.mkdir(parents=True, exist_ok=True)
+            profrs = None
+            dtprofup = None
+
+        response = self._request_profile(
+            dtprofup=dtprofup,
+            version=version,
+            gen_newfileuid=gen_newfileuid,
+            prettyprint=prettyprint,
+            close_elements=close_elements,
+            dryrun=dryrun,
+            timeout=dryrun,
+            url=url,
+        )
+        parser = OFXTree()
+        parser.parse(response)
+        ofx = parser.convert()
+
+        #  If the client has the latest version of the FIs profile, the server returns
+        #  status code 1 in the <STATUS> aggregate of the profile-transaction aggregate
+        #  <PROFTRNRS>. The server does not return a profile- response aggregate <PROFRS>.
+
+        #  If the client does not have the latest version of the FI profile, the server
+        #  responds with the profile-response aggregate <PROFRS> in the profile-transaction
+        #  aggregate <PROFTRNRS>.
+        proftrnrs = ofx.profmsgsrsv1[0]
+        if proftrnrs.status.code == 1:
+            assert profrs is not None
+            response = profrs
+        else:
+            assert proftrnrs.status.code == 0
+            dtprofup_server = proftrnrs.profrs.dtprofup
+            assert dtprofup is None or dtprofup <= dtprofup_server
+
+            # Cache the updated PROFRS sent by the server
+            response.seek(0)
+            with open(persistpath, "wb") as f:
+                f.write(response.read())
+
+        # Rewind PROFRS so it can be returned cleanly after having been parsed.
+        response.seek(0)
+
+        return response
+
+    def _request_profile(
+        self,
+        dtprofup: Optional[datetime.datetime] = None,
+        version: Optional[int] = None,
+        gen_newfileuid: bool = True,
+        prettyprint: Optional[bool] = None,
+        close_elements: Optional[bool] = None,
+        dryrun: bool = False,
+        timeout: Optional[float] = None,
+        url: Optional[str] = None,
+    ) -> BytesIO:
+        """Package and send OFX profile requests (PROFRQ)."""
         logger.info("Creating profile request")
 
-        dtprofup = datetime.datetime(1990, 1, 1, tzinfo=UTC)
+        if dtprofup is None:
+            dtprofup = datetime.datetime(1990, 1, 1, tzinfo=UTC)
         profrq = PROFRQ(clientrouting="NONE", dtprofup=dtprofup)
         proftrnrq = PROFTRNRQ(trnuid=self.uuid, profrq=profrq)
 
@@ -652,7 +798,7 @@ class OFXClient:
             url, method="POST", data=request, headers=self.http_headers
         )
 
-        if timeout is None:
+        if timeout in (None, False):
             timeout = socket._GLOBAL_DEFAULT_TIMEOUT  # type: ignore
 
         kwargs = dict(timeout=timeout)
