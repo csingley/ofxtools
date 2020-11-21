@@ -33,7 +33,7 @@ setup(
     url=ABOUT["__url__"],
     packages=find_packages(),
     package_data={"ofxtools": ["README.rst", "py.typed", "config/*"]},
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     license=ABOUT["__license__"],
     # Note: change 'master' to the tag name when releasing a new verion
     #  download_url="{}/master".format(URL_BASE),
@@ -54,7 +54,7 @@ setup(
         "Natural Language :: English",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
     keywords=["ofx", "Open Financial Exchange"],
 )
