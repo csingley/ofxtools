@@ -486,6 +486,10 @@ class OFXClient:
             timeout=dryrun,
             url=url,
         )
+
+        if dryrun:
+            return response
+
         parser = OFXTree()
         parser.parse(response)
         ofx = parser.convert()
