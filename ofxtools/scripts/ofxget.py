@@ -221,6 +221,12 @@ def add_subparser(
             dest="useragent",
             help="Value to use in HTTP 'User-Agent' header (defaults to empty string)",
         )
+        parser.add_argument(
+            "--skipprofilereq",
+            dest="skipprofilereq",
+            action="store_true",
+            help="Skip making a profile request to determine the appropriate URL for a request. Instead, assume the specified URL is already the correct one.",
+        )
 
     if format:
         parser.add_argument(
@@ -548,6 +554,7 @@ def init_client(args: ArgsType) -> OFXClient:
         bankid=args["bankid"] or None,
         brokerid=args["brokerid"] or None,
         useragent=args["useragent"] or None,
+        skip_profile_req=args["skipprofilereq"],
     )
     logger.debug(f"Initialized {client}")
     return client
@@ -861,6 +868,7 @@ DEFAULTS: Dict[str, ArgType] = {
     "nokeyring": False,
     "nonewfileuid": False,
     "useragent": "",
+    "skipprofilereq": False,
 }
 
 
@@ -889,6 +897,7 @@ configurable_srvr = (
     "language",
     "nonewfileuid",
     "useragent",
+    "skipprofilereq",
 )
 CONFIGURABLE_SRVR = {k: type(v) for k, v in DEFAULTS.items() if k in configurable_srvr}
 

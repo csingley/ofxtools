@@ -87,6 +87,7 @@ class MakeArgParserTestCase(unittest.TestCase):
             "savepass": False,
             "nonewfileuid": False,
             "useragent": "",
+            "skipprofilereq": False,
         }
 
     def testScanProfile(self):

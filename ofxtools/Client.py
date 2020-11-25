@@ -260,6 +260,7 @@ class OFXClient:
         brokerid: Optional[str] = None,
         useragent: Optional[str] = None,
         persist_cookies: bool = True,
+        skip_profile_req: bool = False,
     ):
 
         self.url = url
@@ -290,6 +291,8 @@ class OFXClient:
             cj = http.cookiejar.CookieJar()
             opener = urllib_request.build_opener(urllib_request.HTTPCookieProcessor(cj))
             self.url_opener = opener.open
+
+        self.skip_profile_req = skip_profile_req
 
     @classproperty
     @classmethod
@@ -335,14 +338,17 @@ class OFXClient:
         Package and send OFX statement requests
         (STMTRQ/CCSTMTRQ/INVSTMTRQ/STMTENDRQ/CCSTMTENDRQ).
         """
-        RqCls2url = self._get_service_urls()
+        if self.skip_profile_req:
+            url = self.url
+        else:
+            RqCls2url = self._get_service_urls()
 
-        # HACK FIXME
-        # As a simplification, we assume that FIs handle all classes
-        # of statement request from a single URL.
-        urls = set(RqCls2url.values())
-        assert len(urls) == 1
-        url = urls.pop()
+            # HACK FIXME
+            # As a simplification, we assume that FIs handle all classes
+            # of statement request from a single URL.
+            urls = set(RqCls2url.values())
+            assert len(urls) == 1
+            url = urls.pop()
 
         logger.info(f"Creating statement requests for {requests}")
         # Group requests by type and pass to the appropriate *TRNRQ handler
