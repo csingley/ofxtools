@@ -486,7 +486,7 @@ class OFXClient:
             prettyprint=prettyprint,
             close_elements=close_elements,
             dryrun=dryrun,
-            timeout=dryrun,
+            timeout=timeout,
             url=url,
         )
 
