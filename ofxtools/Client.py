@@ -772,7 +772,7 @@ class OFXClient:
         Package complete OFX tree and POST to server.
 
         N.B. ``version`` / ``prettyprint`` / ``close_elements`` kwargs are
-        basically hacks for ``scripts.ofx.scan_profile()``; ordinarily you
+        basically hacks for ``scripts.ofxget.scan_profile()``; ordinarily you
         should initialize the ``OFXClient`` with the proper version# and
         formatting parameters, rather than overriding the client config here.
 
@@ -806,7 +806,8 @@ class OFXClient:
         )
 
         if timeout in (None, False):
-            timeout = socket._GLOBAL_DEFAULT_TIMEOUT  # type: ignore
+            #  timeout = socket._GLOBAL_DEFAULT_TIMEOUT  # type: ignore
+            timeout = 2.0
 
         kwargs = dict(timeout=timeout)
 
@@ -834,7 +835,7 @@ class OFXClient:
         with OFX header prepended.
 
         N.B. ``version`` / ``prettyprint`` / ``close_elements`` kwargs are
-        basically hacks for ``scripts.ofx.scan_profile()``; ordinarily you
+        basically hacks for ``scripts.ofxget.scan_profile()``; ordinarily you
         should initialize the ``OFXClient`` with the proper version# and
         formatting parameters, rather than overriding the client config here.
 

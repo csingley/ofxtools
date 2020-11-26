@@ -482,8 +482,11 @@ def scan_profile(args: ArgsType) -> None:
     url = args["url"]
     org = args["org"]
     fid = args["fid"]
+    useragent = args["useragent"]
+    gen_newfileuid = not args["nonewfileuid"]
+    timeout = 2.0
 
-    scan_results = _scan_profile(url, org, fid)
+    scan_results = _scan_profile(url, org, fid, useragent, gen_newfileuid, timeout)
 
     v1, v2, signoninfo = scan_results
     if (not v2["versions"]) and (not v1["versions"]):
@@ -1127,6 +1130,8 @@ def _scan_profile(
     url: str,
     org: Optional[str],
     fid: Optional[str],
+    useragent: Optional[str],
+    gen_newfileuid: Optional[bool],
     max_workers: Optional[int] = None,
     timeout: Optional[float] = None,
 ) -> ScanResults:
@@ -1145,8 +1150,8 @@ def _scan_profile(
             f"max_workers={max_workers} timeout={timeout}"
         )
     )
-    client = OFXClient(url, org=org, fid=fid)
-    futures = _queue_scans(client, max_workers, timeout)
+    client = OFXClient(url, org=org, fid=fid, useragent=useragent)
+    futures = _queue_scans(client, gen_newfileuid, max_workers, timeout)
 
     # The primary data we keep is actually the metadata (i.e. connection
     # parameters - OFX version; prettyprint; unclosedelements) tagged on
@@ -1187,7 +1192,10 @@ def _scan_profile(
 
 
 def _queue_scans(
-    client: OFXClient, max_workers: Optional[int], timeout: Optional[float]
+    client: OFXClient,
+    gen_newfileuid: Optional[bool],
+    max_workers: Optional[int],
+    timeout: Optional[float],
 ) -> Mapping[concurrent.futures.Future, ScanMetadata]:
     ofxv1 = [102, 103, 151, 160]
     ofxv2 = [200, 201, 202, 203, 210, 211, 220]
@@ -1199,6 +1207,7 @@ def _queue_scans(
         for version, pretty, close in itertools.product(ofxv1, BOOLS, BOOLS):
             future = executor.submit(
                 client.request_profile,
+                gen_newfileuid=gen_newfileuid,
                 version=version,
                 prettyprint=pretty,
                 close_elements=close,
@@ -1234,7 +1243,13 @@ def _read_scan_response(
     try:
         # ``future.result()`` returns an http.client.HTTPResponse
         response = future.result()
-    except (URLError, HTTPError, ConnectionError, OSError, socket.timeout) as exc:
+    except (
+        URLError,
+        HTTPError,
+        ConnectionError,
+        OSError,
+        socket.timeout,
+    ) as exc:
         logger.debug(f"Didn't receive HTTP response: {exc}")
         future.cancel()
         return valid, signoninfo
