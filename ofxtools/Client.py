@@ -335,14 +335,17 @@ class OFXClient:
         Package and send OFX statement requests
         (STMTRQ/CCSTMTRQ/INVSTMTRQ/STMTENDRQ/CCSTMTENDRQ).
         """
-        RqCls2url = self._get_service_urls()
+        if dryrun:
+            url = ""
+        else:
+            RqCls2url = self._get_service_urls()
 
-        # HACK FIXME
-        # As a simplification, we assume that FIs handle all classes
-        # of statement request from a single URL.
-        urls = set(RqCls2url.values())
-        assert len(urls) == 1
-        url = urls.pop()
+            # HACK FIXME
+            # As a simplification, we assume that FIs handle all classes
+            # of statement request from a single URL.
+            urls = set(RqCls2url.values())
+            assert len(urls) == 1
+            url = urls.pop()
 
         logger.info(f"Creating statement requests for {requests}")
         # Group requests by type and pass to the appropriate *TRNRQ handler
