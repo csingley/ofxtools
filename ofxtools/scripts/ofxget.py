@@ -138,7 +138,7 @@ def make_argparser() -> argparse.ArgumentParser:
     subparsers["prof"] = add_subparser(
         subparsers_,
         "prof",
-        format=True,
+        signon=True,
         help=("Download OFX service profile for server"),
     )
     subparsers["acctinfo"] = add_subparser(
