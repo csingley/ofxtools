@@ -338,7 +338,9 @@ class OFXClient:
         if dryrun:
             url = ""
         else:
-            RqCls2url = self._get_service_urls()
+            RqCls2url = self._get_service_urls(
+                gen_newfileuid=gen_newfileuid,
+            )
 
             # HACK FIXME
             # As a simplification, we assume that FIs handle all classes
@@ -406,11 +408,16 @@ class OFXClient:
             url=url,
         )
 
-    def _get_service_urls(self) -> dict:
+    def _get_service_urls(
+        self,
+        gen_newfileuid: bool = True,
+    ) -> dict:
         """Query OFX profile endpoint to construct mapping of statement request
         data container to URL providing that service.
         """
-        profile = self.request_profile()
+        profile = self.request_profile(
+            gen_newfileuid=gen_newfileuid,
+        )
         parser = OFXTree()
         parser.parse(profile)
         ofx = parser.convert()
