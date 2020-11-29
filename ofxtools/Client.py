@@ -339,6 +339,7 @@ class OFXClient:
             url = ""
         else:
             RqCls2url = self._get_service_urls(
+                timeout=timeout,
                 gen_newfileuid=gen_newfileuid,
             )
 
@@ -410,6 +411,7 @@ class OFXClient:
 
     def _get_service_urls(
         self,
+        timeout: Optional[float] = None,
         gen_newfileuid: bool = True,
     ) -> dict:
         """Query OFX profile endpoint to construct mapping of statement request
@@ -417,6 +419,7 @@ class OFXClient:
         """
         profile = self.request_profile(
             gen_newfileuid=gen_newfileuid,
+            timeout=timeout,
         )
         parser = OFXTree()
         parser.parse(profile)
