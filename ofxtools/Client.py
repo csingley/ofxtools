@@ -587,6 +587,21 @@ class OFXClient:
         """
         Package and send OFX account info requests (ACCTINFORQ)
         """
+        if dryrun:
+            url = ""
+        else:
+            RqCls2url = self._get_service_urls(
+                timeout=timeout,
+                gen_newfileuid=gen_newfileuid,
+            )
+
+            # HACK FIXME
+            # As a simplification, we assume that FIs handle all classes
+            # of statement request from a single URL.
+            urls = set(RqCls2url.values())
+            assert len(urls) == 1
+            url = urls.pop()
+
         logger.info("Creating account info request")
         signon = self.signon(password)
 
@@ -608,6 +623,7 @@ class OFXClient:
             newfileuid=newfileuid,
             dryrun=dryrun,
             timeout=timeout,
+            url=url,
         )
 
     def request_tax1099(
@@ -623,6 +639,21 @@ class OFXClient:
         """
         Request US federal income tax form 1099 (TAX1099RQ)
         """
+        if dryrun:
+            url = ""
+        else:
+            RqCls2url = self._get_service_urls(
+                timeout=timeout,
+                gen_newfileuid=gen_newfileuid,
+            )
+
+            # HACK FIXME
+            # As a simplification, we assume that FIs handle all classes
+            # of statement request from a single URL.
+            urls = set(RqCls2url.values())
+            assert len(urls) == 1
+            url = urls.pop()
+
         logger.info("Creating tax 1099 request")
         signon = self.signon(password)
 
@@ -643,6 +674,7 @@ class OFXClient:
             newfileuid=newfileuid,
             dryrun=dryrun,
             timeout=timeout,
+            url=url,
         )
 
     def signon(
