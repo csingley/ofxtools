@@ -87,6 +87,8 @@ class MakeArgParserTestCase(unittest.TestCase):
             "savepass": False,
             "nonewfileuid": False,
             "useragent": "",
+            "gen_newfileuid": True,
+            "timeout": 2.0,
         }
 
     def testScanProfile(self):
@@ -119,12 +121,18 @@ class MakeArgParserTestCase(unittest.TestCase):
                 self.assertIsNone(result, None)
 
                 args, kwargs = mock_scan_prof.call_args
-                self.assertEqual(len(args), 3)
-                url, org, fid = args
-                self.assertEqual(url, self.args["url"])
-                self.assertEqual(org, self.args["org"])
-                self.assertEqual(fid, self.args["fid"])
-                self.assertEqual(len(kwargs), 0)
+
+                self.assertEqual(len(args), 0)
+                self.assertEqual(len(kwargs), 6)
+                for arg in (
+                    "url",
+                    "org",
+                    "fid",
+                    "useragent",
+                    "gen_newfileuid",
+                    "timeout",
+                ):
+                    self.assertEqual(kwargs[arg], self.args[arg])
 
                 args, kwargs = mock_print.call_args
                 self.assertEqual(len(args), 1)
@@ -149,18 +157,26 @@ class MakeArgParserTestCase(unittest.TestCase):
                 self.assertIsNone(result, None)
 
                 args, kwargs = mock_scan_prof.call_args
-                self.assertEqual(len(args), 3)
-                url, org, fid = args
-                self.assertEqual(url, self.args["url"])
-                self.assertEqual(org, self.args["org"])
-                self.assertEqual(fid, self.args["fid"])
-                self.assertEqual(len(kwargs), 0)
+
+                self.assertEqual(len(args), 0)
+                self.assertEqual(len(kwargs), 6)
+                for arg in (
+                    "url",
+                    "org",
+                    "fid",
+                    "useragent",
+                    "gen_newfileuid",
+                    "timeout",
+                ):
+                    self.assertEqual(kwargs[arg], self.args[arg])
 
                 args, kwargs = mock_print.call_args
                 self.assertEqual(len(args), 1)
 
                 self.maxDiff = None
-                self.assertEqual(args[0], f"Scan found no working formats for {url}")
+                self.assertEqual(
+                    args[0], f"Scan found no working formats for {self.args['url']}"
+                )
 
     def testScanProfileWrite(self):
         with patch.multiple(
@@ -199,12 +215,11 @@ class MakeArgParserTestCase(unittest.TestCase):
             self.assertEqual(result, None)
 
             args, kwargs = mock_scan_prof.call_args
-            self.assertEqual(len(args), 3)
-            url, org, fid = args
-            self.assertEqual(url, self.args["url"])
-            self.assertEqual(org, self.args["org"])
-            self.assertEqual(fid, self.args["fid"])
-            self.assertEqual(len(kwargs), 0)
+
+            self.assertEqual(len(args), 0)
+            self.assertEqual(len(kwargs), 6)
+            for arg in ("url", "org", "fid", "useragent", "gen_newfileuid", "timeout"):
+                self.assertEqual(kwargs[arg], self.args[arg])
 
             args, kwargs = mock_write_config.call_args
             self.assertEqual(len(args), 1)
@@ -1090,7 +1105,7 @@ class ScanProfileTestCase(unittest.TestCase):
     def test_scanProfile(self):
         with patch("ofxtools.Client.OFXClient.request_profile") as mock_profrq:
             mock_profrq.side_effect = self.prof_result
-            results = ofxget._scan_profile(None, None, None)
+            results = ofxget._scan_profile(None, None, None, None, None)
 
         ofxv1 = {
             "versions": [102, 103],
@@ -1117,7 +1132,7 @@ class ScanProfileTestCase(unittest.TestCase):
     def test_scanProfileNoResult(self):
         with patch("ofxtools.Client.OFXClient.request_profile") as mock_profrq:
             mock_profrq.side_effect = urllib.error.URLError(None, None)
-            results = ofxget._scan_profile(None, None, None)
+            results = ofxget._scan_profile(None, None, None, None, None)
 
         self.assertEqual(len(results), 3)
         self.assertEqual(results[0], {"versions": [], "formats": []})
@@ -1129,7 +1144,9 @@ class ScanProfileTestCase(unittest.TestCase):
         with patch("ofxtools.Client.OFXClient.request_profile") as mock_profrq:
             mock_profrq.side_effect = self.prof_result
 
-            futures = ofxget._queue_scans(self.client, max_workers=1, timeout=1.0)
+            futures = ofxget._queue_scans(
+                self.client, gen_newfileuid=True, max_workers=1, timeout=1.0
+            )
 
         # OFXv1: pretty, unclosed True/False for 6 versions; 4 * 4 = 16
         # OFXv2: pretty True/False for 7 versions ; 7 * 2 = 12

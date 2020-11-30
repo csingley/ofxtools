@@ -486,7 +486,14 @@ def scan_profile(args: ArgsType) -> None:
     gen_newfileuid = not args["nonewfileuid"]
     timeout = 2.0
 
-    scan_results = _scan_profile(url, org, fid, useragent, gen_newfileuid, timeout)
+    scan_results = _scan_profile(
+        url=url,
+        org=org,
+        fid=fid,
+        useragent=useragent,
+        gen_newfileuid=gen_newfileuid,
+        timeout=timeout,
+    )
 
     v1, v2, signoninfo = scan_results
     if (not v2["versions"]) and (not v1["versions"]):
