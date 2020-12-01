@@ -238,7 +238,7 @@ class OFXClientV1TestCase(unittest.TestCase):
                     #  req, timeout=timeout
                     mock_urlopen.assert_called_once_with(
                         sentinel.REQUEST,
-                        timeout=2.0,
+                        timeout=10.0,
                     )
 
                     # The tested function should return the output of download(),
