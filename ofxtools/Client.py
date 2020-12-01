@@ -849,7 +849,7 @@ class OFXClient:
 
         if timeout in (None, False):
             #  timeout = socket._GLOBAL_DEFAULT_TIMEOUT  # type: ignore
-            timeout = 2.0
+            timeout = 10.0
 
         kwargs = dict(timeout=timeout)
 
