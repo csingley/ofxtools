@@ -218,7 +218,7 @@ class OFXClient:
     appid: str = "QWIN"
     appver: str = "2700"
     language: str = "ENG"
-    useragent: str = ""
+    useragent: str = "InetClntApp/3.0"
 
     # Formatting defaults
     prettyprint: bool = False
