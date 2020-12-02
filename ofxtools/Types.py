@@ -59,6 +59,12 @@ class OFXSpecError(OFXTypeError):
     """ Violation of the OFX specification """
 
 
+ATTR_NAME_TEMPLATE = "__ofxtools_element{}"
+""" Standard format for Element descriptor to insert/retrieve values into __dict__
+of parent class.
+"""
+
+
 class Element:
     """
     Python representation of an OFX 'element', i.e. SGML/XML leaf node that
@@ -73,9 +79,22 @@ class Element:
     ``OFXHeaderV1``/``OFXHeaverV2`` classes found in the header module).
     Since these validators are class attributes, they are shared by all instances
     of a model class.  Therefore ``Elements`` are implemented as data descriptors;
-    they intercept calls to ``__get__`` and ``__set__`` redirecting them to a
-    ``defaultdict`` keyed by the calling parent, where values are the data passed
-    to that ``Element``).
+    they intercept calls to ``__get__`` and ``__set__``, which get passed as an
+    arg the ``Aggregate`` instance whose attribute you're trying to read/write.
+
+    We don't want to store the attribute value inside the ``Element`` instance, keyed by
+    the ``Aggregate`` instance, because that will cause the long-persisting ``Element``
+    to keep strong references to an ``Aggregate`` instance that may have no other
+    remaining references, thus screwing up our garbage collection & eating up memory.
+
+    Instead, we stick the attribute value where it belongs (i.e on the ``Aggregate``
+    instance), keyed by the ``Element`` instance (or even better, some proxy therefor).
+    We'll need a reference to the ``Element`` instance as long as any instance of the
+    ``Aggregate`` class remains alive, but the ``Aggregate`` instances can be garbage
+    collected when no longer needed.
+
+    A good introductory discussion to this use of descriptors is here:
+    https://realpython.com/python-descriptors/#how-to-use-python-descriptors-properly
 
     Prior to setting the data value, each ``Element`` performs validation
     (using the arguments passed to ``__init__()``) and type conversion
@@ -109,16 +128,25 @@ class Element:
                 f"Unknown args for '{cls}'- args: {args}; kwargs: {kwargs}"
             )
 
-    def __get__(self, parent, parent_type):
-        # HACK - `parent is not None` is needed for tests/test_models_base.py,
-        # else it crashes.
-        # Research!
-        if parent is not None:
-            return self.data[parent]
+    def __set_name__(self, owner, name):
+        # Cf. PEP 487
+        self.name = name
 
-    def __set__(self, parent, value) -> None:
-        """ Perform validation and type conversion before setting value """
-        self.data[parent] = self.convert(value)
+    def __get__(self, obj, type=None):
+        """
+        ``self`` is the instance of the descriptor
+        ``obj`` is the instance of the object your descriptor is attached to.
+        ``type`` is the type of the object the descriptor is attached to.
+        """
+        return obj.__dict__[self.name]
+
+    def __set__(self, obj, value) -> None:
+        """ Perform validation and type conversion before setting value.
+
+        ``self`` is the instance of the descriptor
+        ``obj`` is the instance of the object your descriptor is attached to.
+        """
+        obj.__dict__[self.name] = self.convert(value)
 
     def enforce_required(self, value):
         if value is None and self.required:
