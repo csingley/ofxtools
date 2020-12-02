@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Type converters / validators for OFX data content text, used as attributes
 of OFX model classes.
@@ -33,12 +32,11 @@ __all__ = [
 
 
 # stdlib imports
-import functools
+from functools import singledispatchmethod
 import decimal
 import datetime
 import re
 import warnings
-from collections import defaultdict
 from xml.sax import saxutils
 from typing import Any, Optional
 
@@ -57,12 +55,6 @@ class OFXTypeError(ValueError):
 
 class OFXSpecError(OFXTypeError):
     """ Violation of the OFX specification """
-
-
-ATTR_NAME_TEMPLATE = "__ofxtools_element{}"
-""" Standard format for Element descriptor to insert/retrieve values into __dict__
-of parent class.
-"""
 
 
 class Element:
@@ -98,45 +90,35 @@ class Element:
 
     Prior to setting the data value, each ``Element`` performs validation
     (using the arguments passed to ``__init__()``) and type conversion
-    (using the logic implemented in ``_convert()``).
+    (using the logic implemented in ``convert()``).
     """
 
-    type: Any = NotImplemented  # define in subclass
+    type_: Any = NotImplemented  # define in subclass
 
     def __init__(self, *args, **kwargs):
-        self.data = defaultdict(None)
+        """To extend in subclass, call super().__init__(*args, **kwargs)
+        last, _AFTER_ any subclass-specific initialization.
+        """
         self.required = kwargs.pop("required", False)
-
-        # N.B. ``functools.singledispatch()`` dispatches on the type of the
-        # first argument of a function, so we can't use decorator syntax on
-        # a method (unless it's a staticmethod).  Instead we use it in
-        # functional form on a bound method.
-        self.convert = functools.singledispatch(self._convert)
-        self.convert.register(type(None), self._convert_none)
-        self.convert.register(str, self._convert_str)
-
-        self.unconvert = functools.singledispatch(self._unconvert)
-        self.unconvert.register(type(None), self._unconvert_none)
-
-        self._init(*args, **kwargs)
-
-    def _init(self, *args, **kwargs):
-        """ Extend in subclass """
         if args or kwargs:
             cls = self.__class__.__name__
             raise ValueError(
                 f"Unknown args for '{cls}'- args: {args}; kwargs: {kwargs}"
             )
 
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} required={self.required}>"
+
+    #  Descriptor protocol
     def __set_name__(self, owner, name):
-        # Cf. PEP 487
+        #  Cf. PEP 487
         self.name = name
 
-    def __get__(self, obj, type=None):
+    def __get__(self, obj, objtype=None):
         """
         ``self`` is the instance of the descriptor
         ``obj`` is the instance of the object your descriptor is attached to.
-        ``type`` is the type of the object the descriptor is attached to.
+        ``objtype`` is the type of the object the descriptor is attached to.
         """
         return obj.__dict__[self.name]
 
@@ -148,120 +130,88 @@ class Element:
         """
         obj.__dict__[self.name] = self.convert(value)
 
+    def convert(self, value):
+        """ Define in subclass """
+        raise NotImplementedError
+
     def enforce_required(self, value):
+        """Utility used by many subclass converters"""
         if value is None and self.required:
             raise OFXSpecError(f"{self.__class__.__name__}: Value is required")
 
         return value
 
-    def _convert(self, value):
-        """ Convert OFX to Python data type """
-        return self._convert_default(value)
-
-    def _convert_default(self, value):
-        """ Default dispatch convert() for unregistered type """
-        # None should be dispatched to _convert_none()
-        assert value is not None
-        # By default, attempt a naive conversion to subclass type
-        return self.type(value)
-
-    def _convert_none(self, value):
-        """ Dispatch convert() for type(None) """
-        # Pass through None, unless value is required
-        return self.enforce_required(value)
-
-    def _convert_str(self, value):
-        """ Dispatch convert() for str """
-        # Interpret empty string as None
-        if value == "":
-            value = None
-            return self._convert_none(value)
-        return self._convert_default(value)
-
-    def _unconvert(self, value):
-        """ Convert Python data type to OFX """
-        return self._unconvert_default(value)
-
-    def _unconvert_default(self, value):
-        # By default, any type not specifically dispatched raises an error
-        cls = self.__class__.__name__
-        raise TypeError(f"{value!r} is not an instance of {cls}")
-
-    def _unconvert_none(self, value: None) -> None:
-        """ Dispatch unconvert() for type(None) """
-        # Pass through None, unless value is required
-        return self.enforce_required(value)
-
-    def __repr__(self) -> str:
-        repr = "<{} required={}>"
-        return repr.format(self.__class__.__name__, self.required)
-
 
 class Bool(Element):
-    type = bool
+    type_ = bool
     mapping = {"Y": True, "N": False}
 
-    def _init(self, *args, **kwargs):
-        self.convert.register(bool, self._convert_bool)
-        self.unconvert.register(bool, self._unconvert_bool)
-        super()._init(*args, **kwargs)
-
-    def _convert_default(self, value):
-        # Better error message than superclass default
+    @singledispatchmethod
+    def convert(self, value):
         msg = f"{value} is not one of the allowed values {self.mapping.keys()}"
         raise OFXSpecError(msg)
 
-    def _convert_bool(self, value):
+    @convert.register
+    def _convert_none(self, value: None):
+        # Pass through None, unless value is required
+        return self.enforce_required(value)
+
+    @convert.register
+    def _convert_bool(self, value: bool):
         return value
 
-    def _convert_str(self, value):
+    @convert.register
+    def _convert_str(self, value: str) -> bool:
         try:
-            value = self.mapping[value]
+            return self.mapping[value]
         except KeyError:
             msg = f"{value} is not one of the allowed values {self.mapping.keys()}"
             raise OFXSpecError(msg)
-        return value
 
-    def _unconvert_default(self, value):
-        # Better error message than superclass default
+    @singledispatchmethod
+    def unconvert(self, value):
         msg = f"{value} is not one of the allowed values {self.mapping.keys()}"
         raise OFXSpecError(msg)
 
-    def _unconvert_bool(self, value):
-        value = {v: k for k, v in self.mapping.items()}[value]
-        return value
+    @unconvert.register
+    def _unconvert_bool(self, value: bool) -> str:
+        return {v: k for k, v in self.mapping.items()}[value]
+
+    @unconvert.register
+    def _unconvert_none(self, value: None) -> None:
+        # Pass through None, unless value is required
+        return self.enforce_required(value)
 
 
 class String(Element):
-    type = str
+    type_ = str
     strict = True
 
-    def _init(self, *args, **kwargs):
-        self.unconvert.register(str, self._unconvert_str)
-
-        length = None
+    def __init__(self, *args, **kwargs):
         if args:
-            length = args[0]
-        self.length = length
-        super()._init(*args[1:], **kwargs)
+            self.length = args[0]
+        else:
+            self.length = None
 
-    def _convert_default(self, value):
-        # Better error message than superclass default
-        raise TypeError(f"'{value!r}' is not a str")
+        super().__init__(*args[1:], **kwargs)
+
+    @singledispatchmethod
+    def convert(self, value):
+        raise TypeError(f"{value!r} is not a str")
 
     def enforce_length(self, value: str) -> str:
         if self.length is not None and len(value) > self.length:
-            msg = f"Value '{value}' exceeds max length={self.length}"
+            msg = f"{type(self).__name__}: {value!r} exceeds max length={self.length}"
             if self.strict:
                 raise OFXSpecError(msg)
             else:
                 warnings.warn(msg, category=OFXTypeWarning)
         return value
 
-    def _convert_str(self, value):
+    @convert.register
+    def _convert_str(self, value: str) -> Optional[str]:
         if value == "":
-            value = None
-            return self.enforce_required(value)
+            return self.enforce_required(None)
 
         # Unescape '&amp;' '&lt;' '&gt;' '&nbsp;' per OFX section 2.3
         # Also go ahead and unescape other XML control characters,
@@ -269,8 +219,24 @@ class String(Element):
         value = saxutils.unescape(value, {"&nbsp;": " ", "&apos;": "'", "&quot;": '"'})
         return self.enforce_length(value)
 
-    def _unconvert_str(self, value):
+    @convert.register
+    def _convert_none(self, value: None):
+        # Pass through None, unless value is required
+        return self.enforce_required(value)
+
+    @singledispatchmethod
+    def unconvert(self, value):
+        # By default, any type not specifically dispatched raises an error
+        raise TypeError(f"{value!r} is not an instance of {self.__class__.__name__}")
+
+    @unconvert.register
+    def _unconvert_str(self, value: str):
         return self.enforce_length(value)
+
+    @unconvert.register
+    def _unconvert_none(self, value: None) -> None:
+        # Pass through None, unless value is required
+        return self.enforce_required(value)
 
 
 class NagString(String):
@@ -285,11 +251,15 @@ class NagString(String):
 
 
 class OneOf(Element):
-    type = str
+    type_ = str
 
-    def _init(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.valid = set(args)
-        super()._init(**kwargs)
+        super().__init__(**kwargs)
+
+    @singledispatchmethod
+    def convert(self, value):
+        return self._convert_default(value)
 
     def _convert_default(self, value):
         value = self.enforce_required(value)
@@ -297,31 +267,37 @@ class OneOf(Element):
             raise OFXSpecError(f"'{value}' is not OneOf {self.valid}")
         return value
 
-    def _convert_str(self, value):
-        if value == "":
-            value = None
-        return self._convert_default(value)
+    @convert.register
+    def _convert_str(self, value: str):
+        return self._convert_default(value or None)
 
-    def _unconvert_default(self, value):
+    @convert.register
+    def _convert_none(self, value: None):
+        # Pass through None, unless value is required
+        return self.enforce_required(value)
+
+    @singledispatchmethod
+    def unconvert(self, value):
         value = self.enforce_required(value)
         if value is not None and value not in self.valid:
             raise OFXSpecError(f"'{value}' is not OneOf {self.valid}")
         return value
 
+    @unconvert.register
+    def _unconvert_none(self, value: None) -> None:
+        # Pass through None, unless value is required
+        return self.enforce_required(value)
+
 
 class Integer(Element):
-    type = int
+    type_ = int
 
-    def _init(self, *args, **kwargs):
-        self.convert.register(int, self._convert_int)
-        self.unconvert.register(int, self._unconvert_int)
-
-        length = None
+    def __init__(self, *args, **kwargs):
         if args:
-            length = args[0]
-        self.length = length
-
-        super()._init(*args[1:], **kwargs)
+            self.length = args[0]
+        else:
+            self.length = None
+        super().__init__(*args[1:], **kwargs)
 
     def enforce_length(self, value: int) -> int:
         if self.length is not None and value >= 10 ** self.length:
@@ -329,56 +305,102 @@ class Integer(Element):
             raise OFXSpecError(msg)
         return value
 
-    def _convert_default(self, value):
+    @singledispatchmethod
+    def convert(self, value):
         value = int(value)
         return self._convert_int(value)
 
-    def _convert_int(self, value):
+    @convert.register
+    def _convert_int(self, value: int):
         value = self.enforce_length(value)
         return value
 
-    def _unconvert_int(self, value):
+    @convert.register
+    def convert_str(self, value: str) -> Optional[int]:
+        if len(value) == 0:
+            return self.enforce_required(None)
+        return self.enforce_length(int(value))
+
+    @convert.register
+    def _convert_none(self, value: None):
+        # Pass through None, unless value is required
+        return self.enforce_required(value)
+
+    @singledispatchmethod
+    def unconvert(self, value):
+        # By default, any type not specifically dispatched raises an error
+        raise TypeError(f"{value!r} is not an instance of {self.__class__.__name__}")
+
+    @unconvert.register
+    def _unconvert_none(self, value: None) -> None:
+        # Pass through None, unless value is required
+        return self.enforce_required(value)
+
+    @unconvert.register
+    def _unconvert_int(self, value: int) -> str:
         value = self.enforce_length(value)
-        value = str(value)
-        return value
+        return str(value)
 
 
 class Decimal(Element):
-    type = decimal.Decimal
+    type_ = decimal.Decimal
     #  N.B. "scale" here means "decimal places"
     #  i.e. Decimal(2).convert("12345.67890") is Decimal("12345.68")
     scale = None
 
-    def _init(self, *args, **kwargs):
-        self.convert.register(decimal.Decimal, self._convert_decimal)
-        self.unconvert.register(decimal.Decimal, self._unconvert_decimal)
-
+    def __init__(self, *args, **kwargs):
         if args:
             scale = args[0]
             self.scale = decimal.Decimal("0.{}1".format("0" * (scale - 1)))
-        super()._init(*args[1:], **kwargs)
+        super().__init__(*args[1:], **kwargs)
 
-    def _convert_decimal(self, value):
+    @singledispatchmethod
+    def convert(self, value):
+        """ Default dispatch convert() for unregistered type """
+        # None should be dispatched to _convert_none()
+        assert value is not None
+        # By default, attempt a naive conversion to subclass type
+        return self.type_(value)
+
+    @convert.register
+    def _convert_decimal(self, value: decimal.Decimal):
         if self.scale is not None:
             value = value.quantize(self.scale)
         return value
 
-    def _convert_str(self, value):
+    @convert.register
+    def _convert_str(self, value: str) -> decimal.Decimal:
         # Handle Euro-style decimal separators (comma)
         try:
-            value = decimal.Decimal(value)
+            value_ = decimal.Decimal(value)
         except decimal.InvalidOperation:
-            value = decimal.Decimal(value.replace(",", "."))
+            value_ = decimal.Decimal(value.replace(",", "."))
 
         if self.scale is not None:
-            value = value.quantize(self.scale)
+            value_ = value_.quantize(self.scale)
 
-        return value
+        return value_
 
-    def _unconvert_decimal(self, value):
+    @convert.register
+    def _convert_none(self, value: None):
+        # Pass through None, unless value is required
+        return self.enforce_required(value)
+
+    @singledispatchmethod
+    def unconvert(self, value):
+        # By default, any type not specifically dispatched raises an error
+        raise TypeError(f"{value!r} is not an instance of {self.__class__.__name__}")
+
+    @unconvert.register
+    def _unconvert_decimal(self, value: decimal.Decimal):
         if self.scale is not None and not value.same_quantum(self.scale):
             raise ValueError(f"'{value}' doesn't match scale={self.scale}")
         return str(value)
+
+    @unconvert.register
+    def _unconvert_none(self, value: None) -> None:
+        # Pass through None, unless value is required
+        return self.enforce_required(value)
 
 
 # Valid datetime formats per the OFX spec (in OFX_Common.xsd):
@@ -446,27 +468,25 @@ DT_REGEX = re.compile(
 class DateTime(Element):
     """ OFX Section 3.2.8.2 """
 
-    type: Any = datetime.datetime
+    type_: Any = datetime.datetime
     regex = DT_REGEX
 
-    def _init(self, *args, **kwargs):
-        self.convert.register(datetime.datetime, self._convert_datetime)
-        self.unconvert.register(datetime.datetime, self._unconvert_datetime)
-        super()._init(*args, **kwargs)
-
-    def _convert_default(self, value):
+    @singledispatchmethod
+    def convert(self, value):
         cls = value.__class__.__name__
-        raise TypeError(f"{value!r} is type '{cls}'; can't convert to {self.type}")
+        raise TypeError(f"{value!r} is type '{cls}'; can't convert to {self.type_}")
 
-    def _convert_datetime(self, value):
+    @convert.register
+    def _convert_datetime(self, value: datetime.datetime):
         if value.utcoffset() is None:
             raise ValueError(f"{value} is not timezone-aware")
         return value
 
-    def _convert_str(self, value):
+    @convert.register
+    def _convert_str(self, value: str):
         match = self.regex.match(value)
         if match is None:
-            msg = f"'{value}' does not conform to OFX formats for {self.type}"
+            msg = f"'{value}' does not conform to OFX formats for {self.type_}"
             raise OFXSpecError(msg)
 
         matchdict = match.groupdict()
@@ -482,7 +502,7 @@ class DateTime(Element):
         # OFX time formats give milliseconds,
         # but datetime.datetime wants microseconds
         intmatches["microsecond"] = 1000 * intmatches.pop("millisecond")
-        return self.normalize_to_gmt(self.type(**intmatches), gmt_offset)
+        return self.normalize_to_gmt(self.type_(**intmatches), gmt_offset)
 
     def parse_gmt_offset(
         self, hours: Optional[str], minutes: Optional[str], tz_name: Optional[str]
@@ -506,9 +526,20 @@ class DateTime(Element):
         self.unconvert.register(datetime.datetime, self._unconvert_datetime)
         return (value - gmt_offset).replace(tzinfo=utils.UTC)
 
-    def _unconvert_datetime(self, value):
+    @convert.register
+    def _convert_none(self, value: None):
+        # Pass through None, unless value is required
+        return self.enforce_required(value)
+
+    @singledispatchmethod
+    def unconvert(self, value):
+        # By default, any type not specifically dispatched raises an error
+        raise TypeError(f"{value!r} is not an instance of {self.__class__.__name__}")
+
+    @unconvert.register
+    def _unconvert_datetime(self, value: datetime.datetime):
         if not hasattr(value, "utcoffset") or value.utcoffset() is None:
-            msg = f"'{value}' isn't a timezone-aware {self.type} instance; can't convert to GMT"
+            msg = f"'{value}' isn't a timezone-aware {self.type_} instance; can't convert to GMT"
             raise ValueError(msg)
 
         # Transform to GMT
@@ -527,6 +558,11 @@ class DateTime(Element):
         millisec_str = "{0:03d}".format(millisecond)
         fmt = "%Y%m%d%H%M%S.{}[0:GMT]".format(millisec_str)
         return value.strftime(fmt)
+
+    @unconvert.register
+    def _unconvert_none(self, value: None) -> None:
+        # Pass through None, unless value is required
+        return self.enforce_required(value)
 
 
 # Valid time formats given by OFX spec (in OFX_Common.xsd):
@@ -566,14 +602,19 @@ TIME_REGEX = re.compile(
 class Time(DateTime):
     """ OFX Section 3.2.8.3 """
 
-    type = datetime.time
+    type_ = datetime.time
     regex = TIME_REGEX
 
-    def _init(self, *args, **kwargs):
-        self.convert.register(datetime.time, self._convert_time)
-        self.unconvert.register(datetime.time, self._unconvert_time)
+    @singledispatchmethod
+    def convert(self, value):
+        cls = value.__class__.__name__
+        raise TypeError(f"{value!r} is type '{cls}'; can't convert to {self.type_}")
 
-        super()._init(*args, **kwargs)
+    @convert.register
+    def _convert_time(self, value: datetime.time):
+        if value.utcoffset() is None:
+            raise ValueError(f"{value} is not timezone-aware")
+        return value
 
     def normalize_to_gmt(
         self, value: datetime.time, gmt_offset: datetime.timedelta
@@ -591,17 +632,24 @@ class Time(DateTime):
         )
         return (dt - gmt_offset).time().replace(tzinfo=utils.UTC)
 
-    def _convert_time(self, value):
-        if value.utcoffset() is None:
-            raise ValueError(f"{value} is not timezone-aware")
-        return value
+    @convert.register
+    def _convert_str(self, value: str):
+        return super()._convert_str(value)  # type: ignore
 
-    def _convert_datetime(self, value):
-        return self._convert_default(value)
+    @convert.register
+    def _convert_none(self, value: None):
+        # Pass through None, unless value is required
+        return self.enforce_required(value)
 
-    def _unconvert_time(self, value):
+    @singledispatchmethod
+    def unconvert(self, value):
+        # By default, any type not specifically dispatched raises an error
+        raise TypeError(f"{value!r} is not an instance of {self.__class__.__name__}")
+
+    @unconvert.register
+    def _unconvert_time(self, value: datetime.time):
         if not hasattr(value, "utcoffset") or value.utcoffset() is None:
-            msg = f"'{value}' isn't a timezone-aware {self.type} instance; can't convert to GMT"
+            msg = f"'{value}' isn't a timezone-aware {self.type_} instance; can't convert to GMT"
             raise ValueError(msg)
 
         # Transform to GMT
@@ -614,13 +662,15 @@ class Time(DateTime):
             value.second,
             microsecond=value.microsecond,
         )
-        dt -= value.utcoffset()
+        dt -= value.utcoffset()  # type: ignore
         milliseconds = "{0:03d}".format((dt.microsecond + 500) // 1000)
         fmt = "%H%M%S.{}[0:GMT]".format(milliseconds)
         return dt.strftime(fmt)
 
-    def _unconvert_datetime(self, value):
-        return self._unconvert_default(value)
+    @unconvert.register
+    def _unconvert_none(self, value: None) -> None:
+        # Pass through None, unless value is required
+        return self.enforce_required(value)
 
 
 class ListElement(Element):
@@ -633,14 +683,14 @@ class ListElement(Element):
         ``ListElement(String(32))``
     """
 
-    def _init(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.converter = args[0]
-        super()._init(*args[1:], **kwargs)
+        super().__init__(*args[1:], **kwargs)
 
-    def _convert_default(self, value):
+    def convert(self, value):
         return self.converter.convert(value)
 
-    def _unconvert_default(self, value):
+    def unconvert(self, value):
         return self.converter.unconvert(value)
 
 
@@ -659,18 +709,24 @@ class SubAggregate(Element):
         ``SubAggregate(BANKACCTFROM, required=True)``
     """
 
-    def _init(self, *args, **kwargs):
-        self.type = args[0]
-        super()._init(*args[1:], **kwargs)
+    def __init__(self, *args, **kwargs):
+        self.type_ = args[0]
+        super().__init__(*args[1:], **kwargs)
 
-    def _convert_default(self, value):
-        if not isinstance(value, self.type):
-            raise TypeError(f"'{value}' is not an instance of {self.type}")
+    @singledispatchmethod
+    def convert(self, value):
+        if not isinstance(value, self.type_):
+            raise TypeError(f"'{value}' is not an instance of {self.type_}")
         return value
+
+    @convert.register
+    def _convert_none(self, value: None):
+        # Pass through None, unless value is required
+        return self.enforce_required(value)
 
     #  This doesn't get used
     #  def __repr__(self):
-    #  return "<{}>".format(self.type.__name__)
+    #  return "<{}>".format(self.type_.__name__)
 
 
 class ListAggregate(SubAggregate):
@@ -678,9 +734,9 @@ class ListAggregate(SubAggregate):
     ``SubAggregate`` that can be repeated on the parent ``Aggregate``.
     """
 
-    def _unconvert_default(self, value):
-        if not isinstance(value, self.type):
-            raise TypeError(f"'{value!r}' is not an instance of {self.type}")
+    def unconvert(self, value):
+        if not isinstance(value, self.type_):
+            raise TypeError(f"'{value!r}' is not an instance of {self.type_}")
         return value
 
 
