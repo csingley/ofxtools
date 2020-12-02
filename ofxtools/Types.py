@@ -141,7 +141,7 @@ class Element:
         return obj.__dict__[self.name]
 
     def __set__(self, obj, value) -> None:
-        """ Perform validation and type conversion before setting value.
+        """Perform validation and type conversion before setting value.
 
         ``self`` is the instance of the descriptor
         ``obj`` is the instance of the object your descriptor is attached to.
