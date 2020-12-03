@@ -148,8 +148,14 @@ class Element:
             setattr(self, name, val)
 
     def __repr__(self) -> str:
-        # Mypy doesn't understand that ``required`` gets set by ``__init__()``
-        return f"<{self.__class__.__name__} required={self.required}>"  # type: ignore
+        repr = f"<{self.__class__.__name__}"
+
+        # Mypy doesn't understand that ``__signature__`` gets set by ``__init__()``
+        for attr in self.__signature__.parameters:  # type: ignore
+            val = getattr(self, attr)
+            repr += f" {attr}={val}"
+        repr += ">"
+        return repr
 
     #  Descriptor protocol
     def __set_name__(self, owner, name):
@@ -286,16 +292,22 @@ class NagString(String):
 
 
 class OneOf(Element):
-    """Enum data type"""
+    """Enum data type
+
+    N.B. the variable number of positional args used for instantiation violates the
+    assumptions of ``make_signature``, so we skip the ``@call_signature`` decorator
+    and directly create the ``__signature__`` attribute in the class definition.
+    """
 
     __type__ = str
-
-    def __init__(self, *args, **kwargs):
-        #  Override ``Element.__init__()``
-        #  Strip off all positional args & consider as defining the set of
-        #  valid values that may be set on this ``Element``.
-        self.valid = set(args)
-        super().__init__(**kwargs)
+    __signature__ = inspect.Signature(
+        (
+            inspect.Parameter("valid", kind=inspect.Parameter.VAR_POSITIONAL),
+            inspect.Parameter(
+                "required", kind=inspect.Parameter.KEYWORD_ONLY, default=False
+            ),
+        )
+    )
 
     @singledispatchmethod
     def convert(self, value):
