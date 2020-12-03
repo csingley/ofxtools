@@ -89,10 +89,23 @@ def make_signature(*args, **kwargs):
     return inspect.Signature(params)
 
 
-class Element:
+def call_signature(*args, **kwargs):
+    """Decorator creating ``__signature__`` class attribute (``inspect.Signature`` instance)
+    for use by ``__init__()`` method of ``Element`` subclasses.
+
+    N.B. All Elements have ``required`` as keyword-only arg, with a default value of False.
     """
-    Python representation of an OFX 'element', i.e. SGML/XML leaf node that
-    contains text data.
+
+    def decorate(cls):
+        cls.__signature__ = make_signature(*args, **kwargs)
+        return cls
+
+    return decorate
+
+
+@call_signature()
+class Element:
+    """Python representation of OFX 'element', i.e. *ML leaf node containing text data.
 
     Pass validation parameters (e.g. maximum string length, decimal scale,
     required vs. optional, etc.) as arguments to __init__() when defining
@@ -126,7 +139,6 @@ class Element:
     """
 
     __type__: Any = NotImplemented  # define in subclass
-    __signature__ = make_signature()
 
     def __init__(self, *args, **kwargs):
         """ """
@@ -161,7 +173,7 @@ class Element:
         obj.__dict__[self.name] = self.convert(value)
 
     def convert(self, value):
-        """ Define in subclass """
+        """Define in subclass"""
         raise NotImplementedError
 
     def enforce_required(self, value):
@@ -213,9 +225,9 @@ class Bool(Element):
         return self.enforce_required(value)
 
 
+@call_signature(length=None)
 class String(Element):
     __type__ = str
-    __signature__ = make_signature(length=None)
     strict = True
 
     @singledispatchmethod
@@ -264,8 +276,7 @@ class String(Element):
 
 
 class NagString(String):
-    """
-    String that raises a warning length is exceeded.
+    """String that raises a warning length is exceeded.
 
     Used to handle OFX data that violates the spec with respect to
     string length on non-critical fields.
@@ -275,9 +286,14 @@ class NagString(String):
 
 
 class OneOf(Element):
+    """Enum data type"""
+
     __type__ = str
 
     def __init__(self, *args, **kwargs):
+        #  Override ``Element.__init__()``
+        #  Strip off all positional args & consider as defining the set of
+        #  valid values that may be set on this ``Element``.
         self.valid = set(args)
         super().__init__(**kwargs)
 
@@ -313,9 +329,9 @@ class OneOf(Element):
         return self.enforce_required(value)
 
 
+@call_signature(length=None)
 class Integer(Element):
     __type__ = int
-    __signature__ = make_signature(length=None)
 
     def enforce_length(self, value: int) -> int:
         # Mypy doesn't understand that ``length`` gets set by ``__init__()``
@@ -361,11 +377,11 @@ class Integer(Element):
         return str(value)
 
 
+#  N.B. "scale" here means "decimal places"
+#  i.e. Decimal(2).convert("12345.67890") is Decimal("12345.68")
+@call_signature(scale=None)
 class Decimal(Element):
     __type__ = decimal.Decimal
-    #  N.B. "scale" here means "decimal places"
-    #  i.e. Decimal(2).convert("12345.67890") is Decimal("12345.68")
-    __signature__ = make_signature(scale=None)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -695,6 +711,7 @@ class Time(DateTime):
         return self.enforce_required(value)
 
 
+@call_signature("converter")
 class ListElement(Element):
     """
     ``Element`` that can be repeated on the parent ``Aggregate``.
@@ -705,8 +722,6 @@ class ListElement(Element):
         ``ListElement(String(32))``
     """
 
-    __signature__ = make_signature("converter")
-
     def convert(self, value):
         return self.converter.convert(value)
 
@@ -714,6 +729,7 @@ class ListElement(Element):
         return self.converter.unconvert(value)
 
 
+@call_signature("__type__")
 class SubAggregate(Element):
     """
     Parent/child relationship between ``Aggregates`` - used for child ``Aggregates``
@@ -728,8 +744,6 @@ class SubAggregate(Element):
 
         ``SubAggregate(BANKACCTFROM, required=True)``
     """
-
-    __signature__ = make_signature("__type__")
 
     @singledispatchmethod
     def convert(self, value):
