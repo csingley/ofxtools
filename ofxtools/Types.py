@@ -38,7 +38,8 @@ import datetime
 import re
 import warnings
 from xml.sax import saxutils
-from typing import Any, Optional
+from typing import Any, Optional, Union, Type
+import inspect
 
 
 # local imports
@@ -55,6 +56,37 @@ class OFXTypeError(ValueError):
 
 class OFXSpecError(OFXTypeError):
     """ Violation of the OFX specification """
+
+
+def make_signature(*args, **kwargs):
+    """Construct appropriate ``inspect.Signature`` to be used by ``__init__()`` of
+    ``Element`` subclasses.
+
+    Cf. discussion of Parameter/Signature
+    pp. 86-101 of David Beazley's "Python 3 Metaprogramming"
+    http://dabeaz.com/py3meta/Py3Meta.pdf
+
+    N.B. we don't follow Beazley's recommendation to stick the signature construction
+    logic in a custom metaclass because we're attracted to the simplicity of reusing
+    Python's *arg, **kwarg passing machinery to define the API here.
+    """
+    #  Interpret *args as positional-only args (e.g. SubAggregate.__type__)
+    #  that are mandatory (i.e. no default)
+    params = [inspect.Parameter(arg, inspect.Parameter.POSITIONAL_ONLY) for arg in args]
+
+    # Interpret **kwargs as args that are optionally positional or keyword e.g. String.length)
+    # with the given default value
+    params += [
+        inspect.Parameter(arg, inspect.Parameter.POSITIONAL_OR_KEYWORD, default=default)
+        for arg, default in kwargs.items()
+    ]
+
+    # All Elements have ``required`` as keyword-only arg, with a default value of False
+    params.append(
+        inspect.Parameter("required", inspect.Parameter.KEYWORD_ONLY, default=False)
+    )
+
+    return inspect.Signature(params)
 
 
 class Element:
@@ -93,21 +125,19 @@ class Element:
     (using the logic implemented in ``convert()``).
     """
 
-    type_: Any = NotImplemented  # define in subclass
+    __type__: Any = NotImplemented  # define in subclass
+    __signature__ = make_signature()
 
     def __init__(self, *args, **kwargs):
-        """To extend in subclass, call super().__init__(*args, **kwargs)
-        last, _AFTER_ any subclass-specific initialization.
-        """
-        self.required = kwargs.pop("required", False)
-        if args or kwargs:
-            cls = self.__class__.__name__
-            raise ValueError(
-                f"Unknown args for '{cls}'- args: {args}; kwargs: {kwargs}"
-            )
+        """ """
+        bound = self.__signature__.bind(*args, **kwargs)
+        bound.apply_defaults()
+        for name, val in bound.arguments.items():
+            setattr(self, name, val)
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} required={self.required}>"
+        # Mypy doesn't understand that ``required`` gets set by ``__init__()``
+        return f"<{self.__class__.__name__} required={self.required}>"  # type: ignore
 
     #  Descriptor protocol
     def __set_name__(self, owner, name):
@@ -143,7 +173,7 @@ class Element:
 
 
 class Bool(Element):
-    type_ = bool
+    __type__ = bool
     mapping = {"Y": True, "N": False}
 
     @singledispatchmethod
@@ -184,24 +214,18 @@ class Bool(Element):
 
 
 class String(Element):
-    type_ = str
+    __type__ = str
+    __signature__ = make_signature(length=None)
     strict = True
-
-    def __init__(self, *args, **kwargs):
-        if args:
-            self.length = args[0]
-        else:
-            self.length = None
-
-        super().__init__(*args[1:], **kwargs)
 
     @singledispatchmethod
     def convert(self, value):
         raise TypeError(f"{value!r} is not a str")
 
     def enforce_length(self, value: str) -> str:
-        if self.length is not None and len(value) > self.length:
-            msg = f"{type(self).__name__}: {value!r} exceeds max length={self.length}"
+        # Mypy doesn't understand that ``length`` gets set by ``__init__()``
+        if self.length is not None and len(value) > self.length:  # type: ignore
+            msg = f"{type(self).__name__}: {value!r} exceeds max length={self.length}"  # type: ignore
             if self.strict:
                 raise OFXSpecError(msg)
             else:
@@ -251,7 +275,7 @@ class NagString(String):
 
 
 class OneOf(Element):
-    type_ = str
+    __type__ = str
 
     def __init__(self, *args, **kwargs):
         self.valid = set(args)
@@ -290,18 +314,13 @@ class OneOf(Element):
 
 
 class Integer(Element):
-    type_ = int
-
-    def __init__(self, *args, **kwargs):
-        if args:
-            self.length = args[0]
-        else:
-            self.length = None
-        super().__init__(*args[1:], **kwargs)
+    __type__ = int
+    __signature__ = make_signature(length=None)
 
     def enforce_length(self, value: int) -> int:
-        if self.length is not None and value >= 10 ** self.length:
-            msg = f"'{value}' has too many digits; max digits={self.length}"
+        # Mypy doesn't understand that ``length`` gets set by ``__init__()``
+        if self.length is not None and value >= 10 ** self.length:  # type: ignore
+            msg = f"'{value}' has too many digits; max digits={self.length}"  # type: ignore
             raise OFXSpecError(msg)
         return value
 
@@ -343,16 +362,17 @@ class Integer(Element):
 
 
 class Decimal(Element):
-    type_ = decimal.Decimal
+    __type__ = decimal.Decimal
     #  N.B. "scale" here means "decimal places"
     #  i.e. Decimal(2).convert("12345.67890") is Decimal("12345.68")
-    scale = None
+    __signature__ = make_signature(scale=None)
 
     def __init__(self, *args, **kwargs):
-        if args:
-            scale = args[0]
-            self.scale = decimal.Decimal("0.{}1".format("0" * (scale - 1)))
-        super().__init__(*args[1:], **kwargs)
+        super().__init__(*args, **kwargs)
+        #  Rewrite ``self.scale`` from # of digits to a ``decimal.Decimal`` instance
+        #  That can be directly fed into ``decimal.Decimal.quantize()``
+        if self.scale is not None:
+            self.scale = decimal.Decimal("0.{}1".format("0" * (self.scale - 1)))
 
     @singledispatchmethod
     def convert(self, value):
@@ -360,7 +380,7 @@ class Decimal(Element):
         # None should be dispatched to _convert_none()
         assert value is not None
         # By default, attempt a naive conversion to subclass type
-        return self.type_(value)
+        return self.__type__(value)
 
     @convert.register
     def _convert_decimal(self, value: decimal.Decimal):
@@ -372,14 +392,14 @@ class Decimal(Element):
     def _convert_str(self, value: str) -> decimal.Decimal:
         # Handle Euro-style decimal separators (comma)
         try:
-            value_ = decimal.Decimal(value)
+            dec = decimal.Decimal(value)
         except decimal.InvalidOperation:
-            value_ = decimal.Decimal(value.replace(",", "."))
+            dec = decimal.Decimal(value.replace(",", "."))
 
         if self.scale is not None:
-            value_ = value_.quantize(self.scale)
+            dec = dec.quantize(self.scale)
 
-        return value_
+        return dec
 
     @convert.register
     def _convert_none(self, value: None):
@@ -468,13 +488,14 @@ DT_REGEX = re.compile(
 class DateTime(Element):
     """ OFX Section 3.2.8.2 """
 
-    type_: Any = datetime.datetime
+    # __type__ must be compatible with Time subclass override
+    __type__: Union[Type[datetime.datetime], Type[datetime.time]] = datetime.datetime
     regex = DT_REGEX
 
     @singledispatchmethod
     def convert(self, value):
         cls = value.__class__.__name__
-        raise TypeError(f"{value!r} is type '{cls}'; can't convert to {self.type_}")
+        raise TypeError(f"{value!r} is type '{cls}'; can't convert to {self.__type__}")
 
     @convert.register
     def _convert_datetime(self, value: datetime.datetime):
@@ -486,7 +507,7 @@ class DateTime(Element):
     def _convert_str(self, value: str):
         match = self.regex.match(value)
         if match is None:
-            msg = f"'{value}' does not conform to OFX formats for {self.type_}"
+            msg = f"'{value}' does not conform to OFX formats for {self.__type__}"
             raise OFXSpecError(msg)
 
         matchdict = match.groupdict()
@@ -502,7 +523,8 @@ class DateTime(Element):
         # OFX time formats give milliseconds,
         # but datetime.datetime wants microseconds
         intmatches["microsecond"] = 1000 * intmatches.pop("millisecond")
-        return self.normalize_to_gmt(self.type_(**intmatches), gmt_offset)
+        # Mypy doesn't understand passing ``**intmatches`` to instantiate
+        return self.normalize_to_gmt(self.__type__(**intmatches), gmt_offset)  # type: ignore
 
     def parse_gmt_offset(
         self, hours: Optional[str], minutes: Optional[str], tz_name: Optional[str]
@@ -539,7 +561,7 @@ class DateTime(Element):
     @unconvert.register
     def _unconvert_datetime(self, value: datetime.datetime):
         if not hasattr(value, "utcoffset") or value.utcoffset() is None:
-            msg = f"'{value}' isn't a timezone-aware {self.type_} instance; can't convert to GMT"
+            msg = f"'{value}' isn't a timezone-aware {self.__type__} instance; can't convert to GMT"
             raise ValueError(msg)
 
         # Transform to GMT
@@ -602,13 +624,13 @@ TIME_REGEX = re.compile(
 class Time(DateTime):
     """ OFX Section 3.2.8.3 """
 
-    type_ = datetime.time
+    __type__ = datetime.time
     regex = TIME_REGEX
 
     @singledispatchmethod
     def convert(self, value):
         cls = value.__class__.__name__
-        raise TypeError(f"{value!r} is type '{cls}'; can't convert to {self.type_}")
+        raise TypeError(f"{value!r} is type '{cls}'; can't convert to {self.__type__}")
 
     @convert.register
     def _convert_time(self, value: datetime.time):
@@ -649,7 +671,7 @@ class Time(DateTime):
     @unconvert.register
     def _unconvert_time(self, value: datetime.time):
         if not hasattr(value, "utcoffset") or value.utcoffset() is None:
-            msg = f"'{value}' isn't a timezone-aware {self.type_} instance; can't convert to GMT"
+            msg = f"'{value}' isn't a timezone-aware {self.__type__} instance; can't convert to GMT"
             raise ValueError(msg)
 
         # Transform to GMT
@@ -683,9 +705,7 @@ class ListElement(Element):
         ``ListElement(String(32))``
     """
 
-    def __init__(self, *args, **kwargs):
-        self.converter = args[0]
-        super().__init__(*args[1:], **kwargs)
+    __signature__ = make_signature("converter")
 
     def convert(self, value):
         return self.converter.convert(value)
@@ -709,14 +729,12 @@ class SubAggregate(Element):
         ``SubAggregate(BANKACCTFROM, required=True)``
     """
 
-    def __init__(self, *args, **kwargs):
-        self.type_ = args[0]
-        super().__init__(*args[1:], **kwargs)
+    __signature__ = make_signature("__type__")
 
     @singledispatchmethod
     def convert(self, value):
-        if not isinstance(value, self.type_):
-            raise TypeError(f"'{value}' is not an instance of {self.type_}")
+        if not isinstance(value, self.__type__):
+            raise TypeError(f"'{value}' is not an instance of {self.__type__}")
         return value
 
     @convert.register
@@ -726,7 +744,7 @@ class SubAggregate(Element):
 
     #  This doesn't get used
     #  def __repr__(self):
-    #  return "<{}>".format(self.type_.__name__)
+    #  return "<{}>".format(self.__type__.__name__)
 
 
 class ListAggregate(SubAggregate):
@@ -735,8 +753,8 @@ class ListAggregate(SubAggregate):
     """
 
     def unconvert(self, value):
-        if not isinstance(value, self.type_):
-            raise TypeError(f"'{value!r}' is not an instance of {self.type_}")
+        if not isinstance(value, self.__type__):
+            raise TypeError(f"'{value!r}' is not an instance of {self.__type__}")
         return value
 
 
@@ -745,10 +763,10 @@ class Unsupported:
     Null Aggregate/Element - not implemented (yet)
     """
 
-    def __get__(self, instance, type_) -> None:
+    def __get__(self, obj, objtype) -> None:
         pass
 
-    def __set__(self, instance, value) -> None:
+    def __set__(self, obj, value) -> None:
         pass
 
     def __repr__(self) -> str:

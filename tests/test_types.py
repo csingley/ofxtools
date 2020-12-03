@@ -20,10 +20,10 @@ class ElementTestCase(unittest.TestCase):
         """
         ofxtools.Types.Element(required=False)  # Succeeds
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             ofxtools.Types.Element(1, required=False)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             ofxtools.Types.Element(required=False, otherarg=5)
 
     def testConvert(self):
