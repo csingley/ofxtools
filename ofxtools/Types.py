@@ -58,17 +58,19 @@ class OFXSpecError(OFXTypeError):
     """ Violation of the OFX specification """
 
 
-def make_signature(*args, **kwargs):
-    """Construct appropriate ``inspect.Signature`` to be used by ``__init__()`` of
-    ``Element`` subclasses.
+def call_signature(*args, **kwargs):
+    """Decorator creating ``__signature__`` class attribute (``inspect.Signature`` instance)
+    for use by ``__init__()`` method of ``Element`` subclasses.
 
     Cf. discussion of Parameter/Signature
     pp. 86-101 of David Beazley's "Python 3 Metaprogramming"
     http://dabeaz.com/py3meta/Py3Meta.pdf
 
-    N.B. we don't follow Beazley's recommendation to stick the signature construction
-    logic in a custom metaclass because we're attracted to the simplicity of reusing
-    Python's *arg, **kwarg passing machinery to define the API here.
+    We don't follow Beazley's recommendation to stick the signature construction logic
+    in a custom metaclass because we're attracted to the simplicity of reusing Python's
+    *arg, **kwarg passing machinery to define the API here.
+
+    N.B. All Elements have ``required`` as keyword-only arg, with a default value of False.
     """
     #  Interpret *args as positional-only args (e.g. SubAggregate.__type__)
     #  that are mandatory (i.e. no default)
@@ -86,18 +88,8 @@ def make_signature(*args, **kwargs):
         inspect.Parameter("required", inspect.Parameter.KEYWORD_ONLY, default=False)
     )
 
-    return inspect.Signature(params)
-
-
-def call_signature(*args, **kwargs):
-    """Decorator creating ``__signature__`` class attribute (``inspect.Signature`` instance)
-    for use by ``__init__()`` method of ``Element`` subclasses.
-
-    N.B. All Elements have ``required`` as keyword-only arg, with a default value of False.
-    """
-
     def decorate(cls):
-        cls.__signature__ = make_signature(*args, **kwargs)
+        cls.__signature__ = inspect.Signature(params)
         return cls
 
     return decorate
@@ -154,6 +146,7 @@ class Element:
         for attr in self.__signature__.parameters:  # type: ignore
             val = getattr(self, attr)
             repr += f" {attr}={val}"
+
         repr += ">"
         return repr
 
@@ -196,6 +189,7 @@ class Bool(Element):
 
     @singledispatchmethod
     def convert(self, value):
+        # By default, any type not specifically dispatched raises an error
         msg = f"{value} is not one of the allowed values {self.mapping.keys()}"
         raise OFXSpecError(msg)
 
@@ -238,6 +232,7 @@ class String(Element):
 
     @singledispatchmethod
     def convert(self, value):
+        # By default, any type not specifically dispatched raises an error
         raise TypeError(f"{value!r} is not a str")
 
     def enforce_length(self, value: str) -> str:
@@ -292,10 +287,13 @@ class NagString(String):
 
 
 class OneOf(Element):
-    """Enum data type
+    """Enum data type.
+
+    Usage example from ``OPTINFO``:
+    >> opttype = OneOf("CALL", "PUT", required=True)
 
     N.B. the variable number of positional args used for instantiation violates the
-    assumptions of ``make_signature``, so we skip the ``@call_signature`` decorator
+    assumptions of ``call_signature``, so we skip the ``@call_signature`` decorator
     and directly create the ``__signature__`` attribute in the class definition.
     """
 
@@ -347,15 +345,16 @@ class Integer(Element):
 
     def enforce_length(self, value: int) -> int:
         # Mypy doesn't understand that ``length`` gets set by ``__init__()``
-        if self.length is not None and value >= 10 ** self.length:  # type: ignore
-            msg = f"'{value}' has too many digits; max digits={self.length}"  # type: ignore
+        length = self.length  # type: ignore
+        if length is not None and value >= 10 ** length:
+            msg = f"'{value}' has too many digits; max digits={length}"
             raise OFXSpecError(msg)
         return value
 
     @singledispatchmethod
     def convert(self, value):
-        value = int(value)
-        return self._convert_int(value)
+        # By default, attempt a naive conversion to subclass type
+        return self.enforce_length(int(value))
 
     @convert.register
     def _convert_int(self, value: int):
