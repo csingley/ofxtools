@@ -292,9 +292,11 @@ def add_format_group(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup
 def add_signon_group(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
     group = parser.add_argument_group(title="signon options")
     group.add_argument("-u", "--user", help="FI login username")
-    group.add_argument("--password",
-            help="Password. Used for scripting. Eg: --password $(/usr/bin/pass mybank/login). Use with "
-            "caution to avoid exposing passwords to the shell and its history.")
+    group.add_argument(
+        "--password",
+        help="Password. Used for scripting. Eg: --password $(/usr/bin/pass mybank/login). Use with "
+        "caution to avoid exposing passwords to the shell and its history.",
+    )
     group.add_argument(
         "--clientuid",
         nargs=0,
