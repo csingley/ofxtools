@@ -89,6 +89,7 @@ class MakeArgParserTestCase(unittest.TestCase):
             "useragent": "",
             "gen_newfileuid": True,
             "timeout": 2.0,
+            "password": "",
         }
 
     def testScanProfile(self):
