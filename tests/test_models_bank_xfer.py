@@ -68,7 +68,7 @@ class XferinfoTestCase(unittest.TestCase, base.TestAggregate):
                 root.append(acctfrom)
                 root.append(acctto)
                 SubElement(root, "TRNAMT").text = "257.53"
-                SubElement(root, "DTDUE").text = "20080930000000.000[0:GMT]"
+                SubElement(root, "DTDUE").text = "20080930000000.000[+0:UTC]"
                 yield root
 
     @classproperty
@@ -130,7 +130,7 @@ class XferprcstsTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("XFERPRCSTS")
         SubElement(root, "XFERPRCCODE").text = "POSTEDON"
-        SubElement(root, "DTXFERPRC").text = "20071231000000.000[0:GMT]"
+        SubElement(root, "DTXFERPRC").text = "20071231000000.000[+0:UTC]"
         return root
 
     @classproperty

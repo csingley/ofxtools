@@ -79,7 +79,7 @@ class ExtraCredentialsRequestTestCase(base.OfxTestCase, unittest.TestCase):
     <OFX>
         <SIGNONMSGSRQV1>
             <SONRQ>
-                <DTCLIENT>20060321083010.000[0:GMT]</DTCLIENT>
+                <DTCLIENT>20060321083010.000[+0:UTC]</DTCLIENT>
                 <USERID>12345</USERID>
                 <USERPASS>MyPassword</USERPASS>
                 <LANGUAGE>ENG</LANGUAGE>
@@ -132,7 +132,7 @@ class NeedsAuthtokenRequestTestCase(base.OfxTestCase, unittest.TestCase):
     <OFX>
         <SIGNONMSGSRQV1>
             <SONRQ>
-            <DTCLIENT>20060321083010.000[0:GMT]</DTCLIENT>
+            <DTCLIENT>20060321083010.000[+0:UTC]</DTCLIENT>
                 <USERID>12345</USERID>
                 <USERPASS>MyPassword</USERPASS>
                 <LANGUAGE>ENG</LANGUAGE>
@@ -181,7 +181,7 @@ class NeedsAuthtokenResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <SEVERITY>ERROR</SEVERITY>
                     <MESSAGE>Please provide Authentication Token</MESSAGE>
                 </STATUS>
-                <DTSERVER>20060321083015.000[0:GMT]</DTSERVER>
+                <DTSERVER>20060321083015.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
                 <FI>
                     <ORG>ABC</ORG>
@@ -221,7 +221,7 @@ class HasAuthtokenRequestTestCase(base.OfxTestCase, unittest.TestCase):
     <OFX>
         <SIGNONMSGSRQV1>
             <SONRQ>
-            <DTCLIENT>20060321083415.000[0:GMT]</DTCLIENT>
+            <DTCLIENT>20060321083415.000[+0:UTC]</DTCLIENT>
                 <USERID>12345</USERID>
                 <USERPASS>MyPassword</USERPASS>
                 <LANGUAGE>ENG</LANGUAGE>
@@ -272,7 +272,7 @@ class HasAuthtokenResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <SEVERITY>INFO</SEVERITY>
                     <MESSAGE>Success</MESSAGE>
                 </STATUS>
-                <DTSERVER>20060321083445.000[0:GMT]</DTSERVER>
+                <DTSERVER>20060321083445.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
                 <FI>
                     <ORG>ABC</ORG>
@@ -361,7 +361,7 @@ class NeedsMfachallengeResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <SEVERITY>ERROR</SEVERITY>
                     <MESSAGE>Further information required</MESSAGE>
                 </STATUS>
-                <DTSERVER>20060321083015.000[0:GMT]</DTSERVER>
+                <DTSERVER>20060321083015.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
                 <FI>
                     <ORG>ABC</ORG>
@@ -400,7 +400,7 @@ class MfachallengeRequestTestCase(base.OfxTestCase, unittest.TestCase):
     <OFX>
         <SIGNONMSGSRQV1>
             <SONRQ>
-            <DTCLIENT>20060321083020.000[0:GMT]</DTCLIENT>
+            <DTCLIENT>20060321083020.000[+0:UTC]</DTCLIENT>
                 <USERID>12345</USERID>
                 <USERPASS>MyPassword</USERPASS>
                 <LANGUAGE>ENG</LANGUAGE>
@@ -415,7 +415,7 @@ class MfachallengeRequestTestCase(base.OfxTestCase, unittest.TestCase):
             <MFACHALLENGETRNRQ>
                 <TRNUID>66D3749F-5B3B-4DC3-87A3-8F795EA59EDB</TRNUID>
                 <MFACHALLENGERQ>
-                <DTCLIENT>20060321083020.000[0:GMT]</DTCLIENT
+                <DTCLIENT>20060321083020.000[+0:UTC]</DTCLIENT
                 </MFACHALLENGERQ>
             </MFACHALLENGETRNRQ>
         </SIGNONMSGSRQV1>
@@ -463,7 +463,7 @@ class MfachallengeResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20060321083025.000[0:GMT]</DTSERVER>
+                <DTSERVER>20060321083025.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
                 <FI>
                     <ORG>ABC</ORG>
@@ -534,7 +534,7 @@ class HasMfachallengeaRequestTestCase(base.OfxTestCase, unittest.TestCase):
     <OFX>
         <SIGNONMSGSRQV1>
             <SONRQ>
-            <DTCLIENT>20060321083415.000[0:GMT]</DTCLIENT>
+            <DTCLIENT>20060321083415.000[+0:UTC]</DTCLIENT>
                 <USERID>12345</USERID>
                 <USERPASS>MyPassword</USERPASS>
                 <LANGUAGE>ENG</LANGUAGE>
@@ -600,7 +600,7 @@ class HasMfachallengeaResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <SEVERITY>INFO</SEVERITY>
                     <MESSAGE>Success</MESSAGE>
                 </STATUS>
-                <DTSERVER>20060321083445.000[0:GMT]</DTSERVER>
+                <DTSERVER>20060321083445.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
                 <FI>
                     <ORG>ABC</ORG>

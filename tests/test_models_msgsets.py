@@ -620,7 +620,7 @@ class XferprofTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("XFERPROF")
         SubElement(root, "PROCDAYSOFF").text = "SUNDAY"
-        SubElement(root, "PROCENDTM").text = "170000.000[0:GMT]"
+        SubElement(root, "PROCENDTM").text = "170000.000[+0:UTC]"
         SubElement(root, "CANSCHED").text = "Y"
         SubElement(root, "CANRECUR").text = "Y"
         SubElement(root, "CANMODXFERS").text = "N"
@@ -654,7 +654,7 @@ class StpchkprofTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("STPCHKPROF")
         SubElement(root, "PROCDAYSOFF").text = "SUNDAY"
-        SubElement(root, "PROCENDTM").text = "170000.000[0:GMT]"
+        SubElement(root, "PROCENDTM").text = "170000.000[+0:UTC]"
         SubElement(root, "CANUSERANGE").text = "Y"
         SubElement(root, "CANUSEDESC").text = "Y"
         SubElement(root, "STPCHKFEE").text = "30.1"
@@ -1026,7 +1026,7 @@ class Wirexfermsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
         root = Element("WIREXFERMSGSETV1")
         root.append(MsgsetcoreTestCase.etree)
         SubElement(root, "PROCDAYSOFF").text = "SUNDAY"
-        SubElement(root, "PROCENDTM").text = "170000.000[0:GMT]"
+        SubElement(root, "PROCENDTM").text = "170000.000[+0:UTC]"
         SubElement(root, "CANSCHED").text = "Y"
         SubElement(root, "DOMXFERFEE").text = "7.50"
         SubElement(root, "INTLXFERFEE").text = "17.50"
@@ -1174,7 +1174,7 @@ class WirexfermsgsetTestCase(unittest.TestCase, base.TestAggregate):
 #  SubElement(root, "XFERDAYSWITH").text = "3"
 #  SubElement(root, "XFERDFLTDAYSTOPAY").text = "5"
 #  SubElement(root, "PROCDAYSOFF").text = "SUNDAY"
-#  SubElement(root, "PROCENDTM").text = "170000.000[0:GMT]"
+#  SubElement(root, "PROCENDTM").text = "170000.000[+0:UTC]"
 #  SubElement(root, "MODELWND").text = "3"
 #  SubElement(root, "POSTPROCWND").text = "6"
 #  SubElement(root, "STSVIAMODS").text = "N"

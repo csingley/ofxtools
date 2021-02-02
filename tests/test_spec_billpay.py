@@ -65,7 +65,7 @@ class PaymentRequestTestCase(base.OfxTestCase, unittest.TestCase):
     <OFX>
         <SIGNONMSGSRQV1>
             <SONRQ>
-                <DTCLIENT>20051029101000.000[0:GMT]</DTCLIENT>
+                <DTCLIENT>20051029101000.000[+0:UTC]</DTCLIENT>
                 <USERID>12345</USERID>
                 <USERPASS>MyPassword</USERPASS>
                 <LANGUAGE>ENG</LANGUAGE>
@@ -97,7 +97,7 @@ class PaymentRequestTestCase(base.OfxTestCase, unittest.TestCase):
                             <PHONE>415.987.6543</PHONE>
                         </PAYEE>
                         <PAYACCT>10101</PAYACCT>
-                        <DTDUE>20051001000000.000[0:GMT]</DTDUE>
+                        <DTDUE>20051001000000.000[+0:UTC]</DTDUE>
                         <MEMO>payment #3</MEMO>
                     </PMTINFO>
                 </PMTRQ>
@@ -146,10 +146,10 @@ class PaymentResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <DTSERVER>20051029101003.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
-                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
-                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <DTPROFUP>20041029101003.000[+0:UTC]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[+0:UTC]</DTACCTUP>
                 <FI>
                     <ORG>NCH</ORG>
                     <FID>1001</FID>
@@ -184,7 +184,7 @@ class PaymentResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     </PAYEE>
                     <PAYEELSTID>123214</PAYEELSTID>
                     <PAYACCT>10101</PAYACCT>
-                    <DTDUE>20051001000000.000[0:GMT]</DTDUE>
+                    <DTDUE>20051001000000.000[+0:UTC]</DTDUE>
                     <MEMO>payment #3</MEMO>
                 </PMTINFO>
                 <EXTDPAYEE>
@@ -195,7 +195,7 @@ class PaymentResponseTestCase(base.OfxTestCase, unittest.TestCase):
                 </EXTDPAYEE>
                 <PMTPRCSTS>
                     <PMTPRCCODE>WILLPROCESSON</PMTPRCCODE>
-                    <DTPMTPRC>20050928000000.000[0:GMT]</DTPMTPRC>
+                    <DTPMTPRC>20050928000000.000[+0:UTC]</DTPMTPRC>
                 </PMTPRCSTS>
             </PMTRS>
         </PMTTRNRS>
@@ -256,7 +256,7 @@ class PayeeidRequestTestCase(base.OfxTestCase, unittest.TestCase):
     <OFX>
         <SIGNONMSGSRQV1>
             <SONRQ>
-                <DTCLIENT>20051029101000.000[0:GMT]</DTCLIENT>
+                <DTCLIENT>20051029101000.000[+0:UTC]</DTCLIENT>
                 <USERID>12345</USERID>
                 <USERPASS>MyPassword</USERPASS>
                 <LANGUAGE>ENG</LANGUAGE>
@@ -282,7 +282,7 @@ class PayeeidRequestTestCase(base.OfxTestCase, unittest.TestCase):
                         <PAYEEID>9076</PAYEEID>
                         <PAYEELSTID>123214</PAYEELSTID>
                         <PAYACCT>10101</PAYACCT>
-                        <DTDUE>20051101000000.000[0:GMT]</DTDUE>
+                        <DTDUE>20051101000000.000[+0:UTC]</DTDUE>
                         <MEMO>Payment #4</MEMO>
                     </PMTINFO>
                 </PMTRQ>
@@ -325,10 +325,10 @@ class PayeeidResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <DTSERVER>20051029101003.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
-                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
-                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <DTPROFUP>20041029101003.000[+0:UTC]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[+0:UTC]</DTACCTUP>
                 <FI>
                     <ORG>NCH</ORG>
                     <FID>1001</FID>
@@ -356,7 +356,7 @@ class PayeeidResponseTestCase(base.OfxTestCase, unittest.TestCase):
                         <PAYEEID>9076</PAYEEID>
                         <PAYEELSTID>123214</PAYEELSTID>
                         <PAYACCT>10101</PAYACCT>
-                        <DTDUE>20051101000000.000[0:GMT]</DTDUE>
+                        <DTDUE>20051101000000.000[+0:UTC]</DTDUE>
                         <MEMO>payment #4</MEMO>
                     </PMTINFO>
                     <EXTDPAYEE>
@@ -367,7 +367,7 @@ class PayeeidResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     </EXTDPAYEE>
                     <PMTPRCSTS>
                         <PMTPRCCODE>WILLPROCESSON</PMTPRCCODE>
-                        <DTPMTPRC>20051029000000.000[0:GMT]</DTPMTPRC>
+                        <DTPMTPRC>20051029000000.000[+0:UTC]</DTPMTPRC>
                     </PMTPRCSTS>
                 </PMTRS>
             </PMTTRNRS>
@@ -420,7 +420,7 @@ class PmtmodAmountRequestTestCase(base.OfxTestCase, unittest.TestCase):
     <OFX>
         <SIGNONMSGSRQV1>
             <SONRQ>
-            <DTCLIENT>20051029101000.000[0:GMT]</DTCLIENT>
+            <DTCLIENT>20051029101000.000[+0:UTC]</DTCLIENT>
             <USERID>12345</USERID>
             <USERPASS>MyPassword</USERPASS>
             <LANGUAGE>ENG</LANGUAGE>
@@ -447,7 +447,7 @@ class PmtmodAmountRequestTestCase(base.OfxTestCase, unittest.TestCase):
                         <PAYEEID>9076</PAYEEID>
                         <PAYEELSTID>123214</PAYEELSTID>
                         <PAYACCT>10101</PAYACCT>
-                        <DTDUE>20051001000000.000[0:GMT]</DTDUE>
+                        <DTDUE>20051001000000.000[+0:UTC]</DTDUE>
                         <MEMO>payment #3</MEMO>
                     </PMTINFO>
                 </PMTMODRQ>
@@ -492,10 +492,10 @@ class PmtmodAmountResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <DTSERVER>20051029101003.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
-                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
-                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <DTPROFUP>20041029101003.000[+0:UTC]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[+0:UTC]</DTACCTUP>
                 <FI>
                     <ORG>NCH</ORG>
                     <FID>1001</FID>
@@ -521,12 +521,12 @@ class PmtmodAmountResponseTestCase(base.OfxTestCase, unittest.TestCase):
                         <PAYEEID>9076</PAYEEID>
                         <PAYEELSTID>123214</PAYEELSTID>
                         <PAYACCT>10101</PAYACCT>
-                        <DTDUE>20051001000000.000[0:GMT]</DTDUE>
+                        <DTDUE>20051001000000.000[+0:UTC]</DTDUE>
                         <MEMO>payment #3</MEMO>
                     </PMTINFO>
                     <PMTPRCSTS>
                         <PMTPRCCODE>WILLPROCESSON</PMTPRCCODE>
-                        <DTPMTPRC>20050928000000.000[0:GMT]</DTPMTPRC>
+                        <DTPMTPRC>20050928000000.000[+0:UTC]</DTPMTPRC>
                     </PMTPRCSTS>
                 </PMTMODRS>
             </PMTTRNRS>
@@ -574,7 +574,7 @@ class PmtmodDateRequestTestCase(base.OfxTestCase, unittest.TestCase):
     <OFX>
         <SIGNONMSGSRQV1>
             <SONRQ>
-                <DTCLIENT>20051029101000.000[0:GMT]</DTCLIENT>
+                <DTCLIENT>20051029101000.000[+0:UTC]</DTCLIENT>
                 <USERID>12345</USERID>
                 <USERPASS>MyPassword</USERPASS>
                 <LANGUAGE>ENG</LANGUAGE>
@@ -601,7 +601,7 @@ class PmtmodDateRequestTestCase(base.OfxTestCase, unittest.TestCase):
                         <PAYEEID>9076</PAYEEID>
                         <PAYEELSTID>123214</PAYEELSTID>
                         <PAYACCT>10101</PAYACCT>
-                        <DTDUE>20051212000000.000[0:GMT]</DTDUE>
+                        <DTDUE>20051212000000.000[+0:UTC]</DTDUE>
                         <MEMO>payment #3</MEMO>
                     </PMTINFO>
                 </PMTMODRQ>
@@ -646,10 +646,10 @@ class PmtmodDateResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <DTSERVER>20051029101003.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
-                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
-                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <DTPROFUP>20041029101003.000[+0:UTC]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[+0:UTC]</DTACCTUP>
                 <FI>
                     <ORG>NCH</ORG>
                     <FID>1001</FID>
@@ -675,12 +675,12 @@ class PmtmodDateResponseTestCase(base.OfxTestCase, unittest.TestCase):
                         <PAYEEID>9076</PAYEEID>
                         <PAYEELSTID>123214</PAYEELSTID>
                         <PAYACCT>10101</PAYACCT>
-                        <DTDUE>20051212000000.000[0:GMT]</DTDUE>
+                        <DTDUE>20051212000000.000[+0:UTC]</DTDUE>
                         <MEMO>payment #3</MEMO>
                     </PMTINFO>
                     <PMTPRCSTS>
                         <PMTPRCCODE>WILLPROCESSON</PMTPRCCODE>
-                        <DTPMTPRC>20051209000000.000[0:GMT]</DTPMTPRC>
+                        <DTPMTPRC>20051209000000.000[+0:UTC]</DTPMTPRC>
                     </PMTPRCSTS>
                 </PMTMODRS>
             </PMTTRNRS>
@@ -728,7 +728,7 @@ class PmtcancRequestTestCase(base.OfxTestCase, unittest.TestCase):
     <OFX>
         <SIGNONMSGSRQV1>
             <SONRQ>
-                <DTCLIENT>20051029101000.000[0:GMT]</DTCLIENT>
+                <DTCLIENT>20051029101000.000[+0:UTC]</DTCLIENT>
                 <USERID>12345</USERID>
                 <USERPASS>MyPassword</USERPASS>
                 <LANGUAGE>ENG</LANGUAGE>
@@ -777,10 +777,10 @@ class PmtcancResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <DTSERVER>20051029101003.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
-                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
-                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <DTPROFUP>20041029101003.000[+0:UTC]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[+0:UTC]</DTACCTUP>
                 <FI>
                     <ORG>NCH</ORG>
                     <FID>1001</FID>
@@ -824,7 +824,7 @@ class PmtinqRequestTestCase(base.OfxTestCase, unittest.TestCase):
     <OFX>
         <SIGNONMSGSRQV1>
             <SONRQ>
-                <DTCLIENT>20051029101000.000[0:GMT]</DTCLIENT>
+                <DTCLIENT>20051029101000.000[+0:UTC]</DTCLIENT>
                 <USERID>12345</USERID>
                 <USERPASS>MyPassword</USERPASS>
                 <LANGUAGE>ENG</LANGUAGE>
@@ -873,10 +873,10 @@ class PmtinqResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <DTSERVER>20051029101003.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
-                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
-                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <DTPROFUP>20041029101003.000[+0:UTC]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[+0:UTC]</DTACCTUP>
                 <FI>
                     <ORG>NCH</ORG>
                     <FID>1001</FID>
@@ -894,7 +894,7 @@ class PmtinqResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <SRVRTID>565321</SRVRTID>
                     <PMTPRCSTS>
                         <PMTPRCCODE>PROCESSEDON</PMTPRCCODE>
-                        <DTPMTPRC>20050201000000.000[0:GMT]</DTPMTPRC>
+                        <DTPMTPRC>20050201000000.000[+0:UTC]</DTPMTPRC>
                     </PMTPRCSTS>
                     <CHECKNUM>6017</CHECKNUM>
                 </PMTINQRS>
@@ -934,7 +934,7 @@ class RecpmtRequestTestCase(base.OfxTestCase, unittest.TestCase):
     <OFX>
         <SIGNONMSGSRQV1>
             <SONRQ>
-                <DTCLIENT>20051029101000.000[0:GMT]</DTCLIENT>
+                <DTCLIENT>20051029101000.000[+0:UTC]</DTCLIENT>
                 <USERID>12345</USERID>
                 <USERPASS>MyPassword</USERPASS>
                 <LANGUAGE>ENG</LANGUAGE>
@@ -964,7 +964,7 @@ class RecpmtRequestTestCase(base.OfxTestCase, unittest.TestCase):
                         <PAYEEID>77810</PAYEEID>
                         <PAYEELSTID>27983</PAYEELSTID>
                         <PAYACCT>444-78-97572</PAYACCT>
-                        <DTDUE>20051115000000.000[0:GMT]</DTDUE>
+                        <DTDUE>20051115000000.000[+0:UTC]</DTDUE>
                         <MEMO>Auto loan payment</MEMO>
                     </PMTINFO>
                 </RECPMTRQ>
@@ -1011,10 +1011,10 @@ class RecpmtResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <DTSERVER>20051029101003.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
-                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
-                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <DTPROFUP>20041029101003.000[+0:UTC]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[+0:UTC]</DTACCTUP>
                 <FI>
                     <ORG>NCH</ORG>
                     <FID>1001</FID>
@@ -1046,7 +1046,7 @@ class RecpmtResponseTestCase(base.OfxTestCase, unittest.TestCase):
                         <PAYEEID>77810</PAYEEID>
                         <PAYEELSTID>27983</PAYEELSTID>
                         <PAYACCT>444-78-97572</PAYACCT>
-                        <DTDUE>20051115000000.000[0:GMT]</DTDUE>
+                        <DTDUE>20051115000000.000[+0:UTC]</DTDUE>
                         <MEMO>Auto loan payment</MEMO>
                     </PMTINFO>
                     <EXTDPAYEE>
@@ -1103,7 +1103,7 @@ class RecpmtmodRequestTestCase(base.OfxTestCase, unittest.TestCase):
     <OFX>
         <SIGNONMSGSRQV1>
             <SONRQ>
-                <DTCLIENT>20051029101000.000[0:GMT]</DTCLIENT>
+                <DTCLIENT>20051029101000.000[+0:UTC]</DTCLIENT>
                 <USERID>12345</USERID>
                 <USERPASS>MyPassword</USERPASS>
                 <LANGUAGE>ENG</LANGUAGE>
@@ -1134,7 +1134,7 @@ class RecpmtmodRequestTestCase(base.OfxTestCase, unittest.TestCase):
                         <PAYEEID>77810</PAYEEID>
                         <PAYEELSTID>27983</PAYEELSTID>
                         <PAYACCT>444-78-97572</PAYACCT>
-                        <DTDUE>20051115000000.000[0:GMT]</DTDUE>
+                        <DTDUE>20051115000000.000[+0:UTC]</DTDUE>
                         <MEMO>Auto loan payment</MEMO>
                     </PMTINFO>
                     <MODPENDING>N</MODPENDING>
@@ -1185,10 +1185,10 @@ class RecpmtmodResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <DTSERVER>20051029101003.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
-                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
-                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <DTPROFUP>20041029101003.000[+0:UTC]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[+0:UTC]</DTACCTUP>
                 <FI>
                     <ORG>NCH</ORG>
                     <FID>1001</FID>
@@ -1266,7 +1266,7 @@ class RecpmtcancRequestTestCase(base.OfxTestCase, unittest.TestCase):
     <OFX>
         <SIGNONMSGSRQV1>
         <SONRQ>
-            <DTCLIENT>20051029101000.000[0:GMT]</DTCLIENT>
+            <DTCLIENT>20051029101000.000[+0:UTC]</DTCLIENT>
             <USERID>12345</USERID>
             <USERPASS>MyPassword</USERPASS>
             <LANGUAGE>ENG</LANGUAGE>
@@ -1317,10 +1317,10 @@ class RecpmtcancResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <DTSERVER>20051029101003.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
-                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
-                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <DTPROFUP>20041029101003.000[+0:UTC]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[+0:UTC]</DTACCTUP>
                 <FI>
                     <ORG>NCH</ORG>
                     <FID>1001</FID>
@@ -1367,7 +1367,7 @@ class PayeeRequestTestCase(base.OfxTestCase, unittest.TestCase):
     <OFX>
         <SIGNONMSGSRQV1>
             <SONRQ>
-                <DTCLIENT>20051029101000.000[0:GMT]</DTCLIENT>
+                <DTCLIENT>20051029101000.000[+0:UTC]</DTCLIENT>
                 <USERID>12345</USERID>
                 <USERPASS>MyPassword</USERPASS>
                 <LANGUAGE>ENG</LANGUAGE>
@@ -1434,10 +1434,10 @@ class PayeeResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <DTSERVER>20051029101003.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
-                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
-                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <DTPROFUP>20041029101003.000[+0:UTC]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[+0:UTC]</DTACCTUP>
                 <FI>
                     <ORG>NCH</ORG>
                     <FID>1001</FID>
@@ -1519,7 +1519,7 @@ class PmtsyncRequestTestCase(base.OfxTestCase, unittest.TestCase):
     <OFX>
         <SIGNONMSGSRQV1>
             <SONRQ>
-                <DTCLIENT>20051029101000.000[0:GMT]</DTCLIENT>
+                <DTCLIENT>20051029101000.000[+0:UTC]</DTCLIENT>
                 <USERID>12345</USERID>
                 <USERPASS>MyPassword</USERPASS>
                 <LANGUAGE>ENG</LANGUAGE>
@@ -1573,10 +1573,10 @@ class PmtsyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <DTSERVER>20051029101003.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
-                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
-                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <DTPROFUP>20041029101003.000[+0:UTC]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[+0:UTC]</DTACCTUP>
                 <FI>
                     <ORG>NCH</ORG>
                     <FID>1001</FID>
@@ -1611,7 +1611,7 @@ class PmtsyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
                             <PAYEEID>9076</PAYEEID>
                             <PAYEELSTID>123214</PAYEELSTID>
                             <PAYACCT>10101</PAYACCT>
-                            <DTDUE>20051001000000.000[0:GMT]</DTDUE>
+                            <DTDUE>20051001000000.000[+0:UTC]</DTDUE>
                             <MEMO>payment #4</MEMO>
                         </PMTINFO>
                         <EXTDPAYEE>
@@ -1622,7 +1622,7 @@ class PmtsyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
                         </EXTDPAYEE>
                         <PMTPRCSTS>
                             <PMTPRCCODE>WILLPROCESSON</PMTPRCCODE>
-                            <DTPMTPRC>20051001000000.000[0:GMT]</DTPMTPRC>
+                            <DTPMTPRC>20051001000000.000[+0:UTC]</DTPMTPRC>
                         </PMTPRCSTS>
                     </PMTRS>
                 </PMTTRNRS>

@@ -148,7 +148,7 @@ class ChkmailrsTestCase(unittest.TestCase, base.TestAggregate):
         root.append(mail)
         SubElement(root, "CHECKNUM").text = "1001"
         SubElement(root, "TRNAMT").text = "321.45"
-        SubElement(root, "DTUSER").text = "21060930000000.000[0:GMT]"
+        SubElement(root, "DTUSER").text = "21060930000000.000[+0:UTC]"
         SubElement(root, "FEE").text = "21.50"
 
         return root
@@ -182,7 +182,7 @@ class DepmailrsTestCase(unittest.TestCase, base.TestAggregate):
         root.append(bankacctfrom)
         root.append(mail)
         SubElement(root, "TRNAMT").text = "321.45"
-        SubElement(root, "DTUSER").text = "21060930000000.000[0:GMT]"
+        SubElement(root, "DTUSER").text = "21060930000000.000[+0:UTC]"
         SubElement(root, "FEE").text = "21.50"
 
         return root

@@ -605,7 +605,7 @@ class DateTime(Element):
         )  # Push seconds dial if necessary
 
         millisec_str = "{0:03d}".format(millisecond)
-        fmt = "%Y%m%d%H%M%S.{}[0:GMT]".format(millisec_str)
+        fmt = "%Y%m%d%H%M%S.{}[+0:UTC]".format(millisec_str)
         return value.strftime(fmt)
 
     @unconvert.register
@@ -713,7 +713,7 @@ class Time(DateTime):
         )
         dt -= value.utcoffset()  # type: ignore
         milliseconds = "{0:03d}".format((dt.microsecond + 500) // 1000)
-        fmt = "%H%M%S.{}[0:GMT]".format(milliseconds)
+        fmt = "%H%M%S.{}[+0:UTC]".format(milliseconds)
         return dt.strftime(fmt)
 
     @unconvert.register

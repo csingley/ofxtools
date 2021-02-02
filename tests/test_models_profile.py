@@ -35,7 +35,7 @@ class ProfrqTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("PROFRQ")
         SubElement(root, "CLIENTROUTING").text = "SERVICE"
-        SubElement(root, "DTPROFUP").text = "20010401000000.000[0:GMT]"
+        SubElement(root, "DTPROFUP").text = "20010401000000.000[+0:UTC]"
         return root
 
     @classproperty
@@ -192,7 +192,7 @@ class ProfrsTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("PROFRS")
         root.append(cls.msgsetlist)
         root.append(SignoninfolistTestCase.etree)
-        SubElement(root, "DTPROFUP").text = "20010401000000.000[0:GMT]"
+        SubElement(root, "DTPROFUP").text = "20010401000000.000[+0:UTC]"
         SubElement(root, "FINAME").text = "Dewey Cheatham & Howe"
         SubElement(root, "ADDR1").text = "3717 N Clark St"
         SubElement(root, "ADDR2").text = "Dugout Box, Aisle 19"

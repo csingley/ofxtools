@@ -46,7 +46,7 @@ class BalTestCase(unittest.TestCase, base.TestAggregate):
         ET.SubElement(root, "DESC").text = "Balance"
         ET.SubElement(root, "BALTYPE").text = "DOLLAR"
         ET.SubElement(root, "VALUE").text = "111.22"
-        ET.SubElement(root, "DTASOF").text = "20010630000000.000[0:GMT]"
+        ET.SubElement(root, "DTASOF").text = "20010630000000.000[+0:UTC]"
         currency = i18n.CurrencyTestCase.etree
         root.append(currency)
         return root
@@ -125,8 +125,8 @@ class TranListTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = ET.Element("TESTTRANLIST")
-        ET.SubElement(root, "DTSTART").text = "20150101000000.000[0:GMT]"
-        ET.SubElement(root, "DTEND").text = "20150331000000.000[0:GMT]"
+        ET.SubElement(root, "DTSTART").text = "20150101000000.000[+0:UTC]"
+        ET.SubElement(root, "DTEND").text = "20150331000000.000[+0:UTC]"
 
         agg0 = ET.SubElement(root, "TESTAGGREGATE")
         ET.SubElement(agg0, "METADATA").text = "foo"

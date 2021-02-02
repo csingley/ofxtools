@@ -54,9 +54,9 @@ class ClosingTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("CLOSING")
         SubElement(root, "FITID").text = "DEADBEEF"
-        SubElement(root, "DTOPEN").text = "20161201000000.000[0:GMT]"
-        SubElement(root, "DTCLOSE").text = "20161225000000.000[0:GMT]"
-        SubElement(root, "DTNEXT").text = "20170101000000.000[0:GMT]"
+        SubElement(root, "DTOPEN").text = "20161201000000.000[+0:UTC]"
+        SubElement(root, "DTCLOSE").text = "20161225000000.000[+0:UTC]"
+        SubElement(root, "DTNEXT").text = "20170101000000.000[+0:UTC]"
         SubElement(root, "BALOPEN").text = "11"
         SubElement(root, "BALCLOSE").text = "20"
         SubElement(root, "BALMIN").text = "6"
@@ -64,8 +64,8 @@ class ClosingTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "CHKANDDEBIT").text = "-5"
         SubElement(root, "TOTALFEES").text = "0"
         SubElement(root, "TOTALINT").text = "0"
-        SubElement(root, "DTPOSTSTART").text = "20161201000000.000[0:GMT]"
-        SubElement(root, "DTPOSTEND").text = "20161225000000.000[0:GMT]"
+        SubElement(root, "DTPOSTSTART").text = "20161201000000.000[+0:UTC]"
+        SubElement(root, "DTPOSTEND").text = "20161225000000.000[+0:UTC]"
         SubElement(root, "MKTGINFO").text = "Get Free Stuff NOW!!"
         root.append(i18n.CurrencyTestCase.etree)
         return root
@@ -103,8 +103,8 @@ class StmtendrqTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("STMTENDRQ")
         root.append(bk_stmt.BankacctfromTestCase.etree)
-        SubElement(root, "DTSTART").text = "20161201000000.000[0:GMT]"
-        SubElement(root, "DTEND").text = "20161225000000.000[0:GMT]"
+        SubElement(root, "DTSTART").text = "20161201000000.000[+0:UTC]"
+        SubElement(root, "DTEND").text = "20161225000000.000[+0:UTC]"
 
         return root
 
@@ -186,7 +186,7 @@ class LastpmtinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("LASTPMTINFO")
-        SubElement(root, "LASTPMTDATE").text = "20170501000000.000[0:GMT]"
+        SubElement(root, "LASTPMTDATE").text = "20170501000000.000[+0:UTC]"
         SubElement(root, "LASTPMTAMT").text = "655.50"
         return root
 
@@ -233,13 +233,13 @@ class CcclosingTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("CCCLOSING")
         SubElement(root, "FITID").text = "1001"
-        SubElement(root, "DTOPEN").text = "20040701000000.000[0:GMT]"
-        SubElement(root, "DTCLOSE").text = "20040704000000.000[0:GMT]"
-        SubElement(root, "DTNEXT").text = "20040804000000.000[0:GMT]"
+        SubElement(root, "DTOPEN").text = "20040701000000.000[+0:UTC]"
+        SubElement(root, "DTCLOSE").text = "20040704000000.000[+0:UTC]"
+        SubElement(root, "DTNEXT").text = "20040804000000.000[+0:UTC]"
         SubElement(root, "BALOPEN").text = "24.5"
         SubElement(root, "BALCLOSE").text = "26.5"
         SubElement(root, "INTYTD").text = "0.01"
-        SubElement(root, "DTPMTDUE").text = "20040715000000.000[0:GMT]"
+        SubElement(root, "DTPMTDUE").text = "20040715000000.000[+0:UTC]"
         SubElement(root, "MINPMTDUE").text = "7.65"
         SubElement(root, "PASTDUEAMT").text = "0.35"
         SubElement(root, "LATEFEEAMT").text = "5"
@@ -252,8 +252,8 @@ class CcclosingTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "DEBADJ").text = "1.45"
         SubElement(root, "CREDITLIMIT").text = "50000"
         SubElement(root, "CASHADVCREDITLIMIT").text = "5000"
-        SubElement(root, "DTPOSTSTART").text = "20040701000000.000[0:GMT]"
-        SubElement(root, "DTPOSTEND").text = "20040704000000.000[0:GMT]"
+        SubElement(root, "DTPOSTSTART").text = "20040701000000.000[+0:UTC]"
+        SubElement(root, "DTPOSTEND").text = "20040704000000.000[+0:UTC]"
         SubElement(root, "AUTOPAY").text = "Y"
         lastpmtinfo = LastpmtinfoTestCase.etree
         root.append(lastpmtinfo)
@@ -311,8 +311,8 @@ class CcstmtendrqTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("CCSTMTENDRQ")
         acctfrom = bk_stmt.CcacctfromTestCase.etree
         root.append(acctfrom)
-        SubElement(root, "DTSTART").text = "20040701000000.000[0:GMT]"
-        SubElement(root, "DTEND").text = "20040704000000.000[0:GMT]"
+        SubElement(root, "DTSTART").text = "20040701000000.000[+0:UTC]"
+        SubElement(root, "DTEND").text = "20040704000000.000[+0:UTC]"
         SubElement(root, "INCSTMTIMG").text = "N"
 
         return root

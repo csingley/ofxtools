@@ -61,7 +61,7 @@ class ChkdescTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("CHKDESC")
         SubElement(root, "NAME").text = "Bucky Beaver"
         SubElement(root, "CHKNUM").text = "125"
-        SubElement(root, "DTUSER").text = "20051122000000.000[0:GMT]"
+        SubElement(root, "DTUSER").text = "20051122000000.000[+0:UTC]"
         SubElement(root, "TRNAMT").text = "2533"
         return root
 
@@ -159,7 +159,7 @@ class StpchknumTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("STPCHKNUM")
         SubElement(root, "CHECKNUM").text = "123"
         SubElement(root, "NAME").text = "Buckaroo Banzai"
-        SubElement(root, "DTUSER").text = "17760704000000.000[0:GMT]"
+        SubElement(root, "DTUSER").text = "17760704000000.000[+0:UTC]"
         SubElement(root, "TRNAMT").text = "4500.00"
         SubElement(root, "CHKSTATUS").text = "0"
         SubElement(root, "CHKERROR").text = "Stop check succeeded"

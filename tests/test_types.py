@@ -469,20 +469,20 @@ class DateTimeTestCase(unittest.TestCase, Base):
     def test_unconvert(self):
         t = self.type_()
         check = datetime.datetime(2007, 1, 1, tzinfo=UTC)
-        self.assertEqual(t.unconvert(check), "20070101000000.000[0:GMT]")
+        self.assertEqual(t.unconvert(check), "20070101000000.000[+0:UTC]")
 
     def test_unconvert_round_microseconds(self):
         # Round up microseconds above 999499; increment seconds (Issue #80)
         t = self.type_()
         check = datetime.datetime(2020, 1, 1, 1, 1, 1, 999499, tzinfo=UTC)
-        self.assertEqual(t.unconvert(check), "20200101010101.999[0:GMT]")
+        self.assertEqual(t.unconvert(check), "20200101010101.999[+0:UTC]")
         check = datetime.datetime(2020, 1, 1, 1, 1, 1, 999500, tzinfo=UTC)
-        self.assertEqual(t.unconvert(check), "20200101010102.000[0:GMT]")
+        self.assertEqual(t.unconvert(check), "20200101010102.000[+0:UTC]")
         check = datetime.datetime(2020, 1, 1, 1, 1, 1, 999999, tzinfo=UTC)
-        self.assertEqual(t.unconvert(check), "20200101010102.000[0:GMT]")
+        self.assertEqual(t.unconvert(check), "20200101010102.000[+0:UTC]")
         # Check that bumping seconds correctly propagates to bump all higher dials
         check = datetime.datetime(2020, 12, 31, 23, 59, 59, 999500, tzinfo=UTC)
-        self.assertEqual(t.unconvert(check), "20210101000000.000[0:GMT]")
+        self.assertEqual(t.unconvert(check), "20210101000000.000[+0:UTC]")
 
     def test_unconvert_illegal(self):
         t = self.type_()
@@ -498,7 +498,7 @@ class DateTimeTestCase(unittest.TestCase, Base):
 
     def test_convert_roundtrip(self):
         t = self.type_()
-        original = "20070101122030.567[0:GMT]"
+        original = "20070101122030.567[+0:UTC]"
         result = original
         self.assertEqual(t.unconvert(t.convert(original)), result)
 
@@ -595,7 +595,7 @@ class TimeTestCase(unittest.TestCase, Base):
     def test_unconvert(self):
         t = self.type_()
         check = datetime.time(1, 2, 3, tzinfo=UTC)
-        self.assertEqual(t.unconvert(check), "010203.000[0:GMT]")
+        self.assertEqual(t.unconvert(check), "010203.000[+0:UTC]")
 
     def test_unconvert_illegal(self):
         t = self.type_()
@@ -613,7 +613,7 @@ class TimeTestCase(unittest.TestCase, Base):
 
     def test_convert_roundtrip(self):
         t = self.type_()
-        original = "122030.567[0:GMT]"
+        original = "122030.567[+0:UTC]"
         result = original
         self.assertEqual(t.unconvert(t.convert(original)), result)
 

@@ -74,7 +74,7 @@ class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "FIID").text = "AC.ME"
         SubElement(root, "RATING").text = "Aa"
         SubElement(root, "UNITPRICE").text = "94.5"
-        SubElement(root, "DTASOF").text = "20130615000000.000[0:GMT]"
+        SubElement(root, "DTASOF").text = "20130615000000.000[+0:UTC]"
         root.append(i18n.CurrencyTestCase.etree)
         SubElement(root, "MEMO").text = "Foobar"
         return root
@@ -217,14 +217,14 @@ class DebtinfoTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "DEBTTYPE").text = "COUPON"
         SubElement(root, "DEBTCLASS").text = "CORPORATE"
         SubElement(root, "COUPONRT").text = "5.125"
-        SubElement(root, "DTCOUPON").text = "20031201000000.000[0:GMT]"
+        SubElement(root, "DTCOUPON").text = "20031201000000.000[+0:UTC]"
         SubElement(root, "COUPONFREQ").text = "QUARTERLY"
         SubElement(root, "CALLPRICE").text = "1000"
         SubElement(root, "YIELDTOCALL").text = "6.5"
-        SubElement(root, "DTCALL").text = "20051215000000.000[0:GMT]"
+        SubElement(root, "DTCALL").text = "20051215000000.000[+0:UTC]"
         SubElement(root, "CALLTYPE").text = "CALL"
         SubElement(root, "YIELDTOMAT").text = "6.0"
-        SubElement(root, "DTMAT").text = "20061215000000.000[0:GMT]"
+        SubElement(root, "DTMAT").text = "20061215000000.000[+0:UTC]"
         SubElement(root, "ASSETCLASS").text = "INTLBOND"
         SubElement(root, "FIASSETCLASS").text = "Fixed to floating bond"
         return root
@@ -357,7 +357,7 @@ class MfinfoTestCase(unittest.TestCase, base.TestAggregate):
         root.append(SecinfoTestCase.etree)
         SubElement(root, "MFTYPE").text = "OPENEND"
         SubElement(root, "YIELD").text = "5.0"
-        SubElement(root, "DTYIELDASOF").text = "20030501000000.000[0:GMT]"
+        SubElement(root, "DTYIELDASOF").text = "20030501000000.000[+0:UTC]"
         root.append(MfassetclassTestCase.etree)
         root.append(FimfassetclassTestCase.etree)
         return root
@@ -393,7 +393,7 @@ class OptinfoTestCase(unittest.TestCase, base.TestAggregate):
         root.append(SecinfoTestCase.etree)
         SubElement(root, "OPTTYPE").text = "CALL"
         SubElement(root, "STRIKEPRICE").text = "25.5"
-        SubElement(root, "DTEXPIRE").text = "20031215000000.000[0:GMT]"
+        SubElement(root, "DTEXPIRE").text = "20031215000000.000[+0:UTC]"
         SubElement(root, "SHPERCTRCT").text = "100"
         root.append(SecidTestCase.etree)
         SubElement(root, "ASSETCLASS").text = "SMALLSTOCK"
@@ -475,7 +475,7 @@ class StockinfoTestCase(unittest.TestCase, base.TestAggregate):
         root.append(secinfo)
         SubElement(root, "STOCKTYPE").text = "CONVERTIBLE"
         SubElement(root, "YIELD").text = "5.0"
-        SubElement(root, "DTYIELDASOF").text = "20030501000000.000[0:GMT]"
+        SubElement(root, "DTYIELDASOF").text = "20030501000000.000[+0:UTC]"
         SubElement(root, "ASSETCLASS").text = "SMALLSTOCK"
         SubElement(root, "FIASSETCLASS").text = "FOO"
         return root

@@ -48,7 +48,7 @@ class MailTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("MAIL")
         SubElement(root, "USERID").text = "somebody"
-        SubElement(root, "DTCREATED").text = "19990909110000.000[0:GMT]"
+        SubElement(root, "DTCREATED").text = "19990909110000.000[+0:UTC]"
         SubElement(root, "FROM").text = "rolltide420@yahoo.com"
         SubElement(root, "TO").text = "support@ubs.com"
         SubElement(root, "SUBJECT").text = "I've got a problem"
@@ -97,7 +97,7 @@ class MailTestCase(unittest.TestCase, base.TestAggregate):
     #  (
     #  "<MAIL>"
     #  "<USERID>somebody</USERID>"
-    #  "<DTCREATED>19990909110000.000[0:GMT]</DTCREATED>"
+    #  "<DTCREATED>19990909110000.000[+0:UTC]</DTCREATED>"
     #  "<FROM>rolltide420@yahoo.com</FROM>"
     #  "<TO>support@ubs.com</TO>"
     #  "<SUBJECT>I've got a problem</SUBJECT>"

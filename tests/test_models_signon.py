@@ -121,7 +121,7 @@ class SonrqTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("SONRQ")
-        SubElement(root, "DTCLIENT").text = "20051029101003.000[0:GMT]"
+        SubElement(root, "DTCLIENT").text = "20051029101003.000[+0:UTC]"
         SubElement(root, "USERKEY").text = "DEADBEEF"
         SubElement(root, "GENUSERKEY").text = "N"
         SubElement(root, "LANGUAGE").text = "ENG"
@@ -234,12 +234,12 @@ class SonrsTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("SONRS")
         root.append(base.StatusTestCase.etree)
-        SubElement(root, "DTSERVER").text = "20051029101003.000[0:GMT]"
+        SubElement(root, "DTSERVER").text = "20051029101003.000[+0:UTC]"
         SubElement(root, "USERKEY").text = "DEADBEEF"
-        SubElement(root, "TSKEYEXPIRE").text = "20051231000000.000[0:GMT]"
+        SubElement(root, "TSKEYEXPIRE").text = "20051231000000.000[+0:UTC]"
         SubElement(root, "LANGUAGE").text = "ENG"
-        SubElement(root, "DTPROFUP").text = "20050101000000.000[0:GMT]"
-        SubElement(root, "DTACCTUP").text = "20050102000000.000[0:GMT]"
+        SubElement(root, "DTPROFUP").text = "20050101000000.000[+0:UTC]"
+        SubElement(root, "DTACCTUP").text = "20050102000000.000[+0:UTC]"
         root.append(FiTestCase.etree)
         SubElement(root, "SESSCOOKIE").text = "BADA55"
         SubElement(root, "ACCESSKEY").text = "CAFEBABE"
@@ -318,7 +318,7 @@ class PinchrsTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("PINCHRS")
         SubElement(root, "USERID").text = "12345"
-        SubElement(root, "DTCHANGED").text = "20110101000000.000[0:GMT]"
+        SubElement(root, "DTCHANGED").text = "20110101000000.000[+0:UTC]"
         return root
 
     @classproperty
@@ -440,7 +440,7 @@ class MfachallengerqTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("MFACHALLENGERQ")
-        SubElement(root, "DTCLIENT").text = "20100317000000.000[0:GMT]"
+        SubElement(root, "DTCLIENT").text = "20100317000000.000[+0:UTC]"
         return root
 
     @classproperty

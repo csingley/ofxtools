@@ -80,7 +80,7 @@ class OoTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "FITID").text = "1001"
         SubElement(root, "SRVRTID").text = "2002"
         root.append(securities.SecidTestCase.etree)
-        SubElement(root, "DTPLACED").text = "20040701000000.000[0:GMT]"
+        SubElement(root, "DTPLACED").text = "20040701000000.000[+0:UTC]"
         SubElement(root, "UNITS").text = "150"
         SubElement(root, "SUBACCT").text = "CASH"
         SubElement(root, "DURATION").text = "GOODTILCANCEL"
@@ -139,7 +139,7 @@ class OobuydebtTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("OOBUYDEBT")
         root.append(OoTestCase.etree)
         SubElement(root, "AUCTION").text = "N"
-        SubElement(root, "DTAUCTION").text = "20120109000000.000[0:GMT]"
+        SubElement(root, "DTAUCTION").text = "20120109000000.000[+0:UTC]"
         return root
 
     @classproperty

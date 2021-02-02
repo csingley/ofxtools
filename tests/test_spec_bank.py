@@ -56,7 +56,7 @@ class Example1RequestTestCase(base.OfxTestCase, unittest.TestCase):
     <OFX>
         <SIGNONMSGSRQV1>
             <SONRQ>
-            <DTCLIENT>20051029101000.000[0:GMT]</DTCLIENT>
+            <DTCLIENT>20051029101000.000[+0:UTC]</DTCLIENT>
                 <USERID>12345</USERID>
                 <USERPASS>MyPassword</USERPASS>
                 <LANGUAGE>ENG</LANGUAGE>
@@ -111,10 +111,10 @@ class Example1ResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <DTSERVER>20051029101003.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
-                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
-                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <DTPROFUP>20041029101003.000[+0:UTC]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[+0:UTC]</DTACCTUP>
                 <FI>
                     <ORG>NCH</ORG>
                     <FID>1001</FID>
@@ -136,30 +136,30 @@ class Example1ResponseTestCase(base.OfxTestCase, unittest.TestCase):
                         <ACCTTYPE>CHECKING</ACCTTYPE>
                     </BANKACCTFROM>
                     <BANKTRANLIST>
-                        <DTSTART>20051001000000.000[0:GMT]</DTSTART>
-                        <DTEND>20051028000000.000[0:GMT]</DTEND>
+                        <DTSTART>20051001000000.000[+0:UTC]</DTSTART>
+                        <DTEND>20051028000000.000[+0:UTC]</DTEND>
                         <STMTTRN>
                             <TRNTYPE>CHECK</TRNTYPE>
-                            <DTPOSTED>20051004000000.000[0:GMT]</DTPOSTED>
+                            <DTPOSTED>20051004000000.000[+0:UTC]</DTPOSTED>
                             <TRNAMT>-200.00</TRNAMT>
                             <FITID>00002</FITID>
                             <CHECKNUM>1000</CHECKNUM>
                         </STMTTRN>
                         <STMTTRN>
                             <TRNTYPE>ATM</TRNTYPE>
-                            <DTPOSTED>20051020000000.000[0:GMT]</DTPOSTED>
-                            <DTUSER>20051020000000.000[0:GMT]</DTUSER>
+                            <DTPOSTED>20051020000000.000[+0:UTC]</DTPOSTED>
+                            <DTUSER>20051020000000.000[+0:UTC]</DTUSER>
                             <TRNAMT>-300.00</TRNAMT>
                             <FITID>00003</FITID>
                         </STMTTRN>
                     </BANKTRANLIST>
                     <LEDGERBAL>
                         <BALAMT>200.29</BALAMT>
-                        <DTASOF>20051029112000.000[0:GMT]</DTASOF>
+                        <DTASOF>20051029112000.000[+0:UTC]</DTASOF>
                     </LEDGERBAL>
                     <AVAILBAL>
                         <BALAMT>200.29</BALAMT>
-                        <DTASOF>20051029112000.000[0:GMT]</DTASOF>
+                        <DTASOF>20051029112000.000[+0:UTC]</DTASOF>
                     </AVAILBAL>
                 </STMTRS>
             </STMTTRNRS>
@@ -217,7 +217,7 @@ class Example2RequestTestCase(base.OfxTestCase, unittest.TestCase):
     <OFX>
         <SIGNONMSGSRQV1>
             <SONRQ>
-            <DTCLIENT>20051029101000.000[0:GMT]</DTCLIENT>
+            <DTCLIENT>20051029101000.000[+0:UTC]</DTCLIENT>
                 <USERID>12345</USERID>
                 <USERPASS>MyPassword</USERPASS>
                 <LANGUAGE>ENG</LANGUAGE>
@@ -281,10 +281,10 @@ class Example2ResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <DTSERVER>20051029101003.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
-                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
-                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <DTPROFUP>20041029101003.000[+0:UTC]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[+0:UTC]</DTACCTUP>
                 <FI>
                     <ORG>NCH</ORG>
                     <FID>1001</FID>
@@ -314,7 +314,7 @@ class Example2ResponseTestCase(base.OfxTestCase, unittest.TestCase):
                         </BANKACCTTO>
                         <TRNAMT>200.00</TRNAMT>
                     </XFERINFO>
-                    <DTXFERPRJ>20060829100000.000[0:GMT]</DTXFERPRJ>
+                    <DTXFERPRJ>20060829100000.000[+0:UTC]</DTXFERPRJ>
                 </INTRARS>
             </INTRATRNRS>
         </BANKMSGSRSV1>
@@ -405,10 +405,10 @@ class Example3ResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <DTSERVER>20051029101003.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
-                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
-                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <DTPROFUP>20041029101003.000[+0:UTC]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[+0:UTC]</DTACCTUP>
                 <FI>
                     <ORG>NCH</ORG>
                     <FID>1001</FID>
@@ -507,7 +507,7 @@ class Example4RequestTestCase(base.OfxTestCase, unittest.TestCase):
                                 <ACCTTYPE>SAVINGS</ACCTTYPE>
                             </BANKACCTTO>
                             <TRNAMT>1000.00</TRNAMT>
-                            <DTDUE>20061115000000.000[0:GMT]</DTDUE>
+                            <DTDUE>20061115000000.000[+0:UTC]</DTDUE>
                         </XFERINFO>
                     </INTRARQ>
                 </RECINTRARQ>
@@ -549,10 +549,10 @@ class Example4ResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <DTSERVER>20051029101003.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
-                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
-                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <DTPROFUP>20041029101003.000[+0:UTC]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[+0:UTC]</DTACCTUP>
                 <FI>
                     <ORG>NCH</ORG>
                     <FID>1001</FID>
@@ -678,10 +678,10 @@ class Example4SyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <DTSERVER>20051029101003.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
-                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
-                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <DTPROFUP>20041029101003.000[+0:UTC]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[+0:UTC]</DTACCTUP>
                 <FI>
                     <ORG>NCH</ORG>
                     <FID>1001</FID>
@@ -718,7 +718,7 @@ class Example4SyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
                             </BANKACCTTO>
                             <TRNAMT>1000.00</TRNAMT>
                         </XFERINFO>
-                        <DTXFERPRJ>20061115000000.000[0:GMT]</DTXFERPRJ>
+                        <DTXFERPRJ>20061115000000.000[+0:UTC]</DTXFERPRJ>
                         <RECSRVRTID>20000</RECSRVRTID>
                     </INTRARS>
                 </INTRATRNRS>
@@ -819,10 +819,10 @@ class Example4RecsyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <DTSERVER>20051029101003.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
-                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
-                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <DTPROFUP>20041029101003.000[+0:UTC]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[+0:UTC]</DTACCTUP>
                 <FI>
                     <ORG>NCH</ORG>
                     <FID>1001</FID>
@@ -926,10 +926,10 @@ class Example4NextSyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <DTSERVER>20051029101003.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
-                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
-                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <DTPROFUP>20041029101003.000[+0:UTC]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[+0:UTC]</DTACCTUP>
                 <FI>
                     <ORG>NCH</ORG>
                     <FID>1001</FID>
@@ -967,7 +967,7 @@ class Example4NextSyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
                         </XFERINFO>
                         <XFERPRCSTS>
                             <XFERPRCCODE>POSTEDON</XFERPRCCODE>
-                            <DTXFERPRC>20061115000000.000[0:GMT]</DTXFERPRC>
+                            <DTXFERPRC>20061115000000.000[+0:UTC]</DTXFERPRC>
                         </XFERPRCSTS>
                     </INTRAMODRS>
                 </INTRATRNRS>
@@ -993,7 +993,7 @@ class Example4NextSyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
                             </BANKACCTTO>
                             <TRNAMT>1000.00</TRNAMT>
                         </XFERINFO>
-                        <DTXFERPRJ>20061215000000.000[0:GMT]</DTXFERPRJ>
+                        <DTXFERPRJ>20061215000000.000[+0:UTC]</DTXFERPRJ>
                         <RECSRVRTID>20000</RECSRVRTID>
                     </INTRARS>
                 </INTRATRNRS>
@@ -1020,7 +1020,7 @@ class Example4NextSyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
                         </XFERINFO>
                         <XFERPRCSTS>
                             <XFERPRCCODE>POSTEDON</XFERPRCCODE>
-                            <DTXFERPRC>20061215000000.000[0:GMT]</DTXFERPRC>
+                            <DTXFERPRC>20061215000000.000[+0:UTC]</DTXFERPRC>
                         </XFERPRCSTS>
                     </INTRAMODRS>
                 </INTRATRNRS>
@@ -1046,7 +1046,7 @@ class Example4NextSyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
                             </BANKACCTTO>
                             <TRNAMT>1000.00</TRNAMT>
                         </XFERINFO>
-                        <DTXFERPRJ>20060115000000.000[0:GMT]</DTXFERPRJ>
+                        <DTXFERPRJ>20060115000000.000[+0:UTC]</DTXFERPRJ>
                         <RECSRVRTID>20000</RECSRVRTID>
                     </INTRARS>
                 </INTRATRNRS>

@@ -217,8 +217,8 @@ class InctranTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("INCTRAN")
-        SubElement(root, "DTSTART").text = "20110401000000.000[0:GMT]"
-        SubElement(root, "DTEND").text = "20110430000000.000[0:GMT]"
+        SubElement(root, "DTSTART").text = "20110401000000.000[+0:UTC]"
+        SubElement(root, "DTEND").text = "20110430000000.000[+0:UTC]"
         SubElement(root, "INCLUDE").text = "Y"
         return root
 
@@ -354,9 +354,9 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
     def emptyBase(cls):
         root = Element("STMTTRN")
         SubElement(root, "TRNTYPE").text = "CHECK"
-        SubElement(root, "DTPOSTED").text = "20130615000000.000[0:GMT]"
-        SubElement(root, "DTUSER").text = "20130614000000.000[0:GMT]"
-        SubElement(root, "DTAVAIL").text = "20130616000000.000[0:GMT]"
+        SubElement(root, "DTPOSTED").text = "20130615000000.000[+0:UTC]"
+        SubElement(root, "DTUSER").text = "20130614000000.000[+0:UTC]"
+        SubElement(root, "DTAVAIL").text = "20130616000000.000[+0:UTC]"
         SubElement(root, "TRNAMT").text = "-433.25"
         SubElement(root, "FITID").text = "DEADBEEF"
         SubElement(root, "CORRECTFITID").text = "B00B5"
@@ -556,7 +556,7 @@ class LedgerbalTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("LEDGERBAL")
         SubElement(root, "BALAMT").text = "12345.67"
-        SubElement(root, "DTASOF").text = "20051029101003.000[0:GMT]"
+        SubElement(root, "DTASOF").text = "20051029101003.000[+0:UTC]"
         return root
 
     @classproperty
@@ -578,7 +578,7 @@ class AvailbalTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("AVAILBAL")
         SubElement(root, "BALAMT").text = "12345.67"
-        SubElement(root, "DTASOF").text = "20051029101003.000[0:GMT]"
+        SubElement(root, "DTASOF").text = "20051029101003.000[+0:UTC]"
         return root
 
     @classproperty

@@ -361,8 +361,8 @@ class TranlistTestCase(TestAggregate):
     def validSoup(cls):
         tag = cls.__name__.replace("TestCase", "").upper()
         root = ET.Element(tag)
-        ET.SubElement(root, "DTSTART").text = "20160101000000.000[0:GMT]"
-        ET.SubElement(root, "DTEND").text = "20161231000000.000[0:GMT]"
+        ET.SubElement(root, "DTSTART").text = "20160101000000.000[+0:UTC]"
+        ET.SubElement(root, "DTEND").text = "20161231000000.000[+0:UTC]"
         yield root
 
     @classproperty
