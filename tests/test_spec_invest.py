@@ -62,7 +62,7 @@ class InvstmtRequestTestCase(base.OfxTestCase, unittest.TestCase):
     <OFX>
         <SIGNONMSGSRQV1>
             <SONRQ>
-                <DTCLIENT>20051029101000.000[0:GMT]</DTCLIENT>
+                <DTCLIENT>20051029101000.000[+0:UTC]</DTCLIENT>
                 <USERID>12345</USERID>
                 <USERPASS>MyPassword</USERPASS>
                 <LANGUAGE>ENG</LANGUAGE>
@@ -83,7 +83,7 @@ class InvstmtRequestTestCase(base.OfxTestCase, unittest.TestCase):
                         <ACCTID>999988</ACCTID>
                     </INVACCTFROM>
                     <INCTRAN>
-                        <DTSTART>20050824130105.000[0:GMT]</DTSTART>
+                        <DTSTART>20050824130105.000[+0:UTC]</DTSTART>
                         <INCLUDE>Y</INCLUDE>
                     </INCTRAN>
                     <INCOO>Y</INCOO>
@@ -138,10 +138,10 @@ class InvstmtResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <DTSERVER>20051029101003.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
-                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
-                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <DTPROFUP>20041029101003.000[+0:UTC]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[+0:UTC]</DTACCTUP>
                 <FI>
                     <ORG>NCH</ORG>
                     <FID>1001</FID>
@@ -156,21 +156,21 @@ class InvstmtResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
                 <INVSTMTRS>
-                    <DTASOF>20050827010000.000[0:GMT]</DTASOF>
+                    <DTASOF>20050827010000.000[+0:UTC]</DTASOF>
                     <CURDEF>USD</CURDEF>
                     <INVACCTFROM>
                         <BROKERID>121099999</BROKERID>
                         <ACCTID>999988</ACCTID>
                     </INVACCTFROM>
                     <INVTRANLIST>
-                        <DTSTART>20050824130105.000[0:GMT]</DTSTART>
-                        <DTEND>20050828101000.000[0:GMT]</DTEND>
+                        <DTSTART>20050824130105.000[+0:UTC]</DTSTART>
+                        <DTEND>20050828101000.000[+0:UTC]</DTEND>
                         <BUYSTOCK>
                             <INVBUY>
                                 <INVTRAN>
                                     <FITID>23321</FITID>
-                                    <DTTRADE>20050825000000.000[0:GMT]</DTTRADE>
-                                    <DTSETTLE>20050828000000.000[0:GMT]</DTSETTLE>
+                                    <DTTRADE>20050825000000.000[+0:UTC]</DTTRADE>
+                                    <DTSETTLE>20050828000000.000[+0:UTC]</DTSETTLE>
                                 </INVTRAN>
                                 <SECID>
                                     <UNIQUEID>123456789</UNIQUEID>
@@ -188,8 +188,8 @@ class InvstmtResponseTestCase(base.OfxTestCase, unittest.TestCase):
                         <INVBANKTRAN>
                             <STMTTRN>
                                 <TRNTYPE>CREDIT</TRNTYPE>
-                                <DTPOSTED>20050825000000.000[0:GMT]</DTPOSTED>
-                                <DTUSER>20050825000000.000[0:GMT]</DTUSER>
+                                <DTPOSTED>20050825000000.000[+0:UTC]</DTPOSTED>
+                                <DTUSER>20050825000000.000[+0:UTC]</DTUSER>
                                 <TRNAMT>1000.00</TRNAMT>
                                 <FITID>12345</FITID>
                                 <NAME>Customer deposit</NAME>
@@ -210,7 +210,7 @@ class InvstmtResponseTestCase(base.OfxTestCase, unittest.TestCase):
                                 <UNITS>200</UNITS>
                                 <UNITPRICE>49.50</UNITPRICE>
                                 <MKTVAL>9900.00</MKTVAL>
-                                <DTPRICEASOF>20050827010000.000[0:GMT]</DTPRICEASOF>
+                                <DTPRICEASOF>20050827010000.000[+0:UTC]</DTPRICEASOF>
                                 <MEMO>Next dividend payable Sept 1</MEMO>
                             </INVPOS>
                         </POSSTOCK>
@@ -225,7 +225,7 @@ class InvstmtResponseTestCase(base.OfxTestCase, unittest.TestCase):
                                 <UNITS>1</UNITS>
                                 <UNITPRICE>5</UNITPRICE>
                                 <MKTVAL>500</MKTVAL>
-                                <DTPRICEASOF>20050827010000.000[0:GMT]</DTPRICEASOF>
+                                <DTPRICEASOF>20050827010000.000[+0:UTC]</DTPRICEASOF>
                                 <MEMO> Option is in the money</MEMO>
                             </INVPOS>
                         </POSOPT>
@@ -240,7 +240,7 @@ class InvstmtResponseTestCase(base.OfxTestCase, unittest.TestCase):
                                 <DESC>Current interest rate on margin balances</DESC>
                                 <BALTYPE>PERCENT</BALTYPE>
                                 <VALUE>7.85</VALUE>
-                                <DTASOF>20050827010000.000[0:GMT]</DTASOF>
+                                <DTASOF>20050827010000.000[+0:UTC]</DTASOF>
                             </BAL>
                         </BALLIST>
                     </INVBAL>
@@ -252,7 +252,7 @@ class InvstmtResponseTestCase(base.OfxTestCase, unittest.TestCase):
                                     <UNIQUEID>666678578</UNIQUEID>
                                     <UNIQUEIDTYPE>CUSIP</UNIQUEIDTYPE>
                                 </SECID>
-                                <DTPLACED>20050624031505.000[0:GMT]</DTPLACED>
+                                <DTPLACED>20050624031505.000[+0:UTC]</DTPLACED>
                                 <UNITS>100</UNITS>
                                 <SUBACCT>CASH</SUBACCT>
                                 <DURATION>GOODTILCANCEL</DURATION>
@@ -305,7 +305,7 @@ class InvstmtResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     </SECINFO>
                     <OPTTYPE>PUT</OPTTYPE>
                     <STRIKEPRICE>35.00</STRIKEPRICE>
-                    <DTEXPIRE>20050121000000.000[0:GMT]</DTEXPIRE>
+                    <DTEXPIRE>20050121000000.000[+0:UTC]</DTEXPIRE>
                     <SHPERCTRCT>100</SHPERCTRCT>
                     <SECID>
                         <UNIQUEID>000342200</UNIQUEID>
@@ -481,7 +481,7 @@ class Inc401kRequestTestCase(base.OfxTestCase, unittest.TestCase):
     <OFX>
         <SIGNONMSGSRQV1>
             <SONRQ>
-                <DTCLIENT>20051029101000.000[0:GMT]</DTCLIENT>
+                <DTCLIENT>20051029101000.000[+0:UTC]</DTCLIENT>
                 <USERID>12345</USERID>
                 <USERPASS>MyPassword</USERPASS>
                 <LANGUAGE>ENG</LANGUAGE>
@@ -502,7 +502,7 @@ class Inc401kRequestTestCase(base.OfxTestCase, unittest.TestCase):
                         <ACCTID>999988</ACCTID>
                     </INVACCTFROM>
                     <INCTRAN>
-                    <DTSTART>20050101120000.000[0:GMT]</DTSTART>
+                    <DTSTART>20050101120000.000[+0:UTC]</DTSTART>
                         <INCLUDE>Y</INCLUDE>
                     </INCTRAN>
                     <INCOO>N</INCOO>
@@ -569,10 +569,10 @@ class Inc401kResponseTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <DTSERVER>20051029101003.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
-                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
-                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <DTPROFUP>20041029101003.000[+0:UTC]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[+0:UTC]</DTACCTUP>
                 <FI>
                     <ORG>NCH</ORG>
                     <FID>1001</FID>
@@ -722,8 +722,8 @@ class Inc401kResponseTestCase(base.OfxTestCase, unittest.TestCase):
                         </CONTRIBINFO>
                         <INV401KSUMMARY>
                             <YEARTODATE>
-                                <DTSTART>20050101000000.000[0:GMT]</DTSTART>
-                                <DTEND>20050131000000.000[0:GMT]</DTEND>
+                                <DTSTART>20050101000000.000[+0:UTC]</DTSTART>
+                                <DTEND>20050131000000.000[+0:UTC]</DTEND>
                                 <CONTRIBUTIONS>
                                     <PRETAX>843.2500</PRETAX>
                                     <AFTERTAX>43.4200</AFTERTAX>

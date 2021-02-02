@@ -144,7 +144,7 @@ class IncposTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("INCPOS")
-        SubElement(root, "DTASOF").text = "20091122000000.000[0:GMT]"
+        SubElement(root, "DTASOF").text = "20091122000000.000[+0:UTC]"
         SubElement(root, "INCLUDE").text = "Y"
         return root
 
@@ -285,7 +285,7 @@ class MatchinfoTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "MATCHPCT").text = "25.0"
         SubElement(root, "MAXMATCHAMT").text = "5000"
         SubElement(root, "MAXMATCHPCT").text = "20.0"
-        SubElement(root, "STARTOFYEAR").text = "19990101000000.000[0:GMT]"
+        SubElement(root, "STARTOFYEAR").text = "19990101000000.000[+0:UTC]"
         SubElement(root, "BASEMATCHAMT").text = "1000"
         SubElement(root, "BASEMATCHPCT").text = "1.0"
         return root
@@ -484,7 +484,7 @@ class VestinfoTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("VESTINFO")
-        SubElement(root, "VESTDATE").text = "20040928000000.000[0:GMT]"
+        SubElement(root, "VESTDATE").text = "20040928000000.000[+0:UTC]"
         SubElement(root, "VESTPCT").text = "29.6671"
         return root
 
@@ -523,18 +523,18 @@ class LoaninfoTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "LOANID").text = "1"
         SubElement(root, "LOANDESC").text = "House down payment"
         SubElement(root, "INITIALLOANBAL").text = "21000"
-        SubElement(root, "LOANSTARTDATE").text = "20050701000000.000[0:GMT]"
+        SubElement(root, "LOANSTARTDATE").text = "20050701000000.000[+0:UTC]"
         SubElement(root, "CURRENTLOANBAL").text = "12000"
-        SubElement(root, "DTASOF").text = "20090701000000.000[0:GMT]"
+        SubElement(root, "DTASOF").text = "20090701000000.000[+0:UTC]"
         SubElement(root, "LOANRATE").text = "5.0"
         SubElement(root, "LOANPMTAMT").text = "865.34"
         SubElement(root, "LOANPMTFREQ").text = "MONTHLY"
         SubElement(root, "LOANPMTSINITIAL").text = "60"
         SubElement(root, "LOANPMTSREMAINING").text = "12"
-        SubElement(root, "LOANMATURITYDATE").text = "20100701000000.000[0:GMT]"
+        SubElement(root, "LOANMATURITYDATE").text = "20100701000000.000[+0:UTC]"
         SubElement(root, "LOANTOTALPROJINTEREST").text = "13000"
         SubElement(root, "LOANINTERESTTODATE").text = "8500"
-        SubElement(root, "LOANNEXTPMTDATE").text = "20090801000000.000[0:GMT]"
+        SubElement(root, "LOANNEXTPMTDATE").text = "20090801000000.000[+0:UTC]"
         return root
 
     @classproperty
@@ -698,8 +698,8 @@ class YeartodateTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("YEARTODATE")
-        SubElement(root, "DTSTART").text = "20010101000000.000[0:GMT]"
-        SubElement(root, "DTEND").text = "20011231000000.000[0:GMT]"
+        SubElement(root, "DTSTART").text = "20010101000000.000[+0:UTC]"
+        SubElement(root, "DTEND").text = "20011231000000.000[+0:UTC]"
         root.append(ContributionsTestCase.etree)
         root.append(WithdrawalsTestCase.etree)
         root.append(EarningsTestCase.etree)
@@ -727,8 +727,8 @@ class InceptodateTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("INCEPTODATE")
-        SubElement(root, "DTSTART").text = "20010101000000.000[0:GMT]"
-        SubElement(root, "DTEND").text = "20011231000000.000[0:GMT]"
+        SubElement(root, "DTSTART").text = "20010101000000.000[+0:UTC]"
+        SubElement(root, "DTEND").text = "20011231000000.000[+0:UTC]"
         root.append(ContributionsTestCase.etree)
         root.append(WithdrawalsTestCase.etree)
         root.append(EarningsTestCase.etree)
@@ -756,8 +756,8 @@ class PeriodtodateTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("PERIODTODATE")
-        SubElement(root, "DTSTART").text = "20010101000000.000[0:GMT]"
-        SubElement(root, "DTEND").text = "20011231000000.000[0:GMT]"
+        SubElement(root, "DTSTART").text = "20010101000000.000[+0:UTC]"
+        SubElement(root, "DTEND").text = "20011231000000.000[+0:UTC]"
         root.append(ContributionsTestCase.etree)
         root.append(WithdrawalsTestCase.etree)
         root.append(EarningsTestCase.etree)
@@ -823,7 +823,7 @@ class Inv401kTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("INV401K")
         SubElement(root, "EMPLOYERNAME").text = "V2 Rockets GmbH"
         SubElement(root, "PLANID").text = "1"
-        SubElement(root, "PLANJOINDATE").text = "20040707000000.000[0:GMT]"
+        SubElement(root, "PLANJOINDATE").text = "20040707000000.000[+0:UTC]"
         SubElement(root, "EMPLOYERCONTACTINFO").text = "plan_help@v2.com"
         SubElement(root, "BROKERCONTACTINFO").text = "plan_help@dch.com"
         SubElement(root, "DEFERPCTPRETAX").text = "15.0"
@@ -890,7 +890,7 @@ class InvposTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "UNITPRICE").text = "90"
         SubElement(root, "MKTVAL").text = "9000"
         SubElement(root, "AVGCOSTBASIS").text = "85"
-        SubElement(root, "DTPRICEASOF").text = "20130630000000.000[0:GMT]"
+        SubElement(root, "DTPRICEASOF").text = "20130630000000.000[+0:UTC]"
         root.append(i18n.CurrencyTestCase.etree)
         SubElement(root, "MEMO").text = "Marked to myth"
         SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
@@ -1158,7 +1158,7 @@ class InvstmtrsTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("INVSTMTRS")
-        SubElement(root, "DTASOF").text = "20010530000000.000[0:GMT]"
+        SubElement(root, "DTASOF").text = "20010530000000.000[+0:UTC]"
         SubElement(root, "CURDEF").text = "USD"
         root.append(InvacctfromTestCase.etree)
         root.append(InvtranlistTestCase.etree)
@@ -1268,8 +1268,8 @@ class InvtranlistTestCase(unittest.TestCase, base.TranlistTestCase):
     @classmethod
     def etree(cls):
         root = Element("INVTRANLIST")
-        SubElement(root, "DTSTART").text = "20160101000000.000[0:GMT]"
-        SubElement(root, "DTEND").text = "20161231000000.000[0:GMT]"
+        SubElement(root, "DTSTART").text = "20160101000000.000[+0:UTC]"
+        SubElement(root, "DTEND").text = "20161231000000.000[+0:UTC]"
         for tx in cls.transactions:
             root.append(tx.etree)
         return root

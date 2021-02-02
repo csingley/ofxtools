@@ -96,8 +96,8 @@ class InvtranTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("INVTRAN")
         SubElement(root, "FITID").text = "1001"
         SubElement(root, "SRVRTID").text = "2002"
-        SubElement(root, "DTTRADE").text = "20040701000000.000[0:GMT]"
-        SubElement(root, "DTSETTLE").text = "20040704000000.000[0:GMT]"
+        SubElement(root, "DTTRADE").text = "20040701000000.000[+0:UTC]"
+        SubElement(root, "DTSETTLE").text = "20040704000000.000[+0:UTC]"
         SubElement(root, "REVERSALFITID").text = "3003"
         SubElement(root, "MEMO").text = "Investment Transaction"
         return root
@@ -168,7 +168,7 @@ class InvbuyTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "LOANPRINCIPAL").text = "1.50"
         SubElement(root, "LOANINTEREST").text = "3.50"
         SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
-        SubElement(root, "DTPAYROLL").text = "20040615000000.000[0:GMT]"
+        SubElement(root, "DTPAYROLL").text = "20040615000000.000[+0:UTC]"
         SubElement(root, "PRIORYEARCONTRIB").text = "Y"
         return root
 
@@ -1194,7 +1194,7 @@ class TransferTestCase(unittest.TestCase, base.TestAggregate):
         root.append(invest.InvacctfromTestCase.etree)
         SubElement(root, "AVGCOSTBASIS").text = "22.22"
         SubElement(root, "UNITPRICE").text = "23.01"
-        SubElement(root, "DTPURCHASE").text = "19991231000000.000[0:GMT]"
+        SubElement(root, "DTPURCHASE").text = "19991231000000.000[+0:UTC]"
         SubElement(root, "INV401KSOURCE").text = "PROFITSHARING"
         return root
 

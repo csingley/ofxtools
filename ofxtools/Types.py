@@ -512,6 +512,34 @@ DT_REGEX = re.compile(
 )
 
 
+def format_datetime(format: str, value: datetime.datetime) -> str:
+    """
+    Format a `datetime` or `time` according to the OFX specification.
+
+    The value must include timezone information which will be preserved in the OFX
+    string.
+
+    The value is rounded to the nearest millisecond since OFX doesn't support
+    microsecond resolution.
+    """
+    utcoffset = value.utcoffset()
+    if utcoffset is None:
+        raise ValueError(f"{value} is not timezone-aware")
+
+    # Round to nearest millisecond by adding 500 us and truncating.
+    value += datetime.timedelta(microseconds=500)
+    ms = value.microsecond // 1000
+
+    # OFX takes the UTC offset in hours, preferably as a whole number.
+    hours = utcoffset.total_seconds() / 3600
+    if hours == int(hours):
+        tz = "{:+d}".format(int(hours))
+    else:
+        tz = "{:+.2f}".format(hours)
+
+    return "{}.{:03d}[{}:{}]".format(value.strftime(format), ms, tz, value.tzname())
+
+
 class DateTime(Element):
     """ OFX Section 3.2.8.2 """
 
@@ -588,25 +616,10 @@ class DateTime(Element):
     @unconvert.register
     def _unconvert_datetime(self, value: datetime.datetime):
         if not hasattr(value, "utcoffset") or value.utcoffset() is None:
-            msg = f"'{value}' isn't a timezone-aware {self.__type__} instance; can't convert to GMT"
+            msg = f"'{value}' must be a timezone-aware {self.__type__} instance"
             raise ValueError(msg)
 
-        # Transform to GMT
-        value = value.astimezone(utils.UTC)
-
-        # Round datetime.datetime microseconds to milliseconds per OFX spec.
-        # Can't naively format microseconds via strftime() due
-        # to need to round to milliseconds.  Instead, manually round
-        # microseconds, then insert milliseconds into string format template.
-        millisecond = round(value.microsecond / 1000)  # 99500-99999 round to 1000
-        second_delta, millisecond = divmod(millisecond, 1000)
-        value += datetime.timedelta(
-            seconds=second_delta
-        )  # Push seconds dial if necessary
-
-        millisec_str = "{0:03d}".format(millisecond)
-        fmt = "%Y%m%d%H%M%S.{}[0:GMT]".format(millisec_str)
-        return value.strftime(fmt)
+        return format_datetime("%Y%m%d%H%M%S", value)
 
     @unconvert.register
     def _unconvert_none(self, value: None) -> None:
@@ -698,10 +711,9 @@ class Time(DateTime):
     @unconvert.register
     def _unconvert_time(self, value: datetime.time):
         if not hasattr(value, "utcoffset") or value.utcoffset() is None:
-            msg = f"'{value}' isn't a timezone-aware {self.__type__} instance; can't convert to GMT"
+            msg = f"'{value}' must be a timezone-aware {self.__type__} instance"
             raise ValueError(msg)
 
-        # Transform to GMT
         dt = datetime.datetime(
             1999,
             6,
@@ -710,11 +722,9 @@ class Time(DateTime):
             value.minute,
             value.second,
             microsecond=value.microsecond,
+            tzinfo=value.tzinfo,
         )
-        dt -= value.utcoffset()  # type: ignore
-        milliseconds = "{0:03d}".format((dt.microsecond + 500) // 1000)
-        fmt = "%H%M%S.{}[0:GMT]".format(milliseconds)
-        return dt.strftime(fmt)
+        return format_datetime("%H%M%S", dt)
 
     @unconvert.register
     def _unconvert_none(self, value: None) -> None:

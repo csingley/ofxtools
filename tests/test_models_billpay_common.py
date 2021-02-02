@@ -97,7 +97,7 @@ class PmtinfoTestCase(unittest.TestCase, base.TestAggregate):
         root.append(ExtdpmtTestCase.etree)
         root.append(ExtdpmtTestCase.etree)
         ET.SubElement(root, "PAYACCT").text = "711"
-        ET.SubElement(root, "DTDUE").text = "19240507000000.000[0:GMT]"
+        ET.SubElement(root, "DTDUE").text = "19240507000000.000[+0:UTC]"
         ET.SubElement(root, "MEMO").text = "Time's up"
         ET.SubElement(root, "BILLREFINFO").text = "Paying it"
         root.append(BillpubinfoTestCase.etree)
@@ -147,7 +147,7 @@ class PmtinfoTestCase(unittest.TestCase, base.TestAggregate):
                 root.append(extdpmt)
 
             ET.SubElement(root, "PAYACCT").text = "711"
-            ET.SubElement(root, "DTDUE").text = "19240507000000.000[0:GMT]"
+            ET.SubElement(root, "DTDUE").text = "19240507000000.000[+0:UTC]"
             ET.SubElement(root, "MEMO").text = "Time's up"
             ET.SubElement(root, "BILLREFINFO").text = "Paying it"
             root.append(billpubinfo)
@@ -173,7 +173,7 @@ class DiscountTestCase(unittest.TestCase, base.TestAggregate):
         root = ET.Element("DISCOUNT")
         ET.SubElement(root, "DSCRATE").text = "18"
         ET.SubElement(root, "DSCAMT").text = "13.50"
-        ET.SubElement(root, "DSCDATE").text = "20170317000000.000[0:GMT]"
+        ET.SubElement(root, "DSCDATE").text = "20170317000000.000[+0:UTC]"
         ET.SubElement(root, "DSCDESC").text = "Loyal customer discount"
         return root
 
@@ -201,7 +201,7 @@ class AdjustmentTestCase(unittest.TestCase, base.TestAggregate):
         ET.SubElement(root, "ADJNO").text = "18"
         ET.SubElement(root, "ADJDESC").text = "We like you"
         ET.SubElement(root, "ADJAMT").text = "13.50"
-        ET.SubElement(root, "ADJDATE").text = "20170317000000.000[0:GMT]"
+        ET.SubElement(root, "ADJDATE").text = "20170317000000.000[+0:UTC]"
         return root
 
     @classproperty
@@ -247,7 +247,7 @@ class InvoiceTestCase(unittest.TestCase, base.TestAggregate):
         ET.SubElement(root, "INVNO").text = "103"
         ET.SubElement(root, "INVTOTALAMT").text = "25"
         ET.SubElement(root, "INVPAIDAMT").text = "25"
-        ET.SubElement(root, "INVDATE").text = "20150906000000.000[0:GMT]"
+        ET.SubElement(root, "INVDATE").text = "20150906000000.000[+0:UTC]"
         ET.SubElement(root, "INVDESC").text = "Purchase invoice"
         root.append(DiscountTestCase.etree)
         root.append(AdjustmentTestCase.etree)
@@ -476,7 +476,7 @@ class PmtprcstsTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = ET.Element("PMTPRCSTS")
         ET.SubElement(root, "PMTPRCCODE").text = "FAILEDON"
-        ET.SubElement(root, "DTPMTPRC").text = "20010101000000.000[0:GMT]"
+        ET.SubElement(root, "DTPMTPRC").text = "20010101000000.000[+0:UTC]"
         return root
 
     @classproperty

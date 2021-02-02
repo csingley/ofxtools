@@ -229,7 +229,7 @@ class AcctinforqTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("ACCTINFORQ")
-        SubElement(root, "DTACCTUP").text = "20120314000000.000[0:GMT]"
+        SubElement(root, "DTACCTUP").text = "20120314000000.000[+0:UTC]"
         return root
 
     @classproperty
@@ -248,7 +248,7 @@ class AcctinforsTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def etree(cls):
         root = Element("ACCTINFORS")
-        SubElement(root, "DTACCTUP").text = "20120314000000.000[0:GMT]"
+        SubElement(root, "DTACCTUP").text = "20120314000000.000[+0:UTC]"
         acctinfo = AcctinfoTestCase.etree
         root.append(acctinfo)
         return root
@@ -343,7 +343,7 @@ class EnrollrqTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "USERID").text = "bacon2b"
         SubElement(root, "TAXID").text = "123456789"
         SubElement(root, "SECURITYNAME").text = "Petunia"
-        SubElement(root, "DATEBIRTH").text = "20160705000000.000[0:GMT]"
+        SubElement(root, "DATEBIRTH").text = "20160705000000.000[+0:UTC]"
         return root
 
     @classproperty
@@ -436,7 +436,7 @@ class EnrollrsTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("ENROLLRS")
         SubElement(root, "TEMPPASS").text = "t0ps3kr1t"
         SubElement(root, "USERID").text = "bacon2b"
-        SubElement(root, "DTEXPIRE").text = "20160705000000.000[0:GMT]"
+        SubElement(root, "DTEXPIRE").text = "20160705000000.000[+0:UTC]"
         return root
 
     @classproperty
@@ -1080,7 +1080,7 @@ class ChguserinforsTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "DAYPHONE").text = "(773) 309-1027"
         SubElement(root, "EVEPHONE").text = "867-5309"
         SubElement(root, "EMAIL").text = "test@example.com"
-        SubElement(root, "DTINFOCHG").text = "20141122000000.000[0:GMT]"
+        SubElement(root, "DTINFOCHG").text = "20141122000000.000[+0:UTC]"
         return root
 
     @classproperty

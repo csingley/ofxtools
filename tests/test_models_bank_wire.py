@@ -148,7 +148,7 @@ class WirerqTestCase(unittest.TestCase, base.TestAggregate):
         root.append(WirebeneficiaryTestCase.etree)
         root.append(WiredestbankTestCase.etree)
         SubElement(root, "TRNAMT").text = "123.45"
-        SubElement(root, "DTDUE").text = "17760704000000.000[0:GMT]"
+        SubElement(root, "DTDUE").text = "17760704000000.000[+0:UTC]"
         SubElement(root, "PAYINSTRUCT").text = "Fold until all sharp corners"
 
         return root
@@ -210,7 +210,7 @@ class WirersTestCase(unittest.TestCase, base.TestAggregate):
         root.append(WirebeneficiaryTestCase.etree)
         root.append(WiredestbankTestCase.etree)
         SubElement(root, "TRNAMT").text = "123.45"
-        SubElement(root, "DTDUE").text = "17760704000000.000[0:GMT]"
+        SubElement(root, "DTDUE").text = "17760704000000.000[+0:UTC]"
         SubElement(root, "PAYINSTRUCT").text = "Fold until all sharp corners"
 
         return root
@@ -219,10 +219,10 @@ class WirersTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def validSoup(cls):
         dtxferprj = Element("DTXFERPRJ")
-        dtxferprj.text = "17760704000000.000[0:GMT]"
+        dtxferprj.text = "17760704000000.000[+0:UTC]"
 
         dtposted = Element("DTPOSTED")
-        dtposted.text = "17760704000000.000[0:GMT]"
+        dtposted.text = "17760704000000.000[+0:UTC]"
 
         for dtChoice in dtxferprj, dtposted:
             root = cls.emptyBase
@@ -239,9 +239,9 @@ class WirersTestCase(unittest.TestCase, base.TestAggregate):
     @classmethod
     def invalidSoup(cls):
         dtxferprj = Element("DTXFERPRJ")
-        dtxferprj.text = "17760704000000.000[0:GMT]"
+        dtxferprj.text = "17760704000000.000[+0:UTC]"
         dtposted = Element("DTPOSTED")
-        dtposted.text = "17760704000000.000[0:GMT]"
+        dtposted.text = "17760704000000.000[+0:UTC]"
 
         # Mutex
         root = cls.emptyBase

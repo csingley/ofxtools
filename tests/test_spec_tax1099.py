@@ -49,10 +49,10 @@ class Tax1099BTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <DTSERVER>20051029101003.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
-                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
-                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <DTPROFUP>20041029101003.000[+0:UTC]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[+0:UTC]</DTACCTUP>
                 <FI>
                     <ORG>NCH</ORG>
                     <FID>1001</FID>
@@ -302,10 +302,10 @@ class FidirectdepositinfoTestCase(base.OfxTestCase, unittest.TestCase):
                     <CODE>0</CODE>
                     <SEVERITY>INFO</SEVERITY>
                 </STATUS>
-                <DTSERVER>20051029101003.000[0:GMT]</DTSERVER>
+                <DTSERVER>20051029101003.000[+0:UTC]</DTSERVER>
                 <LANGUAGE>ENG</LANGUAGE>
-                <DTPROFUP>20041029101003.000[0:GMT]</DTPROFUP>
-                <DTACCTUP>20041029101003.000[0:GMT]</DTACCTUP>
+                <DTPROFUP>20041029101003.000[+0:UTC]</DTPROFUP>
+                <DTACCTUP>20041029101003.000[+0:UTC]</DTACCTUP>
                 <FI>
                     <ORG>NCH</ORG>
                     <FID>1001</FID>
