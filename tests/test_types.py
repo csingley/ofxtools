@@ -413,9 +413,9 @@ class DecimalTestCase(unittest.TestCase, Base):
 class TestingTimezone(datetime.tzinfo):
     """Timezone info class for testing purposes"""
 
-    def __init__(self, name: str, offset: datetime.timedelta):
+    def __init__(self, name: Optional[str], offset: float):
         self.name = name
-        self.offset = offset
+        self.offset = datetime.timedelta(hours=offset)
 
     def utcoffset(self, dst: Optional[datetime.datetime]) -> datetime.timedelta:
         return self.offset
@@ -427,8 +427,10 @@ class TestingTimezone(datetime.tzinfo):
         return self.name
 
 
-CST = TestingTimezone("CST", datetime.timedelta(hours=-6))
-IST = TestingTimezone("IST", datetime.timedelta(hours=5, minutes=30))
+CST = TestingTimezone("CST", -6)
+IST = TestingTimezone("IST", 5.5)
+NST = TestingTimezone("NST", -3.5)
+UTC_NONAME = TestingTimezone(None, 0)
 
 
 class DateTimeTestCase(unittest.TestCase, Base):
@@ -493,11 +495,17 @@ class DateTimeTestCase(unittest.TestCase, Base):
         check = datetime.datetime(2007, 1, 1, tzinfo=UTC)
         self.assertEqual(t.unconvert(check), "20070101000000.000[+0:UTC]")
 
+        check = datetime.datetime(2007, 1, 1, tzinfo=UTC_NONAME)
+        self.assertEqual(t.unconvert(check), "20070101000000.000[+0]")
+
         check = datetime.datetime(2007, 1, 1, tzinfo=CST)
         self.assertEqual(t.unconvert(check), "20070101000000.000[-6:CST]")
 
         check = datetime.datetime(2007, 1, 1, tzinfo=IST)
-        self.assertEqual(t.unconvert(check), "20070101000000.000[+5.50:IST]")
+        self.assertEqual(t.unconvert(check), "20070101000000.000[+5.30:IST]")
+
+        check = datetime.datetime(2007, 1, 1, tzinfo=NST)
+        self.assertEqual(t.unconvert(check), "20070101000000.000[-3.30:NST]")
 
     def test_unconvert_round_microseconds(self):
         # Round up microseconds above 999499; increment seconds (Issue #80)
@@ -625,11 +633,17 @@ class TimeTestCase(unittest.TestCase, Base):
         check = datetime.time(1, 2, 3, tzinfo=UTC)
         self.assertEqual(t.unconvert(check), "010203.000[+0:UTC]")
 
+        check = datetime.time(1, 2, 3, tzinfo=UTC_NONAME)
+        self.assertEqual(t.unconvert(check), "010203.000[+0]")
+
         check = datetime.time(1, 2, 3, tzinfo=CST)
         self.assertEqual(t.unconvert(check), "010203.000[-6:CST]")
 
         check = datetime.time(1, 2, 3, tzinfo=IST)
-        self.assertEqual(t.unconvert(check), "010203.000[+5.50:IST]")
+        self.assertEqual(t.unconvert(check), "010203.000[+5.30:IST]")
+
+        check = datetime.time(1, 2, 3, tzinfo=NST)
+        self.assertEqual(t.unconvert(check), "010203.000[-3.30:NST]")
 
     def test_unconvert_round_microseconds(self):
         # Round up microseconds above 999499; increment seconds (Issue #80)

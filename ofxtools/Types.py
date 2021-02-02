@@ -35,6 +35,7 @@ __all__ = [
 from functools import singledispatchmethod
 import decimal
 import datetime
+from math import copysign
 import re
 import warnings
 from xml.sax import saxutils
@@ -514,30 +515,37 @@ DT_REGEX = re.compile(
 
 def format_datetime(format: str, value: datetime.datetime) -> str:
     """
-    Format a `datetime` or `time` according to the OFX specification.
+    Format a `datetime` according to the OFX specification.
 
-    The value must include timezone information which will be preserved in the OFX
-    string.
+    The value must include timezone information which will be preserved in the
+    OFX string.
 
     The value is rounded to the nearest millisecond since OFX doesn't support
     microsecond resolution.
+
+    The `format` parameter is used to format the part of the timestamp before
+    the milliseconds.
     """
     utcoffset = value.utcoffset()
-    if utcoffset is None:
-        raise ValueError(f"{value} is not timezone-aware")
+    assert utcoffset is not None
 
     # Round to nearest millisecond by adding 500 us and truncating.
     value += datetime.timedelta(microseconds=500)
     ms = value.microsecond // 1000
 
-    # OFX takes the UTC offset in hours, preferably as a whole number.
-    hours = utcoffset.total_seconds() / 3600
-    if hours == int(hours):
-        tz = "{:+d}".format(int(hours))
-    else:
-        tz = "{:+.2f}".format(hours)
+    # OFX takes the UTC offset formatted as +h[.mm].
+    offset_mins = utcoffset // datetime.timedelta(minutes=1)
+    hours, mins = divmod(abs(offset_mins), 60)
+    tz = "{:+d}".format(int(copysign(hours, offset_mins)))
+    if mins != 0:
+        tz += ".{:02d}".format(mins)
 
-    return "{}.{:03d}[{}:{}]".format(value.strftime(format), ms, tz, value.tzname())
+    # Note that tzname() is permitted to return None.
+    tzname = value.tzname()
+    if tzname is not None:
+        tz += ":" + tzname
+
+    return "{}.{:03d}[{}]".format(value.strftime(format), ms, tz)
 
 
 class DateTime(Element):
