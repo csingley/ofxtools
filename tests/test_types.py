@@ -497,7 +497,7 @@ class DateTimeTestCase(unittest.TestCase, Base):
         self.assertEqual(t.unconvert(check), "20070101000000.000[-6:CST]")
 
         check = datetime.datetime(2007, 1, 1, tzinfo=IST)
-        self.assertEqual(t.unconvert(check), "20070101000000.000[+5.50:IST]")
+        self.assertEqual(t.unconvert(check), "20070101000000.000[+5.30:IST]")
 
     def test_unconvert_round_microseconds(self):
         # Round up microseconds above 999499; increment seconds (Issue #80)
@@ -629,7 +629,7 @@ class TimeTestCase(unittest.TestCase, Base):
         self.assertEqual(t.unconvert(check), "010203.000[-6:CST]")
 
         check = datetime.time(1, 2, 3, tzinfo=IST)
-        self.assertEqual(t.unconvert(check), "010203.000[+5.50:IST]")
+        self.assertEqual(t.unconvert(check), "010203.000[+5.30:IST]")
 
     def test_unconvert_round_microseconds(self):
         # Round up microseconds above 999499; increment seconds (Issue #80)

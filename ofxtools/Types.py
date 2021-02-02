@@ -399,7 +399,7 @@ class Decimal(Element):
         #  Rewrite ``self.scale`` from # of digits to a ``decimal.Decimal`` instance
         #  That can be directly fed into ``decimal.Decimal.quantize()``
         if self.scale is not None:
-            self.scale = decimal.Decimal("0.{}1".format("0" * (self.scale - 1)))
+            self.scale = decimal.Decimal(f"0.{'0' * (self.scale - 1)}1")
 
     @singledispatchmethod
     def convert(self, value):
@@ -527,17 +527,25 @@ def format_datetime(format: str, value: datetime.datetime) -> str:
         raise ValueError(f"{value} is not timezone-aware")
 
     # Round to nearest millisecond by adding 500 us and truncating.
-    value += datetime.timedelta(microseconds=500)
-    ms = value.microsecond // 1000
+    # N.B. the value being increased by half a millisecond is
+    # carried forward to this function's return value, to ensure that
+    # the rounded time has the seconds dial bumped if necessary.
+    value_bumped = value + datetime.timedelta(microseconds=500)
+    ms = value_bumped.microsecond // 1000
 
-    # OFX takes the UTC offset in hours, preferably as a whole number.
-    hours = utcoffset.total_seconds() / 3600
-    if hours == int(hours):
-        tz = "{:+d}".format(int(hours))
-    else:
-        tz = "{:+.2f}".format(hours)
+    # OFX takes the UTC offset formatted as +h[.mm].
+    offset_mins = utcoffset // datetime.timedelta(minutes=1)
+    hours, mins = divmod(offset_mins, 60)
+    tz = f"{hours:+d}"
+    if mins != 0:
+        tz += f".{abs(mins):02d}"
 
-    return "{}.{:03d}[{}:{}]".format(value.strftime(format), ms, tz, value.tzname())
+    # Note that tzname() is permitted to return None.
+    tzname = value.tzname()
+    if tzname is not None:
+        tz += ":" + tzname
+
+    return f"{value_bumped.strftime(format)}.{ms:03d}[{tz}]"
 
 
 class DateTime(Element):
@@ -779,7 +787,7 @@ class SubAggregate(Element):
 
     #  This doesn't get used
     #  def __repr__(self):
-    #  return "<{}>".format(self.__type__.__name__)
+    #  return f"<{self.__type__.__name__}>"
 
 
 class ListAggregate(SubAggregate):
