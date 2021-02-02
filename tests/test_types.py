@@ -429,6 +429,7 @@ class TestingTimezone(datetime.tzinfo):
 
 CST = TestingTimezone("CST", datetime.timedelta(hours=-6))
 IST = TestingTimezone("IST", datetime.timedelta(hours=5, minutes=30))
+NST = TestingTimezone("NST", datetime.timedelta(hours=-3.5))
 
 
 class DateTimeTestCase(unittest.TestCase, Base):
@@ -498,6 +499,9 @@ class DateTimeTestCase(unittest.TestCase, Base):
 
         check = datetime.datetime(2007, 1, 1, tzinfo=IST)
         self.assertEqual(t.unconvert(check), "20070101000000.000[+5.30:IST]")
+
+        check = datetime.datetime(2007, 1, 1, tzinfo=NST)
+        self.assertEqual(t.unconvert(check), "20070101000000.000[-3.30:NST]")
 
     def test_unconvert_round_microseconds(self):
         # Round up microseconds above 999499; increment seconds (Issue #80)

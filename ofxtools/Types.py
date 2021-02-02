@@ -535,10 +535,11 @@ def format_datetime(format: str, value: datetime.datetime) -> str:
 
     # OFX takes the UTC offset formatted as +h[.mm].
     offset_mins = utcoffset // datetime.timedelta(minutes=1)
-    hours, mins = divmod(offset_mins, 60)
-    tz = f"{hours:+d}"
+    hours, mins = divmod(abs(offset_mins), 60)
+    sign = "-" if offset_mins < 0 else "+"
+    tz = f"{sign}{hours:d}"
     if mins != 0:
-        tz += f".{abs(mins):02d}"
+        tz += f".{mins:02d}"
 
     # Note that tzname() is permitted to return None.
     tzname = value.tzname()
