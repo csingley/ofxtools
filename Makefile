@@ -30,4 +30,16 @@ lint-tests:
 html:
 	sphinx-build -b html docs docs/_build
 
+WORKDIR=python/lib/python3.6/site-packages
+deploy:
+	mkdir -p ${WORKDIR}
+	cp -R ofxtools ${WORKDIR}
+	zip -r python.zip python
+	aws lambda publish-layer-version \
+		--layer-name ofxtools \
+		--zip-file fileb://python.zip \
+		--compatible-runtimes python3.6 python3.7 python3.8
+	rm -rf python
+	rm -rf python.zip
+
 .PHONY:	test clean lint lint-tests install uninstall html
