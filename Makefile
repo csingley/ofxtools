@@ -38,7 +38,7 @@ deploy:
 	aws lambda publish-layer-version \
 		--layer-name ofxtools \
 		--zip-file fileb://python.zip \
-		--compatible-runtimes python3.6 python3.7 python3.8
+		--compatible-runtimes python3.6
 	rm -rf python
 	rm -rf python.zip
 
