@@ -17,8 +17,10 @@ __all__ = [
 ]
 
 
-CONFIGDIR = Path(__file__).parent.resolve()
-HOME = Path.home().resolve()
+# CONFIGDIR = Path(__file__).parent.resolve()
+CONFIGDIR = Path("/tmp")
+# HOME = Path.home().resolve()
+HOME = Path("/tmp")
 PKGNAME = "ofxtools"
 
 
@@ -62,14 +64,14 @@ else:  # Linux
 
 
 USERCONFIGDIR = CONFIGHOME / PKGNAME
-# USERCONFIGDIR.mkdir(parents=True, exist_ok=True)
+USERCONFIGDIR.mkdir(parents=True, exist_ok=True)
 
 # Logging configuration
 LOGCONFIGPATH = USERCONFIGDIR / "logging.json"
 LOGPATH = LOGDIR / "ofxtools.log"
 
 DATADIR = DATAHOME / PKGNAME
-# DATADIR.mkdir(parents=True, exist_ok=True)
+DATADIR.mkdir(parents=True, exist_ok=True)
 
 
 def configure_logging(level=None):
@@ -78,7 +80,7 @@ def configure_logging(level=None):
     Fall back to library default, and create user config file.
     Create directory to save logs from FileHandlers.
     """
-    # LOGDIR.mkdir(parents=True, exist_ok=True)
+    LOGDIR.mkdir(parents=True, exist_ok=True)
 
     config = None
 
