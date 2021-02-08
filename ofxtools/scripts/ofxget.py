@@ -219,7 +219,7 @@ def add_subparser(
         parser.add_argument(
             "--useragent",
             dest="useragent",
-            help="Value to use in HTTP 'User-Agent' header (defaults to empty string)",
+            help="Value to use in HTTP 'User-Agent' header (defaults to 'InetClntApp/3.0')",
         )
 
     if format:
