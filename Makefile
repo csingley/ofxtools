@@ -30,7 +30,7 @@ lint-tests:
 html:
 	sphinx-build -b html docs docs/_build
 
-WORKDIR=python/lib/python3.6/site-packages
+WORKDIR=python/lib/python3.8/site-packages
 deploy:
 	mkdir -p ${WORKDIR}
 	cp -R ofxtools ${WORKDIR}
@@ -38,7 +38,7 @@ deploy:
 	aws lambda publish-layer-version \
 		--layer-name ofxtools \
 		--zip-file fileb://python.zip \
-		--compatible-runtimes python3.6
+		--compatible-runtimes python3.8
 	rm -rf python
 	rm -rf python.zip
 
