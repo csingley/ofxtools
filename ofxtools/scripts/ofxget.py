@@ -612,7 +612,7 @@ def request_acctinfo(args: ArgsType) -> None:
 
 def _request_acctinfo(args: ArgsType, password: str) -> BytesIO:
     client = init_client(args)
-    dtacctup = args["dtacctup"] or datetime.datetime(1990, 12, 31, tzinfo=utils.UTC)
+    dtacctup = args["dtacctup"] or datetime.datetime(1990, 1, 1, tzinfo=utils.UTC)
 
     with client.request_accounts(
         password,

@@ -299,7 +299,7 @@ class OFXClient:
 
         Wrapper we can mock for testing.
         """
-        return str(uuid.uuid4())
+        return str(uuid.uuid4()).upper()
 
     @property
     def http_headers(self) -> Dict[str, str]:
@@ -894,6 +894,7 @@ class OFXClient:
             prettyprint = self.prettyprint
         if close_elements is None:
             close_elements = self.close_elements
+
         header = bytes(
             str(
                 make_header(
