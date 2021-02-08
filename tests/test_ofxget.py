@@ -315,7 +315,7 @@ class MakeArgParserTestCase(unittest.TestCase):
             self.assertEqual(len(args), 2)
             passwd, dtacctup = args
             self.assertEqual(passwd, "t0ps3kr1t")
-            self.assertEqual(dtacctup, datetime(1990, 12, 31, tzinfo=UTC))
+            self.assertEqual(dtacctup, datetime(1990, 1, 1, tzinfo=UTC))
 
             self.assertEqual(
                 kwargs,
@@ -341,7 +341,7 @@ class MakeArgParserTestCase(unittest.TestCase):
             self.assertEqual(len(args), 2)
             passwd, dtacctup = args
             self.assertEqual(passwd, "t0ps3kr1t")
-            self.assertEqual(dtacctup, datetime(1990, 12, 31, tzinfo=UTC))
+            self.assertEqual(dtacctup, datetime(1990, 1, 1, tzinfo=UTC))
 
             self.assertEqual(
                 kwargs,
