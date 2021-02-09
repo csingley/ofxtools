@@ -477,6 +477,27 @@ class OFXHeaderV2TestCase(unittest.TestCase, OFXHeaderTestMixin):
 
         self.assertEqual(body, self.body)
 
+    def testParseHeaderSingleQuotedDeclarationData(self):
+        # The XML spec allows data to be quoted within either single or double quotes
+        # Make sure that single-quoted data in the XML declaration is captured by
+        # ``ofxtools.header.XML_REGEX``
+        header = str(self.headerClass(self.defaultVersion))
+        header = (
+            "<?xml version='1.0' encoding='UTF-8' standalone='no'?>"
+            + header[header.find("<?OFX") :]
+        )
+        ofx = header + self.body
+        ofx = BytesIO(ofx.encode("utf8"))
+        ofxheader, body = ofxtools.header.parse_header(ofx)
+
+        self.assertEqual(ofxheader.ofxheader, 200)
+        self.assertEqual(ofxheader.version, self.defaultVersion)
+        self.assertEqual(ofxheader.security, "NONE")
+        self.assertEqual(ofxheader.oldfileuid, "NONE")
+        self.assertEqual(ofxheader.newfileuid, "NONE")
+
+        self.assertEqual(body, self.body)
+
 
 class MakeHeaderTestCase(unittest.TestCase):
     def testOfxV1(self):

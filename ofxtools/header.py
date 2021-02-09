@@ -240,10 +240,10 @@ class OFXHeaderV2(OFXHeaderBase):
 
 XML_REGEX = re.compile(
     r"""(<\?xml\s+
-                       (version=\"(?P<xmlversion>[\d.]+)\")?\s*
-                       (encoding=\"(?P<encoding>[\w-]+)\")?\s*
-                       (standalone=\"(?P<standalone>[\w]+)\")?\s*
-                       \?>)\s*""",
+        (version=(?P<versionquote>[\"'])(?P<xmlversion>[\d.]+)(?P=versionquote))?\s*
+        (encoding=(?P<encodingquote>[\"'])(?P<encoding>[\w-]+)(?P=encodingquote))?\s*
+        (standalone=(?P<standalonequote>[\"'])(?P<standalone>[\w]+)(?P=standalonequote))?\s*
+        \?>)\s*""",
     re.VERBOSE,
 )
 
