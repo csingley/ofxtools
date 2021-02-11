@@ -161,7 +161,9 @@ class Element:
         ``obj`` is the instance of the object your descriptor is attached to.
         ``objtype`` is the type of the object the descriptor is attached to.
         """
-        return obj.__dict__[self.name]
+        return obj.__dict__.get(
+            self.name
+        )  # changing to get() syntax for pickle dumpability
 
     def __set__(self, obj, value) -> None:
         """Perform validation and type conversion before setting value.
