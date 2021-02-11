@@ -65,8 +65,8 @@ def write_config(args: ofxget.ArgsType) -> None:
     """
     mk_server_cfg(args)
 
-    with open(ofxget.CONFIGPATH, "w") as f:
-        LibraryConfig.write(f)
+    # with open(ofxget.CONFIGPATH, "w") as f:
+    #     LibraryConfig.write(f)
 
 
 def main():

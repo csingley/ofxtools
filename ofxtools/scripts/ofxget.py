@@ -960,8 +960,8 @@ def write_config(args: ArgsType) -> None:
     mk_server_cfg(args)
     logger.info(f"Writing user configs to {USERCONFIGPATH}")
 
-    with open(USERCONFIGPATH, "w") as f:
-        USERCFG.write(f)
+    # with open(USERCONFIGPATH, "w") as f:
+    #     USERCFG.write(f)
 
 
 def mk_server_cfg(args: ArgsType) -> configparser.SectionProxy:

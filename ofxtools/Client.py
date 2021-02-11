@@ -524,9 +524,9 @@ class OFXClient:
             assert dtprofup is None or dtprofup <= dtprofup_server
 
             # Cache the updated PROFRS sent by the server
-            response.seek(0)
-            with open(persistpath, "wb") as f:
-                f.write(response.read())
+            # response.seek(0)
+            # with open(persistpath, "wb") as f:
+            #     f.write(response.read())
 
         # Rewind PROFRS so it can be returned cleanly after having been parsed.
         response.seek(0)

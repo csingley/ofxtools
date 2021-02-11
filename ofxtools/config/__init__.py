@@ -17,8 +17,8 @@ __all__ = [
 ]
 
 
-# CONFIGDIR = Path(__file__).parent.resolve()
-CONFIGDIR = Path("/tmp")
+CONFIGDIR = Path(__file__).parent.resolve()
+# CONFIGDIR = Path("/tmp")
 # HOME = Path.home().resolve()
 HOME = Path("/tmp")
 PKGNAME = "ofxtools"
@@ -64,14 +64,14 @@ else:  # Linux
 
 
 USERCONFIGDIR = CONFIGHOME / PKGNAME
-USERCONFIGDIR.mkdir(parents=True, exist_ok=True)
+# USERCONFIGDIR.mkdir(parents=True, exist_ok=True)
 
 # Logging configuration
 LOGCONFIGPATH = USERCONFIGDIR / "logging.json"
 LOGPATH = LOGDIR / "ofxtools.log"
 
 DATADIR = DATAHOME / PKGNAME
-DATADIR.mkdir(parents=True, exist_ok=True)
+# DATADIR.mkdir(parents=True, exist_ok=True)
 
 
 def configure_logging(level=None):
@@ -80,22 +80,22 @@ def configure_logging(level=None):
     Fall back to library default, and create user config file.
     Create directory to save logs from FileHandlers.
     """
-    LOGDIR.mkdir(parents=True, exist_ok=True)
+    # LOGDIR.mkdir(parents=True, exist_ok=True)
 
     config = None
 
     if LOGCONFIGPATH.exists():
         try:
-            with open(LOGCONFIGPATH, "r") as f:
-                config = json.load(f)
+            # with open(LOGCONFIGPATH, "r") as f:
+            #     config = json.load(f)
             assert config
         except Exception:
             config = None
 
     if config is None:
         config = DEFAULTLOGCONFIG
-        with open(LOGCONFIGPATH, "w") as f:
-            json.dump(config, f, indent=4)
+        # with open(LOGCONFIGPATH, "w") as f:
+        #     json.dump(config, f, indent=4)
 
     if level is not None:
         assert level in (
