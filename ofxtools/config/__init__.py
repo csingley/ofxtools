@@ -19,8 +19,8 @@ __all__ = [
 
 CONFIGDIR = Path(__file__).parent.resolve()
 # CONFIGDIR = Path("/tmp")
-# HOME = Path.home().resolve()
-HOME = Path("/tmp")
+HOME = Path.home().resolve()
+# HOME = Path("/tmp")
 PKGNAME = "ofxtools"
 
 
