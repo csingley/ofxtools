@@ -69,9 +69,11 @@ from typing import (
     Type,
     Callable,
 )
+from configparser import ConfigParser
 
 
 # local imports
+from ofxtools.scripts import ofxget
 from ofxtools.header import make_header
 from ofxtools.models.ofx import OFX
 from ofxtools.models import ACCTINFORQ, ACCTINFOTRNRQ
@@ -245,7 +247,8 @@ class OFXClient:
 
     def __init__(
         self,
-        url: str,
+        fi_config_key: str = None,
+        url: str = None,
         userid: Optional[str] = None,
         clientuid: Optional[str] = None,
         org: Optional[str] = None,
@@ -261,6 +264,10 @@ class OFXClient:
         useragent: Optional[str] = None,
         persist_cookies: bool = True,
     ):
+        if fi_config_key is not None:
+            LibraryConfig = ConfigParser()
+            LibraryConfig.read(ofxget.CONFIGPATH)
+            section = LibraryConfig[fi_config_key]
 
         self.url = url
 
