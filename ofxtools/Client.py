@@ -73,7 +73,6 @@ from configparser import ConfigParser
 
 
 # local imports
-from ofxtools.scripts import ofxget
 from ofxtools.header import make_header
 from ofxtools.models.ofx import OFX
 from ofxtools.models import ACCTINFORQ, ACCTINFOTRNRQ
@@ -119,6 +118,8 @@ from ofxtools import utils, config
 from ofxtools.Parser import OFXTree
 
 
+CONFIGPATH = config.CONFIGDIR / "fi.cfg"
+USERCONFIGPATH = config.CONFIGDIR / "user.cfg"
 AUTH_PLACEHOLDER = "{:0<32}".format("anonymous")
 
 
@@ -264,14 +265,22 @@ class OFXClient:
         useragent: Optional[str] = None,
         persist_cookies: bool = True,
     ):
+        # config hierarchy: defaults -> library cfg -> user cfg -> passed args
         if fi_config_key is not None:
-            LibraryConfig = ConfigParser()
-            LibraryConfig.read(ofxget.CONFIGPATH)
-            section = LibraryConfig[fi_config_key]
+            fi_config = ConfigParser()
+            fi_config.read(CONFIGPATH)
+            section = fi_config[fi_config_key]
+            for k, v in section.items():
+                setattr(self, k, v)
 
-        self.url = url
+        user_config = ConfigParser()
+        user_config.read(USERCONFIGPATH)
+        client_section = user_config["client"]
+        for k, v in client_section.items():
+            setattr(self, k, v)
 
         for attr in [
+            "url",
             "userid",
             "clientuid",
             "org",
@@ -969,3 +978,7 @@ def wrap_stmtrq_stmtendrq(nt, rqs, client):
 @wrap_stmtrq.register(CcStmtEndRq)
 def wrap_stmtrq_ccstmtendrq(nt, rqs, client):
     return (CREDITCARDMSGSRQV1, [client.ccstmtendtrnrq(**rq._asdict()) for rq in rqs])
+
+
+if __name__ == "__main__":
+    client = OFXClient(fi_config_key="svb")
