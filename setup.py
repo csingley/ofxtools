@@ -49,7 +49,7 @@ setup(
         "Topic :: Office/Business :: Financial",
         "Topic :: Office/Business :: Financial :: Accounting",
         "Topic :: Office/Business :: Financial :: Investment",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: GNU General Public License V3 (GPLV3)",
         "Operating System :: OS Independent",
         "Natural Language :: English",
         "Programming Language :: Python",
