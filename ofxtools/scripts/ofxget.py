@@ -113,7 +113,7 @@ class UuidAction(argparse.Action):
     """
 
     def __call__(self, parser, namespace, values, option_string=None):
-        uuid = OFXClient.uuid
+        uuid = values if values else OFXClient.uuid
         setattr(namespace, self.dest, uuid)
 
 
@@ -299,10 +299,11 @@ def add_signon_group(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup
     )
     group.add_argument(
         "--clientuid",
-        nargs=0,
+        nargs="?",
         action=UuidAction,
         metavar="UUID4",
-        help="Override default CLIENTUID with random number",
+        help="Override default CLIENTUID with the specified ID, or with a random ID if "
+        "left unspecified",
     )
     group.add_argument("--org", help="FI.ORG")
     group.add_argument("--fid", help="FI.FID")
