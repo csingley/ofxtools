@@ -114,20 +114,41 @@ class OFXHeaderV1(OFXHeaderBase):
     # the SGML data, but some FIs disregard this requirement.  We allow it.
     # Therefore the regex doesn't capture whitespace at the end of the header;
     # instead ``parse_header()`` strips whitespace from the start of the data.
-    regex = re.compile(
-        r"""\s*
-            OFXHEADER:\s*(?P<OFXHEADER>\d+)\s*
-            DATA:\s*(?P<DATA>[A-Z]+)\s*
-            VERSION:\s*(?P<VERSION>\d+)\s*
-            SECURITY:\s*(?P<SECURITY>[\w]+)\s*
-            ENCODING:\s*(?P<ENCODING>[A-Z0-9-]+)\s*
-            CHARSET:\s*(?P<CHARSET>[\w-]+)\s*
-            COMPRESSION:\s*(?P<COMPRESSION>[A-Z]+)\s*
-            OLDFILEUID:\s*(?P<OLDFILEUID>[\w-]+)\s*
-            NEWFILEUID:\s*(?P<NEWFILEUID>[\w-]+)
-        """,
-        re.VERBOSE,
-    )
+    #
+    # 4) Some OFX files do not have all header fields (like CHARSET), so
+    # they're optional and have default values.
+    regex = re.compile("([A-Z]+):\s*(.+)\s*")
+    default_header = {
+        "ofxheader": "100",
+        "data": "OFXSGML",
+        "version": "102",
+        "security": "NONE",
+        "encoding": "UTF-8",
+        "charset": "NONE",
+        "compression": "NONE",
+        "oldfileuid": "NONE",
+        "newfileuid": "NONE",
+    }
+
+    @classmethod
+    def parse(
+        cls, rawheader: str
+    ) -> Tuple[Union["OFXHeaderBase", "OFXHeaderV1", "OFXHeaderV2"], int]:
+        """
+        Instantiate from string.
+
+        Returns a tuple of:
+            * class instance containing parsed header data, and
+            * index of header regex match end position (type int).
+        """
+        header = cls.default_header.copy()
+        header.update(
+            {
+                key.lower(): value
+                for key, value in cls.regex.findall(rawheader)
+            }
+        )
+        return cls(**header), len(rawheader) - 1
 
     @property
     def codec(self) -> str:
