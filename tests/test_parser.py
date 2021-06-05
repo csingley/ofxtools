@@ -3,15 +3,17 @@
 
 # stdlib imports
 import unittest
+from io import BytesIO, StringIO
+from tempfile import NamedTemporaryFile
+from textwrap import dedent
 from unittest import TestCase
 from unittest.mock import MagicMock, call, patch, sentinel
 from xml.etree.ElementTree import Element
-from io import BytesIO, StringIO
-from tempfile import NamedTemporaryFile
 
 
 # local imports
 from ofxtools.Parser import OFXTree, TreeBuilder, ParseError, main
+from ofxtools.header import OFXHeaderV1
 
 
 class TreeBuilderRegexTestCase(TestCase):
@@ -118,6 +120,34 @@ class TreeBuilderUnitTestCase(TestCase):
         self.builder.start.assert_called_once_with("TAG", {})
         self.builder.data.assert_called_once_with("value")
         self.builder.end.assert_called_once_with("TAG")
+
+    def test_parse_flexible_header_V1(self):
+        rawheader = dedent("""
+            OFXHEADER:100
+
+            DATA:OFXSGML
+            VERSION:102
+            SECURITY:NONE
+            ENCODING:UTF-8
+            COMPRESSION:NONE
+            OLDFILEUID:NONE
+            NEWFILEUID:NONE
+        """).strip()
+        header, end = OFXHeaderV1.parse(rawheader)
+        expected_header = {
+            "ofxheader": "100",
+            "data": "OFXSGML",
+            "version": "102",
+            "security": "NONE",
+            "encoding": "UTF-8",
+            "charset": "NONE",
+            "compression": "NONE",
+            "oldfileuid": "NONE",
+            "newfileuid": "NONE",
+        }
+        expected_end = len(rawheader) - 1
+        self.assertEqual(str(header), str(OFXHeaderV1(**expected_header)))
+        self.assertEqual(end, expected_end)
 
     def test_elemV2(self):
         (tag, text, closetag) = ("TAG", "value", "TAG")
