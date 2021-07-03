@@ -61,6 +61,7 @@ setup(
         "Programming Language :: Python",
         "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     keywords=["ofx", "Open Financial Exchange"],
 )
