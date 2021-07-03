@@ -12,3 +12,4 @@ ipdbplugin
 coveralls
 mypy
 black
+types-pytz
