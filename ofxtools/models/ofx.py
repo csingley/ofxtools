@@ -37,7 +37,7 @@ from ofxtools.utils import all_equal
 
 
 class OFX(Aggregate):
-    """ OFX Section 2.4.3 """
+    """OFX Section 2.4.3"""
 
     signonmsgsrqv1 = SubAggregate(SIGNONMSGSRQV1)
     signonmsgsrsv1 = SubAggregate(SIGNONMSGSRSV1)

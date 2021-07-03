@@ -67,7 +67,7 @@ SVCS = ("BANKSVC", "BPSVC", "INVSVC", "PRESSVC")
 
 
 class ENROLLRQ(Aggregate):
-    """ OFX section 8.4.2 """
+    """OFX section 8.4.2"""
 
     firstname = String(32, required=True)
     middlename = String(32)
@@ -98,7 +98,7 @@ class ENROLLRQ(Aggregate):
 
 
 class ENROLLRS(Aggregate):
-    """ OFX section 8.4.3 """
+    """OFX section 8.4.3"""
 
     temppass = String(32)
     userid = String(32)
@@ -106,13 +106,13 @@ class ENROLLRS(Aggregate):
 
 
 class ENROLLTRNRQ(TrnRq):
-    """ OFX section 8.4.2 """
+    """OFX section 8.4.2"""
 
     enrollrq = SubAggregate(ENROLLRQ, required=True)
 
 
 class ENROLLTRNRS(TrnRs):
-    """ OFX section 8.4.3 """
+    """OFX section 8.4.3"""
 
     enrollrs = SubAggregate(ENROLLRS)
 
@@ -171,13 +171,13 @@ class ACCTINFO(Aggregate):
 
 
 class ACCTINFORQ(Aggregate):
-    """ OFX section 8.5.1 """
+    """OFX section 8.5.1"""
 
     dtacctup = DateTime(required=True)
 
 
 class ACCTINFORS(Aggregate):
-    """ OFX section 8.5.2 """
+    """OFX section 8.5.2"""
 
     dtacctup = DateTime(required=True)
     acctinfo = ListAggregate(ACCTINFO)
@@ -189,19 +189,19 @@ class ACCTINFORS(Aggregate):
 
 
 class ACCTINFOTRNRQ(TrnRq):
-    """ OFX section 8.5"""
+    """OFX section 8.5"""
 
     acctinforq = SubAggregate(ACCTINFORQ, required=True)
 
 
 class ACCTINFOTRNRS(TrnRs):
-    """ OFX section 8.5.2 """
+    """OFX section 8.5.2"""
 
     acctinfors = SubAggregate(ACCTINFORS)
 
 
 class SVCADD(Aggregate):
-    """ OFX section 8.6.1.1 """
+    """OFX section 8.6.1.1"""
 
     bankacctto = SubAggregate(BANKACCTTO)
     ccacctto = SubAggregate(CCACCTTO)
@@ -211,7 +211,7 @@ class SVCADD(Aggregate):
 
 
 class SVCCHG(Aggregate):
-    """ OFX section 8.6.1.2 """
+    """OFX section 8.6.1.2"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
@@ -227,7 +227,7 @@ class SVCCHG(Aggregate):
 
 
 class SVCDEL(Aggregate):
-    """ OFX section 8.6.1.1 """
+    """OFX section 8.6.1.1"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
@@ -237,7 +237,7 @@ class SVCDEL(Aggregate):
 
 
 class ACCTRQ(Aggregate):
-    """ OFX section 8.6.1 """
+    """OFX section 8.6.1"""
 
     svcadd = SubAggregate(SVCADD)
     svcchg = SubAggregate(SVCCHG)
@@ -248,7 +248,7 @@ class ACCTRQ(Aggregate):
 
 
 class ACCTRS(Aggregate):
-    """ OFX section 8.6.2 """
+    """OFX section 8.6.2"""
 
     svcadd = SubAggregate(SVCADD)
     svcchg = SubAggregate(SVCCHG)
@@ -260,31 +260,31 @@ class ACCTRS(Aggregate):
 
 
 class ACCTTRNRQ(TrnRq):
-    """ OFX section 8.6.1 """
+    """OFX section 8.6.1"""
 
     acctrq = SubAggregate(ACCTRQ, required=True)
 
 
 class ACCTTRNRS(TrnRs):
-    """ OFX section 8.6.2 """
+    """OFX section 8.6.2"""
 
     acctrs = SubAggregate(ACCTRS)
 
 
 class ACCTSYNCRQ(SyncRqList):
-    """ OFX section 8.6.4.1 """
+    """OFX section 8.6.4.1"""
 
     accttrnrq = ListAggregate(ACCTTRNRQ)
 
 
 class ACCTSYNCRS(SyncRsList):
-    """ OFX section 8.6.4.2 """
+    """OFX section 8.6.4.2"""
 
     accttrnrs = ListAggregate(ACCTTRNRS)
 
 
 class CHGUSERINFORQ(Aggregate):
-    """ OFX section 8.7.1 """
+    """OFX section 8.7.1"""
 
     firstname = String(32)
     middlename = String(32)
@@ -302,7 +302,7 @@ class CHGUSERINFORQ(Aggregate):
 
 
 class CHGUSERINFORS(Aggregate):
-    """ OFX section 8.7.2 """
+    """OFX section 8.7.2"""
 
     firstname = String(32)
     middlename = String(32)
@@ -321,31 +321,31 @@ class CHGUSERINFORS(Aggregate):
 
 
 class CHGUSERINFOTRNRQ(TrnRq):
-    """ OFX section 8.7 """
+    """OFX section 8.7"""
 
     chguserinforq = SubAggregate(CHGUSERINFORQ, required=True)
 
 
 class CHGUSERINFOTRNRS(TrnRs):
-    """ OFX section 8.7 """
+    """OFX section 8.7"""
 
     chguserinfors = SubAggregate(CHGUSERINFORS)
 
 
 class CHGUSERINFOSYNCRQ(SyncRqList):
-    """ OFX section 8.7.4.1 """
+    """OFX section 8.7.4.1"""
 
     chguserinfotrnrq = ListAggregate(CHGUSERINFOTRNRQ)
 
 
 class CHGUSERINFOSYNCRS(SyncRsList):
-    """ OFX section 8.7.4.2 """
+    """OFX section 8.7.4.2"""
 
     chguserinfotrnrs = ListAggregate(CHGUSERINFOTRNRS)
 
 
 class SIGNUPMSGSRQV1(Aggregate):
-    """ OFX section 8.1 """
+    """OFX section 8.1"""
 
     enrolltrnrq = ListAggregate(ENROLLTRNRQ)
     acctinfotrnrq = ListAggregate(ACCTINFOTRNRQ)
@@ -354,7 +354,7 @@ class SIGNUPMSGSRQV1(Aggregate):
 
 
 class SIGNUPMSGSRSV1(Aggregate):
-    """ OFX section 8.1 """
+    """OFX section 8.1"""
 
     enrolltrnrs = ListAggregate(ENROLLTRNRS)
     acctinfotrnrs = ListAggregate(ACCTINFOTRNRS)
@@ -363,25 +363,25 @@ class SIGNUPMSGSRSV1(Aggregate):
 
 
 class CLIENTENROLL(Aggregate):
-    """ OFX section 8.8 """
+    """OFX section 8.8"""
 
     acctrequired = Bool(required=True)
 
 
 class WEBENROLL(Aggregate):
-    """ OFX section 8.8 """
+    """OFX section 8.8"""
 
     url = String(255, required=True)
 
 
 class OTHERENROLL(Aggregate):
-    """ OFX section 8.8 """
+    """OFX section 8.8"""
 
     message = String(80, required=True)
 
 
 class SIGNUPMSGSETV1(Aggregate):
-    """ OFX section 8.8 """
+    """OFX section 8.8"""
 
     msgsetcore = SubAggregate(MSGSETCORE, required=True)
     clientenroll = SubAggregate(CLIENTENROLL)
@@ -399,6 +399,6 @@ class SIGNUPMSGSETV1(Aggregate):
 
 
 class SIGNUPMSGSET(Aggregate):
-    """ OFX section 8.8 """
+    """OFX section 8.8"""
 
     signupmsgsetv1 = SubAggregate(SIGNUPMSGSETV1, required=True)

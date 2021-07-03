@@ -39,21 +39,21 @@ from ofxtools.models.bank.stmt import BANKACCTFROM, BANKACCTTO, PAYEE
 
 
 class BPACCTINFO(Aggregate):
-    """ OFX Section 12.5.1 """
+    """OFX Section 12.5.1"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     svcstatus = OneOf(*SVCSTATUSES, required=True)
 
 
 class BILLPUBINFO(Aggregate):
-    """ OFX Section 12.5.2 """
+    """OFX Section 12.5.2"""
 
     billpub = String(32, required=True)
     billid = String(32, required=True)
 
 
 class DISCOUNT(Aggregate):
-    """ OFX Section 12.5.2.3 """
+    """OFX Section 12.5.2.3"""
 
     dscrate = Decimal(required=True)
     dscamt = Decimal(required=True)
@@ -62,7 +62,7 @@ class DISCOUNT(Aggregate):
 
 
 class ADJUSTMENT(Aggregate):
-    """ OFX Section 12.5.2.4 """
+    """OFX Section 12.5.2.4"""
 
     adjno = String(32)
     adjdesc = String(80, required=True)
@@ -71,14 +71,14 @@ class ADJUSTMENT(Aggregate):
 
 
 class LINEITEM(Aggregate):
-    """ OFX Section 12.5.2.5 """
+    """OFX Section 12.5.2.5"""
 
     litmamt = Decimal(required=True)
     litmdesc = String(80, required=True)
 
 
 class INVOICE(Aggregate):
-    """ OFX Section 12.5.2.3 """
+    """OFX Section 12.5.2.3"""
 
     invno = String(32, required=True)
     invtotalamt = Decimal(required=True)
@@ -91,13 +91,13 @@ class INVOICE(Aggregate):
 
 
 class EXTDPMTINV(Aggregate):
-    """ OFX Section 12.5.2.2 """
+    """OFX Section 12.5.2.2"""
 
     invoice = ListAggregate(INVOICE)
 
 
 class EXTDPMT(Aggregate):
-    """ OFX Section 12.5.2.2 """
+    """OFX Section 12.5.2.2"""
 
     extdpmtfor = OneOf("INDIVIDUAL", "BUSINESS")
     extdpmtchk = Integer(10)
@@ -116,7 +116,7 @@ class EXTDPMT(Aggregate):
 
 
 class PMTINFO(Aggregate):
-    """ OFX Section 12.5.2 """
+    """OFX Section 12.5.2"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     trnamt = Decimal(required=True)
@@ -135,7 +135,7 @@ class PMTINFO(Aggregate):
 
 
 class EXTDPAYEE(Aggregate):
-    """ OFX Section 12.5.2.6 """
+    """OFX Section 12.5.2.6"""
 
     payeeid = String(12)
     idscope = OneOf("GLOBAL", "USER")  # Required if <PAYEEID> is present.
@@ -156,7 +156,7 @@ class EXTDPAYEE(Aggregate):
 
 
 class PMTPRCSTS(Aggregate):
-    """ OFX Section 12.5.2.7 """
+    """OFX Section 12.5.2.7"""
 
     pmtprccode = OneOf(
         "WILLPROCESSON",

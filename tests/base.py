@@ -9,9 +9,8 @@ import itertools
 from typing import List, Dict, Sequence, Any
 
 # local imports
-from ofxtools.Types import SubAggregate, ListAggregate, ListElement
 import ofxtools.models
-from ofxtools.models.base import Aggregate
+from ofxtools.models.base import Aggregate, UnknownTagWarning
 from ofxtools.models.common import STATUS
 from ofxtools.utils import classproperty, indent
 from ofxtools.Parser import OFXTree, TreeBuilder
@@ -33,13 +32,13 @@ class TestAggregate:
     @classproperty
     @classmethod
     def validSoup(cls):
-        """ Define in subclass """
+        """Define in subclass"""
         yield from ()
 
     @classproperty
     @classmethod
     def invalidSoup(cls):
-        """ Define in subclass """
+        """Define in subclass"""
         yield ET.Element("NOTAREALOFXTAG")
 
     def testValidSoup(self):
@@ -77,9 +76,14 @@ class TestAggregate:
                 Aggregate.from_etree(etree)
 
     def testExtraElement(self):
+        #  OFXv1 Section 2.3.1:
+        #    Open Financial Exchange is not completely SGML-compliant because the
+        #    specification allows unrecognized tags to be present. Clients and servers
+        #    must skip over the unrecognized tags. That is, if a client or server does
+        #    not recognize <XYZ>, it must ignore the tag and its enclosed data.
         etree = deepcopy(self.etree)
         ET.SubElement(etree, "FAKEELEMENT").text = "garbage"
-        with self.assertRaises(ValueError):
+        with self.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(etree)
 
     def oneOfTest(self, tag, texts):
@@ -104,6 +108,11 @@ class TestAggregate:
         self.assertEqual(len(elem), length)
 
     def _eqEtree(self, elem0, elem1):
+        """Equality testing for ``xml.etree.ElementTree`` instances.
+
+        Instances are equal if tag, text, and children are equal.
+        """
+
         self.assertIsInstance(elem0, ET.Element)
         self.assertIsInstance(elem1, ET.Element)
         self.assertEqual(elem0.tag, elem1.tag)
@@ -113,6 +122,13 @@ class TestAggregate:
             self._eqEtree(child0, child1)
 
     def _eqAggregate(self, agg0, agg1):
+        """Equality testing for ``ofxtools.models.base.Aggregate`` instances.
+
+        Run down the list of the spec of class attributes (excluding contained list
+        elements/aggregates) and test equality of each instance attribute.
+
+        Then use the list API to test equality of each contained list element/aggregate.
+        """
         self.assertIsInstance(agg0, Aggregate)
         self.assertIsInstance(agg1, Aggregate)
         self.assertIs(agg0.__class__, agg1.__class__)

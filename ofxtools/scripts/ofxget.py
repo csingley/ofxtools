@@ -999,7 +999,7 @@ def mk_server_cfg(args: ArgsType) -> configparser.SectionProxy:
     lib_cfg = read_config(LIBCFG, server)
 
     def test_cfg_val(opt: str, value: ArgType) -> bool:
-        """ Select CLI args to write to config file """
+        """Select CLI args to write to config file"""
         if value in NULL_ARGS:
             return False
         # Don't include CLIENTUID in the server section if it's sourced
@@ -1128,12 +1128,12 @@ def merge_from_ofxhome(args: ArgsType):
 
 
 def extrargs(args: ArgsType) -> dict:
-    """ Extract non-null args """
+    """Extract non-null args"""
     return {k: v for k, v in args.items() if v not in NULL_ARGS}
 
 
 def extractns(ns) -> dict:
-    """ Extract non-null argparse.Namespace"""
+    """Extract non-null argparse.Namespace"""
     return {k: v for k, v in vars(ns).items() if v is not None}
 
 
@@ -1482,7 +1482,7 @@ def list_fis(args: ArgsType) -> None:
 
 
 def fi_index() -> Sequence[Tuple[str, str, str]]:
-    """ All FIs known to ofxget """
+    """All FIs known to ofxget"""
     names = {id_: name for id_, name in USERCFG["NAMES"].items()}
     cfg_default_sect = USERCFG.default_section  # type: ignore
     servers = [
@@ -1502,7 +1502,7 @@ def fi_index() -> Sequence[Tuple[str, str, str]]:
 
 
 def convert_datetime(args: ArgsType) -> Mapping[str, Optional[datetime.datetime]]:
-    """ Convert dtstart/dtend/dtasof to Python datetime type for request """
+    """Convert dtstart/dtend/dtasof to Python datetime type for request"""
     D = DateTime().convert
     return {d[2:]: D(args[d] or None) for d in ("dtstart", "dtend", "dtasof")}
 

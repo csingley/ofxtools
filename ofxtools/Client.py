@@ -303,7 +303,7 @@ class OFXClient:
 
     @property
     def http_headers(self) -> Dict[str, str]:
-        """ Pass to urllib.request.urlopen() """
+        """Pass to urllib.request.urlopen()"""
         mimetype = "application/x-ofx"
         # Python libraries such as ``urllib.request`` and ``requests``
         # identify themselves in the ``User-Agent`` header,
@@ -683,7 +683,7 @@ class OFXClient:
         userid: Optional[str] = None,
         sesscookie: Optional[str] = None,
     ) -> SIGNONMSGSRQV1:
-        """ Construct SONRQ; package in SIGNONMSGSRQV1 """
+        """Construct SONRQ; package in SIGNONMSGSRQV1"""
         if self.org:
             fi: Optional[FI] = FI(org=self.org, fid=self.fid)
         else:
@@ -720,7 +720,7 @@ class OFXClient:
         dtend: Optional[datetime.datetime] = None,
         inctran: bool = True,
     ) -> STMTTRNRQ:
-        """ Construct STMTRQ; package in STMTTRNRQ """
+        """Construct STMTRQ; package in STMTTRNRQ"""
         acct = BANKACCTFROM(bankid=bankid, acctid=acctid, accttype=accttype)
         inctran_ = INCTRAN(dtstart=dtstart, dtend=dtend, include=inctran)
         stmtrq = STMTRQ(bankacctfrom=acct, inctran=inctran_)
@@ -735,7 +735,7 @@ class OFXClient:
         dtstart: Optional[datetime.datetime] = None,
         dtend: Optional[datetime.datetime] = None,
     ) -> STMTENDTRNRQ:
-        """ Construct STMTENDRQ; package in STMTENDTRNRQ """
+        """Construct STMTENDRQ; package in STMTENDTRNRQ"""
         acct = BANKACCTFROM(bankid=bankid, acctid=acctid, accttype=accttype)
         stmtrq = STMTENDRQ(bankacctfrom=acct, dtstart=dtstart, dtend=dtend)
         trnuid = self.uuid
@@ -748,7 +748,7 @@ class OFXClient:
         dtend: Optional[datetime.datetime] = None,
         inctran: bool = True,
     ) -> CCSTMTTRNRQ:
-        """ Construct CCSTMTRQ; package in CCSTMTTRNRQ """
+        """Construct CCSTMTRQ; package in CCSTMTTRNRQ"""
         acct = CCACCTFROM(acctid=acctid)
         inctran_ = INCTRAN(dtstart=dtstart, dtend=dtend, include=inctran)
         stmtrq = CCSTMTRQ(ccacctfrom=acct, inctran=inctran_)
@@ -761,7 +761,7 @@ class OFXClient:
         dtstart: Optional[datetime.datetime] = None,
         dtend: Optional[datetime.datetime] = None,
     ) -> CCSTMTENDTRNRQ:
-        """ Construct CCSTMTENDRQ; package in CCSTMTENDTRNRQ """
+        """Construct CCSTMTENDRQ; package in CCSTMTENDTRNRQ"""
         acct = CCACCTFROM(acctid=acctid)
         stmtrq = CCSTMTENDRQ(ccacctfrom=acct, dtstart=dtstart, dtend=dtend)
         trnuid = self.uuid
@@ -779,7 +779,7 @@ class OFXClient:
         incpos: bool = True,
         incbal: bool = True,
     ) -> INVSTMTTRNRQ:
-        """ Construct INVSTMTRQ; package in INVSTMTTRNRQ """
+        """Construct INVSTMTRQ; package in INVSTMTTRNRQ"""
         acct = INVACCTFROM(acctid=acctid, brokerid=brokerid)
         if inctran:
             inctran_: Optional[INCTRAN] = INCTRAN(

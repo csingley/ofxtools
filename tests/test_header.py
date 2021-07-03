@@ -140,7 +140,7 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
     """.strip()
 
     def testParseHeaderDefaults(self):
-        """ Test parse_header() with default values for OFXv1 """
+        """Test parse_header() with default values for OFXv1"""
         header = str(self.headerClass(self.defaultVersion))
         ofx = header + self.body
         ofx = BytesIO(ofx.encode("ascii"))
@@ -159,7 +159,7 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
         self.assertEqual(body, self.body)
 
     def testParseHeaderLatin1(self):
-        """ Test parse_header() with ISO-8859-1 charset """
+        """Test parse_header() with ISO-8859-1 charset"""
         header = str(
             self.headerClass(
                 self.defaultVersion, encoding="UTF-8", charset="ISO-8859-1"
@@ -182,7 +182,7 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
         self.assertEqual(body, self.body)
 
     def testParseHeader1252(self):
-        """ Test parse_header() with 1252 charset """
+        """Test parse_header() with 1252 charset"""
         # Issue #25
         header = str(
             self.headerClass(self.defaultVersion, encoding="UTF-8", charset="1252")
@@ -204,7 +204,7 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
         self.assertEqual(body, self.body_cp1252)
 
     def testParseHeaderUnicode(self):
-        """ Test parse_header() with UTF-8 charset """
+        """Test parse_header() with UTF-8 charset"""
         # Issue #49
         header = str(
             self.headerClass(self.defaultVersion, encoding="UTF-8", charset="NONE")
@@ -410,7 +410,7 @@ class OFXHeaderV2TestCase(unittest.TestCase, OFXHeaderTestMixin):
     }
 
     def testParseHeaderV2NoNewlineBetweenHeaderAndBody(self):
-        """ OFXv2 doesn't need newline between header and message body """
+        """OFXv2 doesn't need newline between header and message body"""
         # Issue #47
         header = str(self.headerClass(self.defaultVersion))
         ofx = header.strip() + self.body

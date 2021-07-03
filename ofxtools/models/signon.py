@@ -93,28 +93,28 @@ MFAPHRASEIDS = {
 
 
 class FI(Aggregate):
-    """ OFX section 2.5.1.8 """
+    """OFX section 2.5.1.8"""
 
     org = String(32, required=True)
     fid = String(32)
 
 
 class MFACHALLENGE(Aggregate):
-    """ OFX Section 2.5.4.2 """
+    """OFX Section 2.5.4.2"""
 
     mfaphraseid = String(32, required=True)
     mfaphraselabel = String(64)
 
 
 class MFACHALLENGEA(Aggregate):
-    """ OFX Section 2.5.4.5 """
+    """OFX Section 2.5.4.5"""
 
     mfaphraseid = String(32, required=True)
     mfaphrasea = String(64, required=True)
 
 
 class SONRQ(Aggregate):
-    """ OFX section 2.5.1.2 """
+    """OFX section 2.5.1.2"""
 
     dtclient = DateTime(required=True)
     userid = String(32)
@@ -156,7 +156,7 @@ class SONRQ(Aggregate):
 
 
 class SONRS(Aggregate):
-    """ OFX section 2.5.1.3 """
+    """OFX section 2.5.1.3"""
 
     status = SubAggregate(STATUS, required=True)
     dtserver = DateTime(required=True)
@@ -181,40 +181,40 @@ class SONRS(Aggregate):
 
 
 class PINCHRQ(Aggregate):
-    """ OFX Section 2.5.2.1 """
+    """OFX Section 2.5.2.1"""
 
     userid = String(32, required=True)
     newuserpass = String(32, required=True)
 
 
 class PINCHRS(Aggregate):
-    """ OFX Section 2.5.2.2 """
+    """OFX Section 2.5.2.2"""
 
     userid = String(32, required=True)
     dtchanged = DateTime()
 
 
 class PINCHTRNRQ(TrnRq):
-    """ OFX Section 2.5.2.1 """
+    """OFX Section 2.5.2.1"""
 
     pinchrq = SubAggregate(PINCHRQ, required=True)
 
 
 class PINCHTRNRS(TrnRs):
-    """ OFX Section 2.5.2.2 """
+    """OFX Section 2.5.2.2"""
 
     pinchrs = SubAggregate(PINCHRS, required=True)
 
 
 class CHALLENGERQ(Aggregate):
-    """ OFX Section 2.5.3.1 """
+    """OFX Section 2.5.3.1"""
 
     userid = String(32, required=True)
     ficertid = String(64)
 
 
 class CHALLENGERS(Aggregate):
-    """ OFX Section 2.5.3.2 """
+    """OFX Section 2.5.3.2"""
 
     userid = String(32, required=True)
     nonce = String(16, required=True)
@@ -222,25 +222,25 @@ class CHALLENGERS(Aggregate):
 
 
 class CHALLENGETRNRQ(TrnRq):
-    """ OFX Section 2.5.3.1 """
+    """OFX Section 2.5.3.1"""
 
     challengerq = SubAggregate(CHALLENGERQ, required=True)
 
 
 class CHALLENGETRNRS(TrnRs):
-    """ OFX Section 2.5.3.2 """
+    """OFX Section 2.5.3.2"""
 
     challengers = SubAggregate(CHALLENGERS, required=True)
 
 
 class MFACHALLENGERQ(Aggregate):
-    """ OFX Section 2.5.4.1 """
+    """OFX Section 2.5.4.1"""
 
     dtclient = DateTime(required=True)
 
 
 class MFACHALLENGERS(Aggregate):
-    """ OFX Section 2.5.4.2 """
+    """OFX Section 2.5.4.2"""
 
     mfachallenge = ListAggregate(MFACHALLENGE)
 
@@ -255,19 +255,19 @@ class MFACHALLENGERS(Aggregate):
 
 
 class MFACHALLENGETRNRQ(TrnRq):
-    """ OFX Section 2.5.4.1 """
+    """OFX Section 2.5.4.1"""
 
     mfachallengerq = SubAggregate(MFACHALLENGERQ, required=True)
 
 
 class MFACHALLENGETRNRS(TrnRs):
-    """ OFX Section 2.5.4.2 """
+    """OFX Section 2.5.4.2"""
 
     mfachallengers = SubAggregate(MFACHALLENGERS, required=True)
 
 
 class SIGNONMSGSRQV1(Aggregate):
-    """ OFX Section 2.5 """
+    """OFX Section 2.5"""
 
     sonrq = SubAggregate(SONRQ, required=True)
     pinchtrnrq = SubAggregate(PINCHTRNRQ)
@@ -276,7 +276,7 @@ class SIGNONMSGSRQV1(Aggregate):
 
 
 class SIGNONMSGSRSV1(Aggregate):
-    """ OFX Section 2.5 """
+    """OFX Section 2.5"""
 
     sonrs = SubAggregate(SONRS, required=True)
     pinchtrnrs = SubAggregate(PINCHTRNRS)
@@ -285,12 +285,12 @@ class SIGNONMSGSRSV1(Aggregate):
 
 
 class SIGNONMSGSETV1(Aggregate):
-    """ OFX section 2.5.5 """
+    """OFX section 2.5.5"""
 
     msgsetcore = SubAggregate(MSGSETCORE, required=True)
 
 
 class SIGNONMSGSET(Aggregate):
-    """ OFX section 2.5.5 """
+    """OFX section 2.5.5"""
 
     signonmsgsetv1 = SubAggregate(SIGNONMSGSETV1, required=True)

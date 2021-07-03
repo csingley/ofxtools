@@ -25,7 +25,7 @@ from ofxtools.models.i18n import CURRENCY
 
 
 class INVPOS(Aggregate):
-    """ OFX section 13.9.2.6.1 """
+    """OFX section 13.9.2.6.1"""
 
     secid = SubAggregate(SECID, required=True)
     heldinacct = OneOf(*INVSUBACCTS, required=True)
@@ -41,13 +41,13 @@ class INVPOS(Aggregate):
 
 
 class POSDEBT(Aggregate):
-    """ OFX section 13.9.2.6.1 """
+    """OFX section 13.9.2.6.1"""
 
     invpos = SubAggregate(INVPOS, required=True)
 
 
 class POSMF(Aggregate):
-    """ OFX section 13.9.2.6.1 """
+    """OFX section 13.9.2.6.1"""
 
     invpos = SubAggregate(INVPOS, required=True)
     unitsstreet = Decimal()
@@ -57,20 +57,20 @@ class POSMF(Aggregate):
 
 
 class POSOPT(Aggregate):
-    """ OFX section 13.9.2.6.1 """
+    """OFX section 13.9.2.6.1"""
 
     invpos = SubAggregate(INVPOS, required=True)
     secured = OneOf("NAKED", "COVERED")
 
 
 class POSOTHER(Aggregate):
-    """ OFX section 13.9.2.6.1 """
+    """OFX section 13.9.2.6.1"""
 
     invpos = SubAggregate(INVPOS, required=True)
 
 
 class POSSTOCK(Aggregate):
-    """ OFX section 13.9.2.6.1 """
+    """OFX section 13.9.2.6.1"""
 
     invpos = SubAggregate(INVPOS, required=True)
     unitsstreet = Decimal()
@@ -79,7 +79,7 @@ class POSSTOCK(Aggregate):
 
 
 class INVPOSLIST(Aggregate):
-    """ OFX section 13.9.2.2 """
+    """OFX section 13.9.2.2"""
 
     posdebt = ListAggregate(POSDEBT)
     posmf = ListAggregate(POSMF)

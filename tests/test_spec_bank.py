@@ -50,7 +50,7 @@ BANKACCTTO = models.BANKACCTTO(bankid="121099999", acctid="999977", accttype="SA
 
 
 class Example1RequestTestCase(base.OfxTestCase, unittest.TestCase):
-    """ OFX Section 11.14.1 """
+    """OFX Section 11.14.1"""
 
     ofx = """
     <OFX>
@@ -101,7 +101,7 @@ class Example1RequestTestCase(base.OfxTestCase, unittest.TestCase):
 
 
 class Example1ResponseTestCase(base.OfxTestCase, unittest.TestCase):
-    """ OFX Section 11.14.1 """
+    """OFX Section 11.14.1"""
 
     ofx = """
     <OFX>
@@ -211,7 +211,7 @@ class Example1ResponseTestCase(base.OfxTestCase, unittest.TestCase):
 
 
 class Example2RequestTestCase(base.OfxTestCase, unittest.TestCase):
-    """ OFX Section 11.14.2 """
+    """OFX Section 11.14.2"""
 
     ofx = """
     <OFX>
@@ -271,7 +271,7 @@ class Example2RequestTestCase(base.OfxTestCase, unittest.TestCase):
 
 
 class Example2ResponseTestCase(base.OfxTestCase, unittest.TestCase):
-    """ OFX Section 11.14.2 """
+    """OFX Section 11.14.2"""
 
     ofx = """
     <OFX>
@@ -342,7 +342,7 @@ class Example2ResponseTestCase(base.OfxTestCase, unittest.TestCase):
 
 
 class Example3RequestTestCase(base.OfxTestCase, unittest.TestCase):
-    """ OFX Section 11.14.3 """
+    """OFX Section 11.14.3"""
 
     ofx = """
     <OFX>
@@ -395,7 +395,7 @@ class Example3RequestTestCase(base.OfxTestCase, unittest.TestCase):
 
 
 class Example3ResponseTestCase(base.OfxTestCase, unittest.TestCase):
-    """ OFX Section 11.14.3 """
+    """OFX Section 11.14.3"""
 
     ofx = """
     <OFX>
@@ -469,7 +469,7 @@ class Example3ResponseTestCase(base.OfxTestCase, unittest.TestCase):
 
 
 class Example4RequestTestCase(base.OfxTestCase, unittest.TestCase):
-    """ OFX Section 11.14.4 """
+    """OFX Section 11.14.4"""
 
     ofx = """
     <OFX>
@@ -539,7 +539,7 @@ class Example4RequestTestCase(base.OfxTestCase, unittest.TestCase):
 
 
 class Example4ResponseTestCase(base.OfxTestCase, unittest.TestCase):
-    """ OFX Section 11.14.4 """
+    """OFX Section 11.14.4"""
 
     ofx = """
     <OFX>
@@ -624,7 +624,7 @@ class Example4ResponseTestCase(base.OfxTestCase, unittest.TestCase):
 
 
 class Example4SyncRequestTestCase(base.OfxTestCase, unittest.TestCase):
-    """ OFX Section 11.14.4 """
+    """OFX Section 11.14.4"""
 
     ofx = """
     <OFX>
@@ -668,7 +668,7 @@ class Example4SyncRequestTestCase(base.OfxTestCase, unittest.TestCase):
 
 
 class Example4SyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
-    """ OFX Section 11.14.4 """
+    """OFX Section 11.14.4"""
 
     ofx = """
     <OFX>
@@ -752,7 +752,7 @@ class Example4SyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
 
 
 class Example4RecsyncRequestTestCase(base.OfxTestCase, unittest.TestCase):
-    """ OFX Section 11.14.4 """
+    """OFX Section 11.14.4"""
 
     ofx = """
     <OFX>
@@ -809,7 +809,7 @@ class Example4RecsyncRequestTestCase(base.OfxTestCase, unittest.TestCase):
 
 
 class Example4RecsyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
-    """ OFX Section 11.14.4 """
+    """OFX Section 11.14.4"""
 
     ofx = """
     <OFX>
@@ -872,7 +872,7 @@ class Example4RecsyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
 
 
 class Example4NextSyncRequestTestCase(base.OfxTestCase, unittest.TestCase):
-    """ OFX Section 11.14.4 """
+    """OFX Section 11.14.4"""
 
     ofx = """
     <OFX>
@@ -916,7 +916,7 @@ class Example4NextSyncRequestTestCase(base.OfxTestCase, unittest.TestCase):
 
 
 class Example4NextSyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
-    """ OFX Section 11.14.4 """
+    """OFX Section 11.14.4"""
 
     ofx = """
     <OFX>

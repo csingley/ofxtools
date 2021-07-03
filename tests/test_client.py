@@ -846,7 +846,7 @@ class OFXClientV1TestCase(unittest.TestCase):
 
 class OFXClientV2TestCase(unittest.TestCase):
     def testUnclosedTagsOFXv2(self):
-        """ OFXv2 (XML) doesn't support unclosed tags """
+        """OFXv2 (XML) doesn't support unclosed tags"""
         with self.assertRaises(ValueError):
             OFXClient(
                 "https://example.com/ofx",

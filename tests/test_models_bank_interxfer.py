@@ -270,7 +270,7 @@ class IntertrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
 class IntertrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
 
-    wraps = InterrqTestCase
+    wraps = InterrsTestCase
 
     @classproperty
     @classmethod

@@ -24,7 +24,7 @@ from ofxtools.models.billpay.common import EXTDPAYEE
 
 
 class PAYEERQ(ElementList):
-    """ OFX Section 12.9.1.1 """
+    """OFX Section 12.9.1.1"""
 
     payeeid = String(12)
     payee = SubAggregate(PAYEE)
@@ -35,7 +35,7 @@ class PAYEERQ(ElementList):
 
 
 class PAYEERS(ElementList):
-    """ OFX Section 12.9.1.2 """
+    """OFX Section 12.9.1.2"""
 
     payeelstid = String(12, required=True)
     payee = SubAggregate(PAYEE)
@@ -45,7 +45,7 @@ class PAYEERS(ElementList):
 
 
 class PAYEEMODRQ(ElementList):
-    """ OFX Section 12.9.2.1 """
+    """OFX Section 12.9.2.1"""
 
     payeelstid = String(12, required=True)
     payee = SubAggregate(PAYEE)
@@ -54,7 +54,7 @@ class PAYEEMODRQ(ElementList):
 
 
 class PAYEEMODRS(ElementList):
-    """ OFX Section 12.9.2.2 """
+    """OFX Section 12.9.2.2"""
 
     payeelstid = String(12, required=True)
     payee = SubAggregate(PAYEE)
@@ -64,13 +64,13 @@ class PAYEEMODRS(ElementList):
 
 
 class PAYEEDELRQ(Aggregate):
-    """ OFX Section 12.9.3.1 """
+    """OFX Section 12.9.3.1"""
 
     payeelstid = String(12, required=True)
 
 
 class PAYEEDELRS(Aggregate):
-    """ OFX Section 12.9.3.1 """
+    """OFX Section 12.9.3.1"""
 
     payeelstid = String(12, required=True)
 

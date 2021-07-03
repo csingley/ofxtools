@@ -12,7 +12,7 @@ from typing import List
 
 
 # local imports
-from ofxtools.models.base import Aggregate
+from ofxtools.models.base import Aggregate, UnknownTagWarning
 from ofxtools.models.common import SVCSTATUSES
 from ofxtools.models.bank.stmt import (
     TRNTYPES,
@@ -296,7 +296,7 @@ class PayeeTestCase(unittest.TestCase, base.TestAggregate):
         )
 
     def testConvertNameTooLong(self):
-        """ Don't enforce length restriction on NAME; raise Warning """
+        """Don't enforce length restriction on NAME; raise Warning"""
         # Issue #12
         copy_root = deepcopy(self.etree)
         copy_element = Element("NAME")
@@ -327,7 +327,7 @@ class PayeeTestCase(unittest.TestCase, base.TestAggregate):
 
 
 class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
-    """ STMTTRN with CURRENCY """
+    """STMTTRN with CURRENCY"""
 
     __test__ = True
 
@@ -483,7 +483,7 @@ class StmttrnTestCase(unittest.TestCase, base.TestAggregate):
         self.assertEqual(instance.currate, instance.currency.currate)
 
     def testConvertNameTooLong(self):
-        """ Don't enforce length restriction on NAME; raise Warning """
+        """Don't enforce length restriction on NAME; raise Warning"""
         # Issue #91
         copy_root = deepcopy(self.etree)
         copy_element = Element("NAME")
@@ -604,7 +604,7 @@ class BallistTestCase(unittest.TestCase, base.TestAggregate):
         root = self.etree
         root.append(StmttrnTestCase.etree)
 
-        with self.assertRaises(ValueError):
+        with self.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(root)
 
     @classproperty

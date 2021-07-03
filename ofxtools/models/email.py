@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 
 class MAIL(Aggregate):
-    """ OFX section 9.2.2 """
+    """OFX section 9.2.2"""
 
     userid = String(32, required=True)
     dtcreated = DateTime(required=True)
@@ -82,31 +82,31 @@ class MAIL(Aggregate):
 
 
 class MAILRQ(Aggregate):
-    """ OFX section 9.2.3 """
+    """OFX section 9.2.3"""
 
     mail = SubAggregate(MAIL, required=True)
 
 
 class MAILRS(Aggregate):
-    """ OFX section 9.2.3 """
+    """OFX section 9.2.3"""
 
     mail = SubAggregate(MAIL, required=True)
 
 
 class MAILTRNRQ(TrnRq):
-    """ OFX section 9.2.3 """
+    """OFX section 9.2.3"""
 
     mailrq = SubAggregate(MAILRQ, required=True)
 
 
 class MAILTRNRS(TrnRs):
-    """ OFX section 9.2.3 """
+    """OFX section 9.2.3"""
 
     mailrs = SubAggregate(MAILRS)
 
 
 class MAILSYNCRQ(SyncRqList):
-    """ OFX section 9.2.4 """
+    """OFX section 9.2.4"""
 
     incimages = Bool(required=True)
     usehtml = Bool(required=True)
@@ -114,37 +114,37 @@ class MAILSYNCRQ(SyncRqList):
 
 
 class MAILSYNCRS(SyncRsList):
-    """ OFX section 9.2.4 """
+    """OFX section 9.2.4"""
 
     mailtrnrs = ListAggregate(MAILTRNRS)
 
 
 class GETMIMERQ(Aggregate):
-    """ OFX section 9.3.1 """
+    """OFX section 9.3.1"""
 
     url = String(255, required=True)
 
 
 class GETMIMERS(Aggregate):
-    """ OFX section 9.3.1 """
+    """OFX section 9.3.1"""
 
     url = String(255, required=True)
 
 
 class GETMIMETRNRQ(TrnRq):
-    """ OFX section 9.3.2 """
+    """OFX section 9.3.2"""
 
     getmimerq = SubAggregate(GETMIMERQ, required=True)
 
 
 class GETMIMETRNRS(TrnRs):
-    """ OFX section 9.3.2 """
+    """OFX section 9.3.2"""
 
     getmimers = SubAggregate(GETMIMERS)
 
 
 class EMAILMSGSRQV1(Aggregate):
-    """ OFX section 9.4.1.1 """
+    """OFX section 9.4.1.1"""
 
     mailtrnrq = ListAggregate(MAILTRNRQ)
     getmimetrnrq = ListAggregate(GETMIMETRNRQ)
@@ -152,7 +152,7 @@ class EMAILMSGSRQV1(Aggregate):
 
 
 class EMAILMSGSRSV1(Aggregate):
-    """ OFX section 9.4.1.2 """
+    """OFX section 9.4.1.2"""
 
     mailtrnrs = ListAggregate(MAILTRNRS)
     getmimetrnrs = ListAggregate(GETMIMETRNRS)
@@ -160,7 +160,7 @@ class EMAILMSGSRSV1(Aggregate):
 
 
 class EMAILMSGSETV1(Aggregate):
-    """ OFX section 9.4.2 """
+    """OFX section 9.4.2"""
 
     msgsetcore = SubAggregate(MSGSETCORE, required=True)
     mailsup = Bool(required=True)
@@ -168,6 +168,6 @@ class EMAILMSGSETV1(Aggregate):
 
 
 class EMAILMSGSET(Aggregate):
-    """ OFX section 9.4.2 """
+    """OFX section 9.4.2"""
 
     emailmsgsetv1 = SubAggregate(EMAILMSGSETV1, required=True)

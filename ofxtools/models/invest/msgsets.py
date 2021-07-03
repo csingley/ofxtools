@@ -31,7 +31,7 @@ from ofxtools.models.invest.securities import SECLIST, SECLISTTRNRQ, SECLISTTRNR
 
 
 class INVSTMTMSGSRQV1(Aggregate):
-    """ OFX section 13.7.1.2.1 """
+    """OFX section 13.7.1.2.1"""
 
     invstmttrnrq = ListAggregate(INVSTMTTRNRQ)
     invmailtrnrq = ListAggregate(INVMAILTRNRQ)
@@ -49,7 +49,7 @@ class INVSTMTMSGSRQV1(Aggregate):
 
 
 class INVSTMTMSGSRSV1(Aggregate):
-    """ OFX section 13.7.1.2.2 """
+    """OFX section 13.7.1.2.2"""
 
     invstmttrnrs = ListAggregate(INVSTMTTRNRS)
     invmailtrnrs = ListAggregate(INVMAILTRNRS)
@@ -70,7 +70,7 @@ class INVSTMTMSGSRSV1(Aggregate):
 
 
 class INVSTMTMSGSETV1(Aggregate):
-    """ OFX section 13.7.1.1 """
+    """OFX section 13.7.1.1"""
 
     msgsetcore = SubAggregate(MSGSETCORE, required=True)
     trandnld = Bool(required=True)
@@ -84,19 +84,19 @@ class INVSTMTMSGSETV1(Aggregate):
 
 
 class INVSTMTMSGSET(Aggregate):
-    """ OFX section 13.7.1.1 """
+    """OFX section 13.7.1.1"""
 
     invstmtmsgsetv1 = SubAggregate(INVSTMTMSGSETV1, required=True)
 
 
 class SECLISTMSGSRQV1(Aggregate):
-    """ OFX section 13.7.2.2.1 """
+    """OFX section 13.7.2.2.1"""
 
     seclisttrnrq = ListAggregate(SECLISTTRNRQ)
 
 
 class SECLISTMSGSRSV1(Aggregate):
-    """ OFX section 13.7.2.2.2 """
+    """OFX section 13.7.2.2.2"""
 
     # N.B. this part of the spec is unusual in that SECLIST is a direct
     # child of SECLISTMSGSRSV1, unwrapped.  SECLISTRS, wrapped in SECLISTTRNS,
@@ -116,13 +116,13 @@ class SECLISTMSGSRSV1(Aggregate):
 
 
 class SECLISTMSGSETV1(Aggregate):
-    """ OFX section 13.7.2.1 """
+    """OFX section 13.7.2.1"""
 
     msgsetcore = SubAggregate(MSGSETCORE, required=True)
     seclistrqdnld = Bool(required=True)
 
 
 class SECLISTMSGSET(Aggregate):
-    """ OFX section 13.7.2.1 """
+    """OFX section 13.7.2.1"""
 
     seclistmsgsetv1 = SubAggregate(SECLISTMSGSETV1, required=True)

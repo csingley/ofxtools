@@ -35,7 +35,7 @@ FID_REGEX = re.compile(r"<fid>([^<]*)</fid>")
 
 
 class OFXServer(NamedTuple):
-    """ Container for an OFX Home FI record """
+    """Container for an OFX Home FI record"""
 
     id: Optional[str] = None
     name: Optional[str] = None

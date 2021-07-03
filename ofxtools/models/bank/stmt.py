@@ -92,7 +92,7 @@ TRNTYPES = (
 
 
 class BANKACCTFROM(Aggregate):
-    """ OFX section 11.3.1 """
+    """OFX section 11.3.1"""
 
     bankid = String(9, required=True)
     branchid = String(22)
@@ -102,7 +102,7 @@ class BANKACCTFROM(Aggregate):
 
 
 class BANKACCTTO(Aggregate):
-    """ OFX section 11.3.1 """
+    """OFX section 11.3.1"""
 
     bankid = String(9, required=True)
     branchid = String(22)
@@ -112,7 +112,7 @@ class BANKACCTTO(Aggregate):
 
 
 class BANKACCTINFO(Aggregate):
-    """ OFX section 11.3.3 """
+    """OFX section 11.3.3"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     suptxdl = Bool(required=True)
@@ -122,21 +122,21 @@ class BANKACCTINFO(Aggregate):
 
 
 class CCACCTFROM(Aggregate):
-    """ OFX section 11.3.2 """
+    """OFX section 11.3.2"""
 
     acctid = String(22, required=True)
     acctkey = String(22)
 
 
 class CCACCTTO(Aggregate):
-    """ OFX section 11.3.2 """
+    """OFX section 11.3.2"""
 
     acctid = String(22, required=True)
     acctkey = String(22)
 
 
 class CCACCTINFO(Aggregate):
-    """ OFX section 11.3.4 """
+    """OFX section 11.3.4"""
 
     ccacctfrom = SubAggregate(CCACCTFROM, required=True)
     suptxdl = Bool(required=True)
@@ -146,7 +146,7 @@ class CCACCTINFO(Aggregate):
 
 
 class INCTRAN(Aggregate):
-    """ OFX section 11.4.2.1 """
+    """OFX section 11.4.2.1"""
 
     dtstart = DateTime()
     dtend = DateTime()
@@ -154,7 +154,7 @@ class INCTRAN(Aggregate):
 
 
 class STMTRQ(Aggregate):
-    """ OFX section 11.4.2.1 """
+    """OFX section 11.4.2.1"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     inctran = SubAggregate(INCTRAN)
@@ -165,7 +165,7 @@ class STMTRQ(Aggregate):
 #  This class is defined here, rather than models.billpay, in order to avoid
 #  circular imports.
 class PAYEE(Aggregate):
-    """ OFX section 12.5.2.1 """
+    """OFX section 12.5.2.1"""
 
     name = NagString(32, required=True)
     addr1 = String(32, required=True)
@@ -179,7 +179,7 @@ class PAYEE(Aggregate):
 
 
 class STMTTRN(Aggregate, Origcurrency):
-    """ OFX section 11.4.3 """
+    """OFX section 11.4.3"""
 
     trntype = OneOf(*TRNTYPES, required=True)
     dtposted = DateTime(required=True)
@@ -213,33 +213,33 @@ class STMTTRN(Aggregate, Origcurrency):
 
 
 class BANKTRANLIST(TranList):
-    """ OFX section 11.4.2.2 """
+    """OFX section 11.4.2.2"""
 
     stmttrn = ListAggregate(STMTTRN)
 
 
 class LEDGERBAL(Aggregate):
-    """ OFX section 11.4.2.2 """
+    """OFX section 11.4.2.2"""
 
     balamt = Decimal(required=True)
     dtasof = DateTime(required=True)
 
 
 class AVAILBAL(Aggregate):
-    """ OFX section 11.4.2.2 """
+    """OFX section 11.4.2.2"""
 
     balamt = Decimal(required=True)
     dtasof = DateTime(required=True)
 
 
 class BALLIST(Aggregate):
-    """ OFX section 11.4.2.2 & 13.9.2.7 """
+    """OFX section 11.4.2.2 & 13.9.2.7"""
 
     bal = ListAggregate(BAL)
 
 
 class STMTRS(Aggregate):
-    """ OFX section 11.4.2.2 """
+    """OFX section 11.4.2.2"""
 
     curdef = OneOf(*CURRENCY_CODES, required=True)
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
@@ -266,13 +266,13 @@ class STMTRS(Aggregate):
 
 
 class STMTTRNRQ(TrnRq):
-    """ OFX section 11.4.2.1 """
+    """OFX section 11.4.2.1"""
 
     stmtrq = SubAggregate(STMTRQ, required=True)
 
 
 class STMTTRNRS(TrnRs):
-    """ OFX section 11.4.2.2 """
+    """OFX section 11.4.2.2"""
 
     stmtrs = SubAggregate(STMTRS)
 
@@ -282,7 +282,7 @@ class STMTTRNRS(TrnRs):
 
 
 class REWARDINFO(Aggregate):
-    """ OFX section 11.4.3.2 """
+    """OFX section 11.4.3.2"""
 
     name = String(32, required=True)
     rewardbal = Decimal(required=True)
@@ -290,7 +290,7 @@ class REWARDINFO(Aggregate):
 
 
 class CCSTMTRQ(Aggregate):
-    """ OFX section 11.4.3.1 """
+    """OFX section 11.4.3.1"""
 
     ccacctfrom = SubAggregate(CCACCTFROM, required=True)
     inctran = SubAggregate(INCTRAN)
@@ -299,7 +299,7 @@ class CCSTMTRQ(Aggregate):
 
 
 class CCSTMTRS(Aggregate):
-    """ OFX section 11.4.3.2 """
+    """OFX section 11.4.3.2"""
 
     curdef = OneOf(*CURRENCY_CODES, required=True)
     ccacctfrom = SubAggregate(CCACCTFROM, required=True)
@@ -329,13 +329,13 @@ class CCSTMTRS(Aggregate):
 
 
 class CCSTMTTRNRQ(TrnRq):
-    """ OFX section 11.4.3.1 """
+    """OFX section 11.4.3.1"""
 
     ccstmtrq = SubAggregate(CCSTMTRQ, required=True)
 
 
 class CCSTMTTRNRS(TrnRs):
-    """ OFX section 11.4.3.2 """
+    """OFX section 11.4.3.2"""
 
     ccstmtrs = SubAggregate(CCSTMTRS)
 

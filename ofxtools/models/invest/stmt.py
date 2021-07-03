@@ -68,14 +68,14 @@ LOANPMTFREQUENCIES = (
 
 
 class INCPOS(Aggregate):
-    """ OFX section 13.9.1.2 """
+    """OFX section 13.9.1.2"""
 
     dtasof = DateTime()
     include = Bool(required=True)
 
 
 class INVSTMTRQ(Aggregate):
-    """ OFX section 13.9.1.2 """
+    """OFX section 13.9.1.2"""
 
     invacctfrom = SubAggregate(INVACCTFROM, required=True)
     inctran = SubAggregate(INCTRAN)
@@ -88,7 +88,7 @@ class INVSTMTRQ(Aggregate):
 
 
 class INVBAL(Aggregate):
-    """ OFX section 13.9.2.7 """
+    """OFX section 13.9.2.7"""
 
     availcash = Decimal(required=True)
     marginbalance = Decimal(required=True)
@@ -98,7 +98,7 @@ class INVBAL(Aggregate):
 
 
 class INV401KBAL(Aggregate):
-    """ OFX section 13.9.2.9 """
+    """OFX section 13.9.2.9"""
 
     cashbal = Decimal()
     pretax = Decimal()
@@ -113,7 +113,7 @@ class INV401KBAL(Aggregate):
 
 
 class MATCHINFO(Aggregate):
-    """ OFX section 13.9.3 """
+    """OFX section 13.9.3"""
 
     matchpct = Decimal(required=True)
     maxmatchamt = Decimal()
@@ -124,7 +124,7 @@ class MATCHINFO(Aggregate):
 
 
 class CONTRIBSECURITY(Aggregate):
-    """ OFX section 13.9.3 """
+    """OFX section 13.9.3"""
 
     secid = SubAggregate(SECID, required=True)
     pretaxcontribpct = Decimal()
@@ -162,7 +162,7 @@ class CONTRIBSECURITY(Aggregate):
 
 
 class CONTRIBINFO(Aggregate):
-    """ OFX section 13.9.3 """
+    """OFX section 13.9.3"""
 
     contribsecurity = ListAggregate(CONTRIBSECURITY)
 
@@ -177,14 +177,14 @@ class CONTRIBINFO(Aggregate):
 
 
 class VESTINFO(Aggregate):
-    """ OFX section 13.9.3 """
+    """OFX section 13.9.3"""
 
     vestdate = DateTime()
     vestpct = Decimal(required=True)
 
 
 class LOANINFO(Aggregate):
-    """ OFX section 13.9.3 """
+    """OFX section 13.9.3"""
 
     loanid = String(32, required=True)
     loandesc = String(32)
@@ -215,15 +215,15 @@ class Inv401kSubaccountMixin:
 
 
 class CONTRIBUTIONS(Aggregate, Inv401kSubaccountMixin):
-    """ OFX section 13.9.3.1 """
+    """OFX section 13.9.3.1"""
 
 
 class WITHDRAWALS(Aggregate, Inv401kSubaccountMixin):
-    """ OFX section 13.9.3.2 """
+    """OFX section 13.9.3.2"""
 
 
 class EARNINGS(Aggregate, Inv401kSubaccountMixin):
-    """ OFX section 13.9.3.3 """
+    """OFX section 13.9.3.3"""
 
 
 class ToDateMixin:
@@ -235,19 +235,19 @@ class ToDateMixin:
 
 
 class YEARTODATE(Aggregate, ToDateMixin):
-    """ OFX section 13.9.3 """
+    """OFX section 13.9.3"""
 
 
 class INCEPTODATE(Aggregate, ToDateMixin):
-    """ OFX section 13.9.3 """
+    """OFX section 13.9.3"""
 
 
 class PERIODTODATE(Aggregate, ToDateMixin):
-    """ OFX section 13.9.3 """
+    """OFX section 13.9.3"""
 
 
 class INV401KSUMMARY(Aggregate):
-    """ OFX section 13.9.3 """
+    """OFX section 13.9.3"""
 
     yeartodate = SubAggregate(YEARTODATE, required=True)
     inceptodate = SubAggregate(INCEPTODATE)
@@ -255,7 +255,7 @@ class INV401KSUMMARY(Aggregate):
 
 
 class INV401K(Aggregate):
-    """ OFX section 13.9.3 """
+    """OFX section 13.9.3"""
 
     employername = NagString(32, required=True)
     planid = String(32)
@@ -273,7 +273,7 @@ class INV401K(Aggregate):
 
 
 class INVSTMTRS(Aggregate):
-    """ OFX section 13.9.2.1 """
+    """OFX section 13.9.2.1"""
 
     dtasof = DateTime(required=True)
     curdef = OneOf(*CURRENCY_CODES, required=True)
@@ -304,13 +304,13 @@ class INVSTMTRS(Aggregate):
 
 
 class INVSTMTTRNRQ(TrnRq):
-    """ OFX section 13.9.1.1 """
+    """OFX section 13.9.1.1"""
 
     invstmtrq = SubAggregate(INVSTMTRQ, required=True)
 
 
 class INVSTMTTRNRS(TrnRs):
-    """ OFX section 13.9.2.1 """
+    """OFX section 13.9.2.1"""
 
     invstmtrs = SubAggregate(INVSTMTRS)
 

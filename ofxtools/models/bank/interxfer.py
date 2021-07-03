@@ -25,13 +25,13 @@ from ofxtools.models.i18n import CURRENCY_CODES
 
 
 class INTERRQ(Aggregate):
-    """ OFX section 11.8.2.1 """
+    """OFX section 11.8.2.1"""
 
     xferinfo = SubAggregate(XFERINFO, required=True)
 
 
 class INTERRS(Aggregate):
-    """ OFX section 11.8.2.2 """
+    """OFX section 11.8.2.2"""
 
     curdef = OneOf(*CURRENCY_CODES, required=True)
     srvrtid = String(10, required=True)
@@ -46,20 +46,20 @@ class INTERRS(Aggregate):
 
 
 class INTERMODRQ(Aggregate):
-    """ OFX section 11.8.3.1 """
+    """OFX section 11.8.3.1"""
 
     srvrtid = String(10, required=True)
     xferinfo = SubAggregate(XFERINFO, required=True)
 
 
 class INTERCANRQ(Aggregate):
-    """ OFX section 11.8.4.1"""
+    """OFX section 11.8.4.1"""
 
     srvrtid = String(10, required=True)
 
 
 class INTERMODRS(Aggregate):
-    """ OFX section 11.8.3.2 """
+    """OFX section 11.8.3.2"""
 
     srvrtid = String(10, required=True)
     xferinfo = SubAggregate(XFERINFO, required=True)
@@ -67,13 +67,13 @@ class INTERMODRS(Aggregate):
 
 
 class INTERCANRS(Aggregate):
-    """ OFX section 11.8.4.2 """
+    """OFX section 11.8.4.2"""
 
     srvrtid = String(10, required=True)
 
 
 class INTERTRNRQ(TrnRq):
-    """ OFX section 11.8.2.1 """
+    """OFX section 11.8.2.1"""
 
     interrq = SubAggregate(INTERRQ)
     intermodrq = SubAggregate(INTERMODRQ)
@@ -83,7 +83,7 @@ class INTERTRNRQ(TrnRq):
 
 
 class INTERTRNRS(TrnRs):
-    """ OFX section 11.8.2.2 """
+    """OFX section 11.8.2.2"""
 
     interrs = SubAggregate(INTERRS)
     intermodrs = SubAggregate(INTERMODRS)

@@ -59,7 +59,7 @@ class TranList(Aggregate):
 
 
 class SyncRqList(Aggregate):
-    """ Base class for *SYNCRQ """
+    """Base class for *SYNCRQ"""
 
     token = String(10)
     tokenonly = Bool()
@@ -70,7 +70,7 @@ class SyncRqList(Aggregate):
 
 
 class SyncRsList(Aggregate):
-    """ Base class for *SYNCRS """
+    """Base class for *SYNCRS"""
 
     token = String(10, required=True)
     lostsync = Bool()

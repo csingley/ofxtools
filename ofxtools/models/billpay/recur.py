@@ -25,7 +25,7 @@ from ofxtools.models.bank.recur import RECURRINST
 
 
 class RECPMTRQ(Aggregate):
-    """ OFX Section 12.7.1.1 """
+    """OFX Section 12.7.1.1"""
 
     recurrinst = SubAggregate(RECURRINST, required=True)
     pmtinfo = SubAggregate(PMTINFO, required=True)
@@ -34,7 +34,7 @@ class RECPMTRQ(Aggregate):
 
 
 class RECPMTRS(Aggregate):
-    """ OFX Section 12.7.1.2 """
+    """OFX Section 12.7.1.2"""
 
     recsrvrtid = String(10, required=True)
     payeelstid = String(12, required=True)
@@ -47,7 +47,7 @@ class RECPMTRS(Aggregate):
 
 
 class RECPMTMODRQ(Aggregate):
-    """ OFX Section 12.7.2.1 """
+    """OFX Section 12.7.2.1"""
 
     recsrvrtid = String(10, required=True)
     recurrinst = SubAggregate(RECURRINST, required=True)
@@ -58,7 +58,7 @@ class RECPMTMODRQ(Aggregate):
 
 
 class RECPMTMODRS(Aggregate):
-    """ OFX Section 12.7.2.1 """
+    """OFX Section 12.7.2.1"""
 
     recsrvrtid = String(10, required=True)
     recurrinst = SubAggregate(RECURRINST, required=True)
@@ -69,21 +69,21 @@ class RECPMTMODRS(Aggregate):
 
 
 class RECPMTCANCRQ(Aggregate):
-    """ OFX Section 12.7.3.1 """
+    """OFX Section 12.7.3.1"""
 
     recsrvrtid = String(10, required=True)
     canpending = Bool(required=True)
 
 
 class RECPMTCANCRS(Aggregate):
-    """ OFX Section 12.7.3.2 """
+    """OFX Section 12.7.3.2"""
 
     recsrvrtid = String(10, required=True)
     canpending = Bool(required=True)
 
 
 class RECPMTTRNRQ(TrnRq):
-    """ OFX Section 12.7.1.1 """
+    """OFX Section 12.7.1.1"""
 
     recpmtrq = SubAggregate(RECPMTRQ)
     recpmtmodrq = SubAggregate(RECPMTMODRQ)
@@ -93,7 +93,7 @@ class RECPMTTRNRQ(TrnRq):
 
 
 class RECPMTTRNRS(TrnRs):
-    """ OFX Section 12.7.1.2 """
+    """OFX Section 12.7.1.2"""
 
     recpmtrs = SubAggregate(RECPMTRS)
     recpmtmodrs = SubAggregate(RECPMTMODRS)

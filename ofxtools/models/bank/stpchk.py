@@ -24,14 +24,14 @@ from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, Origcurrency, CURRENCY_
 
 
 class CHKRANGE(Aggregate):
-    """ OFX section 11.6.1.1.1 """
+    """OFX section 11.6.1.1.1"""
 
     chknumstart = String(12, required=True)
     chknumend = String(12)
 
 
 class CHKDESC(Aggregate):
-    """ OFX section 11.6.1.1.2 """
+    """OFX section 11.6.1.1.2"""
 
     name = String(32, required=True)
     chknum = String(12)
@@ -40,7 +40,7 @@ class CHKDESC(Aggregate):
 
 
 class STPCHKRQ(Aggregate):
-    """ OFX section 11.6.1.1 """
+    """OFX section 11.6.1.1"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     chkrange = SubAggregate(CHKRANGE)
@@ -50,7 +50,7 @@ class STPCHKRQ(Aggregate):
 
 
 class STPCHKNUM(Aggregate, Origcurrency):
-    """ OFX section 11.6.1.2.1 """
+    """OFX section 11.6.1.2.1"""
 
     checknum = String(12, required=True)
     name = String(32)
@@ -65,7 +65,7 @@ class STPCHKNUM(Aggregate, Origcurrency):
 
 
 class STPCHKRS(Aggregate):
-    """ OFX section 11.6.1.1 """
+    """OFX section 11.6.1.1"""
 
     curdef = OneOf(*CURRENCY_CODES, required=True)
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
@@ -75,12 +75,12 @@ class STPCHKRS(Aggregate):
 
 
 class STPCHKTRNRQ(TrnRq):
-    """ OFX section 11.6.1.1 """
+    """OFX section 11.6.1.1"""
 
     stpchkrq = SubAggregate(STPCHKRQ, required=True)
 
 
 class STPCHKTRNRS(TrnRs):
-    """ OFX section 11.6.1.2 """
+    """OFX section 11.6.1.2"""
 
     stpchkrs = SubAggregate(STPCHKRS)

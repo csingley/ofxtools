@@ -87,7 +87,7 @@ DAYS = ("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUN
 
 
 class BANKMSGSRQV1(Aggregate):
-    """ OFX section 11.13.1.1.1 """
+    """OFX section 11.13.1.1.1"""
 
     stmttrnrq = ListAggregate(STMTTRNRQ)
     stmtendtrnrq = ListAggregate(STMTENDTRNRQ)
@@ -116,7 +116,7 @@ class BANKMSGSRQV1(Aggregate):
 
 
 class BANKMSGSRSV1(Aggregate):
-    """ OFX section 11.13.1.1.2 """
+    """OFX section 11.13.1.1.2"""
 
     stmttrnrs = ListAggregate(STMTTRNRS)
     stmtendtrnrs = ListAggregate(STMTENDTRNRS)
@@ -148,7 +148,7 @@ class BANKMSGSRSV1(Aggregate):
 
 
 class XFERPROF(ElementList):
-    """ OFX section 11.13.2.2 """
+    """OFX section 11.13.2.2"""
 
     procdaysoff = ListElement(OneOf(*DAYS))
     procendtm = Time(required=True)
@@ -165,7 +165,7 @@ class XFERPROF(ElementList):
 
 
 class STPCHKPROF(ElementList):
-    """ OFX section 11.13.2.3 """
+    """OFX section 11.13.2.3"""
 
     procdaysoff = ListElement(OneOf(*DAYS))
     procendtm = Time(required=True)
@@ -175,14 +175,14 @@ class STPCHKPROF(ElementList):
 
 
 class EMAILPROF(Aggregate):
-    """ OFX section 11.13.2.4 """
+    """OFX section 11.13.2.4"""
 
     canemail = Bool(required=True)
     cannotify = Bool(required=True)
 
 
 class BANKMSGSETV1(ElementList):
-    """ OFX section 11.13.2.1 """
+    """OFX section 11.13.2.1"""
 
     msgsetcore = SubAggregate(MSGSETCORE, required=True)
     invalidaccttype = ListElement(OneOf(*ACCTTYPES))
@@ -195,13 +195,13 @@ class BANKMSGSETV1(ElementList):
 
 
 class BANKMSGSET(Aggregate):
-    """ OFX section 7.3 """
+    """OFX section 7.3"""
 
     bankmsgsetv1 = SubAggregate(BANKMSGSETV1, required=True)
 
 
 class CREDITCARDMSGSRQV1(Aggregate):
-    """ OFX section 11.13.1.1.1 """
+    """OFX section 11.13.1.1.1"""
 
     ccstmttrnrq = ListAggregate(CCSTMTTRNRQ)
     ccstmtendtrnrq = ListAggregate(CCSTMTENDTRNRQ)
@@ -222,7 +222,7 @@ class CREDITCARDMSGSRQV1(Aggregate):
 
 
 class CREDITCARDMSGSRSV1(Aggregate):
-    """ OFX section 11.13.1.1.2 """
+    """OFX section 11.13.1.1.2"""
 
     ccstmttrnrs = ListAggregate(CCSTMTTRNRS)
     ccstmtendtrnrs = ListAggregate(CCSTMTENDTRNRS)
@@ -247,7 +247,7 @@ class CREDITCARDMSGSRSV1(Aggregate):
 
 
 class CREDITCARDMSGSETV1(Aggregate):
-    """ OFX section 11.13.3 """
+    """OFX section 11.13.3"""
 
     msgsetcore = SubAggregate(MSGSETCORE, required=True)
     closingavail = Bool(required=True)
@@ -256,13 +256,13 @@ class CREDITCARDMSGSETV1(Aggregate):
 
 
 class CREDITCARDMSGSET(Aggregate):
-    """ OFX section 11.13.3 """
+    """OFX section 11.13.3"""
 
     creditcardmsgsetv1 = SubAggregate(CREDITCARDMSGSETV1, required=True)
 
 
 class INTERXFERMSGSRQV1(Aggregate):
-    """ OFX section 11.13.1.3.1 """
+    """OFX section 11.13.1.3.1"""
 
     intertrnrq = ListAggregate(INTERTRNRQ)
     recintertrnrq = ListAggregate(RECINTERTRNRQ)
@@ -271,7 +271,7 @@ class INTERXFERMSGSRQV1(Aggregate):
 
 
 class INTERXFERMSGSRSV1(Aggregate):
-    """ OFX section 11.13.1.3.2 """
+    """OFX section 11.13.1.3.2"""
 
     intertrnrs = ListAggregate(INTERTRNRS)
     recintertrnrs = ListAggregate(RECINTERTRNRS)
@@ -280,7 +280,7 @@ class INTERXFERMSGSRSV1(Aggregate):
 
 
 class INTERXFERMSGSETV1(Aggregate):
-    """ OFX section 11.13.4 """
+    """OFX section 11.13.4"""
 
     msgsetcore = SubAggregate(MSGSETCORE, required=True)
     xferprof = SubAggregate(XFERPROF, required=True)
@@ -291,27 +291,27 @@ class INTERXFERMSGSETV1(Aggregate):
 
 
 class INTERXFERMSGSET(Aggregate):
-    """ OFX section 11.13.4 """
+    """OFX section 11.13.4"""
 
     interxfermsgsetv1 = SubAggregate(INTERXFERMSGSETV1, required=True)
 
 
 class WIREXFERMSGSRQV1(Aggregate):
-    """ OFX section 11.13.1.4.1 """
+    """OFX section 11.13.1.4.1"""
 
     wiretrnrq = ListAggregate(WIRETRNRQ)
     wiresyncrq = ListAggregate(WIRESYNCRQ)
 
 
 class WIREXFERMSGSRSV1(Aggregate):
-    """ OFX section 11.13.1.4.2 """
+    """OFX section 11.13.1.4.2"""
 
     wiretrnrs = ListAggregate(WIRETRNRS)
     wiresyncrs = ListAggregate(WIRESYNCRS)
 
 
 class WIREXFERMSGSETV1(ElementList):
-    """ OFX section 11.13.5 """
+    """OFX section 11.13.5"""
 
     msgsetcore = SubAggregate(MSGSETCORE, required=True)
     procdaysoff = ListElement(OneOf(*DAYS))
@@ -322,6 +322,6 @@ class WIREXFERMSGSETV1(ElementList):
 
 
 class WIREXFERMSGSET(Aggregate):
-    """ OFX section 11.13.5 """
+    """OFX section 11.13.5"""
 
     wirexfermsgsetv1 = SubAggregate(WIREXFERMSGSETV1, required=True)

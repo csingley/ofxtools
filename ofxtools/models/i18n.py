@@ -1187,21 +1187,21 @@ COUNTRY_CODES = ISO3166_1a3
 
 
 class CURRENCY(Aggregate):
-    """ OFX section 5.2 """
+    """OFX section 5.2"""
 
     currate = Decimal(required=True)
     cursym = OneOf(*CURRENCY_CODES, required=True)
 
 
 class ORIGCURRENCY(Aggregate):
-    """ OFX section 5.2 """
+    """OFX section 5.2"""
 
     currate = Decimal(required=True)
     cursym = OneOf(*CURRENCY_CODES, required=True)
 
 
 class Origcurrency:
-    """ Mixin providing property aliases and CURRENCY/ORIGCURRENCY mutex """
+    """Mixin providing property aliases and CURRENCY/ORIGCURRENCY mutex"""
 
     optionalMutexes: Sequence[Sequence[str]] = [["currency", "origcurrency"]]
 

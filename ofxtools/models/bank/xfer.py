@@ -27,7 +27,7 @@ from ofxtools.models.i18n import CURRENCY_CODES
 
 
 class XFERINFO(Aggregate):
-    """ OFX section 11.3.5 """
+    """OFX section 11.3.5"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
@@ -40,13 +40,13 @@ class XFERINFO(Aggregate):
 
 
 class INTRARQ(Aggregate):
-    """ OFX section 11.7.1.1 """
+    """OFX section 11.7.1.1"""
 
     xferinfo = SubAggregate(XFERINFO, required=True)
 
 
 class XFERPRCSTS(Aggregate):
-    """ OFX section 11.3.6 """
+    """OFX section 11.3.6"""
 
     xferprccode = OneOf(
         "WILLPROCESSON",
@@ -60,7 +60,7 @@ class XFERPRCSTS(Aggregate):
 
 
 class INTRARS(Aggregate):
-    """ OFX section 11.7.1.2 """
+    """OFX section 11.7.1.2"""
 
     curdef = OneOf(*CURRENCY_CODES, required=True)
     srvrtid = String(10, required=True)
@@ -74,20 +74,20 @@ class INTRARS(Aggregate):
 
 
 class INTRAMODRQ(Aggregate):
-    """ OFX section 11.7.2.1 """
+    """OFX section 11.7.2.1"""
 
     srvrtid = String(10, required=True)
     xferinfo = SubAggregate(XFERINFO, required=True)
 
 
 class INTRACANRQ(Aggregate):
-    """ OFX section 11.7.3.1 """
+    """OFX section 11.7.3.1"""
 
     srvrtid = String(10, required=True)
 
 
 class INTRAMODRS(Aggregate):
-    """ OFX section 11.7.2.2 """
+    """OFX section 11.7.2.2"""
 
     srvrtid = String(10, required=True)
     xferinfo = SubAggregate(XFERINFO, required=True)
@@ -95,13 +95,13 @@ class INTRAMODRS(Aggregate):
 
 
 class INTRACANRS(Aggregate):
-    """ OFX section 11.7.3.2 """
+    """OFX section 11.7.3.2"""
 
     srvrtid = String(10, required=True)
 
 
 class INTRATRNRQ(TrnRq):
-    """ OFX section 11.7.1.1 """
+    """OFX section 11.7.1.1"""
 
     intrarq = SubAggregate(INTRARQ)
     intramodrq = SubAggregate(INTRAMODRQ)
@@ -111,7 +111,7 @@ class INTRATRNRQ(TrnRq):
 
 
 class INTRATRNRS(TrnRs):
-    """ OFX section 11.7.1.2 """
+    """OFX section 11.7.1.2"""
 
     intrars = SubAggregate(INTRARS)
     intramodrs = SubAggregate(INTRAMODRS)

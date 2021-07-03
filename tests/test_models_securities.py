@@ -95,7 +95,7 @@ class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
         )
 
     def testConvertSecnameTooLong(self):
-        """ Don't enforce length restriction on SECNAME; raise Warning """
+        """Don't enforce length restriction on SECNAME; raise Warning"""
         # Issue #12
         root = self.etree
         root[
@@ -129,7 +129,7 @@ class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
         )
 
     def testConvertTickerTooLong(self):
-        """ Don't enforce length restriction on TICKER; raise Warning """
+        """Don't enforce length restriction on TICKER; raise Warning"""
         # Issue #12
         root = deepcopy(self.etree)
         root[

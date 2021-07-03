@@ -39,7 +39,7 @@ PAYERADDR = models.PAYERADDR(
 
 
 class Tax1099BTestCase(base.OfxTestCase, unittest.TestCase):
-    """ OFX Tax Extensions Section 2.2.11 """
+    """OFX Tax Extensions Section 2.2.11"""
 
     ofx = """
     <OFX>

@@ -47,19 +47,19 @@ from ofxtools.models.tax1099 import TAX1099MSGSET
 
 
 class PROFMSGSETV1(Aggregate):
-    """ OFX section 7.3 """
+    """OFX section 7.3"""
 
     msgsetcore = SubAggregate(MSGSETCORE, required=True)
 
 
 class PROFMSGSET(Aggregate):
-    """ OFX section 7.3 """
+    """OFX section 7.3"""
 
     profmsgsetv1 = SubAggregate(PROFMSGSETV1, required=True)
 
 
 class MSGSETLIST(Aggregate):
-    """ OFX section 7.2 """
+    """OFX section 7.2"""
 
     signonmsgset = ListAggregate(SIGNONMSGSET)
     signupmsgset = ListAggregate(SIGNUPMSGSET)
@@ -89,7 +89,7 @@ class MSGSETLIST(Aggregate):
 
 
 class SIGNONINFO(Aggregate):
-    """ OFX section 7.2.2 """
+    """OFX section 7.2.2"""
 
     signonrealm = String(32, required=True)
     min = Integer(required=True)
@@ -114,20 +114,20 @@ class SIGNONINFO(Aggregate):
 
 
 class SIGNONINFOLIST(Aggregate):
-    """ OFX section 7.2 """
+    """OFX section 7.2"""
 
     signoninfo = ListAggregate(SIGNONINFO)
 
 
 class PROFRQ(Aggregate):
-    """ OFX section 7.1.5 """
+    """OFX section 7.1.5"""
 
     clientrouting = OneOf("NONE", "SERVICE", "MSGSET", required=True)
     dtprofup = DateTime(required=True)
 
 
 class PROFRS(Aggregate):
-    """ OFX section 7.2 """
+    """OFX section 7.2"""
 
     msgsetlist = SubAggregate(MSGSETLIST, required=True)
     signoninfolist = SubAggregate(SIGNONINFOLIST, required=True)
@@ -148,13 +148,13 @@ class PROFRS(Aggregate):
 
 
 class PROFTRNRQ(TrnRq):
-    """ OFX section 7.1.5 """
+    """OFX section 7.1.5"""
 
     profrq = SubAggregate(PROFRQ, required=True)
 
 
 class PROFTRNRS(TrnRs):
-    """ OFX section 7.2 """
+    """OFX section 7.2"""
 
     profrs = SubAggregate(PROFRS)
 

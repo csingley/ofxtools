@@ -22,7 +22,7 @@ from ofxtools.models.billpay.common import PMTINFO
 
 
 class PMTMAILRQ(Aggregate):
-    """ OFX Section 12.8.1.1 """
+    """OFX Section 12.8.1.1"""
 
     mail = SubAggregate(MAIL, required=True)
     srvrtid = String(10)
@@ -30,7 +30,7 @@ class PMTMAILRQ(Aggregate):
 
 
 class PMTMAILRS(Aggregate):
-    """ OFX Section 12.8.1.2 """
+    """OFX Section 12.8.1.2"""
 
     mail = SubAggregate(MAIL, required=True)
     srvrtid = String(10)
@@ -38,19 +38,19 @@ class PMTMAILRS(Aggregate):
 
 
 class PMTMAILTRNRQ(TrnRq):
-    """ OFX Section 12.8.1.1 """
+    """OFX Section 12.8.1.1"""
 
     pmtmailrq = SubAggregate(PMTMAILRQ, required=True)
 
 
 class PMTMAILTRNRS(TrnRs):
-    """ OFX Section 12.8.1.2 """
+    """OFX Section 12.8.1.2"""
 
     pmtmailrs = SubAggregate(PMTMAILRS)
 
 
 class PMTMAILSYNCRQ(SyncRqList):
-    """ OFX Section 12.8.2.1 """
+    """OFX Section 12.8.2.1"""
 
     incimages = Bool(required=True)
     usehtml = Bool(required=True)
@@ -58,6 +58,6 @@ class PMTMAILSYNCRQ(SyncRqList):
 
 
 class PMTMAILSYNCRS(SyncRsList):
-    """ OFX Section 12.8.2.2 """
+    """OFX Section 12.8.2.2"""
 
     pmtmailtrnrs = ListAggregate(PMTMAILTRNRS)

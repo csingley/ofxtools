@@ -53,7 +53,7 @@ from ofxtools.models.common import MSGSETCORE
 
 
 class PAYERADDR(Aggregate):
-    """ OFX tax extensions section 2.2.7 """
+    """OFX tax extensions section 2.2.7"""
 
     payername1 = String(32, required=True)
     payername2 = String(32)
@@ -67,7 +67,7 @@ class PAYERADDR(Aggregate):
 
 
 class RECADDR(Aggregate):
-    """ OFX tax extensions section 2.2.8 """
+    """OFX tax extensions section 2.2.8"""
 
     recname1 = String(32, required=True)
     recname2 = String(32)
@@ -82,7 +82,7 @@ class RECADDR(Aggregate):
 
 
 class ADDLSTTAXWHAGG(Aggregate):
-    """ OFX tax extensions section 2.2.9 """
+    """OFX tax extensions section 2.2.9"""
 
     sttaxwh = Decimal(required=True)
     payerstate = String(2, required=True)
@@ -91,7 +91,7 @@ class ADDLSTTAXWHAGG(Aggregate):
 
 
 class STTAXWHAGG(Aggregate):
-    """ OFX tax extensions section 2.2.10 """
+    """OFX tax extensions section 2.2.10"""
 
     amount = Decimal(required=True)
     payerstate = String(2, required=True)
@@ -100,7 +100,7 @@ class STTAXWHAGG(Aggregate):
 
 
 class LCLTAXWHAGG(Aggregate):
-    """ OFX tax extensions section 2.2.10 """
+    """OFX tax extensions section 2.2.10"""
 
     amount = Decimal(required=True)
     namelcl = String(32, required=True)
@@ -108,7 +108,7 @@ class LCLTAXWHAGG(Aggregate):
 
 
 class PROCDET_V100(Aggregate):
-    """ OFX tax extensions section 2.2.11.2 """
+    """OFX tax extensions section 2.2.11.2"""
 
     form8949code = String(1)
     dtaqd = DateTime()
@@ -142,7 +142,7 @@ class PROCDET_V100(Aggregate):
 
 
 class PROCSUM_V100(Aggregate):
-    """ OFX tax extensions section 2.2.11.3 """
+    """OFX tax extensions section 2.2.11.3"""
 
     form8949code = String(1, required=True)
     adjcode = String(9)
@@ -153,14 +153,14 @@ class PROCSUM_V100(Aggregate):
 
 
 class EXTDBINFO_V100(Aggregate):
-    """ OFX tax extensions section 2.2.11.1 """
+    """OFX tax extensions section 2.2.11.1"""
 
     procsum_v100 = ListAggregate(PROCSUM_V100)
     procdet_v100 = ListAggregate(PROCDET_V100)
 
 
 class STKBND(Aggregate):
-    """ OFX tax extensions section 2.2.11 """
+    """OFX tax extensions section 2.2.11"""
 
     stkbndamt = Decimal(required=True)
     sbgros = Bool()
@@ -168,14 +168,14 @@ class STKBND(Aggregate):
 
 
 class FORINCOME(Aggregate):
-    """ OFX tax extensions section 2.2.12 """
+    """OFX tax extensions section 2.2.12"""
 
     countrystring = String(32, required=True)
     forincomeallocamt = Decimal()
 
 
 class FIDIRECTDEPOSITINFO(Aggregate):
-    """ OFX tax extensions section 2.2.16 """
+    """OFX tax extensions section 2.2.16"""
 
     finame_directdeposit = String(32, required=True)
     firoutingnum = Integer(9, required=True)
@@ -184,14 +184,14 @@ class FIDIRECTDEPOSITINFO(Aggregate):
 
 
 class ORIGSTATE(Aggregate):
-    """ OFX tax extensions section 2.2.12 """
+    """OFX tax extensions section 2.2.12"""
 
     origstatecode = String(2, required=True)
     origstateallocamt = Decimal()
 
 
 class ADDLSTATETAXWHAGG(Aggregate):
-    """ OFX tax extensions section 2.2.12 """
+    """OFX tax extensions section 2.2.12"""
 
     statecode = String(2, required=True)
     stateidnum = String(32)
@@ -199,7 +199,7 @@ class ADDLSTATETAXWHAGG(Aggregate):
 
 
 class TAX1099MISC_V100(Aggregate):
-    """ OFX tax extensions section 2.2.9 """
+    """OFX tax extensions section 2.2.9"""
 
     srvrtid = String(10, required=True)
     taxyear = Integer(4, required=True)
@@ -243,7 +243,7 @@ class TAX1099MISC_V100(Aggregate):
 
 
 class TAX1099R_V100(Aggregate):
-    """ OFX tax extensions section 2.2.10 """
+    """OFX tax extensions section 2.2.10"""
 
     srvrtid = String(10, required=True)
     taxyear = Integer(4, required=True)
@@ -292,7 +292,7 @@ class TAX1099R_V100(Aggregate):
 
 
 class TAX1099B_V100(Aggregate):
-    """ OFX tax extensions section 2.2.11 """
+    """OFX tax extensions section 2.2.11"""
 
     srvrtid = String(10, required=True)
     taxyear = Integer(4, required=True)
@@ -318,7 +318,7 @@ class TAX1099B_V100(Aggregate):
 
 
 class TAX1099INT_V100(Aggregate):
-    """ OFX tax extensions section 2.2.12 """
+    """OFX tax extensions section 2.2.12"""
 
     srvrtid = String(10, required=True)
     taxyear = Integer(4, required=True)
@@ -362,7 +362,7 @@ class TAX1099INT_V100(Aggregate):
 
 
 class TAX1099DIV_V100(Aggregate):
-    """ OFX tax extensions section 2.2.13 """
+    """OFX tax extensions section 2.2.13"""
 
     srvrtid = String(10, required=True)
     taxyear = Integer(4, required=True)
@@ -403,7 +403,7 @@ class TAX1099DIV_V100(Aggregate):
 
 
 class TAX1099OID_V100(Aggregate):
-    """ OFX tax extensions section 2.2.14 """
+    """OFX tax extensions section 2.2.14"""
 
     srvrtid = String(10, required=True)
     taxyear = Integer(4, required=True)
@@ -442,7 +442,7 @@ class TAX1099OID_V100(Aggregate):
 
 
 class TAX1099RQ(ElementList):
-    """ OFX tax extensions section 2.2.5 """
+    """OFX tax extensions section 2.2.5"""
 
     acctnum = String(32)
     recid = String(32)
@@ -450,7 +450,7 @@ class TAX1099RQ(ElementList):
 
 
 class TAX1099RS(Aggregate):
-    """ OFX tax extensions section 2.2.6 """
+    """OFX tax extensions section 2.2.6"""
 
     acctnum = String(32)
     recid = String(32)
@@ -475,19 +475,19 @@ class TAX1099RS(Aggregate):
 
 
 class TAX1099TRNRQ(TrnRq):
-    """ OFX tax extensions section 2.2.3 """
+    """OFX tax extensions section 2.2.3"""
 
     tax1099rq = SubAggregate(TAX1099RQ, required=True)
 
 
 class TAX1099TRNRS(TrnRs):
-    """ OFX tax extensions section 2.2.4 """
+    """OFX tax extensions section 2.2.4"""
 
     tax1099rs = SubAggregate(TAX1099RS)
 
 
 class TAX1099MSGSRQV1(Aggregate):
-    """ OFX tax extensions section 2.2.1 """
+    """OFX tax extensions section 2.2.1"""
 
     tax1099trnrq = ListAggregate(TAX1099TRNRQ)
 
@@ -502,7 +502,7 @@ class TAX1099MSGSRQV1(Aggregate):
 
 
 class TAX1099MSGSRSV1(Aggregate):
-    """ OFX tax extensions section 2.2.2 """
+    """OFX tax extensions section 2.2.2"""
 
     tax1099trnrs = ListAggregate(TAX1099TRNRS)
 
@@ -517,7 +517,7 @@ class TAX1099MSGSRSV1(Aggregate):
 
 
 class TAX1099MSGSETV1(ElementList):
-    """ OFX tax extensions section 2.1 """
+    """OFX tax extensions section 2.1"""
 
     msgsetcore = SubAggregate(MSGSETCORE, required=True)
     tax1099dnld = Bool(required=True)
@@ -535,6 +535,6 @@ class TAX1099MSGSETV1(ElementList):
 
 
 class TAX1099MSGSET(Aggregate):
-    """ OFX tax extensions section 2.1 """
+    """OFX tax extensions section 2.1"""
 
     tax1099msgsetv1 = SubAggregate(TAX1099MSGSETV1, required=True)

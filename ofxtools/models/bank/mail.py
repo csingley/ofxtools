@@ -23,7 +23,7 @@ from ofxtools.models.email import MAIL
 
 
 class BANKMAILRQ(Aggregate):
-    """ OFX section 11.11.1.1 """
+    """OFX section 11.11.1.1"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
@@ -33,7 +33,7 @@ class BANKMAILRQ(Aggregate):
 
 
 class BANKMAILRS(Aggregate):
-    """ OFX section 11.11.1.2 """
+    """OFX section 11.11.1.2"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
@@ -43,7 +43,7 @@ class BANKMAILRS(Aggregate):
 
 
 class CHKMAILRS(Aggregate):
-    """ OFX section 11.11.3.1 """
+    """OFX section 11.11.3.1"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     mail = SubAggregate(MAIL, required=True)
@@ -54,7 +54,7 @@ class CHKMAILRS(Aggregate):
 
 
 class DEPMAILRS(Aggregate):
-    """ OFX section 11.11.3.2 """
+    """OFX section 11.11.3.2"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     mail = SubAggregate(MAIL, required=True)
@@ -64,13 +64,13 @@ class DEPMAILRS(Aggregate):
 
 
 class BANKMAILTRNRQ(TrnRq):
-    """ OFX section 11.11.1.1 """
+    """OFX section 11.11.1.1"""
 
     bankmailrq = SubAggregate(BANKMAILRQ, required=True)
 
 
 class BANKMAILTRNRS(TrnRs):
-    """ OFX section 11.11.1.2 """
+    """OFX section 11.11.1.2"""
 
     bankmailrs = SubAggregate(BANKMAILRS)
     chkmailrs = SubAggregate(CHKMAILRS)

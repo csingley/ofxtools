@@ -11,14 +11,14 @@ from ofxtools.models.invest.acct import INVACCTFROM
 
 
 class INVMAILRQ(Aggregate):
-    """ OFX Section 13.10.1.1 """
+    """OFX Section 13.10.1.1"""
 
     invacctfrom = SubAggregate(INVACCTFROM)
     mail = SubAggregate(MAIL)
 
 
 class INVMAILRS(Aggregate):
-    """ OFX Section 13.10.1.2 """
+    """OFX Section 13.10.1.2"""
 
     invacctfrom = SubAggregate(INVACCTFROM)
     mail = SubAggregate(MAIL)
@@ -33,7 +33,7 @@ class INVMAILTRNRS(TrnRs):
 
 
 class INVMAILSYNCRQ(SyncRqList):
-    """ OFX Section 13.10.2.1 """
+    """OFX Section 13.10.2.1"""
 
     incimages = Bool(required=True)
     usehtml = Bool(required=True)
@@ -42,7 +42,7 @@ class INVMAILSYNCRQ(SyncRqList):
 
 
 class INVMAILSYNCRS(SyncRsList):
-    """ OFX Section 13.10.2.2 """
+    """OFX Section 13.10.2.2"""
 
     invacctfrom = SubAggregate(INVACCTFROM)
     invmailtrnrs = ListAggregate(INVMAILTRNRS)

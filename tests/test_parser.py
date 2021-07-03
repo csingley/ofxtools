@@ -27,7 +27,7 @@ class TreeBuilderRegexTestCase(TestCase):
         del self.builder
 
     def _parsetag(self, markup):
-        """ Call regex.match() on input string; return match groups """
+        """Call regex.match() on input string; return match groups"""
         m = self.regex.match(markup)
         self.assertIsNotNone(m)
         groupdict = m.groupdict()
@@ -77,7 +77,7 @@ class TreeBuilderRegexTestCase(TestCase):
 
 
 class TreeBuilderUnitTestCase(TestCase):
-    """ Unit tests for ofxtools.Parser.Treebuilder """
+    """Unit tests for ofxtools.Parser.Treebuilder"""
 
     def setUp(self):
         builder = TreeBuilder()
@@ -167,7 +167,7 @@ class TreeBuilderUnitTestCase(TestCase):
 
 
 class TreeBuilderUnitFunctionalTestCase(TestCase):
-    """ Functional tests for ofxtools.Parser.Treebuilder """
+    """Functional tests for ofxtools.Parser.Treebuilder"""
 
     def _testElement(self, element, tag, text, length):
         self.assertIsInstance(element, Element)
@@ -427,7 +427,7 @@ class OFXTreeTestCase(TestCase):
 
 
 class MainTestCase(TestCase):
-    """ Test main() """
+    """Test main()"""
 
     def testMain(self):
         import os

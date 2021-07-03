@@ -8,7 +8,7 @@ from datetime import datetime
 
 
 # local imports
-from ofxtools.models.base import Aggregate
+from ofxtools.models.base import Aggregate, UnknownTagWarning
 from ofxtools.models.common import SVCSTATUSES
 from ofxtools.models.bank.stmt import INV401KSOURCES
 from ofxtools.models.invest import (
@@ -186,7 +186,7 @@ class InvposlistTestCase(unittest.TestCase, base.TestAggregate):
         root = cls.etree
         root.append(bk_stmt.StmttrnTestCase.etree)
 
-        with cls.assertRaises(ValueError):
+        with cls.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(root)
 
 

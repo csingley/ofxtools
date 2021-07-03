@@ -37,6 +37,7 @@ from typing import (
     ChainMap,
 )
 import logging
+import warnings
 
 
 # local imports
@@ -50,11 +51,27 @@ logger = logging.getLogger(__name__)
 
 
 class OFXAggregateError(ValueError):
-    """ Base class for errors in this module """
+    """Base class for errors in this module."""
 
 
 class OFXSpecError(OFXAggregateError):
-    """ Violation of the OFX specification """
+    """Violation of the OFX specification."""
+
+
+class OFXAggregateWarning(UserWarning):
+    """Base class for warnings in this module."""
+
+
+class UnknownTagWarning(OFXAggregateWarning):
+    """Type conversion fails because Aggregate tag is unrecognized.
+
+    OFXv1 Section 2.3.1:
+
+        Open Financial Exchange is not completely SGML-compliant because the
+        specification allows unrecognized tags to be present. Clients and servers must
+        skip over the unrecognized tags. That is, if a client or server does not
+        recognize <XYZ>, it must ignore the tag and its enclosed data.
+    """
 
 
 class Aggregate(list):
@@ -248,7 +265,13 @@ class Aggregate(list):
             try:
                 index = spec.index(attrname)
             except ValueError:
-                raise OFXSpecError(f"{clsnm}.spec = {spec}; doesn't contain {attrname}")
+                #  raise OFXSpecError(f"{clsnm}.spec = {spec}; doesn't contain {attrname}")
+                msg = (
+                    f"While parsing {clsnm}, encountered unknown tag {elem.tag}; "
+                    "skipping."
+                )
+                warnings.warn(msg, category=UnknownTagWarning)
+                return accum
 
             is_listmember = attrname in listaggregates or attrname in listelements
             if index <= prev_index and not (is_listmember and prev_is_listmember):
@@ -515,7 +538,7 @@ class Aggregate(list):
         return "<{}>".format(instance_repr)
 
     def __getattr__(self, attr: str):
-        """ Proxy access to attributes of SubAggregates """
+        """Proxy access to attributes of SubAggregates"""
         for subaggregate in self.subaggregates:
             subagg = getattr(self, subaggregate)
             try:

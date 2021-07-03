@@ -25,7 +25,7 @@ from ofxtools.models.i18n import CURRENCY_CODES, COUNTRY_CODES
 
 
 class WIREBENEFICIARY(Aggregate):
-    """ OFX section 11.9.1.1.1 """
+    """OFX section 11.9.1.1.1"""
 
     name = String(32, required=True)
     bankacctto = SubAggregate(BANKACCTTO, required=True)
@@ -33,7 +33,7 @@ class WIREBENEFICIARY(Aggregate):
 
 
 class EXTBANKDESC(Aggregate):
-    """ OFX section 11.9.1.1.2 """
+    """OFX section 11.9.1.1.2"""
 
     name = String(32, required=True)
     bankid = String(9, required=True)
@@ -48,13 +48,13 @@ class EXTBANKDESC(Aggregate):
 
 
 class WIREDESTBANK(Aggregate):
-    """ OFX section 11.9.1.1.1 """
+    """OFX section 11.9.1.1.1"""
 
     extbankdesc = SubAggregate(EXTBANKDESC, required=True)
 
 
 class WIRERQ(Aggregate):
-    """ OFX section 11.9.1.1.1 """
+    """OFX section 11.9.1.1.1"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     wirebeneficiary = SubAggregate(WIREBENEFICIARY, required=True)
@@ -65,7 +65,7 @@ class WIRERQ(Aggregate):
 
 
 class WIRERS(Aggregate):
-    """ OFX section 11.9.1.2 """
+    """OFX section 11.9.1.2"""
 
     curdef = OneOf(*CURRENCY_CODES, required=True)
     srvrtid = String(10, required=True)
@@ -84,19 +84,19 @@ class WIRERS(Aggregate):
 
 
 class WIRECANRQ(Aggregate):
-    """ OFX section 11.9.2.1"""
+    """OFX section 11.9.2.1"""
 
     srvrtid = String(10, required=True)
 
 
 class WIRECANRS(Aggregate):
-    """ OFX section 11.9.2.2"""
+    """OFX section 11.9.2.2"""
 
     srvrtid = String(10, required=True)
 
 
 class WIRETRNRQ(TrnRq):
-    """ OFX section 11.9.2.1 """
+    """OFX section 11.9.2.1"""
 
     wirerq = SubAggregate(WIRERQ)
     wirecanrq = SubAggregate(WIRECANRQ)
@@ -105,7 +105,7 @@ class WIRETRNRQ(TrnRq):
 
 
 class WIRETRNRS(TrnRs):
-    """ OFX section 11.9.2.2 """
+    """OFX section 11.9.2.2"""
 
     wirers = SubAggregate(WIRERS)
     wirecanrs = SubAggregate(WIRECANRS)

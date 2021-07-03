@@ -49,7 +49,7 @@ UNITTYPES = ("SHARES", "CURRENCY")
 
 
 class OO(Aggregate):
-    """ OFX section 13.9.2.5.1 - General open order aggregate """
+    """OFX section 13.9.2.5.1 - General open order aggregate"""
 
     fitid = String(255, required=True)
     srvrtid = String(10)
@@ -68,7 +68,7 @@ class OO(Aggregate):
 
 
 class OOBUYDEBT(Aggregate):
-    """ OFX section 13.9.2.5.2 """
+    """OFX section 13.9.2.5.2"""
 
     oo = SubAggregate(OO, required=True)
     auction = Bool(required=True)
@@ -76,7 +76,7 @@ class OOBUYDEBT(Aggregate):
 
 
 class OOBUYMF(Aggregate):
-    """ OFX section 13.9.2.5.2 """
+    """OFX section 13.9.2.5.2"""
 
     oo = SubAggregate(OO, required=True)
     buytype = OneOf(*BUYTYPES, required=True)
@@ -84,34 +84,34 @@ class OOBUYMF(Aggregate):
 
 
 class OOBUYOPT(Aggregate):
-    """ OFX section 13.9.2.5.2 """
+    """OFX section 13.9.2.5.2"""
 
     oo = SubAggregate(OO, required=True)
     optbuytype = OneOf(*OPTBUYTYPES, required=True)
 
 
 class OOBUYOTHER(Aggregate):
-    """ OFX section 13.9.2.5.2 """
+    """OFX section 13.9.2.5.2"""
 
     oo = SubAggregate(OO, required=True)
     unittype = OneOf(*UNITTYPES, required=True)
 
 
 class OOBUYSTOCK(Aggregate):
-    """ OFX section 13.9.2.5.2 """
+    """OFX section 13.9.2.5.2"""
 
     oo = SubAggregate(OO, required=True)
     buytype = OneOf(*BUYTYPES, required=True)
 
 
 class OOSELLDEBT(Aggregate):
-    """ OFX section 13.9.2.5.2 """
+    """OFX section 13.9.2.5.2"""
 
     oo = SubAggregate(OO, required=True)
 
 
 class OOSELLMF(Aggregate):
-    """ OFX section 13.9.2.5.2 """
+    """OFX section 13.9.2.5.2"""
 
     oo = SubAggregate(OO, required=True)
     selltype = OneOf(*SELLTYPES, required=True)
@@ -120,28 +120,28 @@ class OOSELLMF(Aggregate):
 
 
 class OOSELLOPT(Aggregate):
-    """ OFX section 13.9.2.5.2 """
+    """OFX section 13.9.2.5.2"""
 
     oo = SubAggregate(OO, required=True)
     optselltype = OneOf(*OPTSELLTYPES, required=True)
 
 
 class OOSELLOTHER(Aggregate):
-    """ OFX section 13.9.2.5.2 """
+    """OFX section 13.9.2.5.2"""
 
     oo = SubAggregate(OO, required=True)
     unittype = OneOf(*UNITTYPES, required=True)
 
 
 class OOSELLSTOCK(Aggregate):
-    """ OFX section 13.9.2.5.2 """
+    """OFX section 13.9.2.5.2"""
 
     oo = SubAggregate(OO, required=True)
     selltype = OneOf(*SELLTYPES, required=True)
 
 
 class SWITCHMF(Aggregate):
-    """ OFX section 13.9.2.5.2 """
+    """OFX section 13.9.2.5.2"""
 
     oo = SubAggregate(OO, required=True)
     secid = SubAggregate(SECID, required=True)
@@ -150,7 +150,7 @@ class SWITCHMF(Aggregate):
 
 
 class INVOOLIST(Aggregate):
-    """ OFX section 13.9.2.2 """
+    """OFX section 13.9.2.2"""
 
     oobuydebt = ListAggregate(OOBUYDEBT)
     oobuymf = ListAggregate(OOBUYMF)

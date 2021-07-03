@@ -272,7 +272,7 @@ class MakeArgParserTestCase(unittest.TestCase):
                 self.assertEqual(len(kwargs), 0)
 
     def testRequestAcctinfo(self):
-        """ Unit test for ofxtools.scripts.ofxget.request_acctinfo() """
+        """Unit test for ofxtools.scripts.ofxget.request_acctinfo()"""
         args = self.args
         args["dryrun"] = False
 
@@ -301,7 +301,7 @@ class MakeArgParserTestCase(unittest.TestCase):
                     self.assertEqual(len(kwargs), 0)
 
     def test_RequestAcctinfo(self):
-        """ Unit test for ofxtools.scripts.ofxget._request_acctinfo() """
+        """Unit test for ofxtools.scripts.ofxget._request_acctinfo()"""
         args = self.args
         args["dryrun"] = False
 
@@ -326,7 +326,7 @@ class MakeArgParserTestCase(unittest.TestCase):
             )
 
     def test_RequestAcctinfoOverrideDtacctup(self):
-        """ Nondefault `dtacctup` arg for ofxtools.scripts.ofxget._request_acctinfo() """
+        """Nondefault `dtacctup` arg for ofxtools.scripts.ofxget._request_acctinfo()"""
         args = self.args
         args["dryrun"] = False
         args["dtacctup"] = "17760704"
@@ -352,7 +352,7 @@ class MakeArgParserTestCase(unittest.TestCase):
             )
 
     def testMergeAcctinfo(self):
-        """ Unit test for ofxtools.scripts.ofxget._merge_acctinfo() """
+        """Unit test for ofxtools.scripts.ofxget._merge_acctinfo()"""
         cli = {"dryrun": True}
         config = {"pretty": False}
         args = collections.ChainMap(cli, config)
@@ -773,7 +773,7 @@ class MakeArgParserTestCase(unittest.TestCase):
 # ARGUMENT/CONFIG HANDLERS
 ###############################################################################
 class MkServerCfgTestCase(unittest.TestCase):
-    """ Unit tests for ofxtools.script.ofxget.mk_server_cfg() """
+    """Unit tests for ofxtools.script.ofxget.mk_server_cfg()"""
 
     def testMkservercfg(self):
         with patch("ofxtools.scripts.ofxget.USERCFG", new=ConfigParser()):
@@ -1061,7 +1061,7 @@ class MergeConfigTestCase(unittest.TestCase):
 # PROFILE SCAN
 ###############################################################################
 class ScanProfileTestCase(unittest.TestCase):
-    """ Unit tests for ofxtools.scripts.ofxget._scan_profile() and helpers """
+    """Unit tests for ofxtools.scripts.ofxget._scan_profile() and helpers"""
 
     ofx = models.OFX(
         signonmsgsrsv1=test_models_msgsets.Signonmsgsrsv1TestCase.aggregate,
@@ -1141,7 +1141,7 @@ class ScanProfileTestCase(unittest.TestCase):
         self.assertEqual(results[2], {})
 
     def testQueueScanResponse(self):
-        """ Test ofxget._queue_scans() """
+        """Test ofxget._queue_scans()"""
         with patch("ofxtools.Client.OFXClient.request_profile") as mock_profrq:
             mock_profrq.side_effect = self.prof_result
 
@@ -1286,7 +1286,7 @@ class CollateScanResultsTestCase(unittest.TestCase):
 # OFX PARSING
 ###############################################################################
 class VerifyStatusTestCase(unittest.TestCase):
-    """ Unit tests for ofxtools.scripts.ofxget.verify_status() """
+    """Unit tests for ofxtools.scripts.ofxget.verify_status()"""
 
     status_good = models.STATUS(code=0, severity="INFO")
     status_bad = models.STATUS(code=1500, severity="ERROR")
@@ -1306,7 +1306,7 @@ class VerifyStatusTestCase(unittest.TestCase):
 
 
 class AcctIsActiveTestCase(unittest.TestCase):
-    """ Unit tests for ofxtools.scripts.ofxget._acctIsActive() """
+    """Unit tests for ofxtools.scripts.ofxget._acctIsActive()"""
 
     bankacctinfo = test_models_bank_stmt.BankacctinfoTestCase.aggregate
     ccacctinfo = test_models_bank_stmt.CcacctinfoTestCase.aggregate
@@ -1328,7 +1328,7 @@ class AcctIsActiveTestCase(unittest.TestCase):
 
 
 class ExtractSignonInfosTestCase(unittest.TestCase):
-    """ Unit tests for ofxtools.scripts.ofxget.extract_signoninfos() """
+    """Unit tests for ofxtools.scripts.ofxget.extract_signoninfos()"""
 
     ofx = models.OFX(
         signonmsgsrsv1=test_models_msgsets.Signonmsgsrsv1TestCase.aggregate,
@@ -1357,7 +1357,7 @@ class ExtractSignonInfosTestCase(unittest.TestCase):
 
 
 class ExtractAcctInfosTestCase(unittest.TestCase):
-    """ Unit tests for ofxtools.scripts.ofxget.extract_acctinfos() """
+    """Unit tests for ofxtools.scripts.ofxget.extract_acctinfos()"""
 
     ofx = models.OFX(
         signonmsgsrsv1=test_models_msgsets.Signonmsgsrsv1TestCase.aggregate,

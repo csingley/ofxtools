@@ -47,15 +47,15 @@ from ofxtools import utils
 
 
 class OFXTypeWarning(UserWarning):
-    """ Base class for warnings in this module """
+    """Base class for warnings in this module"""
 
 
 class OFXTypeError(ValueError):
-    """ Base class for errors in this module """
+    """Base class for errors in this module"""
 
 
 class OFXSpecError(OFXTypeError):
-    """ Violation of the OFX specification """
+    """Violation of the OFX specification"""
 
 
 def call_signature(*args, **kwargs):
@@ -403,7 +403,7 @@ class Decimal(Element):
 
     @singledispatchmethod
     def convert(self, value):
-        """ Default dispatch convert() for unregistered type """
+        """Default dispatch convert() for unregistered type"""
         # None should be dispatched to _convert_none()
         assert value is not None
         # By default, attempt a naive conversion to subclass type
@@ -550,7 +550,7 @@ def format_datetime(format: str, value: datetime.datetime) -> str:
 
 
 class DateTime(Element):
-    """ OFX Section 3.2.8.2 """
+    """OFX Section 3.2.8.2"""
 
     # __type__ must be compatible with Time subclass override
     __type__: Union[Type[datetime.datetime], Type[datetime.time]] = datetime.datetime
@@ -671,7 +671,7 @@ TIME_REGEX = re.compile(
 
 
 class Time(DateTime):
-    """ OFX Section 3.2.8.3 """
+    """OFX Section 3.2.8.3"""
 
     __type__ = datetime.time
     regex = TIME_REGEX

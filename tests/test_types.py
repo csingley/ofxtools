@@ -39,7 +39,7 @@ class ElementTestCase(unittest.TestCase):
 
 
 class Base:
-    """ Common tests for Element subclasses """
+    """Common tests for Element subclasses"""
 
     def test_required(self):
         t = self.type_(required=True)

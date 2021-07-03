@@ -27,7 +27,7 @@ SVCSTATUSES = ["AVAIL", "PEND", "ACTIVE"]
 
 
 class STATUS(Aggregate):
-    """ OFX section 3.1.5 """
+    """OFX section 3.1.5"""
 
     code = Integer(6, required=True)
     severity = OneOf("INFO", "WARN", "ERROR", required=True)
@@ -35,7 +35,7 @@ class STATUS(Aggregate):
 
 
 class BAL(Aggregate):
-    """ OFX section 3.1.4 """
+    """OFX section 3.1.4"""
 
     name = String(32, required=True)
     desc = String(80, required=True)
@@ -46,7 +46,7 @@ class BAL(Aggregate):
 
 
 class OFXELEMENT(Aggregate):
-    """ OFX section 2.7.2 """
+    """OFX section 2.7.2"""
 
     tagname = String(32, required=True)
     name = String(32)
@@ -55,13 +55,13 @@ class OFXELEMENT(Aggregate):
 
 
 class OFXEXTENSION(Aggregate):
-    """ OFX section 2.7.2 """
+    """OFX section 2.7.2"""
 
     ofxelement = ListAggregate(OFXELEMENT)
 
 
 class MSGSETCORE(ElementList):
-    """ OFX section 7.2.1 """
+    """OFX section 7.2.1"""
 
     ver = Integer(required=True)
     url = String(255, required=True)

@@ -40,21 +40,21 @@ from ofxtools.models.bank.stpchk import STPCHKTRNRQ, STPCHKTRNRS
 
 
 class STPCHKSYNCRQ(SyncRqList):
-    """ OFX section 11.12.1.1 """
+    """OFX section 11.12.1.1"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     stpchktrnrq = ListAggregate(STPCHKTRNRQ)
 
 
 class STPCHKSYNCRS(SyncRsList):
-    """ OFX section 11.12.1.2 """
+    """OFX section 11.12.1.2"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     stpchktrnrs = ListAggregate(STPCHKTRNRS)
 
 
 class INTRASYNCRQ(SyncRqList):
-    """ OFX section 11.12.2.1 """
+    """OFX section 11.12.2.1"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
@@ -64,7 +64,7 @@ class INTRASYNCRQ(SyncRqList):
 
 
 class INTRASYNCRS(SyncRsList):
-    """ OFX section 11.12.2.2 """
+    """OFX section 11.12.2.2"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
@@ -74,7 +74,7 @@ class INTRASYNCRS(SyncRsList):
 
 
 class INTERSYNCRQ(SyncRqList):
-    """ OFX section 11.12.3.1 """
+    """OFX section 11.12.3.1"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
@@ -84,7 +84,7 @@ class INTERSYNCRQ(SyncRqList):
 
 
 class INTERSYNCRS(SyncRsList):
-    """ OFX section 11.12.3.2 """
+    """OFX section 11.12.3.2"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
@@ -94,21 +94,21 @@ class INTERSYNCRS(SyncRsList):
 
 
 class WIRESYNCRQ(SyncRqList):
-    """ OFX section 11.12.4.1 """
+    """OFX section 11.12.4.1"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     wiretrnrq = ListAggregate(WIRETRNRQ)
 
 
 class WIRESYNCRS(SyncRsList):
-    """ OFX section 11.12.4.2 """
+    """OFX section 11.12.4.2"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     wiretrnrs = ListAggregate(WIRETRNRS)
 
 
 class RECINTRASYNCRQ(SyncRqList):
-    """ OFX section 11.12.5.1 """
+    """OFX section 11.12.5.1"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
@@ -118,7 +118,7 @@ class RECINTRASYNCRQ(SyncRqList):
 
 
 class RECINTRASYNCRS(SyncRsList):
-    """ OFX section 11.12.5.2 """
+    """OFX section 11.12.5.2"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
@@ -128,7 +128,7 @@ class RECINTRASYNCRS(SyncRsList):
 
 
 class RECINTERSYNCRQ(SyncRqList):
-    """ OFX section 11.12.5.1 """
+    """OFX section 11.12.5.1"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
@@ -138,7 +138,7 @@ class RECINTERSYNCRQ(SyncRqList):
 
 
 class RECINTERSYNCRS(SyncRsList):
-    """ OFX section 11.12.5.2 """
+    """OFX section 11.12.5.2"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)
@@ -148,7 +148,7 @@ class RECINTERSYNCRS(SyncRsList):
 
 
 class BANKMAILSYNCRQ(SyncRqList):
-    """ OFX section 11.12.7.1 """
+    """OFX section 11.12.7.1"""
 
     incimages = Bool(required=True)
     usehtml = Bool(required=True)
@@ -160,7 +160,7 @@ class BANKMAILSYNCRQ(SyncRqList):
 
 
 class BANKMAILSYNCRS(SyncRsList):
-    """ OFX section 11.12.7.2 """
+    """OFX section 11.12.7.2"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM)
     ccacctfrom = SubAggregate(CCACCTFROM)

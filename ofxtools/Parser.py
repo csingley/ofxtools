@@ -45,9 +45,7 @@ logger = logging.getLogger(__name__)
 
 
 class ParseError(SyntaxError):
-    """ Exception raised by parsing errors in this module """
-
-    pass
+    """Exception raised by parsing errors in this module"""
 
 
 class OFXTree(ET.ElementTree):
@@ -222,7 +220,7 @@ class TreeBuilder(ET.TreeBuilder):
 
     @staticmethod
     def _groomstring(string: str) -> Optional[str]:
-        """ Strips whitespace and returns None for empty string """
+        """Strips whitespace and returns None for empty string"""
         # Can't strip() None
         string = (string or "").strip()
         if string:

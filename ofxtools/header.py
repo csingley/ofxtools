@@ -45,7 +45,7 @@ OFXHeaderType = Union["OFXHeaderBase", "OFXHeaderV1", "OFXHeaderV2"]
 
 
 class OFXHeaderError(SyntaxError):
-    """ Exception raised by parsing errors in this module """
+    """Exception raised by parsing errors in this module"""
 
     pass
 
@@ -62,7 +62,7 @@ class OFXHeaderBase:
     codec: Any = NotImplemented  # Define in subclass
 
     def __init__(self, *args, **kwargs):
-        """ This is only here to please the type checker """
+        """This is only here to please the type checker"""
         super().__init__()
 
     @classmethod
@@ -86,7 +86,7 @@ class OFXHeaderBase:
 
 
 class OFXHeaderV1(OFXHeaderBase):
-    """ Header for OFX version 1 """
+    """Header for OFX version 1"""
 
     ofxheader = Types.OneOf(100)
     data = Types.OneOf("OFXSGML")
@@ -184,7 +184,7 @@ class OFXHeaderV1(OFXHeaderBase):
 
 
 class OFXHeaderV2(OFXHeaderBase):
-    """ Header for OFX version 2 """
+    """Header for OFX version 2"""
 
     ofxheader = Types.OneOf(200)
     version = Types.OneOf(200, 201, 202, 203, 210, 211, 220)

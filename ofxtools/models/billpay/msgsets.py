@@ -42,7 +42,7 @@ DAYS = ("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUN
 
 
 class BILLPAYMSGSRQV1(Aggregate):
-    """ OFX section 12.11.1.1 """
+    """OFX section 12.11.1.1"""
 
     pmttrnrq = ListAggregate(PMTTRNRQ)
     recpmttrnrq = ListAggregate(RECPMTTRNRQ)
@@ -56,7 +56,7 @@ class BILLPAYMSGSRQV1(Aggregate):
 
 
 class BILLPAYMSGSRSV1(Aggregate):
-    """ OFX section 12.11.1.2 """
+    """OFX section 12.11.1.2"""
 
     pmttrnrs = ListAggregate(PMTTRNRS)
     recpmttrnrs = ListAggregate(RECPMTTRNRS)
@@ -70,7 +70,7 @@ class BILLPAYMSGSRSV1(Aggregate):
 
 
 class BILLPAYMSGSETV1(ElementList):
-    """ OFX section 12.11.2 """
+    """OFX section 12.11.2"""
 
     msgsetcore = SubAggregate(MSGSETCORE, required=True)
     dayswith = Integer(3, required=True)
@@ -95,6 +95,6 @@ class BILLPAYMSGSETV1(ElementList):
 
 
 class BILLPAYMSGSET(Aggregate):
-    """ OFX section 12.11.2 """
+    """OFX section 12.11.2"""
 
     billpaymsgsetv1 = SubAggregate(BILLPAYMSGSETV1, required=True)

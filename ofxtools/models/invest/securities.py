@@ -61,14 +61,14 @@ ASSETCLASSES = (
 
 
 class SECID(Aggregate):
-    """ OFX section 13.8.1 """
+    """OFX section 13.8.1"""
 
     uniqueid = String(32, required=True)
     uniqueidtype = String(10, required=True)
 
 
 class SECRQ(Aggregate):
-    """ OFX section 13.8.2.2 """
+    """OFX section 13.8.2.2"""
 
     secid = SubAggregate(SECID)
     ticker = String(32)
@@ -78,13 +78,13 @@ class SECRQ(Aggregate):
 
 
 class SECLISTRQ(Aggregate):
-    """ OFX section 13.8.2.2 """
+    """OFX section 13.8.2.2"""
 
     secrq = ListAggregate(SECRQ)
 
 
 class SECINFO(Aggregate):
-    """ OFX Section 13.8.5.1 """
+    """OFX Section 13.8.5.1"""
 
     secid = SubAggregate(SECID, required=True)
     # FIs abuse SECNAME/TICKER
@@ -100,7 +100,7 @@ class SECINFO(Aggregate):
 
 
 class DEBTINFO(Aggregate):
-    """ OFX Section 13.8.5.2 """
+    """OFX Section 13.8.5.2"""
 
     secinfo = SubAggregate(SECINFO, required=True)
     parvalue = Decimal(required=True)
@@ -120,33 +120,33 @@ class DEBTINFO(Aggregate):
 
 
 class PORTION(Aggregate):
-    """ OFX section 13.8.5.3 """
+    """OFX section 13.8.5.3"""
 
     assetclass = OneOf(*ASSETCLASSES, required=True)
     percent = Decimal(required=True)
 
 
 class MFASSETCLASS(Aggregate):  # pylint: disable=too-many-ancestors
-    """ OFX section 13.8.5.3 """
+    """OFX section 13.8.5.3"""
 
     portion = ListAggregate(PORTION)
 
 
 class FIPORTION(Aggregate):
-    """ OFX section 13.8.5.3 """
+    """OFX section 13.8.5.3"""
 
     fiassetclass = String(32, required=True)
     percent = Decimal(required=True)
 
 
 class FIMFASSETCLASS(Aggregate):  # pylint: disable=too-many-ancestors
-    """ OFX section 13.8.5.3 """
+    """OFX section 13.8.5.3"""
 
     fiportion = ListAggregate(FIPORTION)
 
 
 class MFINFO(Aggregate):
-    """ OFX section 13.8.5.3 """
+    """OFX section 13.8.5.3"""
 
     secinfo = SubAggregate(SECINFO, required=True)
     mftype = OneOf("OPENEND", "CLOSEEND", "OTHER")
@@ -187,7 +187,7 @@ class MFINFO(Aggregate):
 
 
 class OPTINFO(Aggregate):
-    """ OFX Section 13.8.5.4 """
+    """OFX Section 13.8.5.4"""
 
     secinfo = SubAggregate(SECINFO, required=True)
     opttype = OneOf("CALL", "PUT", required=True)
@@ -200,7 +200,7 @@ class OPTINFO(Aggregate):
 
 
 class OTHERINFO(Aggregate):
-    """ OFX Section 13.8.5.5 """
+    """OFX Section 13.8.5.5"""
 
     secinfo = SubAggregate(SECINFO, required=True)
     typedesc = String(32)
@@ -209,7 +209,7 @@ class OTHERINFO(Aggregate):
 
 
 class STOCKINFO(Aggregate):
-    """ OFX Section 13.8.5.6 """
+    """OFX Section 13.8.5.6"""
 
     secinfo = SubAggregate(SECINFO, required=True)
     stocktype = OneOf("COMMON", "PREFERRED", "CONVERTIBLE", "OTHER")
@@ -251,7 +251,7 @@ class STOCKINFO(Aggregate):
 
 
 class SECLIST(Aggregate):
-    """ OFX section 13.8.4.4 """
+    """OFX section 13.8.4.4"""
 
     debtinfo = ListAggregate(DEBTINFO)
     mfinfo = ListAggregate(MFINFO)
@@ -261,7 +261,7 @@ class SECLIST(Aggregate):
 
 
 class SECLISTTRNRQ(TrnRq):
-    """ OFX section 13.8.2.1 """
+    """OFX section 13.8.2.1"""
 
     seclistrq = SubAggregate(SECLISTRQ, required=True)
 
@@ -275,6 +275,6 @@ class SECLISTRS(Aggregate):
 
 
 class SECLISTTRNRS(TrnRs):
-    """ OFX section 13.8.2.1 """
+    """OFX section 13.8.2.1"""
 
     seclistrs = SubAggregate(SECLISTRS)

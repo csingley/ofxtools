@@ -48,21 +48,21 @@ FREQUENCIES = (
 
 
 class RECURRINST(Aggregate):
-    """ OFX section 10.2 """
+    """OFX section 10.2"""
 
     ninsts = Integer(3)
     freq = OneOf(*FREQUENCIES, required=True)
 
 
 class RECINTRARQ(Aggregate):
-    """ OFX section 11.10.1.1 """
+    """OFX section 11.10.1.1"""
 
     recurrinst = SubAggregate(RECURRINST, required=True)
     intrarq = SubAggregate(INTRARQ, required=True)
 
 
 class RECINTRARS(Aggregate):
-    """ OFX section 11.10.1.2 """
+    """OFX section 11.10.1.2"""
 
     recsrvrtid = String(10, required=True)
     recurrinst = SubAggregate(RECURRINST, required=True)
@@ -70,7 +70,7 @@ class RECINTRARS(Aggregate):
 
 
 class RECINTRAMODRQ(Aggregate):
-    """ OFX section 11.10.2.1 """
+    """OFX section 11.10.2.1"""
 
     recsrvrtid = String(10, required=True)
     recurrinst = SubAggregate(RECURRINST, required=True)
@@ -79,7 +79,7 @@ class RECINTRAMODRQ(Aggregate):
 
 
 class RECINTRAMODRS(Aggregate):
-    """ OFX section 11.10.2.2 """
+    """OFX section 11.10.2.2"""
 
     recsrvrtid = String(10, required=True)
     recurrinst = SubAggregate(RECURRINST, required=True)
@@ -88,21 +88,21 @@ class RECINTRAMODRS(Aggregate):
 
 
 class RECINTRACANRQ(Aggregate):
-    """ OFX section 11.10.3.1 """
+    """OFX section 11.10.3.1"""
 
     recsrvrtid = String(10, required=True)
     canpending = Bool(required=True)
 
 
 class RECINTRACANRS(Aggregate):
-    """ OFX section 11.10.3.2 """
+    """OFX section 11.10.3.2"""
 
     recsrvrtid = String(10, required=True)
     canpending = Bool(required=True)
 
 
 class RECINTRATRNRQ(TrnRq):
-    """ OFX section 11.10.1.1 """
+    """OFX section 11.10.1.1"""
 
     recintrarq = SubAggregate(RECINTRARQ)
     recintramodrq = SubAggregate(RECINTRAMODRQ)
@@ -112,7 +112,7 @@ class RECINTRATRNRQ(TrnRq):
 
 
 class RECINTRATRNRS(TrnRs):
-    """ OFX section 11.10.1.2 """
+    """OFX section 11.10.1.2"""
 
     recintrars = SubAggregate(RECINTRARS)
     recintramodrs = SubAggregate(RECINTRAMODRS)
@@ -122,14 +122,14 @@ class RECINTRATRNRS(TrnRs):
 
 
 class RECINTERRQ(Aggregate):
-    """ OFX section 11.10.4.1 """
+    """OFX section 11.10.4.1"""
 
     recurrinst = SubAggregate(RECURRINST, required=True)
     interrq = SubAggregate(INTERRQ, required=True)
 
 
 class RECINTERRS(Aggregate):
-    """ OFX section 11.10.4.2 """
+    """OFX section 11.10.4.2"""
 
     recsrvrtid = String(10, required=True)
     recurrinst = SubAggregate(RECURRINST, required=True)
@@ -137,7 +137,7 @@ class RECINTERRS(Aggregate):
 
 
 class RECINTERMODRQ(Aggregate):
-    """ OFX section 11.10.5.1 """
+    """OFX section 11.10.5.1"""
 
     recsrvrtid = String(10, required=True)
     recurrinst = SubAggregate(RECURRINST, required=True)
@@ -146,7 +146,7 @@ class RECINTERMODRQ(Aggregate):
 
 
 class RECINTERMODRS(Aggregate):
-    """ OFX section 11.10.5.2 """
+    """OFX section 11.10.5.2"""
 
     recsrvrtid = String(10, required=True)
     recurrinst = SubAggregate(RECURRINST, required=True)
@@ -155,21 +155,21 @@ class RECINTERMODRS(Aggregate):
 
 
 class RECINTERCANRQ(Aggregate):
-    """ OFX section 11.10.6.1 """
+    """OFX section 11.10.6.1"""
 
     recsrvrtid = String(10, required=True)
     canpending = Bool(required=True)
 
 
 class RECINTERCANRS(Aggregate):
-    """ OFX section 11.10.6.2 """
+    """OFX section 11.10.6.2"""
 
     recsrvrtid = String(10, required=True)
     canpending = Bool(required=True)
 
 
 class RECINTERTRNRQ(TrnRq):
-    """ OFX section 11.10.5.1 """
+    """OFX section 11.10.5.1"""
 
     recinterrq = SubAggregate(RECINTERRQ)
     recintermodrq = SubAggregate(RECINTERMODRQ)
@@ -179,7 +179,7 @@ class RECINTERTRNRQ(TrnRq):
 
 
 class RECINTERTRNRS(TrnRs):
-    """ OFX section 11.10.5.2 """
+    """OFX section 11.10.5.2"""
 
     recinterrs = SubAggregate(RECINTERRS)
     recintermodrs = SubAggregate(RECINTERMODRS)

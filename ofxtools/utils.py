@@ -15,7 +15,7 @@ from ofxtools.lib import NUMBERING_AGENCIES
 
 
 class classproperty(property):
-    """ Decorator that turns a classmethod into a property """
+    """Decorator that turns a classmethod into a property"""
 
     def __get__(self, cls, owner):
         return self.fget.__get__(None, owner)()
@@ -74,14 +74,14 @@ TZS = {
 #  https://docs.python.org/2/library/itertools.html#recipes
 ###############################################################################
 def pairwise(iterable: Iterable) -> Iterable[Tuple[Any, Any]]:
-    """ s -> (s0,s1), (s1,s2), (s2, s3), ...  """
+    """s -> (s0,s1), (s1,s2), (s2, s3), ..."""
     a, b = itertools.tee(iterable)
     next(b, None)
     return zip(a, b)
 
 
 def all_equal(iterable):
-    """ Returns True if all the elements are equal to each other """
+    """Returns True if all the elements are equal to each other"""
     g = itertools.groupby(iterable)
     return next(g, True) and not next(g, False)
 

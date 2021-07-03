@@ -37,7 +37,7 @@ from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, Origcurrency, CURRENCY_
 
 
 class CLOSING(Aggregate, Origcurrency):
-    """ OFX section 11.5.2 """
+    """OFX section 11.5.2"""
 
     fitid = String(255, required=True)
     dtopen = DateTime()
@@ -58,7 +58,7 @@ class CLOSING(Aggregate, Origcurrency):
 
 
 class STMTENDRQ(Aggregate):
-    """ OFX section 11.5.1 """
+    """OFX section 11.5.1"""
 
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
     dtstart = DateTime()
@@ -66,7 +66,7 @@ class STMTENDRQ(Aggregate):
 
 
 class STMTENDRS(Aggregate):
-    """ OFX section 11.5.2 """
+    """OFX section 11.5.2"""
 
     curdef = OneOf(*CURRENCY_CODES, required=True)
     bankacctfrom = SubAggregate(BANKACCTFROM, required=True)
@@ -74,26 +74,26 @@ class STMTENDRS(Aggregate):
 
 
 class STMTENDTRNRQ(TrnRq):
-    """ OFX section 11.5.1 """
+    """OFX section 11.5.1"""
 
     stmtendrq = SubAggregate(STMTENDRQ, required=True)
 
 
 class STMTENDTRNRS(TrnRs):
-    """ OFX section 11.5.2 """
+    """OFX section 11.5.2"""
 
     stmtendrs = SubAggregate(STMTENDRS)
 
 
 class LASTPMTINFO(Aggregate):
-    """ OFX section 11.3.10 """
+    """OFX section 11.3.10"""
 
     lastpmtdate = DateTime(required=True)
     lastpmtamt = Decimal(required=True)
 
 
 class CCCLOSING(Aggregate):
-    """ OFX Section 11.5.4.2 """
+    """OFX Section 11.5.4.2"""
 
     fitid = String(255, required=True)
     dtopen = DateTime()
@@ -127,7 +127,7 @@ class CCCLOSING(Aggregate):
 
 
 class CCSTMTENDRQ(Aggregate):
-    """ OFX section 11.5.3 """
+    """OFX section 11.5.3"""
 
     ccacctfrom = SubAggregate(CCACCTFROM, required=True)
     dtstart = DateTime()
@@ -136,7 +136,7 @@ class CCSTMTENDRQ(Aggregate):
 
 
 class CCSTMTENDRS(Aggregate):
-    """ OFX section 11.5.4 """
+    """OFX section 11.5.4"""
 
     curdef = OneOf(*CURRENCY_CODES, required=True)
     ccacctfrom = SubAggregate(CCACCTFROM, required=True)
@@ -144,13 +144,13 @@ class CCSTMTENDRS(Aggregate):
 
 
 class CCSTMTENDTRNRQ(TrnRq):
-    """ OFX section 11.4.3.1 """
+    """OFX section 11.4.3.1"""
 
     ccstmtendrq = SubAggregate(CCSTMTENDRQ, required=True)
 
 
 class CCSTMTENDTRNRS(TrnRs):
-    """ OFX section 11.4.3.2 """
+    """OFX section 11.4.3.2"""
 
     ccstmtendrs = SubAggregate(CCSTMTENDRS)
 

@@ -228,7 +228,7 @@ class IntrasyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     def invalidSoup(self):
         bankacctfrom = bk_stmt.BankacctfromTestCase.etree
         ccacctfrom = bk_stmt.CcacctfromTestCase.etree
-        trnrq = xfer.IntratrnrsTestCase.etree
+        trnrq = xfer.IntratrnrqTestCase.etree
 
         # SYNCRQ base malformed; INTRA additions OK
         for root_ in super().invalidSoup:
@@ -412,7 +412,7 @@ class IntersyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     def invalidSoup(self):
         bankacctfrom = bk_stmt.BankacctfromTestCase.etree
         ccacctfrom = bk_stmt.CcacctfromTestCase.etree
-        trnrq = interxfer.IntertrnrsTestCase.etree
+        trnrq = interxfer.IntertrnrqTestCase.etree
 
         # SYNCRQ base malformed; INTER additions OK
         for root_ in super().invalidSoup:
@@ -594,7 +594,7 @@ class WiresyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     @classmethod
     def invalidSoup(self):
         acctfrom = bk_stmt.BankacctfromTestCase.etree
-        trnrq = xfer.IntratrnrsTestCase.etree
+        trnrq = wire.WiretrnrqTestCase.etree
 
         # SYNCRQ base malformed; WIRE additions OK
         for root in super().invalidSoup:
@@ -1030,7 +1030,7 @@ class BankmailsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):
     @classmethod
     def invalidSoup(self):
         acctfrom = bk_stmt.BankacctfromTestCase.etree
-        trnrq = xfer.IntratrnrsTestCase.etree
+        trnrq = bk_mail.BankmailtrnrqTestCase.etree
 
         # SYNCRQ base malformed; WIRE additions OK
         for root in super().invalidSoup:

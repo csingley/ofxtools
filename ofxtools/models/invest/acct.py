@@ -40,21 +40,21 @@ INVSUBACCTS = ("CASH", "MARGIN", "SHORT", "OTHER")
 
 
 class INVACCTFROM(Aggregate):
-    """ OFX section 13.6.1 """
+    """OFX section 13.6.1"""
 
     brokerid = String(22, required=True)
     acctid = String(22, required=True)
 
 
 class INVACCTTO(Aggregate):
-    """ OFX section 13.6.1 """
+    """OFX section 13.6.1"""
 
     brokerid = String(22, required=True)
     acctid = String(22, required=True)
 
 
 class INVACCTINFO(Aggregate):
-    """ OFX section 13.6.2 """
+    """OFX section 13.6.2"""
 
     invacctfrom = SubAggregate(INVACCTFROM, required=True)
     usproducttype = OneOf(*USPRODUCTTYPES, required=True)

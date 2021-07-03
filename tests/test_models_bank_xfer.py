@@ -388,7 +388,7 @@ class IntratrnrqTestCase(unittest.TestCase, base.TrnrqTestCase):
 class IntratrnrsTestCase(unittest.TestCase, base.TrnrsTestCase):
     __test__ = True
 
-    wraps = IntrarqTestCase
+    wraps = IntrarsTestCase
 
     @classproperty
     @classmethod
