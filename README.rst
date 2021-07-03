@@ -1,10 +1,8 @@
 Open Financial Exchange (OFX) Tools for Python
 ==============================================
 
-.. image:: https://travis-ci.org/csingley/ofxtools.svg?branch=master
-    :target: https://travis-ci.org/csingley/ofxtools
-
 .. image:: https://github.com/csingley/ofxtools/actions/workflows/commit-ofxtools.yml/badge.svg
+    :alt: CI tests status
     :target: https://github.com/csingley/ofxtools/actions/workflows/commit-ofxtools.yml
 
 .. image:: https://coveralls.io/repos/github/csingley/ofxtools/badge.svg?branch=master
