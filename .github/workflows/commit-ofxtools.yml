@@ -1,4 +1,4 @@
-name: commit-ofxtools
+name: CI tests
 
 on: [push, pull_request]
 
