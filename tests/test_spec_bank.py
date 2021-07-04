@@ -572,7 +572,7 @@ class Example4ResponseTestCase(base.OfxTestCase, unittest.TestCase):
                         <FREQ>MONTHLY</FREQ>
                     </RECURRINST>
                     <INTRARS>
-                        <CURDEF>USD</CURDEF?
+                        <CURDEF>USD</CURDEF>
                         <SRVRTID>20000</SRVRTID>
                         <XFERINFO>
                             <BANKACCTFROM>

@@ -951,7 +951,7 @@ class RecpmtRequestTestCase(base.OfxTestCase, unittest.TestCase):
                 <TRNUID>12354</TRNUID>
                 <RECPMTRQ>
                     <RECURRINST>
-                        <NINSTS>36</NINSTS/
+                        <NINSTS>36</NINSTS>
                         <FREQ>MONTHLY</FREQ>
                     </RECURRINST>
                     <PMTINFO>

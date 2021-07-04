@@ -546,7 +546,7 @@ class HasMfachallengeaRequestTestCase(base.OfxTestCase, unittest.TestCase):
                 <APPVER>1600</APPVER>
                 <CLIENTUID>22576921-8E39-4A82-9E3E-EDDB121ADDEE</CLIENTUID>
                 <MFACHALLENGEA>
-                    <MFAPHRASEID>MFA13</MFAPHRASEID
+                    <MFAPHRASEID>MFA13</MFAPHRASEID>
                     <MFAPHRASEA>1234</MFAPHRASEA>
                 </MFACHALLENGEA>
                 <MFACHALLENGEA>
