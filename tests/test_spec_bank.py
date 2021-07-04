@@ -831,7 +831,7 @@ class Example4RecsyncResponseTestCase(base.OfxTestCase, unittest.TestCase):
         </SIGNONMSGSRSV1>
         <BANKMSGSRSV1>
             <RECINTRASYNCRS>
-                <TOKEN>324789988</TOKEN
+                <TOKEN>324789988</TOKEN>
                 <BANKACCTFROM>
                     <BANKID>121099999</BANKID>
                     <ACCTID>999988</ACCTID>
