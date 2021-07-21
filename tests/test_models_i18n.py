@@ -51,5 +51,19 @@ class OrigcurrencyTestCase(CurrencyTestCase):
         return ORIGCURRENCY(currate=Decimal("59.773"), cursym="EUR")
 
 
+class OrigcurrencyWithCursymCodeTestCase(CurrencyTestCase):
+    @classproperty
+    @classmethod
+    def etree(cls):
+        etree = Element("ORIGCURRENCY")
+        SubElement(etree, "CURRATE").text = "59.773"
+        SubElement(etree, "CURSYM").text = "124"
+        return etree
+
+    @classproperty
+    @classmethod
+    def aggregate(cls):
+        return ORIGCURRENCY(currate=Decimal("59.773"), cursym="124")
+
 if __name__ == "__main__":
     unittest.main()
