@@ -543,7 +543,7 @@ class Aggregate(list):
             subagg = getattr(self, subaggregate)
             try:
                 return getattr(subagg, attr)
-            except AttributeError:
+            except (AttributeError, KeyError):
                 continue
         cls = self.__class__.__name__
         raise AttributeError(f"'{cls}' object has no attribute '{attr}'")
