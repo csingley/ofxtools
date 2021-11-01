@@ -91,7 +91,7 @@ libary (no external dependencies).
 which goes EOL 2020-01-01.**
 
 
-.. _OFX specification: http://www.ofx.net/downloads.html
+.. _OFX specification: https://financialdataexchange.org/ofx
 .. _Requests: http://docs.python-requests.org/en/master/
 .. _Read the Docs: https://ofxtools.readthedocs.io/
 .. _GitHub: https://github.com/csingley/ofxtools

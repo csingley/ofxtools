@@ -125,4 +125,4 @@ in order to avoid name collision with Python reserved keywords.
 Proprietary OFX tags (e.g. ``<INTU.BANKID>``) are stripped and dropped.
 
 
-.. _OFX spec: http://www.ofx.net/downloads.html
+.. _OFX spec: https://financialdataexchange.org/ofx

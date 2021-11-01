@@ -525,4 +525,4 @@ All done!
 
 .. _create pull requests: https://help.github.com/articles/using-pull-requests/
 .. _ofxtools repository on GitHub: https://github.com/csingley/ofxtools
-.. _OFXv2.03: http://ofx.net/downloads/OFX2.0.3.zip
+.. _OFXv2.03: https://financialdataexchange.org/ofx
