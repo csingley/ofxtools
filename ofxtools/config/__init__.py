@@ -62,14 +62,12 @@ else:  # Linux
 
 
 USERCONFIGDIR = CONFIGHOME / PKGNAME
-USERCONFIGDIR.mkdir(parents=True, exist_ok=True)
 
 # Logging configuration
 LOGCONFIGPATH = USERCONFIGDIR / "logging.json"
 LOGPATH = LOGDIR / "ofxtools.log"
 
 DATADIR = DATAHOME / PKGNAME
-DATADIR.mkdir(parents=True, exist_ok=True)
 
 
 def configure_logging(level=None):
@@ -79,6 +77,7 @@ def configure_logging(level=None):
     Create directory to save logs from FileHandlers.
     """
     LOGDIR.mkdir(parents=True, exist_ok=True)
+    USERCONFIGDIR.mkdir(parents=True, exist_ok=True)
 
     config = None
 
