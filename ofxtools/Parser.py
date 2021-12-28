@@ -36,7 +36,6 @@ import logging
 
 
 # local imports
-from ofxtools import config
 from ofxtools.header import parse_header, OFXHeaderType
 from ofxtools.models.base import Aggregate
 
@@ -244,6 +243,8 @@ LOG_LEVELS = {0: logging.WARN, 1: logging.INFO, 2: logging.DEBUG}
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
+
+    from ofxtools import config
 
     argparser = ArgumentParser(description="Parse OFX data; dump transactions")
     argparser.add_argument("file", nargs="+", help="OFX file(s)")
