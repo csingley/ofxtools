@@ -961,6 +961,7 @@ def write_config(args: ArgsType) -> None:
     mk_server_cfg(args)
     logger.info(f"Writing user configs to {USERCONFIGPATH}")
 
+    config.USERCONFIGDIR.mkdir(parents=True, exist_ok=True)
     with open(USERCONFIGPATH, "w") as f:
         USERCFG.write(f)
 
