@@ -1457,6 +1457,25 @@ class SavePasswdTestCase(unittest.TestCase):
     #  set_password.assert_called_once_with("ofxtools", "myserver", "t0ps3kr1t")
 
 
+class CustomConfigTestCase(unittest.TestCase):
+    def testCustomConfig(self):
+        import os
+
+        this_dir = os.path.dirname(os.path.abspath(__file__))
+        config_file = os.path.join(this_dir, "data", "custom.cfg")
+
+        def _merge_config(*args):
+            return {"verbose": 1, "request": "list", "server": "server0"}
+
+        with patch("sys.argv", ["main", "list", "server0", "--config", config_file]):
+            with patch.multiple(
+                "ofxtools.scripts.ofxget",
+                merge_config=_merge_config,
+                list_fis=DEFAULT,
+            ) as MOCKS:
+                ofxget.main()
+
+
 class MainTestCase(unittest.TestCase):
     def testMain(self):
         args = argparse.Namespace(verbose=1, request="list")
