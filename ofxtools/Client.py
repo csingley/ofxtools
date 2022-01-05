@@ -71,6 +71,15 @@ from typing import (
 )
 
 
+# 3rd party libs
+try:
+    import requests
+
+    USE_REQUESTS = True
+except ImportError:
+    USE_REQUESTS = False
+
+
 # local imports
 from ofxtools.header import make_header
 from ofxtools.models.ofx import OFX
@@ -227,9 +236,7 @@ class OFXClient:
     # Stmt request
     bankid: Optional[str] = None
     brokerid: Optional[str] = None
-
-    # URL opener
-    url_opener: Optional[Callable] = None
+    persist_cookies: bool = True
 
     def __repr__(self) -> str:
         r = (
@@ -259,7 +266,7 @@ class OFXClient:
         bankid: Optional[str] = None,
         brokerid: Optional[str] = None,
         useragent: Optional[str] = None,
-        persist_cookies: bool = True,
+        persist_cookies: bool = None,
     ):
 
         self.url = url
@@ -278,6 +285,7 @@ class OFXClient:
             "bankid",
             "brokerid",
             "useragent",
+            "persist_cookies",
         ]:
             value = locals()[attr]
             if value is not None:
@@ -286,10 +294,9 @@ class OFXClient:
         if (not self.close_elements) and self.version >= 200:
             raise ValueError(f"OFX version {self.version} must close all tags")
 
-        if persist_cookies:
-            cj = http.cookiejar.CookieJar()
-            opener = urllib_request.build_opener(urllib_request.HTTPCookieProcessor(cj))
-            self.url_opener = opener.open
+        # Allow persistent cookies in case PROFRS sets cookies that are needed by
+        # subsequent STMTRQ or what have you.
+        self.cookiejar = http.cookiejar.CookieJar()
 
     @classproperty
     @classmethod
@@ -843,25 +850,45 @@ class OFXClient:
         if url is None:
             url = self.url
 
-        req = urllib_request.Request(
-            url, method="POST", data=request, headers=self.http_headers
-        )
-
         if timeout in (None, False):
             #  timeout = socket._GLOBAL_DEFAULT_TIMEOUT  # type: ignore
             timeout = 10.0
 
-        kwargs = dict(timeout=timeout)
+        # NB: we resolve the url opener here instead of in __init__ because the tests
+        #     mock urlopen after instantiating the OFXClient object
+        response = self.post_request(url, request, timeout)
+        return BytesIO(response)
 
-        url_opener = self.url_opener
-        if url_opener is None:
-            # NB: we resolve the default url opener here instead
-            #     instead of in __init__ because the tests
-            #     mock urlopen after instantiating the OFXClient object
-            url_opener = urllib_request.urlopen
+    def post_request(
+        self, url: str, serialized_request: bytes, timeout: float
+    ) -> bytes:
+        """Separated out to facilitate mocking in unit tests."""
+        if USE_REQUESTS:
+            with requests.Session() as sess:
+                if self.persist_cookies:
+                    sess.cookies = self.cookiejar
 
-        response = url_opener(req, **kwargs)
-        return BytesIO(response.read())
+                response = sess.request(
+                    method="POST",
+                    url=url,
+                    headers=self.http_headers,
+                    data=serialized_request,
+                    timeout=timeout,
+                )
+            return response.content
+
+        else:
+            handlers = []
+            if self.persist_cookies:
+                handlers.append(urllib_request.HTTPCookieProcessor(self.cookiejar))
+            opener = urllib_request.build_opener(*handlers)
+
+            req = urllib_request.Request(
+                url, method="POST", data=serialized_request, headers=self.http_headers
+            )
+
+            response = opener.open(req, timeout=timeout)
+            return response.read()
 
     def serialize(
         self,

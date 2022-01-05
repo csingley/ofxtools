@@ -192,60 +192,44 @@ class OFXClientV1TestCase(unittest.TestCase):
             self.assertEqual(dryrun, request)
 
     def _testRequest(self, fn, *args, **kwargs):
-        """Mock out the relevant parts of ``urllib`` that get called by
-        ``ofxtools.Client.OFXClient.download()``, then call the function
+        """Mock out ``ofxtools.Client.OFXClient.post_request()``, which gets called by
+        ``ofxtools.Client.OFXClient.download()``, then call the given function
         with the given arguments.
 
-        Return the serialized data passed to ``urllib.request.Request`` by
-        ``ofxtools.Client.OFXClient.download()`` (as a string, not bytes)
+        Return the serialized data passed to ``ofxtools.Client.OFXClient.post_request()``
+        by ``ofxtools.Client.OFXClient.download()`` (as a string, not bytes)
         """
-        with patch.multiple(
-            "urllib.request", Request=DEFAULT, urlopen=DEFAULT
-        ) as mock_urllib:
+        with patch("ofxtools.Client.OFXClient.post_request") as mock_post:
             with patch("uuid.uuid4") as mock_uuid:
                 with patch("ofxtools.Client.OFXClient.dtclient") as mock_dtclient:
-                    # Mock out DTCLIENT/CLIENTUID to get static values, not dynamic
+                    #  Mock out DTCLIENT/CLIENTUID to get static values, not dynamic
                     mock_dtclient.return_value = datetime(2017, 4, 1, tzinfo=UTC)
                     mock_uuid.return_value = "DEADBEEF"
-                    # Mock out urllib.request's Request that gets called by
-                    # OFXClient.download()
-                    mock_Request = mock_urllib["Request"]
-                    mock_Request.return_value = sentinel.REQUEST
-                    # Mock out the url_opener that gets called by
-                    # OFXClient.download() for the case of `persist_cookies=False`
-                    mock_urlopen = mock_urllib["urlopen"]
-                    mock_urlopen.return_value = BytesIO(b"Some OFX Response")
-                    # Mock out the url_opener that gets called by
-                    # OFXClient.download() for the case of `persist_cookies=True`
-                    # FIXME
+                    #  Mock out OFXClient.post_request(), which gets called by
+                    #  OFXClient.download()
+                    mock_post.return_value = b"Some OFX Response"
 
-                    # With the necessary mocks in place, call the function with
-                    # the given arguments.
+                    #  FIXME mock out the 2 different cases for USE_REQUESTS
+                    #  (i.e. ``urllib`` vs. ``requests``) and test the arguments
+                    #  used to call the underlying URL openers
+
+                    #  With the necessary mocks in place, call the function with
+                    #  the given arguments.
                     output = fn(*args, **kwargs)
 
-                    # OFXClient.download() calls Request with these args:
-                    #  self.url, method="POST", data=request, headers=self.http_headers
-                    rq_args = mock_Request.call_args[0]
+                    # OFXClient.download() calls OFXClient.post_request() with these args:
+                    #  self.url, serialized_request, timeout
+                    rq_args = mock_post.call_args[0]
 
-                    self.assertEqual(len(rq_args), 1)
+                    self.assertEqual(len(rq_args), 3)
                     self.assertEqual(rq_args[0], self.client.url)
-
-                    rq_kwargs = mock_Request.call_args[1]
-                    self.assertEqual(rq_kwargs["method"], "POST")
-                    self.assertEqual(rq_kwargs["headers"], self.client.http_headers)
-
-                    # OFXClient.download() calls urlopen() with these args:
-                    #  req, timeout=timeout
-                    mock_urlopen.assert_called_once_with(
-                        sentinel.REQUEST,
-                        timeout=10.0,
-                    )
+                    self.assertEqual(rq_args[2], 10.0)
 
                     # The tested function should return the output of download(),
-                    # which itself returns the output of urlopen()
-                    self.assertEqual(output.read(), b"Some OFX Response")
+                    # which itself returns the output of post_request()
+                    self.assertEqual(output.read(), mock_post.return_value)
 
-                    return rq_kwargs["data"].decode("utf_8")
+                    return rq_args[1].decode("utf_8")
 
     def testRequestStatements(self):
         data = self._testRequest(
