@@ -16,7 +16,9 @@ from ofxtools.Parser import OFXTree, TreeBuilder, ParseError
 
 
 # Container for results of TreeBuilderRegexTestCase._parsetag()
-TagParseResults = namedtuple("TagParseResults", ["tag", "cdata", "text", "closetag", "tail"])
+TagParseResults = namedtuple(
+    "TagParseResults", ["tag", "cdata", "text", "closetag", "tail"]
+)
 
 
 class TreeBuilderRegexTestCase(TestCase):
@@ -42,7 +44,7 @@ class TreeBuilderRegexTestCase(TestCase):
             cdata=groupdict["cdata"],
             text=groupdict["text"],
             closetag=groupdict["closetag"],
-            tail=groupdict["tail"]
+            tail=groupdict["tail"],
         )
 
     def test_sgml_tag(self):
