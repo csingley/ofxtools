@@ -6,12 +6,17 @@ import unittest
 from unittest import TestCase
 from unittest.mock import MagicMock, call, patch, sentinel
 from xml.etree.ElementTree import Element
-from io import BytesIO, StringIO
+from io import BytesIO
 from tempfile import NamedTemporaryFile
+from collections import namedtuple
 
 
 # local imports
-from ofxtools.Parser import OFXTree, TreeBuilder, ParseError, main
+from ofxtools.Parser import OFXTree, TreeBuilder, ParseError
+
+
+# Container for results of TreeBuilderRegexTestCase._parsetag()
+TagParseResults = namedtuple("TagParseResults", ["tag", "cdata", "text", "closetag", "tail"])
 
 
 class TreeBuilderRegexTestCase(TestCase):
@@ -32,42 +37,76 @@ class TreeBuilderRegexTestCase(TestCase):
         self.assertIsNotNone(m)
         groupdict = m.groupdict()
         self.assertEqual(len(groupdict), 5)
-        return (
-            groupdict["tag"],
-            groupdict["cdata"],
-            groupdict["text"],
-            groupdict["closetag"],
+        return TagParseResults(
+            tag=groupdict["tag"],
+            cdata=groupdict["cdata"],
+            text=groupdict["text"],
+            closetag=groupdict["closetag"],
+            tail=groupdict["tail"]
         )
 
     def test_sgml_tag(self):
         markup = "<TAG>data"
         parsed = self._parsetag(markup)
-        self.assertEqual(parsed, ("TAG", None, "data", None))
+        self.assertEqual(parsed.tag, "TAG")
+        self.assertIsNone(parsed.cdata)
+        self.assertEqual(parsed.text, "data")
+        self.assertIsNone(parsed.closetag)
+        self.assertIsNone(parsed.tail)
 
     def test_sgml_endtag(self):
         markup = "</TAG>data"
         parsed = self._parsetag(markup)
-        self.assertEqual(parsed, ("/TAG", None, "data", None))
+        self.assertEqual(parsed.tag, "/TAG")
+        self.assertIsNone(parsed.cdata)
+        self.assertEqual(parsed.text, "data")
+        self.assertIsNone(parsed.closetag)
+        self.assertIsNone(parsed.tail)
 
     def test_xml_tag(self):
         markup = "<TAG>data</TAG>"
         parsed = self._parsetag(markup)
-        self.assertEqual(parsed, ("TAG", None, "data", "TAG"))
+        self.assertEqual(parsed.tag, "TAG")
+        self.assertIsNone(parsed.cdata)
+        self.assertEqual(parsed.text, "data")
+        self.assertEqual(parsed.closetag, "TAG")
+        self.assertIsNone(parsed.tail)
 
     def test_xml_mismatched_endtag(self):
         markup = "<TAG>data</GAT>"
         parsed = self._parsetag(markup)
-        self.assertEqual(parsed, ("TAG", None, "data", None))
+        self.assertEqual(parsed.tag, "TAG")
+        self.assertIsNone(parsed.cdata)
+        self.assertEqual(parsed.text, "data")
+        self.assertIsNone(parsed.closetag)
+        self.assertIsNone(parsed.tail)
 
     def test_xml_selfclosing_tag(self):
         markup = "<TAG />"
         parsed = self._parsetag(markup)
-        self.assertEqual(parsed, ("TAG /", None, None, None))
+        self.assertEqual(parsed.tag, "TAG /")
+        self.assertIsNone(parsed.cdata)
+        self.assertIsNone(parsed.text)
+        self.assertIsNone(parsed.closetag)
+        self.assertIsNone(parsed.tail)
 
     def test_cdata(self):
-        markup = "<TAG><![CDATA[data]]></TAG>"
+        markup = "<TAG><![CDATA[cdata]]>"
         parsed = self._parsetag(markup)
-        self.assertEqual(parsed, ("TAG", "data", None, "TAG"))
+        self.assertEqual(parsed.tag, "TAG")
+        self.assertEqual(parsed.cdata, "cdata")
+        self.assertIsNone(parsed.text)
+        self.assertIsNone(parsed.closetag)
+        self.assertIsNone(parsed.tail)
+
+    def test_cdata_closing_tag(self):
+        markup = "<TAG><![CDATA[cdata]]></TAG>"
+        parsed = self._parsetag(markup)
+        self.assertEqual(parsed.tag, "TAG")
+        self.assertEqual(parsed.cdata, "cdata")
+        self.assertIsNone(parsed.text)
+        self.assertEqual(parsed.closetag, "TAG")
+        self.assertIsNone(parsed.tail)
 
     def test_finditer_sgml(self):
         markup = "<TAG1><TAG2>value"

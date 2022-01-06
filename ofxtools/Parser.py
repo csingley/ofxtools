@@ -165,7 +165,8 @@ class TreeBuilder(ET.TreeBuilder):
 
                 tag = groupdict["tag"]
 
-                cdata = self._groomstring(groupdict["cdata"])
+                # Cf. discussion of element values including CDATA in issue #141
+                cdata = groupdict["cdata"]
                 text = self._groomstring(groupdict["text"])
                 assert not (cdata and text)  # FIXME - can we in fact have both?
                 text = cdata or text
