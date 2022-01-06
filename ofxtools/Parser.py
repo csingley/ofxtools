@@ -242,7 +242,7 @@ def main(*files):
         ofxparser.parse(file)
         response = ofxparser.convert()
         print(response)
-        print("="*79)
+        print("=" * 79)
 
 
 LOG_LEVELS = {0: logging.WARN, 1: logging.INFO, 2: logging.DEBUG}
