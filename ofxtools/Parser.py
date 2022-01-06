@@ -143,7 +143,7 @@ class TreeBuilder(ET.TreeBuilder):
     # and optionally an end tag (not mandatory for OFXv1 syntax).
     regex = re.compile(
         r"""<(?P<tag>[A-Z0-9./_ ]+?)>
-                (?P<text>[^<]+)?
+                ((<!\[CDATA\[(?P<cdata>.+)\]\]>)|(?P<text>[^<]+))?
             (</(?P<closetag>(?P=tag))>)?
             (?P<tail>[^<]+)?
         """,
@@ -164,7 +164,12 @@ class TreeBuilder(ET.TreeBuilder):
                     raise ParseError(f"Tail text '{tail}' in {match.string}")
 
                 tag = groupdict["tag"]
+
+                cdata = self._groomstring(groupdict["cdata"])
                 text = self._groomstring(groupdict["text"])
+                assert not (cdata and text)  # FIXME - can we in fact have both?
+                text = cdata or text
+
                 closetag = groupdict["closetag"]
                 logger.debug(
                     f"Regex match tag='{tag}', text='{text}', closetag='{closetag}'"
@@ -232,10 +237,12 @@ def main(*files):
     Simple functional test for impatient developers.
     """
     for file in files:
+        print(f"Parsing {file}..")
         ofxparser = OFXTree()
         ofxparser.parse(file)
         response = ofxparser.convert()
-        print(response.statements[0].transactions[:])
+        print(response)
+        print("="*79)
 
 
 LOG_LEVELS = {0: logging.WARN, 1: logging.INFO, 2: logging.DEBUG}
