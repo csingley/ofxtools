@@ -31,33 +31,38 @@ class TreeBuilderRegexTestCase(TestCase):
         m = self.regex.match(markup)
         self.assertIsNotNone(m)
         groupdict = m.groupdict()
-        self.assertEqual(len(groupdict), 4)
-        return (groupdict["tag"], groupdict["text"], groupdict["closetag"])
+        self.assertEqual(len(groupdict), 5)
+        return (groupdict["tag"], groupdict["cdata"], groupdict["text"], groupdict["closetag"])
 
     def test_sgml_tag(self):
         markup = "<TAG>data"
         parsed = self._parsetag(markup)
-        self.assertEqual(parsed, ("TAG", "data", None))
+        self.assertEqual(parsed, ("TAG", None, "data", None))
 
     def test_sgml_endtag(self):
         markup = "</TAG>data"
         parsed = self._parsetag(markup)
-        self.assertEqual(parsed, ("/TAG", "data", None))
+        self.assertEqual(parsed, ("/TAG", None, "data", None))
 
     def test_xml_tag(self):
         markup = "<TAG>data</TAG>"
         parsed = self._parsetag(markup)
-        self.assertEqual(parsed, ("TAG", "data", "TAG"))
+        self.assertEqual(parsed, ("TAG", None, "data", "TAG"))
 
     def test_xml_mismatched_endtag(self):
         markup = "<TAG>data</GAT>"
         parsed = self._parsetag(markup)
-        self.assertEqual(parsed, ("TAG", "data", None))
+        self.assertEqual(parsed, ("TAG", None, "data", None))
 
     def test_xml_selfclosing_tag(self):
         markup = "<TAG />"
         parsed = self._parsetag(markup)
-        self.assertEqual(parsed, ("TAG /", None, None))
+        self.assertEqual(parsed, ("TAG /", None, None, None))
+
+    def test_cdata(self):
+        markup = "<TAG><![CDATA[data]]></TAG>"
+        parsed = self._parsetag(markup)
+        self.assertEqual(parsed, ("TAG", "data", None, "TAG"))
 
     def test_finditer_sgml(self):
         markup = "<TAG1><TAG2>value"
@@ -424,30 +429,6 @@ class OFXTreeTestCase(TestCase):
         # raises ValueError
         with self.assertRaises(ValueError):
             self.tree.convert()
-
-
-class MainTestCase(TestCase):
-    """Test main()"""
-
-    def testMain(self):
-        import os
-
-        this_dir = os.path.dirname(os.path.abspath(__file__))
-        source = os.path.join(this_dir, "data", "invstmtrs.ofx")
-
-        with patch("sys.stdout", new_callable=StringIO) as stdout:
-            main(source)
-            output = stdout.getvalue()
-            self.assertEqual(
-                output,
-                (
-                    "["
-                    "<BUYSTOCK(invbuy=<INVBUY(invtran=<INVTRAN(fitid='23321', dttrade=datetime.datetime(2005, 8, 25, 0, 0, tzinfo=<UTC>), dtsettle=datetime.datetime(2005, 8, 28, 0, 0, tzinfo=<UTC>))>, secid=<SECID(uniqueid='123456789', uniqueidtype='CUSIP')>, units=Decimal('100'), unitprice=Decimal('50.00'), commission=Decimal('25.00'), total=Decimal('-5025.00'), subacctsec='CASH', subacctfund='CASH')>, buytype='BUY')>"
-                    ", "
-                    "<INVBANKTRAN(stmttrn=<STMTTRN(trntype='CREDIT', dtposted=datetime.datetime(2005, 8, 25, 0, 0, tzinfo=<UTC>), dtuser=datetime.datetime(2005, 8, 25, 0, 0, tzinfo=<UTC>), trnamt=Decimal('1000.00'), fitid='12345', name='Customer deposit', memo='Your check #1034')>, subacctfund='CASH')>"
-                    "]\n"
-                ),
-            )
 
 
 if __name__ == "__main__":
