@@ -32,7 +32,12 @@ class TreeBuilderRegexTestCase(TestCase):
         self.assertIsNotNone(m)
         groupdict = m.groupdict()
         self.assertEqual(len(groupdict), 5)
-        return (groupdict["tag"], groupdict["cdata"], groupdict["text"], groupdict["closetag"])
+        return (
+            groupdict["tag"],
+            groupdict["cdata"],
+            groupdict["text"],
+            groupdict["closetag"],
+        )
 
     def test_sgml_tag(self):
         markup = "<TAG>data"
