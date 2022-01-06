@@ -3,8 +3,10 @@
 # `setup.py develop`
 -e .
 
+requests
+
 # test running
-nose
+nose2
 coverage
 pylint
 ipdb
@@ -13,3 +15,4 @@ coveralls
 mypy
 black
 types-pytz
+types-requests

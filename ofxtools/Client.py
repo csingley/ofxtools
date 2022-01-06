@@ -850,23 +850,23 @@ class OFXClient:
         if url is None:
             url = self.url
 
-        if timeout in (None, False):
-            #  timeout = socket._GLOBAL_DEFAULT_TIMEOUT  # type: ignore
-            timeout = 10.0
-
         # NB: we resolve the url opener here instead of in __init__ because the tests
         #     mock urlopen after instantiating the OFXClient object
         response = self.post_request(url, request, timeout)
         return BytesIO(response)
 
     def post_request(
-        self, url: str, serialized_request: bytes, timeout: float
+        self, url: str, serialized_request: bytes, timeout: Optional[float]
     ) -> bytes:
         """Separated out to facilitate mocking in unit tests."""
+        if timeout in (None, False):
+            #  timeout = socket._GLOBAL_DEFAULT_TIMEOUT  # type: ignore
+            timeout = 10.0
+
         if USE_REQUESTS:
             with requests.Session() as sess:
                 if self.persist_cookies:
-                    sess.cookies = self.cookiejar
+                    sess.cookies = self.cookiejar  # type: ignore
 
                 response = sess.request(
                     method="POST",
@@ -888,7 +888,7 @@ class OFXClient:
             )
 
             response = opener.open(req, timeout=timeout)
-            return response.read()
+            return response.read()  # type: ignore
 
     def serialize(
         self,

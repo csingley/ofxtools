@@ -161,6 +161,10 @@ class Element:
         ``obj`` is the instance of the object your descriptor is attached to.
         ``objtype`` is the type of the object the descriptor is attached to.
         """
+        #  Unbound methods get called by the test suite, which AFAICT is scanning
+        #  the code base for tests to run.
+        if obj is None:
+            return
         return obj.__dict__[self.name]
 
     def __set__(self, obj, value) -> None:

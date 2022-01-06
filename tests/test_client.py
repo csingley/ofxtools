@@ -223,7 +223,7 @@ class OFXClientV1TestCase(unittest.TestCase):
 
                     self.assertEqual(len(rq_args), 3)
                     self.assertEqual(rq_args[0], self.client.url)
-                    self.assertEqual(rq_args[2], 10.0)
+                    self.assertEqual(rq_args[2], None)
 
                     # The tested function should return the output of download(),
                     # which itself returns the output of post_request()

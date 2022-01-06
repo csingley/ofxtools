@@ -77,7 +77,7 @@ def lookup(id: str) -> Optional[OFXServer]:
     # mypy doesn't accept NamedTuple(**kwargs); use OrderedDict as workaround
     attrs = [(e.tag, converters.get(e.tag, _convert_str)(e)) for e in etree]
     attrs.insert(0, ("id", etree.attrib["id"]))
-    return OFXServer(**OrderedDict(attrs))
+    return OFXServer(**OrderedDict(attrs))  # type: ignore
 
 
 def fetch_fi_xml(id: str) -> Optional[ET.Element]:

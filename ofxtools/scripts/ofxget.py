@@ -647,7 +647,7 @@ def _merge_acctinfo(args: ArgsType, markup: BytesIO) -> None:
     ]
 
     # Insert extracted ACCTINFO after CLI commands, but before config files
-    args.maps.insert(1, ChainMap(*parsed_args))
+    args.maps.insert(1, ChainMap(*parsed_args))  # type: ignore
 
 
 def request_stmt(args: ArgsType) -> None:
@@ -1066,7 +1066,7 @@ def merge_config(
     else:
         user_cfg = {}
     logger.debug(f"Configs: {user_cfg}")
-    merged: ArgsType = ChainMap(_args, user_cfg, DEFAULTS)
+    merged: ArgsType = ChainMap(_args, user_cfg, DEFAULTS)  # type: ignore
     #  logger.debug(f"CLI args merged with user configs and defaults: {extrargs(merged)}")
 
     # Try to perform an OFX Home lookup if:
