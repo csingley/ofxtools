@@ -146,7 +146,7 @@ class TreeBuilderRegexTestCase(TestCase):
                 "I didn’t earn any interest this month. Can you please tell me "
                 "what I need to do to earn interest on this account?"
                 "</BODY></HTML>"
-            )
+            ),
         )
 
         self.assertIsNone(parsed.text)
@@ -452,7 +452,7 @@ class TreeBuilderUnitFunctionalTestCase(TestCase):
         self._testElement(trnuid, tag="TRNUID", text="54321", length=0)
 
         status = root[1]
-        self._testElement(status , tag="STATUS", text=None, length=2)
+        self._testElement(status, tag="STATUS", text=None, length=2)
         code, severity = status
         self._testElement(code, tag="CODE", text="0", length=0)
         self._testElement(severity, tag="SEVERITY", text="INFO", length=0)
@@ -466,18 +466,20 @@ class TreeBuilderUnitFunctionalTestCase(TestCase):
         self._testElement(userid, tag="USERID", text="123456789", length=0)
         self._testElement(from_, tag="FROM", text="James Hackleman", length=0)
         self._testElement(to, tag="TO", text="Noelani Federal Savings", length=0)
-        self._testElement(subject, tag="SUBJECT", text="What do I need to earn interest?", length=0)
+        self._testElement(
+            subject, tag="SUBJECT", text="What do I need to earn interest?", length=0
+        )
         self._testElement(dtcreated, tag="DTCREATED", text="19960305", length=0)
         self._testElement(
             msgbody,
             tag="MSGBODY",
-            text= (
+            text=(
                 "<HTML><BODY>"
                 "I didn’t earn any interest this month. Can you please tell me "
                 "what I need to do to earn interest on this account?"
                 "</BODY></HTML>"
             ),
-            length=0
+            length=0,
         )
         self._testElement(incimages, tag="INCIMAGES", text="N", length=0)
         self._testElement(usehtml, tag="USEHTML", text="Y", length=0)
