@@ -8,7 +8,7 @@ server URL, OFX protocol version, financial institution identifiers, client
 identifiers, etc.
 
 ``config/fi.cfg`` contains a database of these parameters, most conveniently
-accessed via ``scripts/ofx.py``.
+accessed via ``scripts/ofxget.py``.
 
 Using the configured ``OFXClient`` instance, make a request by calling the
 relevant method, e.g. ``OFXClient.request_statements()``.  Provide the password
@@ -877,6 +877,7 @@ class OFXClient:
             timeout = 10.0
 
         if USE_REQUESTS:
+            logger.info("Using requests lib to post request")
             with requests.Session() as sess:
                 if self.persist_cookies:
                     sess.cookies = self.cookiejar  # type: ignore
@@ -891,6 +892,7 @@ class OFXClient:
             return response.content
 
         else:
+            logger.info("Using urllib to post request")
             handlers = []
             if self.persist_cookies:
                 handlers.append(urllib_request.HTTPCookieProcessor(self.cookiejar))
