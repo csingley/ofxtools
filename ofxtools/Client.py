@@ -337,6 +337,7 @@ class OFXClient:
         gen_newfileuid: bool = True,
         dryrun: bool = False,
         timeout: Optional[float] = None,
+        skip_profile: bool = False,
     ) -> BinaryIO:
         """
         Package and send OFX statement requests
@@ -344,7 +345,12 @@ class OFXClient:
         """
         if dryrun:
             url = ""
+            logger.info("Dry run for statement request")
+        elif skip_profile:
+            url = self.url
+            logger.info(f"Skipping profile request; using url='{url}'")
         else:
+            logger.info("Requesting OFX profile to extract service URLs")
             RqCls2url = self._get_service_urls(
                 timeout=timeout,
                 gen_newfileuid=gen_newfileuid,
@@ -356,6 +362,7 @@ class OFXClient:
             urls = set(RqCls2url.values())
             assert len(urls) == 1
             url = urls.pop()
+            logger.info(f"Received service url={url} from OFX profile response")
 
         logger.info(f"Creating statement requests for {requests}")
         # Group requests by type and pass to the appropriate *TRNRQ handler
@@ -590,12 +597,15 @@ class OFXClient:
         version: Optional[int] = None,
         gen_newfileuid: bool = True,
         timeout: Optional[float] = None,
+        skip_profile: bool = False,
     ) -> BinaryIO:
         """
         Package and send OFX account info requests (ACCTINFORQ)
         """
         if dryrun:
             url = ""
+        elif skip_profile:
+            url = self.url
         else:
             RqCls2url = self._get_service_urls(
                 timeout=timeout,
@@ -642,12 +652,15 @@ class OFXClient:
         gen_newfileuid: bool = True,
         dryrun: bool = False,
         timeout: Optional[float] = None,
+        skip_profile: bool = False,
     ) -> BinaryIO:
         """
         Request US federal income tax form 1099 (TAX1099RQ)
         """
         if dryrun:
             url = ""
+        elif skip_profile:
+            url = self.url
         else:
             RqCls2url = self._get_service_urls(
                 timeout=timeout,

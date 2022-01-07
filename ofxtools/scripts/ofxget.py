@@ -221,6 +221,12 @@ def add_subparser(
             dest="useragent",
             help="Value to use in HTTP 'User-Agent' header (defaults to 'InetClntApp/3.0')",
         )
+        parser.add_argument(
+            "--skipprofile",
+            action="store_true",
+            default=None,
+            help="Skip sending PROFRQ to look up service URLs",
+        )
 
     if format:
         parser.add_argument(
@@ -620,6 +626,7 @@ def _request_acctinfo(args: ArgsType, password: str) -> BytesIO:
         dtacctup,
         dryrun=args["dryrun"],
         gen_newfileuid=not args["nonewfileuid"],
+        skip_profile=args["skipprofile"],
     ) as f:
         response = f.read()
 
@@ -718,6 +725,7 @@ def request_stmt(args: ArgsType) -> None:
         *stmtrqs,
         dryrun=args["dryrun"],
         gen_newfileuid=not args["nonewfileuid"],
+        skip_profile=args["skipprofile"],
     ) as f:
         response = f.read()
 
@@ -772,6 +780,7 @@ def request_stmtend(args: ArgsType) -> None:
         *stmtendrqs,
         dryrun=args["dryrun"],
         gen_newfileuid=not args["nonewfileuid"],
+        skip_profile=args["skipprofile"],
     ) as f:
         response = f.read()
 
@@ -799,6 +808,7 @@ def request_tax1099(args: ArgsType) -> None:
         recid=args["recid"],
         dryrun=args["dryrun"],
         gen_newfileuid=not args["nonewfileuid"],
+        skip_profile=args["skipprofile"],
     ) as f:
         response = f.read()
 
@@ -878,6 +888,7 @@ DEFAULTS: Dict[str, ArgType] = {
     "nokeyring": False,
     "nonewfileuid": False,
     "useragent": "",
+    "skipprofile": False,
 }
 
 
@@ -906,6 +917,7 @@ configurable_srvr = (
     "language",
     "nonewfileuid",
     "useragent",
+    "skipprofile",
 )
 CONFIGURABLE_SRVR = {k: type(v) for k, v in DEFAULTS.items() if k in configurable_srvr}
 

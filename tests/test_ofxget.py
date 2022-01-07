@@ -90,6 +90,7 @@ class MakeArgParserTestCase(unittest.TestCase):
             "gen_newfileuid": True,
             "timeout": 2.0,
             "password": "",
+            "skipprofile": False,
         }
 
     def testScanProfile(self):
@@ -322,6 +323,7 @@ class MakeArgParserTestCase(unittest.TestCase):
                 {
                     "dryrun": self.args["dryrun"],
                     "gen_newfileuid": not self.args["nonewfileuid"],
+                    "skip_profile": self.args["skipprofile"],
                 },
             )
 
@@ -348,6 +350,7 @@ class MakeArgParserTestCase(unittest.TestCase):
                 {
                     "dryrun": self.args["dryrun"],
                     "gen_newfileuid": not self.args["nonewfileuid"],
+                    "skip_profile": self.args["skipprofile"],
                 },
             )
 
@@ -485,6 +488,7 @@ class MakeArgParserTestCase(unittest.TestCase):
                         {
                             "dryrun": False,
                             "gen_newfileuid": True,
+                            "skip_profile": False,
                         },
                     )
 
@@ -602,6 +606,7 @@ class MakeArgParserTestCase(unittest.TestCase):
                     {
                         "dryrun": True,
                         "gen_newfileuid": True,
+                        "skip_profile": False,
                     },
                 )
 
@@ -721,6 +726,7 @@ class MakeArgParserTestCase(unittest.TestCase):
                         {
                             "dryrun": False,
                             "gen_newfileuid": True,
+                            "skip_profile": False,
                         },
                     )
 
@@ -760,6 +766,7 @@ class MakeArgParserTestCase(unittest.TestCase):
                             "recid": "67890",
                             "dryrun": False,
                             "gen_newfileuid": True,
+                            "skip_profile": False,
                         },
                     )
 
