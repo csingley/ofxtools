@@ -8,7 +8,7 @@ people and kills them too automatically.
 __title__ = "ofxtools"
 __description__ = "Library for working with Open Financial Exchange (OFX) data"
 __url__ = "https://github.com/csingley/ofxtools"
-__version__ = "0.9.4"
+__version__ = "0.9.5"
 __author__ = "Christopher Singley"
 __author_email__ = "csingley@gmail.com"
 __license__ = "GPLv3"
