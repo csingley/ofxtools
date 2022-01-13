@@ -10,7 +10,7 @@ clean:
 	find -name '.*~' -exec rm {} \;
 	rm -rf reg-settings.py
 	rm -rf MANIFEST dist build *.egg-info
-	rm coverage.xml
+	rm -rf coverage.xml
 
 install:
 	make clean
