@@ -1158,7 +1158,7 @@ def _scan_profile(
     org: Optional[str],
     fid: Optional[str],
     useragent: Optional[str],
-    gen_newfileuid: Optional[bool],
+    gen_newfileuid: bool,
     max_workers: Optional[int] = None,
     timeout: Optional[float] = None,
 ) -> ScanResults:
@@ -1220,7 +1220,7 @@ def _scan_profile(
 
 def _queue_scans(
     client: OFXClient,
-    gen_newfileuid: Optional[bool],
+    gen_newfileuid: bool,
     max_workers: Optional[int],
     timeout: Optional[float],
 ) -> Mapping[concurrent.futures.Future, ScanMetadata]:

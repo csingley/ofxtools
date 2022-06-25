@@ -403,7 +403,8 @@ class Aggregate(list):
         .. _collections.ChainMap: https://docs.python.org/3/library/collections.html#collections.ChainMap
         .. _inheritance order: https://www.python.org/download/releases/2.3/mro/
         """
-        return ChainMap(*[base.__dict__ for base in cls.mro()])
+        # mypy doesn't seem to understand "star" arg-unpacking syntax used here
+        return ChainMap(*[base.__dict__ for base in cls.mro()])  # type: ignore
 
     @classmethod
     def _filter_attrs(cls, predicate: Callable) -> Mapping[str, Any]:
