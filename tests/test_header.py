@@ -390,6 +390,46 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
 
         self.assertEqual(body, body_)
 
+    def testHeaderlessDoomScroll(self):
+        # Some FIs apparently send endless empty lines with no header.
+        # To prevent that, we allow a maximum of 7 empty lines
+        # before getting down to brass tacks.
+        header = "\r\n" * 7
+        header += (
+            "OFXHEADER:  100\r\n"
+            "DATA:  OFXSGML\r\n"
+            "VERSION:  160\r\n"
+            "SECURITY:  NONE\r\n"
+            "ENCODING:  USASCII\r\n"
+            "CHARSET:  NONE\r\n"
+            "COMPRESSION:  NONE\r\n"
+            "OLDFILEUID:  NONE\r\n"
+            "NEWFILEUID:  NONE\r\n"
+        )
+
+        ofx = header + self.body
+        ofx = BytesIO(ofx.encode("utf8"))
+        ofxheader, body = ofxtools.header.parse_header(ofx)
+
+        self.assertEqual(ofxheader.ofxheader, 100)
+        self.assertEqual(ofxheader.data, "OFXSGML")
+        self.assertEqual(ofxheader.version, 160)
+        self.assertEqual(ofxheader.security, "NONE")
+        self.assertEqual(ofxheader.encoding, "USASCII")
+        self.assertEqual(ofxheader.charset, "NONE")
+        self.assertEqual(ofxheader.compression, "NONE")
+        self.assertEqual(ofxheader.oldfileuid, "NONE")
+        self.assertEqual(ofxheader.newfileuid, "NONE")
+
+        self.assertEqual(body, self.body)
+
+        # 8 empty lines before header should fail
+        header = "\r\n" + header
+        ofx = header + self.body
+        ofx = BytesIO(ofx.encode("utf8"))
+        with self.assertRaises(ofxtools.header.OFXHeaderError):
+            ofxtools.header.parse_header(ofx)
+
 
 class OFXHeaderV2TestCase(unittest.TestCase, OFXHeaderTestMixin):
     headerClass = ofxtools.header.OFXHeaderV2
