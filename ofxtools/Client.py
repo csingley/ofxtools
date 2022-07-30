@@ -317,7 +317,7 @@ class OFXClient:
         # which apparently displeases some FIs
         return {
             "User-Agent": self.useragent,
-            "Content-type": mimetype,
+            "Content-Type": mimetype,
             # Apparently Amex is unhappy unless it sees a MIME type of application/xml
             # with some quality rating - ANY quality rating, it seems.
             "Accept": "*/*, {}, application/xml;q=0.9".format(mimetype),
