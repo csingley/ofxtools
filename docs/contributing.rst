@@ -9,7 +9,7 @@ Make sure your changes haven't broken anything by running the tests:
 
 .. code:: bash
 
-    python `which nosetests` -dsv  --with-coverage --cover-package ofxtools
+    python nose2 -s tests --verbose --with-coverage --fail-fast --output-buffer
 
 Or even better, use ``make``:
 
