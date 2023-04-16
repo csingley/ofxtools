@@ -683,7 +683,6 @@ class WiresyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
 
         # SYNCRS base OK; WIRE additions malformed
         for root in super().validSoup:
-
             # *ACCTFROM in the wrong place
             # (should be right after LOSTSYNC)
             index = list(root).index(root.find("LOSTSYNC"))
@@ -964,7 +963,6 @@ class RecintersyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
 
         # SYNCRS base OK; RECINTER additions malformed
         for root in super().validSoup:
-
             # *ACCTFROM in the wrong place
             # (should be right after LOSTSYNC)
             index = list(root).index(root.find("LOSTSYNC"))
@@ -1117,7 +1115,6 @@ class BankmailsyncrsTestCase(unittest.TestCase, base.SyncrsTestCase):
 
         # SYNCRS base OK; WIRE additions malformed
         for root in super().validSoup:
-
             # *ACCTFROM in the wrong place
             # (should be right after LOSTSYNC)
             index = list(root).index(root.find("LOSTSYNC"))

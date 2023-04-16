@@ -566,7 +566,7 @@ class SecrqTestCase(unittest.TestCase, base.TestAggregate):
         yield root
 
         #  Two
-        for (choice0, choice1) in [(secid, ticker), (secid, fiid), (ticker, fiid)]:
+        for choice0, choice1 in [(secid, ticker), (secid, fiid), (ticker, fiid)]:
             root = Element("SECRQ")
             root.append(choice0)
             root.append(choice1)

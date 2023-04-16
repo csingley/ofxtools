@@ -125,7 +125,6 @@ class Aggregate(list):
             mutexes: Sequence[Sequence[str]],
             predicate: Callable[[int], bool],
         ) -> None:
-
             for mutex in mutexes:
                 count = sum([kwargs.get(m, None) is not None for m in mutex])
                 if not predicate(count):
