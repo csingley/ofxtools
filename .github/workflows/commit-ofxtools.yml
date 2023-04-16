@@ -1,6 +1,10 @@
 name: CI tests
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
 
 jobs:
   build:
@@ -8,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.9]
+        python-version: [3.8, 3.9, "3.10", "3.11"]
 
     steps:
     - uses: actions/checkout@v2
@@ -32,4 +36,4 @@ jobs:
     - name: Static analysis with mypy
       run: mypy ofxtools tests
     - name: Test with nose
-      run: nosetests -dsv --nologcapture --with-coverage --cover-package ofxtools tests/*.py
+      run: nose2 -s tests --verbose --with-coverage --fail-fast --output-buffer
