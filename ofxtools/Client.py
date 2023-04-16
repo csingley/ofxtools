@@ -266,9 +266,8 @@ class OFXClient:
         bankid: Optional[str] = None,
         brokerid: Optional[str] = None,
         useragent: Optional[str] = None,
-        persist_cookies: bool = None,
+        persist_cookies: Optional[bool] = None,
     ):
-
         self.url = url
 
         for attr in [
@@ -647,8 +646,8 @@ class OFXClient:
         self,
         password: str,
         *taxyears: str,
-        acctnum: str = None,
-        recid: str = None,
+        acctnum: Optional[str] = None,
+        recid: Optional[str] = None,
         gen_newfileuid: bool = True,
         dryrun: bool = False,
         timeout: Optional[float] = None,

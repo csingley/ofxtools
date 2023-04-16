@@ -367,7 +367,6 @@ class RecinterrqTestCase(unittest.TestCase, base.TestAggregate):
 
 
 class RecinterrsTestCase(unittest.TestCase, base.TestAggregate):
-
     __test__ = True
 
     requiredElements = ["RECSRVRTID", "RECURRINST", "INTERRS"]
