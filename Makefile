@@ -3,7 +3,7 @@ test:
 	black --check .
 	mypy ofxtools
 	mypy tests
-	python `which nose2` -s tests --verbose --with-coverage --fail-fast --output-buffer
+	python `which pytest` --cov=ofxtools tests/
 
 clean:
 	find . -name "*.py[co]" -o -name __pycache__ -exec rm -rf {} +;

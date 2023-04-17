@@ -6,7 +6,8 @@
 requests
 
 # test running
-nose2
+pytest
+pytest-cov
 coverage
 pylint
 ipdb
