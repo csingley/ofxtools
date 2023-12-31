@@ -1277,8 +1277,14 @@ def _read_scan_response(
         OSError,
         socket.timeout,
     ) as exc:
-        logger.debug(f"Didn't receive HTTP response: {exc}")
-        future.cancel()
+        logger.error(f"Didn't receive response: {exc}")
+        return valid, signoninfo
+    except (
+        ParseError,
+        ET.ParseError,
+        OFXHeaderError,
+    ) as exc:
+        logger.error("Response contains invalid OFX: {exc}")
         return valid, signoninfo
 
     if read_signoninfo:
@@ -1310,19 +1316,13 @@ def _read_scan_response(
             logger.debug(
                 ("Received HTTP response with valid OFX; " f"signoninfo={signoninfo}")
             )
-        except (socket.timeout,):
-            # We didn't receive a response at all
-            logger.debug("Didn't receive HTTP response: socket timeout")
-            valid = False
-        except (ParseError, ET.ParseError, OFXHeaderError):
+        except (ParseError, ET.ParseError, OFXHeaderError) as exc:
             # We didn't receive valid OFX in the response
-            logger.debug("Received HTTP response that didn't contain valid OFX")
+            logger.error(f"Response contains invalid OFX {exc}")
             valid = False
         except (ValueError,):
             # We received OFX; can't find SIGNONIFO (probably no PROFRS)
-            logger.debug(
-                ("Received HTTP response with valid OFX; can't parse SIGNONINFO")
-            )
+            logger.warning(("Response with valid OFX; can't parse SIGNONINFO"))
             valid = True
     else:
         # IF we're not parsing the PROFRS, then we interpret receiving a good

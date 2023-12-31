@@ -1207,7 +1207,6 @@ class ReadScanResponseTestCase(unittest.TestCase):
 
         # No valid OFX: return False, empty SIGNONINFO parameters
         ofx_errors = [
-            socket.timeout,
             ET.ParseError(),
             Parser.ParseError(),
             header.OFXHeaderError(),
