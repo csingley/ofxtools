@@ -90,7 +90,7 @@ class OFXHeaderV1(OFXHeaderBase):
 
     ofxheader = Types.OneOf(100)
     data = Types.OneOf("OFXSGML")
-    version = Types.OneOf(102, 103, 151, 160)
+    version = Types.Integer(length=3)
     security = Types.OneOf("NONE", "TYPE1")
     encoding = Types.OneOf("USASCII", "UNICODE", "UTF-8")
     # DRY - mapping of CHARSET: codec used below in codec()
@@ -153,7 +153,7 @@ class OFXHeaderV1(OFXHeaderBase):
         try:
             self.ofxheader = int(ofxheader or 100)
             self.data = data or "OFXSGML"
-            self.version = int(version)
+            self.version = int(version or 102)
             self.security = security or "NONE"
             self.encoding = encoding or "USASCII"
             self.charset = charset or "NONE"

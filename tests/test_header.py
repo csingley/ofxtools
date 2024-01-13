@@ -77,9 +77,10 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
     headerClass = ofxtools.header.OFXHeaderV1
     defaultVersion = 102
     valid = {
-        "version": (102, 103, 151, 160),
         "ofxheader": (100,),
         "data": ("OFXSGML",),
+        # OFXHeader version 100 supports message sets from later versions
+        "version": (102, 103, 151, 160, 200, 203),
         "security": ("NONE", "TYPE1"),
         "encoding": ("USASCII", "UNICODE", "UTF-8"),
         "charset": ("ISO-8859-1", "1252", "NONE"),
@@ -88,9 +89,9 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
         "newfileuid": (str(uuid.uuid4()),),
     }
     invalid = {
-        "version": (123,),
         "ofxheader": (200,),
         "data": ("XML",),
+        "version": (1111,),
         "security": ("TYPE2",),
         "encoding": ("UTF-16",),
         "charset": ("ISO-8859-7",),
