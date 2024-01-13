@@ -37,6 +37,7 @@ from typing import (
     Iterator,
     ChainMap,
 )
+from pathlib import Path
 
 # 3rd party imports
 try:
@@ -192,6 +193,9 @@ def add_subparser(
         default=0,
         help="Give more output (option can be repeated)",
     )
+    parser.add_argument(
+        "--config", type=Path, default=None, help="Use custom configuration file"
+    ),
     # Higher-level configs (e.g. account #s)
     # imply lower-level configs (e.g. username/passwd)
     if stmt:
@@ -1607,6 +1611,16 @@ def main() -> None:
     if not hasattr(args_, "request"):
         argparser.print_help()
         sys.exit()
+
+    if hasattr(args_, "config") and isinstance(args_.config, Path):
+        global USERCONFIGPATH
+        USERCONFIGPATH = args_.config.resolve()
+        if not USERCONFIGPATH.exists():
+            msg = "Can't find custom configuration file"
+            logger.error(msg)
+            raise RuntimeError(msg)
+        USERCFG.read([CONFIGPATH, USERCONFIGPATH])
+        logger.debug(f"Using custom configuration: {USERCONFIGPATH}")
 
     args = merge_config(args_, USERCFG)
     REQUEST_HANDLERS[args["request"]](args)
