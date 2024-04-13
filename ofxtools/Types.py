@@ -10,7 +10,6 @@ Since the OFX schema is highly nested, some of these class attributes
 (e.g. ``SubAggregate``) express parent/child relationships between ``Aggregates``.
 """
 
-
 __all__ = [
     "OFXTypeWarning",
     "OFXTypeError",

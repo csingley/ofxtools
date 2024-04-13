@@ -172,9 +172,9 @@ class ProfrsTestCase(unittest.TestCase, base.TestAggregate):
         signonmsgsetv1 = SubElement(signonmsgset, "SIGNONMSGSETV1")
         msgsetcore = SubElement(signonmsgsetv1, "MSGSETCORE")
         SubElement(msgsetcore, "VER").text = "1"
-        SubElement(
-            msgsetcore, "URL"
-        ).text = "https://ofxs.ameritrade.com/cgi-bin/apps/OFX"
+        SubElement(msgsetcore, "URL").text = (
+            "https://ofxs.ameritrade.com/cgi-bin/apps/OFX"
+        )
         SubElement(msgsetcore, "OFXSEC").text = "NONE"
         SubElement(msgsetcore, "TRANSPSEC").text = "Y"
         SubElement(msgsetcore, "SIGNONREALM").text = "AMERITRADE"

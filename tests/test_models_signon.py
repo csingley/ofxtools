@@ -67,9 +67,9 @@ class MfachallengeTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("MFACHALLENGE")
         SubElement(root, "MFAPHRASEID").text = "MFA13"
-        SubElement(
-            root, "MFAPHRASELABEL"
-        ).text = "Please enter the last four digits of your social security number"
+        SubElement(root, "MFAPHRASELABEL").text = (
+            "Please enter the last four digits of your social security number"
+        )
         return root
 
     @classproperty

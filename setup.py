@@ -13,6 +13,7 @@ Release process:
     11. `make clean`
     12. Change download_url back to master; commit & push
 """
+
 # stdlib imports
 import os.path
 from setuptools import setup, find_packages

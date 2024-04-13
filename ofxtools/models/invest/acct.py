@@ -15,7 +15,7 @@ __all__ = [
 
 
 # Local imports
-from ofxtools.Types import Bool, String, OneOf, SubAggregate
+from ofxtools.Types import Bool, String, NagString, OneOf, SubAggregate
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import SVCSTATUSES
 
@@ -43,14 +43,14 @@ class INVACCTFROM(Aggregate):
     """OFX section 13.6.1"""
 
     brokerid = String(22, required=True)
-    acctid = String(22, required=True)
+    acctid = NagString(22, required=True)
 
 
 class INVACCTTO(Aggregate):
     """OFX section 13.6.1"""
 
     brokerid = String(22, required=True)
-    acctid = String(22, required=True)
+    acctid = NagString(22, required=True)
 
 
 class INVACCTINFO(Aggregate):

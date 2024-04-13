@@ -1388,8 +1388,7 @@ class ExtractAcctInfosTestCase(unittest.TestCase):
         # our results are the same as the children of
         # test_models_signup.AcctinfoTestCase, which was used to construct
         # self.ofx
-        class Foo(unittest.TestCase, base.OfxTestCase):
-            ...
+        class Foo(unittest.TestCase, base.OfxTestCase): ...
 
         tc = Foo()
 

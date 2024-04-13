@@ -96,7 +96,7 @@ class BANKACCTFROM(Aggregate):
 
     bankid = String(9, required=True)
     branchid = String(22)
-    acctid = String(22, required=True)
+    acctid = NagString(22, required=True)
     accttype = OneOf(*ACCTTYPES, required=True)
     acctkey = String(22)
 
@@ -106,7 +106,7 @@ class BANKACCTTO(Aggregate):
 
     bankid = String(9, required=True)
     branchid = String(22)
-    acctid = String(22, required=True)
+    acctid = NagString(22, required=True)
     accttype = OneOf(*ACCTTYPES, required=True)
     acctkey = String(22)
 
@@ -124,14 +124,14 @@ class BANKACCTINFO(Aggregate):
 class CCACCTFROM(Aggregate):
     """OFX section 11.3.2"""
 
-    acctid = String(22, required=True)
+    acctid = NagString(22, required=True)
     acctkey = String(22)
 
 
 class CCACCTTO(Aggregate):
     """OFX section 11.3.2"""
 
-    acctid = String(22, required=True)
+    acctid = NagString(22, required=True)
     acctkey = String(22)
 
 
