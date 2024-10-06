@@ -132,6 +132,22 @@ AUTH_PLACEHOLDER = "{:0<32}".format("anonymous")
 logger = logging.getLogger(__name__)
 
 
+import ssl
+import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.poolmanager import PoolManager
+from requests.packages.urllib3.util import ssl_
+class TlsAdapter(HTTPAdapter):
+    def __init__(self, ssl_options=0, **kwargs):
+        self.ssl_options = ssl_options
+        super(TlsAdapter, self).__init__(**kwargs)
+    def init_poolmanager(self, *pool_args, **pool_kwargs):
+        ctx = ssl_.create_urllib3_context(ciphers='DEFAULT', cert_reqs=ssl.CERT_REQUIRED, options=self.ssl_options)
+        self.poolmanager = PoolManager(*pool_args,
+                                       ssl_context=ctx,
+                                       **pool_kwargs)
+
+
 # Statement request data containers
 # Pass instances of these containers as args to OFXClient.request_statement()
 class StmtRq(NamedTuple):
@@ -878,6 +894,9 @@ class OFXClient:
         if USE_REQUESTS:
             logger.info("Using requests lib to post request")
             with requests.Session() as sess:
+                adapter = TlsAdapter(ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1)
+                sess.mount("https://", adapter)
+                
                 if self.persist_cookies:
                     sess.cookies = self.cookiejar  # type: ignore
 
