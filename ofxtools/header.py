@@ -122,7 +122,7 @@ class OFXHeaderV1(OFXHeaderBase):
             SECURITY:\s*(?P<SECURITY>[\w]+)\s*
             ENCODING:\s*(?P<ENCODING>[A-Z0-9-]+)\s*
             CHARSET:\s*(?P<CHARSET>[\w-]+)\s*
-            COMPRESSION:\s*(?P<COMPRESSION>[A-Z]+)\s*
+            (?:COMPRESSION:\s*(?P<COMPRESSION>[A-Z]+)\s*)?
             OLDFILEUID:\s*(?P<OLDFILEUID>[\w-]+)\s*
             NEWFILEUID:\s*(?P<NEWFILEUID>[\w-]+)
         """,
