@@ -18,7 +18,6 @@ More open-source OFX code
 
 .. _OFX spec: https://financialdataexchange.org/ofx
 .. _Quicken data mapping guide: https://web.archive.org/web/20110908185057if_/http://fi.intuit.com/ofximplementation/dl/OFXDataMappingGuide.pdfi
-.. _OFX Home: http://www.ofxhome.com/
 .. _libofx: https://github.com/libofx/libofx
 .. _ofxparse: https://github.com/jseutter/ofxparse
 .. _csv2ofx: https://github.com/reubano/csv2ofx

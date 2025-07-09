@@ -164,13 +164,6 @@ its nickname instead:
 
     $ ofxget prof amex
 
-Or, if the server is known to OFX Home, then you can just use its database
-ID (the end part of its `institution page on OFX Home`_):
-
-.. code-block:: bash
-
-    $ ofxget prof --ofxhome 424
-
 Any of these work just fine, dumping a load of markup on the screen telling us
 what OFX services are available and some parameters for accessing them.
 
@@ -191,12 +184,6 @@ provide a server nickname.
 .. code-block:: bash
 
     $ ofxget prof myfi --write --org AMEX --fid 3101 --url https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do\?request_type\=nl_ofxdownload
-
-If your server is up on OFX Home, this works as well:
-
-.. code-block:: bash
-
-    ofxget prof myfi --ofxhome 424 --write
 
 It's also easy to write a configuration file manually in a text editor - it's
 just the command line options in simple INI format, with a server nicknames as
@@ -231,16 +218,6 @@ Our configuration file will look like this:
     url: https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do?request_type=nl_ofxdownload
     org: AMEX
     fid: 3101
-
-Alternatively, since AmEx has working parameters listed on OFX Home, you could
-just use the OFX Home API to look them up for each request.  Using the OFX Home
-database id (at the end of the webpage URL), the config looks like this:
-
-.. code-block:: ini
-
-    # American Express
-    [amex]
-    ofxhome: 424
 
 With either configuration, we can now use the provider nickname to make our
 connection more conveniently:
@@ -608,8 +585,6 @@ Other methods available:
     * ``OFXClient.request_accounts()``- ACCTINFORQ
     * ``OFXClient.request_tax1099()``- TAX1099RQ (still a WIP)
 
-.. _OFX Home: http://www.ofxhome.com/
-.. _institution page on OFX Home: http://www.ofxhome.com/index.php/institution/view/424
 .. _OFX Blog: https://ofxblog.wordpress.com/
 .. _ABA routing number: http://routingnumber.aba.com/default1.aspx
 .. _getfidata.sh: https://web.archive.org/web/20070120102800/http://www.jongsma.org/gc/bankinfo/getfidata.sh.gz

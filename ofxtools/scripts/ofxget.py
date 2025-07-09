@@ -49,7 +49,7 @@ except ImportError:
 
 
 # local imports
-from ofxtools import Client, header, Parser, utils, ofxhome, config, models
+from ofxtools import Client, header, Parser, utils, config, models
 from ofxtools.Client import (
     OFXClient,
     StmtRq,
@@ -206,9 +206,6 @@ def add_subparser(
 
     if server:
         parser.add_argument("--url", help="OFX server URL")
-        parser.add_argument(
-            "--ofxhome", metavar="ID#", help="FI id# on http://www.ofxhome.com/"
-        )
         parser.add_argument(
             "-w",
             "--write",
@@ -849,7 +846,6 @@ DEFAULTS: Dict[str, ArgType] = {
     "verbose": 0,
     "server": "",
     "url": "",
-    "ofxhome": "",
     "version": 203,
     "org": "",
     "fid": "",
@@ -898,13 +894,11 @@ NULL_ARGS: Iterable = (None, "", [])
 # "Configurable" means "will be read from / written to config file".
 # Subdivided into -
 #   "Configurable server", i.e. parameters used establish an OFX connection
-#       (the kind of thing you'd pass to OFXClient.__init__(), which is
-#       how they're used by update_fi_cfg.py); and
+#       (the kind of thing you'd pass to OFXClient.__init__()); and
 #   "Configurable user", i.e. auth/account parameters that are completely
 #       user-specific and won't be shared by different users of the library.
 configurable_srvr = (
     "url",
-    "ofxhome",
     "version",
     "pretty",
     "unclosedelements",
@@ -1081,13 +1075,6 @@ def merge_config(
     merged: ArgsType = ChainMap(_args, user_cfg, DEFAULTS)  # type: ignore
     #  logger.debug(f"CLI args merged with user configs and defaults: {extrargs(merged)}")
 
-    # Try to perform an OFX Home lookup if:
-    # - it's configured from the CLI
-    # - it's configured in ofxget.cfg
-    # - we don't have a URL
-    if "ofxhome" in _args or "ofxhome" in user_cfg or (not merged["url"]):
-        merge_from_ofxhome(merged)
-
     if not (
         merged.get("url", None)
         or merged.get("dryrun", False)
@@ -1099,7 +1086,7 @@ def merge_config(
             logger.error(err)
             msg = (
                 f"{err} - please provide a server nickname, "
-                "or configure 'url' / 'ofxhome'\n"
+                "or configure 'url'\n"
             )
             print(msg)
             command = merged["request"]
@@ -1113,31 +1100,11 @@ def merge_config(
             merged["server"] = None
         else:
             logger.error(err)
-            msg = f"{err} - please configure 'url' or 'ofxhome' for server '{server}'"
+            msg = f"{err} - please configure 'url' for server '{server}'"
             raise ValueError(msg)
 
     logger.info(f"Merged args: {extrargs(merged)}")
     return merged
-
-
-def merge_from_ofxhome(args: ArgsType):
-    ofxhome_id = args["ofxhome"]
-    if ofxhome_id:
-        logger.info(f"Looking up OFX Home API for id#{ofxhome_id}")
-        lookup = ofxhome.lookup(ofxhome_id)
-        if lookup:
-            logger.debug(f"OFX Home lookup found {lookup}")
-            # Insert OFX Home lookup ahead of DEFAULTS but after
-            # CLI args and user configss
-            args.maps.insert(
-                -1,
-                {
-                    "url": lookup.url,
-                    "org": lookup.org,
-                    "fid": lookup.fid,
-                    "brokerid": lookup.brokerid,
-                },
-            )
 
 
 def extrargs(args: ArgsType) -> dict:
@@ -1484,6 +1451,7 @@ def list_fis(args: ArgsType) -> None:
         msg = f"Unknown server '{server}'"
         raise ValueError(msg)
     else:
+        # Note: ofxhome.com doesn't exist anymore, but we still use its IDs for name lookups.
         ofxhome = USERCFG[server].get("ofxhome", "")
         name = USERCFG["NAMES"].get(ofxhome, "")
         config = [" = ".join(pair) for pair in USERCFG[server].items()]
@@ -1499,7 +1467,8 @@ def fi_index() -> Sequence[Tuple[str, str, str]]:
     names = {id_: name for id_, name in USERCFG["NAMES"].items()}
     cfg_default_sect = USERCFG.default_section  # type: ignore
     servers = [
-        (names.get(sct.get("ofxhome", None), ""), nick, sct.get("ofxhome", "--"))
+        # Note: ofxhome.com doesn't exist anymore, but we still use its IDs for name lookups.
+        (names.get(sct.get("ofxhome", ""), ""), nick, sct.get("ofxhome", "--"))
         for nick, sct in USERCFG.items()
         if nick not in (cfg_default_sect, "NAMES") and "url" in sct
     ]
