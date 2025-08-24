@@ -273,7 +273,8 @@ def parse_header(source: BinaryIO) -> Tuple[OFXHeaderType, str]:
 
         # OFX header is read by nice clean machines, not meatbags -
         # should not contain 💩, 漢字, or what have you.
-        line = source.readline().decode("ascii")
+        # However, the first line may contain  the XML body, which CAN contain non-ascii.
+        line = source.readline().decode("ascii", "replace")
         if line.strip():
             found_header = True
             break
