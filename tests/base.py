@@ -1,5 +1,5 @@
 # coding: utf-8
-""" Common classes reused by unit tests in this package """
+"""Common classes reused by unit tests in this package"""
 
 # stdlib imports
 import unittest

@@ -1,5 +1,5 @@
 # coding: utf-8
-""" Utility functions and classes """
+"""Utility functions and classes"""
 
 # stdlib imports
 import datetime

@@ -1,5 +1,5 @@
 # coding: utf-8
-""" Unit tests for ofxtools.Parser """
+"""Unit tests for ofxtools.Parser"""
 
 # stdlib imports
 import unittest

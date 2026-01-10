@@ -1,5 +1,5 @@
 # coding: utf-8
-""" Unit tests for models/common.py """
+"""Unit tests for models/common.py"""
 # stdlib imports
 import unittest
 from decimal import Decimal

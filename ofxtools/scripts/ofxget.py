@@ -1335,7 +1335,7 @@ def _read_scan_response(
 
 
 def collate_scan_results(
-    scan_results: Iterable[Tuple[OFXVersion, Sequence[MarkupFormat]]]
+    scan_results: Iterable[Tuple[OFXVersion, Sequence[MarkupFormat]]],
 ) -> ScanResult:
     """
     Input ``scan_results`` needs to be a complete set for either OFXv1 or v2,
@@ -1365,7 +1365,7 @@ def collate_scan_results(
 # OFX PARSING
 ###############################################################################
 def verify_status(
-    trnrs: Union[models.SONRS, models.PROFTRNRS, models.ACCTINFOTRNRS]
+    trnrs: Union[models.SONRS, models.PROFTRNRS, models.ACCTINFOTRNRS],
 ) -> None:
     """
     Input a models.Aggregate instance representing a transaction wrapper.

@@ -1,5 +1,5 @@
 # coding: utf-8
-""" Unit tests for models.common """
+"""Unit tests for models.common"""
 # stdlib imports
 import unittest
 from datetime import datetime

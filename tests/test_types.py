@@ -1,5 +1,5 @@
 # coding: utf-8
-""" Unit tests for ofxtools.Types """
+"""Unit tests for ofxtools.Types"""
 # stdlib imports
 import unittest
 import decimal

@@ -1,5 +1,5 @@
 # coding: utf-8
-""" Unit tests for ofxtools.models.seclist """
+"""Unit tests for ofxtools.models.seclist"""
 
 # stdlib imports
 import unittest

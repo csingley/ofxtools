@@ -1,5 +1,5 @@
 # coding: utf-8
-""" Unit tests for ofxtools.models.signup """
+"""Unit tests for ofxtools.models.signup"""
 # stdlib imports
 import unittest
 from xml.etree.ElementTree import Element, SubElement

@@ -1,5 +1,5 @@
 # coding: utf-8
-""" Unit tests for models.billpay.recur """
+"""Unit tests for models.billpay.recur"""
 # stdlib imports
 import unittest
 from decimal import Decimal

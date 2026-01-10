@@ -1,5 +1,5 @@
 # coding: utf-8
-""" Unit tests for models.billpay.sync """
+"""Unit tests for models.billpay.sync"""
 # stdlib imports
 import unittest
 import xml.etree.ElementTree as ET

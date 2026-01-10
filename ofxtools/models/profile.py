@@ -1,5 +1,5 @@
 # coding: utf-8
-""" FI Profile - OFX Section 7 """
+"""FI Profile - OFX Section 7"""
 
 
 __all__ = [

@@ -1,5 +1,5 @@
 # coding: utf-8
-""" Unit tests for models.email """
+"""Unit tests for models.email"""
 # stdlib imports
 import unittest
 from xml.etree.ElementTree import Element, SubElement

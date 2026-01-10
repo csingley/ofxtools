@@ -1,5 +1,5 @@
 # coding: utf-8
-""" Unit tests for models.signon """
+"""Unit tests for models.signon"""
 # stdlib imports
 import unittest
 from xml.etree.ElementTree import Element, SubElement
