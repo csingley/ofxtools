@@ -1499,7 +1499,7 @@ def fi_index() -> Sequence[Tuple[str, str, str]]:
     names = {id_: name for id_, name in USERCFG["NAMES"].items()}
     cfg_default_sect = USERCFG.default_section  # type: ignore
     servers = [
-        (names.get(sct.get("ofxhome", None), ""), nick, sct.get("ofxhome", "--"))
+        (names.get(sct.get("ofxhome", ""), ""), nick, sct.get("ofxhome", "--"))
         for nick, sct in USERCFG.items()
         if nick not in (cfg_default_sect, "NAMES") and "url" in sct
     ]
