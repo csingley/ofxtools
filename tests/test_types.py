@@ -410,7 +410,7 @@ class DecimalTestCase(unittest.TestCase, Base):
         self.assertEqual(t.convert(t.unconvert(value)), value)
 
 
-class TestingTimezone(datetime.tzinfo):
+class _TestingTimezone(datetime.tzinfo):
     """Timezone info class for testing purposes"""
 
     def __init__(self, name: str, offset: datetime.timedelta):
@@ -427,9 +427,9 @@ class TestingTimezone(datetime.tzinfo):
         return self.name
 
 
-CST = TestingTimezone("CST", datetime.timedelta(hours=-6))
-IST = TestingTimezone("IST", datetime.timedelta(hours=5, minutes=30))
-NST = TestingTimezone("NST", datetime.timedelta(hours=-3.5))
+CST = _TestingTimezone("CST", datetime.timedelta(hours=-6))
+IST = _TestingTimezone("IST", datetime.timedelta(hours=5, minutes=30))
+NST = _TestingTimezone("NST", datetime.timedelta(hours=-3.5))
 
 
 class DateTimeTestCase(unittest.TestCase, Base):
