@@ -1,11 +1,9 @@
-# coding: utf-8
 """
 Base classes for OFX message wrappers
 
 These can't be defined in models.base because models.common.STATUS would
 create circular imports.
 """
-
 
 __all__ = ["TrnRq", "TrnRs", "SyncRqList", "SyncRsList"]
 
@@ -53,9 +51,7 @@ class TranList(Aggregate):
     dtend = DateTime(required=True)
 
     def __repr__(self) -> str:
-        return "<{} dtstart='{}' dtend='{}' len={}>".format(
-            self.__class__.__name__, self.dtstart, self.dtend, len(self)
-        )
+        return f"<{self.__class__.__name__} dtstart='{self.dtstart}' dtend='{self.dtend}' len={len(self)}>"
 
 
 class SyncRqList(Aggregate):

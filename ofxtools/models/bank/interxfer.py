@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Interbank fund transfers - OFX Section 11.8
 """
-
 
 __all__ = [
     "INTERRQ",

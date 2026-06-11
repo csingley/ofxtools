@@ -1,7 +1,7 @@
-# coding: utf-8
 """
 Unit tests for models.bank.stpchk
 """
+
 # stdlib imports
 import unittest
 from copy import deepcopy

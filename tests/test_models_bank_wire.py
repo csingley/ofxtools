@@ -1,7 +1,7 @@
-# coding: utf-8
 """
 Unit tests for models.bank.wire
 """
+
 # stdlib imports
 import unittest
 from datetime import datetime

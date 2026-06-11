@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Bill pay message sets - OFX Section 12.11
 """
-
 
 __all__ = ["BILLPAYMSGSRQV1", "BILLPAYMSGSRSV1", "BILLPAYMSGSETV1", "BILLPAYMSGSET"]
 

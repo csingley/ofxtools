@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Security information - OFX section 13.7.2
 """
-
 
 __all__ = [
     "SECID",

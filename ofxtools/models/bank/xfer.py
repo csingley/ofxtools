@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Intrabank funds transfer  - OFX Section 11.6
 """
-
 
 __all__ = [
     "XFERINFO",

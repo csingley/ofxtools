@@ -1,7 +1,7 @@
-# coding: utf-8
 """
 Unit tests for models.bank.recur
 """
+
 # stdlib imports
 import itertools
 import unittest

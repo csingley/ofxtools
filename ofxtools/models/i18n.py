@@ -1,14 +1,12 @@
-# coding: utf-8
 """
 International support - OFX Section 5
 """
-
 
 __all__ = ["LANG_CODES", "CURRENCY_CODES", "COUNTRY_CODES", "CURRENCY", "ORIGCURRENCY"]
 
 
 # stdlib imports
-from typing import Sequence
+from collections.abc import Sequence
 
 from ofxtools.models.base import Aggregate
 

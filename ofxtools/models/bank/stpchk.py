@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Bank stop check - OFX Section 11.6
 """
-
 
 __all__ = [
     "CHKRANGE",

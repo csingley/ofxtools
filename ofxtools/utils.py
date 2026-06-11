@@ -1,5 +1,4 @@
-# coding: utf-8
-""" Utility functions and classes """
+"""Utility functions and classes"""
 
 # stdlib imports
 import datetime
@@ -7,7 +6,8 @@ import itertools
 import math
 import os
 import xml.etree.ElementTree as ET
-from typing import Any, Callable, Iterable, Optional, Sequence, Tuple
+from collections.abc import Callable, Iterable, Sequence
+from typing import Any
 
 # local imports
 from ofxtools.lib import NUMBERING_AGENCIES
@@ -41,7 +41,7 @@ def collapseToSingle(items: Sequence, label: str):
         raise ValueError("{label} is empty")
     if len(items_) > 1:
         raise ValueError(
-            (f"Multiple {label} {list(items)}; " "can't configure automatically")
+            f"Multiple {label} {list(items)}; can't configure automatically"
         )
     return items_.pop()
 
@@ -72,7 +72,7 @@ TZS = {
 #  itertools recipes
 #  https://docs.python.org/2/library/itertools.html#recipes
 ###############################################################################
-def pairwise(iterable: Iterable) -> Iterable[Tuple[Any, Any]]:
+def pairwise(iterable: Iterable) -> Iterable[tuple[Any, Any]]:
     """s -> (s0,s1), (s1,s2), (s2, s3), ..."""
     a, b = itertools.tee(iterable)
     next(b, None)
@@ -85,7 +85,7 @@ def all_equal(iterable):
     return next(g, True) and not next(g, False)
 
 
-def partition(pred: Callable, iterable: Iterable) -> Tuple[Iterable, Iterable]:
+def partition(pred: Callable, iterable: Iterable) -> tuple[Iterable, Iterable]:
     """
     Use a predicate to partition entries into false entries and true entries
     """
@@ -212,14 +212,14 @@ def validate_isin(isin: str) -> bool:
         return False
 
 
-def cusip2isin(cusip: str, nation: Optional[str] = None) -> str:
+def cusip2isin(cusip: str, nation: str | None = None) -> str:
     # Validate inputs
     if not validate_cusip(cusip):
-        raise ValueError("'%s' is not a valid CUSIP" % cusip)
+        raise ValueError(f"'{cusip}' is not a valid CUSIP")
 
     nation = nation or "US"
     if nation not in NUMBERING_AGENCIES.keys():
-        raise ValueError("'%s' is not a valid country code" % nation)
+        raise ValueError(f"'{nation}' is not a valid country code")
 
     # Construct ISIN
     base = nation + cusip
@@ -243,17 +243,15 @@ try:
 except ImportError:
     # Otherwise create our own UTC tzinfo.
     class _UTC(datetime.tzinfo):
-        def tzname(self, dt: Optional[datetime.datetime]) -> Optional[str]:
+        def tzname(self, dt: datetime.datetime | None) -> str | None:
             """datetime -> string name of time zone."""
             return "UTC"
 
-        def utcoffset(
-            self, dt: Optional[datetime.datetime]
-        ) -> Optional[datetime.timedelta]:
+        def utcoffset(self, dt: datetime.datetime | None) -> datetime.timedelta | None:
             """datetime -> minutes east of UTC (negative for west of UTC)"""
             return datetime.timedelta(0)
 
-        def dst(self, dt: Optional[datetime.datetime]) -> Optional[datetime.timedelta]:
+        def dst(self, dt: datetime.datetime | None) -> datetime.timedelta | None:
             """datetime -> DST offset in minutes east of UTC.
 
             Return 0 if DST not in effect.  utcoffset() must include the DST

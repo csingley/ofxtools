@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Payment mail - OFX Section 12.8
 """
-
 
 __all__ = [
     "PMTMAILRQ",

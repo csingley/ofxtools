@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Bill pay message sets
 """
-
 
 __all__ = [
     "INVSTMTMSGSRQV1",

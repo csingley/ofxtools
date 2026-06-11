@@ -1,7 +1,7 @@
-# coding: utf-8
 """
 Unit tests for models.bank.stmtend
 """
+
 # stdlib imports
 import unittest
 from datetime import datetime

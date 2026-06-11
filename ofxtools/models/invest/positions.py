@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Investment positions - OFX Section 13.9.2.6
 """
-
 
 __all__ = ["INVPOS", "POSDEBT", "POSMF", "POSOPT", "POSOTHER", "POSSTOCK", "INVPOSLIST"]
 

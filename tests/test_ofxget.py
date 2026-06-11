@@ -1,5 +1,4 @@
-# coding: utf-8
-""" Unit tests for ofxtools.ofxget """
+"""Unit tests for ofxtools.ofxget"""
 
 # stdlib imports
 import argparse
@@ -945,7 +944,6 @@ class MergeConfigTestCase(unittest.TestCase):
         # Undo monkey patches for ofxget.USERCFG
         #  ofxget.UserConfig = cls._UserConfig
         ofxget.USERCFG = cls._USERCFG
-
 
     def testMergeConfigUnknownFiArg(self):
         args = argparse.Namespace(server="3big4fail")

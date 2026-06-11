@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Tax form 1099 - as of TY2018
 """
-
 
 __all__ = [
     "PAYERADDR",

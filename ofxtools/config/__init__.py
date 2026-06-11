@@ -1,4 +1,3 @@
-# coding: utf-8
 # stdlib imports
 import json
 import logging
@@ -82,7 +81,7 @@ def configure_logging(level=None):
 
     if LOGCONFIGPATH.exists():
         try:
-            with open(LOGCONFIGPATH, "r") as f:
+            with open(LOGCONFIGPATH) as f:
                 config = json.load(f)
             assert config
         except Exception:

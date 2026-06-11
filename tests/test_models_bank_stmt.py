@@ -1,13 +1,12 @@
-# coding: utf-8
 """
 Unit tests for models.bank.stmt
 """
+
 # stdlib imports
 import unittest
 from copy import deepcopy
 from datetime import datetime
 from decimal import Decimal
-from typing import List
 from xml.etree.ElementTree import Element, SubElement
 
 # test imports
@@ -594,7 +593,7 @@ class BallistTestCase(unittest.TestCase, base.TestAggregate):
 
     __test__ = True
 
-    optionalElements: List[str] = []  # FIXME - how to handle multiple BALs?
+    optionalElements: list[str] = []  # FIXME - how to handle multiple BALs?
 
     def testListAggregates(self):
         # BALLLIST may only contain BAL

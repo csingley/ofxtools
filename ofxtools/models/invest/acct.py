@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Investment accounts - OFX Section 13.6
 """
-
 
 __all__ = [
     "INVACCTTYPES",

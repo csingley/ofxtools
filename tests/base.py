@@ -1,12 +1,12 @@
-# coding: utf-8
-""" Common classes reused by unit tests in this package """
+"""Common classes reused by unit tests in this package"""
 
 # stdlib imports
 import itertools
 import unittest
 import xml.etree.ElementTree as ET
+from collections.abc import Sequence
 from copy import deepcopy
-from typing import Any, Dict, List, Sequence
+from typing import Any
 
 # local imports
 import ofxtools.models
@@ -21,10 +21,10 @@ class TestAggregate:
 
     # Here "Element" refers to ``xml.etree.ElementTree.Element``,
     # not ``ofxtools.Types.Element`` (i.e. includes both Aggregates & Elements)
-    requiredElements: List[str] = []
-    optionalElements: List[str] = []
-    oneOfs: Dict[str, Sequence[str]] = {}
-    unsupported: List[str] = []
+    requiredElements: list[str] = []
+    optionalElements: list[str] = []
+    oneOfs: dict[str, Sequence[str]] = {}
+    unsupported: list[str] = []
 
     etree: Any = NotImplemented
     aggregate: Any = NotImplemented
@@ -91,12 +91,12 @@ class TestAggregate:
         # illegal values
         for text in texts:
             etree = deepcopy(self.etree)
-            target = etree.find(".//%s" % tag)
+            target = etree.find(f".//{tag}")
             target.text = text
             Aggregate.from_etree(etree)
 
         etree = deepcopy(self.etree)
-        target = etree.find(".//%s" % tag)
+        target = etree.find(f".//{tag}")
         target.text = "garbage"
         with self.assertRaises(ValueError):
             Aggregate.from_etree(etree)

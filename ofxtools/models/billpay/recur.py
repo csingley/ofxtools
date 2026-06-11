@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Recurring payments - OFX Section 12.7
 """
-
 
 __all__ = [
     "RECPMTRQ",

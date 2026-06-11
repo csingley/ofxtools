@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Bank email & customer notification - OFX Section 11.11
 """
-
 
 __all__ = [
     "BANKMAILRQ",

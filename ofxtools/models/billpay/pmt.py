@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Payments Functions - OFX Section 12.6
 """
-
 
 __all__ = [
     "PMTRQ",

@@ -1,7 +1,7 @@
-# coding: utf-8
 """
 Unit tests for models.bank.xfer
 """
+
 # stdlib imports
 import itertools
 import unittest

@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Bases for OFX model classes to inherit.
 
@@ -17,7 +16,6 @@ the OFX spec, to be found in the package namespace by
 ``Aggregate.from_etree()`` which is called by the ``ofxtools.Parser``.
 """
 
-
 __all__ = ["Aggregate", "ElementList"]
 
 
@@ -26,17 +24,11 @@ import functools
 import logging
 import warnings
 import xml.etree.ElementTree as ET
+from collections import ChainMap
+from collections.abc import Callable, Mapping, Sequence
 from copy import deepcopy
 from typing import (
     Any,
-    Callable,
-    ChainMap,
-    Dict,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
 )
 
 import ofxtools.models
@@ -118,7 +110,7 @@ class Aggregate(list):
 
         def enforce_count(
             cls,
-            kwargs: Dict[str, Any],
+            kwargs: dict[str, Any],
             errMsg: str,
             mutexes: Sequence[Sequence[str]],
             predicate: Callable[[int], bool],
@@ -126,9 +118,7 @@ class Aggregate(list):
             for mutex in mutexes:
                 count = sum([kwargs.get(m, None) is not None for m in mutex])
                 if not predicate(count):
-                    kwargs_ = ", ".join(
-                        ["{}={}".format(m, kwargs.get(m, None)) for m in mutex]
-                    )
+                    kwargs_ = ", ".join([f"{m}={kwargs.get(m, None)}" for m in mutex])
                     errFields = {
                         "cls": cls.__name__,
                         "kwargs": kwargs_,
@@ -169,8 +159,7 @@ class Aggregate(list):
                 # FIXME validation
                 if type(member) is not str:
                     msg = (
-                        f"{clsnm} can only contain str as list element, "
-                        f"not {member!r}"
+                        f"{clsnm} can only contain str as list element, not {member!r}"
                     )
                     raise TypeError(msg)
             self.append(member)
@@ -233,7 +222,7 @@ class Aggregate(list):
         listelements = cls.listelements
 
         #  Type alias - accumulator for functools.reduce()
-        Accum = Tuple[list, dict, int, bool]
+        Accum = tuple[list, dict, int, bool]
         " args, kwargs, previous attr index within spec, previous attr is list member? "
 
         def update_args(accum: Accum, elem: ET.Element) -> Accum:
@@ -281,7 +270,7 @@ class Aggregate(list):
 
             # Parse attribute value
             if attrname in cls.unsupported:
-                value: Optional[Union[str, Aggregate]] = None
+                value: str | Aggregate | None = None
             elif elem.text:
                 # Element - extract as string; value will be type-converted upon
                 # instance initialization by ``ofxtools.Types.Element.__set__()``.
@@ -432,7 +421,7 @@ class Aggregate(list):
 
     @classproperty
     @classmethod
-    def spec(cls) -> Mapping[str, Union[Types.Element, Types.Unsupported]]:
+    def spec(cls) -> Mapping[str, Types.Element | Types.Unsupported]:
         """
         Mapping of all class attributes that are Elements/SubAggregates/Unsupported.
 
@@ -448,14 +437,16 @@ class Aggregate(list):
     @classmethod
     def spec_no_listaggregates(
         cls,
-    ) -> Mapping[str, Union[Types.Element, Types.Unsupported]]:
+    ) -> Mapping[str, Types.Element | Types.Unsupported]:
         """
         Mapping of all class attributes that are
         Elements/SubAggregates/Unsupported, excluding ListAggregates/ListElements.
         """
         return cls._filter_attrs(
-            lambda v: isinstance(v, (Types.Element, Types.Unsupported))
-            and not isinstance(v, (Types.ListAggregate, Types.ListElement))
+            lambda v: (
+                isinstance(v, (Types.Element, Types.Unsupported))
+                and not isinstance(v, (Types.ListAggregate, Types.ListElement))
+            )
         )
 
     @classproperty
@@ -467,8 +458,9 @@ class Aggregate(list):
         N.B. Types.SubAggregate is a subclass of Element.
         """
         return cls._filter_attrs(
-            lambda v: isinstance(v, Types.Element)
-            and not isinstance(v, Types.SubAggregate)
+            lambda v: (
+                isinstance(v, Types.Element) and not isinstance(v, Types.SubAggregate)
+            )
         )
 
     @classproperty
@@ -504,7 +496,7 @@ class Aggregate(list):
         return cls._filter_attrs(lambda v: isinstance(v, Types.ListElement))
 
     @property
-    def _spec_repr(self) -> Sequence[Tuple[str, Any]]:
+    def _spec_repr(self) -> Sequence[tuple[str, Any]]:
         """
         Sequence of (name, repr()) for each non-empty attribute in the
         class ``spec`` (see property above).
@@ -532,8 +524,8 @@ class Aggregate(list):
         instance_repr = "{}({})".format(self.__class__.__name__, ", ".join(attrs))
         num_list_elements = len(self)
         if num_list_elements != 0:
-            instance_repr += ", len={}".format(num_list_elements)
-        return "<{}>".format(instance_repr)
+            instance_repr += f", len={num_list_elements}"
+        return f"<{instance_repr}>"
 
     def __getattr__(self, attr: str):
         """Proxy access to attributes of SubAggregates"""

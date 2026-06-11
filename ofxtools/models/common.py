@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Common Aggregates (OFX Section 3.1); message extensions (OFX Section 2.7)
 """
-
 
 __all__ = ["SVCSTATUSES", "STATUS", "BAL", "OFXELEMENT", "OFXEXTENSION", "MSGSETCORE"]
 

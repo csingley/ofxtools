@@ -1,5 +1,4 @@
-# coding: utf-8
-""" Unit tests for ofxtools.Client """
+"""Unit tests for ofxtools.Client"""
 
 # stdlib imports
 import unittest
@@ -161,8 +160,8 @@ class OFXClientV1TestCase(unittest.TestCase):
                 "<ORG>FIORG</ORG>"
                 "<FID>FID</FID>"
                 "</FI>"
-                "<APPID>{appid}</APPID>"
-                "<APPVER>{appver}</APPVER>"
+                f"<APPID>{DEFAULT_APPID}</APPID>"
+                f"<APPVER>{DEFAULT_APPVER}</APPVER>"
                 "</SONRQ>"
                 "</SIGNONMSGSRQV1>"
                 "<BANKMSGSRQV1>"
@@ -183,7 +182,7 @@ class OFXClientV1TestCase(unittest.TestCase):
                 "</STMTTRNRQ>"
                 "</BANKMSGSRQV1>"
                 "</OFX>"
-            ).format(appid=DEFAULT_APPID, appver=DEFAULT_APPVER)
+            )
             self.assertEqual(dryrun, request)
 
     def _testRequest(self, fn, *args, **kwargs):
@@ -253,8 +252,8 @@ class OFXClientV1TestCase(unittest.TestCase):
             "<ORG>FIORG</ORG>"
             "<FID>FID</FID>"
             "</FI>"
-            "<APPID>{appid}</APPID>"
-            "<APPVER>{appver}</APPVER>"
+            f"<APPID>{DEFAULT_APPID}</APPID>"
+            f"<APPVER>{DEFAULT_APPVER}</APPVER>"
             "</SONRQ>"
             "</SIGNONMSGSRQV1>"
             "<BANKMSGSRQV1>"
@@ -275,7 +274,7 @@ class OFXClientV1TestCase(unittest.TestCase):
             "</STMTTRNRQ>"
             "</BANKMSGSRQV1>"
             "</OFX>"
-        ).format(appid=DEFAULT_APPID, appver=DEFAULT_APPVER)
+        )
 
         self.assertEqual(data, request)
 
@@ -304,12 +303,12 @@ class OFXClientV1TestCase(unittest.TestCase):
             "<ORG>FIORG</ORG>"
             "<FID>FID</FID>"
             "</FI>"
-            "<APPID>{appid}</APPID>"
-            "<APPVER>{appver}</APPVER>"
+            f"<APPID>{DEFAULT_APPID}</APPID>"
+            f"<APPVER>{DEFAULT_APPVER}</APPVER>"
             "</SONRQ>"
             "</SIGNONMSGSRQV1>"
             "</OFX>"
-        ).format(appid=DEFAULT_APPID, appver=DEFAULT_APPVER)
+        )
 
         self.assertEqual(data, request)
 
@@ -349,8 +348,8 @@ class OFXClientV1TestCase(unittest.TestCase):
             "<ORG>FIORG</ORG>"
             "<FID>FID</FID>"
             "</FI>"
-            "<APPID>{appid}</APPID>"
-            "<APPVER>{appver}</APPVER>"
+            f"<APPID>{DEFAULT_APPID}</APPID>"
+            f"<APPVER>{DEFAULT_APPVER}</APPVER>"
             "</SONRQ>"
             "</SIGNONMSGSRQV1>"
             "<BANKMSGSRQV1>"
@@ -444,7 +443,7 @@ class OFXClientV1TestCase(unittest.TestCase):
             "</INVSTMTTRNRQ>"
             "</INVSTMTMSGSRQV1>"
             "</OFX>"
-        ).format(appid=DEFAULT_APPID, appver=DEFAULT_APPVER)
+        )
 
         self.assertEqual(data, request)
 
@@ -488,8 +487,8 @@ class OFXClientV1TestCase(unittest.TestCase):
             "        <ORG>FIORG</ORG>\n"
             "        <FID>FID</FID>\n"
             "      </FI>\n"
-            "      <APPID>{appid}</APPID>\n"
-            "      <APPVER>{appver}</APPVER>\n"
+            f"      <APPID>{DEFAULT_APPID}</APPID>\n"
+            f"      <APPVER>{DEFAULT_APPVER}</APPVER>\n"
             "    </SONRQ>\n"
             "  </SIGNONMSGSRQV1>\n"
             "  <BANKMSGSRQV1>\n"
@@ -510,7 +509,7 @@ class OFXClientV1TestCase(unittest.TestCase):
             "    </STMTTRNRQ>\n"
             "  </BANKMSGSRQV1>\n"
             "</OFX>\n"
-        ).format(appid=DEFAULT_APPID, appver=DEFAULT_APPVER)
+        )
 
         self.assertEqual(data, request)
 
@@ -554,8 +553,8 @@ class OFXClientV1TestCase(unittest.TestCase):
             "<ORG>FIORG"
             "<FID>FID"
             "</FI>"
-            "<APPID>{appid}"
-            "<APPVER>{appver}"
+            f"<APPID>{DEFAULT_APPID}"
+            f"<APPVER>{DEFAULT_APPVER}"
             "</SONRQ>"
             "</SIGNONMSGSRQV1>"
             "<BANKMSGSRQV1>"
@@ -576,7 +575,7 @@ class OFXClientV1TestCase(unittest.TestCase):
             "</STMTTRNRQ>"
             "</BANKMSGSRQV1>"
             "</OFX>"
-        ).format(appid=DEFAULT_APPID, appver=DEFAULT_APPVER)
+        )
 
         self.assertEqual(data, request)
 
@@ -634,8 +633,8 @@ class OFXClientV1TestCase(unittest.TestCase):
             "<ORG>FIORG</ORG>"
             "<FID>FID</FID>"
             "</FI>"
-            "<APPID>{appid}</APPID>"
-            "<APPVER>{appver}</APPVER>"
+            f"<APPID>{DEFAULT_APPID}</APPID>"
+            f"<APPVER>{DEFAULT_APPVER}</APPVER>"
             "</SONRQ>"
             "</SIGNONMSGSRQV1>"
             "<BANKMSGSRQV1>"
@@ -653,7 +652,7 @@ class OFXClientV1TestCase(unittest.TestCase):
             "</STMTENDTRNRQ>"
             "</BANKMSGSRQV1>"
             "</OFX>"
-        ).format(appid=DEFAULT_APPID, appver=DEFAULT_APPVER)
+        )
 
         self.assertEqual(data, request)
 
@@ -687,8 +686,8 @@ class OFXClientV1TestCase(unittest.TestCase):
             "<ORG>FIORG</ORG>"
             "<FID>FID</FID>"
             "</FI>"
-            "<APPID>{appid}</APPID>"
-            "<APPVER>{appver}</APPVER>"
+            f"<APPID>{DEFAULT_APPID}</APPID>"
+            f"<APPVER>{DEFAULT_APPVER}</APPVER>"
             "</SONRQ>"
             "</SIGNONMSGSRQV1>"
             "<BANKMSGSRQV1>"
@@ -718,7 +717,7 @@ class OFXClientV1TestCase(unittest.TestCase):
             "</CCSTMTENDTRNRQ>"
             "</CREDITCARDMSGSRQV1>"
             "</OFX>"
-        ).format(appid=DEFAULT_APPID, appver=DEFAULT_APPVER)
+        )
 
         self.assertEqual(data, request)
 
@@ -805,8 +804,8 @@ class OFXClientV1TestCase(unittest.TestCase):
             "<ORG>FIORG</ORG>"
             "<FID>FID</FID>"
             "</FI>"
-            "<APPID>{appid}</APPID>"
-            "<APPVER>{appver}</APPVER>"
+            f"<APPID>{DEFAULT_APPID}</APPID>"
+            f"<APPVER>{DEFAULT_APPVER}</APPVER>"
             "</SONRQ>"
             "</SIGNONMSGSRQV1>"
             "<SIGNUPMSGSRQV1>"
@@ -818,7 +817,7 @@ class OFXClientV1TestCase(unittest.TestCase):
             "</ACCTINFOTRNRQ>"
             "</SIGNUPMSGSRQV1>"
             "</OFX>"
-        ).format(appid=DEFAULT_APPID, appver=DEFAULT_APPVER)
+        )
 
         self.assertEqual(data, request)
 
@@ -868,7 +867,7 @@ class UtilitiesTestCase(unittest.TestCase):
         result = tostring_unclosed_elements(self.root).decode()
         self.assertEqual(
             result,
-            ("<ROOT>" "<LEVEL1>" "<LEVEL2>level2" "</LEVEL1>" "<LEVEL1>" "</ROOT>"),
+            ("<ROOT><LEVEL1><LEVEL2>level2</LEVEL1><LEVEL1></ROOT>"),
         )
 
 

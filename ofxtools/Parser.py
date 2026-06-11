@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
 """
 A parser for Open Financial Exchange (OFX) messages,
 both version 1 (SGML) and version 2 (XML) formats,
@@ -24,7 +23,6 @@ No ponies were harmed during the production of this parser:
 https://stackoverflow.com/questions/1732348/regex-match-open-tags-except-xhtml-self-contained-tags/1732454#1732454
 """
 
-
 __all__ = ["OFXTree", "TreeBuilder", "ParseError"]
 
 
@@ -32,7 +30,6 @@ __all__ = ["OFXTree", "TreeBuilder", "ParseError"]
 import logging
 import re
 import xml.etree.ElementTree as ET
-from typing import Optional, Tuple
 
 # local imports
 from ofxtools.header import OFXHeaderType, parse_header
@@ -94,7 +91,7 @@ class OFXTree(ET.ElementTree):
         return self._root
 
     @staticmethod
-    def _read(source) -> Tuple[OFXHeaderType, str]:
+    def _read(source) -> tuple[OFXHeaderType, str]:
         """
         Validate/convert OFX header and return it as an instance of
         `ofxtools.header.OFXHeader{V1, V2}`, along with message body as `str`.
@@ -177,12 +174,10 @@ class TreeBuilder(ET.TreeBuilder):
             except ParseError as err:
                 # Report the position of the error
                 msg = err.args[0]
-                msg += " - position=[{}:{}]".format(match.start(), match.end())
+                msg += f" - position=[{match.start()}:{match.end()}]"
                 raise ParseError(msg)
 
-    def _feedmatch(
-        self, tag: str, text: Optional[str], closetag: Optional[str]
-    ) -> None:
+    def _feedmatch(self, tag: str, text: str | None, closetag: str | None) -> None:
         """
         Route individual regex matches to _start()/_end() according to tag.
 
@@ -198,7 +193,7 @@ class TreeBuilder(ET.TreeBuilder):
         else:
             self._start(tag, text, closetag)
 
-    def _start(self, tag: str, text: Optional[str], closetag: Optional[str]) -> None:
+    def _start(self, tag: str, text: str | None, closetag: str | None) -> None:
         """
         Push a new Element to the stack.
 
@@ -222,7 +217,7 @@ class TreeBuilder(ET.TreeBuilder):
             self.end(tag)
 
     @staticmethod
-    def _groomstring(string: str) -> Optional[str]:
+    def _groomstring(string: str) -> str | None:
         """Strips whitespace and returns None for empty string"""
         # Can't strip() None
         string = (string or "").strip()

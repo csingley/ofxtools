@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Payee lists - OFX Section 12.9
 """
-
 
 __all__ = [
     "PAYEERQ",

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# coding: utf-8
 """
 Configurable CLI front end for ``ofxtools.Client``
 """
+
 # stdlib imports
 import argparse
 import concurrent.futures
@@ -14,26 +14,15 @@ import json
 import logging
 import logging.config
 import pydoc
-import socket
 import sys
 import warnings
 import xml.etree.ElementTree as ET
-from collections import defaultdict
+from collections import ChainMap, defaultdict
+from collections.abc import Iterable, Iterator, Mapping, MutableMapping, Sequence
 from io import BytesIO
 from operator import attrgetter
 from typing import (
     Any,
-    ChainMap,
-    Dict,
-    Iterable,
-    Iterator,
-    List,
-    Mapping,
-    MutableMapping,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
 )
 from urllib import parse as urllib_parse
 from urllib.error import HTTPError, URLError
@@ -73,7 +62,7 @@ logger = logging.getLogger(__name__)
 # TYPE ALIASES
 ###############################################################################
 # Parsed ArgParser arg
-ArgType = Union[List[str], bool, int, str]
+ArgType = list[str] | bool | int | str
 
 # Common data structure used for loading, combining, and converting between
 # ArgParser and ConfigParser
@@ -84,10 +73,10 @@ ArgsType = ChainMap[str, Any]
 # during a profile scan
 OFXVersion = int
 MarkupFormat = Mapping[str, bool]  # keys are "pretty", "unclosedelements"
-ScanMetadata = Tuple[OFXVersion, MarkupFormat]
+ScanMetadata = tuple[OFXVersion, MarkupFormat]
 
 # All working FormatArgs for a given OFX version
-FormatMap = Mapping[OFXVersion, List[MarkupFormat]]
+FormatMap = Mapping[OFXVersion, list[MarkupFormat]]
 
 # Scan result of a single OFX protocol version
 ScanResult = Mapping[str, list]
@@ -97,10 +86,10 @@ ScanResult = Mapping[str, list]
 SignoninfoReport = Mapping[str, bool]
 
 # Full set of profile scan results
-ScanResults = Tuple[ScanResult, ScanResult, SignoninfoReport]
+ScanResults = tuple[ScanResult, ScanResult, SignoninfoReport]
 
-AcctInfo = Union[models.BANKACCTINFO, models.CCACCTINFO, models.INVACCTINFO]
-ParsedAcctinfo = Mapping[str, Union[str, list]]
+AcctInfo = models.BANKACCTINFO | models.CCACCTINFO | models.INVACCTINFO
+ParsedAcctinfo = Mapping[str, str | list]
 
 
 ###############################################################################
@@ -179,7 +168,7 @@ def add_subparser(
     stmt: bool = False,
     acctinforq: bool = False,
     tax: bool = False,
-    help: Optional[str] = None,
+    help: str | None = None,
 ) -> argparse.ArgumentParser:
     parser = subparsers.add_parser(cmd, help=help, description=help)
     parser.set_defaults(request=cmd)
@@ -633,7 +622,7 @@ def _merge_acctinfo(args: ArgsType, markup: BytesIO) -> None:
     # *ACCTINFO classes don't have rich comparison methods;
     # can't sort by class
     sortKey = attrgetter("__class__.__name__")
-    acctinfos: List[AcctInfo] = sorted(extract_acctinfos(markup), key=sortKey)
+    acctinfos: list[AcctInfo] = sorted(extract_acctinfos(markup), key=sortKey)
 
     def parse_acctinfos(clsName, acctinfos):
         dispatcher = {
@@ -644,7 +633,7 @@ def _merge_acctinfo(args: ArgsType, markup: BytesIO) -> None:
         parser = dispatcher.get(clsName, lambda x: {})
         return parser(acctinfos)
 
-    parsed_args: List[ParsedAcctinfo] = [
+    parsed_args: list[ParsedAcctinfo] = [
         parse_acctinfos(clsnm, infos)
         for clsnm, infos in itertools.groupby(acctinfos, key=sortKey)
     ]
@@ -664,7 +653,7 @@ def request_stmt(args: ArgsType) -> None:
         acctinfo = _request_acctinfo(args, password)
         _merge_acctinfo(args, acctinfo)
 
-    stmtrqs: List[Union[StmtRq, CcStmtRq, InvStmtRq]] = []
+    stmtrqs: list[StmtRq | CcStmtRq | InvStmtRq] = []
     for accttype in ("checking", "savings", "moneymrkt", "creditline"):
         stmtrqs.extend(
             [
@@ -745,7 +734,7 @@ def request_stmtend(args: ArgsType) -> None:
         acctinfo = _request_acctinfo(args, password)
         _merge_acctinfo(args, acctinfo)
 
-    stmtendrqs: List[Union[StmtEndRq, CcStmtEndRq]] = []
+    stmtendrqs: list[StmtEndRq | CcStmtEndRq] = []
     for accttype in ("checking", "savings", "moneymrkt", "creditline"):
         acctids = args[accttype]
         stmtendrqs.extend(
@@ -814,7 +803,7 @@ def request_tax1099(args: ArgsType) -> None:
 ###############################################################################
 # ARGUMENT/CONFIG HANDLERS
 ###############################################################################
-def convert_list(string: str) -> List[str]:
+def convert_list(string: str) -> list[str]:
     """
     Deserialize INI representation to a Python list
     """
@@ -841,7 +830,7 @@ LIBCFG = LibraryConfig()
 LIBCFG.read(CONFIGPATH)
 
 
-DEFAULTS: Dict[str, ArgType] = {
+DEFAULTS: dict[str, ArgType] = {
     "verbose": 0,
     "server": "",
     "url": "",
@@ -1084,10 +1073,7 @@ def merge_config(
 
         if "server" not in _args:
             logger.error(err)
-            msg = (
-                f"{err} - please provide a server nickname, "
-                "or configure 'url'\n"
-            )
+            msg = f"{err} - please provide a server nickname, or configure 'url'\n"
             print(msg)
             command = merged["request"]
             make_argparser().subparsers[command].print_help()  # type: ignore
@@ -1107,7 +1093,6 @@ def merge_config(
     return merged
 
 
-
 def extrargs(args: ArgsType) -> dict:
     """Extract non-null args"""
     return {k: v for k, v in args.items() if v not in NULL_ARGS}
@@ -1123,12 +1108,12 @@ def extractns(ns) -> dict:
 ###############################################################################
 def _scan_profile(
     url: str,
-    org: Optional[str],
-    fid: Optional[str],
-    useragent: Optional[str],
+    org: str | None,
+    fid: str | None,
+    useragent: str | None,
     gen_newfileuid: bool,
-    max_workers: Optional[int] = None,
-    timeout: Optional[float] = None,
+    max_workers: int | None = None,
+    timeout: float | None = None,
 ) -> ScanResults:
     """
     Report permutations of OFX version/prettyprint/unclosedelements that
@@ -1140,10 +1125,8 @@ def _scan_profile(
     that may be helpful to authenticate successfully.
     """
     logger.info(
-        (
-            f"Scanning url={url} org={org} fid={fid} "
-            f"max_workers={max_workers} timeout={timeout}"
-        )
+        f"Scanning url={url} org={org} fid={fid} "
+        f"max_workers={max_workers} timeout={timeout}"
     )
     client = OFXClient(url, org=org, fid=fid, useragent=useragent)
     futures = _queue_scans(client, gen_newfileuid, max_workers, timeout)
@@ -1168,7 +1151,7 @@ def _scan_profile(
         if not signoninfo and signoninfo_:
             signoninfo = signoninfo_
 
-        logger.debug((f"OFX connection success, version={version}, format={format}"))
+        logger.debug(f"OFX connection success, version={version}, format={format}")
         success_params[version].append(format)
 
     v1_result, v2_result = [
@@ -1189,8 +1172,8 @@ def _scan_profile(
 def _queue_scans(
     client: OFXClient,
     gen_newfileuid: bool,
-    max_workers: Optional[int],
-    timeout: Optional[float],
+    max_workers: int | None,
+    timeout: float | None,
 ) -> Mapping[concurrent.futures.Future, ScanMetadata]:
     ofxv1 = [102, 103, 151, 160]
     ofxv2 = [200, 201, 202, 203, 210, 211, 220]
@@ -1231,20 +1214,14 @@ def _queue_scans(
 
 def _read_scan_response(
     future: concurrent.futures.Future, read_signoninfo: bool = False
-) -> Tuple[bool, SignoninfoReport]:
+) -> tuple[bool, SignoninfoReport]:
     valid: bool = False
     signoninfo: SignoninfoReport = {}
 
     try:
         # ``future.result()`` returns an http.client.HTTPResponse
         response = future.result()
-    except (
-        URLError,
-        HTTPError,
-        ConnectionError,
-        OSError,
-        socket.timeout,
-    ) as exc:
+    except (TimeoutError, URLError, HTTPError, ConnectionError, OSError) as exc:
         logger.error(f"Didn't receive response: {exc}")
         return valid, signoninfo
     except (
@@ -1282,7 +1259,7 @@ def _read_scan_response(
             }
 
             logger.debug(
-                ("Received HTTP response with valid OFX; " f"signoninfo={signoninfo}")
+                f"Received HTTP response with valid OFX; signoninfo={signoninfo}"
             )
         except (ParseError, ET.ParseError, OFXHeaderError) as exc:
             # We didn't receive valid OFX in the response
@@ -1290,7 +1267,7 @@ def _read_scan_response(
             valid = False
         except (ValueError,):
             # We received OFX; can't find SIGNONIFO (probably no PROFRS)
-            logger.warning(("Response with valid OFX; can't parse SIGNONINFO"))
+            logger.warning("Response with valid OFX; can't parse SIGNONINFO")
             valid = True
     else:
         # IF we're not parsing the PROFRS, then we interpret receiving a good
@@ -1303,7 +1280,7 @@ def _read_scan_response(
 
 
 def collate_scan_results(
-    scan_results: Iterable[Tuple[OFXVersion, Sequence[MarkupFormat]]]
+    scan_results: Iterable[tuple[OFXVersion, Sequence[MarkupFormat]]],
 ) -> ScanResult:
     """
     Input ``scan_results`` needs to be a complete set for either OFXv1 or v2,
@@ -1333,7 +1310,7 @@ def collate_scan_results(
 # OFX PARSING
 ###############################################################################
 def verify_status(
-    trnrs: Union[models.SONRS, models.PROFTRNRS, models.ACCTINFOTRNRS]
+    trnrs: models.SONRS | models.PROFTRNRS | models.ACCTINFOTRNRS,
 ) -> None:
     """
     Input a models.Aggregate instance representing a transaction wrapper.
@@ -1362,19 +1339,19 @@ def extract_signoninfos(markup: BytesIO) -> Iterator[models.SIGNONINFO]:
     parser.parse(markup)
     ofx = parser.convert()
 
-    sonrs: Union[models.SONRS, None] = ofx.signonmsgsrsv1.sonrs
+    sonrs: models.SONRS | None = ofx.signonmsgsrsv1.sonrs
     assert isinstance(sonrs, models.SONRS)
     verify_status(sonrs)
 
-    msgs: Union[models.PROFMSGSRSV1, None] = ofx.profmsgsrsv1
+    msgs: models.PROFMSGSRSV1 | None = ofx.profmsgsrsv1
     assert msgs is not None
 
-    def extract_signoninfo(trnrs: models.PROFTRNRS) -> List[models.SIGNONINFO]:
+    def extract_signoninfo(trnrs: models.PROFTRNRS) -> list[models.SIGNONINFO]:
         verify_status(trnrs)
-        rs: Union[models.PROFRS, None] = trnrs.profrs
+        rs: models.PROFRS | None = trnrs.profrs
         assert rs is not None
 
-        list_: Union[models.SIGNONINFOLIST, None] = rs.signoninfolist
+        list_: models.SIGNONINFOLIST | None = rs.signoninfolist
         assert list_ is not None
         return list_
 
@@ -1461,7 +1438,7 @@ def list_fis(args: ArgsType) -> None:
         print()
 
 
-def fi_index() -> Sequence[Tuple[str, str]]:
+def fi_index() -> Sequence[tuple[str, str]]:
     """All FIs known to ofxget"""
     names = {nick: name for nick, name in USERCFG["NAMES"].items()}
     cfg_default_sect = USERCFG.default_section  # type: ignore
@@ -1481,7 +1458,7 @@ def fi_index() -> Sequence[Tuple[str, str]]:
     return servers
 
 
-def convert_datetime(args: ArgsType) -> Mapping[str, Optional[datetime.datetime]]:
+def convert_datetime(args: ArgsType) -> Mapping[str, datetime.datetime | None]:
     """Convert dtstart/dtend/dtasof to Python datetime type for request"""
     D = DateTime().convert
     return {d[2:]: D(args[d] or None) for d in ("dtstart", "dtend", "dtasof")}

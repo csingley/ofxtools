@@ -1,11 +1,11 @@
-# coding: utf-8
-""" Unit tests for ofxtools.header """
+"""Unit tests for ofxtools.header"""
 
 # stdlib imports
 import unittest
 import uuid
+from collections.abc import Mapping
 from io import BytesIO
-from typing import Any, Mapping, Optional, Type, Union
+from typing import Any
 from unittest.mock import patch
 from xml.etree.ElementTree import Element
 
@@ -13,14 +13,14 @@ from xml.etree.ElementTree import Element
 import ofxtools
 
 
-class OFXHeaderTestMixin(object):
+class OFXHeaderTestMixin:
     # Override in subclass
-    headerClass: Optional[
-        Union[Type[ofxtools.header.OFXHeaderV1], Type[ofxtools.header.OFXHeaderV2]]
-    ] = None
-    defaultVersion: Optional[int] = None
-    valid: Optional[Mapping[str, Any]] = None
-    invalid: Optional[Mapping[str, Any]] = None
+    headerClass: (
+        type[ofxtools.header.OFXHeaderV1] | type[ofxtools.header.OFXHeaderV2] | None
+    ) = None
+    defaultVersion: int | None = None
+    valid: Mapping[str, Any] | None = None
+    invalid: Mapping[str, Any] | None = None
 
     body = """
     <OFX>
@@ -477,12 +477,14 @@ class OFXHeaderV2TestCase(unittest.TestCase, OFXHeaderTestMixin):
     def testParseHeaderV2NoNewlineBetweenHeaderAndBodyWithUnicode(self):
         """OFXv2 may contain non-ascii characters in the first line,
         if the header is not separated from the body by newlines."""
-        ofxtools.header.parse_header(BytesIO(
-            b'<?xml version="1.0" encoding="utf-8" ?>'
-            b'<?OFX OFXHEADER="200" VERSION="202" SECURITY="NONE" OLDFILEUID="NONE" NEWFILEUID="NONE" ?>'
-            b'Dummy unicode data: A:\xc3\x83\xe2\x80\x9e\xc3\x83\xc2\xa4, '
-            b'O:\xc3\x83\xe2\x80\x93\xc3\x83\xc2\xb6, U:\xc3\x83\xc5\x93\xc3\x83\xc2\xbc'
-        ))
+        ofxtools.header.parse_header(
+            BytesIO(
+                b'<?xml version="1.0" encoding="utf-8" ?>'
+                b'<?OFX OFXHEADER="200" VERSION="202" SECURITY="NONE" OLDFILEUID="NONE" NEWFILEUID="NONE" ?>'
+                b"Dummy unicode data: A:\xc3\x83\xe2\x80\x9e\xc3\x83\xc2\xa4, "
+                b"O:\xc3\x83\xe2\x80\x93\xc3\x83\xc2\xb6, U:\xc3\x83\xc5\x93\xc3\x83\xc2\xbc"
+            )
+        )
 
     def testParseInvalid(self):
         header = str(self.headerClass(self.defaultVersion))
@@ -493,14 +495,15 @@ class OFXHeaderV2TestCase(unittest.TestCase, OFXHeaderTestMixin):
         headerStr = (
             '<?xml version="1.0" encoding="UTF-8" standalone="no"?>'
             + "\r\n"
-            + "<?OFX %s?>"
-            % " ".join(
-                (
-                    'OFXHEADER="200"',
-                    'VERSION="200"',
-                    'SECURITY="TYPE1"',
-                    'OLDFILEUID="p0rkyp1g"',
-                    'NEWFILEUID="d0n41dduck"',
+            + "<?OFX {}?>".format(
+                " ".join(
+                    (
+                        'OFXHEADER="200"',
+                        'VERSION="200"',
+                        'SECURITY="TYPE1"',
+                        'OLDFILEUID="p0rkyp1g"',
+                        'NEWFILEUID="d0n41dduck"',
+                    )
                 )
             )
             + "\r\n" * 2

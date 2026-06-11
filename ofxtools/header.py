@@ -1,4 +1,3 @@
-# vim: set fileencoding=utf-8
 """
 Open Financial Exchange (OFX) message header, both version 1 & version 2 (XML),
 which precedes the OFX message body.
@@ -18,7 +17,6 @@ appropriate header class based on OFX version #.  It's used by
 `ofxtools.Client`.
 """
 
-
 __all__ = [
     "OFXHeaderError",
     "OFXHeaderV1",
@@ -31,7 +29,7 @@ __all__ = [
 # stdlib imports
 import logging
 import re
-from typing import Any, BinaryIO, Optional, Tuple, Union
+from typing import Any, BinaryIO, Union
 
 # local imports
 from ofxtools import Types
@@ -66,7 +64,7 @@ class OFXHeaderBase:
     @classmethod
     def parse(
         cls, rawheader: str
-    ) -> Tuple[Union["OFXHeaderBase", "OFXHeaderV1", "OFXHeaderV2"], int]:
+    ) -> tuple[Union["OFXHeaderBase", "OFXHeaderV1", "OFXHeaderV2"], int]:
         """
         Instantiate from string.
 
@@ -138,15 +136,15 @@ class OFXHeaderV1(OFXHeaderBase):
 
     def __init__(
         self,
-        version: Union[int, str],
-        ofxheader: Optional[int] = None,
-        data: Optional[str] = None,
-        security: Optional[str] = None,
-        encoding: Optional[str] = None,
-        charset: Optional[str] = None,
-        compression: Optional[str] = None,
-        oldfileuid: Optional[str] = None,
-        newfileuid: Optional[str] = None,
+        version: int | str,
+        ofxheader: int | None = None,
+        data: str | None = None,
+        security: str | None = None,
+        encoding: str | None = None,
+        charset: str | None = None,
+        compression: str | None = None,
+        oldfileuid: str | None = None,
+        newfileuid: str | None = None,
     ):
         try:
             self.ofxheader = int(ofxheader or 100)
@@ -206,11 +204,11 @@ class OFXHeaderV2(OFXHeaderBase):
 
     def __init__(
         self,
-        version: Union[int, str],
-        ofxheader: Optional[int] = None,
-        security: Optional[str] = None,
-        oldfileuid: Optional[str] = None,
-        newfileuid: Optional[str] = None,
+        version: int | str,
+        ofxheader: int | None = None,
+        security: str | None = None,
+        oldfileuid: str | None = None,
+        newfileuid: str | None = None,
     ):
         try:
             self.version = int(version)
@@ -231,7 +229,7 @@ class OFXHeaderV2(OFXHeaderBase):
             ("OLDFILEUID", self.oldfileuid),
             ("NEWFILEUID", self.newfileuid),
         )
-        attrs = ["=".join((attr, '"{}"'.format(val))) for attr, val in fields]
+        attrs = ["=".join((attr, f'"{val}"')) for attr, val in fields]
         ofx_decl = "<?OFX {}?>".format(" ".join(attrs))
         return "\r\n".join((xml_decl, ofx_decl, ""))
 
@@ -246,7 +244,7 @@ XML_REGEX = re.compile(
 )
 
 
-def parse_header(source: BinaryIO) -> Tuple[OFXHeaderType, str]:
+def parse_header(source: BinaryIO) -> tuple[OFXHeaderType, str]:
     """
     Consume source; feed to appropriate class constructor which performs
     validation/type conversion on OFX header.
@@ -320,10 +318,10 @@ def parse_header(source: BinaryIO) -> Tuple[OFXHeaderType, str]:
 
 
 def make_header(
-    version: Union[int, str],
-    security: Optional[str] = None,
-    oldfileuid: Optional[str] = None,
-    newfileuid: Optional[str] = None,
+    version: int | str,
+    security: str | None = None,
+    oldfileuid: str | None = None,
+    newfileuid: str | None = None,
 ) -> OFXHeaderType:
     """
     Route to OFXHeaderV1 / OFXHeaderV2 according to the input OFX version #,

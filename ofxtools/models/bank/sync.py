@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Data synchronization for banking - OFX Section 11.12
 """
-
 
 __all__ = [
     "STPCHKSYNCRQ",

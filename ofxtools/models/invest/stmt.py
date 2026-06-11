@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Investments - OFX Section 13
 """
-
 
 __all__ = [
     "LOANPMTFREQUENCIES",

@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Network client that composes/transmits Open Financial Exchange (OFX) requests,
 and receives OFX responses in reply.  A basic CLI utility is included.
@@ -33,7 +32,6 @@ For example:
 >>> response = client.request_statements("t0ps3kr1t", s0, s1, c0)
 """
 
-
 __all__ = [
     "AUTH_PLACEHOLDER",
     "StmtRq",
@@ -54,18 +52,13 @@ import logging
 import urllib.request as urllib_request
 import uuid
 import xml.etree.ElementTree as ET
+from collections.abc import Iterator
 from functools import singledispatch
 from io import BytesIO
 from operator import attrgetter, itemgetter
 from typing import (
     BinaryIO,
-    Dict,
-    Iterator,
     NamedTuple,
-    Optional,
-    Tuple,
-    Type,
-    Union,
 )
 
 # 3rd party libs
@@ -137,11 +130,11 @@ class StmtRq(NamedTuple):
     Parameters of a bank statement request
     """
 
-    acctid: Optional[str] = None
-    accttype: Optional[str] = None
-    dtstart: Optional[datetime.datetime] = None
-    dtend: Optional[datetime.datetime] = None
-    inctran: Optional[bool] = True
+    acctid: str | None = None
+    accttype: str | None = None
+    dtstart: datetime.datetime | None = None
+    dtend: datetime.datetime | None = None
+    inctran: bool | None = True
 
 
 class CcStmtRq(NamedTuple):
@@ -149,10 +142,10 @@ class CcStmtRq(NamedTuple):
     Parameters of a credit card statement request
     """
 
-    acctid: Optional[str] = None
-    dtstart: Optional[datetime.datetime] = None
-    dtend: Optional[datetime.datetime] = None
-    inctran: Optional[bool] = True
+    acctid: str | None = None
+    dtstart: datetime.datetime | None = None
+    dtend: datetime.datetime | None = None
+    inctran: bool | None = True
 
 
 class InvStmtRq(NamedTuple):
@@ -160,14 +153,14 @@ class InvStmtRq(NamedTuple):
     Parameters of an investment account statement request
     """
 
-    acctid: Optional[str] = None
-    dtstart: Optional[datetime.datetime] = None
-    dtend: Optional[datetime.datetime] = None
-    dtasof: Optional[datetime.datetime] = None
-    inctran: Optional[bool] = True
-    incoo: Optional[bool] = False
-    incpos: Optional[bool] = True
-    incbal: Optional[bool] = True
+    acctid: str | None = None
+    dtstart: datetime.datetime | None = None
+    dtend: datetime.datetime | None = None
+    dtasof: datetime.datetime | None = None
+    inctran: bool | None = True
+    incoo: bool | None = False
+    incpos: bool | None = True
+    incbal: bool | None = True
 
 
 class StmtEndRq(NamedTuple):
@@ -175,10 +168,10 @@ class StmtEndRq(NamedTuple):
     Parameters of a bank statement ending balance request
     """
 
-    acctid: Optional[str] = None
-    accttype: Optional[str] = None
-    dtstart: Optional[datetime.datetime] = None
-    dtend: Optional[datetime.datetime] = None
+    acctid: str | None = None
+    accttype: str | None = None
+    dtstart: datetime.datetime | None = None
+    dtend: datetime.datetime | None = None
 
 
 class CcStmtEndRq(NamedTuple):
@@ -186,29 +179,29 @@ class CcStmtEndRq(NamedTuple):
     Parameters of a credit card statement ending balance request
     """
 
-    acctid: Optional[str] = None
-    dtstart: Optional[datetime.datetime] = None
-    dtend: Optional[datetime.datetime] = None
+    acctid: str | None = None
+    dtstart: datetime.datetime | None = None
+    dtend: datetime.datetime | None = None
 
 
 # TYPE ALIASES
-RequestParam = Union[StmtRq, CcStmtRq, InvStmtRq, StmtEndRq, CcStmtEndRq]
-Request = Union[STMTRQ, CCSTMTRQ, INVSTMTRQ, STMTENDRQ, CCSTMTENDRQ]
-Message = Union[BANKMSGSRQV1, CREDITCARDMSGSRQV1, INVSTMTMSGSRQV1]
-MsgsetClass = Union[
-    Type[SIGNONMSGSET],
-    Type[SIGNUPMSGSET],
-    Type[BANKMSGSET],
-    Type[CREDITCARDMSGSET],
-    Type[INVSTMTMSGSET],
-    Type[INTERXFERMSGSET],
-    Type[WIREXFERMSGSET],
-    Type[BILLPAYMSGSET],
-    Type[EMAILMSGSET],
-    Type[SECLISTMSGSET],
-    Type[PROFMSGSET],
-    Type[TAX1099MSGSET],
-]
+RequestParam = StmtRq | CcStmtRq | InvStmtRq | StmtEndRq | CcStmtEndRq
+Request = STMTRQ | CCSTMTRQ | INVSTMTRQ | STMTENDRQ | CCSTMTENDRQ
+Message = BANKMSGSRQV1 | CREDITCARDMSGSRQV1 | INVSTMTMSGSRQV1
+MsgsetClass = (
+    type[SIGNONMSGSET]
+    | type[SIGNUPMSGSET]
+    | type[BANKMSGSET]
+    | type[CREDITCARDMSGSET]
+    | type[INVSTMTMSGSET]
+    | type[INTERXFERMSGSET]
+    | type[WIREXFERMSGSET]
+    | type[BILLPAYMSGSET]
+    | type[EMAILMSGSET]
+    | type[SECLISTMSGSET]
+    | type[PROFMSGSET]
+    | type[TAX1099MSGSET]
+)
 
 
 class OFXClient:
@@ -218,9 +211,9 @@ class OFXClient:
 
     # OFX header/signon defaults
     userid: str = AUTH_PLACEHOLDER
-    clientuid: Optional[str] = None
-    org: Optional[str] = None
-    fid: Optional[str] = None
+    clientuid: str | None = None
+    org: str | None = None
+    fid: str | None = None
     version: int = 203
     appid: str = "QWIN"
     appver: str = "2700"
@@ -232,8 +225,8 @@ class OFXClient:
     close_elements: bool = True
 
     # Stmt request
-    bankid: Optional[str] = None
-    brokerid: Optional[str] = None
+    bankid: str | None = None
+    brokerid: str | None = None
     persist_cookies: bool = True
 
     def __repr__(self) -> str:
@@ -251,20 +244,20 @@ class OFXClient:
     def __init__(
         self,
         url: str,
-        userid: Optional[str] = None,
-        clientuid: Optional[str] = None,
-        org: Optional[str] = None,
-        fid: Optional[str] = None,
-        version: Optional[int] = None,
-        appid: Optional[str] = None,
-        appver: Optional[str] = None,
-        language: Optional[str] = None,
-        prettyprint: Optional[bool] = None,
-        close_elements: Optional[bool] = None,
-        bankid: Optional[str] = None,
-        brokerid: Optional[str] = None,
-        useragent: Optional[str] = None,
-        persist_cookies: Optional[bool] = None,
+        userid: str | None = None,
+        clientuid: str | None = None,
+        org: str | None = None,
+        fid: str | None = None,
+        version: int | None = None,
+        appid: str | None = None,
+        appver: str | None = None,
+        language: str | None = None,
+        prettyprint: bool | None = None,
+        close_elements: bool | None = None,
+        bankid: str | None = None,
+        brokerid: str | None = None,
+        useragent: str | None = None,
+        persist_cookies: bool | None = None,
     ):
         self.url = url
 
@@ -306,7 +299,7 @@ class OFXClient:
         return str(uuid.uuid4()).upper()
 
     @property
-    def http_headers(self) -> Dict[str, str]:
+    def http_headers(self) -> dict[str, str]:
         """Pass to urllib.request.urlopen()"""
         mimetype = "application/x-ofx"
         # Python libraries such as ``urllib.request`` and ``requests``
@@ -317,7 +310,7 @@ class OFXClient:
             "Content-Type": mimetype,
             # Apparently Amex is unhappy unless it sees a MIME type of application/xml
             # with some quality rating - ANY quality rating, it seems.
-            "Accept": "*/*, {}, application/xml;q=0.9".format(mimetype),
+            "Accept": f"*/*, {mimetype}, application/xml;q=0.9",
         }
 
     def dtclient(self) -> datetime.datetime:
@@ -333,7 +326,7 @@ class OFXClient:
         *requests: RequestParam,
         gen_newfileuid: bool = True,
         dryrun: bool = False,
-        timeout: Optional[float] = None,
+        timeout: float | None = None,
         skip_profile: bool = False,
     ) -> BinaryIO:
         """
@@ -389,11 +382,11 @@ class OFXClient:
         # N.B. we need to annotate first arg as typing.Type here to indicate that
         # we're passing in a class not an instance.
         def msg_args(
-            msgcls: Union[
-                Type[BANKMSGSRQV1], Type[CREDITCARDMSGSRQV1], Type[INVSTMTMSGSRQV1]
-            ],
+            msgcls: type[BANKMSGSRQV1]
+            | type[CREDITCARDMSGSRQV1]
+            | type[INVSTMTMSGSRQV1],
             trnrqs: Iterator[Request],
-        ) -> Tuple[str, Message]:
+        ) -> tuple[str, Message]:
             trnrqs_ = list(itertools.chain.from_iterable(t[1] for t in trnrqs))
             attr_name = msgcls.__name__.lower()
             return (attr_name, msgcls(*trnrqs_))
@@ -422,7 +415,7 @@ class OFXClient:
 
     def _get_service_urls(
         self,
-        timeout: Optional[float] = None,
+        timeout: float | None = None,
         gen_newfileuid: bool = True,
     ) -> dict:
         """Query OFX profile endpoint to construct mapping of statement request
@@ -451,7 +444,7 @@ class OFXClient:
         # Also map *STMTENDRQ
         def map_stmtendrq_urls(
             msgsetCls: MsgsetClass,
-            stmtendrqCls: Union[Type[StmtEndRq], Type[CcStmtEndRq]],
+            stmtendrqCls: type[StmtEndRq] | type[CcStmtEndRq],
         ):
             try:
                 index = [type(msgset) for msgset in msgsetlist].index(msgsetCls)
@@ -469,13 +462,13 @@ class OFXClient:
 
     def request_profile(
         self,
-        version: Optional[int] = None,
+        version: int | None = None,
         gen_newfileuid: bool = True,
-        prettyprint: Optional[bool] = None,
-        close_elements: Optional[bool] = None,
+        prettyprint: bool | None = None,
+        close_elements: bool | None = None,
         dryrun: bool = False,
-        timeout: Optional[float] = None,
-        url: Optional[str] = None,
+        timeout: float | None = None,
+        url: str | None = None,
         persist: bool = True,
     ) -> BinaryIO:
         """Request/cache OFX profiles (PROFRS).
@@ -488,7 +481,7 @@ class OFXClient:
 
         if persistpath.exists():
             with open(persistpath, "rb") as f:
-                profrs: Optional[BytesIO] = BytesIO(f.read())
+                profrs: BytesIO | None = BytesIO(f.read())
 
             parser = OFXTree()
             parser.parse(profrs)
@@ -546,14 +539,14 @@ class OFXClient:
 
     def _request_profile(
         self,
-        dtprofup: Optional[datetime.datetime] = None,
-        version: Optional[int] = None,
+        dtprofup: datetime.datetime | None = None,
+        version: int | None = None,
         gen_newfileuid: bool = True,
-        prettyprint: Optional[bool] = None,
-        close_elements: Optional[bool] = None,
+        prettyprint: bool | None = None,
+        close_elements: bool | None = None,
         dryrun: bool = False,
-        timeout: Optional[float] = None,
-        url: Optional[str] = None,
+        timeout: float | None = None,
+        url: str | None = None,
     ) -> BytesIO:
         """Package and send OFX profile requests (PROFRQ)."""
         logger.info("Creating profile request")
@@ -591,9 +584,9 @@ class OFXClient:
         password: str,
         dtacctup: datetime.datetime,
         dryrun: bool = False,
-        version: Optional[int] = None,
+        version: int | None = None,
         gen_newfileuid: bool = True,
-        timeout: Optional[float] = None,
+        timeout: float | None = None,
         skip_profile: bool = False,
     ) -> BinaryIO:
         """
@@ -644,11 +637,11 @@ class OFXClient:
         self,
         password: str,
         *taxyears: str,
-        acctnum: Optional[str] = None,
-        recid: Optional[str] = None,
+        acctnum: str | None = None,
+        recid: str | None = None,
         gen_newfileuid: bool = True,
         dryrun: bool = False,
-        timeout: Optional[float] = None,
+        timeout: float | None = None,
         skip_profile: bool = False,
     ) -> BinaryIO:
         """
@@ -697,12 +690,12 @@ class OFXClient:
     def signon(
         self,
         userpass: str,
-        userid: Optional[str] = None,
-        sesscookie: Optional[str] = None,
+        userid: str | None = None,
+        sesscookie: str | None = None,
     ) -> SIGNONMSGSRQV1:
         """Construct SONRQ; package in SIGNONMSGSRQV1"""
         if self.org:
-            fi: Optional[FI] = FI(org=self.org, fid=self.fid)
+            fi: FI | None = FI(org=self.org, fid=self.fid)
         else:
             fi = None
 
@@ -733,8 +726,8 @@ class OFXClient:
         bankid: str,
         acctid: str,
         accttype: str,
-        dtstart: Optional[datetime.datetime] = None,
-        dtend: Optional[datetime.datetime] = None,
+        dtstart: datetime.datetime | None = None,
+        dtend: datetime.datetime | None = None,
         inctran: bool = True,
     ) -> STMTTRNRQ:
         """Construct STMTRQ; package in STMTTRNRQ"""
@@ -749,8 +742,8 @@ class OFXClient:
         bankid: str,
         acctid: str,
         accttype: str,
-        dtstart: Optional[datetime.datetime] = None,
-        dtend: Optional[datetime.datetime] = None,
+        dtstart: datetime.datetime | None = None,
+        dtend: datetime.datetime | None = None,
     ) -> STMTENDTRNRQ:
         """Construct STMTENDRQ; package in STMTENDTRNRQ"""
         acct = BANKACCTFROM(bankid=bankid, acctid=acctid, accttype=accttype)
@@ -761,8 +754,8 @@ class OFXClient:
     def ccstmttrnrq(
         self,
         acctid: str,
-        dtstart: Optional[datetime.datetime] = None,
-        dtend: Optional[datetime.datetime] = None,
+        dtstart: datetime.datetime | None = None,
+        dtend: datetime.datetime | None = None,
         inctran: bool = True,
     ) -> CCSTMTTRNRQ:
         """Construct CCSTMTRQ; package in CCSTMTTRNRQ"""
@@ -775,8 +768,8 @@ class OFXClient:
     def ccstmtendtrnrq(
         self,
         acctid: str,
-        dtstart: Optional[datetime.datetime] = None,
-        dtend: Optional[datetime.datetime] = None,
+        dtstart: datetime.datetime | None = None,
+        dtend: datetime.datetime | None = None,
     ) -> CCSTMTENDTRNRQ:
         """Construct CCSTMTENDRQ; package in CCSTMTENDTRNRQ"""
         acct = CCACCTFROM(acctid=acctid)
@@ -788,18 +781,18 @@ class OFXClient:
         self,
         acctid: str,
         brokerid: str,
-        dtstart: Optional[datetime.datetime] = None,
-        dtend: Optional[datetime.datetime] = None,
+        dtstart: datetime.datetime | None = None,
+        dtend: datetime.datetime | None = None,
         inctran: bool = True,
         incoo: bool = False,
-        dtasof: Optional[datetime.datetime] = None,
+        dtasof: datetime.datetime | None = None,
         incpos: bool = True,
         incbal: bool = True,
     ) -> INVSTMTTRNRQ:
         """Construct INVSTMTRQ; package in INVSTMTTRNRQ"""
         acct = INVACCTFROM(acctid=acctid, brokerid=brokerid)
         if inctran:
-            inctran_: Optional[INCTRAN] = INCTRAN(
+            inctran_: INCTRAN | None = INCTRAN(
                 dtstart=dtstart, dtend=dtend, include=inctran
             )
         else:
@@ -818,14 +811,14 @@ class OFXClient:
     def download(
         self,
         ofx: OFX,
-        version: Optional[int] = None,
-        oldfileuid: Optional[str] = None,
-        newfileuid: Optional[str] = None,
-        prettyprint: Optional[bool] = None,
-        close_elements: Optional[bool] = None,
+        version: int | None = None,
+        oldfileuid: str | None = None,
+        newfileuid: str | None = None,
+        prettyprint: bool | None = None,
+        close_elements: bool | None = None,
         dryrun: bool = False,
-        timeout: Optional[float] = None,
-        url: Optional[str] = None,
+        timeout: float | None = None,
+        url: str | None = None,
     ) -> BytesIO:
         """
         Package complete OFX tree and POST to server.
@@ -866,7 +859,7 @@ class OFXClient:
         return BytesIO(response)
 
     def post_request(
-        self, url: str, serialized_request: bytes, timeout: Optional[float]
+        self, url: str, serialized_request: bytes, timeout: float | None
     ) -> bytes:
         """Separated out to facilitate mocking in unit tests."""
         if timeout in (None, False):
@@ -905,11 +898,11 @@ class OFXClient:
     def serialize(
         self,
         ofx: OFX,
-        version: Optional[int] = None,
-        oldfileuid: Optional[str] = None,
-        newfileuid: Optional[str] = None,
-        prettyprint: Optional[bool] = None,
-        close_elements: Optional[bool] = None,
+        version: int | None = None,
+        oldfileuid: str | None = None,
+        newfileuid: str | None = None,
+        prettyprint: bool | None = None,
+        close_elements: bool | None = None,
     ) -> bytes:
         """
         Transform a ``models.OFX`` instance into bytestring representation

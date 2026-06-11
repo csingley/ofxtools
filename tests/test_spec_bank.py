@@ -1,7 +1,7 @@
-# coding: utf-8
 """
 Examples - OFX Section 11.14
 """
+
 # stdlib imports
 import unittest
 from datetime import datetime

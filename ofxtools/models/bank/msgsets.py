@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Banking message sets
 """
-
 
 __all__ = [
     "BANKMSGSRQV1",

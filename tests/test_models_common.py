@@ -1,5 +1,5 @@
-# coding: utf-8
-""" Unit tests for models.common """
+"""Unit tests for models.common"""
+
 # stdlib imports
 import unittest
 import xml.etree.ElementTree as ET
@@ -161,9 +161,7 @@ class TranListTestCase(unittest.TestCase, base.TestAggregate):
         rep = repr(self.aggregate)
         self.assertEqual(
             rep,
-            "<TESTTRANLIST dtstart='{}' dtend='{}' len=2>".format(
-                datetime(2015, 1, 1, tzinfo=UTC), datetime(2015, 3, 31, tzinfo=UTC)
-            ),
+            f"<TESTTRANLIST dtstart='{datetime(2015, 1, 1, tzinfo=UTC)}' dtend='{datetime(2015, 3, 31, tzinfo=UTC)}' len=2>",
         )
 
 

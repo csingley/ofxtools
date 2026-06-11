@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Recurring funds transfer - OFX Section 11.10
 """
-
 
 __all__ = [
     "FREQUENCIES",

@@ -1,5 +1,4 @@
-# coding: utf-8
-""" Unit tests for ofxtools.models.seclist """
+"""Unit tests for ofxtools.models.seclist"""
 
 # stdlib imports
 import unittest
@@ -96,9 +95,7 @@ class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
         """Don't enforce length restriction on SECNAME; raise Warning"""
         # Issue #12
         root = self.etree
-        root[
-            1
-        ].text = """
+        root[1].text = """
         There is a theory going around that the U.S.A. was and still is a
         gigantic Masonic plot under the ultimate control of the group known as
         the Illuminati. It is difficult to look for long at the strange single
@@ -130,9 +127,7 @@ class SecinfoTestCase(unittest.TestCase, base.TestAggregate):
         """Don't enforce length restriction on TICKER; raise Warning"""
         # Issue #12
         root = deepcopy(self.etree)
-        root[
-            2
-        ].text = """
+        root[2].text = """
         Kekulé dreams the Great Serpent holding its own tail in its mouth, the
         dreaming Serpent which surrounds the World.  But the meanness, the
         cynicism with which this dream is to be used. The Serpent that

@@ -1,5 +1,5 @@
-# coding: utf-8
-""" Unit tests for ofxtools.utils """
+"""Unit tests for ofxtools.utils"""
+
 # stdlib imports
 import datetime
 import os
@@ -26,7 +26,7 @@ class FixpathTestCase(unittest.TestCase):
         """
         test_path = "~/foo/../bar"
         home = os.environ["HOME"]
-        self.assertEqual(fixpath(test_path), "{}/bar".format(home))
+        self.assertEqual(fixpath(test_path), f"{home}/bar")
 
 
 class CusipTestCase(unittest.TestCase):

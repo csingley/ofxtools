@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Activation and Account Information - OFX Section 8
 """
-
 
 __all__ = [
     "ENROLLRQ",
@@ -164,9 +162,7 @@ class ACCTINFO(Aggregate):
         super().validate_args(*args, **kwargs)
 
     def __repr__(self):
-        return "<{} desc='{}' phone='{}' len={}>".format(
-            self.__class__.__name__, self.desc, self.phone, len(self)
-        )
+        return f"<{self.__class__.__name__} desc='{self.desc}' phone='{self.phone}' len={len(self)}>"
 
 
 class ACCTINFORQ(Aggregate):
@@ -182,9 +178,7 @@ class ACCTINFORS(Aggregate):
     acctinfo = ListAggregate(ACCTINFO)
 
     def __repr__(self):
-        return "<{} dtacctup='{}' len={}>".format(
-            self.__class__.__name__, self.dtacctup, len(self)
-        )
+        return f"<{self.__class__.__name__} dtacctup='{self.dtacctup}' len={len(self)}>"
 
 
 class ACCTINFOTRNRQ(TrnRq):

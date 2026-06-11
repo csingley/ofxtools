@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Data synchronization for payments - OFX Section 12.10
 """
-
 
 __all__ = [
     "PMTSYNCRQ",

@@ -1,6 +1,3 @@
-# coding: utf-8
-
-
 # 2-letter country codes for numbering agencies (used to construct ISINs)
 # Swiped from
 # http://code.activestate.com/recipes/498277-isin-validator/

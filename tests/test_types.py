@@ -1,11 +1,10 @@
-# coding: utf-8
-""" Unit tests for ofxtools.Types """
+"""Unit tests for ofxtools.Types"""
+
 # stdlib imports
 import datetime
 import decimal
 import unittest
 import warnings
-from typing import Optional
 
 # local imports
 import ofxtools
@@ -416,13 +415,13 @@ class TestingTimezone(datetime.tzinfo):
         self.name = name
         self.offset = offset
 
-    def utcoffset(self, dst: Optional[datetime.datetime]) -> datetime.timedelta:
+    def utcoffset(self, dst: datetime.datetime | None) -> datetime.timedelta:
         return self.offset
 
-    def dst(self, dst: Optional[datetime.datetime]) -> Optional[datetime.timedelta]:
+    def dst(self, dst: datetime.datetime | None) -> datetime.timedelta | None:
         return None
 
-    def tzname(self, dst: Optional[datetime.datetime]) -> Optional[str]:
+    def tzname(self, dst: datetime.datetime | None) -> str | None:
         return self.name
 
 

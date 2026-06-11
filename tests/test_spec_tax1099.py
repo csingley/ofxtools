@@ -1,7 +1,7 @@
-# coding: utf-8
 """
 Examples - OFX Tax Extensions (Form 1099)
 """
+
 # stdlib imports
 import unittest
 from datetime import datetime

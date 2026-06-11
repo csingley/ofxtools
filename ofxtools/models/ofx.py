@@ -1,9 +1,7 @@
-# coding: utf-8
 """
 Python object model for fundamental data aggregates such as transactions,
 balances, and securities.
 """
-
 
 __all__ = ["OFX"]
 
@@ -89,7 +87,7 @@ class OFX(Aggregate):
         super().validate_args(*args, **kwargs)
 
     def __repr__(self):
-        s = "<{} ".format(self.__class__.__name__)
+        s = f"<{self.__class__.__name__} "
         signon = self.signon
         if signon.fi is not None:
             s += f"fid='{signon.fi.fid}' org='{signon.fi.org}' "

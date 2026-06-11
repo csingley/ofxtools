@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Wire fund transfers - OFX Section 11.9
 """

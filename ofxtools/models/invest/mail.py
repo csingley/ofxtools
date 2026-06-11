@@ -1,7 +1,7 @@
-# coding: utf-8
 """
 Investment Email - OFX Section 13.10
 """
+
 # local imports
 from ofxtools.models.base import Aggregate
 from ofxtools.models.email import MAIL

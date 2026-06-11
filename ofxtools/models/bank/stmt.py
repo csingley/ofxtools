@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Bank statement download - OFX Section 11.4
 """
-
 
 __all__ = [
     "INV401KSOURCES",

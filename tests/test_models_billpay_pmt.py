@@ -1,5 +1,5 @@
-# coding: utf-8
-""" Unit tests for models.billpay.pmt """
+"""Unit tests for models.billpay.pmt"""
+
 # stdlib imports
 import itertools
 import unittest

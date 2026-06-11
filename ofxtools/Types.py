@@ -37,7 +37,7 @@ import inspect
 import re
 import warnings
 from functools import singledispatchmethod
-from typing import Any, Optional, Type, Union
+from typing import Any
 from xml.sax import saxutils
 
 # local imports
@@ -248,7 +248,7 @@ class String(Element):
         return value
 
     @convert.register
-    def _convert_str(self, value: str) -> Optional[str]:
+    def _convert_str(self, value: str) -> str | None:
         if value == "":
             return self.enforce_required(None)
 
@@ -364,7 +364,7 @@ class Integer(Element):
         return value
 
     @convert.register
-    def convert_str(self, value: str) -> Optional[int]:
+    def convert_str(self, value: str) -> int | None:
         if len(value) == 0:
             return self.enforce_required(None)
         return self.enforce_length(int(value))
@@ -555,7 +555,7 @@ class DateTime(Element):
     """OFX Section 3.2.8.2"""
 
     # __type__ must be compatible with Time subclass override
-    __type__: Union[Type[datetime.datetime], Type[datetime.time]] = datetime.datetime
+    __type__: type[datetime.datetime] | type[datetime.time] = datetime.datetime
     regex = DT_REGEX
 
     @singledispatchmethod
@@ -593,7 +593,7 @@ class DateTime(Element):
         return self.normalize_to_gmt(self.__type__(**intmatches), gmt_offset)  # type: ignore
 
     def parse_gmt_offset(
-        self, hours: Optional[str], minutes: Optional[str], tz_name: Optional[str]
+        self, hours: str | None, minutes: str | None, tz_name: str | None
     ) -> datetime.timedelta:
         try:
             gmt_offset_hours = int(hours or 0)

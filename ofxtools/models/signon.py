@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Client signon - OFX Section 2.5
 """
-
 
 __all__ = [
     "FI",

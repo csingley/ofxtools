@@ -1,10 +1,8 @@
-# coding: utf-8
 """
 Common payments aggregates - OFX Section 12.5
 
 PAYEE is defined in ``ofxtools.models.bank.stmt`` to avoid circular imports.
 """
-
 
 __all__ = [
     "BPACCTINFO",

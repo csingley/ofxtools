@@ -1,5 +1,5 @@
-# coding: utf-8
-""" Unit tests for models.invest """
+"""Unit tests for models.invest"""
+
 # stdlib imports
 import unittest
 from datetime import datetime
@@ -161,7 +161,7 @@ class InvposlistTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("INVPOSLIST")
         for invpos in ("Posdebt", "Posmf", "Posopt", "Posother", "Posstock"):
-            testCase = "{}TestCase".format(invpos)
+            testCase = f"{invpos}TestCase"
             elem = globals()[testCase].etree
             root.append(elem)
         return root

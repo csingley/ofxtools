@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 email - OFX Section 9
 """
-
 
 __all__ = [
     "MAIL",

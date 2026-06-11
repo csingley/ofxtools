@@ -1,8 +1,6 @@
-# coding: utf-8
 """
 Statement closing information - OFX Section 11.5
 """
-
 
 __all__ = [
     "CLOSING",
