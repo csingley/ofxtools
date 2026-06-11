@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ofxtools"
-version = "0.9.5"
+version = "1.0.0"
 description = "Library for working with Open Financial Exchange (OFX) data"
 readme = {file = "README.rst", content-type = "text/x-rst"}
 license = "GPL-3.0-only"
