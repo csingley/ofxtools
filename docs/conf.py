@@ -18,7 +18,6 @@
 
 import ofxtools
 
-
 # -- Project information -----------------------------------------------------
 project = ofxtools.__title__
 copyright = ofxtools.__copyright__
