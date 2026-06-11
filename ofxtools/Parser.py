@@ -246,7 +246,7 @@ def main(*files):
         print("=" * 79)
 
 
-LOG_LEVELS = {0: logging.WARN, 1: logging.INFO, 2: logging.DEBUG}
+LOG_LEVELS = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
 
 
 if __name__ == "__main__":

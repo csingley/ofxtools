@@ -1579,7 +1579,7 @@ def save_passwd(args: Mapping, password: str) -> None:
     keyring.set_password("ofxtools", server, password)
 
 
-LOG_LEVELS = {0: logging.WARN, 1: logging.INFO, 2: logging.DEBUG}
+LOG_LEVELS = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
 
 
 # Map "request" arg to handler function

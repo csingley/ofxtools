@@ -47,7 +47,7 @@ setup(
     #  download_url="{}/{}".format(URL_BASE, ABOUT["__version__"]),
     entry_points={"console_scripts": ["ofxget=ofxtools.scripts.ofxget:main"]},
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "Intended Audience :: Financial and Insurance Industry",
         "Topic :: Software Development :: Libraries :: Python Modules",
@@ -65,6 +65,8 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
     ],
     keywords=["ofx", "Open Financial Exchange"],
 )

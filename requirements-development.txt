@@ -1,6 +1,3 @@
---index-url https://pypi.python.org/simple/
-
-# `setup.py develop`
 -e .
 
 requests
@@ -11,7 +8,6 @@ pytest-cov
 coverage
 pylint
 ipdb
-ipdbplugin
 coveralls
 mypy
 black
