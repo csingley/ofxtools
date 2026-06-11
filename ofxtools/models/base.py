@@ -64,6 +64,17 @@ class UnknownTagWarning(OFXAggregateWarning):
     """
 
 
+class PrivateTagWarning(OFXAggregateWarning):
+    """An OFX private extension tag (containing a period) was encountered and skipped.
+
+    OFX Section 2.7.1 Private Tag Extension:
+
+        All tag names that do not contain a period (.) are reserved for use in
+        future versions of the Open Financial Exchange specification. A period in
+        a tag name indicates a private tag extension.
+    """
+
+
 class Aggregate(list):
     """
     Base class for Python representation of OFX 'aggregate', i.e. SGML/XML
@@ -316,7 +327,10 @@ class Aggregate(list):
 
         for child in set(elem):
             if "." in child.tag:
-                logger.debug(f"Removing extended tag <{child.tag}>")
+                warnings.warn(
+                    f"Encountered private extension tag <{child.tag}>; skipping.",
+                    category=PrivateTagWarning,
+                )
                 elem.remove(child)
 
         return elem

@@ -553,6 +553,25 @@ class OFXHeaderV2TestCase(unittest.TestCase, OFXHeaderTestMixin):
         self.assertEqual(body, self.body)
 
 
+class ParseHeaderEOFTestCase(unittest.TestCase):
+    """parse_header() should raise OFXHeaderError on empty/truncated input rather
+    than blocking on readline() indefinitely."""
+
+    def testEmptySource(self):
+        with self.assertRaises(ofxtools.header.OFXHeaderError):
+            ofxtools.header.parse_header(BytesIO(b""))
+
+    def testOnlyNewlines(self):
+        with self.assertRaises(ofxtools.header.OFXHeaderError):
+            ofxtools.header.parse_header(BytesIO(b"\n\n\n\n\n\n\n\n"))
+
+    def testTruncatedV1Header(self):
+        # Fewer than 9 header lines — should raise, not hang
+        truncated = b"OFXHEADER:100\nDATA:OFXSGML\n"
+        with self.assertRaises(ofxtools.header.OFXHeaderError):
+            ofxtools.header.parse_header(BytesIO(truncated))
+
+
 class MakeHeaderTestCase(unittest.TestCase):
     def testOfxV1(self):
         """

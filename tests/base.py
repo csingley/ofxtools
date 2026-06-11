@@ -10,7 +10,7 @@ from typing import Any
 
 # local imports
 import ofxtools.models
-from ofxtools.models.base import Aggregate, UnknownTagWarning
+from ofxtools.models.base import Aggregate, PrivateTagWarning, UnknownTagWarning
 from ofxtools.models.common import STATUS
 from ofxtools.Parser import OFXTree, TreeBuilder
 from ofxtools.utils import classproperty, indent
@@ -84,6 +84,14 @@ class TestAggregate:
         etree = deepcopy(self.etree)
         ET.SubElement(etree, "FAKEELEMENT").text = "garbage"
         with self.assertWarns(UnknownTagWarning):
+            Aggregate.from_etree(etree)
+
+    def testPrivateTagElement(self):
+        # OFX §2.7.1: tags containing '.' are private vendor extensions and
+        # should be skipped with PrivateTagWarning, not UnknownTagWarning.
+        etree = deepcopy(self.etree)
+        ET.SubElement(etree, "VENDOR.PRIVATE").text = "data"
+        with self.assertWarns(PrivateTagWarning):
             Aggregate.from_etree(etree)
 
     def oneOfTest(self, tag, texts):

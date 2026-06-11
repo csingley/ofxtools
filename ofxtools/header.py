@@ -269,7 +269,10 @@ def parse_header(source: BinaryIO) -> tuple[OFXHeaderType, str]:
 
         # OFX header is read by nice clean machines, not meatbags -
         # should not contain 💩, 漢字, or what have you.
-        line = source.readline().decode("ascii", "replace")
+        raw = source.readline()
+        if not raw:  # EOF — stop rather than blocking forever on a slow/broken FI
+            break
+        line = raw.decode("ascii", "replace")
         if line.strip():
             found_header = True
             break
@@ -298,7 +301,10 @@ def parse_header(source: BinaryIO) -> tuple[OFXHeaderType, str]:
         # First line is OFXHEADER; need to read next 8 lines for a fixed
         # total of 9 fields required by OFX v1 spec.
         for _ in range(8):
-            rawheader += source.readline().decode("ascii")
+            raw = source.readline()
+            if not raw:  # EOF
+                break
+            rawheader += raw.decode("ascii")
 
         header, header_end_offset = OFXHeaderV1.parse(rawheader)
 
