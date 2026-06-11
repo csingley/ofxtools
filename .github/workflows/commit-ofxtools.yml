@@ -12,33 +12,23 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.9, "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-    # - name: Cache pip
-    #   uses: actions/cache@v2
-    #   with:
-    #     path: ~/.cache/pip  # This path is specific to Ubuntu
-    #     # Look to see if there is a cache hit for the corresponding requirements file
-    #     key: ${{ runner.os }}-pip-${{ hashFiles('requirements-development.txt') }}
-    #     restore-keys: |
-    #       ${{ runner.os }}-pip-
-    #       ${{ runner.os }}-
     - name: Install dependencies
-      run: pip install -r requirements-development.txt
-    - name: Standardize code formatting with black
-      run: black --check .
+      run: pip install -e ".[net,dev]"
+    - name: Lint with ruff
+      run: ruff check
     - name: Static analysis with mypy
-      run: mypy ofxtools tests
+      run: mypy
     - name: Run tests
       run: pytest --cov-report lcov:coverage.lcov --cov=ofxtools tests/
-    - run: find .
     - name: Coveralls
-      uses: coverallsapp/github-action@v1
+      uses: coverallsapp/github-action@v2
       with:
         path-to-lcov: coverage.lcov
