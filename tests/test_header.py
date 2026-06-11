@@ -474,6 +474,16 @@ class OFXHeaderV2TestCase(unittest.TestCase, OFXHeaderTestMixin):
         self.assertIsNone(root.text)
         self.assertEqual(len(root), 1)
 
+    def testParseHeaderV2NoNewlineBetweenHeaderAndBodyWithUnicode(self):
+        """OFXv2 may contain non-ascii characters in the first line,
+        if the header is not separated from the body by newlines."""
+        ofxtools.header.parse_header(BytesIO(
+            b'<?xml version="1.0" encoding="utf-8" ?>'
+            b'<?OFX OFXHEADER="200" VERSION="202" SECURITY="NONE" OLDFILEUID="NONE" NEWFILEUID="NONE" ?>'
+            b'Dummy unicode data: A:\xc3\x83\xe2\x80\x9e\xc3\x83\xc2\xa4, '
+            b'O:\xc3\x83\xe2\x80\x93\xc3\x83\xc2\xb6, U:\xc3\x83\xc5\x93\xc3\x83\xc2\xbc'
+        ))
+
     def testParseInvalid(self):
         header = str(self.headerClass(self.defaultVersion))
         with self.assertRaises(ofxtools.header.OFXHeaderError):
