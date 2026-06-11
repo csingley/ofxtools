@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -9,7 +9,7 @@ description = "Library for working with Open Financial Exchange (OFX) data"
 readme = {file = "README.rst", content-type = "text/x-rst"}
 license = "GPL-3.0-only"
 authors = [{name = "Christopher Singley", email = "csingley@gmail.com"}]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 keywords = ["ofx", "Open Financial Exchange"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -25,7 +25,6 @@ classifiers = [
     "Natural Language :: English",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -33,14 +32,14 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
+net = ["requests"]
 dev = [
     "pytest",
     "pytest-cov",
     "coverage",
     "coveralls",
     "mypy",
-    "black",
-    "pylint",
+    "ruff",
     "ipdb",
     "types-pytz",
     "types-requests",
@@ -66,10 +65,7 @@ source = ["ofxtools"]
 
 [tool.mypy]
 files = ["ofxtools", "tests"]
-strict = false
 
-[tool.black]
-line-length = 88
-
-[tool.flake8]
-max-line-length = 88
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]

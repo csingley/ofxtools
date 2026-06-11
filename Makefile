@@ -1,32 +1,20 @@
 test:
-	coverage erase
-	black --check .
-	mypy ofxtools
-	mypy tests
-	python `which pytest` --cov=ofxtools tests/
+	ruff check
+	mypy
+	pytest
 
 clean:
 	find . -name "*.py[co]" -o -name __pycache__ -exec rm -rf {} +;
 	find -name '.*~' -exec rm {} \;
-	rm -rf reg-settings.py
-	rm -rf MANIFEST dist build *.egg-info
-	rm -rf coverage.xml
+	rm -rf MANIFEST dist build *.egg-info coverage.xml
 
 install:
-	make clean
-	make uninstall
-	pip install .
+	pip install -e ".[net,dev]"
 
 uninstall:
 	pip uninstall -y ofxtools
 
 lint:
-	pylint ofxtools/*.py
+	ruff check ofxtools
 
-lint-tests:
-	pylint tests/*.py
-
-html:
-	sphinx-build -b html docs docs/_build
-
-.PHONY:	test clean lint lint-tests install uninstall html
+.PHONY:	test clean lint install uninstall
