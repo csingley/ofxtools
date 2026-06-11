@@ -8,35 +8,34 @@ __all__ = ["BILLPAYMSGSRQV1", "BILLPAYMSGSRSV1", "BILLPAYMSGSETV1", "BILLPAYMSGS
 
 
 # local imports
-from ofxtools.Types import (
-    Bool,
-    Integer,
-    Time,
-    OneOf,
-    ListElement,
-    SubAggregate,
-    ListAggregate,
-)
 from ofxtools.models.base import Aggregate, ElementList
-from ofxtools.models.common import MSGSETCORE
-from ofxtools.models.billpay.pmt import PMTTRNRQ, PMTTRNRS, PMTINQTRNRQ, PMTINQTRNRS
+from ofxtools.models.billpay.list import PAYEETRNRQ, PAYEETRNRS
+from ofxtools.models.billpay.mail import (
+    PMTMAILSYNCRQ,
+    PMTMAILSYNCRS,
+    PMTMAILTRNRQ,
+    PMTMAILTRNRS,
+)
+from ofxtools.models.billpay.pmt import PMTINQTRNRQ, PMTINQTRNRS, PMTTRNRQ, PMTTRNRS
 from ofxtools.models.billpay.recur import RECPMTTRNRQ, RECPMTTRNRS
 from ofxtools.models.billpay.sync import (
-    PMTSYNCRQ,
-    PMTSYNCRS,
     PAYEESYNCRQ,
     PAYEESYNCRS,
+    PMTSYNCRQ,
+    PMTSYNCRS,
     RECPMTSYNCRQ,
     RECPMTSYNCRS,
 )
-from ofxtools.models.billpay.mail import (
-    PMTMAILTRNRQ,
-    PMTMAILTRNRS,
-    PMTMAILSYNCRQ,
-    PMTMAILSYNCRS,
+from ofxtools.models.common import MSGSETCORE
+from ofxtools.Types import (
+    Bool,
+    Integer,
+    ListAggregate,
+    ListElement,
+    OneOf,
+    SubAggregate,
+    Time,
 )
-from ofxtools.models.billpay.list import PAYEETRNRQ, PAYEETRNRS
-
 
 DAYS = ("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY")
 

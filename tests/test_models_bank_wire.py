@@ -4,30 +4,28 @@ Unit tests for models.bank.wire
 """
 # stdlib imports
 import unittest
-from xml.etree.ElementTree import Element, SubElement
 from datetime import datetime
 from decimal import Decimal
+from xml.etree.ElementTree import Element, SubElement
 
+# test imports
+import base
+import test_models_bank_stmt as bk_stmt
 
 # local imports
 from ofxtools.models.bank.wire import (
     EXTBANKDESC,
-    WIREDESTBANK,
     WIREBENEFICIARY,
-    WIRERQ,
-    WIRERS,
     WIRECANRQ,
     WIRECANRS,
+    WIREDESTBANK,
+    WIRERQ,
+    WIRERS,
     WIRETRNRQ,
     WIRETRNRS,
 )
 from ofxtools.models.i18n import COUNTRY_CODES
 from ofxtools.utils import UTC, classproperty
-
-
-# test imports
-import base
-import test_models_bank_stmt as bk_stmt
 
 
 class WirebeneficiaryTestCase(unittest.TestCase, base.TestAggregate):

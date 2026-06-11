@@ -4,21 +4,20 @@
 import unittest
 import xml.etree.ElementTree as ET
 
-
 # local imports
-from ofxtools import models, Types
-from ofxtools.Types import (
-    String,
-    Bool,
-    SubAggregate,
-    Unsupported,
-    ListAggregate,
-    ListElement,
-)
+from ofxtools import Types, models
 from ofxtools.models.base import (
     Aggregate,
     ElementList,
     OFXSpecError,
+)
+from ofxtools.Types import (
+    Bool,
+    ListAggregate,
+    ListElement,
+    String,
+    SubAggregate,
+    Unsupported,
 )
 
 

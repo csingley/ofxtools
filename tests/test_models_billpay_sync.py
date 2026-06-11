@@ -4,25 +4,23 @@
 import unittest
 import xml.etree.ElementTree as ET
 
-
-# local imports
-from ofxtools.models.billpay.sync import (
-    PMTSYNCRQ,
-    PMTSYNCRS,
-    RECPMTSYNCRQ,
-    RECPMTSYNCRS,
-    PAYEESYNCRQ,
-    PAYEESYNCRS,
-)
-from ofxtools.utils import classproperty
-
-
 # test imports
 import base
 import test_models_bank_stmt as bk_stmt
 import test_models_billpay_list as bp_list
 import test_models_billpay_pmt as bp_pmt
 import test_models_billpay_recur as bp_recur
+
+# local imports
+from ofxtools.models.billpay.sync import (
+    PAYEESYNCRQ,
+    PAYEESYNCRS,
+    PMTSYNCRQ,
+    PMTSYNCRS,
+    RECPMTSYNCRQ,
+    RECPMTSYNCRS,
+)
+from ofxtools.utils import classproperty
 
 
 class PmtsyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):

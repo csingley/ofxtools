@@ -7,13 +7,12 @@ import unittest
 from datetime import datetime
 from decimal import Decimal
 
-# local imports
-from ofxtools import models
-from ofxtools.utils import classproperty, UTC
-
 # test imports
 import base
 
+# local imports
+from ofxtools import models
+from ofxtools.utils import UTC, classproperty
 
 # Common aggregates used across tests
 SONRQ = models.SONRQ(

@@ -24,16 +24,15 @@ __all__ = [
 
 
 # stdlib imports
-from copy import deepcopy
 import logging
+from copy import deepcopy
 
+from ofxtools.models.base import Aggregate
+from ofxtools.models.common import MSGSETCORE
+from ofxtools.models.wrapperbases import SyncRqList, SyncRsList, TrnRq, TrnRs
 
 # local imports
-from ofxtools.Types import Bool, String, DateTime, SubAggregate, ListAggregate
-from ofxtools.models.base import Aggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
-from ofxtools.models.common import MSGSETCORE
-
+from ofxtools.Types import Bool, DateTime, ListAggregate, String, SubAggregate
 
 logger = logging.getLogger(__name__)
 

@@ -22,30 +22,28 @@ __all__ = ["Aggregate", "ElementList"]
 
 
 # stdlib imports
-import xml.etree.ElementTree as ET
-from copy import deepcopy
 import functools
-from typing import (
-    Any,
-    Dict,
-    Tuple,
-    Callable,
-    Sequence,
-    Mapping,
-    Union,
-    Optional,
-    ChainMap,
-)
 import logging
 import warnings
+import xml.etree.ElementTree as ET
+from copy import deepcopy
+from typing import (
+    Any,
+    Callable,
+    ChainMap,
+    Dict,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
+import ofxtools.models
 
 # local imports
 from ofxtools import Types
-
-import ofxtools.models
 from ofxtools.utils import classproperty
-
 
 logger = logging.getLogger(__name__)
 

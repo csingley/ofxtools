@@ -3,40 +3,38 @@
 Unit tests for models.bank.recur
 """
 # stdlib imports
-import unittest
-from xml.etree.ElementTree import Element, SubElement
-from copy import deepcopy
 import itertools
+import unittest
+from copy import deepcopy
+from xml.etree.ElementTree import Element, SubElement
 
+# test imports
+import base
+import test_models_bank_interxfer as interxfer
+import test_models_bank_xfer as xfer
 
 # local imports
 from ofxtools.models.bank.recur import (
     FREQUENCIES,
-    RECURRINST,
+    RECINTERCANRQ,
+    RECINTERCANRS,
+    RECINTERMODRQ,
+    RECINTERMODRS,
+    RECINTERRQ,
+    RECINTERRS,
+    RECINTERTRNRQ,
+    RECINTERTRNRS,
+    RECINTRACANRQ,
+    RECINTRACANRS,
+    RECINTRAMODRQ,
+    RECINTRAMODRS,
     RECINTRARQ,
     RECINTRARS,
     RECINTRATRNRQ,
     RECINTRATRNRS,
-    RECINTERRQ,
-    RECINTERRS,
-    RECINTRAMODRQ,
-    RECINTRAMODRS,
-    RECINTRACANRQ,
-    RECINTRACANRS,
-    RECINTERMODRQ,
-    RECINTERMODRS,
-    RECINTERCANRQ,
-    RECINTERCANRS,
-    RECINTERTRNRQ,
-    RECINTERTRNRS,
+    RECURRINST,
 )
 from ofxtools.utils import classproperty
-
-
-# test imports
-import base
-import test_models_bank_xfer as xfer
-import test_models_bank_interxfer as interxfer
 
 
 class RecurrinstTestCase(unittest.TestCase, base.TestAggregate):

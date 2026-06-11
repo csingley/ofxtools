@@ -2,23 +2,24 @@
 """ Unit tests for models.invest """
 # stdlib imports
 import unittest
-from xml.etree.ElementTree import Element, SubElement
-from decimal import Decimal
 from datetime import datetime
+from decimal import Decimal
+from xml.etree.ElementTree import Element, SubElement
 
+# test imports
+import base
+import test_models_bank_stmt as bk_stmt
+import test_models_i18n as i18n
+import test_models_securities as securities
+
+from ofxtools.models.bank.stmt import INV401KSOURCES
 
 # local imports
 from ofxtools.models.base import Aggregate, UnknownTagWarning
-from ofxtools.models.bank.stmt import INV401KSOURCES
+from ofxtools.models.i18n import CURRENCY_CODES
 from ofxtools.models.invest.acct import INVSUBACCTS
-from ofxtools.models.invest.transactions import (
-    BUYTYPES,
-    SELLTYPES,
-    OPTBUYTYPES,
-    OPTSELLTYPES,
-)
 from ofxtools.models.invest.openorders import (
-    UNITTYPES,
+    INVOOLIST,
     OO,
     OOBUYDEBT,
     OOBUYMF,
@@ -31,17 +32,15 @@ from ofxtools.models.invest.openorders import (
     OOSELLOTHER,
     OOSELLSTOCK,
     SWITCHMF,
-    INVOOLIST,
+    UNITTYPES,
 )
-from ofxtools.models.i18n import CURRENCY_CODES
+from ofxtools.models.invest.transactions import (
+    BUYTYPES,
+    OPTBUYTYPES,
+    OPTSELLTYPES,
+    SELLTYPES,
+)
 from ofxtools.utils import UTC, classproperty
-
-
-# test imports
-import base
-import test_models_securities as securities
-import test_models_bank_stmt as bk_stmt
-import test_models_i18n as i18n
 
 
 class OoTestCase(unittest.TestCase, base.TestAggregate):

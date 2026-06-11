@@ -21,19 +21,18 @@ __all__ = [
 ]
 
 
-from ofxtools.Types import (
-    String,
-    OneOf,
-    Integer,
-    Decimal,
-    DateTime,
-    ListAggregate,
-    SubAggregate,
-)
+from ofxtools.models.bank.stmt import BANKACCTFROM, BANKACCTTO, PAYEE
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import SVCSTATUSES
-from ofxtools.models.bank.stmt import BANKACCTFROM, BANKACCTTO, PAYEE
-
+from ofxtools.Types import (
+    DateTime,
+    Decimal,
+    Integer,
+    ListAggregate,
+    OneOf,
+    String,
+    SubAggregate,
+)
 
 #  PAYEE is defined in ``ofxtools.models.bank.stmt`` to avoid circular imports.
 

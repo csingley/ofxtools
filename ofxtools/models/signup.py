@@ -40,27 +40,26 @@ __all__ = [
 
 
 # stdlib imports
-import operator
 import itertools
+import operator
 
-
-# local imports
-from ofxtools.Types import Bool, String, OneOf, DateTime, SubAggregate, ListAggregate
-from ofxtools.models.base import Aggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs, SyncRqList, SyncRsList
-from ofxtools.models.common import SVCSTATUSES, MSGSETCORE
-from ofxtools.models.i18n import COUNTRY_CODES
 from ofxtools.models.bank import (
     BANKACCTFROM,
-    BANKACCTTO,
     BANKACCTINFO,
+    BANKACCTTO,
     CCACCTFROM,
-    CCACCTTO,
     CCACCTINFO,
+    CCACCTTO,
 )
+from ofxtools.models.base import Aggregate
 from ofxtools.models.billpay import BPACCTINFO
-from ofxtools.models.invest import INVACCTFROM, INVACCTTO, INVACCTINFO
+from ofxtools.models.common import MSGSETCORE, SVCSTATUSES
+from ofxtools.models.i18n import COUNTRY_CODES
+from ofxtools.models.invest import INVACCTFROM, INVACCTINFO, INVACCTTO
+from ofxtools.models.wrapperbases import SyncRqList, SyncRsList, TrnRq, TrnRs
 
+# local imports
+from ofxtools.Types import Bool, DateTime, ListAggregate, OneOf, String, SubAggregate
 
 # Enums used in aggregate validation
 SVCS = ("BANKSVC", "BPSVC", "INVSVC", "PRESSVC")

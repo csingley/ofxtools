@@ -3,34 +3,32 @@
 Unit tests for models.bank.xfer
 """
 # stdlib imports
+import itertools
 import unittest
-from xml.etree.ElementTree import Element, SubElement
+from copy import deepcopy
 from datetime import datetime
 from decimal import Decimal
-from copy import deepcopy
-import itertools
-
-
-# local imports
-from ofxtools.models.bank.xfer import (
-    XFERINFO,
-    XFERPRCSTS,
-    INTRARQ,
-    INTRARS,
-    INTRAMODRQ,
-    INTRACANRQ,
-    INTRAMODRS,
-    INTRACANRS,
-    INTRATRNRQ,
-    INTRATRNRS,
-)
-from ofxtools.models.i18n import CURRENCY_CODES
-from ofxtools.utils import UTC, classproperty
-
+from xml.etree.ElementTree import Element, SubElement
 
 # test imports
 import base
 import test_models_bank_stmt as bk_stmt
+
+# local imports
+from ofxtools.models.bank.xfer import (
+    INTRACANRQ,
+    INTRACANRS,
+    INTRAMODRQ,
+    INTRAMODRS,
+    INTRARQ,
+    INTRARS,
+    INTRATRNRQ,
+    INTRATRNRS,
+    XFERINFO,
+    XFERPRCSTS,
+)
+from ofxtools.models.i18n import CURRENCY_CODES
+from ofxtools.utils import UTC, classproperty
 
 
 class XferinfoTestCase(unittest.TestCase, base.TestAggregate):

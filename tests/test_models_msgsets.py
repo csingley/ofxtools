@@ -5,95 +5,94 @@ Unit tests for models.msgsets
 
 # stdlib imports
 import unittest
-from xml.etree.ElementTree import Element, SubElement
 from datetime import time
 from decimal import Decimal
-
-
-# local imports
-from ofxtools.models.base import Aggregate, UnknownTagWarning
-from ofxtools.models.i18n import LANG_CODES
-from ofxtools.models.signon import (
-    SIGNONMSGSRQV1,
-    SIGNONMSGSRSV1,
-    SIGNONMSGSETV1,
-    SIGNONMSGSET,
-)
-from ofxtools.models.profile import (
-    MSGSETLIST,
-    PROFMSGSRQV1,
-    PROFMSGSRSV1,
-    PROFMSGSETV1,
-    PROFMSGSET,
-)
-from ofxtools.models.signup import (
-    SIGNUPMSGSRQV1,
-    SIGNUPMSGSRSV1,
-    SIGNUPMSGSETV1,
-    SIGNUPMSGSET,
-)
-from ofxtools.models.email import (
-    EMAILMSGSRQV1,
-    EMAILMSGSRSV1,
-    EMAILMSGSETV1,
-    EMAILMSGSET,
-)
-from ofxtools.models.bank.msgsets import (
-    MSGSETCORE,
-    XFERPROF,
-    STPCHKPROF,
-    EMAILPROF,
-    BANKMSGSRQV1,
-    BANKMSGSRSV1,
-    BANKMSGSETV1,
-    BANKMSGSET,
-    CREDITCARDMSGSRQV1,
-    CREDITCARDMSGSRSV1,
-    CREDITCARDMSGSETV1,
-    CREDITCARDMSGSET,
-    INTERXFERMSGSRQV1,
-    INTERXFERMSGSRSV1,
-    INTERXFERMSGSETV1,
-    INTERXFERMSGSET,
-    WIREXFERMSGSRQV1,
-    WIREXFERMSGSRSV1,
-    WIREXFERMSGSETV1,
-    WIREXFERMSGSET,
-)
-from ofxtools.models.bank.stmt import STMTRS
-from ofxtools.models.bank.stmtend import STMTENDRS
-from ofxtools.models.invest.msgsets import (
-    INVSTMTMSGSRQV1,
-    INVSTMTMSGSRSV1,
-    INVSTMTMSGSETV1,
-    INVSTMTMSGSET,
-    SECLISTMSGSRQV1,
-    SECLISTMSGSRSV1,
-    SECLISTMSGSETV1,
-    SECLISTMSGSET,
-)
-from ofxtools.models.tax1099 import TAX1099MSGSETV1, TAX1099MSGSET
-from ofxtools.utils import UTC, classproperty
-
+from xml.etree.ElementTree import Element, SubElement
 
 # test imports
 import base
-from test_models_common import OfxextensionTestCase
-import test_models_signon as signon
-import test_models_profile as profile
-import test_models_email as email
+import test_models_bank_interxfer as interxfer
+import test_models_bank_mail as bank_mail
+import test_models_bank_recur as recur
 import test_models_bank_stmt as bk_stmt
 import test_models_bank_stmtend as bk_stmtend
 import test_models_bank_stpchk as stpchk
-import test_models_bank_xfer as xfer
-import test_models_bank_interxfer as interxfer
-import test_models_bank_wire as wire
-import test_models_bank_recur as recur
-import test_models_bank_mail as bank_mail
 import test_models_bank_sync as bank_sync
+import test_models_bank_wire as wire
+import test_models_bank_xfer as xfer
+import test_models_email as email
 import test_models_invest as invest
+import test_models_profile as profile
 import test_models_securities as securities
+import test_models_signon as signon
 import test_models_signup as signup
+from test_models_common import OfxextensionTestCase
+
+from ofxtools.models.bank.msgsets import (
+    BANKMSGSET,
+    BANKMSGSETV1,
+    BANKMSGSRQV1,
+    BANKMSGSRSV1,
+    CREDITCARDMSGSET,
+    CREDITCARDMSGSETV1,
+    CREDITCARDMSGSRQV1,
+    CREDITCARDMSGSRSV1,
+    EMAILPROF,
+    INTERXFERMSGSET,
+    INTERXFERMSGSETV1,
+    INTERXFERMSGSRQV1,
+    INTERXFERMSGSRSV1,
+    MSGSETCORE,
+    STPCHKPROF,
+    WIREXFERMSGSET,
+    WIREXFERMSGSETV1,
+    WIREXFERMSGSRQV1,
+    WIREXFERMSGSRSV1,
+    XFERPROF,
+)
+from ofxtools.models.bank.stmt import STMTRS
+from ofxtools.models.bank.stmtend import STMTENDRS
+
+# local imports
+from ofxtools.models.base import Aggregate, UnknownTagWarning
+from ofxtools.models.email import (
+    EMAILMSGSET,
+    EMAILMSGSETV1,
+    EMAILMSGSRQV1,
+    EMAILMSGSRSV1,
+)
+from ofxtools.models.i18n import LANG_CODES
+from ofxtools.models.invest.msgsets import (
+    INVSTMTMSGSET,
+    INVSTMTMSGSETV1,
+    INVSTMTMSGSRQV1,
+    INVSTMTMSGSRSV1,
+    SECLISTMSGSET,
+    SECLISTMSGSETV1,
+    SECLISTMSGSRQV1,
+    SECLISTMSGSRSV1,
+)
+from ofxtools.models.profile import (
+    MSGSETLIST,
+    PROFMSGSET,
+    PROFMSGSETV1,
+    PROFMSGSRQV1,
+    PROFMSGSRSV1,
+)
+from ofxtools.models.signon import (
+    SIGNONMSGSET,
+    SIGNONMSGSETV1,
+    SIGNONMSGSRQV1,
+    SIGNONMSGSRSV1,
+)
+from ofxtools.models.signup import (
+    SIGNUPMSGSET,
+    SIGNUPMSGSETV1,
+    SIGNUPMSGSRQV1,
+    SIGNUPMSGSRSV1,
+)
+from ofxtools.models.tax1099 import TAX1099MSGSET, TAX1099MSGSETV1
+from ofxtools.utils import UTC, classproperty
 
 
 class Signonmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):

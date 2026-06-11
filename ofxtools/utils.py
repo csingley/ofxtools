@@ -3,12 +3,11 @@
 
 # stdlib imports
 import datetime
-import os
 import itertools
-import xml.etree.ElementTree as ET
-from typing import Any, Optional, Tuple, Callable, Iterable, Sequence
 import math
-
+import os
+import xml.etree.ElementTree as ET
+from typing import Any, Callable, Iterable, Optional, Sequence, Tuple
 
 # local imports
 from ofxtools.lib import NUMBERING_AGENCIES

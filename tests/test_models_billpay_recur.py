@@ -2,29 +2,26 @@
 """ Unit tests for models.billpay.recur """
 # stdlib imports
 import unittest
-from decimal import Decimal
-
 import xml.etree.ElementTree as ET
-
-
-# local imports
-from ofxtools.models.billpay.recur import (
-    RECPMTRQ,
-    RECPMTRS,
-    RECPMTMODRQ,
-    RECPMTMODRS,
-    RECPMTCANCRQ,
-    RECPMTCANCRS,
-    RECPMTTRNRQ,
-    RECPMTTRNRS,
-)
-from ofxtools.utils import classproperty
-
+from decimal import Decimal
 
 # test imports
 import base
 import test_models_bank_recur as bk_recur
 import test_models_billpay_common as bp_common
+
+# local imports
+from ofxtools.models.billpay.recur import (
+    RECPMTCANCRQ,
+    RECPMTCANCRS,
+    RECPMTMODRQ,
+    RECPMTMODRS,
+    RECPMTRQ,
+    RECPMTRS,
+    RECPMTTRNRQ,
+    RECPMTTRNRS,
+)
+from ofxtools.utils import classproperty
 
 
 class RecpmtrqTestCase(unittest.TestCase, base.TestAggregate):

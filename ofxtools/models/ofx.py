@@ -9,12 +9,6 @@ __all__ = ["OFX"]
 
 
 # local imports
-from ofxtools.Types import SubAggregate, Unsupported
-from ofxtools.models.base import Aggregate
-from ofxtools.models.signon import SIGNONMSGSRQV1, SIGNONMSGSRSV1
-from ofxtools.models.profile import PROFMSGSRQV1, PROFMSGSRSV1
-from ofxtools.models.signup import SIGNUPMSGSRQV1, SIGNUPMSGSRSV1
-from ofxtools.models.email import EMAILMSGSRQV1, EMAILMSGSRSV1
 from ofxtools.models.bank.msgsets import (
     BANKMSGSRQV1,
     BANKMSGSRSV1,
@@ -25,14 +19,20 @@ from ofxtools.models.bank.msgsets import (
     WIREXFERMSGSRQV1,
     WIREXFERMSGSRSV1,
 )
+from ofxtools.models.base import Aggregate
 from ofxtools.models.billpay.msgsets import BILLPAYMSGSRQV1, BILLPAYMSGSRSV1
+from ofxtools.models.email import EMAILMSGSRQV1, EMAILMSGSRSV1
 from ofxtools.models.invest.msgsets import (
     INVSTMTMSGSRQV1,
     INVSTMTMSGSRSV1,
     SECLISTMSGSRQV1,
     SECLISTMSGSRSV1,
 )
+from ofxtools.models.profile import PROFMSGSRQV1, PROFMSGSRSV1
+from ofxtools.models.signon import SIGNONMSGSRQV1, SIGNONMSGSRSV1
+from ofxtools.models.signup import SIGNUPMSGSRQV1, SIGNUPMSGSRSV1
 from ofxtools.models.tax1099 import TAX1099MSGSRQV1, TAX1099MSGSRSV1
+from ofxtools.Types import SubAggregate, Unsupported
 from ofxtools.utils import all_equal
 
 

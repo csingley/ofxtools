@@ -2,39 +2,37 @@
 """ Unit tests for models.signon """
 # stdlib imports
 import unittest
-from xml.etree.ElementTree import Element, SubElement
-from datetime import datetime
 from copy import deepcopy
+from datetime import datetime
+from xml.etree.ElementTree import Element, SubElement
 
+# test imports
+import base
 
 # local imports
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import STATUS
+from ofxtools.models.i18n import LANG_CODES
 from ofxtools.models.signon import (
-    FI,
-    MFACHALLENGE,
-    MFACHALLENGEA,
-    SONRQ,
-    SONRS,
-    PINCHRQ,
-    PINCHRS,
-    PINCHTRNRQ,
-    PINCHTRNRS,
     CHALLENGERQ,
     CHALLENGERS,
     CHALLENGETRNRQ,
     CHALLENGETRNRS,
+    FI,
+    MFACHALLENGE,
+    MFACHALLENGEA,
     MFACHALLENGERQ,
     MFACHALLENGERS,
     MFACHALLENGETRNRQ,
     MFACHALLENGETRNRS,
+    PINCHRQ,
+    PINCHRS,
+    PINCHTRNRQ,
+    PINCHTRNRS,
+    SONRQ,
+    SONRS,
 )
-from ofxtools.models.i18n import LANG_CODES
 from ofxtools.utils import UTC, classproperty
-
-
-# test imports
-import base
 
 
 class FiTestCase(unittest.TestCase, base.TestAggregate):

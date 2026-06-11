@@ -5,39 +5,37 @@ Unit tests for models.bank.sync
 
 # stdlib imports
 import unittest
-from xml.etree.ElementTree import Element, SubElement
 from copy import deepcopy
-
-
-# local imports
-from ofxtools.models.bank.sync import (
-    STPCHKSYNCRQ,
-    STPCHKSYNCRS,
-    INTRASYNCRQ,
-    INTRASYNCRS,
-    INTERSYNCRQ,
-    INTERSYNCRS,
-    WIRESYNCRQ,
-    WIRESYNCRS,
-    BANKMAILSYNCRQ,
-    BANKMAILSYNCRS,
-    RECINTRASYNCRQ,
-    RECINTRASYNCRS,
-    RECINTERSYNCRQ,
-    RECINTERSYNCRS,
-)
-from ofxtools.utils import classproperty
-
+from xml.etree.ElementTree import Element, SubElement
 
 # test imports
 import base
+import test_models_bank_interxfer as interxfer
+import test_models_bank_mail as bk_mail
+import test_models_bank_recur as bk_recur
 import test_models_bank_stmt as bk_stmt
 import test_models_bank_stpchk as stpchk
-import test_models_bank_xfer as xfer
-import test_models_bank_interxfer as interxfer
 import test_models_bank_wire as wire
-import test_models_bank_recur as bk_recur
-import test_models_bank_mail as bk_mail
+import test_models_bank_xfer as xfer
+
+# local imports
+from ofxtools.models.bank.sync import (
+    BANKMAILSYNCRQ,
+    BANKMAILSYNCRS,
+    INTERSYNCRQ,
+    INTERSYNCRS,
+    INTRASYNCRQ,
+    INTRASYNCRS,
+    RECINTERSYNCRQ,
+    RECINTERSYNCRS,
+    RECINTRASYNCRQ,
+    RECINTRASYNCRS,
+    STPCHKSYNCRQ,
+    STPCHKSYNCRS,
+    WIRESYNCRQ,
+    WIRESYNCRS,
+)
+from ofxtools.utils import classproperty
 
 
 class StpchksyncrqTestCase(unittest.TestCase, base.SyncrqTestCase):

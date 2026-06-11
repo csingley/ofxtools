@@ -15,10 +15,9 @@ __all__ = [
 
 
 # Local imports
-from ofxtools.Types import Bool, String, NagString, OneOf, SubAggregate
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import SVCSTATUSES
-
+from ofxtools.Types import Bool, NagString, OneOf, String, SubAggregate
 
 # Section 13.6.2
 INVACCTTYPES = ("INDIVIDUAL", "JOINT", "TRUST", "CORPORATE")

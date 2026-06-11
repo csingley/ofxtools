@@ -2,31 +2,28 @@
 """ Unit tests for models.email """
 # stdlib imports
 import unittest
-from xml.etree.ElementTree import Element, SubElement
-from datetime import datetime
 from copy import deepcopy
+from datetime import datetime
+from xml.etree.ElementTree import Element, SubElement
 
+# test imports
+import base
 
 # local imports
-from ofxtools.models.base import Aggregate
 from ofxtools.models.email import (
-    MAIL,
-    MAILRQ,
-    MAILRS,
-    MAILTRNRQ,
-    MAILTRNRS,
     GETMIMERQ,
     GETMIMERS,
     GETMIMETRNRQ,
     GETMIMETRNRS,
+    MAIL,
+    MAILRQ,
+    MAILRS,
     MAILSYNCRQ,
     MAILSYNCRS,
+    MAILTRNRQ,
+    MAILTRNRS,
 )
 from ofxtools.utils import UTC, classproperty
-
-
-# test imports
-import base
 
 
 class MailTestCase(unittest.TestCase, base.TestAggregate):

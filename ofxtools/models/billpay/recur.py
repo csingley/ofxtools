@@ -16,12 +16,12 @@ __all__ = [
 ]
 
 
-from ofxtools.Types import Bool, String, Decimal, OneOf, SubAggregate
-from ofxtools.models.base import Aggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs
-from ofxtools.models.i18n import CURRENCY_CODES
-from ofxtools.models.billpay.common import PMTINFO, EXTDPAYEE
 from ofxtools.models.bank.recur import RECURRINST
+from ofxtools.models.base import Aggregate
+from ofxtools.models.billpay.common import EXTDPAYEE, PMTINFO
+from ofxtools.models.i18n import CURRENCY_CODES
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.Types import Bool, Decimal, OneOf, String, SubAggregate
 
 
 class RECPMTRQ(Aggregate):

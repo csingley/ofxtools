@@ -8,20 +8,19 @@ __all__ = ["SVCSTATUSES", "STATUS", "BAL", "OFXELEMENT", "OFXEXTENSION", "MSGSET
 
 
 # local imports
-from ofxtools.Types import (
-    String,
-    OneOf,
-    Integer,
-    Decimal,
-    DateTime,
-    Bool,
-    SubAggregate,
-    ListAggregate,
-    ListElement,
-)
 from ofxtools.models.base import Aggregate, ElementList
 from ofxtools.models.i18n import CURRENCY, LANG_CODES
-
+from ofxtools.Types import (
+    Bool,
+    DateTime,
+    Decimal,
+    Integer,
+    ListAggregate,
+    ListElement,
+    OneOf,
+    String,
+    SubAggregate,
+)
 
 SVCSTATUSES = ["AVAIL", "PEND", "ACTIVE"]
 

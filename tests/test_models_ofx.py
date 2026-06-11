@@ -2,23 +2,21 @@
 """ Unit tests for models.ofx """
 # stdlib imports
 import unittest
-from xml.etree.ElementTree import Element
 from datetime import datetime
-
-
-# local imports
-from ofxtools.models.base import Aggregate
-from ofxtools.models.ofx import OFX
-from ofxtools.models.signon import SONRS
-from ofxtools.models.bank import STMTRS, CCSTMTRS, STMTENDRS, CCSTMTENDRS
-from ofxtools.models.invest import INVSTMTRS
-from ofxtools.utils import UTC, classproperty
-
+from xml.etree.ElementTree import Element
 
 # test imports
 import base
 import test_models_msgsets as msgsets
 
+from ofxtools.models.bank import CCSTMTENDRS, CCSTMTRS, STMTENDRS, STMTRS
+
+# local imports
+from ofxtools.models.base import Aggregate
+from ofxtools.models.invest import INVSTMTRS
+from ofxtools.models.ofx import OFX
+from ofxtools.models.signon import SONRS
+from ofxtools.utils import UTC, classproperty
 
 # Cache results of expensive class properties for reuse
 signonmsgsrqv1 = msgsets.Signonmsgsrqv1TestCase.etree

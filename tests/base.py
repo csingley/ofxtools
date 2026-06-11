@@ -2,18 +2,18 @@
 """ Common classes reused by unit tests in this package """
 
 # stdlib imports
+import itertools
 import unittest
 import xml.etree.ElementTree as ET
 from copy import deepcopy
-import itertools
-from typing import List, Dict, Sequence, Any
+from typing import Any, Dict, List, Sequence
 
 # local imports
 import ofxtools.models
 from ofxtools.models.base import Aggregate, UnknownTagWarning
 from ofxtools.models.common import STATUS
-from ofxtools.utils import classproperty, indent
 from ofxtools.Parser import OFXTree, TreeBuilder
+from ofxtools.utils import classproperty, indent
 
 
 class TestAggregate:

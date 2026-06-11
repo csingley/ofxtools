@@ -17,11 +17,11 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import String, Decimal, OneOf, DateTime, SubAggregate
-from ofxtools.models.base import Aggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.bank.stmt import BANKACCTFROM, BANKACCTTO
-from ofxtools.models.i18n import CURRENCY_CODES, COUNTRY_CODES
+from ofxtools.models.base import Aggregate
+from ofxtools.models.i18n import COUNTRY_CODES, CURRENCY_CODES
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.Types import DateTime, Decimal, OneOf, String, SubAggregate
 
 
 class WIREBENEFICIARY(Aggregate):

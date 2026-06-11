@@ -2,26 +2,24 @@
 """ Unit tests for models.profile """
 # stdlib imports
 import unittest
-from xml.etree.ElementTree import Element, SubElement
 from datetime import datetime
+from xml.etree.ElementTree import Element, SubElement
 
+# test imports
+import base
 
 # local imports
 from ofxtools.models.base import Aggregate
 from ofxtools.models.profile import (
+    MSGSETLIST,
     PROFRQ,
     PROFRS,
     PROFTRNRQ,
     PROFTRNRS,
     SIGNONINFO,
     SIGNONINFOLIST,
-    MSGSETLIST,
 )
 from ofxtools.utils import UTC, classproperty
-
-
-# test imports
-import base
 
 
 class ProfrqTestCase(unittest.TestCase, base.TestAggregate):

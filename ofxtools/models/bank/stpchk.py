@@ -16,11 +16,11 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import String, Decimal, OneOf, DateTime, SubAggregate, ListAggregate
-from ofxtools.models.base import Aggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.bank.stmt import BANKACCTFROM
-from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, Origcurrency, CURRENCY_CODES
+from ofxtools.models.base import Aggregate
+from ofxtools.models.i18n import CURRENCY, CURRENCY_CODES, ORIGCURRENCY, Origcurrency
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.Types import DateTime, Decimal, ListAggregate, OneOf, String, SubAggregate
 
 
 class CHKRANGE(Aggregate):

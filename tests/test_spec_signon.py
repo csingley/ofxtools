@@ -6,13 +6,12 @@ Examples - OFX Section 2.5.6
 import unittest
 from datetime import datetime
 
-# local imports
-from ofxtools import models
-from ofxtools.utils import classproperty, UTC
-
 # test imports
 import base
 
+# local imports
+from ofxtools import models
+from ofxtools.utils import UTC, classproperty
 
 # Common aggregates used across tests
 FI = models.FI(org="ABC", fid="000111222")

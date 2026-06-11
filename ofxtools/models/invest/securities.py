@@ -26,25 +26,24 @@ __all__ = [
 
 
 # stdlib imports
-from copy import deepcopy
 import logging
+from copy import deepcopy
 
+from ofxtools.models.base import Aggregate
+from ofxtools.models.i18n import CURRENCY
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
 
 # local imports
 from ofxtools.Types import (
-    String,
+    DateTime,
+    Decimal,
+    Integer,
+    ListAggregate,
     NagString,
     OneOf,
-    Integer,
-    Decimal,
-    DateTime,
+    String,
     SubAggregate,
-    ListAggregate,
 )
-from ofxtools.models.base import Aggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs
-from ofxtools.models.i18n import CURRENCY
-
 
 logger = logging.getLogger(__name__)
 

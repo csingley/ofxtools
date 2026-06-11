@@ -16,11 +16,11 @@ __all__ = [
 ]
 
 
-from ofxtools.Types import String, ListElement, SubAggregate
+from ofxtools.models.bank.stmt import BANKACCTTO, PAYEE
 from ofxtools.models.base import Aggregate, ElementList
-from ofxtools.models.wrapperbases import TrnRq, TrnRs
-from ofxtools.models.bank.stmt import PAYEE, BANKACCTTO
 from ofxtools.models.billpay.common import EXTDPAYEE
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.Types import ListElement, String, SubAggregate
 
 
 class PAYEERQ(ElementList):

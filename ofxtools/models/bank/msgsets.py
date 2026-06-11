@@ -28,60 +28,59 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import (
-    Bool,
-    OneOf,
-    Integer,
-    Decimal,
-    Time,
-    SubAggregate,
-    ListAggregate,
-    ListElement,
-    Unsupported,
-)
-from ofxtools.models.base import Aggregate, ElementList
-from ofxtools.models.common import MSGSETCORE
-from ofxtools.models.bank.stmt import (
-    ACCTTYPES,
-    STMTTRNRQ,
-    STMTTRNRS,
-    CCSTMTTRNRQ,
-    CCSTMTTRNRS,
-)
-from ofxtools.models.bank.stmtend import (
-    STMTENDTRNRQ,
-    STMTENDTRNRS,
-    CCSTMTENDTRNRQ,
-    CCSTMTENDTRNRS,
-)
-from ofxtools.models.bank.stpchk import STPCHKTRNRQ, STPCHKTRNRS
-from ofxtools.models.bank.xfer import INTRATRNRQ, INTRATRNRS
 from ofxtools.models.bank.interxfer import INTERTRNRQ, INTERTRNRS
-from ofxtools.models.bank.wire import WIRETRNRQ, WIRETRNRS
+from ofxtools.models.bank.mail import BANKMAILTRNRQ, BANKMAILTRNRS
 from ofxtools.models.bank.recur import (
-    RECINTRATRNRQ,
-    RECINTRATRNRS,
     RECINTERTRNRQ,
     RECINTERTRNRS,
+    RECINTRATRNRQ,
+    RECINTRATRNRS,
 )
+from ofxtools.models.bank.stmt import (
+    ACCTTYPES,
+    CCSTMTTRNRQ,
+    CCSTMTTRNRS,
+    STMTTRNRQ,
+    STMTTRNRS,
+)
+from ofxtools.models.bank.stmtend import (
+    CCSTMTENDTRNRQ,
+    CCSTMTENDTRNRS,
+    STMTENDTRNRQ,
+    STMTENDTRNRS,
+)
+from ofxtools.models.bank.stpchk import STPCHKTRNRQ, STPCHKTRNRS
 from ofxtools.models.bank.sync import (
-    INTRASYNCRQ,
-    INTRASYNCRS,
-    INTERSYNCRQ,
-    INTERSYNCRS,
-    WIRESYNCRQ,
-    WIRESYNCRS,
-    STPCHKSYNCRQ,
-    STPCHKSYNCRS,
-    RECINTRASYNCRQ,
-    RECINTRASYNCRS,
-    RECINTERSYNCRQ,
-    RECINTERSYNCRS,
     BANKMAILSYNCRQ,
     BANKMAILSYNCRS,
+    INTERSYNCRQ,
+    INTERSYNCRS,
+    INTRASYNCRQ,
+    INTRASYNCRS,
+    RECINTERSYNCRQ,
+    RECINTERSYNCRS,
+    RECINTRASYNCRQ,
+    RECINTRASYNCRS,
+    STPCHKSYNCRQ,
+    STPCHKSYNCRS,
+    WIRESYNCRQ,
+    WIRESYNCRS,
 )
-from ofxtools.models.bank.mail import BANKMAILTRNRQ, BANKMAILTRNRS
-
+from ofxtools.models.bank.wire import WIRETRNRQ, WIRETRNRS
+from ofxtools.models.bank.xfer import INTRATRNRQ, INTRATRNRS
+from ofxtools.models.base import Aggregate, ElementList
+from ofxtools.models.common import MSGSETCORE
+from ofxtools.Types import (
+    Bool,
+    Decimal,
+    Integer,
+    ListAggregate,
+    ListElement,
+    OneOf,
+    SubAggregate,
+    Time,
+    Unsupported,
+)
 
 DAYS = ("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY")
 

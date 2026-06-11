@@ -3,17 +3,15 @@
 
 # stdlib imports
 import unittest
+from collections import namedtuple
+from io import BytesIO
+from tempfile import NamedTemporaryFile
 from unittest import TestCase
 from unittest.mock import MagicMock, call, patch, sentinel
 from xml.etree.ElementTree import Element
-from io import BytesIO
-from tempfile import NamedTemporaryFile
-from collections import namedtuple
-
 
 # local imports
-from ofxtools.Parser import OFXTree, TreeBuilder, ParseError
-
+from ofxtools.Parser import OFXTree, ParseError, TreeBuilder
 
 # Container for results of TreeBuilderRegexTestCase._parsetag()
 TagParseResults = namedtuple(

@@ -5,15 +5,12 @@ import unittest
 from decimal import Decimal
 from xml.etree.ElementTree import Element, SubElement
 
-
-# local imports
-from ofxtools.models.base import Aggregate
-from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, CURRENCY_CODES
-from ofxtools.utils import classproperty
-
-
 # test imports
 import base
+
+# local imports
+from ofxtools.models.i18n import CURRENCY, CURRENCY_CODES, ORIGCURRENCY
+from ofxtools.utils import classproperty
 
 
 class CurrencyTestCase(unittest.TestCase, base.TestAggregate):

@@ -2,33 +2,30 @@
 """ Unit tests for models.billpay.common """
 # stdlib imports
 import unittest
+import xml.etree.ElementTree as ET
+from copy import deepcopy
 from datetime import datetime
 from decimal import Decimal
-from copy import deepcopy
-
-import xml.etree.ElementTree as ET
-
-
-# local imports
-from ofxtools.models.billpay.common import (
-    PMTINFO,
-    BPACCTINFO,
-    BILLPUBINFO,
-    DISCOUNT,
-    ADJUSTMENT,
-    LINEITEM,
-    INVOICE,
-    EXTDPMT,
-    EXTDPAYEE,
-    EXTDPMTINV,
-    PMTPRCSTS,
-)
-from ofxtools.utils import UTC, classproperty
-
 
 # test imports
 import base
 import test_models_bank_stmt as bk_stmt
+
+# local imports
+from ofxtools.models.billpay.common import (
+    ADJUSTMENT,
+    BILLPUBINFO,
+    BPACCTINFO,
+    DISCOUNT,
+    EXTDPAYEE,
+    EXTDPMT,
+    EXTDPMTINV,
+    INVOICE,
+    LINEITEM,
+    PMTINFO,
+    PMTPRCSTS,
+)
+from ofxtools.utils import UTC, classproperty
 
 
 class BpacctinfoTestCase(unittest.TestCase, base.TestAggregate):

@@ -8,20 +8,20 @@ __all__ = ["INVPOS", "POSDEBT", "POSMF", "POSOPT", "POSOTHER", "POSSTOCK", "INVP
 
 
 # Local imports
-from ofxtools.Types import (
-    Bool,
-    String,
-    OneOf,
-    Decimal,
-    DateTime,
-    SubAggregate,
-    ListAggregate,
-)
+from ofxtools.models.bank import INV401KSOURCES
 from ofxtools.models.base import Aggregate
+from ofxtools.models.i18n import CURRENCY
 from ofxtools.models.invest.acct import INVSUBACCTS
 from ofxtools.models.invest.securities import SECID
-from ofxtools.models.bank import INV401KSOURCES
-from ofxtools.models.i18n import CURRENCY
+from ofxtools.Types import (
+    Bool,
+    DateTime,
+    Decimal,
+    ListAggregate,
+    OneOf,
+    String,
+    SubAggregate,
+)
 
 
 class INVPOS(Aggregate):

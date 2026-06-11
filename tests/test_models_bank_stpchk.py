@@ -4,16 +4,20 @@ Unit tests for models.bank.stpchk
 """
 # stdlib imports
 import unittest
-from xml.etree.ElementTree import Element, SubElement
+from copy import deepcopy
 from datetime import datetime
 from decimal import Decimal
-from copy import deepcopy
+from xml.etree.ElementTree import Element, SubElement
 
+# test imports
+import base
+import test_models_bank_stmt as bk_stmt
+import test_models_i18n as i18n
 
 # local imports
 from ofxtools.models.bank.stpchk import (
-    CHKRANGE,
     CHKDESC,
+    CHKRANGE,
     STPCHKNUM,
     STPCHKRQ,
     STPCHKRS,
@@ -21,12 +25,6 @@ from ofxtools.models.bank.stpchk import (
     STPCHKTRNRS,
 )
 from ofxtools.utils import UTC, classproperty
-
-
-# test imports
-import base
-import test_models_i18n as i18n
-import test_models_bank_stmt as bk_stmt
 
 
 class ChkrangeTestCase(unittest.TestCase, base.TestAggregate):

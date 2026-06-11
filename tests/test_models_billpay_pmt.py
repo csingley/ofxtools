@@ -1,34 +1,32 @@
 # coding: utf-8
 """ Unit tests for models.billpay.pmt """
 # stdlib imports
-import unittest
-from xml.etree.ElementTree import Element, SubElement
-from copy import deepcopy
 import itertools
-
-
-# local imports
-from ofxtools.models.billpay.pmt import (
-    PMTRQ,
-    PMTRS,
-    PMTMODRQ,
-    PMTMODRS,
-    PMTCANCRQ,
-    PMTCANCRS,
-    PMTTRNRQ,
-    PMTTRNRS,
-    PMTINQRQ,
-    PMTINQRS,
-    PMTINQTRNRQ,
-    PMTINQTRNRS,
-)
-from ofxtools.models.i18n import CURRENCY_CODES
-from ofxtools.utils import classproperty
-
+import unittest
+from copy import deepcopy
+from xml.etree.ElementTree import Element, SubElement
 
 # test imports
 import base
 import test_models_billpay_common as bp_common
+
+# local imports
+from ofxtools.models.billpay.pmt import (
+    PMTCANCRQ,
+    PMTCANCRS,
+    PMTINQRQ,
+    PMTINQRS,
+    PMTINQTRNRQ,
+    PMTINQTRNRS,
+    PMTMODRQ,
+    PMTMODRS,
+    PMTRQ,
+    PMTRS,
+    PMTTRNRQ,
+    PMTTRNRS,
+)
+from ofxtools.models.i18n import CURRENCY_CODES
+from ofxtools.utils import classproperty
 
 
 class PmtrqTestCase(unittest.TestCase, base.TestAggregate):

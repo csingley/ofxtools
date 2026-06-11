@@ -15,12 +15,12 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import ListAggregate, SubAggregate
-from ofxtools.models.wrapperbases import SyncRqList, SyncRsList
 from ofxtools.models.bank.stmt import BANKACCTFROM
+from ofxtools.models.billpay.list import PAYEETRNRQ, PAYEETRNRS
 from ofxtools.models.billpay.pmt import PMTTRNRQ, PMTTRNRS
 from ofxtools.models.billpay.recur import RECPMTTRNRQ, RECPMTTRNRS
-from ofxtools.models.billpay.list import PAYEETRNRQ, PAYEETRNRS
+from ofxtools.models.wrapperbases import SyncRqList, SyncRsList
+from ofxtools.Types import ListAggregate, SubAggregate
 
 
 class PMTSYNCRQ(SyncRqList):

@@ -20,11 +20,11 @@ __all__ = [
 ]
 
 
-from ofxtools.Types import String, OneOf, SubAggregate
 from ofxtools.models.base import Aggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.models.billpay.common import EXTDPAYEE, PMTINFO, PMTPRCSTS
 from ofxtools.models.i18n import CURRENCY_CODES
-from ofxtools.models.billpay.common import PMTINFO, EXTDPAYEE, PMTPRCSTS
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.Types import OneOf, String, SubAggregate
 
 
 class PMTRQ(Aggregate):

@@ -2,25 +2,23 @@
 """ Unit tests for models.common """
 # stdlib imports
 import unittest
+import xml.etree.ElementTree as ET
 from datetime import datetime
 from decimal import Decimal
-
-import xml.etree.ElementTree as ET
-
-
-# local imports
-from ofxtools.Types import DateTime, ListAggregate
-from ofxtools import models
-from ofxtools.models.common import BAL, OFXELEMENT, OFXEXTENSION
-from ofxtools.models.wrapperbases import TranList
-from ofxtools.models.i18n import CURRENCY_CODES
-from ofxtools.utils import UTC, classproperty
-
 
 # test imports
 import base
 import test_models_i18n as i18n
 from test_models_base import TESTAGGREGATE, TESTSUBAGGREGATE
+
+from ofxtools import models
+from ofxtools.models.common import BAL, OFXELEMENT, OFXEXTENSION
+from ofxtools.models.i18n import CURRENCY_CODES
+from ofxtools.models.wrapperbases import TranList
+
+# local imports
+from ofxtools.Types import DateTime, ListAggregate
+from ofxtools.utils import UTC, classproperty
 
 
 class TESTTRANLIST(TranList):

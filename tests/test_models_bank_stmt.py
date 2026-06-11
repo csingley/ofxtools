@@ -4,49 +4,48 @@ Unit tests for models.bank.stmt
 """
 # stdlib imports
 import unittest
-from xml.etree.ElementTree import Element, SubElement
+from copy import deepcopy
 from datetime import datetime
 from decimal import Decimal
-from copy import deepcopy
 from typing import List
-
-
-# local imports
-from ofxtools.models.base import Aggregate, UnknownTagWarning
-from ofxtools.models.common import SVCSTATUSES
-from ofxtools.models.bank.stmt import (
-    TRNTYPES,
-    INV401KSOURCES,
-    BANKACCTFROM,
-    BANKACCTTO,
-    BANKACCTINFO,
-    CCACCTFROM,
-    CCACCTTO,
-    CCACCTINFO,
-    PAYEE,
-    LEDGERBAL,
-    AVAILBAL,
-    BALLIST,
-    INCTRAN,
-    BANKTRANLIST,
-    REWARDINFO,
-    STMTTRN,
-    STMTRQ,
-    STMTRS,
-    STMTTRNRQ,
-    STMTTRNRS,
-    CCSTMTRQ,
-    CCSTMTRS,
-    CCSTMTTRNRQ,
-    CCSTMTTRNRS,
-)
-from ofxtools.utils import UTC, classproperty
-
+from xml.etree.ElementTree import Element, SubElement
 
 # test imports
 import base
 import test_models_common as common
 import test_models_i18n as i18n
+
+from ofxtools.models.bank.stmt import (
+    AVAILBAL,
+    BALLIST,
+    BANKACCTFROM,
+    BANKACCTINFO,
+    BANKACCTTO,
+    BANKTRANLIST,
+    CCACCTFROM,
+    CCACCTINFO,
+    CCACCTTO,
+    CCSTMTRQ,
+    CCSTMTRS,
+    CCSTMTTRNRQ,
+    CCSTMTTRNRS,
+    INCTRAN,
+    INV401KSOURCES,
+    LEDGERBAL,
+    PAYEE,
+    REWARDINFO,
+    STMTRQ,
+    STMTRS,
+    STMTTRN,
+    STMTTRNRQ,
+    STMTTRNRS,
+    TRNTYPES,
+)
+
+# local imports
+from ofxtools.models.base import Aggregate, UnknownTagWarning
+from ofxtools.models.common import SVCSTATUSES
+from ofxtools.utils import UTC, classproperty
 
 
 class BankacctfromTestCase(unittest.TestCase, base.TestAggregate):

@@ -2,61 +2,60 @@
 """ Unit tests for models.invest """
 # stdlib imports
 import unittest
-from xml.etree.ElementTree import Element, SubElement
-from decimal import Decimal
 from datetime import datetime
+from decimal import Decimal
+from xml.etree.ElementTree import Element, SubElement
 
+# test imports
+import base
+import test_models_bank_stmt as bk_stmt
+import test_models_i18n as i18n
+import test_models_invest_oo as oo
+import test_models_securities as securities
+
+from ofxtools.models.bank.stmt import INV401KSOURCES
 
 # local imports
 from ofxtools.models.base import Aggregate, UnknownTagWarning
 from ofxtools.models.common import SVCSTATUSES
-from ofxtools.models.bank.stmt import INV401KSOURCES
 from ofxtools.models.invest import (
-    USPRODUCTTYPES,
+    CONTRIBINFO,
+    CONTRIBSECURITY,
+    CONTRIBUTIONS,
+    EARNINGS,
+    INCEPTODATE,
+    INCPOS,
+    INV401K,
+    INV401KBAL,
+    INV401KSUMMARY,
+    INVACCTFROM,
+    INVACCTINFO,
+    INVACCTTO,
     INVACCTTYPES,
-    INVSUBACCTS,
-    LOANPMTFREQUENCIES,
+    INVBAL,
     INVPOS,
+    INVPOSLIST,
+    INVSTMTRQ,
+    INVSTMTRS,
+    INVSTMTTRNRQ,
+    INVSTMTTRNRS,
+    INVSUBACCTS,
+    INVTRANLIST,
+    LOANINFO,
+    LOANPMTFREQUENCIES,
+    MATCHINFO,
+    PERIODTODATE,
     POSDEBT,
     POSMF,
     POSOPT,
     POSOTHER,
     POSSTOCK,
-    INVTRANLIST,
-    INVPOSLIST,
-    INCPOS,
-    INVACCTFROM,
-    INVACCTTO,
-    INVACCTINFO,
-    INVBAL,
-    INV401KBAL,
-    MATCHINFO,
-    CONTRIBSECURITY,
-    CONTRIBINFO,
+    USPRODUCTTYPES,
     VESTINFO,
-    LOANINFO,
-    CONTRIBUTIONS,
     WITHDRAWALS,
-    EARNINGS,
     YEARTODATE,
-    INCEPTODATE,
-    PERIODTODATE,
-    INV401KSUMMARY,
-    INV401K,
-    INVSTMTRQ,
-    INVSTMTRS,
-    INVSTMTTRNRQ,
-    INVSTMTTRNRS,
 )
 from ofxtools.utils import UTC, classproperty
-
-
-# test imports
-import base
-import test_models_bank_stmt as bk_stmt
-import test_models_securities as securities
-import test_models_i18n as i18n
-import test_models_invest_oo as oo
 
 
 class InvacctfromTestCase(unittest.TestCase, base.TestAggregate):

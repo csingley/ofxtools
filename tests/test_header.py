@@ -5,9 +5,9 @@
 import unittest
 import uuid
 from io import BytesIO
-from xml.etree.ElementTree import Element
+from typing import Any, Mapping, Optional, Type, Union
 from unittest.mock import patch
-from typing import Optional, Union, Mapping, Any, Type
+from xml.etree.ElementTree import Element
 
 # local imports
 import ofxtools

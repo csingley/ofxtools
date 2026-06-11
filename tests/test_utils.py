@@ -1,21 +1,21 @@
 # coding: utf-8
 """ Unit tests for ofxtools.utils """
 # stdlib imports
-import unittest
-import os
 import datetime
+import os
+import unittest
 
 # local imports
 import ofxtools.utils
 from ofxtools.utils import (
-    fixpath,
-    cusip_checksum,
-    validate_cusip,
-    sedol_checksum,
-    isin_checksum,
-    validate_isin,
     cusip2isin,
+    cusip_checksum,
+    fixpath,
+    isin_checksum,
     sedol2isin,
+    sedol_checksum,
+    validate_cusip,
+    validate_isin,
 )
 
 

@@ -1,16 +1,15 @@
 # coding: utf-8
 """ Unit tests for ofxtools.Types """
 # stdlib imports
-import unittest
-import decimal
 import datetime
+import decimal
+import unittest
 import warnings
 from typing import Optional
 
-
 # local imports
 import ofxtools
-from ofxtools.Types import OFXTypeWarning, OFXSpecError
+from ofxtools.Types import OFXSpecError, OFXTypeWarning
 from ofxtools.utils import UTC
 
 

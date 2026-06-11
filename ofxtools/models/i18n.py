@@ -10,11 +10,10 @@ __all__ = ["LANG_CODES", "CURRENCY_CODES", "COUNTRY_CODES", "CURRENCY", "ORIGCUR
 # stdlib imports
 from typing import Sequence
 
-
-# local imports
-from ofxtools.Types import OneOf, Decimal
 from ofxtools.models.base import Aggregate
 
+# local imports
+from ofxtools.Types import Decimal, OneOf
 
 # 3-letter language codes
 ISO639_2 = (

@@ -15,11 +15,11 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import String, Decimal, DateTime, SubAggregate
-from ofxtools.models.base import Aggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM
+from ofxtools.models.base import Aggregate
 from ofxtools.models.email import MAIL
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.Types import DateTime, Decimal, String, SubAggregate
 
 
 class BANKMAILRQ(Aggregate):

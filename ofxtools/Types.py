@@ -31,15 +31,14 @@ __all__ = [
 
 
 # stdlib imports
-from functools import singledispatchmethod
-import decimal
 import datetime
+import decimal
+import inspect
 import re
 import warnings
+from functools import singledispatchmethod
+from typing import Any, Optional, Type, Union
 from xml.sax import saxutils
-from typing import Any, Optional, Union, Type
-import inspect
-
 
 # local imports
 from ofxtools import utils

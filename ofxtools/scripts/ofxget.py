@@ -4,39 +4,39 @@
 Configurable CLI front end for ``ofxtools.Client``
 """
 # stdlib imports
-import sys
 import argparse
+import concurrent.futures
 import configparser
 import datetime
-from collections import defaultdict
 import getpass
-from urllib import parse as urllib_parse
-from urllib.error import HTTPError, URLError
-import socket
-import concurrent.futures
-import json
-import xml.etree.ElementTree as ET
-from io import BytesIO
 import itertools
-from operator import attrgetter
+import json
 import logging
 import logging.config
-import warnings
 import pydoc
+import socket
+import sys
+import warnings
+import xml.etree.ElementTree as ET
+from collections import defaultdict
+from io import BytesIO
+from operator import attrgetter
 from typing import (
-    Union,
-    Optional,
-    Tuple,
-    List,
     Any,
-    Mapping,
-    MutableMapping,
+    ChainMap,
     Dict,
-    Sequence,
     Iterable,
     Iterator,
-    ChainMap,
+    List,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
 )
+from urllib import parse as urllib_parse
+from urllib.error import HTTPError, URLError
 
 # 3rd party imports
 try:
@@ -49,19 +49,18 @@ except ImportError:
 
 
 # local imports
-from ofxtools import Client, header, Parser, utils, config, models
+from ofxtools import config, models, utils
 from ofxtools.Client import (
-    OFXClient,
-    StmtRq,
+    CcStmtEndRq,
     CcStmtRq,
     InvStmtRq,
+    OFXClient,
     StmtEndRq,
-    CcStmtEndRq,
+    StmtRq,
 )
-from ofxtools.Types import DateTime
 from ofxtools.header import OFXHeaderError
 from ofxtools.Parser import OFXTree, ParseError
-
+from ofxtools.Types import DateTime
 
 CONFIGPATH = config.CONFIGDIR / "fi.cfg"
 USERCONFIGPATH = config.USERCONFIGDIR / "ofxget.cfg"
@@ -1252,7 +1251,7 @@ def _read_scan_response(
         ParseError,
         ET.ParseError,
         OFXHeaderError,
-    ) as exc:
+    ):
         logger.error("Response contains invalid OFX: {exc}")
         return valid, signoninfo
 

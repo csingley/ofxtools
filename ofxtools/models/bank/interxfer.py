@@ -17,11 +17,11 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import String, OneOf, DateTime, SubAggregate
-from ofxtools.models.base import Aggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.models.bank.xfer import XFERINFO, XFERPRCSTS
+from ofxtools.models.base import Aggregate
 from ofxtools.models.i18n import CURRENCY_CODES
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.Types import DateTime, OneOf, String, SubAggregate
 
 
 class INTERRQ(Aggregate):

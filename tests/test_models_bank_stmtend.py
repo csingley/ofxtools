@@ -4,32 +4,30 @@ Unit tests for models.bank.stmtend
 """
 # stdlib imports
 import unittest
-from xml.etree.ElementTree import Element, SubElement
 from datetime import datetime
 from decimal import Decimal
+from xml.etree.ElementTree import Element, SubElement
 
+# test imports
+import base
+import test_models_bank_stmt as bk_stmt
+import test_models_i18n as i18n
 
 # local imports
 from ofxtools.models.bank.stmtend import (
+    CCCLOSING,
+    CCSTMTENDRQ,
+    CCSTMTENDRS,
+    CCSTMTENDTRNRQ,
+    CCSTMTENDTRNRS,
     CLOSING,
     LASTPMTINFO,
     STMTENDRQ,
     STMTENDRS,
     STMTENDTRNRQ,
     STMTENDTRNRS,
-    CCCLOSING,
-    CCSTMTENDRQ,
-    CCSTMTENDRS,
-    CCSTMTENDTRNRQ,
-    CCSTMTENDTRNRS,
 )
 from ofxtools.utils import UTC, classproperty
-
-
-# test imports
-import base
-import test_models_i18n as i18n
-import test_models_bank_stmt as bk_stmt
 
 
 class ClosingTestCase(unittest.TestCase, base.TestAggregate):

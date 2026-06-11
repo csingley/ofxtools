@@ -29,28 +29,27 @@ __all__ = [
 ]
 
 
-from ofxtools.Types import (
-    Bool,
-    NagString,
-    String,
-    Integer,
-    OneOf,
-    Decimal,
-    DateTime,
-    SubAggregate,
-    ListAggregate,
-)
+from ofxtools.models.bank.stmt import BALLIST, INCTRAN
 from ofxtools.models.base import Aggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.models.i18n import CURRENCY_CODES
 from ofxtools.models.invest.acct import INVACCTFROM
-from ofxtools.models.invest.transactions import INVTRANLIST
+from ofxtools.models.invest.openorders import INVOOLIST
 from ofxtools.models.invest.positions import INVPOSLIST
 from ofxtools.models.invest.securities import SECID
-from ofxtools.models.invest.openorders import INVOOLIST
-from ofxtools.models.bank.stmt import INCTRAN, BALLIST
-from ofxtools.models.i18n import CURRENCY_CODES
+from ofxtools.models.invest.transactions import INVTRANLIST
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
+from ofxtools.Types import (
+    Bool,
+    DateTime,
+    Decimal,
+    Integer,
+    ListAggregate,
+    NagString,
+    OneOf,
+    String,
+    SubAggregate,
+)
 from ofxtools.utils import all_equal
-
 
 #  OFX section 13.9.3
 LOANPMTFREQUENCIES = (

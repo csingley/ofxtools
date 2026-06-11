@@ -30,23 +30,21 @@ __all__ = [
 
 
 # stdlib imports
-from copy import deepcopy
 
 # local imports
+from ofxtools.models.base import Aggregate
+from ofxtools.models.common import MSGSETCORE, STATUS
+from ofxtools.models.i18n import LANG_CODES
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.Types import (
-    String,
-    OneOf,
-    DateTime,
     Bool,
+    DateTime,
     ListAggregate,
+    OneOf,
+    String,
     SubAggregate,
     Unsupported,
 )
-from ofxtools.models.base import Aggregate
-from ofxtools.models.wrapperbases import TrnRq, TrnRs
-from ofxtools.models.common import STATUS, MSGSETCORE
-from ofxtools.models.i18n import LANG_CODES
-
 
 MFAPHRASEIDS = {
     "MFA1": "City of birth",

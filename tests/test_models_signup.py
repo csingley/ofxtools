@@ -1,53 +1,51 @@
 # coding: utf-8
 """ Unit tests for ofxtools.models.signup """
 # stdlib imports
-import unittest
-from xml.etree.ElementTree import Element, SubElement
-from datetime import datetime
 import itertools
+import unittest
+from datetime import datetime
+from xml.etree.ElementTree import Element, SubElement
 
+# test imports
+import base
+import test_models_bank_stmt as bk_stmt
+import test_models_invest as invest
 
 # local imports
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import SVCSTATUSES
+from ofxtools.models.i18n import COUNTRY_CODES
 from ofxtools.models.signup import (
     ACCTINFO,
     ACCTINFORQ,
     ACCTINFORS,
     ACCTINFOTRNRQ,
     ACCTINFOTRNRS,
+    ACCTRQ,
+    ACCTRS,
+    ACCTSYNCRQ,
+    ACCTSYNCRS,
+    ACCTTRNRQ,
+    ACCTTRNRS,
+    CHGUSERINFORQ,
+    CHGUSERINFORS,
+    CHGUSERINFOSYNCRQ,
+    CHGUSERINFOSYNCRS,
+    CHGUSERINFOTRNRQ,
+    CHGUSERINFOTRNRS,
+    CLIENTENROLL,
     ENROLLRQ,
     ENROLLRS,
     ENROLLTRNRQ,
     ENROLLTRNRS,
-    SVCS,
+    OTHERENROLL,
     SVCADD,
     SVCCHG,
     SVCDEL,
-    ACCTRQ,
-    ACCTRS,
-    ACCTTRNRQ,
-    ACCTTRNRS,
-    ACCTSYNCRQ,
-    ACCTSYNCRS,
-    CHGUSERINFORQ,
-    CHGUSERINFORS,
-    CHGUSERINFOTRNRQ,
-    CHGUSERINFOTRNRS,
-    CHGUSERINFOSYNCRQ,
-    CHGUSERINFOSYNCRS,
-    CLIENTENROLL,
+    SVCS,
     WEBENROLL,
-    OTHERENROLL,
 )
 from ofxtools.utils import UTC, classproperty
-from ofxtools.models.i18n import COUNTRY_CODES
-
-
-# test imports
-import base
-import test_models_bank_stmt as bk_stmt
-import test_models_invest as invest
 
 
 class ClientenrollTestCase(unittest.TestCase, base.TestAggregate):

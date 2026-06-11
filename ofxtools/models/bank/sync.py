@@ -23,20 +23,20 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import Bool, ListAggregate, SubAggregate
-from ofxtools.models.wrapperbases import SyncRqList, SyncRsList
-from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM
-from ofxtools.models.bank.xfer import INTRATRNRQ, INTRATRNRS
 from ofxtools.models.bank.interxfer import INTERTRNRQ, INTERTRNRS
-from ofxtools.models.bank.wire import WIRETRNRQ, WIRETRNRS
+from ofxtools.models.bank.mail import BANKMAILTRNRQ, BANKMAILTRNRS
 from ofxtools.models.bank.recur import (
-    RECINTRATRNRQ,
-    RECINTRATRNRS,
     RECINTERTRNRQ,
     RECINTERTRNRS,
+    RECINTRATRNRQ,
+    RECINTRATRNRS,
 )
-from ofxtools.models.bank.mail import BANKMAILTRNRQ, BANKMAILTRNRS
+from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM
 from ofxtools.models.bank.stpchk import STPCHKTRNRQ, STPCHKTRNRS
+from ofxtools.models.bank.wire import WIRETRNRQ, WIRETRNRS
+from ofxtools.models.bank.xfer import INTRATRNRQ, INTRATRNRS
+from ofxtools.models.wrapperbases import SyncRqList, SyncRsList
+from ofxtools.Types import Bool, ListAggregate, SubAggregate
 
 
 class STPCHKSYNCRQ(SyncRqList):

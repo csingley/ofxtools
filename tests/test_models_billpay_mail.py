@@ -4,23 +4,21 @@
 import unittest
 import xml.etree.ElementTree as ET
 
+# test imports
+import base
+import test_models_billpay_common as bp_common
+import test_models_email as email
 
 # local imports
 from ofxtools.models.billpay.mail import (
     PMTMAILRQ,
     PMTMAILRS,
-    PMTMAILTRNRQ,
-    PMTMAILTRNRS,
     PMTMAILSYNCRQ,
     PMTMAILSYNCRS,
+    PMTMAILTRNRQ,
+    PMTMAILTRNRS,
 )
 from ofxtools.utils import classproperty
-
-
-# test imports
-import base
-import test_models_email as email
-import test_models_billpay_common as bp_common
 
 
 class PmtmailrqTestCase(unittest.TestCase, base.TestAggregate):

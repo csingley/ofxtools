@@ -34,29 +34,28 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import (
-    Bool,
-    String,
-    NagString,
-    OneOf,
-    Integer,
-    Decimal,
-    DateTime,
-    SubAggregate,
-    ListAggregate,
-    Unsupported,
-)
 from ofxtools.models.base import Aggregate
-from ofxtools.models.common import SVCSTATUSES, BAL
-from ofxtools.models.wrapperbases import TrnRq, TrnRs, TranList
+from ofxtools.models.common import BAL, SVCSTATUSES
 from ofxtools.models.i18n import (
+    COUNTRY_CODES,
     CURRENCY,
+    CURRENCY_CODES,
     ORIGCURRENCY,
     Origcurrency,
-    CURRENCY_CODES,
-    COUNTRY_CODES,
 )
-
+from ofxtools.models.wrapperbases import TranList, TrnRq, TrnRs
+from ofxtools.Types import (
+    Bool,
+    DateTime,
+    Decimal,
+    Integer,
+    ListAggregate,
+    NagString,
+    OneOf,
+    String,
+    SubAggregate,
+    Unsupported,
+)
 
 # Enums used in aggregate validation
 INV401KSOURCES = (

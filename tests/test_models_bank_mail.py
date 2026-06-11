@@ -4,10 +4,14 @@ Unit tests for models.bank.mail
 """
 # stdlib imports
 import unittest
-from xml.etree.ElementTree import Element, SubElement
 from datetime import datetime
 from decimal import Decimal
+from xml.etree.ElementTree import Element, SubElement
 
+# test imports
+import base
+import test_models_bank_stmt as bk_stmt
+import test_models_email as email
 
 # local imports
 from ofxtools.models.bank.mail import (
@@ -19,12 +23,6 @@ from ofxtools.models.bank.mail import (
     DEPMAILRS,
 )
 from ofxtools.utils import UTC, classproperty
-
-
-# test imports
-import base
-import test_models_email as email
-import test_models_bank_stmt as bk_stmt
 
 
 class BankmailrqTestCase(unittest.TestCase, base.TestAggregate):

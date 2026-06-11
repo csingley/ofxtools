@@ -17,17 +17,17 @@ __all__ = [
 
 
 # local imports
-from ofxtools.Types import Bool, SubAggregate, ListAggregate, Unsupported
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import MSGSETCORE
-from ofxtools.models.invest.stmt import INVSTMTTRNRQ, INVSTMTTRNRS
 from ofxtools.models.invest.mail import (
-    INVMAILTRNRQ,
-    INVMAILTRNRS,
     INVMAILSYNCRQ,
     INVMAILSYNCRS,
+    INVMAILTRNRQ,
+    INVMAILTRNRS,
 )
 from ofxtools.models.invest.securities import SECLIST, SECLISTTRNRQ, SECLISTTRNRS
+from ofxtools.models.invest.stmt import INVSTMTTRNRQ, INVSTMTTRNRS
+from ofxtools.Types import Bool, ListAggregate, SubAggregate, Unsupported
 
 
 class INVSTMTMSGSRQV1(Aggregate):

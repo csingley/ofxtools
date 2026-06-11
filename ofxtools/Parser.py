@@ -29,16 +29,14 @@ __all__ = ["OFXTree", "TreeBuilder", "ParseError"]
 
 
 # stdlib imports
+import logging
 import re
 import xml.etree.ElementTree as ET
-from typing import Tuple, Optional
-import logging
-
+from typing import Optional, Tuple
 
 # local imports
-from ofxtools.header import parse_header, OFXHeaderType
+from ofxtools.header import OFXHeaderType, parse_header
 from ofxtools.models.base import Aggregate
-
 
 logger = logging.getLogger(__name__)
 

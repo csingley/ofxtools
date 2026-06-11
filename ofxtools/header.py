@@ -29,14 +29,12 @@ __all__ = [
 
 
 # stdlib imports
-import re
 import logging
-from typing import Tuple, Union, Optional, BinaryIO, Pattern, Any
-
+import re
+from typing import Any, BinaryIO, Optional, Tuple, Union
 
 # local imports
 from ofxtools import Types
-
 
 logger = logging.getLogger(__name__)
 

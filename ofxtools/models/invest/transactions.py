@@ -39,23 +39,22 @@ __all__ = [
 
 
 # Local imports
+from ofxtools.models.bank import INV401KSOURCES, STMTTRN
+from ofxtools.models.base import Aggregate
+from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, Origcurrency
+from ofxtools.models.invest.acct import INVACCTFROM, INVSUBACCTS
+from ofxtools.models.invest.securities import SECID
+from ofxtools.models.wrapperbases import TranList
 from ofxtools.Types import (
     Bool,
-    String,
-    OneOf,
-    Integer,
-    Decimal,
     DateTime,
+    Decimal,
+    Integer,
     ListAggregate,
+    OneOf,
+    String,
     SubAggregate,
 )
-from ofxtools.models.base import Aggregate
-from ofxtools.models.wrapperbases import TranList
-from ofxtools.models.invest.acct import INVSUBACCTS, INVACCTFROM
-from ofxtools.models.invest.securities import SECID
-from ofxtools.models.bank import STMTTRN, INV401KSOURCES
-from ofxtools.models.i18n import CURRENCY, ORIGCURRENCY, Origcurrency
-
 
 BUYTYPES = ("BUY", "BUYTOCOVER")
 SELLTYPES = ("SELL", "SELLSHORT")

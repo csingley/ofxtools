@@ -36,20 +36,20 @@ __all__ = [
 
 
 # local imports
+from ofxtools.models.base import Aggregate, ElementList
+from ofxtools.models.common import MSGSETCORE
+from ofxtools.models.wrapperbases import TrnRq, TrnRs
 from ofxtools.Types import (
-    String,
     Bool,
-    Integer,
-    Decimal,
-    OneOf,
     DateTime,
-    SubAggregate,
+    Decimal,
+    Integer,
     ListAggregate,
     ListElement,
+    OneOf,
+    String,
+    SubAggregate,
 )
-from ofxtools.models.base import Aggregate, ElementList
-from ofxtools.models.wrapperbases import TrnRq, TrnRs
-from ofxtools.models.common import MSGSETCORE
 
 
 class PAYERADDR(Aggregate):

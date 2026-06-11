@@ -2,31 +2,38 @@
 """ Unit tests for models.invest """
 # stdlib imports
 import unittest
-from xml.etree.ElementTree import Element, SubElement
-from decimal import Decimal
 from datetime import datetime
+from decimal import Decimal
+from xml.etree.ElementTree import Element, SubElement
 
+# test imports
+import base
+import test_models_bank_stmt as bk_stmt
+import test_models_i18n as i18n
+import test_models_invest as invest
+import test_models_securities as securities
+
+from ofxtools.models.bank.stmt import INV401KSOURCES
 
 # local imports
 from ofxtools.models.base import Aggregate
-from ofxtools.models.bank.stmt import INV401KSOURCES
+from ofxtools.models.i18n import CURRENCY
 from ofxtools.models.invest import (
-    BUYTYPES,
-    SELLTYPES,
-    INCOMETYPES,
-    INVSUBACCTS,
-    INVTRAN,
-    INVBUY,
-    INVSELL,
-    INVBANKTRAN,
     BUYDEBT,
     BUYMF,
     BUYOPT,
     BUYOTHER,
     BUYSTOCK,
+    BUYTYPES,
     CLOSUREOPT,
     INCOME,
+    INCOMETYPES,
+    INVBANKTRAN,
+    INVBUY,
     INVEXPENSE,
+    INVSELL,
+    INVSUBACCTS,
+    INVTRAN,
     JRNLFUND,
     JRNLSEC,
     MARGININTEREST,
@@ -37,19 +44,11 @@ from ofxtools.models.invest import (
     SELLOPT,
     SELLOTHER,
     SELLSTOCK,
+    SELLTYPES,
     SPLIT,
     TRANSFER,
 )
-from ofxtools.models.i18n import CURRENCY
 from ofxtools.utils import UTC, classproperty
-
-
-# test imports
-import base
-import test_models_bank_stmt as bk_stmt
-import test_models_invest as invest
-import test_models_securities as securities
-import test_models_i18n as i18n
 
 
 class InvbanktranTestCase(unittest.TestCase, base.TestAggregate):

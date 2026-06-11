@@ -2,40 +2,39 @@
 """ Unit tests for ofxtools.ofxget """
 
 # stdlib imports
-import unittest
-from unittest.mock import Mock, patch, DEFAULT
-from datetime import datetime
-from io import BytesIO
 import argparse
 import collections
-import urllib
-from configparser import ConfigParser
-import xml.etree.ElementTree as ET
 import concurrent.futures
-from urllib.error import HTTPError, URLError
 import socket
-
-
-# local imports
-from ofxtools import models, header, Parser, utils
-from ofxtools.Client import (
-    OFXClient,
-    StmtRq,
-    CcStmtRq,
-    InvStmtRq,
-    StmtEndRq,
-    CcStmtEndRq,
-)
-from ofxtools.utils import UTC
-from ofxtools.scripts import ofxget
+import unittest
+import urllib
+import xml.etree.ElementTree as ET
+from configparser import ConfigParser
+from datetime import datetime
+from io import BytesIO
+from unittest.mock import DEFAULT, Mock, patch
+from urllib.error import HTTPError, URLError
 
 # test imports
 import base
+import test_models_bank_stmt
+import test_models_billpay_common
+import test_models_invest
 import test_models_msgsets
 import test_models_signup
-import test_models_bank_stmt
-import test_models_invest
-import test_models_billpay_common
+
+# local imports
+from ofxtools import Parser, header, models, utils
+from ofxtools.Client import (
+    CcStmtEndRq,
+    CcStmtRq,
+    InvStmtRq,
+    OFXClient,
+    StmtEndRq,
+    StmtRq,
+)
+from ofxtools.scripts import ofxget
+from ofxtools.utils import UTC
 
 
 class MakeArgParserTestCase(unittest.TestCase):
@@ -1309,7 +1308,7 @@ class FiIndexTestCase(unittest.TestCase):
 
     def testListFisNoServer(self):
         with patch("ofxtools.scripts.ofxget.USERCFG", new=self.USERCFG):
-            with patch("pydoc.pager") as mock_pager:
+            with patch("pydoc.pager"):
                 ofxget.list_fis({"server": ""})
 
         # FIXME
@@ -1321,7 +1320,7 @@ class FiIndexTestCase(unittest.TestCase):
 
     def testListFisWithKnownServer(self):
         with patch("ofxtools.scripts.ofxget.USERCFG", new=self.USERCFG):
-            with patch("builtins.print") as mock_print:
+            with patch("builtins.print"):
                 ofxget.list_fis({"server": "server0"})
 
         # FIXME
@@ -1371,7 +1370,7 @@ class MainTestCase(unittest.TestCase):
             merge_config=_merge_config,
             list_fis=DEFAULT,
             USERCFG=_USERCFG,
-        ) as MOCKS:
+        ):
             ofxget.main()
 
 

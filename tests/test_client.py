@@ -3,26 +3,21 @@
 
 # stdlib imports
 import unittest
-from unittest.mock import patch, DEFAULT, sentinel, Mock
-from datetime import datetime
 import xml.etree.ElementTree as ET
-import socket
-from io import BytesIO
-
+from datetime import datetime
+from unittest.mock import DEFAULT, Mock, patch
 
 # local imports
 from ofxtools.Client import (
-    OFXClient,
-    StmtRq,
+    CcStmtEndRq,
     CcStmtRq,
     InvStmtRq,
+    OFXClient,
     StmtEndRq,
-    CcStmtEndRq,
+    StmtRq,
 )
-from ofxtools.models.signon import SIGNONMSGSRQV1
+from ofxtools.models.signon import SIGNONMSGSRQV1, SONRQ
 from ofxtools.utils import UTC, indent, tostring_unclosed_elements
-from ofxtools.models.signon import SONRQ
-
 
 DEFAULT_APPID = "QWIN"
 DEFAULT_APPVER = "2700"

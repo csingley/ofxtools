@@ -47,29 +47,26 @@ __all__ = [
 
 
 # stdlib imports
-import logging
 import datetime
 import http.cookiejar
+import itertools
+import logging
+import urllib.request as urllib_request
 import uuid
 import xml.etree.ElementTree as ET
-import urllib.request as urllib_request
-import socket
-from io import BytesIO
-import itertools
-from operator import attrgetter, itemgetter
 from functools import singledispatch
+from io import BytesIO
+from operator import attrgetter, itemgetter
 from typing import (
+    BinaryIO,
     Dict,
-    Union,
-    Optional,
-    Tuple,
     Iterator,
     NamedTuple,
-    BinaryIO,
+    Optional,
+    Tuple,
     Type,
-    Callable,
+    Union,
 )
-
 
 # 3rd party libs
 try:
@@ -81,50 +78,51 @@ except ImportError:
 
 
 # local imports
+from ofxtools import config, utils
 from ofxtools.header import make_header
-from ofxtools.models.ofx import OFX
 from ofxtools.models import ACCTINFORQ, ACCTINFOTRNRQ
-from ofxtools.models.profile import PROFRQ, PROFTRNRQ, PROFMSGSRQV1, PROFMSGSET
-from ofxtools.models.signon import SONRQ, FI, SIGNONMSGSRQV1
-from ofxtools.models.signup import SIGNUPMSGSRQV1
 from ofxtools.models.bank import (
     BANKACCTFROM,
+    BANKMSGSET,
+    BANKMSGSRQV1,
     CCACCTFROM,
-    INCTRAN,
-    STMTRQ,
-    STMTTRNRQ,
-    CCSTMTRQ,
-    CCSTMTTRNRQ,
-    STMTENDRQ,
-    STMTENDTRNRQ,
     CCSTMTENDRQ,
     CCSTMTENDTRNRQ,
-    BANKMSGSRQV1,
-    CREDITCARDMSGSRQV1,
-    BANKMSGSET,
+    CCSTMTRQ,
+    CCSTMTTRNRQ,
     CREDITCARDMSGSET,
+    CREDITCARDMSGSRQV1,
+    INCTRAN,
     INTERXFERMSGSET,
+    STMTENDRQ,
+    STMTENDTRNRQ,
+    STMTRQ,
+    STMTTRNRQ,
     WIREXFERMSGSET,
 )
-from ofxtools.models.invest import (
-    INVSTMTTRNRQ,
-    INVSTMTRQ,
-    INVACCTFROM,
-    INCPOS,
-    INVSTMTMSGSRQV1,
-    INVSTMTMSGSET,
-    SECLISTMSGSET,
-)
-from ofxtools.models.signon import SIGNONMSGSET
-from ofxtools.models.signup import SIGNUPMSGSET
 from ofxtools.models.billpay.msgsets import BILLPAYMSGSET
 from ofxtools.models.email import EMAILMSGSET
-from ofxtools.models.tax1099 import TAX1099MSGSET
-from ofxtools.models.tax1099 import TAX1099RQ, TAX1099TRNRQ, TAX1099MSGSRQV1
-from ofxtools.utils import classproperty, UTC
-from ofxtools import utils, config
+from ofxtools.models.invest import (
+    INCPOS,
+    INVACCTFROM,
+    INVSTMTMSGSET,
+    INVSTMTMSGSRQV1,
+    INVSTMTRQ,
+    INVSTMTTRNRQ,
+    SECLISTMSGSET,
+)
+from ofxtools.models.ofx import OFX
+from ofxtools.models.profile import PROFMSGSET, PROFMSGSRQV1, PROFRQ, PROFTRNRQ
+from ofxtools.models.signon import FI, SIGNONMSGSET, SIGNONMSGSRQV1, SONRQ
+from ofxtools.models.signup import SIGNUPMSGSET, SIGNUPMSGSRQV1
+from ofxtools.models.tax1099 import (
+    TAX1099MSGSET,
+    TAX1099MSGSRQV1,
+    TAX1099RQ,
+    TAX1099TRNRQ,
+)
 from ofxtools.Parser import OFXTree
-
+from ofxtools.utils import UTC, classproperty
 
 AUTH_PLACEHOLDER = "{:0<32}".format("anonymous")
 

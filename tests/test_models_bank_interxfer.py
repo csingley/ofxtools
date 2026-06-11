@@ -3,30 +3,29 @@
 Unit tests for models.bank.interxfer
 """
 # stdlib imports
-import unittest
-from xml.etree.ElementTree import Element, SubElement
-from copy import deepcopy
 import itertools
-
+import unittest
+from copy import deepcopy
+from xml.etree.ElementTree import Element, SubElement
 
 # local imports
 import base
+
+# test imports
+import test_models_bank_xfer as xfer
+
 from ofxtools.models.bank.interxfer import (
-    INTERRQ,
-    INTERRS,
-    INTERMODRQ,
-    INTERMODRS,
     INTERCANRQ,
     INTERCANRS,
+    INTERMODRQ,
+    INTERMODRS,
+    INTERRQ,
+    INTERRS,
     INTERTRNRQ,
     INTERTRNRS,
 )
 from ofxtools.models.i18n import CURRENCY_CODES
 from ofxtools.utils import classproperty
-
-
-# test imports
-import test_models_bank_xfer as xfer
 
 
 class InterrqTestCase(unittest.TestCase, base.TestAggregate):

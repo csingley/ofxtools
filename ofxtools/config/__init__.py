@@ -1,12 +1,11 @@
 # coding: utf-8
 # stdlib imports
-import sys
-import os
-from pathlib import Path
+import json
 import logging
 import logging.config
-import json
-
+import os
+import sys
+from pathlib import Path
 
 __all__ = [
     "CONFIGDIR",
