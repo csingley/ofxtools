@@ -271,9 +271,13 @@ class Aggregate(list):
             # Parse attribute value
             if attrname in cls.unsupported:
                 value: str | Aggregate | None = None
-            elif elem.text:
+            elif attrname not in cls.subaggregates:
                 # Element - extract as string; value will be type-converted upon
                 # instance initialization by ``ofxtools.Types.Element.__set__()``.
+                # Use the class spec rather than elem.text to discriminate text
+                # elements from aggregates, so that empty elements (<MEMO></MEMO>
+                # or <MEMO/>) are handled correctly instead of falling through to
+                # the aggregate branch.
                 value = elem.text
             else:
                 # Aggregate - recurse

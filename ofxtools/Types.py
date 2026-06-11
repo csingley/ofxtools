@@ -494,16 +494,18 @@ DT_REGEX = re.compile(
         (
             (?P<hour>([0-1][0-9])|(2[0-3]))
             (?P<minute>[0-5][0-9])
-            (?P<second>([0-5][0-9])|(60))
             (
-                (\.(?P<millisecond>[0-9]{3}))?
+                (?P<second>([0-5][0-9])|(60))
                 (
-                    \[(?P<gmt_offset_hours>[0-9-+]+)
+                    (\.(?P<millisecond>[0-9]{3}))?
                     (
-                        (.(?P<gmt_offset_minutes>\d\d))?
-                        (:(?P<tz_name>.*))?
+                        \[(?P<gmt_offset_hours>[0-9-+]+)
+                        (
+                            (.(?P<gmt_offset_minutes>\d\d))?
+                            (:(?P<tz_name>.*))?
+                        )?
+                        \]
                     )?
-                    \]
                 )?
             )?
         )?

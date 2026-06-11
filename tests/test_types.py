@@ -459,6 +459,9 @@ class DateTimeTestCase(unittest.TestCase, Base):
         # Accept YYYYMMDDHHMMSS.XXX[-:TZ] for TZs defined in the kludge
         check = datetime.datetime(2011, 11, 17, 9, 30, 45, 150000, tzinfo=UTC)
         self.assertEqual(check, t.convert("20111117033045.150[-:CST]"))
+        # Accept YYYYMMDDHHMM (seconds optional)
+        check = datetime.datetime(2011, 11, 17, 3, 30, 0, tzinfo=UTC)
+        self.assertEqual(check, t.convert("201111170330"))
 
     def test_convert_illegal(self):
         t = self.type_()
@@ -477,9 +480,6 @@ class DateTimeTestCase(unittest.TestCase, Base):
         # Don't accept integer
         with self.assertRaises(TypeError):
             t.convert(123)
-        # Don't accept YYYYMMDDHHMM
-        with self.assertRaises(ValueError):
-            t.convert("201111170330")
         # Don't accept YYYYMMDD.XXX
         with self.assertRaises(ValueError):
             t.convert("20111117.150")
