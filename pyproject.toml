@@ -1,0 +1,75 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ofxtools"
+version = "0.9.5"
+description = "Library for working with Open Financial Exchange (OFX) data"
+readme = {file = "README.rst", content-type = "text/x-rst"}
+license = "GPL-3.0-only"
+authors = [{name = "Christopher Singley", email = "csingley@gmail.com"}]
+requires-python = ">=3.9"
+keywords = ["ofx", "Open Financial Exchange"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities",
+    "Topic :: Office/Business",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Office/Business :: Financial :: Accounting",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Operating System :: OS Independent",
+    "Natural Language :: English",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "coverage",
+    "coveralls",
+    "mypy",
+    "black",
+    "pylint",
+    "ipdb",
+    "types-pytz",
+    "types-requests",
+]
+
+[project.urls]
+Homepage = "https://github.com/csingley/ofxtools"
+
+[project.scripts]
+ofxget = "ofxtools.scripts.ofxget:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.package-data]
+ofxtools = ["py.typed", "config/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["ofxtools"]
+
+[tool.mypy]
+files = ["ofxtools", "tests"]
+strict = false
+
+[tool.black]
+line-length = 88
+
+[tool.flake8]
+max-line-length = 88
