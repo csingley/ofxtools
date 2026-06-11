@@ -28,7 +28,6 @@ from ofxtools.Client import (
 )
 from ofxtools.utils import UTC
 from ofxtools.scripts import ofxget
-from ofxtools.ofxhome import OFXServer
 
 # test imports
 import base
@@ -801,7 +800,6 @@ class MkServerCfgTestCase(unittest.TestCase):
                         "server": "myserver",
                         "url": "https://ofxget.test.com",
                         "version": 203,
-                        "ofxhome": "123",
                         "org": "TEST",
                         "fid": "321",
                         "brokerid": "test.com",
@@ -821,7 +819,6 @@ class MkServerCfgTestCase(unittest.TestCase):
             # args equal to defaults are omitted from the results
             predicted = {
                 "url": "https://ofxget.test.com",
-                "ofxhome": "123",
                 "org": "TEST",
                 "fid": "321",
                 "brokerid": "test.com",
@@ -922,7 +919,6 @@ class MergeConfigTestCase(unittest.TestCase):
         # Monkey-patch ofxget.USERCFG
         default_cfg = """
         [2big2fail]
-        ofxhome = 417
         version = 203
         pretty = true
         fid = 44
@@ -951,112 +947,6 @@ class MergeConfigTestCase(unittest.TestCase):
         #  ofxget.UserConfig = cls._UserConfig
         ofxget.USERCFG = cls._USERCFG
 
-    def testMergeConfig(self):
-        args = argparse.Namespace(
-            server="2big2fail", user="daffyduck", creditcard=["666"]
-        )
-
-        with patch("ofxtools.ofxhome.lookup") as ofxhome_lookup:
-            ofxhome_lookup.return_value = OFXServer(
-                id="1",
-                name="Two Big Two Fail",
-                fid="22",
-                org="2BIG2FAIL",
-                url="https://ofx.test.com",
-                brokerid="2big2fail.com",
-            )
-
-            merged = ofxget.merge_config(args, ofxget.USERCFG)
-
-        # None of args/usercfg/defaultcfg has the URL,
-        # so there should have been an OFX Home lookup
-        ofxhome_lookup.assert_called_once_with("417")
-
-        # ChainMap(args, user_cfg, ofxhome_lookup, DEFAULTS)
-        self.assertIsInstance(merged, collections.ChainMap)
-        maps = merged.maps
-        self.assertEqual(len(maps), 4)
-        self.assertEqual(maps[0]["user"], "daffyduck")
-        self.assertEqual(maps[1]["user"], "porkypig")
-        self.assertEqual(maps[2]["org"], "2BIG2FAIL")
-        self.assertEqual(maps[3], ofxget.DEFAULTS)
-
-        # Any arg from the the CLI should be available in the merged map.
-        self.assertEqual(merged["server"], "2big2fail")
-
-        # Args passed from the CLI trump the same args from any other source.
-        self.assertEqual(merged["user"], "daffyduck")
-
-        # For list-type configs, higher-priority config overrides
-        # lower-priority config (i.e. it's not appended).
-        self.assertEqual(merged["creditcard"], ["666"])
-
-        # Args missing from CLI fall back to user config...
-        self.assertEqual(merged["savings"], ["111"])
-
-        # ...or, failing that, fall back to library default config...
-        self.assertEqual(merged["org"], "2big2fail")
-
-        # ...or, failing that, fall back to ofxhome lookup
-        self.assertEqual(merged["brokerid"], "2big2fail.com")
-
-        # ...or, failing THAT, fall back to ofxget.DEFAULTS
-        self.assertEqual(merged["unsafe"], False)
-
-        # User config trumps library default config and ofxhome lookup
-        self.assertEqual(merged["fid"], "33")
-
-        # Library default config trumps ofxhome lookup
-        self.assertEqual(merged["org"], "2big2fail")
-
-        # Library default config drumps ofxget.DEFAULTS
-        # Also, INI bool conversion works
-        self.assertEqual(merged["pretty"], True)
-
-        # INI list chunking works
-        self.assertEqual(maps[1]["checking"], ["222", "333"])
-
-        # INI int conversion works
-        self.assertEqual(maps[1]["version"], 203)
-
-        # We have proper types for all lists, even absent configuration
-        for lst in (
-            "checking",
-            "savings",
-            "moneymrkt",
-            "creditline",
-            "creditcard",
-            "investment",
-            "years",
-        ):
-            self.assertIsInstance(merged[lst], list)
-
-        # We have proper types for all bools, even absent configuration
-        for boole in (
-            "dryrun",
-            "unsafe",
-            "unclosedelements",
-            "pretty",
-            "inctran",
-            "incbal",
-            "incpos",
-            "incoo",
-            "all",
-            "write",
-        ):
-            self.assertIsInstance(merged[boole], bool)
-
-        # We have default empty string for all unset string configs
-        for string in (
-            "appid",
-            "appver",
-            "bankid",
-            "clientuid",
-            "language",
-            "acctnum",
-            "recid",
-        ):
-            self.assertEqual(merged[string], "")
 
     def testMergeConfigUnknownFiArg(self):
         args = argparse.Namespace(server="3big4fail")
@@ -1403,9 +1293,9 @@ class FiIndexTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         parser = ConfigParser()
-        parser["NAMES"] = {"0": "0th Server", "1": "1st Server"}
-        parser["server0"] = {"ofxhome": "0", "url": "https://ofx.test.com"}
-        parser["server1"] = {"ofxhome": "1", "url": "https://ofx.test.com"}
+        parser["NAMES"] = {"server0": "0th Server", "server1": "1st Server"}
+        parser["server0"] = {"url": "https://ofx.test.com"}
+        parser["server1"] = {"url": "https://ofx.test.com"}
 
         cls.USERCFG = parser
 
@@ -1414,7 +1304,7 @@ class FiIndexTestCase(unittest.TestCase):
             servers = ofxget.fi_index()
 
         self.assertEqual(
-            servers, [("0th Server", "server0", "0"), ("1st Server", "server1", "1")]
+            servers, [("0th Server", "server0"), ("1st Server", "server1")]
         )
 
     def testListFisNoServer(self):
@@ -1473,7 +1363,7 @@ class MainTestCase(unittest.TestCase):
 
         _USERCFG = ConfigParser()
         _USERCFG["NAMES"] = {"0": "0th server"}
-        _USERCFG["server0"] = {"ofxhome": "0", "url": "https://ofx.test.com"}
+        _USERCFG["server0"] = {"url": "https://ofx.test.com"}
 
         with patch.multiple(
             "ofxtools.scripts.ofxget",
