@@ -872,10 +872,16 @@ class OFXClient:
                 if self.persist_cookies:
                     sess.cookies = self.cookiejar  # type: ignore
 
+                # Replace session default headers entirely rather than merging
+                # via the headers= kwarg. Some FIs (e.g. Amex) validate HTTP
+                # header ordering and reject requests where User-Agent is not
+                # the first header — which happens when requests prepends its
+                # own defaults before ours.
+                sess.headers = self.http_headers  # type: ignore
+
                 response = sess.request(
                     method="POST",
                     url=url,
-                    headers=self.http_headers,
                     data=serialized_request,
                     timeout=timeout,
                 )
