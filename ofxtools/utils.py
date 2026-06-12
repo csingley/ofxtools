@@ -6,7 +6,7 @@ import datetime
 import math
 import os
 import xml.etree.ElementTree as ET
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from itertools import filterfalse, groupby, tee
 from itertools import pairwise as pairwise
 from typing import Any
@@ -80,7 +80,7 @@ def all_equal(iterable: Iterable) -> bool:
     return next(g, None) is None  # True iff no second group exists
 
 
-def partition(pred: Callable, iterable: Iterable) -> tuple[Iterable, Iterable]:
+def partition(pred: Callable, iterable: Iterable) -> tuple[Iterator, Iterator]:
     """
     Use a predicate to partition entries into false entries and true entries
     """
@@ -174,7 +174,7 @@ def isin_checksum(base: str) -> str:
     """
     if len(base) != 11:
         raise ValueError(f"ISIN base must be 11 characters, got {len(base)}")
-    if base[:2] not in NUMBERING_AGENCIES.keys():
+    if base[:2] not in NUMBERING_AGENCIES:
         raise ValueError(f"ISIN country code '{base[:2]}' not recognized")
     check = "".join([str(int(char, 36)) for char in base])
     check = check[::-1]  # string reversal
@@ -188,7 +188,7 @@ def validate_isin(isin: str) -> bool:
     """
     return (
         len(isin) == 12
-        and isin[:2] in NUMBERING_AGENCIES.keys()
+        and isin[:2] in NUMBERING_AGENCIES
         and isin_checksum(isin[:11]) == isin[11]
     )
 
@@ -199,7 +199,7 @@ def cusip2isin(cusip: str, nation: str | None = None) -> str:
         raise ValueError(f"'{cusip}' is not a valid CUSIP")
 
     nation = nation or "US"
-    if nation not in NUMBERING_AGENCIES.keys():
+    if nation not in NUMBERING_AGENCIES:
         raise ValueError(f"'{nation}' is not a valid country code")
 
     # Construct ISIN
