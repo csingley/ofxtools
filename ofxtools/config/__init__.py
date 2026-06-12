@@ -68,7 +68,7 @@ LOGPATH = LOGDIR / "ofxtools.log"
 DATADIR = DATAHOME / PKGNAME
 
 
-def configure_logging(level=None):
+def configure_logging(level: int | None = None) -> None:
     """
     Set up logging from user config file.
     Fall back to library default, and create user config file.

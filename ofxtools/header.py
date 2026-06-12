@@ -37,9 +37,6 @@ from ofxtools import Types
 logger = logging.getLogger(__name__)
 
 
-OFXHeaderType: TypeAlias = "OFXHeaderBase | OFXHeaderV1 | OFXHeaderV2"
-
-
 class OFXHeaderError(SyntaxError):
     """Exception raised by parsing errors in this module"""
 
@@ -232,6 +229,9 @@ class OFXHeaderV2(OFXHeaderBase):
         attrs = ["=".join((attr, f'"{val}"')) for attr, val in fields]
         ofx_decl = f"<?OFX {' '.join(attrs)}?>"
         return "\r\n".join((xml_decl, ofx_decl, ""))
+
+
+OFXHeaderType: TypeAlias = OFXHeaderBase | OFXHeaderV1 | OFXHeaderV2
 
 
 XML_REGEX = re.compile(

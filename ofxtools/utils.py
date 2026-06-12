@@ -29,7 +29,7 @@ def fixpath(path: str) -> str:
     return path
 
 
-def collapseToSingle(items: Sequence, label: str):
+def collapseToSingle(items: Sequence, label: str) -> Any:
     """
     Given a sequence of repeated items, return the item that's repeated.
     Throw an error if sequence is empty or contains >1 distinct item.
@@ -38,7 +38,7 @@ def collapseToSingle(items: Sequence, label: str):
     """
     items_ = set(items)
     if len(items_) == 0:
-        raise ValueError("{label} is empty")
+        raise ValueError(f"{label} is empty")
     if len(items_) > 1:
         raise ValueError(
             f"Multiple {label} {list(items)}; can't configure automatically"
@@ -81,7 +81,7 @@ def pairwise(iterable: Iterable) -> Iterable[tuple[Any, Any]]:
     return zip(a, b)
 
 
-def all_equal(iterable):
+def all_equal(iterable: Iterable) -> bool:
     """Returns True if all the elements are equal to each other"""
     g = itertools.groupby(iterable)
     return next(g, True) and not next(g, False)
@@ -233,7 +233,7 @@ def cusip2isin(cusip: str, nation: str | None = None) -> str:
     return base + isin_checksum(base)
 
 
-def sedol2isin(sedol, nation=None) -> str:
+def sedol2isin(sedol: str, nation: str | None = None) -> str:
     nation = nation or "GB"
     if len(sedol) != 7:
         raise ValueError(f"SEDOL must be 7 characters, got {len(sedol)}")

@@ -116,7 +116,7 @@ from ofxtools.models.tax1099 import (
 from ofxtools.Parser import OFXTree
 from ofxtools.utils import UTC
 
-AUTH_PLACEHOLDER = "{:0<32}".format("anonymous")
+AUTH_PLACEHOLDER = f"{'anonymous':0<32}"
 
 
 logger = logging.getLogger(__name__)
@@ -314,6 +314,25 @@ class OFXClient:
         """
         return datetime.datetime.now(UTC)
 
+    def _url_from_profile(
+        self,
+        dryrun: bool,
+        skip_profile: bool,
+        timeout: float | None,
+        gen_newfileuid: bool,
+    ) -> str:
+        if dryrun:
+            return ""
+        if skip_profile:
+            return self.url
+        RqCls2url = self._get_service_urls(
+            timeout=timeout, gen_newfileuid=gen_newfileuid
+        )
+        urls = set(RqCls2url.values())
+        if len(urls) != 1:
+            raise ValueError(f"Expected 1 service URL, got {len(urls)}: {urls}")
+        return urls.pop()
+
     def request_statements(
         self,
         password: str,
@@ -327,27 +346,9 @@ class OFXClient:
         Package and send OFX statement requests
         (STMTRQ/CCSTMTRQ/INVSTMTRQ/STMTENDRQ/CCSTMTENDRQ).
         """
-        if dryrun:
-            url = ""
-            logger.info("Dry run for statement request")
-        elif skip_profile:
-            url = self.url
-            logger.info(f"Skipping profile request; using url='{url}'")
-        else:
-            logger.info("Requesting OFX profile to extract service URLs")
-            RqCls2url = self._get_service_urls(
-                timeout=timeout,
-                gen_newfileuid=gen_newfileuid,
-            )
-
-            # HACK FIXME
-            # As a simplification, we assume that FIs handle all classes
-            # of statement request from a single URL.
-            urls = set(RqCls2url.values())
-            if len(urls) != 1:
-                raise ValueError(f"Expected 1 service URL, got {len(urls)}: {urls}")
-            url = urls.pop()
-            logger.info(f"Received service url={url} from OFX profile response")
+        url = self._url_from_profile(dryrun, skip_profile, timeout, gen_newfileuid)
+        if url:
+            logger.info(f"Service url={url}")
 
         logger.info(f"Creating statement requests for {requests}")
         # Group requests by type and pass to the appropriate *TRNRQ handler
@@ -594,24 +595,7 @@ class OFXClient:
         """
         Package and send OFX account info requests (ACCTINFORQ)
         """
-        if dryrun:
-            url = ""
-        elif skip_profile:
-            url = self.url
-        else:
-            RqCls2url = self._get_service_urls(
-                timeout=timeout,
-                gen_newfileuid=gen_newfileuid,
-            )
-
-            # HACK FIXME
-            # As a simplification, we assume that FIs handle all classes
-            # of statement request from a single URL.
-            urls = set(RqCls2url.values())
-            if len(urls) != 1:
-                raise ValueError(f"Expected 1 service URL, got {len(urls)}: {urls}")
-            url = urls.pop()
-
+        url = self._url_from_profile(dryrun, skip_profile, timeout, gen_newfileuid)
         logger.info("Creating account info request")
         signon = self.signon(password)
 
@@ -650,24 +634,7 @@ class OFXClient:
         """
         Request US federal income tax form 1099 (TAX1099RQ)
         """
-        if dryrun:
-            url = ""
-        elif skip_profile:
-            url = self.url
-        else:
-            RqCls2url = self._get_service_urls(
-                timeout=timeout,
-                gen_newfileuid=gen_newfileuid,
-            )
-
-            # HACK FIXME
-            # As a simplification, we assume that FIs handle all classes
-            # of statement request from a single URL.
-            urls = set(RqCls2url.values())
-            if len(urls) != 1:
-                raise ValueError(f"Expected 1 service URL, got {len(urls)}: {urls}")
-            url = urls.pop()
-
+        url = self._url_from_profile(dryrun, skip_profile, timeout, gen_newfileuid)
         logger.info("Creating tax 1099 request")
         signon = self.signon(password)
 
@@ -952,7 +919,7 @@ class OFXClient:
 
         # Some servers choke on OFXv1 requests including ending tags for
         # elements (which are optional per the spec).
-        if close_elements is False:
+        if not close_elements:
             if version >= 200:
                 raise ValueError(
                     f"OFX version {version} requires ending tags for elements"
@@ -965,7 +932,9 @@ class OFXClient:
         return header + body
 
 
-def wrap_stmtrq(nt, rqs, client):
+def wrap_stmtrq(
+    nt: RequestParam, rqs: list[RequestParam], client: "OFXClient"
+) -> tuple[type[Message], list[Request]]:
     match nt:
         case StmtRq():
             return (

@@ -177,7 +177,7 @@ class Aggregate(list):
             else:
                 # ListElement
                 # FIXME validation
-                if type(member) is not str:
+                if not isinstance(member, str):
                     msg = (
                         f"{clsnm} can only contain str as list element, not {member!r}"
                     )
@@ -308,7 +308,7 @@ class Aggregate(list):
                 args.append(value)
             else:
                 if attrname in kwargs:
-                    raise OFXSpecError
+                    raise OFXSpecError(f"Duplicate element <{elem.tag}> in {clsnm}")
                 kwargs[attrname] = value
 
             return args, kwargs, index, is_listmember
