@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-from __future__ import annotations
 """
 Configurable CLI front end for ``ofxtools.Client``
 """
 
 # stdlib imports
+from __future__ import annotations
+
 import argparse
 import concurrent.futures
 import configparser
