@@ -14,7 +14,7 @@ from ofxtools.lib import NUMBERING_AGENCIES
 
 
 class classproperty(property):
-    """Decorator that turns a classmethod into a property"""
+    """Descriptor that makes a classmethod behave like a property."""
 
     def __get__(self, cls, owner):
         return self.fget.__get__(None, owner)()

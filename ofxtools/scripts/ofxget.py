@@ -101,7 +101,7 @@ class UuidAction(argparse.Action):
     """
 
     def __call__(self, parser, namespace, values, option_string=None):
-        uuid = values if values else OFXClient.uuid
+        uuid = values if values else OFXClient.uuid()
         setattr(namespace, self.dest, uuid)
 
 
@@ -975,7 +975,7 @@ def mk_server_cfg(args: ArgsType) -> configparser.SectionProxy:
 
     defaults = USERCFG[USERCFG.default_section]  # type: ignore
     if "clientuid" not in defaults:
-        clientuid = OFXClient.uuid
+        clientuid = OFXClient.uuid()
         logger.debug(f"No global default CLIENTUID found; choosing {clientuid}")
         defaults["clientuid"] = clientuid
 

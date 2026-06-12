@@ -115,7 +115,7 @@ from ofxtools.models.tax1099 import (
     TAX1099TRNRQ,
 )
 from ofxtools.Parser import OFXTree
-from ofxtools.utils import UTC, classproperty
+from ofxtools.utils import UTC
 
 AUTH_PLACEHOLDER = "{:0<32}".format("anonymous")
 
@@ -288,14 +288,9 @@ class OFXClient:
         # subsequent STMTRQ or what have you.
         self.cookiejar = http.cookiejar.CookieJar()
 
-    @classproperty
     @classmethod
     def uuid(cls) -> str:
-        """
-        Return a new UUID each time called.
-
-        Wrapper we can mock for testing.
-        """
+        """Return a new UUID each time called. Wrapper we can mock for testing."""
         return str(uuid.uuid4()).upper()
 
     @property
@@ -401,7 +396,7 @@ class OFXClient:
         ofx = OFX(signonmsgsrqv1=signon, **msgs)
 
         if gen_newfileuid:
-            newfileuid = self.uuid
+            newfileuid = self.uuid()
         else:
             newfileuid = None
 
@@ -554,7 +549,7 @@ class OFXClient:
         if dtprofup is None:
             dtprofup = datetime.datetime(1990, 1, 1, tzinfo=UTC)
         profrq = PROFRQ(clientrouting="NONE", dtprofup=dtprofup)
-        proftrnrq = PROFTRNRQ(trnuid=self.uuid, profrq=profrq)
+        proftrnrq = PROFTRNRQ(trnuid=self.uuid(), profrq=profrq)
 
         logger.debug(f"Wrapped profile request: {proftrnrq}")
 
@@ -564,7 +559,7 @@ class OFXClient:
         ofx = OFX(signonmsgsrqv1=signon, profmsgsrqv1=PROFMSGSRQV1(proftrnrq))
 
         if gen_newfileuid:
-            newfileuid = self.uuid
+            newfileuid = self.uuid()
         else:
             newfileuid = None
 
@@ -613,7 +608,7 @@ class OFXClient:
         signon = self.signon(password)
 
         acctinforq = ACCTINFORQ(dtacctup=dtacctup)
-        acctinfotrnrq = ACCTINFOTRNRQ(trnuid=self.uuid, acctinforq=acctinforq)
+        acctinfotrnrq = ACCTINFOTRNRQ(trnuid=self.uuid(), acctinforq=acctinforq)
         msgs = SIGNUPMSGSRQV1(acctinfotrnrq)
 
         logger.debug(f"Wrapped account info request messages: {msgs}")
@@ -621,7 +616,7 @@ class OFXClient:
         ofx = OFX(signonmsgsrqv1=signon, signupmsgsrqv1=msgs)
 
         if gen_newfileuid:
-            newfileuid = self.uuid
+            newfileuid = self.uuid()
         else:
             newfileuid = None
 
@@ -668,14 +663,14 @@ class OFXClient:
         signon = self.signon(password)
 
         rq = TAX1099RQ(*taxyears, recid=recid or None)
-        msgs = TAX1099MSGSRQV1(TAX1099TRNRQ(trnuid=self.uuid, tax1099rq=rq))
+        msgs = TAX1099MSGSRQV1(TAX1099TRNRQ(trnuid=self.uuid(), tax1099rq=rq))
 
         logger.debug(f"Wrapped tax 1099 request messages: {msgs}")
 
         ofx = OFX(signonmsgsrqv1=signon, tax1099msgsrqv1=msgs)
 
         if gen_newfileuid:
-            newfileuid = self.uuid
+            newfileuid = self.uuid()
         else:
             newfileuid = None
 
@@ -734,7 +729,7 @@ class OFXClient:
         acct = BANKACCTFROM(bankid=bankid, acctid=acctid, accttype=accttype)
         inctran_ = INCTRAN(dtstart=dtstart, dtend=dtend, include=inctran)
         stmtrq = STMTRQ(bankacctfrom=acct, inctran=inctran_)
-        trnuid = self.uuid
+        trnuid = self.uuid()
         return STMTTRNRQ(trnuid=trnuid, stmtrq=stmtrq)
 
     def stmtendtrnrq(
@@ -748,7 +743,7 @@ class OFXClient:
         """Construct STMTENDRQ; package in STMTENDTRNRQ"""
         acct = BANKACCTFROM(bankid=bankid, acctid=acctid, accttype=accttype)
         stmtrq = STMTENDRQ(bankacctfrom=acct, dtstart=dtstart, dtend=dtend)
-        trnuid = self.uuid
+        trnuid = self.uuid()
         return STMTENDTRNRQ(trnuid=trnuid, stmtendrq=stmtrq)
 
     def ccstmttrnrq(
@@ -762,7 +757,7 @@ class OFXClient:
         acct = CCACCTFROM(acctid=acctid)
         inctran_ = INCTRAN(dtstart=dtstart, dtend=dtend, include=inctran)
         stmtrq = CCSTMTRQ(ccacctfrom=acct, inctran=inctran_)
-        trnuid = self.uuid
+        trnuid = self.uuid()
         return CCSTMTTRNRQ(trnuid=trnuid, ccstmtrq=stmtrq)
 
     def ccstmtendtrnrq(
@@ -774,7 +769,7 @@ class OFXClient:
         """Construct CCSTMTENDRQ; package in CCSTMTENDTRNRQ"""
         acct = CCACCTFROM(acctid=acctid)
         stmtrq = CCSTMTENDRQ(ccacctfrom=acct, dtstart=dtstart, dtend=dtend)
-        trnuid = self.uuid
+        trnuid = self.uuid()
         return CCSTMTENDTRNRQ(trnuid=trnuid, ccstmtendrq=stmtrq)
 
     def invstmttrnrq(
@@ -805,7 +800,7 @@ class OFXClient:
             incpos=incpos_,
             incbal=incbal,
         )
-        trnuid = self.uuid
+        trnuid = self.uuid()
         return INVSTMTTRNRQ(trnuid=trnuid, invstmtrq=stmtrq)
 
     def download(

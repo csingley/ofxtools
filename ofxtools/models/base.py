@@ -35,7 +35,6 @@ import ofxtools.models
 
 # local imports
 from ofxtools import Types
-from ofxtools.utils import classproperty
 
 logger = logging.getLogger(__name__)
 
@@ -384,31 +383,51 @@ class Aggregate(list):
         """
         return elem
 
-    @classproperty
     @classmethod
-    def _superdict(cls) -> Mapping[str, Any]:
+    def _init_class_attrs(cls) -> None:
         """
-        Consolidate ``cls.__dict__`` with that of all superclasses.
+        Compute and cache per-class OFX field mappings.
 
-        Ordering is significant for OFX messages, which maps to significant ordering
-        of class attributes of ``ofxtools.models.base.Aggregate`` subclasses.
-
-        That ordering is implemented by combining `PEP 520`_ (which was implemented
-        as of Python 3.6), `collections.ChainMap`_, and Python's `inheritance chain`_
-        (i.e. the MRO).
-
-        PEP 520 guarantees that each class's ``__dict__`` preserves the order in which
-        its attributes and methods were defined.  ``ChainMap`` searches its list of
-        mappings from left to right.  By feeding a class's MRO into ``ChainMap``, we
-        get an ordering where attributes defined on subclasses override those defined
-        on the parent, preserving the order of the class definition in each case.
-
-        .. _PEP 520: https://www.python.org/dev/peps/pep-0520/
-        .. _collections.ChainMap: https://docs.python.org/3/library/collections.html#collections.ChainMap
-        .. _inheritance order: https://www.python.org/download/releases/2.3/mro/
+        Called once at class definition time (via ``__init_subclass__``) rather
+        than recomputing on every attribute access.  Ordering is significant for
+        OFX messages and is preserved by combining PEP 520 insertion-order dicts,
+        ``ChainMap``, and Python's MRO.
         """
         # mypy doesn't seem to understand "star" arg-unpacking syntax used here
-        return ChainMap(*[base.__dict__ for base in cls.mro()])  # type: ignore
+        superdict: Mapping[str, Any] = ChainMap(*[base.__dict__ for base in cls.mro()])  # type: ignore
+        cls._superdict = superdict  # type: ignore
+        cls.spec = {  # type: ignore
+            k: v
+            for k, v in superdict.items()
+            if isinstance(v, (Types.Element, Types.Unsupported))
+        }
+        cls.spec_no_listaggregates = {  # type: ignore
+            k: v
+            for k, v in superdict.items()
+            if isinstance(v, (Types.Element, Types.Unsupported))
+            and not isinstance(v, (Types.ListAggregate, Types.ListElement))
+        }
+        cls.elements = {  # type: ignore
+            k: v
+            for k, v in superdict.items()
+            if isinstance(v, Types.Element) and not isinstance(v, Types.SubAggregate)
+        }
+        cls.subaggregates = {  # type: ignore
+            k: v for k, v in superdict.items() if isinstance(v, Types.SubAggregate)
+        }
+        cls.unsupported = {  # type: ignore
+            k: v for k, v in superdict.items() if isinstance(v, Types.Unsupported)
+        }
+        cls.listaggregates = {  # type: ignore
+            k: v for k, v in superdict.items() if isinstance(v, Types.ListAggregate)
+        }
+        cls.listelements = {  # type: ignore
+            k: v for k, v in superdict.items() if isinstance(v, Types.ListElement)
+        }
+
+    def __init_subclass__(cls, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        cls._init_class_attrs()
 
     @classmethod
     def _filter_attrs(cls, predicate: Callable) -> Mapping[str, Any]:
@@ -436,82 +455,6 @@ class Aggregate(list):
              (not keys i.e. attribute names)
         """
         return {k: v for k, v in cls._superdict.items() if predicate(v)}
-
-    @classproperty
-    @classmethod
-    def spec(cls) -> Mapping[str, Types.Element | Types.Unsupported]:
-        """
-        Mapping of all class attributes that are Elements/SubAggregates/Unsupported.
-
-        Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
-
-        N.B. Types.SubAggregate is a subclass of Element.
-        """
-        return cls._filter_attrs(
-            lambda v: isinstance(v, (Types.Element, Types.Unsupported))
-        )
-
-    @classproperty
-    @classmethod
-    def spec_no_listaggregates(
-        cls,
-    ) -> Mapping[str, Types.Element | Types.Unsupported]:
-        """
-        Mapping of all class attributes that are
-        Elements/SubAggregates/Unsupported, excluding ListAggregates/ListElements.
-        """
-        return cls._filter_attrs(
-            lambda v: (
-                isinstance(v, (Types.Element, Types.Unsupported))
-                and not isinstance(v, (Types.ListAggregate, Types.ListElement))
-            )
-        )
-
-    @classproperty
-    @classmethod
-    def elements(cls) -> Mapping[str, Types.Element]:
-        """
-        Mapping of all class attributes that are Elements but not SubAggregates.
-
-        N.B. Types.SubAggregate is a subclass of Element.
-        """
-        return cls._filter_attrs(
-            lambda v: (
-                isinstance(v, Types.Element) and not isinstance(v, Types.SubAggregate)
-            )
-        )
-
-    @classproperty
-    @classmethod
-    def subaggregates(cls) -> Mapping[str, Types.SubAggregate]:
-        """
-        Mapping of all class attributes that are SubAggregates.
-        """
-        return cls._filter_attrs(lambda v: isinstance(v, Types.SubAggregate))
-
-    @classproperty
-    @classmethod
-    def unsupported(cls) -> Mapping[str, Types.Unsupported]:
-        """
-        Mapping of all class attributes that are Unsupported.
-        """
-        return cls._filter_attrs(lambda v: isinstance(v, Types.Unsupported))
-
-    @classproperty
-    @classmethod
-    def listaggregates(cls) -> Mapping[str, Types.ListAggregate]:
-        """
-        Mapping of all class attributes that are ListAggregates.
-        """
-        return cls._filter_attrs(lambda v: isinstance(v, Types.ListAggregate))
-
-    @classproperty
-    @classmethod
-    def listelements(cls) -> Mapping[str, Types.ListAggregate]:
-        """
-        Mapping of all class attributes that are ListElements.
-        """
-        return cls._filter_attrs(lambda v: isinstance(v, Types.ListElement))
 
     @property
     def _spec_repr(self) -> Sequence[tuple[str, Any]]:
@@ -562,13 +505,12 @@ class ElementList(Aggregate):
     Aggregate whose sequence contents are ListElements instead of ListAggregates
     """
 
-    @classproperty
-    @classmethod
-    def listaggregates(cls) -> Mapping[str, Types.ListElement]:
-        """
-        ElementList.listaggregates returns ListElements instead of ListAggregates
-        """
-        return cls._filter_attrs(lambda v: isinstance(v, Types.ListElement))
+    def __init_subclass__(cls, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        # Override: listaggregates returns ListElements instead of ListAggregates
+        cls.listaggregates = {  # type: ignore
+            k: v for k, v in cls._superdict.items() if isinstance(v, Types.ListElement)
+        }
 
     def _apply_args(self, *args) -> None:
         # Interpret positional args as contained list items (of variable #)
@@ -584,3 +526,13 @@ class ElementList(Aggregate):
 
         text = converter.unconvert(member)
         ET.SubElement(root, attr.upper()).text = text
+
+
+# Bootstrap cached attr mappings for the base classes themselves.
+# __init_subclass__ handles all subclasses automatically; these two calls
+# cover Aggregate and ElementList since they are not their own subclasses.
+Aggregate._init_class_attrs()
+ElementList._init_class_attrs()
+ElementList.listaggregates = {  # type: ignore
+    k: v for k, v in ElementList._superdict.items() if isinstance(v, Types.ListElement)
+}
