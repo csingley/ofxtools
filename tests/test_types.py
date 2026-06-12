@@ -12,6 +12,14 @@ from ofxtools.Types import OFXSpecError, OFXTypeWarning
 from ofxtools.utils import UTC
 
 
+def _set(descriptor, value):
+    """Invoke descriptor.__set__ on a minimal dummy object."""
+    obj = type("_Obj", (), {})()
+    descriptor.__set_name__(type(obj), "attr")
+    descriptor.__set__(obj, value)
+    return obj.__dict__.get("attr")
+
+
 class ElementTestCase(unittest.TestCase):
     def testInit(self):
         """
@@ -28,7 +36,7 @@ class ElementTestCase(unittest.TestCase):
     def testConvert(self):
         with self.assertRaises(NotImplementedError):
             instance = ofxtools.Types.Element(required=True)
-            instance.convert(None)
+            instance.convert("anything")
 
     def testRepr(self):
         instance = ofxtools.Types.Element(required=True)
@@ -43,12 +51,12 @@ class Base:
         t = self.type_(required=True)
         # If required, missing value (i.e. None) is illegal
         with self.assertRaises(OFXSpecError):
-            t.convert(None)
+            _set(t, None)
 
     def test_optional(self):
         t = self.type_(required=False)
-        # If not required, missing value (i.e. None) returns None
-        self.assertEqual(t.convert(None), None)
+        # If not required, missing value (i.e. None) stores None
+        self.assertIsNone(_set(t, None))
 
 
 class BoolTestCase(unittest.TestCase, Base):
@@ -65,7 +73,7 @@ class BoolTestCase(unittest.TestCase, Base):
         # we pass Python types True/False/none
         self.assertEqual(t.convert(True), True)
         self.assertEqual(t.convert(False), False)
-        self.assertEqual(t.convert(None), None)
+        self.assertIsNone(_set(t, None))
 
         # All other inputs are illegal
         for illegal in (0, 1, "y", "n"):
@@ -116,8 +124,8 @@ class StringTestCase(unittest.TestCase, Base):
         t = self.type_()
         # Pass string
         self.assertEqual("foo", t.convert("foo"))
-        # Pass None
-        self.assertEqual(None, t.convert(None))
+        # Pass None (handled by __set__, not convert)
+        self.assertIsNone(_set(t, None))
         # Interpret empty string as None
         self.assertEqual(None, t.convert(""))
         # Don't pass non-string
@@ -284,7 +292,7 @@ class IntegerTestCase(unittest.TestCase, Base):
 
     def test_convert(self):
         t = self.type_()
-        self.assertEqual(None, t.convert(None))
+        self.assertIsNone(_set(t, None))
         self.assertEqual(None, t.convert(""))
         self.assertEqual(1, t.convert(1))
         self.assertEqual(1, t.convert("1"))

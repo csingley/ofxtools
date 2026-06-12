@@ -109,9 +109,22 @@ class Element:
             raise AttributeError(self.name) from None
 
     def __set__(self, obj, value) -> None:
-        obj.__dict__[self.name] = self.convert(value)
+        if value is None:
+            self.enforce_required(value)
+            obj.__dict__[self.name] = None
+        else:
+            obj.__dict__[self.name] = self.convert(value)
 
     def convert(self, value):
+        raise NotImplementedError
+
+    def unconvert(self, value):
+        if value is None:
+            self.enforce_required(value)
+            return None
+        return self._unconvert(value)
+
+    def _unconvert(self, value):
         raise NotImplementedError
 
     def enforce_required(self, value):
@@ -126,8 +139,6 @@ class Bool(Element):
 
     def convert(self, value):
         match value:
-            case None:
-                return self.enforce_required(value)
             case bool():
                 return value
             case str():
@@ -142,10 +153,8 @@ class Bool(Element):
                     f"{value} is not one of the allowed values {self.mapping.keys()}"
                 )
 
-    def unconvert(self, value):
+    def _unconvert(self, value):
         match value:
-            case None:
-                return self.enforce_required(value)
             case bool():
                 return {v: k for k, v in self.mapping.items()}[value]
             case _:
@@ -178,11 +187,10 @@ class String(Element):
 
     def convert(self, value):
         match value:
-            case None:
-                return self.enforce_required(value)
             case str():
                 if value == "":
-                    return self.enforce_required(None)
+                    self.enforce_required(None)
+                    return None
                 # Unescape '&amp;' '&lt;' '&gt;' '&nbsp;' per OFX section 2.3
                 # Also go ahead and unescape other XML control characters,
                 # because FIs tend to mix &amp; match...
@@ -193,10 +201,8 @@ class String(Element):
             case _:
                 raise TypeError(f"{value!r} is not a str")
 
-    def unconvert(self, value):
+    def _unconvert(self, value):
         match value:
-            case None:
-                return self.enforce_required(value)
             case str():
                 return self.enforce_length(value)
             case _:
@@ -241,19 +247,13 @@ class OneOf(Element):
 
     def convert(self, value):
         match value:
-            case None:
-                return self.enforce_required(value)
             case str():
                 return self._check(value or None)
             case _:
                 return self._check(value)
 
-    def unconvert(self, value):
-        match value:
-            case None:
-                return self.enforce_required(value)
-            case _:
-                return self._check(value)
+    def _unconvert(self, value):
+        return self._check(value)
 
 
 class Integer(Element):
@@ -277,21 +277,18 @@ class Integer(Element):
 
     def convert(self, value):
         match value:
-            case None:
-                return self.enforce_required(value)
             case int():
                 return self.enforce_length(value)
             case str():
                 if len(value) == 0:
-                    return self.enforce_required(None)
+                    self.enforce_required(None)
+                    return None
                 return self.enforce_length(int(value))
             case _:
                 return self.enforce_length(int(value))
 
-    def unconvert(self, value):
+    def _unconvert(self, value):
         match value:
-            case None:
-                return self.enforce_required(value)
             case int():
                 return str(self.enforce_length(value))
             case _:
@@ -323,8 +320,6 @@ class Decimal(Element):
 
     def convert(self, value):
         match value:
-            case None:
-                return self.enforce_required(value)
             case decimal.Decimal():
                 if self.scale is not None:
                     value = value.quantize(self.scale)
@@ -341,10 +336,8 @@ class Decimal(Element):
             case _:
                 return self.__type__(value)
 
-    def unconvert(self, value):
+    def _unconvert(self, value):
         match value:
-            case None:
-                return self.enforce_required(value)
             case decimal.Decimal():
                 if self.scale is not None and not value.same_quantum(self.scale):
                     raise ValueError(f"'{value}' doesn't match scale={self.scale}")
@@ -442,8 +435,6 @@ class DateTime(Element):
 
     def convert(self, value):
         match value:
-            case None:
-                return self.enforce_required(value)
             case datetime.datetime():
                 if value.utcoffset() is None:
                     raise ValueError(f"{value} is not timezone-aware")
@@ -497,10 +488,8 @@ class DateTime(Element):
     def _normalize_to_gmt(self, value, gmt_offset):
         return (value - gmt_offset).replace(tzinfo=utils.UTC)
 
-    def unconvert(self, value):
+    def _unconvert(self, value):
         match value:
-            case None:
-                return self.enforce_required(value)
             case datetime.datetime():
                 if value.utcoffset() is None:
                     raise ValueError(
@@ -553,8 +542,6 @@ class Time(DateTime):
 
     def convert(self, value):
         match value:
-            case None:
-                return self.enforce_required(value)
             case datetime.time():
                 if value.utcoffset() is None:
                     raise ValueError(f"{value} is not timezone-aware")
@@ -582,10 +569,8 @@ class Time(DateTime):
         )
         return (dt - gmt_offset).time().replace(tzinfo=utils.UTC)
 
-    def unconvert(self, value):
+    def _unconvert(self, value):
         match value:
-            case None:
-                return self.enforce_required(value)
             case datetime.time():
                 if value.utcoffset() is None:
                     raise ValueError(
@@ -626,10 +611,13 @@ class ListElement(Element):
         return f"<{self.__class__.__name__} converter={self.converter!r} required={self.required}>"
 
     def convert(self, value):
+        if value is None:
+            self.enforce_required(value)
+            return None
         return self.converter.convert(value)
 
-    def unconvert(self, value):
-        return self.converter.unconvert(value)
+    def _unconvert(self, value):
+        return self.converter._unconvert(value)
 
 
 class SubAggregate(Element):
@@ -655,15 +643,9 @@ class SubAggregate(Element):
         return f"<{self.__class__.__name__} type={self.aggregate_type.__name__} required={self.required}>"
 
     def convert(self, value):
-        match value:
-            case None:
-                return self.enforce_required(value)
-            case _ if isinstance(value, self.aggregate_type):
-                return value
-            case _:
-                raise TypeError(
-                    f"'{value}' is not an instance of {self.aggregate_type}"
-                )
+        if isinstance(value, self.aggregate_type):
+            return value
+        raise TypeError(f"'{value}' is not an instance of {self.aggregate_type}")
 
 
 class ListAggregate(SubAggregate):
