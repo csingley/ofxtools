@@ -402,36 +402,36 @@ class Aggregate(list):
         OFX messages and is preserved by combining PEP 520 insertion-order dicts,
         ``ChainMap``, and Python's MRO.
         """
-        # mypy can't type ChainMap over heterogeneous __dict__ mappings
+        # MappingProxyType (from type.__dict__) is read-only; ChainMap stubs
+        # require MutableMapping but only mutates the first map at runtime.
         superdict: Mapping[str, Any] = ChainMap(*[base.__dict__ for base in cls.mro()])  # type: ignore[arg-type]
-        # mypy can't verify dynamic class-attr assignment in __init_subclass__
-        cls._superdict = superdict  # type: ignore[attr-defined]
-        cls.spec = {  # type: ignore[attr-defined]
+        cls._superdict = superdict
+        cls.spec = {
             k: v
             for k, v in superdict.items()
             if isinstance(v, (Types.Element, Types.Unsupported))
         }
-        cls.spec_no_listaggregates = {  # type: ignore[attr-defined]
+        cls.spec_no_listaggregates = {
             k: v
             for k, v in superdict.items()
             if isinstance(v, (Types.Element, Types.Unsupported))
             and not isinstance(v, (Types.ListAggregate, Types.ListElement))
         }
-        cls.elements = {  # type: ignore[attr-defined]
+        cls.elements = {
             k: v
             for k, v in superdict.items()
             if isinstance(v, Types.Element) and not isinstance(v, Types.SubAggregate)
         }
-        cls.subaggregates = {  # type: ignore[attr-defined]
+        cls.subaggregates = {
             k: v for k, v in superdict.items() if isinstance(v, Types.SubAggregate)
         }
-        cls.unsupported = {  # type: ignore[attr-defined]
+        cls.unsupported = {
             k: v for k, v in superdict.items() if isinstance(v, Types.Unsupported)
         }
-        cls.listaggregates = {  # type: ignore[attr-defined]
+        cls.listaggregates = {
             k: v for k, v in superdict.items() if isinstance(v, Types.ListAggregate)
         }
-        cls.listelements = {  # type: ignore[attr-defined]
+        cls.listelements = {
             k: v for k, v in superdict.items() if isinstance(v, Types.ListElement)
         }
 
@@ -517,7 +517,7 @@ class ElementList(Aggregate):
     def __init_subclass__(cls, **kwargs) -> None:
         super().__init_subclass__(**kwargs)
         # Override: listaggregates returns ListElements instead of ListAggregates
-        cls.listaggregates = {  # type: ignore[attr-defined]
+        cls.listaggregates = {
             k: v for k, v in cls._superdict.items() if isinstance(v, Types.ListElement)
         }
 
@@ -548,6 +548,6 @@ class ElementList(Aggregate):
 # cover Aggregate and ElementList since they are not their own subclasses.
 Aggregate._init_class_attrs()
 ElementList._init_class_attrs()
-ElementList.listaggregates = {  # type: ignore[attr-defined]
+ElementList.listaggregates = {
     k: v for k, v in ElementList._superdict.items() if isinstance(v, Types.ListElement)
 }

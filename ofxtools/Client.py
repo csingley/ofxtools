@@ -870,7 +870,7 @@ class OFXClient:
             )
 
             response = opener.open(req, timeout=timeout)
-            return response.read()  # type: ignore[union-attr]
+            return response.read()
 
     def serialize(
         self,

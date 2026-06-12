@@ -472,7 +472,7 @@ class DateTime(Element):
 
         # OFX time formats give milliseconds, but datetime.datetime wants microseconds
         intmatches["microsecond"] = 1000 * intmatches.pop("millisecond")
-        return self._normalize_to_gmt(self.__type__(**intmatches), gmt_offset)  # type: ignore[call-arg]
+        return self._normalize_to_gmt(self.__type__(**intmatches), gmt_offset)  # type: ignore[arg-type]
 
     def _parse_gmt_offset(
         self, hours: str | None, minutes: str | None, tz_name: str | None

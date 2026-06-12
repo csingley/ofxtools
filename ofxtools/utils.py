@@ -256,7 +256,7 @@ try:
     # If pytz is installed then use that.
     import pytz
 
-    UTC = pytz.UTC  # type: ignore[assignment]
+    UTC = pytz.UTC
 except ImportError:
     # Otherwise create our own UTC tzinfo.
     class _UTC(datetime.tzinfo):

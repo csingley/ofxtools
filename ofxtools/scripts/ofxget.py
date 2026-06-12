@@ -18,19 +18,24 @@ import sys
 import warnings
 import xml.etree.ElementTree as ET
 from collections import ChainMap, defaultdict
-from collections.abc import Iterable, Iterator, Mapping, MutableMapping, Sequence
+from collections.abc import (
+    Callable,
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    Sequence,
+)
 from io import BytesIO
 from operator import attrgetter
-from typing import (
-    Any,
-)
+from typing import Any
 from urllib import parse as urllib_parse
 from urllib.error import HTTPError, URLError
 
 # 3rd party imports
 try:
     # No library stub file for module 'keyring'
-    import keyring  # type: ignore[import-untyped]
+    import keyring  # type: ignore[import-not-found]
 
     HAS_KEYRING = True
 except ImportError:
@@ -89,7 +94,7 @@ SignoninfoReport = Mapping[str, bool]
 ScanResults = tuple[ScanResult, ScanResult, SignoninfoReport]
 
 AcctInfo = models.BANKACCTINFO | models.CCACCTINFO | models.INVACCTINFO
-ParsedAcctinfo = Mapping[str, str | list]
+ParsedAcctinfo = dict[str, str | list[Any]]
 
 
 ###############################################################################
@@ -639,7 +644,7 @@ def _merge_acctinfo(args: ArgsType, markup: BytesIO) -> None:
     ]
 
     # Insert extracted ACCTINFO after CLI commands, but before config files
-    args.maps.insert(1, ChainMap(*parsed_args))  # type: ignore[union-attr]
+    args.maps.insert(1, ChainMap(*parsed_args))
 
 
 def request_stmt(args: ArgsType) -> None:
@@ -929,7 +934,7 @@ def read_config(cfg: configparser.ConfigParser, section: str) -> Mapping[str, Ar
         return args
 
     proxy = cfg[section]
-    handlers = {
+    handlers: dict[type | None, Callable[..., ArgType | None]] = {
         bool: proxy.getboolean,
         int: proxy.getint,
         list: proxy.getlist,
@@ -938,7 +943,7 @@ def read_config(cfg: configparser.ConfigParser, section: str) -> Mapping[str, Ar
     }
 
     args = {
-        opt: handlers[CONFIGURABLE.get(opt, None)](opt)  # type: ignore[index]
+        opt: handlers[CONFIGURABLE.get(opt, None)](opt)
         for opt in proxy
         if opt in CONFIGURABLE
     }
@@ -973,7 +978,7 @@ def mk_server_cfg(args: ArgsType) -> configparser.SectionProxy:
     USERCFG.clear()
     USERCFG.read(USERCONFIGPATH)
 
-    defaults = USERCFG[USERCFG.default_section]  # type: ignore[index]
+    defaults = USERCFG[USERCFG.default_section]
     if "clientuid" not in defaults:
         clientuid = OFXClient.uuid()
         logger.debug(f"No global default CLIENTUID found; choosing {clientuid}")
@@ -1035,14 +1040,19 @@ def arg2config(key: str, cfg_type: type, value: ArgType) -> str:
         # Serialized string representation of Python list type
         return str(value).strip("[]").replace("'", "")
 
-    handlers = {str: write_string, bool: write_bool, list: write_list, int: write_int}
+    handlers: dict[type, Callable[..., str]] = {
+        str: write_string,
+        bool: write_bool,
+        list: write_list,
+        int: write_int,
+    }
 
     if cfg_type not in handlers:
         msg = f"Don't know how to write config for {key} type={cfg_type}"
         logger.error(msg)
         raise ValueError(msg)
 
-    return handlers[cfg_type](value)  # type: ignore[index]
+    return handlers[cfg_type](value)
 
 
 def merge_config(
@@ -1452,7 +1462,7 @@ def list_fis(args: ArgsType) -> None:
 def fi_index() -> Sequence[tuple[str, str]]:
     """All FIs known to ofxget"""
     names = {nick: name for nick, name in USERCFG["NAMES"].items()}
-    cfg_default_sect = USERCFG.default_section  # type: ignore[attr-defined]
+    cfg_default_sect = USERCFG.default_section
     servers = [
         (names.get(nick, ""), nick)
         for nick, sct in USERCFG.items()

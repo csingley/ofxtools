@@ -1,7 +1,7 @@
 from .common import *
 from .list import *
 from .mail import *
-from .msgsets import *  # type: ignore
+from .msgsets import *
 from .pmt import *
 from .recur import *
-from .sync import *  # type: ignore
+from .sync import *
