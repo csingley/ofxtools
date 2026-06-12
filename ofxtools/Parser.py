@@ -27,6 +27,7 @@ __all__ = ["OFXTree", "TreeBuilder", "ParseError"]
 
 
 # stdlib imports
+import contextlib
 import logging
 import re
 import xml.etree.ElementTree as ET
@@ -98,20 +99,12 @@ class OFXTree(ET.ElementTree):
 
         Factored out from `parse()` to facilitate unit testing.
         """
-        close_source = False
-        if not hasattr(source, "read"):
-            source = open(source, "rb")
-            close_source = True
-
-        if hasattr(source, "mode") and "b" not in source.mode:
-            raise ValueError("Source must be opened in binary mode")
-
-        try:
+        with contextlib.ExitStack() as stack:
+            if not hasattr(source, "read"):
+                source = stack.enter_context(open(source, "rb"))
+            if hasattr(source, "mode") and "b" not in source.mode:
+                raise ValueError("Source must be opened in binary mode")
             header, message = parse_header(source)
-        finally:
-            if close_source and hasattr(source, "close"):
-                source.close()
-
         return header, message
 
     def convert(self) -> Aggregate:

@@ -511,7 +511,9 @@ class OFXTreeTestCase(TestCase):
     def test_read_filename(self):
         with patch("builtins.open") as fake_open:
             with patch("ofxtools.Parser.parse_header") as fake_parse_header:
-                fake_open.return_value = sentinel.file
+                fake_file = MagicMock(spec=["read"])
+                fake_open.return_value.__enter__ = lambda s: fake_file
+                fake_open.return_value.__exit__ = MagicMock(return_value=False)
 
                 fake_header = sentinel.header
                 fake_body = sentinel.ofx
@@ -524,7 +526,7 @@ class OFXTreeTestCase(TestCase):
                 output = self.tree._read(source.name)
                 source.close()
                 fake_open.assert_called_once_with(source.name, "rb")
-                fake_parse_header.assert_called_once_with(sentinel.file)
+                fake_parse_header.assert_called_once_with(fake_file)
                 self.assertEqual(output, (fake_header, fake_body))
 
     def test_read_file(self):

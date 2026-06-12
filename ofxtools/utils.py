@@ -3,12 +3,14 @@
 # stdlib imports
 import calendar
 import datetime
-import itertools
 import math
 import os
 import xml.etree.ElementTree as ET
 from collections.abc import Callable, Iterable, Sequence
+from itertools import filterfalse, groupby, tee
+from itertools import pairwise as pairwise
 from typing import Any
+from xml.etree.ElementTree import indent as indent
 
 # local imports
 from ofxtools.lib import NUMBERING_AGENCIES
@@ -71,20 +73,9 @@ TZS = {
 }
 
 
-###############################################################################
-#  itertools recipes
-#  https://docs.python.org/2/library/itertools.html#recipes
-###############################################################################
-def pairwise(iterable: Iterable) -> Iterable[tuple[Any, Any]]:
-    """s -> (s0,s1), (s1,s2), (s2, s3), ..."""
-    a, b = itertools.tee(iterable)
-    next(b, None)
-    return zip(a, b)
-
-
 def all_equal(iterable: Iterable) -> bool:
     """Returns True if all the elements are equal to each other"""
-    g = itertools.groupby(iterable)
+    g = groupby(iterable)
     return next(g, True) and not next(g, False)
 
 
@@ -93,34 +84,13 @@ def partition(pred: Callable, iterable: Iterable) -> tuple[Iterable, Iterable]:
     Use a predicate to partition entries into false entries and true entries
     """
     # partition(is_odd, range(10)) --> 0 2 4 6 8   and  1 3 5 7 9
-    t1, t2 = itertools.tee(iterable)
-    return itertools.filterfalse(pred, t1), filter(pred, t2)
+    t1, t2 = tee(iterable)
+    return filterfalse(pred, t1), filter(pred, t2)
 
 
 ###############################################################################
 #  ElementTree utilities
 ###############################################################################
-def indent(elem: ET.Element, level: int = 0) -> None:
-    """
-    Indent xml.etree.ElementTree.Element.text by nesting level.
-
-    http://effbot.org/zone/element-lib.htm#prettyprint
-    """
-    i = "\n" + level * "  "
-    if len(elem):
-        if not elem.text or not elem.text.strip():
-            elem.text = i + "  "
-        if not elem.tail or not elem.tail.strip():
-            elem.tail = i
-        for elem in elem:
-            indent(elem, level + 1)
-        if not elem.tail or not elem.tail.strip():
-            elem.tail = i
-    else:
-        if level and (not elem.tail or not elem.tail.strip()):
-            elem.tail = i
-
-
 def tostring_unclosed_elements(elem: ET.Element) -> bytes:
     """
     SGML-style string representation of xml.etree.ElementTree, without
@@ -175,10 +145,7 @@ def validate_cusip(cusip: str) -> bool:
     """
     Validate a CUSIP
     """
-    if len(cusip) == 9 and cusip_checksum(cusip[:8]) == cusip[8]:
-        return True
-    else:
-        return False
+    return len(cusip) == 9 and cusip_checksum(cusip[:8]) == cusip[8]
 
 
 def sedol_checksum(base: str) -> str:
@@ -218,14 +185,11 @@ def validate_isin(isin: str) -> bool:
     """
     Validate an ISIN
     """
-    if (
+    return (
         len(isin) == 12
         and isin[:2] in NUMBERING_AGENCIES.keys()
         and isin_checksum(isin[:11]) == isin[11]
-    ):
-        return True
-    else:
-        return False
+    )
 
 
 def cusip2isin(cusip: str, nation: str | None = None) -> str:

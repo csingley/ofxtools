@@ -915,7 +915,7 @@ class OFXClient:
 
         tree = ofx.to_etree()
         if prettyprint:
-            utils.indent(tree)
+            ET.indent(tree)
 
         # Some servers choke on OFXv1 requests including ending tags for
         # elements (which are optional per the spec).

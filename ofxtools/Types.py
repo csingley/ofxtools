@@ -102,7 +102,7 @@ class Element:
 
     def __get__(self, obj, objtype=None):
         if obj is None:
-            return
+            return self
         return obj.__dict__[self.name]
 
     def __set__(self, obj, value) -> None:

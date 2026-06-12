@@ -509,7 +509,7 @@ class OFXClientV1TestCase(unittest.TestCase):
             "      </STMTRQ>\n"
             "    </STMTTRNRQ>\n"
             "  </BANKMSGSRQV1>\n"
-            "</OFX>\n"
+            "</OFX>"
         )
 
         self.assertEqual(data, request)
@@ -860,7 +860,7 @@ class UtilitiesTestCase(unittest.TestCase):
                 "    <LEVEL2>level2</LEVEL2>\n"
                 "  </LEVEL1>\n"
                 "  <LEVEL1 />\n"
-                "</ROOT>\n"
+                "</ROOT>"
             ),
         )
 

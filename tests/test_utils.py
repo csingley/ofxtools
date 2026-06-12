@@ -67,7 +67,7 @@ class TostringUnclosedElementsTestCase(unittest.TestCase):
         indent(root)
         result = tostring_unclosed_elements(root).decode("utf_8")
         self.assertEqual(
-            result, "<OFX>\n  <STMTRQ>\n    <ACCTID>12345\n  </STMTRQ>\n</OFX>\n"
+            result, "<OFX>\n  <STMTRQ>\n    <ACCTID>12345\n  </STMTRQ>\n</OFX>"
         )
 
 
