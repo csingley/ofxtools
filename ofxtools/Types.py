@@ -223,7 +223,7 @@ class OneOf(Element):
     """Enum data type.
 
     Usage example from ``OPTINFO``:
-    >> opttype = OneOf("CALL", "PUT", required=True)
+    >>> opttype = OneOf("CALL", "PUT", required=True)
     """
 
     def __init__(self, *valid, required: bool = False) -> None:
