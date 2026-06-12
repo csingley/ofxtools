@@ -10,13 +10,16 @@ import xml.etree.ElementTree as ET
 import ofxtools.utils
 from ofxtools.utils import (
     NYSEcalendar,
+    collapseToSingle,
     cusip2isin,
     cusip_checksum,
     findEaster,
     fixpath,
+    gmt_offset,
     indent,
     isin_checksum,
     nextBizDay,
+    pairwise,
     sedol2isin,
     sedol_checksum,
     settleDate,
@@ -68,6 +71,43 @@ class TostringUnclosedElementsTestCase(unittest.TestCase):
         )
 
 
+class CollapseToSingleTestCase(unittest.TestCase):
+    def test_single(self):
+        self.assertEqual(collapseToSingle([42, 42, 42], "values"), 42)
+
+    def test_empty_raises(self):
+        with self.assertRaises(ValueError):
+            collapseToSingle([], "values")
+
+    def test_multiple_raises(self):
+        with self.assertRaises(ValueError):
+            collapseToSingle([1, 2], "values")
+
+
+class GmtOffsetTestCase(unittest.TestCase):
+    def test_valid(self):
+        self.assertEqual(gmt_offset(-5, 0), datetime.timedelta(hours=-5))
+
+    def test_invalid_hours(self):
+        with self.assertRaises(ValueError):
+            gmt_offset(15, 0)
+
+    def test_negative_minutes(self):
+        with self.assertRaises(ValueError):
+            gmt_offset(0, -1)
+
+
+class PairwiseTestCase(unittest.TestCase):
+    def test_basic(self):
+        self.assertEqual(list(pairwise([1, 2, 3])), [(1, 2), (2, 3)])
+
+    def test_empty(self):
+        self.assertEqual(list(pairwise([])), [])
+
+    def test_single(self):
+        self.assertEqual(list(pairwise([1])), [])
+
+
 class FixpathTestCase(unittest.TestCase):
     def test_all(self):
         """
@@ -81,6 +121,10 @@ class FixpathTestCase(unittest.TestCase):
 class CusipTestCase(unittest.TestCase):
     def test_cusip_checksum(self):
         self.assertEqual(cusip_checksum("08467010"), "8")
+
+    def test_cusip_checksum_wrong_length(self):
+        with self.assertRaises(ValueError):
+            cusip_checksum("0846701")  # 7 chars, needs 8
 
     def test_validate_cusip(self):
         self.assertTrue(validate_cusip("084670207"))
@@ -104,19 +148,46 @@ class IsinTestCase(unittest.TestCase):
     def test_isin_checksum(self):
         self.assertEqual(isin_checksum("US084670108"), "6")
 
+    def test_isin_checksum_wrong_length(self):
+        with self.assertRaises(ValueError):
+            isin_checksum("US08467010")  # 10 chars, needs 11
+
+    def test_isin_checksum_bad_country(self):
+        with self.assertRaises(ValueError):
+            isin_checksum("XX08467010X")  # XX not a valid country code
+
     def test_validate_isin(self):
         self.assertTrue(validate_isin("US0846701086"))
         self.assertFalse(validate_isin("US0846701087"))
         self.assertFalse(validate_isin("US084670108"))
         self.assertFalse(validate_isin("US08467010866"))
 
+    def test_validate_isin_bad_country(self):
+        self.assertFalse(validate_isin("XX0846701086"))
+
 
 class SedolTestCase(unittest.TestCase):
     def test_sedol_checksum(self):
         self.assertEqual(sedol_checksum("011100"), "9")
 
+    def test_sedol_checksum_wrong_length(self):
+        with self.assertRaises(ValueError):
+            sedol_checksum("01110")  # 5 chars, needs 6
+
+    def test_sedol_checksum_vowel(self):
+        with self.assertRaises(ValueError):
+            sedol_checksum("A11100")  # contains vowel A
+
     def test_sedol2isin(self):
         self.assertEqual(sedol2isin("0111009"), "GB0001110096")
+
+    def test_sedol2isin_wrong_length(self):
+        with self.assertRaises(ValueError):
+            sedol2isin("011100")  # 6 chars, needs 7
+
+    def test_sedol2isin_bad_check_digit(self):
+        with self.assertRaises(ValueError):
+            sedol2isin("0111008")  # correct is 0111009
 
 
 class FindEasterTestCase(unittest.TestCase):
