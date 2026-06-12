@@ -47,6 +47,9 @@ dev = [
 
 [project.urls]
 Homepage = "https://github.com/csingley/ofxtools"
+Documentation = "https://ofxtools.readthedocs.io/"
+Source = "https://github.com/csingley/ofxtools"
+"Bug Tracker" = "https://github.com/csingley/ofxtools/issues"
 
 [project.scripts]
 ofxget = "ofxtools.scripts.ofxget:main"
@@ -65,6 +68,7 @@ source = ["ofxtools"]
 
 [tool.mypy]
 files = ["ofxtools", "tests"]
+strict = true
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]

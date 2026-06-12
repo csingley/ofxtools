@@ -638,7 +638,7 @@ def _merge_acctinfo(args: ArgsType, markup: BytesIO) -> None:
         def _noop(x: Any) -> Any:
             return {}
         parser_fn = dispatcher.get(clsName, _noop)
-        return parser_fn(acctinfos)
+        return parser_fn(acctinfos)  # type: ignore[no-untyped-call]
 
     parsed_args: list[ParsedAcctinfo] = [
         parse_acctinfos(clsnm, infos)
