@@ -60,7 +60,7 @@ class MAIL(Aggregate):
             logger.debug("Renaming <FROM> to <FRM>")
             frm.tag = "FRM"
 
-        return super(MAIL, MAIL).groom(elem)
+        return Aggregate.groom(elem)
 
     @staticmethod
     def ungroom(elem):
@@ -75,7 +75,7 @@ class MAIL(Aggregate):
             logger.debug("Renaming <FRM> to <FROM>")
             frm.tag = "FROM"
 
-        return super(MAIL, MAIL).ungroom(elem)
+        return Aggregate.ungroom(elem)
 
 
 class MAILRQ(Aggregate):

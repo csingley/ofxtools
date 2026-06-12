@@ -165,7 +165,7 @@ class MFINFO(Aggregate):
             logger.debug("Renaming <YIELD> to <YLD>")
             yld.tag = "YLD"
 
-        return super(MFINFO, MFINFO).groom(elem)
+        return Aggregate.groom(elem)
 
     @staticmethod
     def ungroom(elem):
@@ -180,7 +180,7 @@ class MFINFO(Aggregate):
             logger.debug("Renaming <YLD> to <YIELD>")
             yld.tag = "YIELD"
 
-        return super(MFINFO, MFINFO).ungroom(elem)
+        return Aggregate.ungroom(elem)
 
 
 class OPTINFO(Aggregate):
@@ -229,7 +229,7 @@ class STOCKINFO(Aggregate):
             logger.debug("Renaming <YIELD> to <YLD>")
             yld.tag = "YLD"
 
-        return super(STOCKINFO, STOCKINFO).groom(elem)
+        return Aggregate.groom(elem)
 
     @staticmethod
     def ungroom(elem):
@@ -244,7 +244,7 @@ class STOCKINFO(Aggregate):
             logger.debug("Renaming <YLD> to <YIELD>")
             yld.tag = "YIELD"
 
-        return super(STOCKINFO, STOCKINFO).ungroom(elem)
+        return Aggregate.ungroom(elem)
 
 
 class SECLIST(Aggregate):

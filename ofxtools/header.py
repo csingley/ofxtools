@@ -29,7 +29,7 @@ __all__ = [
 # stdlib imports
 import logging
 import re
-from typing import Any, BinaryIO, Union
+from typing import Any, BinaryIO
 
 # local imports
 from ofxtools import Types
@@ -37,7 +37,7 @@ from ofxtools import Types
 logger = logging.getLogger(__name__)
 
 
-OFXHeaderType = Union["OFXHeaderBase", "OFXHeaderV1", "OFXHeaderV2"]
+OFXHeaderType = "OFXHeaderBase | OFXHeaderV1 | OFXHeaderV2"
 
 
 class OFXHeaderError(SyntaxError):
@@ -64,7 +64,7 @@ class OFXHeaderBase:
     @classmethod
     def parse(
         cls, rawheader: str
-    ) -> tuple[Union["OFXHeaderBase", "OFXHeaderV1", "OFXHeaderV2"], int]:
+    ) -> tuple["OFXHeaderBase | OFXHeaderV1 | OFXHeaderV2", int]:
         """
         Instantiate from string.
 
