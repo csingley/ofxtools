@@ -1,4 +1,4 @@
-.. sqlalchemy:
+.. _sqlalchemy:
 
 Using ``ofxtools`` with SQL
 ===========================
@@ -30,21 +30,21 @@ the relevant data, and feed it to your model classes.  Something like this:
 
 .. code:: python
 
-    from sqlalchemy.ext.declarative import declarative_base
     from sqlalchemy import (
         Column, Integer, String, Text, DateTime, Numeric, ForeignKey, Enum,
+        create_engine,
     )
-    from sqlalchemy.orm import (relationship, sessionmaker, )
-    from sqlalchemy import create_engine
+    from sqlalchemy.orm import DeclarativeBase, relationship, sessionmaker
 
     from ofxtools.models.i18n import CURRENCY_CODES
-    from ofxtools.Client import (OFXClient, InvStmtRq, )
+    from ofxtools.Client import OFXClient, InvStmtRq
     from ofxtools.Parser import OFXTree
-    from ofxtools.models.investment import (BUYSTOCK, SELLSTOCK)
+    from ofxtools.models.invest.transactions import BUYSTOCK, SELLSTOCK
 
 
     # Data model
-    Base = declarative_base()
+    class Base(DeclarativeBase):
+        pass
 
 
     class Account(Base):
@@ -88,12 +88,11 @@ the relevant data, and feed it to your model classes.  Something like this:
 
     # Import
     client = OFXClient('https://ofxs.ameritrade.com/cgi-bin/apps/OFX',
+                       userid='elmerfudd',
                        org='Ameritrade Technology Group', fid='AIS',
                        brokerid='ameritrade.com')
     stmtrq = InvStmtRq(acctid='999999999')
-    response = client.request_statements(user='elmerfudd',
-                                         password='T0PS3CR3T',
-                                         invstmtrqs=[stmtrq])
+    response = client.request_statements('T0PS3CR3T', stmtrq)
     parser = OFXTree()
     parser.parse(response)
     ofx = parser.convert()
