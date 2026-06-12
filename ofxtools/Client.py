@@ -382,7 +382,7 @@ class OFXClient:
             msgcls: type[BANKMSGSRQV1]
             | type[CREDITCARDMSGSRQV1]
             | type[INVSTMTMSGSRQV1],
-            trnrqs: Iterator[Request],
+            trnrqs: Iterator[tuple[type[Message], list[TrnRequest]]],
         ) -> tuple[str, Message]:
             trnrqs_ = list(itertools.chain.from_iterable(t[1] for t in trnrqs))
             attr_name = msgcls.__name__.lower()

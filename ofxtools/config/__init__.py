@@ -5,6 +5,7 @@ import logging.config
 import os
 import sys
 from pathlib import Path
+from typing import Any, cast
 
 __all__ = [
     "CONFIGDIR",
@@ -82,7 +83,7 @@ def configure_logging(level: int | None = None) -> None:
     if LOGCONFIGPATH.exists():
         try:
             with open(LOGCONFIGPATH) as f:
-                config = json.load(f)
+                config = cast(dict[str, Any], json.load(f))
             if not config:
                 raise ValueError("Empty log config")
         except Exception:
