@@ -6,8 +6,8 @@ __all__ = ["LANG_CODES", "CURRENCY_CODES", "COUNTRY_CODES", "CURRENCY", "ORIGCUR
 
 
 # stdlib imports
-from typing import Any
 from collections.abc import Sequence
+from typing import Any
 
 from ofxtools.models.base import Aggregate
 

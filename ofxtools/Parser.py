@@ -28,10 +28,10 @@ __all__ = ["OFXTree", "TreeBuilder", "ParseError"]
 
 # stdlib imports
 import contextlib
-from typing import Any, cast
 import logging
 import re
 import xml.etree.ElementTree as ET
+from typing import Any, cast
 
 # local imports
 from ofxtools.header import OFXHeaderType, parse_header

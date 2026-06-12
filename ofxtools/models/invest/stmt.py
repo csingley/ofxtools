@@ -28,6 +28,7 @@ __all__ = [
 
 
 from typing import Any
+
 from ofxtools.models.bank.stmt import BALLIST, INCTRAN
 from ofxtools.models.base import Aggregate
 from ofxtools.models.i18n import CURRENCY_CODES

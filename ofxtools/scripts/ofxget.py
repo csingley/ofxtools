@@ -635,7 +635,8 @@ def _merge_acctinfo(args: ArgsType, markup: BytesIO) -> None:
             "CCACCTINFO": parse_ccacctinfos,
             "INVACCTINFO": parse_invacctinfos,
         }
-        _noop: Callable[..., Any] = lambda x: {}
+        def _noop(x: Any) -> Any:
+            return {}
         parser_fn = dispatcher.get(clsName, _noop)
         return parser_fn(acctinfos)
 
