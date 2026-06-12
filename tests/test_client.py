@@ -128,9 +128,10 @@ class OFXClientV1TestCase(unittest.TestCase):
         self.assertIsNone(signon.clientuid)
 
     def testRequestStatementsDryrun(self):
-        with patch.multiple(
-            "ofxtools.Client.OFXClient", dtclient=DEFAULT
-        ) as mock, patch("ofxtools.Client.uuid.uuid4", return_value="deadbeef"):
+        with (
+            patch.multiple("ofxtools.Client.OFXClient", dtclient=DEFAULT) as mock,
+            patch("ofxtools.Client.uuid.uuid4", return_value="deadbeef"),
+        ):
             mock["dtclient"].return_value = datetime(2017, 4, 1, tzinfo=UTC)
 
             dryrun = (
