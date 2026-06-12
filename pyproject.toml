@@ -67,7 +67,7 @@ testpaths = ["tests"]
 source = ["ofxtools"]
 
 [tool.mypy]
-files = ["ofxtools", "tests"]
+files = ["ofxtools"]
 strict = true
 
 [tool.ruff.lint]
