@@ -52,7 +52,7 @@ import logging
 import urllib.request as urllib_request
 import uuid
 import xml.etree.ElementTree as ET
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from io import BytesIO
 from operator import attrgetter, itemgetter
 from typing import (
@@ -186,6 +186,7 @@ class CcStmtEndRq(NamedTuple):
 # TYPE ALIASES
 RequestParam = StmtRq | CcStmtRq | InvStmtRq | StmtEndRq | CcStmtEndRq
 Request = STMTRQ | CCSTMTRQ | INVSTMTRQ | STMTENDRQ | CCSTMTENDRQ
+TrnRequest = STMTTRNRQ | CCSTMTTRNRQ | INVSTMTTRNRQ | STMTENDTRNRQ | CCSTMTENDTRNRQ
 Message = BANKMSGSRQV1 | CREDITCARDMSGSRQV1 | INVSTMTMSGSRQV1
 MsgsetClass = (
     type[SIGNONMSGSET]
@@ -933,8 +934,8 @@ class OFXClient:
 
 
 def wrap_stmtrq(
-    nt: RequestParam, rqs: list[RequestParam], client: "OFXClient"
-) -> tuple[type[Message], list[Request]]:
+    nt: RequestParam, rqs: Iterable[RequestParam], client: "OFXClient"
+) -> tuple[type[Message], list[TrnRequest]]:
     match nt:
         case StmtRq():
             return (

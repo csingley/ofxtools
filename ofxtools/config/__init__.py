@@ -77,7 +77,7 @@ def configure_logging(level: int | None = None) -> None:
     LOGDIR.mkdir(parents=True, exist_ok=True)
     USERCONFIGDIR.mkdir(parents=True, exist_ok=True)
 
-    config = None
+    config: dict | None = None
 
     if LOGCONFIGPATH.exists():
         try:
