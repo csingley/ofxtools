@@ -1,6 +1,7 @@
 """Utility functions and classes"""
 
 # stdlib imports
+import calendar
 import datetime
 import itertools
 import math
@@ -274,142 +275,117 @@ except ImportError:
     UTC = _UTC()  # type: ignore
 
 
-#  def settleDate(dt):
-#  """
-#  Given a trade date (or datetime), return the trade settlement date(time)
-#  """
+def findEaster(year: int) -> datetime.date:
+    """
+    Compute the date of Easter Sunday for the given Gregorian calendar year
+    (valid 1583–4099).
 
-#  def nextBizDay(dt):
-#  stop = False
-#  while not stop:
-#  dt += datetime.timedelta(days=1)
-#  if dt.weekday() in (5, 6) or dt in NYSEcalendar.holidays(dt.year):
-#  stop = False
-#  else:
-#  stop = True
-#  return dt
-
-#  for n in range(3):
-#  dt = nextBizDay(dt)
-#  return dt
-
-
-#  class NYSEcalendar:
-#  """
-#  The Board has determined that the Exchange will not be open for business on
-#  New Year's Day,
-#  Martin Luther King, Jr. Day,
-#  Washington's Birthday,
-#  Good Friday,
-#  Memorial Day,
-#  Independence Day,
-#  Labor Day,
-#  Thanksgiving Day
-#  and Christmas Day.
-#  Martin Luther King, Jr. Day, Washington's Birthday and Memorial Day will be
-#  celebrated on the third Monday in January, the third Monday in February
-#  and the last Monday in May, respectively
-
-#  The Exchange Board has also determined that, when any holiday observed by
-#  the Exchange falls on a Saturday, the Exchange will not be open for
-#  business on the preceding Friday and when any holiday observed by the
-#  Exchange falls on a Sunday, the Exchange will not be open for business on
-#  the succeeding Monday, unless unusual business conditions exist,
-#  such as the ending of a monthly or the yearly accounting period.
-#  """
-
-#  _cal = calendar.Calendar()
-
-#  @classmethod
-#  def _weekdays(cls, year, month, weekday):
-#  """
-#  Filter datetime.dates in (year, month) for a given weekday.
-#  """
-
-#  def weekdayTest(days):
-#  return (days[0] > 0) and (days[1] == weekday)
-
-#  return [
-#  datetime.date(year, month, day)
-#  for (day, wkday) in itertools.ifilter(
-#  weekdayTest, cls._cal.itermonthdays2(year, month)
-#  )
-#  ]
-
-#  @classmethod
-#  def mondays(cls, year, month):
-#  return cls._weekdays(year, month, weekday=0)
-
-#  @classmethod
-#  def thursdays(cls, year, month):
-#  return cls._weekdays(year, month, weekday=3)
-
-#  @classmethod
-#  def holidays(cls, year):
-#  hols = [
-#  datetime.date(year, 7, 4),  # Independence Day
-#  datetime.date(year, 12, 25),  # Christmas
-#  cls.mondays(year, 1)[2],  # MLK Day
-#  findEaster(year) - datetime.timedelta(days=2),  # Good Friday
-#  cls.mondays(year, 2)[2],  # Washington's Birthday
-#  cls.mondays(year, 5)[-1],  # Memorial Day
-#  cls.mondays(year, 9)[0],  # Labor Day
-#  cls.thursdays(year, 11)[-1],  # Thanksgiving
-#  ]
-#  newYearsDay = datetime.date(year, 1, 1)
-#  if newYearsDay.weekday() != 5:
-#  # If New Year's Day falls on a Saturday, then it would get moved
-#  # back to the preceding Friday, except that would be 12/31, which
-#  # is the close of the monthly and annual accounting cycle... so
-#  # in that case, the holiday just gets skipped instead.
-#  hols.append(newYearsDay)
-#  hols.sort()
-#  return hols
+    Copyright (c) 2003  Gustavo Niemeyer <niemeyer@conectiva.com>
+    Licensed under the PSF license.
+    Ported from GM Arts / Claus Tondering algorithm (Ouding 1940), as quoted
+    in "Explanatory Supplement to the Astronomical Almanac", P. Kenneth
+    Seidelmann, editor.
+    """
+    # g - Golden year - 1
+    # c - Century
+    # h - (23 - Epact) mod 30
+    # i - Number of days from March 21 to Paschal Full Moon
+    # j - Weekday for PFM (0=Sunday, etc)
+    # p - Number of days from March 21 to Sunday on or before PFM (-6 to 28)
+    y = year
+    g = y % 19
+    c = y // 100
+    h = (c - c // 4 - (8 * c + 13) // 25 + 19 * g + 15) % 30
+    i = h - (h // 28) * (1 - (h // 28) * (29 // (h + 1)) * ((21 - g) // 11))
+    j = (y + y // 4 + i + 2 - c + c // 4) % 7
+    p = i - j
+    d = 1 + (p + 27 + (p + 6) // 40) % 31
+    m = 3 + (p + 26) // 30
+    return datetime.date(y, m, d)
 
 
-#  def findEaster(year):
-#  """
-#  Copyright (c) 2003  Gustavo Niemeyer <niemeyer@conectiva.com>
-#  The code is licensed under the PSF license.
+class NYSEcalendar:
+    """
+    NYSE holiday calendar.
 
-#  This method was ported from the work done by GM Arts,
-#  on top of the algorithm by Claus Tondering, which was
-#  based in part on the algorithm of Ouding (1940), as
-#  quoted in "Explanatory Supplement to the Astronomical
-#  Almanac", P.  Kenneth Seidelmann, editor.
+    The Exchange is closed on: New Year's Day, Martin Luther King Jr. Day,
+    Washington's Birthday, Good Friday, Memorial Day, Independence Day,
+    Labor Day, Thanksgiving Day, and Christmas Day.
 
-#  Edited by csingley to "de-modulize" the function to fit into ofxtools,
-#  and to remove unused Easter calculation methods.
+    When a fixed-date holiday falls on Saturday, the preceding Friday is
+    observed — except New Year's Day, where Dec 31 is the year-end accounting
+    close and the holiday is simply skipped that year.  When a fixed-date
+    holiday falls on Sunday, the following Monday is observed.
+    """
 
-#  This algorithm implements the revised method of easter calculation,
-#  in Gregorian calendar, valid in years 1583 to 4099.
+    _cal = calendar.Calendar()
 
-#  More about the algorithm may be found at:
-#  http://users.chariot.net.au/~gmarts/eastalg.htm
-#  and
-#  http://www.tondering.dk/claus/calendar.html
-#  """
-#  # g - Golden year - 1
-#  # c - Century
-#  # h - (23 - Epact) mod 30
-#  # i - Number of days from March 21 to Paschal Full Moon
-#  # j - Weekday for PFM (0=Sunday, etc)
-#  # p - Number of days from March 21 to Sunday on or before PFM
-#  #     (-6 to 28)
+    @classmethod
+    def _weekdays(cls, year: int, month: int, weekday: int) -> list[datetime.date]:
+        """Return all dates in (year, month) falling on the given weekday (0=Mon)."""
+        return [
+            datetime.date(year, month, day)
+            for day, wkday in cls._cal.itermonthdays2(year, month)
+            if day > 0 and wkday == weekday
+        ]
 
-#  y = year
-#  g = y % 19
-#  e = 0
+    @classmethod
+    def mondays(cls, year: int, month: int) -> list[datetime.date]:
+        return cls._weekdays(year, month, weekday=0)
 
-#  # New method (i.e. EASTER_WESTERN)
-#  c = y / 100
-#  h = (c - c / 4 - (8 * c + 13) / 25 + 19 * g + 15) % 30
-#  i = h - (h / 28) * (1 - (h / 28) * (29 / (h + 1)) * ((21 - g) / 11))
-#  j = (y + y / 4 + i + 2 - c + c / 4) % 7
+    @classmethod
+    def thursdays(cls, year: int, month: int) -> list[datetime.date]:
+        return cls._weekdays(year, month, weekday=3)
 
-#  # p can be from -6 to 56 corresponding to dates 22 March to 23 May
-#  # (later dates apply to method 2, although 23 May never actually occurs)
-#  p = i - j + e
-#  d = 1 + (p + 27 + (p + 6) / 40) % 31
-#  m = 3 + (p + 26) / 30
-#  return datetime.date(y, m, d)
+    @classmethod
+    def _observed(cls, date: datetime.date) -> datetime.date:
+        """Return the NYSE-observed date for a fixed holiday falling on a weekend."""
+        if date.weekday() == 5:  # Saturday → preceding Friday
+            return date - datetime.timedelta(days=1)
+        if date.weekday() == 6:  # Sunday → following Monday
+            return date + datetime.timedelta(days=1)
+        return date
+
+    @classmethod
+    def holidays(cls, year: int) -> list[datetime.date]:
+        hols = [
+            cls._observed(datetime.date(year, 7, 4)),  # Independence Day
+            cls._observed(datetime.date(year, 12, 25)),  # Christmas
+            cls.mondays(year, 1)[2],  # MLK Day (3rd Mon in Jan)
+            findEaster(year) - datetime.timedelta(days=2),  # Good Friday
+            cls.mondays(year, 2)[2],  # Washington's Birthday (3rd Mon in Feb)
+            cls.mondays(year, 5)[-1],  # Memorial Day (last Mon in May)
+            cls.mondays(year, 9)[0],  # Labor Day (1st Mon in Sep)
+            cls.thursdays(year, 11)[3],  # Thanksgiving (4th Thu in Nov)
+        ]
+        # New Year's Day: Saturday → skipped (Dec 31 is year-end accounting close)
+        #                 Sunday   → observed Monday Jan 2
+        #                 weekday  → Jan 1 itself
+        nyd = datetime.date(year, 1, 1)
+        if nyd.weekday() == 6:
+            hols.append(nyd + datetime.timedelta(days=1))
+        elif nyd.weekday() != 5:
+            hols.append(nyd)
+        hols.sort()
+        return hols
+
+
+def nextBizDay(dt: datetime.date) -> datetime.date:
+    """Return the next NYSE business day after dt."""
+    dt += datetime.timedelta(days=1)
+    while dt.weekday() in (5, 6) or dt in NYSEcalendar.holidays(dt.year):
+        dt += datetime.timedelta(days=1)
+    return dt
+
+
+def settleDate(dt: datetime.date, n: int = 1) -> datetime.date:
+    """
+    Return the settlement date for a trade on dt.
+
+    n is the number of business days to add (T+n).  Defaults to 1 (T+1),
+    the US equity standard since May 2024.  Pass n=2 for instruments still
+    settling T+2 (e.g. most bonds, some international markets).
+    """
+    for _ in range(n):
+        dt = nextBizDay(dt)
+    return dt
