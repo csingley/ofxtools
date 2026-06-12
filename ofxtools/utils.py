@@ -76,7 +76,8 @@ TZS = {
 def all_equal(iterable: Iterable) -> bool:
     """Returns True if all the elements are equal to each other"""
     g = groupby(iterable)
-    return next(g, True) and not next(g, False)
+    next(g, None)  # consume first group (if any)
+    return next(g, None) is None  # True iff no second group exists
 
 
 def partition(pred: Callable, iterable: Iterable) -> tuple[Iterable, Iterable]:

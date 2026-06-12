@@ -437,19 +437,18 @@ class Aggregate(list):
         cls._init_class_attrs()
 
     @property
-    def _spec_repr(self) -> Sequence[tuple[str, Any]]:
+    def _spec_repr(self) -> list[tuple[str, str]]:
         """
         Sequence of (name, repr()) for each non-empty attribute in the
         class ``spec`` (see property above).
 
         Used by __repr__().
         """
-        attrs = [
+        return [
             (attr, repr(v))
             for attr in self.spec_no_listaggregates.keys()
             if (v := getattr(self, attr)) is not None
         ]
-        return attrs
 
     def __hash__(self) -> int:  # type: ignore[override]
         """
@@ -473,7 +472,7 @@ class Aggregate(list):
             subagg = getattr(self, subaggregate)
             try:
                 return getattr(subagg, attr)
-            except (AttributeError, KeyError):
+            except AttributeError:
                 continue
         cls = self.__class__.__name__
         raise AttributeError(f"'{cls}' object has no attribute '{attr}'")
@@ -497,7 +496,7 @@ class ElementList(Aggregate):
             raise ValueError(
                 f"{self.__class__.__name__} must have exactly one list aggregate"
             )
-        converter = list(self.listaggregates.values())[0]
+        converter = next(iter(self.listaggregates.values()))
         for member in args:
             self.append(converter.convert(member))
 
@@ -506,8 +505,7 @@ class ElementList(Aggregate):
             raise ValueError(
                 f"{self.__class__.__name__} must have exactly one list aggregate"
             )
-        spec = list(self.listaggregates.items())[0]
-        attr, converter = spec
+        attr, converter = next(iter(self.listaggregates.items()))
 
         text = converter.unconvert(member)
         ET.SubElement(root, attr.upper()).text = text
