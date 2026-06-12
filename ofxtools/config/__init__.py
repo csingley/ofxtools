@@ -5,7 +5,7 @@ import logging.config
 import os
 import sys
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 __all__ = [
     "CONFIGDIR",
@@ -78,12 +78,12 @@ def configure_logging(level: int | None = None) -> None:
     LOGDIR.mkdir(parents=True, exist_ok=True)
     USERCONFIGDIR.mkdir(parents=True, exist_ok=True)
 
-    config: dict | None = None
+    config: Any = None
 
     if LOGCONFIGPATH.exists():
         try:
             with open(LOGCONFIGPATH) as f:
-                config = cast(dict[str, Any], json.load(f))
+                config = json.load(f)
             if not config:
                 raise ValueError("Empty log config")
         except Exception:
