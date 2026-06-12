@@ -29,7 +29,7 @@ __all__ = [
 # stdlib imports
 import logging
 import re
-from typing import Any, BinaryIO, TypeAlias
+from typing import Any, BinaryIO, TypeAlias, cast
 
 # local imports
 from ofxtools import Types
@@ -339,4 +339,4 @@ def make_header(
         version, security=security, oldfileuid=oldfileuid, newfileuid=newfileuid
     )
     logger.debug(f"Made OFX header {header}")
-    return header
+    return cast(OFXHeaderType, header)

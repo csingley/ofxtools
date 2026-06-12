@@ -14,6 +14,8 @@ __all__ = [
 ]
 
 
+from typing import Any
+
 # local imports
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import MSGSETCORE
@@ -36,7 +38,7 @@ class INVSTMTMSGSRQV1(Aggregate):
     invmailsyncrq = ListAggregate(INVMAILSYNCRQ)
 
     @property
-    def statements(self):
+    def statements(self) -> Any:
         stmts = []
         for trnrq in self:
             if isinstance(trnrq, INVSTMTTRNRQ):
@@ -54,7 +56,7 @@ class INVSTMTMSGSRSV1(Aggregate):
     invmailsyncrs = ListAggregate(INVMAILSYNCRS)
 
     @property
-    def statements(self):
+    def statements(self) -> Any:
         stmts = []
         for trnrs in self:
             if isinstance(trnrs, INVSTMTTRNRS):
@@ -105,8 +107,8 @@ class SECLISTMSGSRSV1(Aggregate):
     seclist = ListAggregate(SECLIST)
 
     @property
-    def securities(self):
-        securities = []
+    def securities(self) -> Any:
+        securities: list[Any] = []
         for child in self:
             if isinstance(child, SECLIST):
                 securities.extend(child)

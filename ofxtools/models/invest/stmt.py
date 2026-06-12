@@ -27,6 +27,7 @@ __all__ = [
 ]
 
 
+from typing import Any
 from ofxtools.models.bank.stmt import BALLIST, INCTRAN
 from ofxtools.models.base import Aggregate
 from ofxtools.models.i18n import CURRENCY_CODES
@@ -140,7 +141,7 @@ class CONTRIBSECURITY(Aggregate):
     othernonvestamt = Decimal()
 
     @classmethod
-    def validate_args(cls, *args, **kwargs):
+    def validate_args(cls, *args: object, **kwargs: object) -> None:
         """
         Specify either <xxxPCT> or <xxxAMT>.  The new contributions to each
         security are either all specified by a percentage of contributions or
@@ -162,7 +163,7 @@ class CONTRIBINFO(Aggregate):
     contribsecurity = ListAggregate(CONTRIBSECURITY)
 
     @classmethod
-    def validate_args(cls, *args, **kwargs):
+    def validate_args(cls, *args: object, **kwargs: object) -> None:
         #  "current contribution allocation for a security (1 or more)"
         if len(args) == 0:
             raise ValueError(f"{cls.__name__} must contain at least one item")
@@ -281,19 +282,19 @@ class INVSTMTRS(Aggregate):
     inv401kbal = SubAggregate(INV401KBAL)
 
     @property
-    def account(self):
+    def account(self) -> Any:
         return self.invacctfrom
 
     @property
-    def transactions(self):
+    def transactions(self) -> Any:
         return self.invtranlist
 
     @property
-    def positions(self):
+    def positions(self) -> Any:
         return self.invposlist
 
     @property
-    def balances(self):
+    def balances(self) -> Any:
         return self.invbal
 
 
@@ -309,5 +310,5 @@ class INVSTMTTRNRS(TrnRs):
     invstmtrs = SubAggregate(INVSTMTRS)
 
     @property
-    def statement(self):
+    def statement(self) -> Any:
         return self.invstmtrs

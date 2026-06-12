@@ -31,6 +31,8 @@ __all__ = [
 ]
 
 
+from typing import Any
+
 # local imports
 from ofxtools.models.base import Aggregate
 from ofxtools.models.common import BAL, SVCSTATUSES
@@ -250,15 +252,15 @@ class STMTRS(Aggregate):
     mktginfo = String(360)
 
     @property
-    def account(self):
+    def account(self) -> Any:
         return self.bankacctfrom
 
     @property
-    def transactions(self):
+    def transactions(self) -> Any:
         return self.banktranlist
 
     @property
-    def balance(self):
+    def balance(self) -> Any:
         return self.ledgerbal
 
 
@@ -274,7 +276,7 @@ class STMTTRNRS(TrnRs):
     stmtrs = SubAggregate(STMTRS)
 
     @property
-    def statement(self):
+    def statement(self) -> Any:
         return self.stmtrs
 
 
@@ -313,15 +315,15 @@ class CCSTMTRS(Aggregate):
     mktginfo = String(360)
 
     @property
-    def account(self):
+    def account(self) -> Any:
         return self.ccacctfrom
 
     @property
-    def transactions(self):
+    def transactions(self) -> Any:
         return self.banktranlist
 
     @property
-    def balance(self):
+    def balance(self) -> Any:
         return self.ledgerbal
 
 
@@ -337,5 +339,5 @@ class CCSTMTTRNRS(TrnRs):
     ccstmtrs = SubAggregate(CCSTMTRS)
 
     @property
-    def statement(self):
+    def statement(self) -> Any:
         return self.ccstmtrs

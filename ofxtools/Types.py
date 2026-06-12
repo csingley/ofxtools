@@ -35,6 +35,7 @@ import datetime
 import decimal
 import re
 import warnings
+from typing import Any
 from xml.sax import saxutils
 
 # local imports
@@ -94,10 +95,10 @@ class Element:
         return f"<{self.__class__.__name__} required={self.required}>"
 
     #  Descriptor protocol
-    def __set_name__(self, owner, name):
+    def __set_name__(self, owner: type, name: str) -> None:
         self.name = name
 
-    def __get__(self, obj, objtype=None):
+    def __get__(self, obj: Any, objtype: Any = None) -> Any:
         if obj is None:
             return self
         try:
@@ -105,26 +106,26 @@ class Element:
         except KeyError:
             raise AttributeError(self.name) from None
 
-    def __set__(self, obj, value) -> None:
+    def __set__(self, obj: Any, value: Any) -> None:
         if value is None:
             self.enforce_required(value)
             obj.__dict__[self.name] = None
         else:
             obj.__dict__[self.name] = self.convert(value)
 
-    def convert(self, value):
+    def convert(self, value: Any) -> Any:
         raise NotImplementedError
 
-    def unconvert(self, value):
+    def unconvert(self, value: Any) -> Any:
         if value is None:
             self.enforce_required(value)
             return None
         return self._unconvert(value)
 
-    def _unconvert(self, value):
+    def _unconvert(self, value: Any) -> Any:
         raise NotImplementedError
 
-    def enforce_required(self, value) -> None:
+    def enforce_required(self, value: Any) -> None:
         if value is None and self.required:
             raise OFXSpecError(f"{self.__class__.__name__}: Value is required")
 
@@ -133,7 +134,7 @@ class Bool(Element):
     mapping = {"Y": True, "N": False}
     reverse_mapping = {True: "Y", False: "N"}
 
-    def convert(self, value):
+    def convert(self, value: Any) -> Any:
         match value:
             case bool():
                 return value
@@ -149,7 +150,7 @@ class Bool(Element):
                     f"{value} is not one of the allowed values {list(self.mapping)}"
                 )
 
-    def _unconvert(self, value):
+    def _unconvert(self, value: Any) -> Any:
         match value:
             case bool():
                 return self.reverse_mapping[value]
@@ -180,7 +181,7 @@ class String(Element):
                 warnings.warn(msg, category=OFXTypeWarning)
         return value
 
-    def convert(self, value):
+    def convert(self, value: Any) -> Any:
         match value:
             case str():
                 if value == "":
@@ -196,7 +197,7 @@ class String(Element):
             case _:
                 raise TypeError(f"{value!r} is not a str")
 
-    def _unconvert(self, value):
+    def _unconvert(self, value: Any) -> Any:
         match value:
             case str():
                 return self.enforce_length(value)
@@ -223,7 +224,7 @@ class OneOf(Element):
     >>> opttype = OneOf("CALL", "PUT", required=True)
     """
 
-    def __init__(self, *valid, required: bool = False) -> None:
+    def __init__(self, *valid: Any, required: bool = False) -> None:
         super().__init__(required=required)
         self.valid = valid
 
@@ -232,20 +233,20 @@ class OneOf(Element):
             f"<{self.__class__.__name__} valid={self.valid} required={self.required}>"
         )
 
-    def _check(self, value):
+    def _check(self, value: Any) -> Any:
         self.enforce_required(value)
         if value is not None and value not in self.valid:
             raise OFXSpecError(f"'{value}' is not OneOf {self.valid}")
         return value
 
-    def convert(self, value):
+    def convert(self, value: Any) -> Any:
         match value:
             case str():
                 return self._check(value or None)
             case _:
                 return self._check(value)
 
-    def _unconvert(self, value):
+    def _unconvert(self, value: Any) -> Any:
         return self._check(value)
 
 
@@ -266,7 +267,7 @@ class Integer(Element):
             )
         return value
 
-    def convert(self, value):
+    def convert(self, value: Any) -> Any:
         match value:
             case int():
                 return self.enforce_length(value)
@@ -278,7 +279,7 @@ class Integer(Element):
             case _:
                 return self.enforce_length(int(value))
 
-    def _unconvert(self, value):
+    def _unconvert(self, value: Any) -> Any:
         match value:
             case int():
                 return str(self.enforce_length(value))
@@ -309,7 +310,7 @@ class Decimal(Element):
             f"<{self.__class__.__name__} scale={self.scale} required={self.required}>"
         )
 
-    def convert(self, value):
+    def convert(self, value: Any) -> Any:
         match value:
             case decimal.Decimal():
                 if self.scale is not None:
@@ -327,7 +328,7 @@ class Decimal(Element):
             case _:
                 return self.__type__(value)
 
-    def _unconvert(self, value):
+    def _unconvert(self, value: Any) -> Any:
         match value:
             case decimal.Decimal():
                 if self.scale is not None and not value.same_quantum(self.scale):
@@ -424,7 +425,7 @@ class DateTime(Element):
     __type__: type[datetime.datetime] | type[datetime.time] = datetime.datetime
     regex = DT_REGEX
 
-    def convert(self, value):
+    def convert(self, value: Any) -> Any:
         match value:
             case datetime.datetime():
                 if value.utcoffset() is None:
@@ -438,7 +439,7 @@ class DateTime(Element):
                     f"can't convert to {self.__type__}"
                 )
 
-    def _convert_str(self, value: str):
+    def _convert_str(self, value: str) -> datetime.datetime:
         match = self.regex.match(value)
         if match is None:
             raise OFXSpecError(
@@ -476,10 +477,10 @@ class DateTime(Element):
 
         return utils.gmt_offset(gmt_offset_hours, int(minutes or 0))
 
-    def _normalize_to_gmt(self, value, gmt_offset):
+    def _normalize_to_gmt(self, value: datetime.datetime, gmt_offset: datetime.timedelta) -> datetime.datetime:
         return (value - gmt_offset).replace(tzinfo=utils.UTC)
 
-    def _unconvert(self, value):
+    def _unconvert(self, value: Any) -> Any:
         match value:
             case datetime.datetime():
                 if value.utcoffset() is None:
@@ -531,7 +532,7 @@ class Time(DateTime):
     __type__ = datetime.time
     regex = TIME_REGEX
 
-    def convert(self, value):
+    def convert(self, value: Any) -> Any:
         match value:
             case datetime.time():
                 if value.utcoffset() is None:
@@ -545,7 +546,7 @@ class Time(DateTime):
                     f"can't convert to {self.__type__}"
                 )
 
-    def _normalize_to_gmt(
+    def _normalize_to_gmt(  # type: ignore[override]
         self, value: datetime.time, gmt_offset: datetime.timedelta
     ) -> datetime.time:
         # Can't directly subtract datetime.timedelta from datetime.time
@@ -560,7 +561,7 @@ class Time(DateTime):
         )
         return (dt - gmt_offset).time().replace(tzinfo=utils.UTC)
 
-    def _unconvert(self, value):
+    def _unconvert(self, value: Any) -> Any:
         match value:
             case datetime.time():
                 if value.utcoffset() is None:
@@ -601,13 +602,13 @@ class ListElement(Element):
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} converter={self.converter!r} required={self.required}>"
 
-    def convert(self, value):
+    def convert(self, value: Any) -> Any:
         if value is None:
             self.enforce_required(value)
             return None
         return self.converter.convert(value)
 
-    def _unconvert(self, value):
+    def _unconvert(self, value: Any) -> Any:
         return self.converter._unconvert(value)
 
 
@@ -633,7 +634,7 @@ class SubAggregate(Element):
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} type={self.aggregate_type.__name__} required={self.required}>"
 
-    def convert(self, value):
+    def convert(self, value: Any) -> Any:
         if isinstance(value, self.aggregate_type):
             return value
         raise TypeError(f"'{value}' is not an instance of {self.aggregate_type}")
@@ -644,7 +645,7 @@ class ListAggregate(SubAggregate):
     ``SubAggregate`` that can be repeated on the parent ``Aggregate``.
     """
 
-    def _unconvert(self, value):
+    def _unconvert(self, value: Any) -> Any:
         if not isinstance(value, self.aggregate_type):
             raise TypeError(f"'{value!r}' is not an instance of {self.aggregate_type}")
         return value
@@ -655,13 +656,13 @@ class Unsupported(Element):
     Null Aggregate/Element - not implemented (yet)
     """
 
-    def __get__(self, obj, objtype):
+    def __get__(self, obj: Any, objtype: Any = None) -> Any:
         return None
 
-    def __set__(self, obj, value) -> None:
+    def __set__(self, obj: Any, value: Any) -> None:
         pass
 
-    def convert(self, value):
+    def convert(self, value: Any) -> Any:
         return None
 
     def __repr__(self) -> str:

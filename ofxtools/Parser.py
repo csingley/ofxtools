@@ -28,6 +28,7 @@ __all__ = ["OFXTree", "TreeBuilder", "ParseError"]
 
 # stdlib imports
 import contextlib
+from typing import Any, cast
 import logging
 import re
 import xml.etree.ElementTree as ET
@@ -64,7 +65,7 @@ class OFXTree(ET.ElementTree):
     the root node of the hierarchy.
     """
 
-    def parse(self, source, parser=None) -> ET.Element:
+    def parse(self, source: Any, parser: Any = None) -> ET.Element:
         """
         Deserialize OFX document into tree of `ElementTree.Element` instances.
 
@@ -86,13 +87,13 @@ class OFXTree(ET.ElementTree):
         # ElementTree.TreeBuilder.close() returns the root.
         # Follow ElementTree API and stash as self._root (so all normal
         # ElementTree methods e.g. find() work normally on our subclass).
-        self._root = parser.close()
+        self._root = cast(ET.Element, parser.close())
         logger.debug(f"Parsed Element tree root: {self._root}")
 
         return self._root
 
     @staticmethod
-    def _read(source) -> tuple[OFXHeaderType, str]:
+    def _read(source: Any) -> tuple[OFXHeaderType, str]:
         """
         Validate/convert OFX header and return it as an instance of
         `ofxtools.header.OFXHeader{V1, V2}`, along with message body as `str`.
@@ -222,7 +223,7 @@ class TreeBuilder(ET.TreeBuilder):
         return None
 
 
-def main(*files):
+def main(*files: str) -> None:
     """
     Simple functional test for impatient developers.
     """

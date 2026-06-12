@@ -102,7 +102,7 @@ class EXTDPMT(Aggregate):
     extdpmtinv = ListAggregate(EXTDPMTINV)
 
     @classmethod
-    def validate_args(cls, *args, **kwargs):
+    def validate_args(cls, *args: object, **kwargs: object) -> None:
         # "At least one of the following: <EXTDPMTDSC>, or <EXTDPMTINV>"
         listitems = [arg.__class__.__name__ for arg in args]
         if "EXTDPMTINV" not in listitems and "extdpmtdsc" not in kwargs:
@@ -141,7 +141,7 @@ class EXTDPAYEE(Aggregate):
     daystopay = Integer(3, required=True)
 
     @classmethod
-    def validate_args(cls, *args, **kwargs):
+    def validate_args(cls, *args: object, **kwargs: object) -> None:
         # "If <PAYEEID> is present, <IDSCOPE> and <NAME> are required."
         payeeid = kwargs.get("payeeid", None)
         if payeeid:

@@ -74,7 +74,7 @@ class PrivateTagWarning(OFXAggregateWarning):
     """
 
 
-class Aggregate(list):
+class Aggregate(list[Any]):
     """
     Base class for Python representation of OFX 'aggregate', i.e. SGML/XML
     parent node that is empty of data text.
@@ -98,7 +98,7 @@ class Aggregate(list):
     # Aggregate MUST contain exactly one child from ``requiredMutexes``
     requiredMutexes: Sequence[Sequence[str]] = []
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: object, **kwargs: object) -> None:
         """
         Positional args interepreted as list items (of variable #).
         kwargs interpreted as singular sub-elements.
@@ -122,14 +122,14 @@ class Aggregate(list):
         self._apply_residual_kwargs(**kwargs)
 
     @classmethod
-    def validate_args(cls, *args, **kwargs) -> None:
+    def validate_args(cls, *args: object, **kwargs: object) -> None:
         """
         Extra class-level validation constraints from the OFX spec not captured
         by class attribute validators.
         """
 
         def enforce_count(
-            cls,
+            cls: type,
             kwargs: dict[str, Any],
             errMsg: str,
             mutexes: Sequence[Sequence[str]],
@@ -163,7 +163,7 @@ class Aggregate(list):
             predicate=lambda x: x == 1,
         )
 
-    def _apply_args(self, *args) -> None:
+    def _apply_args(self, *args: object) -> None:
         # Interpret positional args as contained list items/elements (of variable #)
         clsnm = self.__class__.__name__
 
@@ -185,7 +185,7 @@ class Aggregate(list):
                 )
             self.append(member)
 
-    def _apply_residual_kwargs(self, **kwargs) -> None:
+    def _apply_residual_kwargs(self, **kwargs: object) -> None:
         # Check that all kwargs have been consumed
         if kwargs:
             args = [
@@ -220,7 +220,7 @@ class Aggregate(list):
 
         logger.info(f"Converting <{elem.tag}> to {SubClass.__name__}")
         instance = SubClass._convert(elem)
-        return instance
+        return instance  # type: ignore[no-any-return]
 
     @classmethod
     def _convert(cls, elem: ET.Element) -> "Aggregate":
@@ -241,7 +241,7 @@ class Aggregate(list):
         listelements = cls.listelements
 
         #  Type alias - accumulator for functools.reduce()
-        Accum = tuple[list, dict, int, bool]
+        Accum = tuple[list[Any], dict[Any, Any], int, bool]
         " args, kwargs, previous attr index within spec, previous attr is list member? "
 
         def update_args(accum: Accum, elem: ET.Element) -> Accum:
@@ -375,7 +375,7 @@ class Aggregate(list):
         # Hook to modify `ET.ElementTree` after conversion
         return cls.ungroom(root)
 
-    def _listAppend(self, root: ET.Element, member) -> None:
+    def _listAppend(self, root: ET.Element, member: Any) -> None:
         root.append(member.to_etree())
 
     @staticmethod
@@ -430,7 +430,7 @@ class Aggregate(list):
             k: v for k, v in superdict.items() if isinstance(v, Types.ListElement)
         }
 
-    def __init_subclass__(cls, **kwargs) -> None:
+    def __init_subclass__(cls, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)
         cls._init_class_attrs()
 
@@ -464,7 +464,7 @@ class Aggregate(list):
             instance_repr += f", len={num_list_elements}"
         return f"<{instance_repr}>"
 
-    def __getattr__(self, attr: str):
+    def __getattr__(self, attr: str) -> Any:
         """Proxy access to attributes of SubAggregates"""
         for subaggregate in self.subaggregates:
             subagg = getattr(self, subaggregate)
@@ -481,14 +481,14 @@ class ElementList(Aggregate):
     Aggregate whose sequence contents are ListElements instead of ListAggregates
     """
 
-    def __init_subclass__(cls, **kwargs) -> None:
+    def __init_subclass__(cls, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)
         # Override: listaggregates returns ListElements instead of ListAggregates
         cls.listaggregates = {
             k: v for k, v in cls._superdict.items() if isinstance(v, Types.ListElement)
         }
 
-    def _apply_args(self, *args) -> None:
+    def _apply_args(self, *args: object) -> None:
         # Interpret positional args as contained list items (of variable #)
         if len(self.listaggregates) != 1:
             raise ValueError(
@@ -498,7 +498,7 @@ class ElementList(Aggregate):
         for member in args:
             self.append(converter.convert(member))
 
-    def _listAppend(self, root: ET.Element, member) -> None:
+    def _listAppend(self, root: ET.Element, member: Any) -> None:
         if len(self.listaggregates) != 1:
             raise ValueError(
                 f"{self.__class__.__name__} must have exactly one list aggregate"

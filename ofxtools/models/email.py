@@ -23,6 +23,7 @@ __all__ = [
 
 # stdlib imports
 import logging
+import xml.etree.ElementTree as ET
 from copy import deepcopy
 
 from ofxtools.models.base import Aggregate
@@ -48,7 +49,7 @@ class MAIL(Aggregate):
     usehtml = Bool(required=True)
 
     @staticmethod
-    def groom(elem):
+    def groom(elem: ET.Element) -> ET.Element:
         """
         Rename all Elements tagged FROM (reserved Python keyword) to FROM
         """
@@ -63,7 +64,7 @@ class MAIL(Aggregate):
         return Aggregate.groom(elem)
 
     @staticmethod
-    def ungroom(elem):
+    def ungroom(elem: ET.Element) -> ET.Element:
         """
         Rename FRM back to FROM
         """

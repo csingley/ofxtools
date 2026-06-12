@@ -18,6 +18,7 @@ __all__ = [
 
 
 # local imports
+from typing import Any
 from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM, REWARDINFO
 from ofxtools.models.base import Aggregate
 from ofxtools.models.i18n import CURRENCY, CURRENCY_CODES, ORIGCURRENCY, Origcurrency
@@ -153,5 +154,5 @@ class CCSTMTENDTRNRS(TrnRs):
     ccstmtendrs = SubAggregate(CCSTMTENDRS)
 
     @property
-    def statement(self):
+    def statement(self) -> Any:
         return self.ccstmtendrs

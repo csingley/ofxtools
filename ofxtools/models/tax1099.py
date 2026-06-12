@@ -233,7 +233,7 @@ class TAX1099MISC_V100(Aggregate):
     optionalMutexes = [["sttaxwh", "addlsttaxwhagg"]]
 
     @classmethod
-    def validate_args(cls, *args, **kwargs):
+    def validate_args(cls, *args: object, **kwargs: object) -> None:
         if "sttaxwh" in kwargs and "payerstate" not in kwargs:
             raise ValueError(
                 f"{cls.__name__}: payerstate must also be provided if sttaxwh is provided"
@@ -275,7 +275,7 @@ class TAX1099R_V100(Aggregate):
     dtbenefitpmt = DateTime()
 
     @classmethod
-    def validate_args(cls, *args, **kwargs):
+    def validate_args(cls, *args: object, **kwargs: object) -> None:
         # "[IRASEPSIMP] is required if any of the following tags are present in
         # the 1099R aggregate: GROSSDIST, TAXAMT, FEDTAXWH, STTAXWH,
         # or LCLTAXWH"
@@ -461,7 +461,7 @@ class TAX1099RS(Aggregate):
     tax1099oid_v100 = ListAggregate(TAX1099OID_V100)
 
     @classmethod
-    def validate_args(cls, *args, **kwargs):
+    def validate_args(cls, *args: object, **kwargs: object) -> None:
         # Must contain at least one TAX1099x_Vy
         if len([a for a in args if a.__class__.__name__.startswith("TAX1099")]) == 0:
             mandatory = list(cls.listaggregates)
@@ -489,7 +489,7 @@ class TAX1099MSGSRQV1(Aggregate):
     tax1099trnrq = ListAggregate(TAX1099TRNRQ)
 
     @classmethod
-    def validate_args(cls, *args, **kwargs):
+    def validate_args(cls, *args: object, **kwargs: object) -> None:
         # Must contain at least one TAX1099TRNRQ
         if len(args) == 0:
             raise ValueError(
@@ -505,7 +505,7 @@ class TAX1099MSGSRSV1(Aggregate):
     tax1099trnrs = ListAggregate(TAX1099TRNRS)
 
     @classmethod
-    def validate_args(cls, *args, **kwargs):
+    def validate_args(cls, *args: object, **kwargs: object) -> None:
         # Must contain at least one TAX1099TRNRS
         if len(args) == 0:
             raise ValueError(
@@ -524,7 +524,7 @@ class TAX1099MSGSETV1(ElementList):
     taxyearsupported = ListElement(Integer(4))
 
     @classmethod
-    def validate_args(cls, *args, **kwargs):
+    def validate_args(cls, *args: object, **kwargs: object) -> None:
         # Must contain at least one TAXYEARSUPPORTED
         if len(args) == 0:
             raise ValueError(

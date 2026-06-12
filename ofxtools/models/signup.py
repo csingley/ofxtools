@@ -143,7 +143,7 @@ class ACCTINFO(Aggregate):
     #  presacctinfo = ListAggregate(PRESACCTINFO)
 
     @classmethod
-    def validate_args(cls, *args, **kwargs):
+    def validate_args(cls, *args: object, **kwargs: object) -> None:
         # Must contain at least one <xxxACCTINFO>
         if len(args) == 0:
             raise ValueError(
@@ -161,7 +161,7 @@ class ACCTINFO(Aggregate):
 
         super().validate_args(*args, **kwargs)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<{self.__class__.__name__} desc='{self.desc}' phone='{self.phone}' len={len(self)}>"
 
 
@@ -177,7 +177,7 @@ class ACCTINFORS(Aggregate):
     dtacctup = DateTime(required=True)
     acctinfo = ListAggregate(ACCTINFO)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<{self.__class__.__name__} dtacctup='{self.dtacctup}' len={len(self)}>"
 
 

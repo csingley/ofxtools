@@ -28,7 +28,7 @@ from collections.abc import (
 )
 from io import BytesIO
 from operator import attrgetter
-from typing import Any
+from typing import Any, cast
 from urllib import parse as urllib_parse
 from urllib.error import HTTPError, URLError
 
@@ -84,7 +84,7 @@ ScanMetadata = tuple[OFXVersion, MarkupFormat]
 FormatMap = Mapping[OFXVersion, list[MarkupFormat]]
 
 # Scan result of a single OFX protocol version
-ScanResult = Mapping[str, list]
+ScanResult = Mapping[str, list[Any]]
 
 # Auth information parsed out of SIGNONINFO during a profile scan -
 # CLIENTUIDREQ et al.
@@ -105,7 +105,7 @@ class UuidAction(argparse.Action):
     Generates a random UUID4 each time called
     """
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: Any, namespace: Any, values: Any, option_string: Any = None) -> None:
         uuid = values if values else OFXClient.uuid()
         setattr(namespace, self.dest, uuid)
 
@@ -164,7 +164,7 @@ def make_argparser() -> argparse.ArgumentParser:
 
 
 def add_subparser(
-    subparsers: argparse._SubParsersAction,
+    subparsers: argparse._SubParsersAction[Any],
     cmd: str,
     server: bool = False,
     format: bool = False,
@@ -257,7 +257,7 @@ def add_subparser(
     if tax:
         add_tax_group(parser)
 
-    return parser
+    return cast(argparse.ArgumentParser, parser)
 
 
 def add_format_group(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
@@ -509,7 +509,7 @@ def scan_profile(args: ArgsType) -> None:
             write_config(ChainMap(extra_args, dict(args)))
 
 
-def _best_scan_format(scan_results: ScanResults) -> MutableMapping:
+def _best_scan_format(scan_results: ScanResults) -> MutableMapping[str, Any]:
     """
     Given the results of _scan_profile(), choose the best parameters;
     return as dict (compatible with ArgParser/ ChainMap).
@@ -629,14 +629,15 @@ def _merge_acctinfo(args: ArgsType, markup: BytesIO) -> None:
     sortKey = attrgetter("__class__.__name__")
     acctinfos: list[AcctInfo] = sorted(extract_acctinfos(markup), key=sortKey)
 
-    def parse_acctinfos(clsName, acctinfos):
-        dispatcher = {
+    def parse_acctinfos(clsName: str, acctinfos: Any) -> Any:
+        dispatcher: dict[str, Callable[..., Any]] = {
             "BANKACCTINFO": parse_bankacctinfos,
             "CCACCTINFO": parse_ccacctinfos,
             "INVACCTINFO": parse_invacctinfos,
         }
-        parser = dispatcher.get(clsName, lambda x: {})
-        return parser(acctinfos)
+        _noop: Callable[..., Any] = lambda x: {}
+        parser_fn = dispatcher.get(clsName, _noop)
+        return parser_fn(acctinfos)
 
     parsed_args: list[ParsedAcctinfo] = [
         parse_acctinfos(clsnm, infos)
@@ -816,13 +817,13 @@ def convert_list(string: str) -> list[str]:
 
 
 class UserConfig(configparser.ConfigParser):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         kwargs["converters"] = {"list": convert_list}
         super().__init__(*args, **kwargs)
 
 
 class LibraryConfig(configparser.ConfigParser):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         kwargs["converters"] = {"list": convert_list}
         super().__init__(*args, **kwargs)
 
@@ -881,7 +882,7 @@ DEFAULTS: dict[str, ArgType] = {
 }
 
 
-NULL_ARGS: Iterable = (None, "", [])
+NULL_ARGS: Iterable[Any] = (None, "", [])
 
 
 # "Configurable" means "will be read from / written to config file".
@@ -929,7 +930,7 @@ CONFIGURABLE.update(CONFIGURABLE_USER)
 
 def read_config(cfg: configparser.ConfigParser, section: str) -> Mapping[str, ArgType]:
     logger.info(f"Loading {cfg.__class__.__name__}")
-    args: Mapping = {}
+    args: Mapping[str, ArgType] = {}
     if section not in cfg:
         return args
 
@@ -943,7 +944,7 @@ def read_config(cfg: configparser.ConfigParser, section: str) -> Mapping[str, Ar
     }
 
     args = {
-        opt: handlers[CONFIGURABLE.get(opt, None)](opt)
+        opt: handlers[CONFIGURABLE.get(opt, None)](opt)  # type: ignore[misc]
         for opt in proxy
         if opt in CONFIGURABLE
     }
@@ -1036,7 +1037,7 @@ def arg2config(key: str, cfg_type: type, value: ArgType) -> str:
     def write_bool(value: bool) -> str:
         return {True: "true", False: "false"}[value]
 
-    def write_list(value: list) -> str:
+    def write_list(value: list[Any]) -> str:
         # Serialized string representation of Python list type
         return str(value).strip("[]").replace("'", "")
 
@@ -1103,12 +1104,12 @@ def merge_config(
     return merged
 
 
-def extrargs(args: ArgsType) -> dict:
+def extrargs(args: ArgsType) -> dict[str, Any]:
     """Extract non-null args"""
     return {k: v for k, v in args.items() if v not in NULL_ARGS}
 
 
-def extractns(ns) -> dict:
+def extractns(ns: Any) -> dict[str, Any]:
     """Extract non-null argparse.Namespace"""
     return {k: v for k, v in vars(ns).items() if v is not None}
 
@@ -1185,7 +1186,7 @@ def _queue_scans(
     gen_newfileuid: bool,
     max_workers: int | None,
     timeout: float | None,
-) -> Mapping[concurrent.futures.Future, ScanMetadata]:
+) -> Mapping[concurrent.futures.Future[Any], ScanMetadata]:
     ofxv1 = [102, 103, 151, 160]
     ofxv2 = [200, 201, 202, 203, 210, 211, 220]
 
@@ -1224,7 +1225,7 @@ def _queue_scans(
 
 
 def _read_scan_response(
-    future: concurrent.futures.Future, read_signoninfo: bool = False
+    future: concurrent.futures.Future[Any], read_signoninfo: bool = False
 ) -> tuple[bool, SignoninfoReport]:
     valid: bool = False
     signoninfo: SignoninfoReport = {}
@@ -1309,7 +1310,7 @@ def collate_scan_results(
     #
     # Translation: just pick the longest sequence of successful
     # formats and assume it applies for all versions.
-    def sortKey(d):
+    def sortKey(d: Any) -> int:
         return len(d)
 
     formats_ = list(max(formats, key=sortKey))
@@ -1338,7 +1339,7 @@ def verify_status(
 
 
 def _acctIsActive(acctinfo: AcctInfo) -> bool:
-    return acctinfo.svcstatus == "ACTIVE"
+    return acctinfo.svcstatus == "ACTIVE"  # type: ignore[no-any-return]
 
 
 def extract_signoninfos(markup: BytesIO) -> Iterator[models.SIGNONINFO]:
@@ -1409,7 +1410,7 @@ def extract_acctinfos(markup: BytesIO) -> Iterator[AcctInfo]:
 
 def parse_bankacctinfos(acctinfos: Sequence[models.BANKACCTINFO]) -> ParsedAcctinfo:
     bankids = []
-    args_: MutableMapping = defaultdict(list)
+    args_: MutableMapping[str, Any] = defaultdict(list)
     for inf in acctinfos:
         if _acctIsActive(inf):
             bankids.append(inf.bankid)
@@ -1421,7 +1422,7 @@ def parse_bankacctinfos(acctinfos: Sequence[models.BANKACCTINFO]) -> ParsedAccti
 
 def parse_invacctinfos(acctinfos: Sequence[models.INVACCTINFO]) -> ParsedAcctinfo:
     brokerids = []
-    args_: MutableMapping = defaultdict(list)
+    args_: MutableMapping[str, Any] = defaultdict(list)
     for inf in acctinfos:
         if _acctIsActive(inf):
             acctfrom = inf.invacctfrom
@@ -1469,7 +1470,7 @@ def fi_index() -> Sequence[tuple[str, str]]:
         if nick not in (cfg_default_sect, "NAMES") and "url" in sct
     ]
 
-    def sortkey(srv):
+    def sortkey(srv: Any) -> Any:
         key = srv[0].lower()
         if key.startswith("the "):
             key = key[4:]
@@ -1499,7 +1500,7 @@ def get_passwd(args: ArgsType) -> str:
         logger.debug("Dry run; using dummy password")
         password = "{:0<32}".format("anonymous")
     elif args["password"]:
-        return args["password"]
+        return cast(str, args["password"])
     else:
         password = ""
         if all(
@@ -1524,7 +1525,7 @@ def get_passwd(args: ArgsType) -> str:
     return password
 
 
-def save_passwd(args: Mapping, password: str) -> None:
+def save_passwd(args: Mapping[str, Any], password: str) -> None:
     if "dryrun" in args and args["dryrun"]:
         msg = "Dry run; won't store password"
         warnings.warn(msg, category=SyntaxWarning)

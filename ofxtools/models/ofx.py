@@ -6,6 +6,8 @@ balances, and securities.
 __all__ = ["OFX"]
 
 
+from typing import Any
+
 # local imports
 from ofxtools.models.bank.msgsets import (
     BANKMSGSRQV1,
@@ -78,7 +80,7 @@ class OFX(Aggregate):
     requiredMutexes = [["signonmsgsrqv1", "signonmsgsrsv1"]]
 
     @classmethod
-    def validate_args(cls, *args, **kwargs):
+    def validate_args(cls, *args: object, **kwargs: object) -> None:
         # Don't allow mixed *RQ and *RS in the same OFX
         if not all_equal(key[-7:] for key in kwargs):
             msg = f"{cls.__name__}: mixed *MSGRQV1 and *MSGSRSV1 are invalid"
@@ -86,7 +88,7 @@ class OFX(Aggregate):
 
         super().validate_args(*args, **kwargs)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         s = f"<{self.__class__.__name__} "
         signon = self.signon
         if signon.fi is not None:
@@ -97,7 +99,7 @@ class OFX(Aggregate):
 
     # Human-friendly attribute aliases
     @property
-    def signon(self):
+    def signon(self) -> Any:
         if self.signonmsgsrqv1 is not None:
             return self.signonmsgsrqv1.sonrq
         else:
@@ -106,7 +108,7 @@ class OFX(Aggregate):
             return self.signonmsgsrsv1.sonrs
 
     @property
-    def securities(self):
+    def securities(self) -> Any:
         seclist = []
         msgs = getattr(self, "seclistmsgsrsv1", None)
         if msgs:
@@ -114,7 +116,7 @@ class OFX(Aggregate):
         return seclist
 
     @property
-    def statements(self):
+    def statements(self) -> Any:
         stmts = []
         for msgs in (
             "bankmsgsrqv1",

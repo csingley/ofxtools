@@ -25,6 +25,7 @@ __all__ = [
 
 # stdlib imports
 import logging
+import xml.etree.ElementTree as ET
 from copy import deepcopy
 
 from ofxtools.models.base import Aggregate
@@ -153,7 +154,7 @@ class MFINFO(Aggregate):
     fimfassetclass = SubAggregate(FIMFASSETCLASS)
 
     @staticmethod
-    def groom(elem):
+    def groom(elem: ET.Element) -> ET.Element:
         """
         Rename all Elements tagged YIELD (reserved Python keyword) to YLD
         """
@@ -168,7 +169,7 @@ class MFINFO(Aggregate):
         return Aggregate.groom(elem)
 
     @staticmethod
-    def ungroom(elem):
+    def ungroom(elem: ET.Element) -> ET.Element:
         """
         Rename YLD back to YIELD
         """
@@ -217,7 +218,7 @@ class STOCKINFO(Aggregate):
     fiassetclass = String(32)
 
     @staticmethod
-    def groom(elem):
+    def groom(elem: ET.Element) -> ET.Element:
         """
         Rename all Elements tagged YIELD (reserved Python keyword) to YLD
         """
@@ -232,7 +233,7 @@ class STOCKINFO(Aggregate):
         return Aggregate.groom(elem)
 
     @staticmethod
-    def ungroom(elem):
+    def ungroom(elem: ET.Element) -> ET.Element:
         """
         Rename YLD back to YIELD
         """

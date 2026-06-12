@@ -6,6 +6,7 @@ __all__ = ["LANG_CODES", "CURRENCY_CODES", "COUNTRY_CODES", "CURRENCY", "ORIGCUR
 
 
 # stdlib imports
+from typing import Any
 from collections.abc import Sequence
 
 from ofxtools.models.base import Aggregate
@@ -1203,25 +1204,25 @@ class Origcurrency:
     optionalMutexes: Sequence[Sequence[str]] = [["currency", "origcurrency"]]
 
     @property
-    def curtype(self):
-        cur = self.currency
+    def curtype(self) -> Any:
+        cur = self.currency  # type: ignore[attr-defined]
         if cur is None:
-            cur = self.origcurrency
+            cur = self.origcurrency  # type: ignore[attr-defined]
         if cur is not None:
             return cur.__class__.__name__
 
     @property
-    def cursym(self):
-        cur = self.currency
+    def cursym(self) -> Any:
+        cur = self.currency  # type: ignore[attr-defined]
         if cur is None:
-            cur = self.origcurrency
+            cur = self.origcurrency  # type: ignore[attr-defined]
         if cur is not None:
             return cur.cursym
 
     @property
-    def currate(self):
-        cur = self.currency
+    def currate(self) -> Any:
+        cur = self.currency  # type: ignore[attr-defined]
         if cur is None:
-            cur = self.origcurrency
+            cur = self.origcurrency  # type: ignore[attr-defined]
         if cur is not None:
             return cur.currate

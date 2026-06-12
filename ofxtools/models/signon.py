@@ -28,6 +28,7 @@ __all__ = [
 
 
 # stdlib imports
+from typing import Any
 
 # local imports
 from ofxtools.models.base import Aggregate
@@ -133,7 +134,7 @@ class SONRQ(Aggregate):
     ofxextension = Unsupported()
 
     @classmethod
-    def validate_args(cls, *args, **kwargs):
+    def validate_args(cls, *args: object, **kwargs: object) -> None:
         #  "Either <USERID> and <USERPASS> or <USERKEY>, but not both"
         userid = kwargs.get("userid", None)
         userpass = kwargs.get("userpass", None)
@@ -164,11 +165,11 @@ class SONRS(Aggregate):
 
     # Human-friendly attribute aliases
     @property
-    def org(self):
+    def org(self) -> Any:
         return self.fi.org
 
     @property
-    def fid(self):
+    def fid(self) -> Any:
         return self.fi.fid
 
 
@@ -237,7 +238,7 @@ class MFACHALLENGERS(Aggregate):
     mfachallenge = ListAggregate(MFACHALLENGE)
 
     @classmethod
-    def validate_args(cls, *args, **kwargs):
+    def validate_args(cls, *args: object, **kwargs: object) -> None:
         # "Challenge question aggregate (1 or more)"
         if len(args) == 0:
             raise ValueError(f"{cls.__name__} must contain at least one item")

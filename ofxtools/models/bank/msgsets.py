@@ -25,6 +25,8 @@ __all__ = [
 ]
 
 
+from typing import Any
+
 # local imports
 from ofxtools.models.bank.interxfer import INTERTRNRQ, INTERTRNRS
 from ofxtools.models.bank.mail import BANKMAILTRNRQ, BANKMAILTRNRS
@@ -98,7 +100,7 @@ class BANKMSGSRQV1(Aggregate):
     bankmailsyncrq = ListAggregate(BANKMAILSYNCRQ)
 
     @property
-    def statements(self):
+    def statements(self) -> Any:
         stmts = []
         for trnrq in self:
             stmtrq = None
@@ -127,7 +129,7 @@ class BANKMSGSRSV1(Aggregate):
     bankmailsyncrs = ListAggregate(BANKMAILSYNCRS)
 
     @property
-    def statements(self):
+    def statements(self) -> Any:
         stmts = []
         for trnrs in self:
             stmtrs = None
@@ -204,7 +206,7 @@ class CREDITCARDMSGSRQV1(Aggregate):
     ccstmtendtrnrq = ListAggregate(CCSTMTENDTRNRQ)
 
     @property
-    def statements(self):
+    def statements(self) -> Any:
         stmts = []
         for trnrq in self:
             stmtrq = None
@@ -225,7 +227,7 @@ class CREDITCARDMSGSRSV1(Aggregate):
     ccstmtendtrnrs = ListAggregate(CCSTMTENDTRNRS)
 
     @property
-    def statements(self):
+    def statements(self) -> Any:
         stmts = []
         for trnrs in self:
             stmtrs = None

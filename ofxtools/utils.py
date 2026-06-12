@@ -19,8 +19,8 @@ from ofxtools.lib import NUMBERING_AGENCIES
 class classproperty(property):
     """Descriptor that makes a classmethod behave like a property."""
 
-    def __get__(self, cls, owner):
-        return self.fget.__get__(None, owner)()
+    def __get__(self, cls: Any, owner: type) -> Any:  # type: ignore[override]
+        return self.fget.__get__(None, owner)()  # type: ignore[union-attr]
 
 
 def fixpath(path: str) -> str:
@@ -32,7 +32,7 @@ def fixpath(path: str) -> str:
     return path
 
 
-def collapseToSingle(items: Sequence, label: str) -> Any:
+def collapseToSingle(items: Sequence[Any], label: str) -> Any:
     """
     Given a sequence of repeated items, return the item that's repeated.
     Throw an error if sequence is empty or contains >1 distinct item.
@@ -73,14 +73,14 @@ TZS = {
 }
 
 
-def all_equal(iterable: Iterable) -> bool:
+def all_equal(iterable: Iterable[Any]) -> bool:
     """Returns True if all the elements are equal to each other"""
     g = groupby(iterable)
     next(g, None)  # consume first group (if any)
     return next(g, None) is None  # True iff no second group exists
 
 
-def partition(pred: Callable, iterable: Iterable) -> tuple[Iterator, Iterator]:
+def partition(pred: Callable[..., Any], iterable: Iterable[Any]) -> tuple[Iterator[Any], Iterator[Any]]:
     """
     Use a predicate to partition entries into false entries and true entries
     """
@@ -131,7 +131,7 @@ def cusip_checksum(base: str) -> str:
     http://goo.gl/4TeWl
     """
 
-    def encode(index, char):
+    def encode(index: int, char: str) -> str:
         num = {"*": 36, "@": 37, "#": 38}.get(char, int(char, 36))
         return str(num * 2) if index % 2 else str(num)
 
@@ -217,6 +217,7 @@ def sedol2isin(sedol: str, nation: str | None = None) -> str:
     return base + isin_checksum(base)
 
 
+UTC: datetime.tzinfo
 try:
     # If pytz is installed then use that.
     import pytz
@@ -244,7 +245,7 @@ except ImportError:
         def __repr__(self) -> str:
             return "<UTC>"
 
-    UTC = _UTC()  # type: ignore[assignment]
+    UTC = _UTC()
 
 
 def findEaster(year: int) -> datetime.date:

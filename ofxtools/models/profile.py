@@ -15,6 +15,8 @@ __all__ = [
 ]
 
 
+from typing import Any
+
 # local imports
 from ofxtools.models.bank.msgsets import (
     BANKMSGSET,
@@ -77,7 +79,7 @@ class MSGSETLIST(Aggregate):
     tax1099msgset = ListAggregate(TAX1099MSGSET)
 
     @classmethod
-    def validate_args(cls, *args, **kwargs):
+    def validate_args(cls, *args: object, **kwargs: object) -> None:
         #  "[MSGSETLIST contents] One or more message set aggregates"
         if len(args) == 0:
             raise ValueError(f"{cls.__name__} must contain at least one item")
@@ -156,7 +158,7 @@ class PROFTRNRS(TrnRs):
     profrs = SubAggregate(PROFRS)
 
     @property
-    def profile(self):
+    def profile(self) -> Any:
         return self.profrs
 
 

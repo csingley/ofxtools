@@ -73,7 +73,7 @@ class MSGSETCORE(ElementList):
     ofxextension = SubAggregate(OFXEXTENSION)
 
     @classmethod
-    def validate_args(cls, *args, **kwargs):
+    def validate_args(cls, *args: object, **kwargs: object) -> None:
         if len(args) == 0:
             raise ValueError(f"{cls.__name__} must contain at least one item")
 

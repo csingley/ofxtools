@@ -56,6 +56,7 @@ from collections.abc import Iterable, Iterator
 from io import BytesIO
 from operator import attrgetter, itemgetter
 from typing import (
+    Any,
     BinaryIO,
     NamedTuple,
 )
@@ -332,7 +333,7 @@ class OFXClient:
         urls = set(RqCls2url.values())
         if len(urls) != 1:
             raise ValueError(f"Expected 1 service URL, got {len(urls)}: {urls}")
-        return urls.pop()
+        return str(urls.pop())
 
     def request_statements(
         self,
@@ -370,7 +371,7 @@ class OFXClient:
         # trnrqs is a pair of (models.*MSGSRQV1, [*TRNRQ])
         # Can't sort *MSGSRQV1 by class, either, so we use the same trick
         # of sorting by class name and grouping by class.
-        def trnSortKey(pair):
+        def trnSortKey(pair: Any) -> Any:
             return pair[0].__name__
 
         trnGroupKey = itemgetter(0)
@@ -411,7 +412,7 @@ class OFXClient:
         self,
         timeout: float | None = None,
         gen_newfileuid: bool = True,
-    ) -> dict:
+    ) -> dict[Any, Any]:
         """Query OFX profile endpoint to construct mapping of statement request
         data container to URL providing that service.
         """
@@ -439,7 +440,7 @@ class OFXClient:
         def map_stmtendrq_urls(
             msgsetCls: MsgsetClass,
             stmtendrqCls: type[StmtEndRq] | type[CcStmtEndRq],
-        ):
+        ) -> None:
             try:
                 index = [type(msgset) for msgset in msgsetlist].index(msgsetCls)
             except ValueError:
@@ -858,7 +859,7 @@ class OFXClient:
             )
 
             response = opener.open(req, timeout=timeout)
-            return response.read()
+            return bytes(response.read())
 
     def serialize(
         self,
