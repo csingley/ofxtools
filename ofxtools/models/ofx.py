@@ -101,7 +101,8 @@ class OFX(Aggregate):
         if self.signonmsgsrqv1 is not None:
             return self.signonmsgsrqv1.sonrq
         else:
-            assert self.signonmsgsrsv1 is not None
+            if self.signonmsgsrsv1 is None:
+                raise ValueError("OFX has neither signonmsgsrqv1 nor signonmsgsrsv1")
             return self.signonmsgsrsv1.sonrs
 
     @property

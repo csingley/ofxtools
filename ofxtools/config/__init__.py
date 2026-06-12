@@ -83,7 +83,8 @@ def configure_logging(level=None):
         try:
             with open(LOGCONFIGPATH) as f:
                 config = json.load(f)
-            assert config
+            if not config:
+                raise ValueError("Empty log config")
         except Exception:
             config = None
 
@@ -93,13 +94,14 @@ def configure_logging(level=None):
             json.dump(config, f, indent=4)
 
     if level is not None:
-        assert level in (
+        if level not in (
             logging.DEBUG,
             logging.INFO,
             logging.WARNING,
             logging.ERROR,
             logging.CRITICAL,
-        )
+        ):
+            raise ValueError(f"Invalid logging level: {level}")
         for cfg in config["loggers"].values():
             cfg["level"] = level
 

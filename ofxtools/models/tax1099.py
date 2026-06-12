@@ -281,10 +281,9 @@ class TAX1099R_V100(Aggregate):
         has_irasepsimp = "irasepsimp" in kwargs
         for tag in ("grossdist", "taxamt", "fedtaxwh", "sttaxwh", "lcltaxwh"):
             if tag in kwargs and not has_irasepsimp:
-                msg = (
-                    "{}.__init__(): irasepsimp must also be provided if {} is provided"
+                raise ValueError(
+                    f"{cls.__name__}.__init__(): irasepsimp must also be provided if {tag} is provided"
                 )
-                raise ValueError(msg.format(cls.__name__, tag))
 
         super().validate_args(*args, **kwargs)
 
@@ -466,8 +465,7 @@ class TAX1099RS(Aggregate):
         if len([a for a in args if a.__class__.__name__.startswith("TAX1099")]) == 0:
             mandatory = list(cls.listaggregates.keys())
             mandatory.remove("fidirectdepositinfo")
-            msg = "{} must contain at least one of {}"
-            raise ValueError(msg.format(cls.__name__, mandatory))
+            raise ValueError(f"{cls.__name__} must contain at least one of {mandatory}")
 
         super().validate_args(*args, **kwargs)
 
@@ -493,8 +491,9 @@ class TAX1099MSGSRQV1(Aggregate):
     def validate_args(cls, *args, **kwargs):
         # Must contain at least one TAX1099TRNRQ
         if len(args) == 0:
-            msg = "{} must contain at least one of {}"
-            raise ValueError(msg.format(cls.__name__, list(cls.listaggregates.keys())))
+            raise ValueError(
+                f"{cls.__name__} must contain at least one of {list(cls.listaggregates.keys())}"
+            )
 
         super().validate_args(*args, **kwargs)
 
@@ -508,8 +507,9 @@ class TAX1099MSGSRSV1(Aggregate):
     def validate_args(cls, *args, **kwargs):
         # Must contain at least one TAX1099TRNRS
         if len(args) == 0:
-            msg = "{} must contain at least one of {}"
-            raise ValueError(msg.format(cls.__name__, list(cls.listaggregates.keys())))
+            raise ValueError(
+                f"{cls.__name__} must contain at least one of {list(cls.listaggregates.keys())}"
+            )
 
         super().validate_args(*args, **kwargs)
 
@@ -526,8 +526,9 @@ class TAX1099MSGSETV1(ElementList):
     def validate_args(cls, *args, **kwargs):
         # Must contain at least one TAXYEARSUPPORTED
         if len(args) == 0:
-            msg = "{} must contain at least one of {}"
-            raise ValueError(msg.format(cls.__name__, list(cls.listaggregates.keys())))
+            raise ValueError(
+                f"{cls.__name__} must contain at least one of {list(cls.listaggregates.keys())}"
+            )
 
         super().validate_args(*args, **kwargs)
 

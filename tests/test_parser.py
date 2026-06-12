@@ -219,12 +219,12 @@ class TreeBuilderUnitTestCase(TestCase):
 
     def test_feedmatch_empty_tag(self):
         (tag, text, closetag) = (None, "value", "TAG")
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ParseError):
             self.builder._feedmatch(tag, text, closetag)
 
     def test_feedmatch_tag_mismatch(self):
         (tag, text, closetag) = ("TAG", "value", "GAT")
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ParseError):
             self.builder._feedmatch(tag, text, closetag)
 
     def test_feedmatch_start(self):

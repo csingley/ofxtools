@@ -232,7 +232,10 @@ class CREDITCARDMSGSRSV1(Aggregate):
             if isinstance(trnrs, CCSTMTTRNRS):
                 stmtrs = trnrs.ccstmtrs
             else:
-                assert isinstance(trnrs, CCSTMTENDTRNRS)
+                if not isinstance(trnrs, CCSTMTENDTRNRS):
+                    raise TypeError(
+                        f"Expected CCSTMTENDTRNRS, got {type(trnrs).__name__}"
+                    )
                 stmtrs = trnrs.ccstmtendrs
 
             if stmtrs is not None:

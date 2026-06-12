@@ -146,8 +146,9 @@ class ACCTINFO(Aggregate):
     def validate_args(cls, *args, **kwargs):
         # Must contain at least one <xxxACCTINFO>
         if len(args) == 0:
-            msg = "{} must contain at least one of {}"
-            raise ValueError(msg.format(cls.__name__, cls.listaggregates.keys()))
+            raise ValueError(
+                f"{cls.__name__} must contain at least one of {list(cls.listaggregates.keys())}"
+            )
 
         #  For a given service xxx, there can be at most one <xxxACCTINFO>
         #  returned. For example, you cannot return two <BANKACCTINFO>
@@ -156,8 +157,7 @@ class ACCTINFO(Aggregate):
         args_copy = sorted(args, key=sortKey)
         for tag, group in itertools.groupby(args_copy, key=sortKey):
             if len(list(group)) > 1:
-                msg = "{} contains multiple {} aggregates"
-                raise ValueError(msg.format(cls.__name__, tag))
+                raise ValueError(f"{cls.__name__} contains multiple {tag} aggregates")
 
         super().validate_args(*args, **kwargs)
 

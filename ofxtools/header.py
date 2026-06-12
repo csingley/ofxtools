@@ -230,7 +230,7 @@ class OFXHeaderV2(OFXHeaderBase):
             ("NEWFILEUID", self.newfileuid),
         )
         attrs = ["=".join((attr, f'"{val}"')) for attr, val in fields]
-        ofx_decl = "<?OFX {}?>".format(" ".join(attrs))
+        ofx_decl = f"<?OFX {' '.join(attrs)}?>"
         return "\r\n".join((xml_decl, ofx_decl, ""))
 
 

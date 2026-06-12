@@ -163,7 +163,8 @@ class TreeBuilder(ET.TreeBuilder):
                 # Cf. discussion of element values including CDATA in issue #141
                 cdata = groupdict["cdata"]
                 text = self._groomstring(groupdict["text"])
-                assert not (cdata and text)  # FIXME - can we in fact have both?
+                if cdata and text:  # FIXME - can we in fact have both?
+                    raise ParseError(f"Element has both CDATA and text: tag={tag}")
                 text = cdata or text
 
                 closetag = groupdict["closetag"]
@@ -183,8 +184,10 @@ class TreeBuilder(ET.TreeBuilder):
 
         This is factored out into a separate method to facilitate unit testing.
         """
-        assert tag
-        assert closetag is None or closetag == tag
+        if not tag:
+            raise ParseError("Empty tag")
+        if closetag is not None and closetag != tag:
+            raise ParseError(f"Mismatched tags: open='{tag}', close='{closetag}'")
         if tag.startswith("/"):
             if text:
                 raise ParseError(f"Tail text '{text}' after <{tag}>")

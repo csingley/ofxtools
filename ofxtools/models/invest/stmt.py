@@ -148,12 +148,10 @@ class CONTRIBSECURITY(Aggregate):
         At least one source must be provided.
         """
         if not all_equal(key[-3:] for key in kwargs if key != "secid"):
-            msg = "{}: mixed *PCT and *AMT are invalid"
-            raise ValueError(msg.format(cls.__name__))
+            raise ValueError(f"{cls.__name__}: mixed *PCT and *AMT are invalid")
 
         if len(kwargs) < 2:
-            msg = "{}: at least one source must be provided"
-            raise ValueError(msg.format(cls.__name__))
+            raise ValueError(f"{cls.__name__}: at least one source must be provided")
 
         super().validate_args(*args, **kwargs)
 
@@ -167,8 +165,7 @@ class CONTRIBINFO(Aggregate):
     def validate_args(cls, *args, **kwargs):
         #  "current contribution allocation for a security (1 or more)"
         if len(args) == 0:
-            msg = "{} must contain at least one item"
-            raise ValueError(msg.format(cls.__name__))
+            raise ValueError(f"{cls.__name__} must contain at least one item")
 
         super().validate_args(*args, **kwargs)
 

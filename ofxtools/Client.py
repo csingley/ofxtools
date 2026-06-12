@@ -53,7 +53,6 @@ import urllib.request as urllib_request
 import uuid
 import xml.etree.ElementTree as ET
 from collections.abc import Iterator
-from functools import singledispatch
 from io import BytesIO
 from operator import attrgetter, itemgetter
 from typing import (
@@ -345,7 +344,8 @@ class OFXClient:
             # As a simplification, we assume that FIs handle all classes
             # of statement request from a single URL.
             urls = set(RqCls2url.values())
-            assert len(urls) == 1
+            if len(urls) != 1:
+                raise ValueError(f"Expected 1 service URL, got {len(urls)}: {urls}")
             url = urls.pop()
             logger.info(f"Received service url={url} from OFX profile response")
 
@@ -515,12 +515,19 @@ class OFXClient:
         #  aggregate <PROFTRNRS>.
         proftrnrs = ofx.profmsgsrsv1[0]
         if proftrnrs.status.code == 1:
-            assert profrs is not None
+            if profrs is None:
+                raise ValueError("Profile response required but not provided")
             response = profrs
         else:
-            assert proftrnrs.status.code == 0
+            if proftrnrs.status.code != 0:
+                raise ValueError(
+                    f"Profile response status code {proftrnrs.status.code}"
+                )
             dtprofup_server = proftrnrs.profrs.dtprofup
-            assert dtprofup is None or dtprofup <= dtprofup_server
+            if dtprofup is not None and dtprofup > dtprofup_server:
+                raise ValueError(
+                    f"Profile update date {dtprofup} is newer than server's {dtprofup_server}"
+                )
 
             # Cache the updated PROFRS sent by the server
             response.seek(0)
@@ -601,7 +608,8 @@ class OFXClient:
             # As a simplification, we assume that FIs handle all classes
             # of statement request from a single URL.
             urls = set(RqCls2url.values())
-            assert len(urls) == 1
+            if len(urls) != 1:
+                raise ValueError(f"Expected 1 service URL, got {len(urls)}: {urls}")
             url = urls.pop()
 
         logger.info("Creating account info request")
@@ -656,7 +664,8 @@ class OFXClient:
             # As a simplification, we assume that FIs handle all classes
             # of statement request from a single URL.
             urls = set(RqCls2url.values())
-            assert len(urls) == 1
+            if len(urls) != 1:
+                raise ValueError(f"Expected 1 service URL, got {len(urls)}: {urls}")
             url = urls.pop()
 
         logger.info("Creating tax 1099 request")
@@ -956,43 +965,41 @@ class OFXClient:
         return header + body
 
 
-@singledispatch
 def wrap_stmtrq(nt, rqs, client):
-    raise ValueError(f"Not a *StmtRq/*StmtEndRq: {nt.__class__.__name__}")
-
-
-@wrap_stmtrq.register(StmtRq)
-def wrap_stmtrq_stmtrq(nt, rqs, client):
-    return (
-        BANKMSGSRQV1,
-        [client.stmttrnrq(**dict(rq._asdict(), bankid=client.bankid)) for rq in rqs],
-    )
-
-
-@wrap_stmtrq.register(CcStmtRq)
-def wrap_stmtrq_ccstmtrq(nt, rqs, client):
-    return (CREDITCARDMSGSRQV1, [client.ccstmttrnrq(**rq._asdict()) for rq in rqs])
-
-
-@wrap_stmtrq.register(InvStmtRq)
-def wrap_stmtrq_invstmtrq(nt, rqs, client):
-    return (
-        INVSTMTMSGSRQV1,
-        [
-            client.invstmttrnrq(**dict(r._asdict(), brokerid=client.brokerid))
-            for r in rqs
-        ],
-    )
-
-
-@wrap_stmtrq.register(StmtEndRq)
-def wrap_stmtrq_stmtendrq(nt, rqs, client):
-    return (
-        BANKMSGSRQV1,
-        [client.stmtendtrnrq(**dict(rq._asdict(), bankid=client.bankid)) for rq in rqs],
-    )
-
-
-@wrap_stmtrq.register(CcStmtEndRq)
-def wrap_stmtrq_ccstmtendrq(nt, rqs, client):
-    return (CREDITCARDMSGSRQV1, [client.ccstmtendtrnrq(**rq._asdict()) for rq in rqs])
+    match nt:
+        case StmtRq():
+            return (
+                BANKMSGSRQV1,
+                [
+                    client.stmttrnrq(**dict(rq._asdict(), bankid=client.bankid))
+                    for rq in rqs
+                ],
+            )
+        case CcStmtRq():
+            return (
+                CREDITCARDMSGSRQV1,
+                [client.ccstmttrnrq(**rq._asdict()) for rq in rqs],
+            )
+        case InvStmtRq():
+            return (
+                INVSTMTMSGSRQV1,
+                [
+                    client.invstmttrnrq(**dict(r._asdict(), brokerid=client.brokerid))
+                    for r in rqs
+                ],
+            )
+        case StmtEndRq():
+            return (
+                BANKMSGSRQV1,
+                [
+                    client.stmtendtrnrq(**dict(rq._asdict(), bankid=client.bankid))
+                    for rq in rqs
+                ],
+            )
+        case CcStmtEndRq():
+            return (
+                CREDITCARDMSGSRQV1,
+                [client.ccstmtendtrnrq(**rq._asdict()) for rq in rqs],
+            )
+        case _:
+            raise ValueError(f"Not a *StmtRq/*StmtEndRq: {nt.__class__.__name__}")

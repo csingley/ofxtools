@@ -80,8 +80,7 @@ class MSGSETLIST(Aggregate):
     def validate_args(cls, *args, **kwargs):
         #  "[MSGSETLIST contents] One or more message set aggregates"
         if len(args) == 0:
-            msg = "{} must contain at least one item"
-            raise ValueError(msg.format(cls.__name__))
+            raise ValueError(f"{cls.__name__} must contain at least one item")
 
         super().validate_args(*args, **kwargs)
 

@@ -138,15 +138,11 @@ class SONRQ(Aggregate):
         userid = kwargs.get("userid", None)
         userpass = kwargs.get("userpass", None)
         userkey = kwargs.get("userkey", None)
-        try:
-            assert (userid and userpass) or userkey
-            assert not ((userid or userpass) and userkey)
-        except AssertionError:
-            msg = (
-                "{} must contain either <USERID> and <USERPASS> "
+        if not ((userid and userpass) or userkey) or ((userid or userpass) and userkey):
+            raise ValueError(
+                f"{cls.__name__} must contain either <USERID> and <USERPASS> "
                 "or <USERKEY>, but not both"
             )
-            raise ValueError(msg.format(cls.__name__))
 
         super().validate_args(*args, **kwargs)
 
@@ -244,8 +240,7 @@ class MFACHALLENGERS(Aggregate):
     def validate_args(cls, *args, **kwargs):
         # "Challenge question aggregate (1 or more)"
         if len(args) == 0:
-            msg = "{} must contain at least one item"
-            raise ValueError(msg.format(cls.__name__))
+            raise ValueError(f"{cls.__name__} must contain at least one item")
 
         super().validate_args(*args, **kwargs)
 

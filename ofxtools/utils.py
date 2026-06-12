@@ -50,8 +50,10 @@ def collapseToSingle(items: Sequence, label: str):
 #  date/time utilities
 ###############################################################################
 def gmt_offset(hours: int, minutes: int) -> datetime.timedelta:
-    assert hours in range(-12, 15)
-    assert minutes >= 0
+    if hours not in range(-12, 15):
+        raise ValueError(f"Invalid UTC offset hours: {hours}")
+    if minutes < 0:
+        raise ValueError(f"Invalid UTC offset minutes: {minutes}")
     offset_minutes = math.copysign(60 * abs(hours) + minutes, hours)
     return datetime.timedelta(minutes=offset_minutes)
 
@@ -127,13 +129,13 @@ def tostring_unclosed_elements(elem: ET.Element) -> bytes:
     Drop-in replacement for xml.etree.ElementTree.tostring().
     """
     if len(elem) == 0:
-        text = "<{}>{}{}".format(elem.tag, elem.text or "", elem.tail or "")
+        text = f"<{elem.tag}>{elem.text or ''}{elem.tail or ''}"
         output = bytes(text, "utf_8")
     else:
-        output = bytes("<{}>{}".format(elem.tag, elem.tail or ""), "utf_8")
+        output = bytes(f"<{elem.tag}>{elem.tail or ''}", "utf_8")
         for child in elem:
             output += tostring_unclosed_elements(child)
-        output += bytes("</{}>{}".format(elem.tag, elem.tail or ""), "utf_8")
+        output += bytes(f"</{elem.tag}>{elem.tail or ''}", "utf_8")
     return output
 
 
@@ -153,7 +155,8 @@ def cusip_checksum(base: str) -> str:
         num = {"*": 36, "@": 37, "#": 38}.get(char, int(char, 36))
         return str(num * 2) if index % 2 else str(num)
 
-    assert len(base) == 8
+    if len(base) != 8:
+        raise ValueError(f"CUSIP base must be 8 characters, got {len(base)}")
     check = "".join([encode(index, char) for index, char in enumerate(base)])
     check_ = sum([int(digit) for digit in check])
     return str((10 - (check_ % 10)) % 10)
@@ -176,9 +179,11 @@ def sedol_checksum(base: str) -> str:
     """
     weights = (1, 3, 1, 7, 3, 9)
 
-    assert len(base) == 6
+    if len(base) != 6:
+        raise ValueError(f"SEDOL base must be 6 characters, got {len(base)}")
     for badLetter in "AEIO":
-        assert badLetter not in base
+        if badLetter in base:
+            raise ValueError(f"SEDOL base must not contain vowel '{badLetter}'")
     check = sum([int(char, 36) * weights[n] for n, char in enumerate(base)])
     return str((10 - (check % 10)) % 10)
 
@@ -190,8 +195,10 @@ def isin_checksum(base: str) -> str:
 
     http://goo.gl/8kPzD
     """
-    assert len(base) == 11
-    assert base[:2] in NUMBERING_AGENCIES.keys()
+    if len(base) != 11:
+        raise ValueError(f"ISIN base must be 11 characters, got {len(base)}")
+    if base[:2] not in NUMBERING_AGENCIES.keys():
+        raise ValueError(f"ISIN country code '{base[:2]}' not recognized")
     check = "".join([str(int(char, 36)) for char in base])
     check = check[::-1]  # string reversal
     check = "".join([d if n % 2 else str(int(d) * 2) for n, d in enumerate(check)])
@@ -228,8 +235,10 @@ def cusip2isin(cusip: str, nation: str | None = None) -> str:
 
 def sedol2isin(sedol, nation=None) -> str:
     nation = nation or "GB"
-    assert len(sedol) == 7
-    assert sedol_checksum(sedol[:6]) == sedol[6]
+    if len(sedol) != 7:
+        raise ValueError(f"SEDOL must be 7 characters, got {len(sedol)}")
+    if sedol_checksum(sedol[:6]) != sedol[6]:
+        raise ValueError(f"Invalid SEDOL check digit in '{sedol}'")
     base = nation + sedol.zfill(9)
     return base + isin_checksum(base)
 

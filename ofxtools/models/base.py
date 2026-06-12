@@ -491,8 +491,8 @@ class Aggregate(list):
         return object.__hash__(self)
 
     def __repr__(self) -> str:
-        attrs = ["{}={}".format(*attr) for attr in self._spec_repr]
-        instance_repr = "{}({})".format(self.__class__.__name__, ", ".join(attrs))
+        attrs = [f"{k}={v}" for k, v in self._spec_repr]
+        instance_repr = f"{self.__class__.__name__}({', '.join(attrs)})"
         num_list_elements = len(self)
         if num_list_elements != 0:
             instance_repr += f", len={num_list_elements}"
@@ -524,13 +524,19 @@ class ElementList(Aggregate):
 
     def _apply_args(self, *args) -> None:
         # Interpret positional args as contained list items (of variable #)
-        assert len(self.listaggregates) == 1
+        if len(self.listaggregates) != 1:
+            raise ValueError(
+                f"{self.__class__.__name__} must have exactly one list aggregate"
+            )
         converter = list(self.listaggregates.values())[0]
         for member in args:
             self.append(converter.convert(member))
 
     def _listAppend(self, root: ET.Element, member) -> None:
-        assert len(self.listaggregates) == 1
+        if len(self.listaggregates) != 1:
+            raise ValueError(
+                f"{self.__class__.__name__} must have exactly one list aggregate"
+            )
         spec = list(self.listaggregates.items())[0]
         attr, converter = spec
 

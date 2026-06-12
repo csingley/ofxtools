@@ -106,8 +106,9 @@ class EXTDPMT(Aggregate):
         # "At least one of the following: <EXTDPMTDSC>, or <EXTDPMTINV>"
         listitems = [arg.__class__.__name__ for arg in args]
         if "EXTDPMTINV" not in listitems and "extdpmtdsc" not in kwargs:
-            msg = "{} must contain at least one of [EXTDPMTDSC, EXTPMTINV]"
-            raise ValueError(msg.format(cls.__name__))
+            raise ValueError(
+                f"{cls.__name__} must contain at least one of [EXTDPMTDSC, EXTPMTINV]"
+            )
 
         super().validate_args(*args, **kwargs)
 
@@ -146,8 +147,9 @@ class EXTDPAYEE(Aggregate):
         if payeeid:
             requiredGroup = ("idscope", "name")
             if not all(kwargs.get(attr, None) for attr in requiredGroup):
-                msg = "{}(payeeid={}) must contain all of {}"
-                raise ValueError(msg.format(cls.__name__, payeeid, requiredGroup))
+                raise ValueError(
+                    f"{cls.__name__}(payeeid={payeeid}) must contain all of {requiredGroup}"
+                )
 
         super().validate_args(*args, **kwargs)
 

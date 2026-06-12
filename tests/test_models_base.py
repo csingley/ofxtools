@@ -754,7 +754,7 @@ class ElementListTestCase(unittest.TestCase):
             tag = ListElement(Bool)
             tag2 = ListElement(Bool)
 
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             BADELEMENTLIST(True, metadata="something")
 
     def testFromEtree(self):
