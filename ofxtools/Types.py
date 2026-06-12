@@ -658,7 +658,7 @@ class Unsupported(Element):
     Null Aggregate/Element - not implemented (yet)
     """
 
-    def __get__(self, obj, objtype) -> None:
+    def __get__(self, obj, objtype):
         return None
 
     def __set__(self, obj, value) -> None:
