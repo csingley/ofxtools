@@ -12,25 +12,11 @@ the package (the normal situation).
 
 Installation dependencies
 -------------------------
-You need to install Python 3 (at least version 3.6) in order to use ``ofxtools``.
-It won't work at all under Python 2.
+You need Python 3.10 or later to use ``ofxtools``.
 
-In order to use the OFX client to download OFX files, your Python 3 installation
-needs to be able to validate SSL certificates.  Users of Mac OS X should heed
-the following note from the `ReadMe.rtf` included with the Python installer as
-of version 3.6:
-
-    This variant of Python 3.6 now includes its own private copy of OpenSSL 1.0.2.
-    Unlike previous releases, the deprecated Apple-supplied OpenSSL libraries are
-    no longer used.  This also means that the trust certificates in system and user
-    keychains managed by the Keychain Access application and the security command
-    line utility are no longer used as defaults by the Python ssl module.
-    For 3.6.0, a sample command script is included in /Applications/Python 3.6
-    to install a curated bundle of default root certificates from the
-    third-party `certifi`_ package.
-
-To facilitate keeping this important security package up to date, it's advisable
-for Mac users to instead employ `pip`:
+In order to use the OFX client to download OFX files, your Python installation
+needs to be able to validate SSL certificates.  macOS users who installed
+Python from python.org may need to install root certificates separately:
 
 .. code-block:: bash
 

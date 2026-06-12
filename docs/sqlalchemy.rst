@@ -128,7 +128,7 @@ the relevant data, and feed it to your model classes.  Something like this:
 
 
     # Persist
-    engine = create_engine('')
+    engine = create_engine('sqlite:///trades.db')  # replace with your database URL
     Session = sessionmaker(bind=engine)
     session = Session()
     session.add(account)

@@ -54,7 +54,7 @@ Here's how we translate the spec info Python.
     from ofxtools.models.base import Aggregate, SubAggregate
     from ofxtools.Types import String, Decimal, DateTime, OneOf
     from ofxtools.models.bank.stmt import (
-        BANKACCTFROM, BANKACCTFROM, CCACCTFROM, CCACCTTO,
+        BANKACCTFROM, BANKACCTTO, CCACCTFROM, CCACCTTO,
     )
 
     class XFERINFO(Aggregate):

@@ -132,23 +132,20 @@ Basic connectivity: requesting an OFX profile
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We must know the OFX server URL in order to connect at all.  ``ofxtools``
-contains a database of all US financial institutions listed on the
-`OFX Home`_ website that I could get to speak OFX with me.  If you can't find
-your bank in ``ofxget`` (or if you're having a hard time configuring a
-connection), `OFX Home`_ should be your first stop.  If you prefer, the
-`OFX Blog` also makes the same data available in a different format.  Be sure
-to review user-posted comments on either site.  You can also try the fine
-folks at `GnuCash`_, who share the struggle.
+ships a database (``ofxtools/config/fi.cfg``) of US financial institutions
+that are known to speak OFX.  If your institution isn't listed there, the
+`OFX Blog`_ and `GnuCash`_ wiki both maintain community-sourced connection
+details worth checking.
 
-OFX Home has a listing for AmEx, giving a URL plus the ``ORG``/``FID`` pair
-(i.e. ``<FI><ORG>`` and ``<FI><FID>`` in the signon request.)  This aggregate
+To connect to AmEx you'll also need the ``ORG``/``FID`` pair
+(i.e. ``<FI><ORG>`` and ``<FI><FID>`` in the signon request).  This aggregate
 is optional per the OFX spec, and if your FI is running its own OFX server it
 is optional - many major providers don't need it to connect.  However,
 Quicken always sends ``<FI>``, so your bank may require it anyway.  AmEx
 appears to be one of these; its OFX server throws HTTP error 503 if you omit
 ``ORG``/``FID``.
 
-Using the connection information from OFX Home, first we will try to establish
+Using the connection information for AmEx, first we will try to establish
 basic connectivity by requesting an OFX profile, which does not require
 authenticating a login.
 
@@ -394,9 +391,9 @@ orders as of the statement end date.  See the ``--help`` for more details.
 
 Scanning for OFX connection formats
 -----------------------------------
-What if you can't make an OFX connection?  Your bank isn't in ``ofxtools``; it
-isn't at `OFX Home`_; it is in OFX Home but you can't request a profile; or
-you're trying to connect to a non-US institution and all you have is the URL.
+What if you can't make an OFX connection?  Your bank isn't in ``ofxtools``;
+you can't request a profile; or you're trying to connect to a non-US
+institution and all you have is the URL.
 
 Quicken hasn't yet updated to OFX version 2, so your bank may require a lower
 protocol version in order to connect.  The ``--version`` argument is used for

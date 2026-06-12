@@ -25,6 +25,7 @@ if you need to generate your own OFX-formatted data... ``ofxtools`` is for you!
    parser
    generating
    sqlalchemy
+   utils
    contributing
    resources
 
@@ -84,11 +85,8 @@ a `bug tracker`_.
 
 Installation Dependencies
 -------------------------
-``ofxtools`` requires Python version 3.7+, and depends only on the standard
-libary (no external dependencies).
-
-**NOTE: As of version 0.6, ofxtools no longer supports Python version 2,
-which goes EOL 2020-01-01.**
+``ofxtools`` requires Python version 3.10+, and depends only on the standard
+library (no external dependencies).
 
 
 .. _OFX specification: https://financialdataexchange.org/ofx
