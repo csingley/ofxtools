@@ -351,19 +351,17 @@ class Aggregate(list):
         """
         cls = self.__class__
         root = ET.Element(cls.__name__)
-        do_list = True  # HACK
+        list_processed = False
 
         for attr, type_ in self.spec.items():
             if isinstance(type_, (Types.ListAggregate, Types.ListElement)):
-                # HACK - the assumption here is that all list members
-                # occur immediately adjacent to each other in the class
-                # definition.  So when you encounter the first one, process
-                # all Aggregate contained sequence items, then don't do them
-                # again for subsequent list members.
-                if do_list:
+                # All list members are assumed to be contiguous in the class
+                # definition. Process all contained sequence items on first
+                # encounter; skip for subsequent list attrs of the same class.
+                if not list_processed:
                     for member in self:
                         self._listAppend(root, member)
-                    do_list = False
+                    list_processed = True
             else:
                 value = getattr(self, attr)
                 if value is None:
@@ -404,35 +402,36 @@ class Aggregate(list):
         OFX messages and is preserved by combining PEP 520 insertion-order dicts,
         ``ChainMap``, and Python's MRO.
         """
-        # mypy doesn't seem to understand "star" arg-unpacking syntax used here
-        superdict: Mapping[str, Any] = ChainMap(*[base.__dict__ for base in cls.mro()])  # type: ignore
-        cls._superdict = superdict  # type: ignore
-        cls.spec = {  # type: ignore
+        # mypy can't type ChainMap over heterogeneous __dict__ mappings
+        superdict: Mapping[str, Any] = ChainMap(*[base.__dict__ for base in cls.mro()])  # type: ignore[arg-type]
+        # mypy can't verify dynamic class-attr assignment in __init_subclass__
+        cls._superdict = superdict  # type: ignore[attr-defined]
+        cls.spec = {  # type: ignore[attr-defined]
             k: v
             for k, v in superdict.items()
             if isinstance(v, (Types.Element, Types.Unsupported))
         }
-        cls.spec_no_listaggregates = {  # type: ignore
+        cls.spec_no_listaggregates = {  # type: ignore[attr-defined]
             k: v
             for k, v in superdict.items()
             if isinstance(v, (Types.Element, Types.Unsupported))
             and not isinstance(v, (Types.ListAggregate, Types.ListElement))
         }
-        cls.elements = {  # type: ignore
+        cls.elements = {  # type: ignore[attr-defined]
             k: v
             for k, v in superdict.items()
             if isinstance(v, Types.Element) and not isinstance(v, Types.SubAggregate)
         }
-        cls.subaggregates = {  # type: ignore
+        cls.subaggregates = {  # type: ignore[attr-defined]
             k: v for k, v in superdict.items() if isinstance(v, Types.SubAggregate)
         }
-        cls.unsupported = {  # type: ignore
+        cls.unsupported = {  # type: ignore[attr-defined]
             k: v for k, v in superdict.items() if isinstance(v, Types.Unsupported)
         }
-        cls.listaggregates = {  # type: ignore
+        cls.listaggregates = {  # type: ignore[attr-defined]
             k: v for k, v in superdict.items() if isinstance(v, Types.ListAggregate)
         }
-        cls.listelements = {  # type: ignore
+        cls.listelements = {  # type: ignore[attr-defined]
             k: v for k, v in superdict.items() if isinstance(v, Types.ListElement)
         }
 
@@ -475,19 +474,18 @@ class Aggregate(list):
 
         Used by __repr__().
         """
-        # FIXME - this comprehension is a good use case for the PEP 572
-        # "walrus operator" provided in Python 3.8.
         attrs = [
-            (attr, repr(getattr(self, attr)))
+            (attr, repr(v))
             for attr in self.spec_no_listaggregates.keys()
-            if getattr(self, attr) is not None
+            if (v := getattr(self, attr)) is not None
         ]
         return attrs
 
-    def __hash__(self) -> int:  # type: ignore
+    def __hash__(self) -> int:  # type: ignore[override]
         """
-        HACK - as a subclass of list, List is unhashable, but we need to
-        use it as a dict key in Type.Element.{__get__, __set__}
+        Aggregate subclasses list, so it inherits list's __hash__ = None.
+        We need instances to be hashable so they can serve as descriptor
+        keys in Types.Element.__get__/__set__.
         """
         return object.__hash__(self)
 
@@ -519,7 +517,7 @@ class ElementList(Aggregate):
     def __init_subclass__(cls, **kwargs) -> None:
         super().__init_subclass__(**kwargs)
         # Override: listaggregates returns ListElements instead of ListAggregates
-        cls.listaggregates = {  # type: ignore
+        cls.listaggregates = {  # type: ignore[attr-defined]
             k: v for k, v in cls._superdict.items() if isinstance(v, Types.ListElement)
         }
 
@@ -550,6 +548,6 @@ class ElementList(Aggregate):
 # cover Aggregate and ElementList since they are not their own subclasses.
 Aggregate._init_class_attrs()
 ElementList._init_class_attrs()
-ElementList.listaggregates = {  # type: ignore
+ElementList.listaggregates = {  # type: ignore[attr-defined]
     k: v for k, v in ElementList._superdict.items() if isinstance(v, Types.ListElement)
 }

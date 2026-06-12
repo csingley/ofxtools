@@ -835,21 +835,20 @@ class OFXClient:
     ) -> bytes:
         """Separated out to facilitate mocking in unit tests."""
         if timeout in (None, False):
-            #  timeout = socket._GLOBAL_DEFAULT_TIMEOUT  # type: ignore
             timeout = 10.0
 
         if USE_REQUESTS:
             logger.info("Using requests lib to post request")
             with requests.Session() as sess:
                 if self.persist_cookies:
-                    sess.cookies = self.cookiejar  # type: ignore
+                    sess.cookies = self.cookiejar  # type: ignore[assignment]
 
                 # Replace session default headers entirely rather than merging
                 # via the headers= kwarg. Some FIs (e.g. Amex) validate HTTP
                 # header ordering and reject requests where User-Agent is not
                 # the first header — which happens when requests prepends its
                 # own defaults before ours.
-                sess.headers = self.http_headers  # type: ignore
+                sess.headers = self.http_headers  # type: ignore[assignment]
 
                 response = sess.request(
                     method="POST",
@@ -871,7 +870,7 @@ class OFXClient:
             )
 
             response = opener.open(req, timeout=timeout)
-            return response.read()  # type: ignore
+            return response.read()  # type: ignore[union-attr]
 
     def serialize(
         self,

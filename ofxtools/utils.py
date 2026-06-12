@@ -252,12 +252,11 @@ def sedol2isin(sedol: str, nation: str | None = None) -> str:
     return base + isin_checksum(base)
 
 
-# TESTME
 try:
     # If pytz is installed then use that.
     import pytz
 
-    UTC = pytz.UTC  # type: ignore
+    UTC = pytz.UTC  # type: ignore[assignment]
 except ImportError:
     # Otherwise create our own UTC tzinfo.
     class _UTC(datetime.tzinfo):
@@ -280,7 +279,7 @@ except ImportError:
         def __repr__(self) -> str:
             return "<UTC>"
 
-    UTC = _UTC()  # type: ignore
+    UTC = _UTC()  # type: ignore[assignment]
 
 
 def findEaster(year: int) -> datetime.date:

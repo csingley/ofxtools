@@ -30,7 +30,7 @@ from urllib.error import HTTPError, URLError
 # 3rd party imports
 try:
     # No library stub file for module 'keyring'
-    import keyring  # type: ignore
+    import keyring  # type: ignore[import-untyped]
 
     HAS_KEYRING = True
 except ImportError:
@@ -154,7 +154,7 @@ def make_argparser() -> argparse.ArgumentParser:
         tax=True,
         help=("(EXPERIMENTAL) Download US income tax data on f1099"),
     )
-    main_parser.subparsers = subparsers  # type: ignore
+    main_parser.subparsers = subparsers  # type: ignore[attr-defined]
     return main_parser
 
 
@@ -639,7 +639,7 @@ def _merge_acctinfo(args: ArgsType, markup: BytesIO) -> None:
     ]
 
     # Insert extracted ACCTINFO after CLI commands, but before config files
-    args.maps.insert(1, ChainMap(*parsed_args))  # type: ignore
+    args.maps.insert(1, ChainMap(*parsed_args))  # type: ignore[union-attr]
 
 
 def request_stmt(args: ArgsType) -> None:
@@ -938,7 +938,7 @@ def read_config(cfg: configparser.ConfigParser, section: str) -> Mapping[str, Ar
     }
 
     args = {
-        opt: handlers[CONFIGURABLE.get(opt, None)](opt)  # type: ignore
+        opt: handlers[CONFIGURABLE.get(opt, None)](opt)  # type: ignore[index]
         for opt in proxy
         if opt in CONFIGURABLE
     }
@@ -973,7 +973,7 @@ def mk_server_cfg(args: ArgsType) -> configparser.SectionProxy:
     USERCFG.clear()
     USERCFG.read(USERCONFIGPATH)
 
-    defaults = USERCFG[USERCFG.default_section]  # type: ignore
+    defaults = USERCFG[USERCFG.default_section]  # type: ignore[index]
     if "clientuid" not in defaults:
         clientuid = OFXClient.uuid()
         logger.debug(f"No global default CLIENTUID found; choosing {clientuid}")
@@ -1042,7 +1042,7 @@ def arg2config(key: str, cfg_type: type, value: ArgType) -> str:
         logger.error(msg)
         raise ValueError(msg)
 
-    return handlers[cfg_type](value)  # type: ignore
+    return handlers[cfg_type](value)  # type: ignore[index]
 
 
 def merge_config(
@@ -1061,7 +1061,7 @@ def merge_config(
     else:
         user_cfg = {}
     logger.debug(f"Configs: {user_cfg}")
-    merged: ArgsType = ChainMap(_args, user_cfg, DEFAULTS)  # type: ignore
+    merged: ArgsType = ChainMap(_args, user_cfg, DEFAULTS)  # type: ignore[arg-type]
     #  logger.debug(f"CLI args merged with user configs and defaults: {extrargs(merged)}")
 
     if not (
@@ -1076,7 +1076,7 @@ def merge_config(
             msg = f"{err} - please provide a server nickname, or configure 'url'\n"
             print(msg)
             command = merged["request"]
-            make_argparser().subparsers[command].print_help()  # type: ignore
+            make_argparser().subparsers[command].print_help()  # type: ignore[attr-defined]
             sys.exit()
 
         server = _args["server"]
@@ -1452,7 +1452,7 @@ def list_fis(args: ArgsType) -> None:
 def fi_index() -> Sequence[tuple[str, str]]:
     """All FIs known to ofxget"""
     names = {nick: name for nick, name in USERCFG["NAMES"].items()}
-    cfg_default_sect = USERCFG.default_section  # type: ignore
+    cfg_default_sect = USERCFG.default_section  # type: ignore[attr-defined]
     servers = [
         (names.get(nick, ""), nick)
         for nick, sct in USERCFG.items()
