@@ -59,8 +59,7 @@ is in `development mode`_:
 
     $ git clone https://github.com/csingley/ofxtools.git
     $ cd ofxtools
-    $ pip install -e .
-    $ pip install -r requirements-development.txt
+    $ pip install -e ".[dev]"
 
 
 Extra goodies

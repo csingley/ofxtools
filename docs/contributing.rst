@@ -9,22 +9,20 @@ Make sure your changes haven't broken anything by running the tests:
 
 .. code:: bash
 
-    python pytest --cov=ofxtools tests/
+    pytest --cov=ofxtools tests/
 
-Or even better, use ``make``:
-
-.. code:: bash
-
-    make test
-
-After running one of the above commands, you can view a report of which parts
-of the code aren't covered by tests:
+To view a report of which parts of the code aren't covered by tests:
 
 .. code:: bash
 
     coverage report -m
 
-Poke around in the Makefile; there's a few developer-friendly commands there.
+Also run the linter and type checker before submitting:
+
+.. code:: bash
+
+    ruff check ofxtools/ tests/
+    mypy ofxtools/
 
 Feel free to `create pull requests`_ on `ofxtools repository on GitHub`_.
 

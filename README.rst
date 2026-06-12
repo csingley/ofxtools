@@ -9,7 +9,7 @@ Open Financial Exchange (OFX) Tools for Python
     :target: https://coveralls.io/github/csingley/ofxtools?branch=master
 
 .. image:: https://img.shields.io/badge/dependencies-None-green.svg
-    :target: https://github.com/csingley/ofxtools/blob/master/requirements.txt 
+    :target: https://github.com/csingley/ofxtools/blob/master/pyproject.toml
 
 .. image:: https://badge.fury.io/py/ofxtools.svg
     :target: https://badge.fury.io/py/ofxtools
@@ -79,11 +79,8 @@ a `bug tracker`_.
 
 Installation Dependencies
 -------------------------
-``ofxtools`` requires Python version 3.8+, and depends only on the standard
-libary (no external dependencies).
-
-**NOTE: As of version 0.6, ofxtools no longer supports Python version 2,
-which went EOL 2020-01-01.**
+``ofxtools`` requires Python version 3.10+, and depends only on the standard
+library (no external dependencies).
 
 
 .. _OFX specification: https://financialdataexchange.org/ofx
