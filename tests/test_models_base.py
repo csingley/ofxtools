@@ -304,33 +304,6 @@ class AggregateTestCase(unittest.TestCase):
     def testUngroom(self):
         pass
 
-    def testFilterAttrs(self):
-        """
-        models.base._filter_attrs() takes a predicate, and returns mapping
-        of matching items from cls.__dict__.
-
-        N.B. predicate tests *values* of cls.__dict__
-             (not keys i.e. attribute names)
-        """
-
-        def predicate(v):
-            return v.__class__.__name__.startswith("S")
-
-        # Matches are returned in the order of the class definition
-        matches = TESTAGGREGATE._filter_attrs(predicate)
-        self.assertEqual(len(matches), 2)
-        (name0, instance0), (name1, instance1) = matches.items()
-
-        # N.B. Because no instance of class TestAggregate has been created,
-        # calls to TestAggregate.metadata will fail.
-        self.assertEqual(name0, "metadata")
-        self.assertIsInstance(instance0, String)
-        self.assertEqual(name1, "testsubaggregate")
-        # N.B. on the class TestAggregate, 'sub' is an instance of SubAggregate
-        # but on instances of the class, it's reeplaced by TestSubaggregate
-        # (to which it refers)
-        self.assertIsInstance(instance1, SubAggregate)
-
     def testSpec(self):
         spec = TESTAGGREGATE.spec
         self.assertEqual(len(spec), 11)

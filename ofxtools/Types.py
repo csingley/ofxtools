@@ -644,21 +644,23 @@ class SubAggregate(Element):
         ``SubAggregate(BANKACCTFROM, required=True)``
     """
 
-    def __init__(self, __type__: type, *, required: bool = False) -> None:
+    def __init__(self, aggregate_type: type, *, required: bool = False) -> None:
         super().__init__(required=required)
-        self.__type__ = __type__
+        self.aggregate_type = aggregate_type
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} type={self.__type__.__name__} required={self.required}>"
+        return f"<{self.__class__.__name__} type={self.aggregate_type.__name__} required={self.required}>"
 
     def convert(self, value):
         match value:
             case None:
                 return self.enforce_required(value)
-            case _ if isinstance(value, self.__type__):
+            case _ if isinstance(value, self.aggregate_type):
                 return value
             case _:
-                raise TypeError(f"'{value}' is not an instance of {self.__type__}")
+                raise TypeError(
+                    f"'{value}' is not an instance of {self.aggregate_type}"
+                )
 
 
 class ListAggregate(SubAggregate):
@@ -667,21 +669,24 @@ class ListAggregate(SubAggregate):
     """
 
     def unconvert(self, value):
-        if not isinstance(value, self.__type__):
-            raise TypeError(f"'{value!r}' is not an instance of {self.__type__}")
+        if not isinstance(value, self.aggregate_type):
+            raise TypeError(f"'{value!r}' is not an instance of {self.aggregate_type}")
         return value
 
 
-class Unsupported:
+class Unsupported(Element):
     """
     Null Aggregate/Element - not implemented (yet)
     """
 
     def __get__(self, obj, objtype) -> None:
-        pass
+        return None
 
     def __set__(self, obj, value) -> None:
         pass
+
+    def convert(self, value):
+        return None
 
     def __repr__(self) -> str:
         return "<Unsupported>"

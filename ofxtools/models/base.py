@@ -262,7 +262,7 @@ class Aggregate(list):
 
             #  OFX messages have a sequence order defined by the spec.  This order maps
             #  to the order of class attributes defined by ``Aggregate`` subclasses.
-            #  Cf. discussion of ordering above in the docstring for ``_filter_attrs()``.
+            #  Cf. discussion of ordering above in the docstring for ``_init_class_attrs()``.
             #
             #  Class attributes defined as list members (i.e. ListAggregate / ListElement,
             #  identified as "one or more" or "zero or more" in the OFX spec) may
@@ -406,21 +406,18 @@ class Aggregate(list):
         # require MutableMapping but only mutates the first map at runtime.
         superdict: Mapping[str, Any] = ChainMap(*[base.__dict__ for base in cls.mro()])  # type: ignore[arg-type]
         cls._superdict = superdict
-        cls.spec = {
-            k: v
-            for k, v in superdict.items()
-            if isinstance(v, (Types.Element, Types.Unsupported))
-        }
+        cls.spec = {k: v for k, v in superdict.items() if isinstance(v, Types.Element)}
         cls.spec_no_listaggregates = {
             k: v
             for k, v in superdict.items()
-            if isinstance(v, (Types.Element, Types.Unsupported))
+            if isinstance(v, Types.Element)
             and not isinstance(v, (Types.ListAggregate, Types.ListElement))
         }
         cls.elements = {
             k: v
             for k, v in superdict.items()
-            if isinstance(v, Types.Element) and not isinstance(v, Types.SubAggregate)
+            if isinstance(v, Types.Element)
+            and not isinstance(v, (Types.SubAggregate, Types.Unsupported))
         }
         cls.subaggregates = {
             k: v for k, v in superdict.items() if isinstance(v, Types.SubAggregate)
@@ -438,33 +435,6 @@ class Aggregate(list):
     def __init_subclass__(cls, **kwargs) -> None:
         super().__init_subclass__(**kwargs)
         cls._init_class_attrs()
-
-    @classmethod
-    def _filter_attrs(cls, predicate: Callable) -> Mapping[str, Any]:
-        """
-        Filter class attributes for items matching the given predicate.
-
-        Cf. discussion of ordering above in the docstring for ``_superdict()``.
-
-        In the following example, `_filter_attrs()` always returns a mapping
-        whose keys are ordered as ('foo', 'bar', 'baz'), with subclass values
-        overriding values defined on the base class.
-
-        >>> class Base(Aggregate):
-        ...     foo = 1
-        ...     bar = 2
-        ...
-        >>> class Sub(Base):
-        ...     bar = 3
-        ...     baz = 4
-        ...
-        >>> Sub._filter_attrs(lambda v: isinstance(v, int))
-        {'foo': 1, 'bar': 3, 'baz': 4}
-
-        N.B. `predicate` tests *values* of cls._superdict
-             (not keys i.e. attribute names)
-        """
-        return {k: v for k, v in cls._superdict.items() if predicate(v)}
 
     @property
     def _spec_repr(self) -> Sequence[tuple[str, Any]]:
