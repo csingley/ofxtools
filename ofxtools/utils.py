@@ -121,23 +121,31 @@ def indent(elem: ET.Element, level: int = 0) -> None:
             elem.tail = i
 
 
-# FIXME - this doesn't work quite right
 def tostring_unclosed_elements(elem: ET.Element) -> bytes:
     """
     SGML-style string representation of xml.etree.ElementTree, without
-    closing tags.
+    closing tags on leaf elements.
+
+    In OFX v1 (SGML), aggregate elements retain closing tags but leaf
+    (data-bearing) elements do not: <ACCTID>12345 rather than
+    <ACCTID>12345</ACCTID>.
 
     Drop-in replacement for xml.etree.ElementTree.tostring().
     """
     if len(elem) == 0:
+        # Leaf element: emit value, no closing tag
         text = f"<{elem.tag}>{elem.text or ''}{elem.tail or ''}"
-        output = bytes(text, "utf_8")
+        return bytes(text, "utf_8")
     else:
-        output = bytes(f"<{elem.tag}>{elem.tail or ''}", "utf_8")
+        # Container element: emit children between opening/closing tags.
+        # elem.text is whitespace between the start tag and the first child
+        # (set by utils.indent() when prettyprint=True).
+        # elem.tail is whitespace after the closing tag (between siblings).
+        output = bytes(f"<{elem.tag}>{elem.text or ''}", "utf_8")
         for child in elem:
             output += tostring_unclosed_elements(child)
         output += bytes(f"</{elem.tag}>{elem.tail or ''}", "utf_8")
-    return output
+        return output
 
 
 ###############################################################################

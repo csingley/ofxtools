@@ -160,11 +160,11 @@ class TreeBuilder(ET.TreeBuilder):
 
                 tag = groupdict["tag"]
 
-                # Cf. discussion of element values including CDATA in issue #141
+                # Cf. discussion of element values including CDATA in issue #141.
+                # The regex uses alternation so cdata and text are mutually
+                # exclusive — only one can be non-None per match.
                 cdata = groupdict["cdata"]
                 text = self._groomstring(groupdict["text"])
-                if cdata and text:  # FIXME - can we in fact have both?
-                    raise ParseError(f"Element has both CDATA and text: tag={tag}")
                 text = cdata or text
 
                 closetag = groupdict["closetag"]

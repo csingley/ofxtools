@@ -175,13 +175,14 @@ class Aggregate(list):
                     msg = f"{clsnm} can't contain {arg} as list item: {member}"
                     raise TypeError(msg)
             else:
-                # ListElement
-                # FIXME validation
-                if not isinstance(member, str):
-                    msg = (
-                        f"{clsnm} can only contain str as list element, not {member!r}"
-                    )
-                    raise TypeError(msg)
+                # Non-Aggregate positional args are only valid for ElementList
+                # subclasses, which override _apply_args entirely. Reaching
+                # here means a class has ListElement attributes but doesn't
+                # inherit from ElementList — a model definition error.
+                raise TypeError(
+                    f"{clsnm}: non-Aggregate list member {member!r}; "
+                    "classes with ListElement attributes must subclass ElementList"
+                )
             self.append(member)
 
     def _apply_residual_kwargs(self, **kwargs) -> None:

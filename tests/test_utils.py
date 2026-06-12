@@ -4,6 +4,7 @@
 import datetime
 import os
 import unittest
+import xml.etree.ElementTree as ET
 
 # local imports
 import ofxtools.utils
@@ -13,14 +14,56 @@ from ofxtools.utils import (
     cusip_checksum,
     findEaster,
     fixpath,
+    indent,
     isin_checksum,
     nextBizDay,
     sedol2isin,
     sedol_checksum,
     settleDate,
+    tostring_unclosed_elements,
     validate_cusip,
     validate_isin,
 )
+
+
+class TostringUnclosedElementsTestCase(unittest.TestCase):
+    def _make_tree(self):
+        # <OFX><STMTRQ><ACCTID>12345</STMTRQ></OFX>
+        root = ET.Element("OFX")
+        stmtrq = ET.SubElement(root, "STMTRQ")
+        acctid = ET.SubElement(stmtrq, "ACCTID")
+        acctid.text = "12345"
+        return root
+
+    def test_leaf_no_closing_tag(self):
+        root = self._make_tree()
+        result = tostring_unclosed_elements(root).decode("utf_8")
+        self.assertIn("<ACCTID>12345", result)
+        self.assertNotIn("</ACCTID>", result)
+
+    def test_container_has_closing_tag(self):
+        root = self._make_tree()
+        result = tostring_unclosed_elements(root).decode("utf_8")
+        self.assertIn("<STMTRQ>", result)
+        self.assertIn("</STMTRQ>", result)
+        self.assertIn("<OFX>", result)
+        self.assertIn("</OFX>", result)
+
+    def test_value_preserved(self):
+        root = self._make_tree()
+        result = tostring_unclosed_elements(root).decode("utf_8")
+        self.assertIn("12345", result)
+
+    def test_structure(self):
+        root = self._make_tree()
+        result = tostring_unclosed_elements(root).decode("utf_8")
+        self.assertEqual(result, "<OFX><STMTRQ><ACCTID>12345</STMTRQ></OFX>")
+
+    def test_prettyprint(self):
+        root = self._make_tree()
+        indent(root)
+        result = tostring_unclosed_elements(root).decode("utf_8")
+        self.assertEqual(result, "<OFX>\n  <STMTRQ>\n    <ACCTID>12345\n  </STMTRQ>\n</OFX>\n")
 
 
 class FixpathTestCase(unittest.TestCase):
