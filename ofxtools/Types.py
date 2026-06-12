@@ -477,7 +477,9 @@ class DateTime(Element):
 
         return utils.gmt_offset(gmt_offset_hours, int(minutes or 0))
 
-    def _normalize_to_gmt(self, value: datetime.datetime, gmt_offset: datetime.timedelta) -> datetime.datetime:
+    def _normalize_to_gmt(
+        self, value: datetime.datetime, gmt_offset: datetime.timedelta
+    ) -> datetime.datetime:
         return (value - gmt_offset).replace(tzinfo=utils.UTC)
 
     def _unconvert(self, value: Any) -> Any:

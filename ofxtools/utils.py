@@ -80,7 +80,9 @@ def all_equal(iterable: Iterable[Any]) -> bool:
     return next(g, None) is None  # True iff no second group exists
 
 
-def partition(pred: Callable[..., Any], iterable: Iterable[Any]) -> tuple[Iterator[Any], Iterator[Any]]:
+def partition(
+    pred: Callable[..., Any], iterable: Iterable[Any]
+) -> tuple[Iterator[Any], Iterator[Any]]:
     """
     Use a predicate to partition entries into false entries and true entries
     """

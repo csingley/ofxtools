@@ -105,7 +105,9 @@ class UuidAction(argparse.Action):
     Generates a random UUID4 each time called
     """
 
-    def __call__(self, parser: Any, namespace: Any, values: Any, option_string: Any = None) -> None:
+    def __call__(
+        self, parser: Any, namespace: Any, values: Any, option_string: Any = None
+    ) -> None:
         uuid = values if values else OFXClient.uuid()
         setattr(namespace, self.dest, uuid)
 
@@ -635,8 +637,10 @@ def _merge_acctinfo(args: ArgsType, markup: BytesIO) -> None:
             "CCACCTINFO": parse_ccacctinfos,
             "INVACCTINFO": parse_invacctinfos,
         }
+
         def _noop(x: Any) -> Any:
             return {}
+
         parser_fn = dispatcher.get(clsName, _noop)
         return parser_fn(acctinfos)  # type: ignore[no-untyped-call]
 
