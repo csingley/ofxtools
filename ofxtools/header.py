@@ -40,8 +40,6 @@ logger = logging.getLogger(__name__)
 class OFXHeaderError(SyntaxError):
     """Exception raised by parsing errors in this module"""
 
-    pass
-
 
 class OFXHeaderBase:
     """
@@ -54,14 +52,8 @@ class OFXHeaderBase:
     regex: Any = NotImplemented  # Define in subclass
     codec: Any = NotImplemented  # Define in subclass
 
-    def __init__(self, *args, **kwargs):
-        """This is only here to please the type checker"""
-        super().__init__()
-
     @classmethod
-    def parse(
-        cls, rawheader: str
-    ) -> tuple["OFXHeaderBase | OFXHeaderV1 | OFXHeaderV2", int]:
+    def parse(cls, rawheader: str) -> tuple["OFXHeaderBase", int]:
         """
         Instantiate from string.
 
@@ -231,7 +223,7 @@ class OFXHeaderV2(OFXHeaderBase):
         return "\r\n".join((xml_decl, ofx_decl, ""))
 
 
-OFXHeaderType: TypeAlias = OFXHeaderBase | OFXHeaderV1 | OFXHeaderV2
+OFXHeaderType: TypeAlias = OFXHeaderBase
 
 
 XML_REGEX = re.compile(

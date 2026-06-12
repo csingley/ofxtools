@@ -109,7 +109,7 @@ def tostring_unclosed_elements(elem: ET.Element) -> bytes:
     else:
         # Container element: emit children between opening/closing tags.
         # elem.text is whitespace between the start tag and the first child
-        # (set by utils.indent() when prettyprint=True).
+        # (set by ET.indent() when prettyprint=True).
         # elem.tail is whitespace after the closing tag (between siblings).
         output = bytes(f"<{elem.tag}>{elem.text or ''}", "utf_8")
         for child in elem:

@@ -103,7 +103,10 @@ class Element:
     def __get__(self, obj, objtype=None):
         if obj is None:
             return self
-        return obj.__dict__[self.name]
+        try:
+            return obj.__dict__[self.name]
+        except KeyError:
+            raise AttributeError(self.name) from None
 
     def __set__(self, obj, value) -> None:
         obj.__dict__[self.name] = self.convert(value)
