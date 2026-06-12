@@ -127,15 +127,14 @@ class Element:
     def _unconvert(self, value):
         raise NotImplementedError
 
-    def enforce_required(self, value):
+    def enforce_required(self, value) -> None:
         if value is None and self.required:
             raise OFXSpecError(f"{self.__class__.__name__}: Value is required")
-        return value
 
 
 class Bool(Element):
-    __type__ = bool
     mapping = {"Y": True, "N": False}
+    reverse_mapping = {True: "Y", False: "N"}
 
     def convert(self, value):
         match value:
@@ -156,7 +155,7 @@ class Bool(Element):
     def _unconvert(self, value):
         match value:
             case bool():
-                return {v: k for k, v in self.mapping.items()}[value]
+                return self.reverse_mapping[value]
             case _:
                 raise OFXSpecError(
                     f"{value} is not one of the allowed values {self.mapping.keys()}"
@@ -164,7 +163,6 @@ class Bool(Element):
 
 
 class String(Element):
-    __type__ = str
     strict = True
 
     def __init__(self, length: int | None = None, *, required: bool = False) -> None:
@@ -228,8 +226,6 @@ class OneOf(Element):
     >> opttype = OneOf("CALL", "PUT", required=True)
     """
 
-    __type__ = str
-
     def __init__(self, *valid, required: bool = False) -> None:
         super().__init__(required=required)
         self.valid = valid
@@ -240,7 +236,7 @@ class OneOf(Element):
         )
 
     def _check(self, value):
-        value = self.enforce_required(value)
+        self.enforce_required(value)
         if value is not None and value not in self.valid:
             raise OFXSpecError(f"'{value}' is not OneOf {self.valid}")
         return value
@@ -257,8 +253,6 @@ class OneOf(Element):
 
 
 class Integer(Element):
-    __type__ = int
-
     def __init__(self, length: int | None = None, *, required: bool = False) -> None:
         super().__init__(required=required)
         self.length = length
@@ -653,7 +647,7 @@ class ListAggregate(SubAggregate):
     ``SubAggregate`` that can be repeated on the parent ``Aggregate``.
     """
 
-    def unconvert(self, value):
+    def _unconvert(self, value):
         if not isinstance(value, self.aggregate_type):
             raise TypeError(f"'{value!r}' is not an instance of {self.aggregate_type}")
         return value
