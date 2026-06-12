@@ -234,9 +234,10 @@ class TAX1099MISC_V100(Aggregate):
 
     @classmethod
     def validate_args(cls, *args, **kwargs):
-        if "STTAXWH" in kwargs and "PAYERSTATE" not in kwargs:
-            msg = "{}: payerstate must also be provided if sttaxwh is provided"
-            raise ValueError(msg)
+        if "sttaxwh" in kwargs and "payerstate" not in kwargs:
+            raise ValueError(
+                f"{cls.__name__}: payerstate must also be provided if sttaxwh is provided"
+            )
         super().validate_args(*args, **kwargs)
 
 

@@ -106,7 +106,7 @@ With ``XFERINFO`` in hand, defining the request aggregate (``INTRARQ``) is simpl
 
         xferinfo = SubAggregate(INTRARQ, required=True)
 
-Now we we move on to the corresponding server response aggregate (``INTRARS``).
+Now we move on to the corresponding server response aggregate (``INTRARS``).
 ``INTRARS`` contains a new subaggregate (``XFERPRCSTS``) for the server
 to indicate transfer status; we'll need to implement that first so that
 ``INTRARS`` can refer to it.  Here's the spec.
@@ -136,7 +136,7 @@ to omit them both, which means we can't use ``Aggregate.requiredMutexes`` as
 we did for ``XFERINFO`` above.
 
 Instead we express this class-level constraint via ``Aggregate.optionalMutexes``,
-again using lower-cae attribute names within.
+again using lower-case attribute names within.
 
 .. code:: python
 
@@ -163,9 +163,8 @@ in ISO-4217.  Happily we've already defined them in ``ofxtools.models.i18n``.
 Also note the ``ofxtools.Types.String`` validator; it takes an (optional)
 length argument of type ``int``.  
 
-n addition to creating account transfers with ``INTRARQ``, there are also 
-messages for clients to modify or cancel existing transfer requests.  We'll
-just bang these out.
+In addition to creating account transfers with ``INTRARQ``, there are also
+messages for clients to modify or cancel existing transfer requests:
 
 .. image:: intramodrq.png
 
@@ -206,7 +205,7 @@ just bang these out.
 
         srvrtid = String(10, required=True)
 
-Those are all the basic funds transfer commads, but we're not quite done yet.
+Those are all the basic funds transfer commands, but we're not quite done yet.
 Every request or response in OFX is transmitted in a transaction wrapper bearing a
 unique identifier, The structure of these wrappers is laid out in Section
 2.4.6.1 of the OFX spec.

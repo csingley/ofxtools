@@ -1251,6 +1251,21 @@ class Invstmtmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         with self.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(root)
 
+    def testStatements(self):
+        instance = self.aggregate
+        stmts = instance.statements
+        self.assertEqual(len(stmts), 2)
+        for stmt in stmts:
+            from ofxtools.models.invest.stmt import INVSTMTRQ
+
+            self.assertIsInstance(stmt, INVSTMTRQ)
+
+    def testStatementsEmpty(self):
+        from ofxtools.models import INVSTMTMSGSRQV1
+
+        instance = INVSTMTMSGSRQV1()
+        self.assertEqual(instance.statements, [])
+
 
 class Invstmtmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
     __test__ = True

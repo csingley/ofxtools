@@ -48,5 +48,53 @@ class OrigcurrencyTestCase(CurrencyTestCase):
         return ORIGCURRENCY(currate=Decimal("59.773"), cursym="EUR")
 
 
+class OrigcurrencyMixinTestCase(unittest.TestCase):
+    """Test Origcurrency mixin property fallback via ORIGCURRENCY (not CURRENCY)."""
+
+    def _make_stmttrn(self, use_origcurrency=False):
+        from ofxtools.models.bank.stmt import STMTTRN
+        from ofxtools.utils import UTC
+
+        kwargs = dict(
+            trntype="CHECK",
+            dtposted=__import__("datetime").datetime(2013, 6, 15, tzinfo=UTC),
+            trnamt=Decimal("-433.25"),
+            fitid="DEADBEEF",
+        )
+        if use_origcurrency:
+            kwargs["origcurrency"] = ORIGCURRENCY(
+                currate=Decimal("59.773"), cursym="EUR"
+            )
+        else:
+            kwargs["currency"] = CURRENCY(currate=Decimal("59.773"), cursym="EUR")
+        return STMTTRN(**kwargs)
+
+    def test_curtype_via_origcurrency(self):
+        trn = self._make_stmttrn(use_origcurrency=True)
+        self.assertEqual(trn.curtype, "ORIGCURRENCY")
+
+    def test_cursym_via_origcurrency(self):
+        trn = self._make_stmttrn(use_origcurrency=True)
+        self.assertEqual(trn.cursym, "EUR")
+
+    def test_currate_via_origcurrency(self):
+        trn = self._make_stmttrn(use_origcurrency=True)
+        self.assertEqual(trn.currate, Decimal("59.773"))
+
+    def test_curtype_none_when_no_currency(self):
+        from ofxtools.models.bank.stmt import STMTTRN
+        from ofxtools.utils import UTC
+
+        trn = STMTTRN(
+            trntype="CHECK",
+            dtposted=__import__("datetime").datetime(2013, 6, 15, tzinfo=UTC),
+            trnamt=Decimal("-433.25"),
+            fitid="DEADBEEF",
+        )
+        self.assertIsNone(trn.curtype)
+        self.assertIsNone(trn.cursym)
+        self.assertIsNone(trn.currate)
+
+
 if __name__ == "__main__":
     unittest.main()

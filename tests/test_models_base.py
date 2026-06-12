@@ -791,6 +791,49 @@ class ElementListTestCase(unittest.TestCase):
         self.assertElement(tag0, tag="TAG", text="N", len=0)
         self.assertElement(tag1, tag="TAG", text="Y", len=0)
 
+    def testListAppendTooManyListAggregates(self):
+        # ElementList._listAppend raises if listaggregates != 1
+        # Patch listaggregates to simulate a misconfigured subclass
+        instance = self.instance
+        orig = instance.__class__.listaggregates
+        try:
+            instance.__class__.listaggregates = {}
+            with self.assertRaises(ValueError):
+                import xml.etree.ElementTree as ET2
+
+                instance._listAppend(ET2.Element("ROOT"), True)
+        finally:
+            instance.__class__.listaggregates = orig
+
+
+class ListWrongTypeMemberTestCase(unittest.TestCase):
+    """Aggregate._apply_args raises TypeError for wrong-type list member."""
+
+    @classmethod
+    def setUpClass(cls):
+        models.TESTSUBAGGREGATE = TESTSUBAGGREGATE
+        models.TESTAGGREGATE = TESTAGGREGATE
+        models.TESTAGGREGATE2 = TESTAGGREGATE2
+        models.TESTLIST = TESTLIST
+
+    @classmethod
+    def tearDownClass(cls):
+        del models.TESTSUBAGGREGATE
+        del models.TESTAGGREGATE
+        del models.TESTAGGREGATE2
+        del models.TESTLIST
+
+    def testWrongAggregateType(self):
+        # TESTLIST only accepts TESTAGGREGATE and TESTAGGREGATE2 as list members
+        with self.assertRaises(TypeError):
+            TESTLIST(TESTSUBAGGREGATE(data="x"))
+
+    def testNonAggregateListMember(self):
+        # Passing a non-Aggregate to a class with ListAggregate attrs
+        # hits the else branch and raises TypeError
+        with self.assertRaises(TypeError):
+            TESTLIST("not_an_aggregate")
+
 
 if __name__ == "__main__":
     unittest.main()

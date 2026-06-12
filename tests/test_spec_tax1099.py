@@ -634,5 +634,41 @@ class Tax1099ResponseTestCase(base.OfxTestCase, unittest.TestCase):
         )
 
 
+class Tax1099ValidationTestCase(unittest.TestCase):
+    """Error-path tests for tax1099 validate_args() overrides."""
+
+    def test_tax1099misc_sttaxwh_requires_payerstate(self):
+        with self.assertRaises(ValueError):
+            models.TAX1099MISC_V100(
+                srvrtid="1",
+                taxyear=2023,
+                sttaxwh=100,
+                payeraddr=PAYERADDR,
+                payerid="123",
+            )
+
+    def test_tax1099r_irasepsimp_required_with_grossdist(self):
+        with self.assertRaises(ValueError):
+            models.TAX1099R_V100(
+                srvrtid="1",
+                taxyear=2023,
+                grossdist=True,
+                payeraddr=PAYERADDR,
+                payerid="123",
+            )
+
+    def test_tax1099rs_requires_at_least_one_form(self):
+        with self.assertRaises(ValueError):
+            models.TAX1099RS(recid="123456789")
+
+    def test_tax1099msgsrqv1_requires_at_least_one_trnrq(self):
+        with self.assertRaises(ValueError):
+            models.TAX1099MSGSRQV1()
+
+    def test_tax1099msgsrsv1_requires_at_least_one_trnrs(self):
+        with self.assertRaises(ValueError):
+            models.TAX1099MSGSRSV1()
+
+
 if __name__ == "__main__":
     unittest.main()
