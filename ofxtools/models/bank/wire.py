@@ -2,6 +2,8 @@
 Wire fund transfers - OFX Section 11.9
 """
 
+from __future__ import annotations
+
 __all__ = [
     "WIREBENEFICIARY",
     "EXTBANKDESC",

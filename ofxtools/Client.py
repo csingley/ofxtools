@@ -32,6 +32,8 @@ For example:
 >>> response = client.request_statements("t0ps3kr1t", s0, s1, c0)
 """
 
+from __future__ import annotations
+
 __all__ = [
     "AUTH_PLACEHOLDER",
     "StmtRq",
@@ -949,7 +951,7 @@ class OFXClient:
 
 
 def wrap_stmtrq(
-    nt: RequestParam, rqs: Iterable[RequestParam], client: "OFXClient"
+    nt: RequestParam, rqs: Iterable[RequestParam], client: OFXClient
 ) -> tuple[type[Message], list[TrnRequest]]:
     match nt:
         case StmtRq():

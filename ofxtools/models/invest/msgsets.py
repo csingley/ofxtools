@@ -2,6 +2,8 @@
 Bill pay message sets
 """
 
+from __future__ import annotations
+
 __all__ = [
     "INVSTMTMSGSRQV1",
     "INVSTMTMSGSRSV1",

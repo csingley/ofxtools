@@ -16,6 +16,8 @@ the OFX spec, to be found in the package namespace by
 ``Aggregate.from_etree()`` which is called by the ``ofxtools.Parser``.
 """
 
+from __future__ import annotations
+
 __all__ = ["Aggregate", "ElementList"]
 
 
@@ -217,7 +219,7 @@ class Aggregate(list[Any]):
                 raise OFXSpecError(msg)
 
     @classmethod
-    def from_etree(cls, elem: ET.Element) -> "Aggregate":
+    def from_etree(cls, elem: ET.Element) -> Aggregate:
         """
         Instantiate from ``xml.etree.ElementTree.Element``.
 
@@ -238,7 +240,7 @@ class Aggregate(list[Any]):
         return instance  # type: ignore[no-any-return]
 
     @classmethod
-    def _convert(cls, elem: ET.Element) -> "Aggregate":
+    def _convert(cls, elem: ET.Element) -> Aggregate:
         """Instantiate from ``xml.etree.ElementTree.Element``.
 
         N.B. this method must be called on the appropriate subclass,

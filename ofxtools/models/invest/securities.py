@@ -2,6 +2,8 @@
 Security information - OFX section 13.7.2
 """
 
+from __future__ import annotations
+
 __all__ = [
     "SECID",
     "SECRQ",

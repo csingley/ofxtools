@@ -2,6 +2,8 @@
 Recurring payments - OFX Section 12.7
 """
 
+from __future__ import annotations
+
 __all__ = [
     "RECPMTRQ",
     "RECPMTRS",

@@ -23,6 +23,8 @@ No ponies were harmed during the production of this parser:
 https://stackoverflow.com/questions/1732348/regex-match-open-tags-except-xhtml-self-contained-tags/1732454#1732454
 """
 
+from __future__ import annotations
+
 __all__ = ["OFXTree", "TreeBuilder", "ParseError"]
 
 

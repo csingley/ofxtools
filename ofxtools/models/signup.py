@@ -2,6 +2,8 @@
 Activation and Account Information - OFX Section 8
 """
 
+from __future__ import annotations
+
 __all__ = [
     "ENROLLRQ",
     "ENROLLRS",

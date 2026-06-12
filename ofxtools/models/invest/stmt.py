@@ -2,6 +2,8 @@
 Investments - OFX Section 13
 """
 
+from __future__ import annotations
+
 __all__ = [
     "LOANPMTFREQUENCIES",
     "INCPOS",

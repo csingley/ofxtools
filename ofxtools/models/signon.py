@@ -2,6 +2,8 @@
 Client signon - OFX Section 2.5
 """
 
+from __future__ import annotations
+
 __all__ = [
     "FI",
     "MFACHALLENGE",

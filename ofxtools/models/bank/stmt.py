@@ -2,6 +2,8 @@
 Bank statement download - OFX Section 11.4
 """
 
+from __future__ import annotations
+
 __all__ = [
     "INV401KSOURCES",
     "ACCTTYPES",

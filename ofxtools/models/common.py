@@ -2,6 +2,8 @@
 Common Aggregates (OFX Section 3.1); message extensions (OFX Section 2.7)
 """
 
+from __future__ import annotations
+
 __all__ = ["SVCSTATUSES", "STATUS", "BAL", "OFXELEMENT", "OFXEXTENSION", "MSGSETCORE"]
 
 

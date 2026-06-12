@@ -5,6 +5,8 @@ These can't be defined in models.base because models.common.STATUS would
 create circular imports.
 """
 
+from __future__ import annotations
+
 __all__ = ["TrnRq", "TrnRs", "SyncRqList", "SyncRsList"]
 
 

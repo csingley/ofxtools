@@ -1,5 +1,7 @@
 """FI Profile - OFX Section 7"""
 
+from __future__ import annotations
+
 __all__ = [
     "SIGNONINFO",
     "SIGNONINFOLIST",

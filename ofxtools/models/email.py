@@ -2,6 +2,8 @@
 email - OFX Section 9
 """
 
+from __future__ import annotations
+
 __all__ = [
     "MAIL",
     "MAILRQ",

@@ -3,6 +3,8 @@ Python object model for fundamental data aggregates such as transactions,
 balances, and securities.
 """
 
+from __future__ import annotations
+
 __all__ = ["OFX"]
 
 

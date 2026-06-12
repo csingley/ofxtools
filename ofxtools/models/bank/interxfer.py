@@ -2,6 +2,8 @@
 Interbank fund transfers - OFX Section 11.8
 """
 
+from __future__ import annotations
+
 __all__ = [
     "INTERRQ",
     "INTERRS",

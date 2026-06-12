@@ -17,6 +17,8 @@ appropriate header class based on OFX version #.  It's used by
 `ofxtools.Client`.
 """
 
+from __future__ import annotations
+
 __all__ = [
     "OFXHeaderError",
     "OFXHeaderV1",
@@ -53,7 +55,7 @@ class OFXHeaderBase:
     codec: Any = NotImplemented  # Define in subclass
 
     @classmethod
-    def parse(cls, rawheader: str) -> tuple["OFXHeaderBase", int]:
+    def parse(cls, rawheader: str) -> tuple[OFXHeaderBase, int]:
         """
         Instantiate from string.
 

@@ -2,6 +2,8 @@
 Tax form 1099 - as of TY2018
 """
 
+from __future__ import annotations
+
 __all__ = [
     "PAYERADDR",
     "RECADDR",

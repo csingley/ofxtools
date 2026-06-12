@@ -2,6 +2,8 @@
 Intrabank funds transfer  - OFX Section 11.6
 """
 
+from __future__ import annotations
+
 __all__ = [
     "XFERINFO",
     "XFERPRCSTS",

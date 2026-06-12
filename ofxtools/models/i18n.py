@@ -2,6 +2,8 @@
 International support - OFX Section 5
 """
 
+from __future__ import annotations
+
 __all__ = ["LANG_CODES", "CURRENCY_CODES", "COUNTRY_CODES", "CURRENCY", "ORIGCURRENCY"]
 
 

@@ -2,6 +2,8 @@
 Payments Functions - OFX Section 12.6
 """
 
+from __future__ import annotations
+
 __all__ = [
     "PMTRQ",
     "PMTRS",

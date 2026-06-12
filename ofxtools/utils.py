@@ -1,5 +1,7 @@
 """Utility functions and classes"""
 
+from __future__ import annotations
+
 # stdlib imports
 import calendar
 import datetime

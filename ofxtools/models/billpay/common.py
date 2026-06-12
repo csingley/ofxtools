@@ -4,6 +4,8 @@ Common payments aggregates - OFX Section 12.5
 PAYEE is defined in ``ofxtools.models.bank.stmt`` to avoid circular imports.
 """
 
+from __future__ import annotations
+
 __all__ = [
     "BPACCTINFO",
     "BILLPUBINFO",

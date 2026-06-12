@@ -2,6 +2,8 @@
 Statement closing information - OFX Section 11.5
 """
 
+from __future__ import annotations
+
 __all__ = [
     "CLOSING",
     "STMTENDRQ",

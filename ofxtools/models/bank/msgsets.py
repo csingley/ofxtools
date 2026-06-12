@@ -2,6 +2,8 @@
 Banking message sets
 """
 
+from __future__ import annotations
+
 __all__ = [
     "BANKMSGSRQV1",
     "BANKMSGSRSV1",
