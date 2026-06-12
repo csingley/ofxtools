@@ -10,7 +10,7 @@ _meta = metadata("ofxtools")
 # -- Project information -----------------------------------------------------
 project = _meta["Name"]
 author = _meta["Author-email"].split("<")[0].strip()
-copyright = f"2010 {author}"
+copyright = f"2010–2026 {author}"
 version = release = _meta["Version"]
 
 
@@ -27,7 +27,7 @@ pygments_style = None
 
 # -- Options for HTML output -------------------------------------------------
 
-html_theme = "sphinxdoc"
+html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 
 

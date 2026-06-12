@@ -77,7 +77,7 @@ server nickname.
 
 Storing ofxget passwords in the system keyring
 ----------------------------------------------
-**Note: this feature is experimental.  Expect bugs; kindly report them.**
+**Note: this feature depends on optional third-party packages and may behave differently across platforms.  Please report any issues.**
 
 Rather than typing them in each time, you can securely store your passwords
 in the system keyring (if one is available) and have ``ofxget`` retrieve them
@@ -325,7 +325,7 @@ we'll go ahead and include this information in our ``ofxget.cfg``:
 
 Note that multiple accounts are specified as a comma-separated sequence.
 
-To spare your eyes from looking through all that tag soup, you can just tell
+Rather than parsing the raw XML manually, you can just tell
 ``ofxget`` to download the ACCTINFO response and update your config
 file automatically:
 
@@ -381,7 +381,7 @@ use the ``--start`` and ``--end`` arguments:
 Please note that the CLI accepts OFX-formatted dates (YYYYmmdd) rather than
 ISO-8601 (YYYY-mm-dd).
 
-You can also pass``--asof`` to set the reporting date for balances and/or
+You can also pass ``--asof`` to set the reporting date for balances and/or
 investment positions, although it tends to be ignored for the latter.
 
 There are additional statement options for omitting transactions, balances,
@@ -436,7 +436,7 @@ Vanguard is a little funkier.  They accept all versions of OFX, but version
 2 must have newlines.  For version 1, you must either insert newlines or
 leave element tags unclosed (or both).  Closing tags will fail without newlines.
 
-Copyng these configs into your ``ofxget.cfg`` manually, they would look like
+Copying these configs into your ``ofxget.cfg`` manually, they would look like
 this:
 
 .. code-block:: ini
