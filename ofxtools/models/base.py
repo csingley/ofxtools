@@ -20,7 +20,6 @@ __all__ = ["Aggregate", "ElementList"]
 
 
 # stdlib imports
-import functools
 import logging
 import warnings
 import xml.etree.ElementTree as ET
