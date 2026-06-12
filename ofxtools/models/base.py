@@ -256,83 +256,63 @@ class Aggregate(list[Any]):
         listaggregates = cls.listaggregates
         listelements = cls.listelements
 
-        #  Type alias - accumulator for functools.reduce()
-        Accum = tuple[list[Any], dict[Any, Any], int, bool]
-        " args, kwargs, previous attr index within spec, previous attr is list member? "
+        #  OFX messages have a sequence order defined by the spec.  This order maps
+        #  to the order of class attributes defined by ``Aggregate`` subclasses.
+        #
+        #  Class attributes defined as list members (i.e. ListAggregate / ListElement,
+        #  identified as "one or more" or "zero or more" in the OFX spec) may
+        #  occur in any order, so we don't validate the relative order of list
+        #  members.  Otherwise, we require that the index of an attribute within
+        #  the ``Aggregate.spec`` sequence must increase monotonically.
+        args: list[Any] = []
+        kwargs: dict[str, Any] = {}
+        prev_index = -1
+        prev_is_listmember = False
 
-        def update_args(accum: Accum, elem: ET.Element) -> Accum:
-            """Extend ``functools.reduce()`` accumulator with parsed ``ET.Element``
-            value (either OFX `aggregate` or OFX 'element').
+        for child in elem:
+            attrname = child.tag.lower()
 
-            List members are stored as positional args (i.e. list); everything
-            else is stored as keyword args (i.e. dict).
-
-            Check index within the ``Aggregate.spec`` sequence against previous
-            ``ET.Element`` and return sequencing info for current ``ET.Element``
-            to be used in the next iteration.
-            """
-            args, kwargs, prev_index, prev_is_listmember = accum
-            attrname = elem.tag.lower()
-
-            #  OFX messages have a sequence order defined by the spec.  This order maps
-            #  to the order of class attributes defined by ``Aggregate`` subclasses.
-            #  Cf. discussion of ordering above in the docstring for ``_init_class_attrs()``.
-            #
-            #  Class attributes defined as list members (i.e. ListAggregate / ListElement,
-            #  identified as "one or more" or "zero or more" in the OFX spec) may
-            #  occur in any order, so we don't validate the relative order of list
-            #  members.  Other than, we require that the index of an attribute within
-            #  the ``Aggregate.spec`` sequence must increase monotonically.
             try:
                 index = spec.index(attrname)
             except ValueError:
-                #  raise OFXSpecError(f"{clsnm}.spec = {spec}; doesn't contain {attrname}")
-                msg = (
-                    f"While parsing {clsnm}, encountered unknown tag {elem.tag}; "
-                    "skipping."
+                warnings.warn(
+                    f"While parsing {clsnm}, encountered unknown tag {child.tag}; skipping.",
+                    category=UnknownTagWarning,
                 )
-                warnings.warn(msg, category=UnknownTagWarning)
-                return accum
+                continue
 
             is_listmember = attrname in listaggregates or attrname in listelements
             if index <= prev_index and not (is_listmember and prev_is_listmember):
-                msg = (
+                raise OFXSpecError(
                     f"Elements out of order: According to the class spec for {clsnm}, "
                     f"{attrname.upper()} should occur before "
                     f"{spec[prev_index].upper()}, not after it."
                 )
-                raise OFXSpecError(msg)
 
             # Parse attribute value
             if attrname in cls.unsupported:
                 value: str | Aggregate | None = None
             elif attrname not in cls.subaggregates:
-                # Element - extract as string; value will be type-converted upon
-                # instance initialization by ``ofxtools.Types.Element.__set__()``.
-                # Use the class spec rather than elem.text to discriminate text
-                # elements from aggregates, so that empty elements (<MEMO></MEMO>
-                # or <MEMO/>) are handled correctly instead of falling through to
-                # the aggregate branch.
-                value = elem.text
+                # Element - extract as string; type conversion happens in
+                # ``ofxtools.Types.Element.__set__()`` during __init__.
+                # Use the class spec (not elem.text) to discriminate text
+                # elements from aggregates so empty elements (<MEMO></MEMO>
+                # or <MEMO/>) are handled correctly.
+                value = child.text
             else:
                 # Aggregate - recurse
-                value = Aggregate.from_etree(elem)
+                value = Aggregate.from_etree(child)
 
-            # Append attr value to args (list members) or kwargs (everything else)
             if is_listmember:
                 args.append(value)
             else:
                 if attrname in kwargs:
-                    raise OFXSpecError(f"Duplicate element <{elem.tag}> in {clsnm}")
+                    raise OFXSpecError(f"Duplicate element <{child.tag}> in {clsnm}")
                 kwargs[attrname] = value
 
-            return args, kwargs, index, is_listmember
+            prev_index = index
+            prev_is_listmember = is_listmember
 
-        #  ElementTree API: child Elements stored as a sequence, accessible
-        #  by iterating over the parent Element.
-        #  https://effbot.org/zone/pythondoc-elementtree-ElementTree.htm#elementtree.ElementTree._ElementInterface-class
-        initial: Accum = ([], {}, -1, False)
-        args, kwargs = functools.reduce(update_args, elem, initial)[:2]
         return cls(*args, **kwargs)
 
     @staticmethod
