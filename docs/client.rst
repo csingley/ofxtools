@@ -26,7 +26,7 @@ the ``ofxtools`` library.  If the install location isn't already in your
     **Site installation**
 
     * Mac: ``/Library/Frameworks/Python.framework/Versions/X.Y/bin/ofxget``
-    * Windows: Good question; anybody know?
+    * Windows: ``AppData\Local\Programs\Python\PythonXY\Scripts\ofxget``
     * Linux/BSD/etc.: ``/usr/local/bin/ofxget``
 
     **Virtual environment installation**
@@ -153,7 +153,7 @@ authenticating a login.
 
     $ ofxget prof --org AMEX --fid 3101 --url https://online.americanexpress.com/myca/ofxdl/desktop/desktopDownload.do\?request_type\=nl_ofxdownload
 
-This hairy beast of a command can be used for any arbitrary OFX server.
+This form of the command can be used for any arbitrary OFX server.
 If the server is already known to ``ofxget``, then you can just use
 its nickname instead:
 
@@ -539,12 +539,7 @@ worry about it.  If you do need to fiddle with it, use the ``appid`` and
 ``appver`` arguments, either from the command line or in your ``ofxget.cfg``.
 
 We've also had some problems with FIs checking the ``User-Agent`` header in
-HTTP requests, so it's been blanked out.  If we can figure out what Quicken
-sends for ``User_Agent``, it might be a good idea to spoof that as well.
-
-What I'd really like to do is set up a packet sniffer on a PC running
-Quicken and pull down a current list of working URLs.  If that sounds like
-your idea of a fun time, drop me a line.
+HTTP requests, so it's been blanked out.
 
 Using OFXClient in Another Program
 ==================================
@@ -556,7 +551,7 @@ Using the configured ``OFXClient`` instance, make a request by calling the
 relevant method, e.g. ``OFXClient.request_statements()``.  Provide the password
 as the first positional argument; any remaining positional arguments are parsed
 as requests.  Simple data containers for each statement type (``StmtRq``,
-``CcStmtRq``, ``InvStmtRq``, ``StmtEndRq``, ``CcStmtEndRq`` are provided for 
+``CcStmtRq``, ``InvStmtRq``, ``StmtEndRq``, ``CcStmtEndRq``) are provided for
 this purpose.  Options follow as keyword arguments.
 
 The method call therefore looks like this:
@@ -580,11 +575,10 @@ The method call therefore looks like this:
 Other methods available:
     * ``OFXClient.request_profile()`` - PROFRQ
     * ``OFXClient.request_accounts()``- ACCTINFORQ
-    * ``OFXClient.request_tax1099()``- TAX1099RQ (still a WIP)
+    * ``OFXClient.request_tax1099()`` - TAX1099RQ
 
 .. _OFX Blog: https://ofxblog.wordpress.com/
 .. _ABA routing number: http://routingnumber.aba.com/default1.aspx
-.. _getfidata.sh: https://web.archive.org/web/20070120102800/http://www.jongsma.org/gc/bankinfo/getfidata.sh.gz
 .. _GnuCash: https://wiki.gnucash.org/wiki/OFX_Direct_Connect_Bank_Settings
 .. _python-keyring: https://pypi.org/project/keyring/
 .. _dbus-python: https://pypi.org/project/dbus-python/

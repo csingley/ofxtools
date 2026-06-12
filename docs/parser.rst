@@ -62,8 +62,7 @@ While it's obvious that INTRANLIST is a list, it's perhaps less obvious that
 INVSTMTMSGSRSV1 is also a list, since OFX specifies that a single statement
 response wrapper can contain multiple statements.
 
-It can get to be a real drag crawling all the way to the bottom of
-deeply-nested SGML hierarchies to extract the data that you really want, so
+Navigating deeply-nested OFX hierarchies to extract data can be verbose, so
 subclasses of ``ofxtools.models.base.Aggregate`` provide some navigational
 conveniences.
 

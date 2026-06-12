@@ -22,7 +22,7 @@ Open Financial Exchange (OFX) Tools for Python
 data - the standard format for downloading financial information from banks
 and stockbrokers.  OFX data is widely provided by financial institutions so
 that their customers can import transactions into financial management
-software such as Quicken, Microsoft Money, or GnuCash.
+software such as Quicken or GnuCash.
 
 If you want to download your transaction data outside of one of these
 programs - if you wish to develop a Python application to use this data -
@@ -52,15 +52,15 @@ It targets compliance with the `OFX specification`_, specifically OFX versions
     * Section 11 (banking)
     * Section 12 (bill pay)
     * Section 13 (investments)
+    * OFX tax extensions (1099 forms)
 
 This should cover the great majority of real-world OFX use cases.  A particular
 focus of ``ofxtools`` is full support of the OFX investment message set,
 which has been somewhat neglected by the Python community.
 
-The major item remaining on the ``ofxtools`` "to do" list is to implement the
-tax schemas.  It's currently a low priority to implement Section 14 (bill
-presentment) or the extensions contained in OFX versions beyond 2.03, but
-you're welcome to contribute code if you need these.
+It's currently a low priority to implement Section 14 (bill presentment) or
+the extensions contained in OFX versions beyond 2.03, but you're welcome to
+contribute code if you need these.
 
 Some care has been taken with the data model to make it easily maintainable
 and extensible.  The ``ofxtools.models`` subpackage contains simple, direct
@@ -88,8 +88,7 @@ library (no external dependencies).
 
 
 .. _OFX specification: https://financialdataexchange.org/ofx
-.. _Requests: http://docs.python-requests.org/en/master/
 .. _Read the Docs: https://ofxtools.readthedocs.io/
 .. _GitHub: https://github.com/csingley/ofxtools
 .. _bug tracker: https://github.com/csingley/ofxtools/issues
-.. _PyPI: https://pypi.python.org/pypi/ofxtools
+.. _PyPI: https://pypi.org/project/ofxtools/

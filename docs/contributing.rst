@@ -26,7 +26,7 @@ Also run the linter and type checker before submitting:
 
 Feel free to `create pull requests`_ on `ofxtools repository on GitHub`_.
 
-If you commit working tests for your code, you'll be my favorite person.
+Test coverage for new code is strongly encouraged.
 
 
 Adding New OFX Messages

@@ -2,12 +2,11 @@
 
 Generating OFX
 ==============
-Creating your own OFX requests or responses - as would be neeeded for, say,
+Creating your own OFX requests or responses - as would be needed for, say,
 a Python-powered OFX server - is fairly straightforward.  However, you will
-need to be pretty familiar with the OFX spec.  ``ofxtools`` validates
-individual nodes in the hierarchy, but doesn't really do anything to verify
-compliant sequence order, for example.  It doesn't validate against a DTD.
-That is on you, friend.
+need to be familiar with the OFX spec.  ``ofxtools`` validates individual
+nodes in the hierarchy, but does not verify compliant sequence order and does
+not validate against a DTD.
 
 Don't forget to make datetimes timezone-aware.
 
@@ -27,7 +26,7 @@ along in section 11.4.2.2 of the OFX spec.
     In [7]: stmtrs = STMTRS(curdef='USD', bankacctfrom=acctfrom,
        ...:                 ledgerbal=ledgerbal) 
 
-So far so good.  Now to slather it in wrapper cruft and garnish with metadata.
+Now wrap the statement in the required OFX transaction and message-set containers.
 
 .. code:: python
 
@@ -41,7 +40,7 @@ So far so good.  Now to slather it in wrapper cruft and garnish with metadata.
     In [13]: signonmsgs = SIGNONMSGSRSV1(sonrs=sonrs)
     In [14]: ofx = OFX(signonmsgsrsv1=signonmsgs, bankmsgsrsv1=bankmsgsrs)
 
-OK, that's the complete OFX message body.  To serialize it, we transform the
+That completes the OFX message body.  To serialize it, we transform the
 ``ofxtools.models`` structure back into an instance of
 ``xml.etree.ElementTree.ElementTree``.
 

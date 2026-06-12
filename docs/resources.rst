@@ -1,4 +1,4 @@
-..resources:
+.. _resources:
 
 Additional Resources
 ====================
