@@ -1161,7 +1161,8 @@ def _scan_profile(
 
     # V2 always has closing tags for elements; just report prettyprint
     for fmt in v2_result["formats"]:
-        assert not fmt["unclosedelements"]
+        if fmt["unclosedelements"]:
+            raise ValueError(f"OFX v2 format has unclosed elements: {fmt}")
         del fmt["unclosedelements"]
 
     results = (v1_result, v2_result, signoninfo)
@@ -1340,19 +1341,23 @@ def extract_signoninfos(markup: BytesIO) -> Iterator[models.SIGNONINFO]:
     ofx = parser.convert()
 
     sonrs: models.SONRS | None = ofx.signonmsgsrsv1.sonrs
-    assert isinstance(sonrs, models.SONRS)
+    if not isinstance(sonrs, models.SONRS):
+        raise ValueError(f"Expected SONRS, got {type(sonrs).__name__}")
     verify_status(sonrs)
 
     msgs: models.PROFMSGSRSV1 | None = ofx.profmsgsrsv1
-    assert msgs is not None
+    if msgs is None:
+        raise ValueError("OFX response missing PROFMSGSRSV1")
 
     def extract_signoninfo(trnrs: models.PROFTRNRS) -> list[models.SIGNONINFO]:
         verify_status(trnrs)
         rs: models.PROFRS | None = trnrs.profrs
-        assert rs is not None
+        if rs is None:
+            raise ValueError("PROFTRNRS missing PROFRS")
 
         list_: models.SIGNONINFOLIST | None = rs.signoninfolist
-        assert list_ is not None
+        if list_ is None:
+            raise ValueError("PROFRS missing SIGNONINFOLIST")
         return list_
 
     return itertools.chain.from_iterable(extract_signoninfo(trnrs) for trnrs in msgs)
@@ -1368,17 +1373,23 @@ def extract_acctinfos(markup: BytesIO) -> Iterator[AcctInfo]:
     ofx = parser.convert()
 
     sonrs = ofx.signonmsgsrsv1.sonrs
-    assert isinstance(sonrs, models.SONRS)
+    if not isinstance(sonrs, models.SONRS):
+        raise ValueError(f"Expected SONRS, got {type(sonrs).__name__}")
     verify_status(sonrs)
 
     msgs = ofx.signupmsgsrsv1
-    assert msgs is not None and len(msgs) == 1
+    if msgs is None or len(msgs) != 1:
+        raise ValueError(
+            f"Expected exactly 1 SIGNUPMSGSRSV1, got {len(msgs) if msgs is not None else 0}"
+        )
     trnrs = msgs[0]
-    assert isinstance(trnrs, models.ACCTINFOTRNRS)
+    if not isinstance(trnrs, models.ACCTINFOTRNRS):
+        raise ValueError(f"Expected ACCTINFOTRNRS, got {type(trnrs).__name__}")
     verify_status(trnrs)
 
     acctinfors = trnrs.acctinfors
-    assert isinstance(acctinfors, models.ACCTINFORS)
+    if not isinstance(acctinfors, models.ACCTINFORS):
+        raise ValueError(f"Expected ACCTINFORS, got {type(acctinfors).__name__}")
 
     # ACCTINFOs are ListAggregates of ACCTINFORS
     # *ACCTINFOs are ListAggregates of ACCTINFO
