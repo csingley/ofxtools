@@ -142,11 +142,11 @@ class Bool(Element):
                     return self.mapping[value]
                 except KeyError:
                     raise OFXSpecError(
-                        f"{value} is not one of the allowed values {self.mapping.keys()}"
+                        f"{value} is not one of the allowed values {list(self.mapping)}"
                     )
             case _:
                 raise OFXSpecError(
-                    f"{value} is not one of the allowed values {self.mapping.keys()}"
+                    f"{value} is not one of the allowed values {list(self.mapping)}"
                 )
 
     def _unconvert(self, value):
@@ -155,7 +155,7 @@ class Bool(Element):
                 return self.reverse_mapping[value]
             case _:
                 raise OFXSpecError(
-                    f"{value} is not one of the allowed values {self.mapping.keys()}"
+                    f"{value} is not one of the allowed values {list(self.mapping)}"
                 )
 
 

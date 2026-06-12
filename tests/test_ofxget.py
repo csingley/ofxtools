@@ -1372,5 +1372,37 @@ class MainTestCase(unittest.TestCase):
             ofxget.main()
 
 
+class ConvertDatetimeTestCase(unittest.TestCase):
+    def _make_args(self, **kwargs):
+        defaults = {"dtstart": "", "dtend": "", "dtasof": ""}
+        defaults.update(kwargs)
+        return collections.ChainMap(defaults)
+
+    def test_all_empty(self):
+        args = self._make_args()
+        result = ofxget.convert_datetime(args)
+        self.assertIsNone(result["start"])
+        self.assertIsNone(result["end"])
+        self.assertIsNone(result["asof"])
+
+    def test_with_values(self):
+        from ofxtools.utils import UTC
+
+        args = self._make_args(dtstart="20070101", dtend="20071231", dtasof="20071231")
+        result = ofxget.convert_datetime(args)
+        self.assertEqual(result["start"], datetime(2007, 1, 1, tzinfo=UTC))
+        self.assertEqual(result["end"], datetime(2007, 12, 31, tzinfo=UTC))
+        self.assertEqual(result["asof"], datetime(2007, 12, 31, tzinfo=UTC))
+
+    def test_mixed(self):
+        from ofxtools.utils import UTC
+
+        args = self._make_args(dtstart="20070101")
+        result = ofxget.convert_datetime(args)
+        self.assertEqual(result["start"], datetime(2007, 1, 1, tzinfo=UTC))
+        self.assertIsNone(result["end"])
+        self.assertIsNone(result["asof"])
+
+
 if __name__ == "__main__":
     unittest.main()

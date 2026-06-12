@@ -137,8 +137,8 @@ def cusip_checksum(base: str) -> str:
 
     if len(base) != 8:
         raise ValueError(f"CUSIP base must be 8 characters, got {len(base)}")
-    check = "".join([encode(index, char) for index, char in enumerate(base)])
-    check_ = sum([int(digit) for digit in check])
+    check = "".join(encode(index, char) for index, char in enumerate(base))
+    check_ = sum(int(digit) for digit in check)
     return str((10 - (check_ % 10)) % 10)
 
 
@@ -161,7 +161,7 @@ def sedol_checksum(base: str) -> str:
     for badLetter in "AEIO":
         if badLetter in base:
             raise ValueError(f"SEDOL base must not contain vowel '{badLetter}'")
-    check = sum([int(char, 36) * weights[n] for n, char in enumerate(base)])
+    check = sum(int(char, 36) * weights[n] for n, char in enumerate(base))
     return str((10 - (check % 10)) % 10)
 
 
@@ -176,10 +176,10 @@ def isin_checksum(base: str) -> str:
         raise ValueError(f"ISIN base must be 11 characters, got {len(base)}")
     if base[:2] not in NUMBERING_AGENCIES:
         raise ValueError(f"ISIN country code '{base[:2]}' not recognized")
-    check = "".join([str(int(char, 36)) for char in base])
+    check = "".join(str(int(char, 36)) for char in base)
     check = check[::-1]  # string reversal
-    check = "".join([d if n % 2 else str(int(d) * 2) for n, d in enumerate(check)])
-    return str((10 - sum([int(d) for d in check]) % 10) % 10)
+    check = "".join(d if n % 2 else str(int(d) * 2) for n, d in enumerate(check))
+    return str((10 - sum(int(d) for d in check) % 10) % 10)
 
 
 def validate_isin(isin: str) -> bool:

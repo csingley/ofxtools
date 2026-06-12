@@ -147,7 +147,7 @@ class ACCTINFO(Aggregate):
         # Must contain at least one <xxxACCTINFO>
         if len(args) == 0:
             raise ValueError(
-                f"{cls.__name__} must contain at least one of {list(cls.listaggregates.keys())}"
+                f"{cls.__name__} must contain at least one of {list(cls.listaggregates)}"
             )
 
         #  For a given service xxx, there can be at most one <xxxACCTINFO>

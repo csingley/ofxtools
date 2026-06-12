@@ -81,7 +81,7 @@ class OFXHeaderV1(OFXHeaderBase):
     # DRY - mapping of CHARSET: codec used below in codec()
     #  https://docs.python.org/3/library/codecs.html#standard-encodings
     codecs = {"ISO-8859-1": "latin_1", "1252": "cp1252", "NONE": "utf_8"}
-    charset = Types.OneOf(*codecs.keys())
+    charset = Types.OneOf(*codecs)
     compression = Types.OneOf("NONE")
     oldfileuid = Types.String(36)
     newfileuid = Types.String(36)

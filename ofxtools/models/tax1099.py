@@ -464,7 +464,7 @@ class TAX1099RS(Aggregate):
     def validate_args(cls, *args, **kwargs):
         # Must contain at least one TAX1099x_Vy
         if len([a for a in args if a.__class__.__name__.startswith("TAX1099")]) == 0:
-            mandatory = list(cls.listaggregates.keys())
+            mandatory = list(cls.listaggregates)
             mandatory.remove("fidirectdepositinfo")
             raise ValueError(f"{cls.__name__} must contain at least one of {mandatory}")
 
@@ -493,7 +493,7 @@ class TAX1099MSGSRQV1(Aggregate):
         # Must contain at least one TAX1099TRNRQ
         if len(args) == 0:
             raise ValueError(
-                f"{cls.__name__} must contain at least one of {list(cls.listaggregates.keys())}"
+                f"{cls.__name__} must contain at least one of {list(cls.listaggregates)}"
             )
 
         super().validate_args(*args, **kwargs)
@@ -509,7 +509,7 @@ class TAX1099MSGSRSV1(Aggregate):
         # Must contain at least one TAX1099TRNRS
         if len(args) == 0:
             raise ValueError(
-                f"{cls.__name__} must contain at least one of {list(cls.listaggregates.keys())}"
+                f"{cls.__name__} must contain at least one of {list(cls.listaggregates)}"
             )
 
         super().validate_args(*args, **kwargs)
@@ -528,7 +528,7 @@ class TAX1099MSGSETV1(ElementList):
         # Must contain at least one TAXYEARSUPPORTED
         if len(args) == 0:
             raise ValueError(
-                f"{cls.__name__} must contain at least one of {list(cls.listaggregates.keys())}"
+                f"{cls.__name__} must contain at least one of {list(cls.listaggregates)}"
             )
 
         super().validate_args(*args, **kwargs)

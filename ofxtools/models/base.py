@@ -196,8 +196,8 @@ class Aggregate(list):
                 raise SyntaxError(msg)
             else:
                 cls = self.__class__.__name__
-                kw = str(list(kwargs.keys()))
-                spc = str(list(self.spec.keys()))
+                kw = str(list(kwargs))
+                spc = str(list(self.spec))
                 msg = f"Aggregate {cls} does not define {kw} (spec={spc})"
                 raise OFXSpecError(msg)
 
