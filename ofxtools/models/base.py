@@ -80,6 +80,16 @@ class Aggregate(list):
     parent node that is empty of data text.
     """
 
+    # Computed by __init_subclass__ and bootstrapped for base classes at module end
+    _superdict: Mapping[str, Any]
+    spec: Mapping[str, Any]
+    spec_no_listaggregates: Mapping[str, Any]
+    elements: Mapping[str, Any]
+    subaggregates: Mapping[str, Any]
+    unsupported: Mapping[str, Any]
+    listaggregates: Mapping[str, Any]
+    listelements: Mapping[str, Any]
+
     # Validation constraints used by ``validate_args()``.
 
     # Aggregate MAY have at most child from  `optionalMutexes``

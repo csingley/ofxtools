@@ -29,7 +29,7 @@ __all__ = [
 # stdlib imports
 import logging
 import re
-from typing import Any, BinaryIO
+from typing import Any, BinaryIO, TypeAlias
 
 # local imports
 from ofxtools import Types
@@ -37,7 +37,7 @@ from ofxtools import Types
 logger = logging.getLogger(__name__)
 
 
-OFXHeaderType = "OFXHeaderBase | OFXHeaderV1 | OFXHeaderV2"
+OFXHeaderType: TypeAlias = "OFXHeaderBase | OFXHeaderV1 | OFXHeaderV2"
 
 
 class OFXHeaderError(SyntaxError):
