@@ -35,7 +35,6 @@ import datetime
 import decimal
 import re
 import warnings
-from typing import Any
 from xml.sax import saxutils
 
 # local imports
@@ -87,8 +86,6 @@ class Element:
     (using the arguments passed to ``__init__()``) and type conversion
     (using the logic implemented in ``convert()``).
     """
-
-    __type__: Any = NotImplemented  # define in subclass
 
     def __init__(self, *, required: bool = False) -> None:
         self.required = required

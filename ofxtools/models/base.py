@@ -136,7 +136,7 @@ class Aggregate(list):
             predicate: Callable[[int], bool],
         ) -> None:
             for mutex in mutexes:
-                count = sum([kwargs.get(m, None) is not None for m in mutex])
+                count = sum(kwargs.get(m, None) is not None for m in mutex)
                 if not predicate(count):
                     kwargs_ = ", ".join([f"{m}={kwargs.get(m, None)}" for m in mutex])
                     errFields = {
@@ -189,9 +189,7 @@ class Aggregate(list):
         # Check that all kwargs have been consumed
         if kwargs:
             args = [
-                k
-                for k in kwargs.keys()
-                if k in self.listaggregates or k in self.listelements
+                k for k in kwargs if k in self.listaggregates or k in self.listelements
             ]
             if args:
                 msg = f"{args}: pass list members as args, not kwargs"
@@ -446,7 +444,7 @@ class Aggregate(list):
         """
         return [
             (attr, repr(v))
-            for attr in self.spec_no_listaggregates.keys()
+            for attr in self.spec_no_listaggregates
             if (v := getattr(self, attr)) is not None
         ]
 

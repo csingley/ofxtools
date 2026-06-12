@@ -1217,7 +1217,7 @@ def _queue_scans(
             )
             futures[future] = (
                 version,
-                {"pretty": pretty, "unclosedelements": not close},
+                {"pretty": pretty, "unclosedelements": False},
             )
 
     return futures
@@ -1239,8 +1239,8 @@ def _read_scan_response(
         ParseError,
         ET.ParseError,
         OFXHeaderError,
-    ):
-        logger.error("Response contains invalid OFX: {exc}")
+    ) as exc:
+        logger.error(f"Response contains invalid OFX: {exc}")
         return valid, signoninfo
 
     if read_signoninfo:
@@ -1481,8 +1481,11 @@ def fi_index() -> Sequence[tuple[str, str]]:
 
 def convert_datetime(args: ArgsType) -> Mapping[str, datetime.datetime | None]:
     """Convert dtstart/dtend/dtasof to Python datetime type for request"""
-    D = DateTime().convert
-    return {d[2:]: D(args[d] or None) for d in ("dtstart", "dtend", "dtasof")}
+    D = DateTime()
+    return {
+        d[2:]: D.convert(v) if (v := args[d]) else None
+        for d in ("dtstart", "dtend", "dtasof")
+    }
 
 
 def get_passwd(args: ArgsType) -> str:

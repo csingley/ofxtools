@@ -397,10 +397,7 @@ class OFXClient:
         signon = self.signon(password)
         ofx = OFX(signonmsgsrqv1=signon, **msgs)
 
-        if gen_newfileuid:
-            newfileuid = self.uuid()
-        else:
-            newfileuid = None
+        newfileuid = self.uuid() if gen_newfileuid else None
 
         return self.download(
             ofx,
@@ -567,10 +564,7 @@ class OFXClient:
 
         ofx = OFX(signonmsgsrqv1=signon, profmsgsrqv1=PROFMSGSRQV1(proftrnrq))
 
-        if gen_newfileuid:
-            newfileuid = self.uuid()
-        else:
-            newfileuid = None
+        newfileuid = self.uuid() if gen_newfileuid else None
 
         return self.download(
             ofx,
@@ -608,10 +602,7 @@ class OFXClient:
 
         ofx = OFX(signonmsgsrqv1=signon, signupmsgsrqv1=msgs)
 
-        if gen_newfileuid:
-            newfileuid = self.uuid()
-        else:
-            newfileuid = None
+        newfileuid = self.uuid() if gen_newfileuid else None
 
         return self.download(
             ofx,
@@ -646,10 +637,7 @@ class OFXClient:
 
         ofx = OFX(signonmsgsrqv1=signon, tax1099msgsrqv1=msgs)
 
-        if gen_newfileuid:
-            newfileuid = self.uuid()
-        else:
-            newfileuid = None
+        newfileuid = self.uuid() if gen_newfileuid else None
 
         return self.download(
             ofx,
