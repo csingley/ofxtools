@@ -1057,6 +1057,8 @@ class ScanProfileTestCase(unittest.TestCase):
             self.assertEqual(len(format), 2)
             self.assertIsInstance(format["pretty"], bool)
             self.assertIsInstance(format["unclosedelements"], bool)
+            if version >= 200:
+                self.assertFalse(format["unclosedelements"])
 
 
 class ReadScanResponseTestCase(unittest.TestCase):
