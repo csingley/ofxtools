@@ -63,7 +63,9 @@ class TostringUnclosedElementsTestCase(unittest.TestCase):
         root = self._make_tree()
         indent(root)
         result = tostring_unclosed_elements(root).decode("utf_8")
-        self.assertEqual(result, "<OFX>\n  <STMTRQ>\n    <ACCTID>12345\n  </STMTRQ>\n</OFX>\n")
+        self.assertEqual(
+            result, "<OFX>\n  <STMTRQ>\n    <ACCTID>12345\n  </STMTRQ>\n</OFX>\n"
+        )
 
 
 class FixpathTestCase(unittest.TestCase):
