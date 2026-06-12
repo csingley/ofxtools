@@ -207,7 +207,34 @@ MsgsetClass = (
 
 class OFXClient:
     """
-    Basic OFX client to download statement and profile requests.
+    OFX client that composes, transmits, and receives OFX messages.
+
+    Configure an instance with the server URL and financial-institution
+    parameters (``org``, ``fid``, ``version``, etc.), then call request
+    methods such as ``request_statements()`` or ``request_profile()`` to
+    retrieve data.  Each request method returns a file-like object containing
+    the raw OFX response, which can be passed directly to ``OFXTree.parse()``.
+
+    Statement requests are described by lightweight named-tuple containers:
+    ``StmtRq``, ``CcStmtRq``, ``InvStmtRq``, ``StmtEndRq``, ``CcStmtEndRq``.
+
+    Example::
+
+        from ofxtools.Client import OFXClient, StmtRq
+        import ofxtools.utils
+
+        client = OFXClient(
+            "https://ofx.example.com",
+            userid="jsmith",
+            org="MYBANK",
+            fid="12345",
+            version=220,
+            bankid="111000614",
+        )
+        import datetime
+        dtstart = datetime.datetime(2024, 1, 1, tzinfo=ofxtools.utils.UTC)
+        rq = StmtRq(acctid="123456789", accttype="CHECKING", dtstart=dtstart)
+        response = client.request_statements("s3cr3t", rq)
     """
 
     # OFX header/signon defaults

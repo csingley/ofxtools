@@ -76,8 +76,24 @@ class PrivateTagWarning(OFXAggregateWarning):
 
 class Aggregate(list[Any]):
     """
-    Base class for Python representation of OFX 'aggregate', i.e. SGML/XML
-    parent node that is empty of data text.
+    Base class for OFX aggregates — SGML/XML parent nodes that contain other
+    elements but no direct text data.
+
+    Each concrete subclass corresponds to one OFX aggregate tag (named in ALL
+    CAPS per the spec).  Class attributes are either ``Types.Element``
+    descriptors (leaf data nodes) or ``Types.SubAggregate`` /
+    ``Types.ListAggregate`` descriptors (nested aggregate references).
+
+    ``Aggregate`` subclasses ``list`` to hold variable-count child aggregates
+    declared with ``ListAggregate``; singular children declared with
+    ``SubAggregate`` are stored as instance attributes instead.
+
+    Use ``Aggregate.from_etree()`` to construct instances from parsed XML, or
+    instantiate directly by passing element values as keyword arguments and
+    list-aggregate items as positional arguments.
+
+    Class-level mutual-exclusion constraints from the OFX spec are expressed
+    via ``requiredMutexes`` and ``optionalMutexes``.
     """
 
     # Computed by __init_subclass__ and bootstrapped for base classes at module end
