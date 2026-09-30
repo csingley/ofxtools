@@ -304,6 +304,8 @@ class Decimal(Element):
             self.scale: decimal.Decimal | None = decimal.Decimal(
                 f"0.{'0' * (scale - 1)}1"
             )
+            if scale == 0:
+                self.scale = decimal.Decimal("1")
         else:
             self.scale = None
 
@@ -315,20 +317,20 @@ class Decimal(Element):
     def convert(self, value: Any) -> Any:
         match value:
             case decimal.Decimal():
-                if self.scale is not None:
-                    value = value.quantize(self.scale)
-                return value
+                dec = value
             case str():
                 # Handle Euro-style decimal separators (comma)
                 try:
                     dec = decimal.Decimal(value)
                 except decimal.InvalidOperation:
                     dec = decimal.Decimal(value.replace(",", "."))
-                if self.scale is not None:
-                    dec = dec.quantize(self.scale)
-                return dec
             case _:
-                return self.__type__(value)
+                dec = self.__type__(value)
+
+        if self.scale is not None:
+            dec = dec.quantize(self.scale)
+
+        return dec
 
     def _unconvert(self, value: Any) -> Any:
         match value:

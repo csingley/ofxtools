@@ -8,6 +8,7 @@ import warnings
 
 # local imports
 import ofxtools
+from ofxtools.models.base import Aggregate
 from ofxtools.Types import OFXSpecError, OFXTypeWarning
 from ofxtools.utils import UTC
 
@@ -365,6 +366,135 @@ class DecimalTestCase(unittest.TestCase, Base):
         )
         self.assertEqual(cmp, 0)
 
+    def test_scale_input_types(self):
+        cases = (
+            (2, 100, "100.00"),
+            (2, "100", "100.00"),
+            (2, decimal.Decimal("100"), "100.00"),
+            (2, 1.5, "1.50"),
+            (2, 1.25, "1.25"),
+            (2, (0, (1, 2, 3, 4), -3), "1.23"),
+            (2, True, "1.00"),
+            (0, 12, "12"),
+            (0, 12.75, "13"),
+            (0, "12.7", "13"),
+            (0, decimal.Decimal("12.7"), "13"),
+            (0, 0, "0"),
+            (0, -0.0, "-0"),
+        )
+        with decimal.localcontext() as ctx:
+            ctx.prec = 28
+            ctx.rounding = decimal.ROUND_HALF_EVEN
+            for scale, value, expected in cases:
+                with self.subTest(scale=scale, value=value):
+                    t = self.type_(scale)
+                    converted = _set(t, value)
+                    self.assertEqual(
+                        converted.as_tuple(), decimal.Decimal(expected).as_tuple()
+                    )
+                    self.assertEqual(t.unconvert(converted), expected)
+
+    def test_scale_aggregate_export(self):
+        class SCALED(Aggregate):
+            amount = ofxtools.Types.Decimal(2)
+            whole = ofxtools.Types.Decimal(0)
+
+        aggregate = SCALED(amount=100, whole="12.7")
+        tree = aggregate.to_etree()
+        self.assertEqual(tree.findtext("AMOUNT"), "100.00")
+        self.assertEqual(tree.findtext("WHOLE"), "13")
+        aggregate.amount = 1.5
+        self.assertEqual(aggregate.to_etree().findtext("AMOUNT"), "1.50")
+
+    def test_no_scale_preserves_precision(self):
+        t = self.type_()
+        with decimal.localcontext() as ctx:
+            ctx.prec = 2
+            ctx.traps[decimal.Inexact] = True
+            ctx.traps[decimal.Rounded] = True
+            for text in ("12345.678900", "-0.0000"):
+                with self.subTest(value=text):
+                    value = decimal.Decimal(text)
+                    self.assertIs(t.convert(value), value)
+                    self.assertEqual(t.convert(text).as_tuple(), value.as_tuple())
+
+    def test_scale_rounding(self):
+        cases = (
+            (decimal.ROUND_HALF_EVEN, 0, 12.5, "12"),
+            (decimal.ROUND_HALF_UP, 0, 12.5, "13"),
+            (decimal.ROUND_HALF_EVEN, 2, 1.125, "1.12"),
+            (decimal.ROUND_HALF_UP, 2, 1.125, "1.13"),
+        )
+        for rounding, scale, value, expected in cases:
+            with self.subTest(rounding=rounding, scale=scale):
+                with decimal.localcontext() as ctx:
+                    ctx.rounding = rounding
+                    t = self.type_(scale)
+                    self.assertEqual(t.unconvert(t.convert(value)), expected)
+
+    def test_scale_native_float_conversion(self):
+        with decimal.localcontext() as ctx:
+            ctx.rounding = decimal.ROUND_HALF_EVEN
+            t = self.type_(2)
+            self.assertEqual(t.unconvert(t.convert(2.675)), "2.67")
+            self.assertEqual(t.unconvert(t.convert("2.675")), "2.68")
+            self.assertEqual(
+                self.type_().convert(2.675).as_tuple(),
+                decimal.Decimal(2.675).as_tuple(),
+            )
+
+    def test_float_operation_trap(self):
+        for scale in (None, 0, 2):
+            with self.subTest(scale=scale):
+                with decimal.localcontext() as ctx:
+                    ctx.traps[decimal.FloatOperation] = True
+                    with self.assertRaises(decimal.FloatOperation):
+                        self.type_(scale).convert(1.5)
+
+    def test_scale_quantization_traps(self):
+        cases = (
+            (decimal.Inexact, 28, 1.125),
+            (decimal.Rounded, 28, decimal.Decimal("1.230")),
+            (decimal.InvalidOperation, 2, 1.25),
+        )
+        for signal, precision, value in cases:
+            with self.subTest(signal=signal):
+                with decimal.localcontext() as ctx:
+                    ctx.prec = precision
+                    ctx.traps[signal] = True
+                    with self.assertRaises(signal):
+                        self.type_(2).convert(value)
+
+    def test_scale_untrapped_invalid_operation(self):
+        with decimal.localcontext() as ctx:
+            ctx.prec = 2
+            ctx.traps[decimal.InvalidOperation] = False
+            ctx.clear_flags()
+            self.assertTrue(self.type_(2).convert(1.25).is_nan())
+            self.assertTrue(ctx.flags[decimal.InvalidOperation])
+
+    def test_decimal_subclass_conversion(self):
+        calls = []
+
+        class CustomDecimal(decimal.Decimal):
+            def quantize(self, quantum):
+                calls.append(quantum)
+                return super().quantize(quantum)
+
+        class CustomType(ofxtools.Types.Decimal):
+            __type__ = CustomDecimal
+
+        value = CustomDecimal("1.500")
+        self.assertIs(self.type_().convert(value), value)
+        self.assertIsInstance(CustomType().convert(1), CustomDecimal)
+        self.assertEqual(calls, [])
+        for source in (value, 1.5):
+            with self.subTest(value=source):
+                calls.clear()
+                t = CustomType(2)
+                self.assertEqual(t.unconvert(t.convert(source)), "1.50")
+                self.assertEqual(calls, [decimal.Decimal("0.01")])
+
     def test_euro_decimal_separator(self):
         # Issue #4
         t = self.type_()
@@ -372,15 +502,24 @@ class DecimalTestCase(unittest.TestCase, Base):
         # Separators other than . and , are illegal
         with self.assertRaises(decimal.InvalidOperation):
             t.convert("1:23")
+        t = self.type_(2)
+        self.assertEqual(t.unconvert(t.convert("1,2")), "1.20")
+        with decimal.localcontext() as ctx:
+            ctx.traps[decimal.InvalidOperation] = False
+            ctx.clear_flags()
+            self.assertTrue(t.convert("1,2").is_nan())
+            self.assertTrue(ctx.flags[decimal.InvalidOperation])
 
     def test_illegal(self):
-        t = self.type_()
-        # Don't accept strings that can't be converted to Decimal
-        with self.assertRaises(decimal.InvalidOperation):
-            t.convert("foobar")
-        # Don't accept random types
-        with self.assertRaises(TypeError):
-            t.convert(object)
+        for scale in (None, 0, 2):
+            with self.subTest(scale=scale):
+                t = self.type_(scale)
+                # Don't accept strings that can't be converted to Decimal
+                with self.assertRaises(decimal.InvalidOperation):
+                    t.convert("foobar")
+                # Don't accept random types
+                with self.assertRaises(TypeError):
+                    t.convert(object)
 
     def test_unconvert(self):
         t = self.type_()
