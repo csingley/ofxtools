@@ -49,8 +49,8 @@ Here's how we translate the spec info Python.
 
 .. code:: python
 
-    from ofxtools.models.base import Aggregate, SubAggregate
-    from ofxtools.Types import String, Decimal, DateTime, OneOf
+    from ofxtools.models.base import Aggregate
+    from ofxtools.Types import String, Decimal, DateTime, OneOf, SubAggregate
     from ofxtools.models.bank.stmt import (
         BANKACCTFROM, BANKACCTTO, CCACCTFROM, CCACCTTO,
     )
@@ -74,7 +74,7 @@ We create a subclass of ``ofxtools.models.base.Aggregate``, where the class
 name is the OFX tag in ALL CAPS.  We define a class attribute for each tag
 that can appear under ``XFERINFO`` - the attribute names must be all lowercase.
 
-Container aggregates are defined with ``ofx.models.base.SubAggregate``;
+Container aggregates are defined with ``ofxtools.Types.SubAggregate``;
 pass in the relevant model class.
 
 Data-bearing elements are defined as a subclass of ``ofxtools.Types.Element`` -
@@ -104,7 +104,7 @@ With ``XFERINFO`` in hand, defining the request aggregate (``INTRARQ``) is simpl
     class INTRARQ(Aggregate):
         """ OFX section 11.7.1.1 """
 
-        xferinfo = SubAggregate(INTRARQ, required=True)
+        xferinfo = SubAggregate(XFERINFO, required=True)
 
 Now we move on to the corresponding server response aggregate (``INTRARS``).
 ``INTRARS`` contains a new subaggregate (``XFERPRCSTS``) for the server
@@ -218,6 +218,8 @@ This commonly-repeated pattern is factored out in
 
 .. code:: python
 
+    from ofxtools.models.common import STATUS
+
     class TrnRq(Aggregate):
         trnuid = String(36, required=True)
         cltcookie = String(32)
@@ -244,7 +246,7 @@ allows empty ``*TRNRS`` wrappers, so we set ``requiredMutexes`` and
     class INTRATRNRQ(TrnRq):
         """ OFX section 11.7.1.1 """
 
-        intrarq = SubAggregate(STMTRQ)
+        intrarq = SubAggregate(INTRARQ)
         intramodrq = SubAggregate(INTRAMODRQ)
         intracanrq = SubAggregate(INTRACANRQ)
 
@@ -261,12 +263,7 @@ allows empty ``*TRNRS`` wrappers, so we set ``requiredMutexes`` and
         intracanrs = SubAggregate(INTRACANRS)
 
         optionalMutexes = [
-            ["intrars",
-            "intramodrs",
-            "intracanrs",
-            "intermodrs",
-            "intercanrs",
-            "intermodrs"],
+            ["intrars", "intramodrs", "intracanrs"],
         ]
 
 Recurring Requests
@@ -278,6 +275,9 @@ transfers.  This just repeats the pattern of ``INTRARQ`` and ``INTRARS``.
 .. image:: recintrarq.png
 
 .. code:: python
+
+    from ofxtools.models.bank.recur import RECURRINST
+    from ofxtools.Types import Bool
 
     class RECINTRARQ(Aggregate):
         """ OFX section 11.10.1.1 """
@@ -395,7 +395,7 @@ Here's how it looks in ``ofxtools.models.bank.sync``.
 
 .. code:: python
 
-    from ofxtools.Type import ListAggregate
+    from ofxtools.Types import ListAggregate
     from ofxtools.models.bank.stmt import BANKACCTFROM, CCACCTFROM
     from ofxtools.Types import Bool
 
@@ -462,11 +462,11 @@ Extending the Message Set
 -------------------------
 We have defined the funds transfer service, but we still need to add it to
 the banking message set (the top-level wrappers).  We need to edit the
-relevant classes in ``ofxtools.models.msgsets``.
+relevant classes in ``ofxtools.models.bank.msgsets``.
 
 .. code:: python
 
-    class BANKMSGSRQV1(List):
+    class BANKMSGSRQV1(Aggregate):
         """ OFX section 11.13.1.1.1 """
 
         ...
@@ -477,7 +477,7 @@ relevant classes in ``ofxtools.models.msgsets``.
         ...
 
 
-    class BANKMSGSRSV1(List):
+    class BANKMSGSRSV1(Aggregate):
         """ OFX section 11.13.1.1.2 """
 
         ...
@@ -492,6 +492,10 @@ Then we need to define the funds transfer profile.
 .. image:: intrasyncrs.png
 
 .. code:: python
+
+    from ofxtools.models.base import ElementList
+    from ofxtools.models.bank.msgsets import DAYS
+    from ofxtools.Types import Integer, ListElement, Time
 
     class XFERPROF(ElementList):
         """ OFX section 11.13.2.2 """
