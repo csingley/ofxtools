@@ -9,7 +9,12 @@ from xml.etree.ElementTree import Element, SubElement
 import base
 
 # local imports
-from ofxtools.models.i18n import CURRENCY, CURRENCY_CODES, ORIGCURRENCY
+from ofxtools.models.i18n import (
+    COUNTRY_CODES,
+    CURRENCY,
+    CURRENCY_CODES,
+    ORIGCURRENCY,
+)
 from ofxtools.utils import classproperty
 
 
@@ -46,6 +51,49 @@ class OrigcurrencyTestCase(CurrencyTestCase):
     @classmethod
     def aggregate(cls):
         return ORIGCURRENCY(currate=Decimal("59.773"), cursym="EUR")
+
+
+class CodeListTestCase(unittest.TestCase):
+    def test_country_codes_are_alpha3(self):
+        for code in COUNTRY_CODES:
+            self.assertRegex(code, r"^[A-Z]{3}$")
+
+    def test_country_codes(self):
+        for code in (
+            "BES",
+            "BMU",
+            "CUW",
+            "DEU",
+            "ECU",
+            "LTU",
+            "NIU",
+            "NRU",
+            "REU",
+            "ROU",
+            "SAU",
+            "SSD",
+            "SXM",
+        ):
+            self.assertIn(code, COUNTRY_CODES)
+
+    def test_currency_codes(self):
+        for code in (
+            "BYN",
+            "MRU",
+            "SLE",
+            "SSP",
+            "STN",
+            "UYW",
+            "VED",
+            "VES",
+            "XAD",
+            "XCG",
+            "XSU",
+            "XUA",
+            "ZMW",
+            "ZWG",
+        ):
+            self.assertIn(code, CURRENCY_CODES)
 
 
 class OrigcurrencyMixinTestCase(unittest.TestCase):
