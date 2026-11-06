@@ -308,16 +308,21 @@ class NYSEcalendarTestCase(unittest.TestCase):
         hols = NYSEcalendar.holidays(2024)
         self.assertIn(datetime.date(2024, 3, 29), hols)
 
+    def test_juneteenth(self):
+        # 2022: June 19 is Sunday -> observed June 20; not a holiday before 2022
+        self.assertIn(datetime.date(2022, 6, 20), NYSEcalendar.holidays(2022))
+        self.assertNotIn(datetime.date(2021, 6, 18), NYSEcalendar.holidays(2021))
+
     def test_holidays_sorted(self):
         hols = NYSEcalendar.holidays(2024)
         self.assertEqual(hols, sorted(hols))
 
     def test_holidays_count(self):
-        # Should be 9 holidays in a typical year (NYD + 8 others)
-        # 2024 has all 9 (NYD is Monday)
-        self.assertEqual(len(NYSEcalendar.holidays(2024)), 9)
-        # 2022 has 8 (NYD Saturday is skipped)
-        self.assertEqual(len(NYSEcalendar.holidays(2022)), 8)
+        # Should be 10 holidays in a typical year (NYD + 9 others)
+        # 2024 has all 10 (NYD is Monday)
+        self.assertEqual(len(NYSEcalendar.holidays(2024)), 10)
+        # 2022 has 9 (NYD Saturday is skipped)
+        self.assertEqual(len(NYSEcalendar.holidays(2022)), 9)
 
 
 class NextBizDayTestCase(unittest.TestCase):

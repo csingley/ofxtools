@@ -286,8 +286,8 @@ class NYSEcalendar:
     NYSE holiday calendar.
 
     The Exchange is closed on: New Year's Day, Martin Luther King Jr. Day,
-    Washington's Birthday, Good Friday, Memorial Day, Independence Day,
-    Labor Day, Thanksgiving Day, and Christmas Day.
+    Washington's Birthday, Good Friday, Memorial Day, Juneteenth (since 2022),
+    Independence Day, Labor Day, Thanksgiving Day, and Christmas Day.
 
     When a fixed-date holiday falls on Saturday, the preceding Friday is
     observed — except New Year's Day, where Dec 31 is the year-end accounting
@@ -335,6 +335,8 @@ class NYSEcalendar:
             cls.mondays(year, 9)[0],  # Labor Day (1st Mon in Sep)
             cls.thursdays(year, 11)[3],  # Thanksgiving (4th Thu in Nov)
         ]
+        if year >= 2022:
+            hols.append(cls._observed(datetime.date(year, 6, 19)))  # Juneteenth
         # New Year's Day: Saturday → skipped (Dec 31 is year-end accounting close)
         #                 Sunday   → observed Monday Jan 2
         #                 weekday  → Jan 1 itself
