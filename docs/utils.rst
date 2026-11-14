@@ -37,8 +37,8 @@ NYSE Holiday Calendar
 
 ``NYSEcalendar`` provides the official NYSE holiday schedule for a given year.
 The NYSE is closed on New Year's Day, Martin Luther King Jr. Day, Washington's
-Birthday, Good Friday, Memorial Day, Independence Day, Labor Day, Thanksgiving,
-and Christmas.
+Birthday, Good Friday, Memorial Day, Juneteenth (since 2022), Independence Day,
+Labor Day, Thanksgiving, and Christmas.
 
 Weekend-shifted holidays follow NYSE convention: Saturday holidays are observed
 on the preceding Friday, Sunday holidays on the following Monday — except New
