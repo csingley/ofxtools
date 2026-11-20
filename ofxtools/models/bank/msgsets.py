@@ -108,7 +108,7 @@ class BANKMSGSRQV1(Aggregate):
             stmtrq = None
             if isinstance(trnrq, STMTTRNRQ):
                 stmtrq = trnrq.stmtrq
-            elif isinstance(trnrq, STMTTRNRQ):
+            elif isinstance(trnrq, STMTENDTRNRQ):
                 stmtrq = trnrq.stmtendrq
 
             if stmtrq is not None:
