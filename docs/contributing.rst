@@ -29,6 +29,33 @@ Feel free to `create pull requests`_ on `ofxtools repository on GitHub`_.
 Test coverage for new code is strongly encouraged.
 
 
+Releasing
+=========
+Releases are published to PyPI by the ``Publish to PyPI`` GitHub Actions
+workflow (``.github/workflows/publish.yml``).  The workflow runs when a
+GitHub release is *published*; pushing a tag by itself does not trigger it.
+
+1. Update ``version`` in ``pyproject.toml`` and commit.
+2. Push to ``master`` and wait for the ``CI tests`` workflow to pass.
+3. Tag the release (tags have no ``v`` prefix) and push the tag:
+
+   .. code:: bash
+
+       git tag -a X.Y.Z -m "X.Y.Z"
+       git push origin X.Y.Z
+
+4. Publish a GitHub release for that tag:
+
+   .. code:: bash
+
+       gh release create X.Y.Z --title X.Y.Z --generate-notes
+
+   Publishing the release builds the package and uploads it to PyPI via
+   trusted publishing.
+5. Check that the ``Publish to PyPI`` run succeeded and that the new version
+   appears at https://pypi.org/project/ofxtools/.
+
+
 Adding New OFX Messages
 =======================
 As an example, I'll document the implementation of bank fund transfers.
