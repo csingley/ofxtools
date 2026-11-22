@@ -50,7 +50,7 @@ from ofxtools.models.bank.msgsets import (
     XFERPROF,
 )
 from ofxtools.models.bank.stmt import STMTRS
-from ofxtools.models.bank.stmtend import STMTENDRS
+from ofxtools.models.bank.stmtend import STMTENDRQ, STMTENDRS
 
 # local imports
 from ofxtools.models.base import Aggregate, UnknownTagWarning
@@ -536,6 +536,11 @@ class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
 
         with self.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(root)
+
+    def testPropertyAliases(self):
+        instance = Aggregate.from_etree(self.etree)
+        self.assertEqual(len(instance.statements), 4)
+        self.assertIsInstance(instance.statements[2], STMTENDRQ)
 
 
 class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
