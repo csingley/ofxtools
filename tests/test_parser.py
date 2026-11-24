@@ -150,6 +150,12 @@ class TreeBuilderRegexTestCase(TestCase):
         self.assertEqual(parsed.closetag, "TAG")
         self.assertIsNone(parsed.tail)
 
+    def test_cdata_followed_by_cdata(self):
+        markup = "<TAG><![CDATA[cdata]]></TAG><TAG2><![CDATA[more]]></TAG2>"
+        parsed = self._parsetag(markup)
+        self.assertEqual(parsed.cdata, "cdata")
+        self.assertEqual(parsed.closetag, "TAG")
+
     def test_finditer_sgml(self):
         markup = "<TAG1><TAG2>value"
         self.builder.feed(markup)

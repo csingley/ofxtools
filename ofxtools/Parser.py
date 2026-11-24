@@ -134,7 +134,7 @@ class TreeBuilder(ET.TreeBuilder):
     # and optionally an end tag (not mandatory for OFXv1 syntax).
     regex = re.compile(
         r"""<(?P<tag>[A-Z0-9./_ ]+?)>
-                ((<!\[CDATA\[(?P<cdata>.+)\]\]>)|(?P<text>[^<]+))?
+                ((<!\[CDATA\[(?P<cdata>.+?)\]\]>)|(?P<text>[^<]+))?
             (</(?P<closetag>(?P=tag))>)?
             (?P<tail>[^<]+)?
         """,
