@@ -156,6 +156,12 @@ class TreeBuilderRegexTestCase(TestCase):
         self.assertEqual(parsed.cdata, "cdata")
         self.assertEqual(parsed.closetag, "TAG")
 
+    def test_cdata_multiline(self):
+        markup = "<TAG><![CDATA[line one\nline two]]></TAG>"
+        parsed = self._parsetag(markup)
+        self.assertEqual(parsed.cdata, "line one\nline two")
+        self.assertEqual(parsed.closetag, "TAG")
+
     def test_finditer_sgml(self):
         markup = "<TAG1><TAG2>value"
         self.builder.feed(markup)

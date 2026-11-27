@@ -138,7 +138,7 @@ class TreeBuilder(ET.TreeBuilder):
             (</(?P<closetag>(?P=tag))>)?
             (?P<tail>[^<]+)?
         """,
-        re.VERBOSE,
+        re.VERBOSE | re.DOTALL,
     )
 
     def feed(self, data: str) -> None:
